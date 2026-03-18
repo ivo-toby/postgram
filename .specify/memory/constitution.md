@@ -1,23 +1,25 @@
 <!--
 Sync Impact Report
-Version change: none -> 1.0.0
+Version change: 1.0.0 -> 1.1.0
 Modified principles:
-- Template Principle 1 -> I. Specification Before Implementation
-- Template Principle 2 -> II. Service-Layer Canonical Logic
-- Template Principle 3 -> III. Explicit Schema and Migration Discipline
-- Template Principle 4 -> IV. Scoped Security and Auditability
-- Template Principle 5 -> V. Verification with Contract Coverage
+- None (all five Core Principles unchanged)
 Added sections:
-- Engineering Standards
-- Delivery Workflow & Quality Gates
+- Implementation Phase (Code Quality, Naming Conventions, Architecture
+  Principles, Data Access, Process)
+- Constraints & Boundaries (Security, Performance, Compatibility)
 Removed sections:
 - None
 Templates requiring updates:
-- ✅ .specify/templates/plan-template.md
-- ✅ .specify/templates/spec-template.md
-- ✅ .specify/templates/tasks-template.md
-- ✅ .specify/templates/agent-file-template.md
-- ⚠ pending .specify/templates/commands/ (directory absent; no command templates available to validate)
+- ✅ .specify/templates/plan-template.md (no changes needed; Technical Context
+  already captures stack, testing, and constraints)
+- ✅ .specify/templates/spec-template.md (no changes needed; acceptance
+  scenarios and requirements already aligned)
+- ✅ .specify/templates/tasks-template.md (no changes needed; phase structure
+  and checkpoint gates already compatible)
+- ✅ .specify/templates/agent-file-template.md (no changes needed; Code Style
+  and Commands sections will be filled from these new rules at generation time)
+- ⚠ pending .specify/templates/commands/ (directory absent; no command
+  templates available to validate)
 Follow-up TODOs:
 - None
 -->
@@ -71,6 +73,95 @@ operator-facing documentation when setup or runtime behavior changes. Rationale:
 this project spans database, API, MCP, and CLI interfaces, so regressions are
 easy to introduce and hard to detect without explicit verification.
 
+## Implementation Phase
+
+### Code Quality
+
+- **Linting**: ESLint with TypeScript strict rules
+- **Formatting**: Prettier
+- **Testing**: Vitest (unit + integration minimum)
+- **Coverage**: 80% minimum enforced
+- **Test types**: contract tests for transport interfaces (REST + MCP),
+  integration tests for service-layer operations against a real database,
+  unit tests for pure logic and helpers
+- No code merges without passing CI
+- Follow existing patterns and conventions in codebase
+- Documentation required for public APIs (TSDoc)
+- Comments only where logic is not self-evident
+
+### Naming Conventions
+
+- **Variables / functions**: camelCase
+- **Types / classes / interfaces**: PascalCase
+- **Constants**: UPPER_SNAKE_CASE
+- **File names**: kebab-case (e.g., `entity-service.ts`, `audit-log.ts`)
+- **Directories**: kebab-case
+- **Database tables / columns**: snake_case
+- **SQL migration files**: numbered prefix with kebab-case description
+  (e.g., `001-create-entities.sql`)
+
+### Architecture Principles
+
+- **Pattern**: Service-layer core — thin transport adapters (REST handlers,
+  MCP tools, CLI commands) over shared, transport-agnostic service modules
+- **Error handling**: Result types (`neverthrow`) for expected errors;
+  exceptions only for truly exceptional or unrecoverable failures
+- **Logging**: `pino` — structured JSON logs with `request_id`, `api_key_id`,
+  `operation`, `entity_id`
+- **Observability**: Structured logs, audit log table (append-only), health
+  endpoint reporting service and database status
+- **Security**: Scoped API keys, service-layer enforcement of type and
+  visibility restrictions, admin operations container-local only, secrets
+  never in plaintext at rest
+
+### Data Access
+
+- **No ORM** — raw SQL with typed helpers (e.g., `kysely` or hand-written
+  prepared statements with TypeScript type annotations)
+- Keep the persistence interface behind a repository pattern so the query
+  layer can evolve without touching service logic
+- Migrations are versioned, forward-only SQL files applied via a dedicated
+  migration runner at startup
+
+### Process
+
+- Implementation is fully autonomous after spec approval
+- All changes happen in isolated git worktrees
+- Each stage (coder, reviewer, tester, QA) MUST pass before proceeding
+- QA validation required before merge to main
+
+## Constraints & Boundaries
+
+### Security
+
+- API keys stored hashed (argon2); plaintext returned once at creation, never
+  persisted
+- Admin CLI (`pgm-admin`) has zero network exposure — runs only inside the
+  Docker container via `docker exec`
+- TLS everywhere via Caddy for all API and MCP traffic
+- Encrypted backups (`pg_dump` output encrypted before leaving the host)
+- Audit everything: every mutating or privileged operation recorded with
+  `api_key_id`, `operation`, `entity_id`, and timestamp
+- Network default for Postgres: internal Docker network only, no host binding
+
+### Performance
+
+- Embedding generation MAY be asynchronous — entity writes MUST return before
+  enrichment completes
+- Vector search MUST use pgvector indexes (`ivfflat` or `hnsw`) once chunk
+  volume exceeds 10k rows
+- Connection pooling required for Postgres (e.g., built-in pool or PgBouncer)
+- API response target: < 200ms p95 for non-search operations, < 500ms p95 for
+  vector search at personal scale (< 100k chunks)
+
+### Compatibility
+
+- Node.js 22+ (LTS)
+- PostgreSQL 16+ with `pgvector` and `pgcrypto` extensions
+- Docker and Docker Compose for deployment
+- Caddy as reverse proxy (TLS termination)
+- Target platform: Linux (Hetzner VM); macOS for local development
+
 ## Engineering Standards
 
 - The canonical implementation stack for Phase 1 is Node.js with TypeScript,
@@ -117,4 +208,4 @@ easy to introduce and hard to detect without explicit verification.
   `.specify/templates/agent-file-template.md` MUST remain consistent with this
   constitution.
 
-**Version**: 1.0.0 | **Ratified**: 2026-03-18 | **Last Amended**: 2026-03-18
+**Version**: 1.1.0 | **Ratified**: 2026-03-18 | **Last Amended**: 2026-03-18

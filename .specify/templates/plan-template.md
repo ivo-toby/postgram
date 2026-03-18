@@ -17,34 +17,21 @@
   the iteration process.
 -->
 
-**Language/Version**: [TypeScript on Node.js or NEEDS CLARIFICATION]
-**Primary Dependencies**: [e.g., Hono, @modelcontextprotocol/sdk, pg, pgvector, OpenAI SDK or NEEDS CLARIFICATION]
-**Storage**: [PostgreSQL with pgvector, numbered SQL migrations, or N/A]
-**Testing**: [unit, service, integration, contract, and manual verification commands]
-**Target Platform**: [Linux container / Hetzner VM / CLI clients or NEEDS CLARIFICATION]
-**Project Type**: [backend service with REST, MCP, and CLI surfaces or NEEDS CLARIFICATION]
-**Performance Goals**: [domain-specific, e.g., search latency, ingest latency, migration throughput]
-**Constraints**: [auth, visibility, audit, operational, or deployment constraints]
-**Scale/Scope**: [expected entity volume, clients, interfaces, rollout scope]
+**Language/Version**: [e.g., Python 3.11, Swift 5.9, Rust 1.75 or NEEDS CLARIFICATION]  
+**Primary Dependencies**: [e.g., FastAPI, UIKit, LLVM or NEEDS CLARIFICATION]  
+**Storage**: [if applicable, e.g., PostgreSQL, CoreData, files or N/A]  
+**Testing**: [e.g., pytest, XCTest, cargo test or NEEDS CLARIFICATION]  
+**Target Platform**: [e.g., Linux server, iOS 15+, WASM or NEEDS CLARIFICATION]
+**Project Type**: [e.g., library/cli/web-service/mobile-app/compiler/desktop-app or NEEDS CLARIFICATION]  
+**Performance Goals**: [domain-specific, e.g., 1000 req/s, 10k lines/sec, 60 fps or NEEDS CLARIFICATION]  
+**Constraints**: [domain-specific, e.g., <200ms p95, <100MB memory, offline-capable or NEEDS CLARIFICATION]  
+**Scale/Scope**: [domain-specific, e.g., 10k users, 1M LOC, 50 screens or NEEDS CLARIFICATION]
 
 ## Constitution Check
 
 *GATE: Must pass before Phase 0 research. Re-check after Phase 1 design.*
 
-- **Specification Before Implementation**: Confirm the linked spec captures user
-  stories, edge cases, data impact, contract impact, and operational impact for
-  this change.
-- **Service-Layer Canonical Logic**: List the service modules that own the new or
-  changed behavior and confirm REST, MCP, and CLI work is adapter-only.
-- **Explicit Schema and Migration Discipline**: Identify every affected table,
-  index, SQL migration, typed query helper, and version/locking rule. If none
-  are affected, state that explicitly.
-- **Scoped Security and Auditability**: Describe auth scope changes,
-  type/visibility enforcement, audit-log impact, and confirm no admin capability
-  is being exposed on public transports.
-- **Verification with Contract Coverage**: List the exact unit, service,
-  integration, contract, build, and manual verification commands required before
-  completion, including docs or quickstart updates.
+[Gates determined based on constitution file]
 
 ## Project Structure
 
@@ -61,29 +48,51 @@ specs/[###-feature]/
 ```
 
 ### Source Code (repository root)
+<!--
+  ACTION REQUIRED: Replace the placeholder tree below with the concrete layout
+  for this feature. Delete unused options and expand the chosen structure with
+  real paths (e.g., apps/admin, packages/something). The delivered plan must
+  not include Option labels.
+-->
 
 ```text
+# [REMOVE IF UNUSED] Option 1: Single project (DEFAULT)
 src/
-├── config.ts
-├── db/
-│   ├── migrations/
-│   └── ...
+├── models/
 ├── services/
-├── auth/
-├── transport/
 ├── cli/
-├── types/
-└── util/
+└── lib/
 
 tests/
 ├── contract/
 ├── integration/
 └── unit/
+
+# [REMOVE IF UNUSED] Option 2: Web application (when "frontend" + "backend" detected)
+backend/
+├── src/
+│   ├── models/
+│   ├── services/
+│   └── api/
+└── tests/
+
+frontend/
+├── src/
+│   ├── components/
+│   ├── pages/
+│   └── services/
+└── tests/
+
+# [REMOVE IF UNUSED] Option 3: Mobile + API (when "iOS/Android" detected)
+api/
+└── [same as backend above]
+
+ios/ or android/
+└── [platform-specific structure: feature modules, UI flows, platform tests]
 ```
 
-**Structure Decision**: [Document the exact directories and files this feature
-touches. Call out service-layer ownership, transport adapters, persistence, and
-test locations.]
+**Structure Decision**: [Document the selected structure and reference the real
+directories captured above]
 
 ## Complexity Tracking
 

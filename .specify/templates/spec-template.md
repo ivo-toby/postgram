@@ -1,8 +1,8 @@
 # Feature Specification: [FEATURE NAME]
 
-**Feature Branch**: `[###-feature-name]`
-**Created**: [DATE]
-**Status**: Draft
+**Feature Branch**: `[###-feature-name]`  
+**Created**: [DATE]  
+**Status**: Draft  
 **Input**: User description: "$ARGUMENTS"
 
 ## User Scenarios & Testing *(mandatory)*
@@ -11,7 +11,7 @@
   IMPORTANT: User stories should be PRIORITIZED as user journeys ordered by importance.
   Each user story/journey must be INDEPENDENTLY TESTABLE - meaning if you implement just ONE of them,
   you should still have a viable MVP (Minimum Viable Product) that delivers value.
-
+  
   Assign priorities (P1, P2, P3, etc.) to each story, where P1 is the most critical.
   Think of each story as a standalone slice of functionality that can be:
   - Developed independently
@@ -85,7 +85,7 @@
 ### Functional Requirements
 
 - **FR-001**: System MUST [specific capability, e.g., "allow users to create accounts"]
-- **FR-002**: System MUST [specific capability, e.g., "validate email addresses"]
+- **FR-002**: System MUST [specific capability, e.g., "validate email addresses"]  
 - **FR-003**: Users MUST be able to [key interaction, e.g., "reset their password"]
 - **FR-004**: System MUST [data requirement, e.g., "persist user preferences"]
 - **FR-005**: System MUST [behavior, e.g., "log all security events"]
@@ -99,35 +99,6 @@
 
 - **[Entity 1]**: [What it represents, key attributes without implementation]
 - **[Entity 2]**: [What it represents, relationships to other entities]
-
-## Data, Contracts & Operational Impact *(mandatory)*
-
-### Data & Migration Impact
-
-- **Storage Changes**: [Affected tables, indexes, migrations, backfills, or
-  "None"]
-- **Versioning/Concurrency Impact**: [Optimistic locking, entity versions,
-  idempotency, or "None"]
-
-### Service & Transport Impact
-
-- **Service Layer Changes**: [New or changed service methods, shared validation,
-  persistence, and error-handling rules]
-- **Transport Changes**: [REST endpoints, MCP tools, CLI commands, or "None"]
-
-### Security & Audit Impact
-
-- **Authorization Changes**: [Scopes, allowed types, visibility rules, key
-  handling, or "None"]
-- **Audit/Observability Changes**: [Audit log entries, structured logs, metrics,
-  warnings, tracing, or "None"]
-
-### Operations & Documentation Impact
-
-- **Runbook/Quickstart Changes**: [Env vars, Docker, deployment, backup,
-  migration, quickstart, or "None"]
-- **Rollout/Rollback Notes**: [Deployment sequencing, reversibility, cleanup, or
-  "None"]
 
 ## Success Criteria *(mandatory)*
 

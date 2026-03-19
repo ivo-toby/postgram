@@ -1,8 +1,19 @@
 import { Hono } from 'hono';
+import type { ContentfulStatusCode } from 'hono/utils/http-status';
+
+import {
+  normalizeError,
+  toErrorResponse,
+  toHttpStatus
+} from './util/errors.js';
 
 type HealthStatus = {
   postgres: 'connected' | 'disconnected';
   embeddingModel: string | null;
+};
+
+type AppVariables = {
+  auth: unknown;
 };
 
 type AppOptions = {
@@ -13,14 +24,24 @@ const DEFAULT_EMBEDDING_MODEL = 'text-embedding-3-small';
 
 function getDefaultHealthStatus(): HealthStatus {
   return {
-    postgres: 'connected',
-    embeddingModel: DEFAULT_EMBEDDING_MODEL
+    postgres: 'disconnected',
+    embeddingModel: null
   };
 }
 
-export function createApp(options: AppOptions = {}): Hono {
-  const app = new Hono();
+export function createApp(
+  options: AppOptions = {}
+): Hono<{ Variables: AppVariables }> {
+  const app = new Hono<{ Variables: AppVariables }>();
   const getHealthStatus = options.getHealthStatus ?? getDefaultHealthStatus;
+
+  app.onError((error, c) => {
+    const appError = normalizeError(error);
+    return c.json(
+      toErrorResponse(appError),
+      toHttpStatus(appError.code) as ContentfulStatusCode
+    );
+  });
 
   app.get('/health', async (c) => {
     const health = await getHealthStatus();

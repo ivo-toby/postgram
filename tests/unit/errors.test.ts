@@ -24,4 +24,10 @@ describe('AppError', () => {
     expect(error.message).toBe('Invalid request');
     expect(error.details).toEqual({ field: 'content' });
   });
+
+  it('defaults details to an empty object', () => {
+    const error = new AppError(ErrorCode.INTERNAL, 'Unexpected failure');
+
+    expect(error.details).toEqual({});
+  });
 });

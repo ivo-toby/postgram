@@ -1,3 +1,5 @@
+import type { ErrorResponse } from '../types/api.js';
+
 export enum ErrorCode {
   VALIDATION = 'VALIDATION',
   UNAUTHORIZED = 'UNAUTHORIZED',
@@ -10,19 +12,17 @@ export enum ErrorCode {
 
 export class AppError extends Error {
   code: ErrorCode;
-  details?: Record<string, unknown>;
+  details: Record<string, unknown>;
 
   constructor(
     code: ErrorCode,
     message: string,
-    details?: Record<string, unknown>
+    details: Record<string, unknown> = {}
   ) {
     super(message);
     this.name = 'AppError';
     this.code = code;
-    if (details) {
-      this.details = details;
-    }
+    this.details = details;
   }
 }
 
@@ -43,4 +43,26 @@ export function toHttpStatus(code: ErrorCode): number {
     case ErrorCode.INTERNAL:
       return 500;
   }
+}
+
+export function normalizeError(error: unknown): AppError {
+  if (error instanceof AppError) {
+    return error;
+  }
+
+  if (error instanceof Error) {
+    return new AppError(ErrorCode.INTERNAL, error.message);
+  }
+
+  return new AppError(ErrorCode.INTERNAL, 'Unexpected server error');
+}
+
+export function toErrorResponse(error: AppError): ErrorResponse {
+  return {
+    error: {
+      code: error.code,
+      message: error.message,
+      details: error.details
+    }
+  };
 }

@@ -230,3 +230,17 @@ export function revokeKey(
     (error) => toAppError(error, 'Failed to revoke API key')
   );
 }
+
+export async function touchLastUsedAt(
+  pool: Pool,
+  apiKeyId: string
+): Promise<void> {
+  await pool.query(
+    `
+      UPDATE api_keys
+      SET last_used_at = now()
+      WHERE id = $1
+    `,
+    [apiKeyId]
+  );
+}

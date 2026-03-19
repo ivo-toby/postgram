@@ -1,16 +1,47 @@
 import { Hono } from 'hono';
 
-export function createApp(): Hono {
-  const app = new Hono();
+type HealthStatus = {
+  postgres: 'connected' | 'disconnected';
+  embeddingModel: string | null;
+};
 
-  app.get('/health', (c) =>
-    c.json({
+type AppOptions = {
+  getHealthStatus?: () => Promise<HealthStatus> | HealthStatus;
+};
+
+const DEFAULT_EMBEDDING_MODEL = 'text-embedding-3-small';
+
+function getDefaultHealthStatus(): HealthStatus {
+  return {
+    postgres: 'connected',
+    embeddingModel: DEFAULT_EMBEDDING_MODEL
+  };
+}
+
+export function createApp(options: AppOptions = {}): Hono {
+  const app = new Hono();
+  const getHealthStatus = options.getHealthStatus ?? getDefaultHealthStatus;
+
+  app.get('/health', async (c) => {
+    const health = await getHealthStatus();
+
+    if (health.postgres === 'disconnected') {
+      return c.json(
+        {
+          status: 'degraded',
+          postgres: 'disconnected'
+        },
+        503
+      );
+    }
+
+    return c.json({
       status: 'ok',
       version: '0.1.0',
-      postgres: 'connected',
-      embedding_model: 'unknown'
-    })
-  );
+      postgres: health.postgres,
+      embedding_model: health.embeddingModel ?? DEFAULT_EMBEDDING_MODEL
+    });
+  });
 
   return app;
 }

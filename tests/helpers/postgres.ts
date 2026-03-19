@@ -59,3 +59,34 @@ export async function createTestDatabase(): Promise<TestDatabase> {
     }
   };
 }
+
+export async function resetTestDatabase(pool: Pool): Promise<void> {
+  await pool.query(`
+    TRUNCATE TABLE
+      audit_log,
+      chunks,
+      entities,
+      api_keys,
+      embedding_models
+    RESTART IDENTITY CASCADE
+  `);
+
+  await pool.query(`
+    INSERT INTO embedding_models (
+      name,
+      provider,
+      dimensions,
+      chunk_size,
+      chunk_overlap,
+      is_active
+    )
+    VALUES (
+      'text-embedding-3-small',
+      'openai',
+      1536,
+      300,
+      100,
+      true
+    )
+  `);
+}

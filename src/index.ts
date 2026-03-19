@@ -1,7 +1,13 @@
 import { Hono } from 'hono';
 import type { ContentfulStatusCode } from 'hono/utils/http-status';
+import type { Pool } from 'pg';
 
+import { createAuthMiddleware } from './auth/middleware.js';
+import type { AuthContext } from './auth/types.js';
+import { registerRestRoutes } from './transport/rest.js';
 import {
+  AppError,
+  ErrorCode,
   normalizeError,
   toErrorResponse,
   toHttpStatus
@@ -13,10 +19,11 @@ type HealthStatus = {
 };
 
 type AppVariables = {
-  auth: unknown;
+  auth: AuthContext;
 };
 
 type AppOptions = {
+  pool?: Pool;
   getHealthStatus?: () => Promise<HealthStatus> | HealthStatus;
 };
 
@@ -43,6 +50,13 @@ export function createApp(
     );
   });
 
+  app.notFound((c) =>
+    c.json(
+      toErrorResponse(new AppError(ErrorCode.NOT_FOUND, 'Route not found')),
+      404
+    )
+  );
+
   app.get('/health', async (c) => {
     const health = await getHealthStatus();
 
@@ -63,6 +77,11 @@ export function createApp(
       embedding_model: health.embeddingModel ?? DEFAULT_EMBEDDING_MODEL
     });
   });
+
+  if (options.pool) {
+    app.use('/api/*', createAuthMiddleware({ pool: options.pool }));
+    registerRestRoutes(app, options.pool);
+  }
 
   return app;
 }

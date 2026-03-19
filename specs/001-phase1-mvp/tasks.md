@@ -172,7 +172,6 @@
 ### Audit Integration (cross-cutting, after US5)
 
 - [ ] T048c [US5] Verify audit log entries: entity store, update, delete emit audit rows; task_complete emits audit row; search and recall do NOT emit audit rows in tests/integration/entity-service.test.ts
-- [ ] T048d [US5] Verify privileged admin operations emit audit rows: key create/revoke, audit queries, model list/set-active, and stats in tests/integration/cli-admin.test.ts and tests/integration/key-service.test.ts
 
 ---
 
@@ -210,7 +209,7 @@
 
 ### Tests for US7
 
-- [ ] T062a [US7] Admin CLI integration tests: spawn pgm-admin against test DB, verify key create returns plaintext once, key list shows keys, key revoke deactivates, audit queries filter correctly and emit audit rows, model list/set-active works and set-active emits audit rows, stats returns counts and emits an audit row in tests/integration/cli-admin.test.ts
+- [ ] T062a [US7] Admin CLI integration tests: spawn pgm-admin against test DB, verify key create returns plaintext once, key list shows keys, key revoke deactivates, key create/revoke/list emit audit rows, audit queries filter correctly and emit audit rows, model list/set-active works and emit audit rows, and stats returns counts and emits an audit row in tests/integration/cli-admin.test.ts
 
 ### Implementation for US7
 

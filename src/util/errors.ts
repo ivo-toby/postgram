@@ -20,7 +20,9 @@ export class AppError extends Error {
     super(message);
     this.name = 'AppError';
     this.code = code;
-    this.details = details;
+    if (details) {
+      this.details = details;
+    }
   }
 }
 

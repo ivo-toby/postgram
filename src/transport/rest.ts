@@ -3,7 +3,9 @@ import { z } from 'zod';
 import type { Pool } from 'pg';
 
 import type { AuthContext } from '../auth/types.js';
+import type { EmbeddingService } from '../services/embedding-service.js';
 import { listEntities, recallEntity, softDeleteEntity, storeEntity, updateEntity } from '../services/entity-service.js';
+import { searchEntities } from '../services/search-service.js';
 import type { Entity, EntityStatus, EntityType, Visibility } from '../types/entities.js';
 import { AppError, ErrorCode } from '../util/errors.js';
 
@@ -45,6 +47,15 @@ const updateEntitySchema = z.object({
   status: statusSchema.nullable().optional(),
   tags: z.array(z.string()).optional(),
   metadata: z.record(z.unknown()).optional()
+});
+
+const searchEntitiesSchema = z.object({
+  query: z.string().min(1),
+  type: entityTypeSchema.optional(),
+  tags: z.array(z.string()).optional(),
+  limit: z.number().int().positive().max(50).optional(),
+  threshold: z.number().min(0).max(1).optional(),
+  recency_weight: z.number().min(0).optional()
 });
 
 function toValidationError(message: string): AppError {
@@ -93,7 +104,13 @@ function toStoredEntity(entity: Entity) {
 
 type RestApp = Hono<{ Variables: { auth: AuthContext } }>;
 
-export function registerRestRoutes(app: RestApp, pool: Pool): void {
+export function registerRestRoutes(
+  app: RestApp,
+  pool: Pool,
+  options: {
+    embeddingService?: EmbeddingService | undefined;
+  } = {}
+): void {
   app.post('/api/entities', async (c) => {
     const auth = c.get('auth');
     const body = parseJsonBody(storeEntitySchema, await c.req.json());
@@ -180,6 +197,39 @@ export function registerRestRoutes(app: RestApp, pool: Pool): void {
       total: result.value.total,
       limit: result.value.limit,
       offset: result.value.offset
+    });
+  });
+
+  app.post('/api/search', async (c) => {
+    const auth = c.get('auth');
+    const body = parseJsonBody(searchEntitiesSchema, await c.req.json());
+    const result = await searchEntities(
+      pool,
+      auth,
+      {
+        query: body.query,
+        type: body.type,
+        tags: body.tags,
+        limit: body.limit,
+        threshold: body.threshold,
+        recencyWeight: body.recency_weight
+      },
+      {
+        embeddingService: options.embeddingService
+      }
+    );
+
+    if (result.isErr()) {
+      throw result.error;
+    }
+
+    return c.json({
+      results: result.value.results.map((entry) => ({
+        entity: toStoredEntity(entry.entity),
+        chunk_content: entry.chunkContent,
+        similarity: entry.similarity,
+        score: entry.score
+      }))
     });
   });
 }

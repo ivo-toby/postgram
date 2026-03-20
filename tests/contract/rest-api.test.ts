@@ -9,6 +9,9 @@ import {
 
 import { createApp } from '../../src/index.js';
 import { createKey } from '../../src/auth/key-service.js';
+import { createEmbeddingService } from '../../src/services/embedding-service.js';
+import { createEnrichmentWorker } from '../../src/services/enrichment-worker.js';
+import { AppError, ErrorCode } from '../../src/util/errors.js';
 import {
   createTestDatabase,
   resetTestDatabase,
@@ -36,7 +39,9 @@ describe('REST entity endpoints', () => {
     }
   });
 
-  async function createAuthorizedApp() {
+  async function createAuthorizedApp(options: {
+    embeddingService?: ReturnType<typeof createEmbeddingService>;
+  } = {}) {
     if (!database) {
       throw new Error('test database not initialized');
     }
@@ -48,7 +53,10 @@ describe('REST entity endpoints', () => {
     }))._unsafeUnwrap();
 
     return {
-      app: createApp({ pool: database.pool }),
+      app: createApp({
+        pool: database.pool,
+        embeddingService: options.embeddingService
+      }),
       apiKey: created.plaintextKey
     };
   }
@@ -193,6 +201,120 @@ describe('REST entity endpoints', () => {
     expect(deleteBody).toEqual({
       id: storedBody.entity.id,
       deleted: true
+    });
+  }, 120_000);
+
+  it('searches enriched entities and validates empty queries', async () => {
+    if (!database) {
+      throw new Error('test database not initialized');
+    }
+
+    const embeddingService = createEmbeddingService();
+    const { app, apiKey } = await createAuthorizedApp({ embeddingService });
+
+    const storeResponse = await app.request('/api/entities', {
+      method: 'POST',
+      headers: {
+        Authorization: `Bearer ${apiKey}`,
+        'Content-Type': 'application/json'
+      },
+      body: JSON.stringify({
+        type: 'memory',
+        content: 'postgres vector search for work notes',
+        tags: ['search']
+      })
+    });
+    const storedBody = (await storeResponse.json()) as {
+      entity: { id: string };
+    };
+
+    const worker = createEnrichmentWorker({
+      pool: database.pool,
+      embeddingService
+    });
+    await worker.runOnce();
+
+    const searchResponse = await app.request('/api/search', {
+      method: 'POST',
+      headers: {
+        Authorization: `Bearer ${apiKey}`,
+        'Content-Type': 'application/json'
+      },
+      body: JSON.stringify({
+        query: 'postgres search',
+        tags: ['search']
+      })
+    });
+    const searchBody: unknown = await searchResponse.json();
+
+    expect(searchResponse.status).toBe(200);
+    if (!searchBody || typeof searchBody !== 'object') {
+      throw new Error('expected JSON object');
+    }
+
+    const firstResult = (searchBody as {
+      results: Array<{
+        entity: { id: string };
+        chunk_content: string;
+      }>;
+    }).results[0];
+    expect(firstResult?.entity.id).toBe(storedBody.entity.id);
+    expect(firstResult?.chunk_content).toContain('postgres');
+
+    const invalidResponse = await app.request('/api/search', {
+      method: 'POST',
+      headers: {
+        Authorization: `Bearer ${apiKey}`,
+        'Content-Type': 'application/json'
+      },
+      body: JSON.stringify({
+        query: ''
+      })
+    });
+    const invalidBody: unknown = await invalidResponse.json();
+
+    expect(invalidResponse.status).toBe(400);
+    expect(invalidBody).toEqual({
+      error: {
+        code: 'VALIDATION',
+        message: 'String must contain at least 1 character(s)',
+        details: {}
+      }
+    });
+  }, 120_000);
+
+  it('returns 502 when query embedding fails', async () => {
+    const { app, apiKey } = await createAuthorizedApp({
+      embeddingService: createEmbeddingService({
+        embedQuery: () =>
+          Promise.reject(
+            new AppError(
+              ErrorCode.EMBEDDING_FAILED,
+              'forced query embedding failure'
+            )
+          )
+      })
+    });
+
+    const response = await app.request('/api/search', {
+      method: 'POST',
+      headers: {
+        Authorization: `Bearer ${apiKey}`,
+        'Content-Type': 'application/json'
+      },
+      body: JSON.stringify({
+        query: 'postgres search'
+      })
+    });
+    const body: unknown = await response.json();
+
+    expect(response.status).toBe(502);
+    expect(body).toEqual({
+      error: {
+        code: 'EMBEDDING_FAILED',
+        message: 'forced query embedding failure',
+        details: {}
+      }
     });
   }, 120_000);
 });

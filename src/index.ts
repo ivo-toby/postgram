@@ -4,6 +4,7 @@ import type { Pool } from 'pg';
 
 import { createAuthMiddleware } from './auth/middleware.js';
 import type { AuthContext } from './auth/types.js';
+import type { EmbeddingService } from './services/embedding-service.js';
 import { registerRestRoutes } from './transport/rest.js';
 import {
   AppError,
@@ -24,6 +25,7 @@ type AppVariables = {
 
 type AppOptions = {
   pool?: Pool;
+  embeddingService?: EmbeddingService | undefined;
   getHealthStatus?: () => Promise<HealthStatus> | HealthStatus;
 };
 
@@ -80,7 +82,9 @@ export function createApp(
 
   if (options.pool) {
     app.use('/api/*', createAuthMiddleware({ pool: options.pool }));
-    registerRestRoutes(app, options.pool);
+    registerRestRoutes(app, options.pool, {
+      embeddingService: options.embeddingService
+    });
   }
 
   return app;

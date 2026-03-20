@@ -317,4 +317,108 @@ describe('REST entity endpoints', () => {
       }
     });
   }, 120_000);
+
+  it('creates, lists, updates, and completes tasks', async () => {
+    const { app, apiKey } = await createAuthorizedApp();
+
+    const createResponse = await app.request('/api/tasks', {
+      method: 'POST',
+      headers: {
+        Authorization: `Bearer ${apiKey}`,
+        'Content-Type': 'application/json'
+      },
+      body: JSON.stringify({
+        content: 'write MCP transport',
+        context: '@dev',
+        due_date: '2026-03-25'
+      })
+    });
+    const createBody = (await createResponse.json()) as {
+      entity: { id: string; version: number };
+    };
+
+    expect(createResponse.status).toBe(201);
+    expect(createBody).toMatchObject({
+      entity: {
+        type: 'task',
+        status: 'inbox',
+        metadata: {
+          context: '@dev',
+          due_date: '2026-03-25'
+        }
+      }
+    });
+
+    const listResponse = await app.request('/api/tasks?status=inbox&context=@dev', {
+      headers: {
+        Authorization: `Bearer ${apiKey}`
+      }
+    });
+    const listBody: unknown = await listResponse.json();
+
+    expect(listResponse.status).toBe(200);
+    expect(listBody).toMatchObject({
+      total: 1,
+      items: [
+        {
+          id: createBody.entity.id
+        }
+      ]
+    });
+
+    const updateResponse = await app.request(`/api/tasks/${createBody.entity.id}`, {
+      method: 'PATCH',
+      headers: {
+        Authorization: `Bearer ${apiKey}`,
+        'Content-Type': 'application/json'
+      },
+      body: JSON.stringify({
+        version: createBody.entity.version,
+        status: 'next',
+        context: '@deep-work'
+      })
+    });
+    const updateBody = (await updateResponse.json()) as {
+      entity: { version: number };
+    };
+
+    expect(updateResponse.status).toBe(200);
+    expect(updateBody).toMatchObject({
+      entity: {
+        status: 'next',
+        metadata: {
+          context: '@deep-work'
+        }
+      }
+    });
+
+    const completeResponse = await app.request(
+      `/api/tasks/${createBody.entity.id}/complete`,
+      {
+        method: 'POST',
+        headers: {
+          Authorization: `Bearer ${apiKey}`,
+          'Content-Type': 'application/json'
+        },
+        body: JSON.stringify({
+          version: updateBody.entity.version
+        })
+      }
+    );
+    const completeBody: unknown = await completeResponse.json();
+
+    expect(completeResponse.status).toBe(200);
+    if (!completeBody || typeof completeBody !== 'object') {
+      throw new Error('expected JSON object');
+    }
+
+    const completedEntity = (completeBody as {
+      entity: {
+        status: string;
+        metadata: { completed_at: string };
+      };
+    }).entity;
+    expect(completedEntity.status).toBe('done');
+    expect(typeof completedEntity.metadata.completed_at).toBe('string');
+  }, 120_000);
 });

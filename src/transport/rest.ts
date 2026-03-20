@@ -6,6 +6,7 @@ import type { AuthContext } from '../auth/types.js';
 import type { EmbeddingService } from '../services/embedding-service.js';
 import { listEntities, recallEntity, softDeleteEntity, storeEntity, updateEntity } from '../services/entity-service.js';
 import { searchEntities } from '../services/search-service.js';
+import { completeTask, createTask, listTasks, updateTask } from '../services/task-service.js';
 import type { Entity, EntityStatus, EntityType, Visibility } from '../types/entities.js';
 import { AppError, ErrorCode } from '../util/errors.js';
 
@@ -56,6 +57,29 @@ const searchEntitiesSchema = z.object({
   limit: z.number().int().positive().max(50).optional(),
   threshold: z.number().min(0).max(1).optional(),
   recency_weight: z.number().min(0).optional()
+});
+
+const taskCreateSchema = z.object({
+  content: z.string().min(1),
+  context: z.string().optional(),
+  status: statusSchema.optional(),
+  due_date: z.string().optional(),
+  tags: z.array(z.string()).optional(),
+  visibility: visibilitySchema.optional()
+});
+
+const taskUpdateSchema = z.object({
+  version: z.number().int().positive(),
+  content: z.string().min(1).optional(),
+  context: z.string().optional(),
+  status: statusSchema.nullable().optional(),
+  due_date: z.string().optional(),
+  tags: z.array(z.string()).optional(),
+  visibility: visibilitySchema.optional()
+});
+
+const taskCompleteSchema = z.object({
+  version: z.number().int().positive()
 });
 
 function toValidationError(message: string): AppError {
@@ -231,5 +255,87 @@ export function registerRestRoutes(
         score: entry.score
       }))
     });
+  });
+
+  app.post('/api/tasks', async (c) => {
+    const auth = c.get('auth');
+    const body = parseJsonBody(taskCreateSchema, await c.req.json());
+    const result = await createTask(pool, auth, {
+      content: body.content,
+      context: body.context,
+      status: body.status,
+      dueDate: body.due_date,
+      tags: body.tags,
+      visibility: body.visibility
+    });
+
+    if (result.isErr()) {
+      throw result.error;
+    }
+
+    return c.json({ entity: toStoredEntity(result.value) }, 201);
+  });
+
+  app.get('/api/tasks', async (c) => {
+    const auth = c.get('auth');
+    const status = c.req.query('status');
+
+    if (status && !statusSchema.safeParse(status).success) {
+      throw toValidationError('Invalid entity status');
+    }
+
+    const result = await listTasks(pool, auth, {
+      status: status as EntityStatus | undefined,
+      context: c.req.query('context') ?? undefined,
+      limit: parseQueryNumber(c.req.query('limit'), 50),
+      offset: parseQueryNumber(c.req.query('offset'), 0)
+    });
+
+    if (result.isErr()) {
+      throw result.error;
+    }
+
+    return c.json({
+      items: result.value.items.map(toStoredEntity),
+      total: result.value.total,
+      limit: result.value.limit,
+      offset: result.value.offset
+    });
+  });
+
+  app.patch('/api/tasks/:id', async (c) => {
+    const auth = c.get('auth');
+    const body = parseJsonBody(taskUpdateSchema, await c.req.json());
+    const result = await updateTask(pool, auth, {
+      id: c.req.param('id'),
+      version: body.version,
+      content: body.content,
+      context: body.context,
+      status: body.status,
+      dueDate: body.due_date,
+      tags: body.tags,
+      visibility: body.visibility
+    });
+
+    if (result.isErr()) {
+      throw result.error;
+    }
+
+    return c.json({ entity: toStoredEntity(result.value) });
+  });
+
+  app.post('/api/tasks/:id/complete', async (c) => {
+    const auth = c.get('auth');
+    const body = parseJsonBody(taskCompleteSchema, await c.req.json());
+    const result = await completeTask(pool, auth, {
+      id: c.req.param('id'),
+      version: body.version
+    });
+
+    if (result.isErr()) {
+      throw result.error;
+    }
+
+    return c.json({ entity: toStoredEntity(result.value) });
   });
 }

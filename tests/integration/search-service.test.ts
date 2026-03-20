@@ -8,12 +8,13 @@ import type { AuthContext } from '../../src/auth/types.js';
 import {
   createTestDatabase,
   resetTestDatabase,
+  seedApiKey,
   type TestDatabase
 } from '../helpers/postgres.js';
 
 function makeAuthContext(): AuthContext {
   return {
-    apiKeyId: 'search-key',
+    apiKeyId: '00000000-0000-0000-0000-000000000104',
     keyName: 'search-key',
     scopes: ['read', 'write', 'delete'],
     allowedTypes: null,
@@ -34,6 +35,10 @@ describe('search-service', () => {
     }
 
     await resetTestDatabase(database.pool);
+    await seedApiKey(database.pool, {
+      id: '00000000-0000-0000-0000-000000000104',
+      name: 'search-key'
+    });
   });
 
   afterAll(async () => {

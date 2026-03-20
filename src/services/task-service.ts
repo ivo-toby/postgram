@@ -4,6 +4,7 @@ import type { Pool } from 'pg';
 import type { AuthContext } from '../auth/types.js';
 import type { PaginatedResult, ServiceResult } from '../types/common.js';
 import type { Entity, EntityStatus } from '../types/entities.js';
+import { appendAuditEntry } from '../util/audit.js';
 import { AppError, ErrorCode } from '../util/errors.js';
 import { listEntities, storeEntity, updateEntity } from './entity-service.js';
 
@@ -160,12 +161,33 @@ export function completeTask(
   auth: AuthContext,
   input: CompleteTaskInput
 ) {
-  return updateEntity(pool, auth, {
-    id: input.id,
-    version: input.version,
-    status: 'done',
-    metadata: mergeTaskMetadata({
-      completedAt: new Date().toISOString()
-    })
-  });
+  return ResultAsync.fromPromise(
+    (async () => {
+      const completed = await updateEntity(pool, auth, {
+        id: input.id,
+        version: input.version,
+        status: 'done',
+        metadata: mergeTaskMetadata({
+          completedAt: new Date().toISOString()
+        })
+      }).match(
+        (value) => value,
+        (error) => {
+          throw error;
+        }
+      );
+
+      await appendAuditEntry(pool, {
+        apiKeyId: auth.apiKeyId,
+        operation: 'task_complete',
+        entityId: completed.id,
+        details: {
+          type: 'task'
+        }
+      });
+
+      return completed;
+    })(),
+    (error) => toAppError(error, 'Failed to complete task')
+  );
 }

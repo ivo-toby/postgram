@@ -11,6 +11,7 @@ import type {
   EnrichmentStatus,
   Visibility
 } from '../types/entities.js';
+import { appendAuditEntry } from '../util/audit.js';
 import { AppError, ErrorCode } from '../util/errors.js';
 
 type EntityRow = {
@@ -158,7 +159,17 @@ export function storeEntity(
         throw new AppError(ErrorCode.INTERNAL, 'Failed to store entity');
       }
 
-      return mapEntity(row);
+      const entity = mapEntity(row);
+      await appendAuditEntry(pool, {
+        apiKeyId: auth.apiKeyId,
+        operation: 'store',
+        entityId: entity.id,
+        details: {
+          type: entity.type
+        }
+      });
+
+      return entity;
     })(),
     (error) => toAppError(error, 'Failed to store entity')
   );
@@ -262,7 +273,17 @@ export function updateEntity(
         });
       }
 
-      return mapEntity(updatedRow);
+      const updatedEntity = mapEntity(updatedRow);
+      await appendAuditEntry(pool, {
+        apiKeyId: auth.apiKeyId,
+        operation: 'update',
+        entityId: updatedEntity.id,
+        details: {
+          type: updatedEntity.type
+        }
+      });
+
+      return updatedEntity;
     })(),
     (error) => toAppError(error, 'Failed to update entity')
   );
@@ -296,6 +317,15 @@ export function softDeleteEntity(
       if (result.rowCount !== 1) {
         throw new AppError(ErrorCode.NOT_FOUND, 'Entity not found');
       }
+
+      await appendAuditEntry(pool, {
+        apiKeyId: auth.apiKeyId,
+        operation: 'delete',
+        entityId: id,
+        details: {
+          type: existing.type
+        }
+      });
 
       return {
         id,

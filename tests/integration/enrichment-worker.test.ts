@@ -8,12 +8,13 @@ import { AppError, ErrorCode } from '../../src/util/errors.js';
 import {
   createTestDatabase,
   resetTestDatabase,
+  seedApiKey,
   type TestDatabase
 } from '../helpers/postgres.js';
 
 function makeAuthContext(): AuthContext {
   return {
-    apiKeyId: 'worker-key',
+    apiKeyId: '00000000-0000-0000-0000-000000000103',
     keyName: 'worker-key',
     scopes: ['read', 'write', 'delete'],
     allowedTypes: null,
@@ -34,6 +35,10 @@ describe('enrichment-worker', () => {
     }
 
     await resetTestDatabase(database.pool);
+    await seedApiKey(database.pool, {
+      id: '00000000-0000-0000-0000-000000000103',
+      name: 'worker-key'
+    });
   });
 
   afterAll(async () => {

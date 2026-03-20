@@ -2,6 +2,8 @@ import { Pool } from 'pg';
 import { GenericContainer, Wait } from 'testcontainers';
 
 import { runMigrations } from '../../src/db/migrate.js';
+import type { Scope } from '../../src/auth/types.js';
+import type { EntityType, Visibility } from '../../src/types/entities.js';
 
 export type TestDatabase = {
   pool: Pool;
@@ -89,4 +91,40 @@ export async function resetTestDatabase(pool: Pool): Promise<void> {
       true
     )
   `);
+}
+
+export async function seedApiKey(
+  pool: Pool,
+  input: {
+    id: string;
+    name: string;
+    scopes?: Scope[];
+    allowedTypes?: EntityType[] | null;
+    allowedVisibility?: Visibility[];
+  }
+): Promise<void> {
+  await pool.query(
+    `
+      INSERT INTO api_keys (
+        id,
+        name,
+        key_hash,
+        key_prefix,
+        scopes,
+        allowed_types,
+        allowed_visibility,
+        is_active
+      )
+      VALUES ($1, $2, $3, $4, $5, $6, $7, true)
+    `,
+    [
+      input.id,
+      input.name,
+      'test-hash',
+      input.name.slice(0, 8),
+      input.scopes ?? ['read', 'write', 'delete'],
+      input.allowedTypes ?? null,
+      input.allowedVisibility ?? ['personal', 'work', 'shared']
+    ]
+  );
 }

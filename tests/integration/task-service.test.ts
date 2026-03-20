@@ -10,12 +10,13 @@ import type { AuthContext } from '../../src/auth/types.js';
 import {
   createTestDatabase,
   resetTestDatabase,
+  seedApiKey,
   type TestDatabase
 } from '../helpers/postgres.js';
 
 function makeAuthContext(): AuthContext {
   return {
-    apiKeyId: 'task-key',
+    apiKeyId: '00000000-0000-0000-0000-000000000102',
     keyName: 'task-key',
     scopes: ['read', 'write', 'delete'],
     allowedTypes: null,
@@ -36,6 +37,10 @@ describe('task-service', () => {
     }
 
     await resetTestDatabase(database.pool);
+    await seedApiKey(database.pool, {
+      id: '00000000-0000-0000-0000-000000000102',
+      name: 'task-key'
+    });
   });
 
   afterAll(async () => {
@@ -136,5 +141,15 @@ describe('task-service', () => {
     const completedTask = completed._unsafeUnwrap();
     expect(completedTask.status).toBe('done');
     expect(typeof completedTask.metadata.completed_at).toBe('string');
+
+    const auditRows = await database.pool.query<{ operation: string }>(
+      `
+        SELECT operation
+        FROM audit_log
+        ORDER BY timestamp ASC
+      `
+    );
+
+    expect(auditRows.rows.map((row) => row.operation)).toContain('task_complete');
   }, 120_000);
 });

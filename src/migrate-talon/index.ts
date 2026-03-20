@@ -42,7 +42,7 @@ type CreatedEntityResponse = {
 };
 
 function getFetchImplementation(
-  fetchImpl?: typeof fetch | undefined
+  fetchImpl?: typeof fetch
 ): typeof fetch {
   if (fetchImpl) {
     return fetchImpl;

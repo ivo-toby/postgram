@@ -11,9 +11,9 @@ import type { ApiKeyRecord, AuthContext, Scope } from './types.js';
 
 type CreateKeyInput = {
   name: string;
-  scopes?: Scope[];
-  allowedTypes?: EntityType[] | null;
-  allowedVisibility?: Visibility[];
+  scopes?: Scope[] | undefined;
+  allowedTypes?: EntityType[] | null | undefined;
+  allowedVisibility?: Visibility[] | undefined;
 };
 
 type CreateKeyResult = {

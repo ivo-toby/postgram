@@ -1,17 +1,25 @@
 import { afterAll, beforeAll, beforeEach, describe, expect, it } from 'vitest';
 
 import {
+  createEmbeddingService,
+} from '../../src/services/embedding-service.js';
+import {
+  createEnrichmentWorker
+} from '../../src/services/enrichment-worker.js';
+import {
   listEntities,
   recallEntity,
   softDeleteEntity,
   storeEntity,
   updateEntity
 } from '../../src/services/entity-service.js';
+import { searchEntities } from '../../src/services/search-service.js';
 import type { AuthContext } from '../../src/auth/types.js';
 import { ErrorCode } from '../../src/util/errors.js';
 import {
   createTestDatabase,
   resetTestDatabase,
+  seedApiKey,
   type TestDatabase
 } from '../helpers/postgres.js';
 
@@ -19,7 +27,7 @@ function makeAuthContext(
   overrides: Partial<AuthContext> = {}
 ): AuthContext {
   return {
-    apiKeyId: 'service-key',
+    apiKeyId: '00000000-0000-0000-0000-000000000101',
     keyName: 'service-key',
     scopes: ['read', 'write', 'delete'],
     allowedTypes: null,
@@ -41,6 +49,10 @@ describe('entity-service', () => {
     }
 
     await resetTestDatabase(database.pool);
+    await seedApiKey(database.pool, {
+      id: '00000000-0000-0000-0000-000000000101',
+      name: 'service-key'
+    });
   });
 
   afterAll(async () => {
@@ -168,5 +180,56 @@ describe('entity-service', () => {
         }
       ]
     });
+  }, 120_000);
+
+  it('emits audit rows for mutating operations but not recall, list, or search', async () => {
+    if (!database) {
+      throw new Error('test database not initialized');
+    }
+
+    const auth = makeAuthContext();
+    const stored = (await storeEntity(database.pool, auth, {
+      type: 'memory',
+      content: 'audit trail content'
+    }))._unsafeUnwrap();
+
+    await recallEntity(database.pool, auth, stored.id);
+    await listEntities(database.pool, auth, { type: 'memory' });
+    await updateEntity(database.pool, auth, {
+      id: stored.id,
+      version: stored.version,
+      content: 'audit trail updated'
+    });
+
+    const worker = createEnrichmentWorker({
+      pool: database.pool,
+      embeddingService: createEmbeddingService()
+    });
+    await worker.runOnce();
+    await searchEntities(
+      database.pool,
+      auth,
+      { query: 'audit trail' },
+      { embeddingService: createEmbeddingService() }
+    );
+
+    await softDeleteEntity(database.pool, auth, stored.id);
+
+    const auditRows = await database.pool.query<{
+      operation: string;
+      entity_id: string | null;
+    }>(
+      `
+        SELECT operation, entity_id
+        FROM audit_log
+        ORDER BY timestamp ASC
+      `
+    );
+
+    expect(auditRows.rows).toEqual([
+      { operation: 'store', entity_id: stored.id },
+      { operation: 'update', entity_id: stored.id },
+      { operation: 'delete', entity_id: stored.id }
+    ]);
   }, 120_000);
 });

@@ -118,8 +118,9 @@ easy to introduce and hard to detect without explicit verification.
 
 - **No ORM** — raw SQL with typed helpers (e.g., `kysely` or hand-written
   prepared statements with TypeScript type annotations)
-- Keep the persistence interface behind a repository pattern so the query
-  layer can evolve without touching service logic
+- Persistence logic MUST use typed query helpers co-located in service modules;
+  a formal repository layer is not required but query functions MUST be
+  separable from business logic to allow query-layer evolution
 - Migrations are versioned, forward-only SQL files applied via a dedicated
   migration runner at startup
 

@@ -1,11 +1,21 @@
+import { pathToFileURL } from 'node:url';
+
+import { serve } from '@hono/node-server';
 import { Hono } from 'hono';
 import type { ContentfulStatusCode } from 'hono/utils/http-status';
 import type { Pool } from 'pg';
 
 import { createAuthMiddleware } from './auth/middleware.js';
 import type { AuthContext } from './auth/types.js';
+import { loadConfig } from './config.js';
+import { checkDatabaseHealth, createPool } from './db/pool.js';
+import { runMigrations } from './db/migrate.js';
 import type { EmbeddingService } from './services/embedding-service.js';
+import { createEmbeddingService } from './services/embedding-service.js';
+import { createEnrichmentWorker } from './services/enrichment-worker.js';
+import { registerMcpRoutes } from './transport/mcp.js';
 import { registerRestRoutes } from './transport/rest.js';
+import { createLogger } from './util/logger.js';
 import {
   AppError,
   ErrorCode,
@@ -85,7 +95,97 @@ export function createApp(
     registerRestRoutes(app, options.pool, {
       embeddingService: options.embeddingService
     });
+    registerMcpRoutes(app, options.pool, {
+      embeddingService: options.embeddingService
+    });
   }
 
   return app;
+}
+
+export async function createHealthStatus(pool: Pool): Promise<HealthStatus> {
+  const postgres = await checkDatabaseHealth(pool);
+
+  if (postgres === 'disconnected') {
+    return {
+      postgres,
+      embeddingModel: null
+    };
+  }
+
+  const modelResult = await pool.query<{ name: string }>(
+    `
+      SELECT name
+      FROM embedding_models
+      WHERE is_active = true
+      LIMIT 1
+    `
+  );
+
+  return {
+    postgres,
+    embeddingModel: modelResult.rows[0]?.name ?? null
+  };
+}
+
+export async function startServer(): Promise<{
+  close: () => Promise<void>;
+}> {
+  const config = loadConfig();
+  const logger = createLogger(config.LOG_LEVEL);
+  const pool = createPool(config.DATABASE_URL);
+
+  await runMigrations(pool);
+
+  const embeddingService = createEmbeddingService();
+  const worker = createEnrichmentWorker({
+    pool,
+    embeddingService
+  });
+  const interval = setInterval(() => {
+    void worker.runOnce().catch((error) => {
+      logger.error({ err: error }, 'enrichment worker iteration failed');
+    });
+  }, config.ENRICHMENT_POLL_INTERVAL_MS);
+
+  const app = createApp({
+    pool,
+    embeddingService,
+    getHealthStatus: () => createHealthStatus(pool)
+  });
+
+  const server = serve({
+    fetch: app.fetch,
+    hostname: '0.0.0.0',
+    port: config.PORT
+  });
+
+  logger.info({ port: config.PORT }, 'postgram server started');
+
+  const close = async () => {
+    clearInterval(interval);
+    await new Promise<void>((resolve) => {
+      server.close(() => resolve());
+    });
+    await pool.end();
+  };
+
+  process.once('SIGTERM', () => {
+    void close();
+  });
+  process.once('SIGINT', () => {
+    void close();
+  });
+
+  return { close };
+}
+
+if (
+  process.argv[1] &&
+  import.meta.url === pathToFileURL(process.argv[1]).href
+) {
+  void startServer().catch((error) => {
+    console.error(error);
+    process.exitCode = 1;
+  });
 }

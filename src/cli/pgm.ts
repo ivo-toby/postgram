@@ -1,4 +1,4 @@
-import { spawn } from 'node:child_process';
+import { spawn, spawnSync } from 'node:child_process';
 import { createWriteStream } from 'node:fs';
 import { mkdir, stat } from 'node:fs/promises';
 import path from 'node:path';
@@ -132,13 +132,14 @@ async function runBackup(output: string | undefined, encrypt: boolean): Promise<
 
   const timestamp = new Date().toISOString().replace(/[:.]/g, '-');
   let destination = output;
+  const backupExtension = encrypt ? '.dump.gpg' : '.dump';
 
   try {
     const fileStat = await stat(output);
     if (fileStat.isDirectory()) {
       destination = path.join(
         output,
-        `postgram-backup-${timestamp}.sql${encrypt ? '.gpg' : ''}`
+        `postgram-backup-${timestamp}${backupExtension}`
       );
     }
   } catch (error) {
@@ -150,27 +151,61 @@ async function runBackup(output: string | undefined, encrypt: boolean): Promise<
     ) {
       destination = path.join(
         output,
-        `postgram-backup-${timestamp}.sql${encrypt ? '.gpg' : ''}`
+        `postgram-backup-${timestamp}${backupExtension}`
       );
     }
   }
 
   await mkdir(path.dirname(destination), { recursive: true });
 
-  const pgDump = spawn('pg_dump', [
-    '--dbname',
-    databaseUrl,
-    '--no-owner',
-    '--no-privileges'
-  ]);
+  const hasLocalPgDump =
+    spawnSync('sh', ['-lc', 'command -v pg_dump >/dev/null']).status === 0;
+  const dockerService = process.env.PGM_BACKUP_DOCKER_SERVICE ?? 'postgres';
+  const dockerUser = process.env.PGM_BACKUP_DOCKER_USER ?? 'postgram';
+  const dockerDatabase = process.env.PGM_BACKUP_DOCKER_DB ?? 'postgram';
+
+  const pgDump = hasLocalPgDump
+    ? spawn('pg_dump', [
+        '--dbname',
+        databaseUrl,
+        '--format=custom',
+        '--no-owner',
+        '--no-privileges'
+      ])
+    : spawn('docker', [
+        'compose',
+        'exec',
+        '-T',
+        dockerService,
+        'pg_dump',
+        '-U',
+        dockerUser,
+        '-d',
+        dockerDatabase,
+        '--format=custom',
+        '--no-owner',
+        '--no-privileges'
+      ]);
 
   if (encrypt) {
+    const passphrase = process.env.PGM_BACKUP_PASSPHRASE;
+    if (!passphrase) {
+      throw new AppError(
+        ErrorCode.VALIDATION,
+        'PGM_BACKUP_PASSPHRASE must be set when using --encrypt'
+      );
+    }
+
     const gpg = spawn('gpg', [
       '--symmetric',
       '--cipher-algo',
       'AES256',
       '--batch',
       '--yes',
+      '--pinentry-mode',
+      'loopback',
+      '--passphrase',
+      passphrase,
       '--output',
       destination
     ]);
@@ -471,10 +506,18 @@ program
   .option('--output <path>', 'backup output path')
   .option('--encrypt', 'encrypt the backup with GPG')
   .action(async (options, command) => {
-    await runWithClient(command, async (_client, json) => {
+    const json = isJsonMode(command);
+
+    try {
       await runBackup(options.output, Boolean(options.encrypt));
-      return json ? { ok: true } : ['Backup completed'];
-    });
+      if (json) {
+        printJson({ ok: true });
+      } else {
+        printHuman(['Backup completed']);
+      }
+    } catch (error) {
+      await handleCliFailure(error, json);
+    }
   });
 
 await program.parseAsync(process.argv);

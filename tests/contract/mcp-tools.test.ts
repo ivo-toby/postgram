@@ -1,0 +1,370 @@
+import { afterAll, beforeAll, beforeEach, describe, expect, it } from 'vitest';
+import { serve } from '@hono/node-server';
+import { Client } from '@modelcontextprotocol/sdk/client/index.js';
+import { SSEClientTransport } from '@modelcontextprotocol/sdk/client/sse.js';
+
+import { createKey } from '../../src/auth/key-service.js';
+import { createApp } from '../../src/index.js';
+import { createEmbeddingService } from '../../src/services/embedding-service.js';
+import { createEnrichmentWorker } from '../../src/services/enrichment-worker.js';
+import {
+  createTestDatabase,
+  resetTestDatabase,
+  type TestDatabase
+} from '../helpers/postgres.js';
+
+type ToolResultPayload = {
+  structuredContent?: Record<string, unknown>;
+  content?: Array<{ type: string; text?: string }>;
+  isError?: boolean;
+};
+
+function extractStructuredPayload(result: ToolResultPayload): Record<string, unknown> {
+  if (result.structuredContent) {
+    return result.structuredContent;
+  }
+
+  const text = result.content?.find((item) => item.type === 'text')?.text;
+  if (!text) {
+    throw new Error('tool result did not include structured content');
+  }
+
+  return JSON.parse(text) as Record<string, unknown>;
+}
+
+describe('MCP tools', () => {
+  let database: TestDatabase | undefined;
+  let server: ReturnType<typeof serve> | undefined;
+  let baseUrl = '';
+  const embeddingService = createEmbeddingService();
+
+  beforeAll(async () => {
+    database = await createTestDatabase();
+    if (!database) {
+      throw new Error('test database not initialized');
+    }
+
+    const app = createApp({
+      pool: database.pool,
+      embeddingService
+    });
+
+    server = serve(
+      { fetch: app.fetch, hostname: '127.0.0.1', port: 0 },
+      (info) => {
+        baseUrl = `http://${info.address}:${info.port}`;
+      }
+    );
+  }, 120_000);
+
+  beforeEach(async () => {
+    if (!database) {
+      throw new Error('test database not initialized');
+    }
+
+    await resetTestDatabase(database.pool);
+  });
+
+  afterAll(async () => {
+    if (server) {
+      await new Promise<void>((resolve) => {
+        server?.close(() => resolve());
+      });
+    }
+
+    if (database) {
+      await database.close();
+    }
+  });
+
+  async function createClient() {
+    if (!database) {
+      throw new Error('test database not initialized');
+    }
+
+    const createdKey = (await createKey(database.pool, {
+      name: `mcp-${crypto.randomUUID()}`,
+      scopes: ['read', 'write', 'delete'],
+      allowedVisibility: ['shared', 'work', 'personal']
+    }))._unsafeUnwrap();
+
+    const transport = new SSEClientTransport(new URL('/mcp', baseUrl), {
+      requestInit: {
+        headers: {
+          Authorization: `Bearer ${createdKey.plaintextKey}`
+        }
+      },
+      eventSourceInit: {
+        fetch: async (url, init) =>
+          fetch(url, {
+            ...init,
+            headers: {
+              ...(init?.headers ?? {}),
+              Authorization: `Bearer ${createdKey.plaintextKey}`
+            }
+          })
+      }
+    });
+    const client = new Client(
+      { name: 'postgram-test-client', version: '0.1.0' },
+      { capabilities: {} }
+    );
+
+    await client.connect(transport);
+
+    return {
+      client,
+      close: async () => {
+        await client.close();
+      }
+    };
+  }
+
+  async function startServerWithEmbeddingService(
+    service: ReturnType<typeof createEmbeddingService>
+  ) {
+    if (!database) {
+      throw new Error('test database not initialized');
+    }
+
+    let localBaseUrl = '';
+    const app = createApp({
+      pool: database.pool,
+      embeddingService: service
+    });
+
+    const localServer = serve(
+      { fetch: app.fetch, hostname: '127.0.0.1', port: 0 },
+      (info) => {
+        localBaseUrl = `http://${info.address}:${info.port}`;
+      }
+    );
+
+    const createdKey = (await createKey(database.pool, {
+      name: `mcp-error-${crypto.randomUUID()}`,
+      scopes: ['read', 'write', 'delete'],
+      allowedVisibility: ['shared', 'work', 'personal']
+    }))._unsafeUnwrap();
+
+    const transport = new SSEClientTransport(new URL('/mcp', localBaseUrl), {
+      requestInit: {
+        headers: {
+          Authorization: `Bearer ${createdKey.plaintextKey}`
+        }
+      },
+      eventSourceInit: {
+        fetch: async (url, init) =>
+          fetch(url, {
+            ...init,
+            headers: {
+              ...(init?.headers ?? {}),
+              Authorization: `Bearer ${createdKey.plaintextKey}`
+            }
+          })
+      }
+    });
+
+    const client = new Client(
+      { name: 'postgram-test-client', version: '0.1.0' },
+      { capabilities: {} }
+    );
+    await client.connect(transport);
+
+    return {
+      client,
+      close: async () => {
+        await client.close();
+        await new Promise<void>((resolve) => {
+          localServer.close(() => resolve());
+        });
+      }
+    };
+  }
+
+  it('lists all expected tools', async () => {
+    const { client, close } = await createClient();
+
+    try {
+      const tools = await client.listTools();
+      expect(tools.tools.map((tool) => tool.name).sort()).toEqual([
+        'delete',
+        'recall',
+        'search',
+        'store',
+        'task_complete',
+        'task_create',
+        'task_list',
+        'task_update',
+        'update'
+      ]);
+    } finally {
+      await close();
+    }
+  }, 120_000);
+
+  it('keeps tool behavior in parity with REST for entity operations', async () => {
+    const { client, close } = await createClient();
+
+    try {
+      const storeResult = (await client.callTool({
+        name: 'store',
+        arguments: {
+          type: 'memory',
+          content: 'decided to use pgvector',
+          tags: ['decisions', 'architecture']
+        }
+      })) as ToolResultPayload;
+      const storePayload = extractStructuredPayload(storeResult) as {
+        entity: { id: string; version: number; enrichment_status: string };
+      };
+
+      expect(storePayload.entity.enrichment_status).toBe('pending');
+
+      await createEnrichmentWorker({
+        pool: database!.pool,
+        embeddingService
+      }).runOnce();
+
+      const recallResult = (await client.callTool({
+        name: 'recall',
+        arguments: {
+          id: storePayload.entity.id
+        }
+      })) as ToolResultPayload;
+      const recallPayload = extractStructuredPayload(recallResult) as {
+        entity: { id: string; content: string };
+      };
+      expect(recallPayload.entity).toMatchObject({
+        id: storePayload.entity.id,
+        content: 'decided to use pgvector'
+      });
+
+      const updateResult = (await client.callTool({
+        name: 'update',
+        arguments: {
+          id: storePayload.entity.id,
+          version: storePayload.entity.version,
+          content: 'updated pgvector decision'
+        }
+      })) as ToolResultPayload;
+      const updatePayload = extractStructuredPayload(updateResult) as {
+        entity: { version: number; content: string };
+      };
+      expect(updatePayload.entity.content).toBe('updated pgvector decision');
+
+      const deleteResult = (await client.callTool({
+        name: 'delete',
+        arguments: {
+          id: storePayload.entity.id
+        }
+      })) as ToolResultPayload;
+      const deletePayload = extractStructuredPayload(deleteResult) as {
+        id: string;
+        deleted: boolean;
+      };
+      expect(deletePayload).toEqual({
+        id: storePayload.entity.id,
+        deleted: true
+      });
+    } finally {
+      await close();
+    }
+  }, 120_000);
+
+  it('keeps task tool behavior in parity with REST task operations', async () => {
+    const { client, close } = await createClient();
+
+    try {
+      const created = extractStructuredPayload(
+        (await client.callTool({
+          name: 'task_create',
+          arguments: {
+            content: 'write MCP transport',
+            context: '@dev',
+            status: 'next',
+            due_date: '2026-03-30'
+          }
+        })) as ToolResultPayload
+      ) as {
+        entity: { id: string; version: number; status: string };
+      };
+
+      expect(created.entity.status).toBe('next');
+
+      const listed = extractStructuredPayload(
+        (await client.callTool({
+          name: 'task_list',
+          arguments: {
+            status: 'next',
+            context: '@dev'
+          }
+        })) as ToolResultPayload
+      ) as {
+        total: number;
+        items: Array<{ id: string }>;
+      };
+      expect(listed.total).toBe(1);
+      expect(listed.items[0]?.id).toBe(created.entity.id);
+
+      const updated = extractStructuredPayload(
+        (await client.callTool({
+          name: 'task_update',
+          arguments: {
+            id: created.entity.id,
+            version: created.entity.version,
+            status: 'waiting',
+            context: '@later'
+          }
+        })) as ToolResultPayload
+      ) as {
+        entity: { version: number; status: string };
+      };
+      expect(updated.entity.status).toBe('waiting');
+
+      const completed = extractStructuredPayload(
+        (await client.callTool({
+          name: 'task_complete',
+          arguments: {
+            id: created.entity.id,
+            version: updated.entity.version
+          }
+        })) as ToolResultPayload
+      ) as {
+        entity: { status: string; metadata: { completed_at: string } };
+      };
+
+      expect(completed.entity.status).toBe('done');
+      expect(typeof completed.entity.metadata.completed_at).toBe('string');
+    } finally {
+      await close();
+    }
+  }, 120_000);
+
+  it('returns structured tool errors for embedding failures', async () => {
+    const failingEmbeddingService = createEmbeddingService({
+      embedQuery: () => {
+        throw new Error('forced query embedding failure');
+      }
+    });
+    const { client, close } = await startServerWithEmbeddingService(
+      failingEmbeddingService
+    );
+
+    try {
+      const searchResult = (await client.callTool({
+        name: 'search',
+        arguments: {
+          query: 'pgvector'
+        }
+      })) as ToolResultPayload;
+
+      expect(searchResult.isError).toBe(true);
+      const payload = extractStructuredPayload(searchResult) as {
+        error: { code: string; message: string };
+      };
+      expect(payload.error.code).toBe('INTERNAL');
+    } finally {
+      await close();
+    }
+  }, 120_000);
+});

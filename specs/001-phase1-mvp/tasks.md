@@ -19,14 +19,14 @@
 
 **Purpose**: Project initialization, dependencies, tooling configuration
 
-- [ ] T001 Initialize Node.js project with package.json (name: postgram, type: module, engines: node >=22) and install all dependencies per plan.md in package.json
-- [ ] T002 Create tsconfig.json with strict mode, ES2022 target, NodeNext module resolution, outDir: dist
-- [ ] T003 [P] Configure ESLint with TypeScript strict rules in eslint.config.js
-- [ ] T004 [P] Configure Prettier in .prettierrc
-- [ ] T005 [P] Configure Vitest in vitest.config.ts (coverage threshold 80%, include tests/**)
-- [ ] T006 [P] Create .env.example with POSTGRES_PASSWORD, OPENAI_API_KEY, LOG_LEVEL, PORT placeholders
-- [ ] T007 [P] Create docker-compose.yml with postgres (pgvector/pgvector:pg17) and mcp-server services per SPEC.md section 9.2
-- [ ] T008 [P] Create Dockerfile with multi-stage build (node:22-alpine, tini, non-root user) per SPEC.md section 9.1
+- [x] T001 Initialize Node.js project with package.json (name: postgram, type: module, engines: node >=22) and install all dependencies per plan.md in package.json
+- [x] T002 Create tsconfig.json with strict mode, ES2022 target, NodeNext module resolution, outDir: dist
+- [x] T003 [P] Configure ESLint with TypeScript strict rules in eslint.config.js
+- [x] T004 [P] Configure Prettier in .prettierrc
+- [x] T005 [P] Configure Vitest in vitest.config.ts (coverage threshold 80%, include tests/**)
+- [x] T006 [P] Create .env.example with POSTGRES_PASSWORD, OPENAI_API_KEY, LOG_LEVEL, PORT placeholders
+- [x] T007 [P] Create docker-compose.yml with postgres (pgvector/pgvector:pg17) and mcp-server services per SPEC.md section 9.2
+- [x] T008 [P] Create Dockerfile with multi-stage build (node:22-alpine, tini, non-root user) per SPEC.md section 9.1
 
 **Checkpoint**: Project builds, lints, and runs empty test suite
 
@@ -38,19 +38,19 @@
 
 **CRITICAL**: No user story work can begin until this phase is complete
 
-- [ ] T009 Create shared types: Entity, Chunk, EmbeddingModel, StoredEntity in src/types/entities.ts
-- [ ] T010 [P] Create shared types: ServiceResult (using neverthrow ResultAsync), PaginatedResult in src/types/common.ts
-- [ ] T011 [P] Create AppError class with ErrorCode enum and toHttpStatus mapping in src/util/errors.ts
-- [ ] T012 [P] Create request/response shapes and ErrorResponse type in src/types/api.ts
-- [ ] T013 [P] Create AuthContext and ApiKeyRecord types in src/auth/types.ts
-- [ ] T014 [P] Create zod-validated config loader (DATABASE_URL, OPENAI_API_KEY, PORT, LOG_LEVEL) in src/config.ts
-- [ ] T015 [P] Create pino structured logger with request_id, api_key_id, operation, entity_id fields in src/util/logger.ts
-- [ ] T016 Create pg Pool setup with connection config and health check helper in src/db/pool.ts
-- [ ] T017 Create migration runner (read numbered SQL files, track in schema_migrations table) in src/db/migrate.ts
-- [ ] T018 Write initial schema migration (extensions, embedding_models, api_keys, entities, chunks, audit_log, triggers, seed data) in src/db/migrations/001_initial_schema.sql
-- [ ] T019 Create appendAuditEntry helper (append-only insert to audit_log) in src/util/audit.ts
-- [ ] T020 Create Hono app skeleton with health endpoint (GET /health — no auth, reports DB + model status) in src/index.ts
-- [ ] T021 Write contract test for health endpoint (200 ok, 503 degraded) in tests/contract/health.test.ts
+- [x] T009 Create shared types: Entity, Chunk, EmbeddingModel, StoredEntity in src/types/entities.ts
+- [x] T010 [P] Create shared types: ServiceResult (using neverthrow ResultAsync), PaginatedResult in src/types/common.ts
+- [x] T011 [P] Create AppError class with ErrorCode enum and toHttpStatus mapping in src/util/errors.ts
+- [x] T012 [P] Create request/response shapes and ErrorResponse type in src/types/api.ts
+- [x] T013 [P] Create AuthContext and ApiKeyRecord types in src/auth/types.ts
+- [x] T014 [P] Create zod-validated config loader (DATABASE_URL, OPENAI_API_KEY, PORT, LOG_LEVEL) in src/config.ts
+- [x] T015 [P] Create pino structured logger with request_id, api_key_id, operation, entity_id fields in src/util/logger.ts
+- [x] T016 Create pg Pool setup with connection config and health check helper in src/db/pool.ts
+- [x] T017 Create migration runner (read numbered SQL files, track in schema_migrations table) in src/db/migrate.ts
+- [x] T018 Write initial schema migration (extensions, embedding_models, api_keys, entities, chunks, audit_log, triggers, seed data) in src/db/migrations/001_initial_schema.sql
+- [x] T019 Create appendAuditEntry helper (append-only insert to audit_log) in src/util/audit.ts
+- [x] T020 Create Hono app skeleton with health endpoint (GET /health — no auth, reports DB + model status) in src/index.ts
+- [x] T021 Write contract test for health endpoint (200 ok, 503 degraded) in tests/contract/health.test.ts
 
 **Checkpoint**: `docker compose up postgres`, migrations run, health endpoint responds with DB status
 
@@ -64,14 +64,14 @@
 
 ### Tests for US3
 
-- [ ] T022 [P] [US3] Unit tests for scope, type, and visibility checking functions in tests/unit/auth-scope.test.ts
-- [ ] T023 [P] [US3] Integration tests for key creation (argon2 hash+verify), key lookup by prefix, revocation in tests/integration/key-service.test.ts
+- [x] T022 [P] [US3] Unit tests for scope, type, and visibility checking functions in tests/unit/auth-scope.test.ts
+- [x] T023 [P] [US3] Integration tests for key creation (argon2 hash+verify), key lookup by prefix, revocation in tests/integration/key-service.test.ts
 
 ### Implementation for US3
 
-- [ ] T024 [US3] Implement key-service: createKey (generate pgm-<name>-<random>, argon2id hash, store), validateKey (prefix lookup, verify hash), requireScope, checkTypeAccess, checkVisibilityAccess in src/auth/key-service.ts
-- [ ] T025 [US3] Implement auth middleware: extract Bearer token, lookup by prefix, verify hash, attach AuthContext, update last_used_at (fire-and-forget) in src/auth/middleware.ts
-- [ ] T026 [US3] Wire auth middleware to Hono app for all /api/* routes (exclude /health) in src/index.ts
+- [x] T024 [US3] Implement key-service: createKey (generate pgm-<name>-<random>, argon2id hash, store), validateKey (prefix lookup, verify hash), requireScope, checkTypeAccess, checkVisibilityAccess in src/auth/key-service.ts
+- [x] T025 [US3] Implement auth middleware: extract Bearer token, lookup by prefix, verify hash, attach AuthContext, update last_used_at (fire-and-forget) in src/auth/middleware.ts
+- [x] T026 [US3] Wire auth middleware to Hono app for all /api/* routes (exclude /health) in src/index.ts
 
 **Checkpoint**: Auth middleware rejects missing/invalid keys, attaches AuthContext to valid requests, scope checking works
 
@@ -85,25 +85,25 @@
 
 ### Tests for US1
 
-- [ ] T027 [P] [US1] Unit tests for chunking service (single chunk, multi-chunk, empty content, separator priority, overlap) in tests/unit/chunking-service.test.ts
-- [ ] T028 [P] [US1] Unit tests for AppError construction and error code mapping in tests/unit/errors.test.ts
-- [ ] T029 [P] [US1] Integration tests for entity-service (store, recall, update, version conflict, soft-delete, list with filters) against real Postgres in tests/integration/entity-service.test.ts
-- [ ] T030 [P] [US1] Contract tests for REST entity endpoints (POST /api/entities 201, GET /:id 200/404, PATCH /:id 200/409, DELETE /:id 200, GET /api/entities list with pagination) in tests/contract/rest-api.test.ts
+- [x] T027 [P] [US1] Unit tests for chunking service (single chunk, multi-chunk, empty content, separator priority, overlap) in tests/unit/chunking-service.test.ts
+- [x] T028 [P] [US1] Unit tests for AppError construction and error code mapping in tests/unit/errors.test.ts
+- [x] T029 [P] [US1] Integration tests for entity-service (store, recall, update, version conflict, soft-delete, list with filters) against real Postgres in tests/integration/entity-service.test.ts
+- [x] T030 [P] [US1] Contract tests for REST entity endpoints (POST /api/entities 201, GET /:id 200/404, PATCH /:id 200/409, DELETE /:id 200, GET /api/entities list with pagination) in tests/contract/rest-api.test.ts
 
 ### Implementation for US1
 
-- [ ] T031 [US1] Implement chunking-service: chunkText with RecursiveCharacterTextSplitter logic (300 chars, 100 overlap, hierarchical separators), token count estimation in src/services/chunking-service.ts
-- [ ] T032 [US1] Implement embedding-service: embedQuery (single text), embedBatch (batched, 100 per call), getActiveModel, retry with exponential backoff (3 attempts) using OpenAI SDK in src/services/embedding-service.ts
-- [ ] T033 [US1] Implement entity-service: store (INSERT with enrichment_status=pending, dispatch enrichment), recall (SELECT + auth filter), update (optimistic locking WHERE version=$v, re-dispatch enrichment if content changed), softDelete (SET status=archived), list (paginated with type/status/visibility/tags filters) in src/services/entity-service.ts
-- [ ] T034 [US1] Implement enrichment-worker: poll entities with enrichment_status=pending, chunk content, embed batch, store chunks in transaction, set enrichment_status=completed (or failed on error), configurable poll interval, graceful shutdown in src/services/enrichment-worker.ts
-- [ ] T034a [US1] Wire enrichment-worker startup/shutdown into server lifecycle (start on boot, stop on SIGTERM) in src/index.ts
-- [ ] T035 [US1] Implement REST routes: POST /api/entities, GET /api/entities/:id, PATCH /api/entities/:id, DELETE /api/entities/:id, GET /api/entities — thin adapters calling entity-service, zod validation on request bodies in src/transport/rest.ts
-- [ ] T036 [US1] Wire REST routes to Hono app with auth middleware in src/index.ts
+- [x] T031 [US1] Implement chunking-service: chunkText with RecursiveCharacterTextSplitter logic (300 chars, 100 overlap, hierarchical separators), token count estimation in src/services/chunking-service.ts
+- [x] T032 [US1] Implement embedding-service: embedQuery (single text), embedBatch (batched, 100 per call), getActiveModel, retry with exponential backoff (3 attempts) using OpenAI SDK in src/services/embedding-service.ts
+- [x] T033 [US1] Implement entity-service: store (INSERT with enrichment_status=pending, dispatch enrichment), recall (SELECT + auth filter), update (optimistic locking WHERE version=$v, re-dispatch enrichment if content changed), softDelete (SET status=archived), list (paginated with type/status/visibility/tags filters) in src/services/entity-service.ts
+- [x] T034 [US1] Implement enrichment-worker: poll entities with enrichment_status=pending, chunk content, embed batch, store chunks in transaction, set enrichment_status=completed (or failed on error), configurable poll interval, graceful shutdown in src/services/enrichment-worker.ts
+- [x] T034a [US1] Wire enrichment-worker startup/shutdown into server lifecycle (start on boot, stop on SIGTERM) in src/index.ts
+- [x] T035 [US1] Implement REST routes: POST /api/entities, GET /api/entities/:id, PATCH /api/entities/:id, DELETE /api/entities/:id, GET /api/entities — thin adapters calling entity-service, zod validation on request bodies in src/transport/rest.ts
+- [x] T036 [US1] Wire REST routes to Hono app with auth middleware in src/index.ts
 
 ### Async Enrichment Verification for US1
 
-- [ ] T036a [P] [US1] Integration tests for enrichment-worker (store returns enrichment_status=pending, worker processes to completed, embedding failure sets failed, entity remains recallable throughout, search finds entity only after enrichment completes) in tests/integration/enrichment-worker.test.ts
-- [ ] T036b [US1] Integration test: search before enrichment completes returns no vector results for that entity; search after enrichment returns the entity in tests/integration/search-service.test.ts
+- [x] T036a [P] [US1] Integration tests for enrichment-worker (store returns enrichment_status=pending, worker processes to completed, embedding failure sets failed, entity remains recallable throughout, search finds entity only after enrichment completes) in tests/integration/enrichment-worker.test.ts
+- [x] T036b [US1] Integration test: search before enrichment completes returns no vector results for that entity; search after enrichment returns the entity in tests/integration/search-service.test.ts
 
 **Checkpoint**: Store a memory with content+tags, recall by ID (enrichment_status=pending), enrichment completes asynchronously, search works after enrichment, update with version, conflict on stale version, soft-delete, list with filters — all via REST
 
@@ -117,14 +117,14 @@
 
 ### Tests for US2
 
-- [ ] T037 [P] [US2] Unit tests for search scoring (recency boost formula, deduplication logic, threshold filtering) in tests/unit/search-scoring.test.ts
-- [ ] T038 [P] [US2] Integration tests for search-service (vector search, type/tag filtering, recency boost, empty results, multi-chunk dedup) against real Postgres with embedded data in tests/integration/search-service.test.ts
-- [ ] T041 [US2] Contract test for search endpoint (POST /api/search 200 with results, 400 empty query, 502 query embedding failure) in tests/contract/rest-api.test.ts
+- [x] T037 [P] [US2] Unit tests for search scoring (recency boost formula, deduplication logic, threshold filtering) in tests/unit/search-scoring.test.ts
+- [x] T038 [P] [US2] Integration tests for search-service (vector search, type/tag filtering, recency boost, empty results, multi-chunk dedup) against real Postgres with embedded data in tests/integration/search-service.test.ts
+- [x] T041 [US2] Contract test for search endpoint (POST /api/search 200 with results, 400 empty query, 502 query embedding failure) in tests/contract/rest-api.test.ts
 
 ### Implementation for US2
 
-- [ ] T039 [US2] Implement search-service: search (embed query → vector similarity JOIN entities → auth filters → threshold → recency boost → dedup → sort) in src/services/search-service.ts
-- [ ] T040 [US2] Add REST route: POST /api/search — zod validation, calls search-service, returns SearchResult[] in src/transport/rest.ts
+- [x] T039 [US2] Implement search-service: search (embed query → vector similarity JOIN entities → auth filters → threshold → recency boost → dedup → sort) in src/services/search-service.ts
+- [x] T040 [US2] Add REST route: POST /api/search — zod validation, calls search-service, returns SearchResult[] in src/transport/rest.ts
 
 **Checkpoint**: Store entities, search with natural language, get ranked results with scores and chunk content
 
@@ -138,12 +138,12 @@
 
 ### Tests for US4
 
-- [ ] T042 [P] [US4] Contract tests for MCP tools (store, recall, search, update, delete, task_create, task_list, task_update, task_complete — verify tool listing, call behavior, error responses, parity with REST) in tests/contract/mcp-tools.test.ts
+- [x] T042 [P] [US4] Contract tests for MCP tools (store, recall, search, update, delete, task_create, task_list, task_update, task_complete — verify tool listing, call behavior, error responses, parity with REST) in tests/contract/mcp-tools.test.ts
 
 ### Implementation for US4
 
-- [ ] T043 [US4] Implement MCP server: register tools (store, recall, search, update, delete, task_create, task_list, task_update, task_complete) with inputSchema and descriptions per contracts/mcp-tools.md, authenticate on SSE connection init, map tool calls to service layer in src/transport/mcp.ts
-- [ ] T044 [US4] Mount MCP SSE transport at /mcp on Hono server in src/index.ts
+- [x] T043 [US4] Implement MCP server: register tools (store, recall, search, update, delete, task_create, task_list, task_update, task_complete) with inputSchema and descriptions per contracts/mcp-tools.md, authenticate on SSE connection init, map tool calls to service layer in src/transport/mcp.ts
+- [x] T044 [US4] Mount MCP SSE transport at /mcp on Hono server in src/index.ts
 
 **Checkpoint**: MCP client connects, lists 9 tools, store+search round-trip works identically to REST
 
@@ -157,21 +157,21 @@
 
 ### Tests for US5
 
-- [ ] T045 [P] [US5] Integration tests for task-service (taskCreate defaults to inbox, taskList filters by status/context, taskComplete sets done + completed_at) in tests/integration/task-service.test.ts
-- [ ] T048a [P] [US5] Contract tests for task REST endpoints (POST /api/tasks 201, GET /api/tasks filtered, PATCH /api/tasks/:id 200/409, POST /api/tasks/:id/complete 200 — include auth, validation, and parity assertions) in tests/contract/rest-api.test.ts
-- [ ] T048b [P] [US5] Contract tests for MCP task tools (task_create, task_list, task_update, task_complete — verify parity with REST responses) in tests/contract/mcp-tools.test.ts
+- [x] T045 [P] [US5] Integration tests for task-service (taskCreate defaults to inbox, taskList filters by status/context, taskComplete sets done + completed_at) in tests/integration/task-service.test.ts
+- [x] T048a [P] [US5] Contract tests for task REST endpoints (POST /api/tasks 201, GET /api/tasks filtered, PATCH /api/tasks/:id 200/409, POST /api/tasks/:id/complete 200 — include auth, validation, and parity assertions) in tests/contract/rest-api.test.ts
+- [x] T048b [P] [US5] Contract tests for MCP task tools (task_create, task_list, task_update, task_complete — verify parity with REST responses) in tests/contract/mcp-tools.test.ts
 
 ### Implementation for US5
 
-- [ ] T046 [US5] Implement task-service: taskCreate (store with type=task, default status=inbox, metadata: context/due_date), taskList (list with type=task + context JSONB filter), taskUpdate (entity update), taskComplete (set status=done, merge completed_at) in src/services/task-service.ts
-- [ ] T047 [US5] Add REST routes: POST /api/tasks, GET /api/tasks, PATCH /api/tasks/:id, POST /api/tasks/:id/complete — thin adapters to task-service in src/transport/rest.ts
-- [ ] T048 [US5] Add MCP task tools (task_create, task_list, task_update, task_complete) to MCP server in src/transport/mcp.ts
+- [x] T046 [US5] Implement task-service: taskCreate (store with type=task, default status=inbox, metadata: context/due_date), taskList (list with type=task + context JSONB filter), taskUpdate (entity update), taskComplete (set status=done, merge completed_at) in src/services/task-service.ts
+- [x] T047 [US5] Add REST routes: POST /api/tasks, GET /api/tasks, PATCH /api/tasks/:id, POST /api/tasks/:id/complete — thin adapters to task-service in src/transport/rest.ts
+- [x] T048 [US5] Add MCP task tools (task_create, task_list, task_update, task_complete) to MCP server in src/transport/mcp.ts
 
 **Checkpoint**: Create task, list by status, complete with timestamp — works via both REST and MCP with identical behavior
 
 ### Audit Integration (cross-cutting, after US5)
 
-- [ ] T048c [US5] Verify audit log entries: entity store, update, delete emit audit rows; task_complete emits audit row; search and recall do NOT emit audit rows in tests/integration/entity-service.test.ts
+- [x] T048c [US5] Verify audit log entries: entity store, update, delete emit audit rows; task_complete emits audit row; search and recall do NOT emit audit rows in tests/integration/entity-service.test.ts
 
 ---
 
@@ -183,19 +183,19 @@
 
 ### Tests for US6
 
-- [ ] T057a [US6] CLI integration tests: spawn pgm against test server, verify store returns entity ID, search returns results, recall prints entity, task list filters by status, --json produces parseable output in tests/integration/cli-pgm.test.ts
+- [x] T057a [US6] CLI integration tests: spawn pgm against test server, verify store returns entity ID, search returns results, recall prints entity, task list filters by status, --json produces parseable output in tests/integration/cli-pgm.test.ts
 
 ### Implementation for US6
 
-- [ ] T049 [US6] Implement HTTP client: configurable base URL + API key (from env or ~/.pgmrc), request/response handling, error formatting in src/cli/client.ts
-- [ ] T050 [US6] Implement pgm CLI entry point with commander, global --json flag, config loading from PGM_API_URL/PGM_API_KEY env or ~/.pgmrc in src/cli/pgm.ts
-- [ ] T051 [P] [US6] Implement pgm store command (content from arg or stdin, --type, --tags, --visibility, --status, --metadata flags) in src/cli/commands/store.ts
-- [ ] T052 [P] [US6] Implement pgm search command (query, --type, --tags, --limit, --threshold, --json flags, human-readable output with scores) in src/cli/commands/search.ts
-- [ ] T053 [P] [US6] Implement pgm recall command (id with prefix matching, --json flag, human-readable entity display) in src/cli/commands/recall.ts
-- [ ] T054 [P] [US6] Implement pgm update command (--content, --tags, --status, --visibility, --metadata, --version required, --force for conflict override) in src/cli/commands/update.ts
-- [ ] T055 [P] [US6] Implement pgm delete command (soft delete by id) in src/cli/commands/delete.ts
-- [ ] T056 [P] [US6] Implement pgm task subcommands (add, list, update, complete with --context, --status, --due flags, grouped output) in src/cli/commands/task.ts
-- [ ] T057 [US6] Implement pgm backup command (ssh + pg_dump wrapper, --output, --encrypt with GPG) in src/cli/commands/backup.ts
+- [x] T049 [US6] Implement HTTP client: configurable base URL + API key (from env or ~/.pgmrc), request/response handling, error formatting in src/cli/client.ts
+- [x] T050 [US6] Implement pgm CLI entry point with commander, global --json flag, config loading from PGM_API_URL/PGM_API_KEY env or ~/.pgmrc in src/cli/pgm.ts
+- [x] T051 [P] [US6] Implement pgm store command (content from arg or stdin, --type, --tags, --visibility, --status, --metadata flags) in src/cli/commands/store.ts
+- [x] T052 [P] [US6] Implement pgm search command (query, --type, --tags, --limit, --threshold, --json flags, human-readable output with scores) in src/cli/commands/search.ts
+- [x] T053 [P] [US6] Implement pgm recall command (id with prefix matching, --json flag, human-readable entity display) in src/cli/commands/recall.ts
+- [x] T054 [P] [US6] Implement pgm update command (--content, --tags, --status, --visibility, --metadata, --version required, --force for conflict override) in src/cli/commands/update.ts
+- [x] T055 [P] [US6] Implement pgm delete command (soft delete by id) in src/cli/commands/delete.ts
+- [x] T056 [P] [US6] Implement pgm task subcommands (add, list, update, complete with --context, --status, --due flags, grouped output) in src/cli/commands/task.ts
+- [x] T057 [US6] Implement pgm backup command (ssh + pg_dump wrapper, --output, --encrypt with GPG) in src/cli/commands/backup.ts
 
 **Checkpoint**: All pgm commands work against running server, human-readable output, --json for scripting
 
@@ -209,15 +209,15 @@
 
 ### Tests for US7
 
-- [ ] T062a [US7] Admin CLI integration tests: spawn pgm-admin against test DB, verify key create returns plaintext once, key list shows keys, key revoke deactivates, key create/revoke/list emit audit rows, audit queries filter correctly and emit audit rows, model list/set-active works and emit audit rows, and stats returns counts and emits an audit row in tests/integration/cli-admin.test.ts
+- [x] T062a [US7] Admin CLI integration tests: spawn pgm-admin against test DB, verify key create returns plaintext once, key list shows keys, key revoke deactivates, key create/revoke/list emit audit rows, audit queries filter correctly and emit audit rows, model list/set-active works and emit audit rows, and stats returns counts and emits an audit row in tests/integration/cli-admin.test.ts
 
 ### Implementation for US7
 
-- [ ] T058 [US7] Implement pgm-admin CLI entry point with commander, direct DATABASE_URL connection (no REST) in src/cli/admin/pgm-admin.ts
-- [ ] T059 [P] [US7] Implement pgm-admin key subcommands (create with --name/--scopes/--visibility/--types, list in table format, revoke by id) in src/cli/admin/key.ts
-- [ ] T060 [P] [US7] Implement pgm-admin audit subcommand (--since, --key, --operation, --entity, --limit filters, formatted output) in src/cli/admin/audit.ts
-- [ ] T061 [P] [US7] Implement pgm-admin model subcommands (list models, set-active) in src/cli/admin/model.ts
-- [ ] T062 [P] [US7] Implement pgm-admin stats command (entity counts by type, chunk count, storage usage, key count, uptime) in src/cli/admin/stats.ts
+- [x] T058 [US7] Implement pgm-admin CLI entry point with commander, direct DATABASE_URL connection (no REST) in src/cli/admin/pgm-admin.ts
+- [x] T059 [P] [US7] Implement pgm-admin key subcommands (create with --name/--scopes/--visibility/--types, list in table format, revoke by id) in src/cli/admin/key.ts
+- [x] T060 [P] [US7] Implement pgm-admin audit subcommand (--since, --key, --operation, --entity, --limit filters, formatted output) in src/cli/admin/audit.ts
+- [x] T061 [P] [US7] Implement pgm-admin model subcommands (list models, set-active) in src/cli/admin/model.ts
+- [x] T062 [P] [US7] Implement pgm-admin stats command (entity counts by type, chunk count, storage usage, key count, uptime) in src/cli/admin/stats.ts
 
 **Checkpoint**: Admin CLI works via docker exec, creates keys, queries audit log, manages models, shows stats
 
@@ -231,13 +231,13 @@
 
 ### Tests for US8
 
-- [ ] T063 [US8] Integration test for Talon migration (mock SQLite with sample data, verify entity creation, type mapping, timestamp preservation, embedding_ref skip, dry-run mode, re-run after partial success produces no duplicates, idempotent dedup by source thread_id) in tests/integration/migration.test.ts
+- [x] T063 [US8] Integration test for Talon migration (mock SQLite with sample data, verify entity creation, type mapping, timestamp preservation, embedding_ref skip, dry-run mode, re-run after partial success produces no duplicates, idempotent dedup by source thread_id) in tests/integration/migration.test.ts
 
 ### Implementation for US8
 
-- [ ] T064 [US8] Implement SQLite reader: open read-only, SELECT from memory_items WHERE type != 'embedding_ref', group by thread_id in src/migrate-talon/reader.ts
-- [ ] T065 [US8] Implement transformer: map Talon types to Postgram entities (fact→memory/facts, summary→memory/summaries, note→memory/notes), convert ms epoch to ISO timestamps, parse metadata JSON in src/migrate-talon/transformer.ts
-- [ ] T066 [US8] Implement migration entry point: iterate items, POST to /api/entities via REST, batch embedding, progress logging, --dry-run, --thread, --batch-size, --skip-embeddings flags in src/migrate-talon/index.ts
+- [x] T064 [US8] Implement SQLite reader: open read-only, SELECT from memory_items WHERE type != 'embedding_ref', group by thread_id in src/migrate-talon/reader.ts
+- [x] T065 [US8] Implement transformer: map Talon types to Postgram entities (fact→memory/facts, summary→memory/summaries, note→memory/notes), convert ms epoch to ISO timestamps, parse metadata JSON in src/migrate-talon/transformer.ts
+- [x] T066 [US8] Implement migration entry point: iterate items, POST to /api/entities via REST, batch embedding, progress logging, --dry-run, --thread, --batch-size, --skip-embeddings flags in src/migrate-talon/index.ts
 
 **Checkpoint**: Migration script imports Talon memories, preserved timestamps, searchable in Postgram
 
@@ -247,15 +247,15 @@
 
 **Purpose**: Docker deployment readiness, CI, documentation, final verification
 
-- [ ] T067 [P] Add npm scripts to package.json: build, start, dev (tsx), test, test:coverage, lint, format, migrate
-- [ ] T068 [P] Verify Dockerfile builds and runs successfully (multi-stage, includes migrations, pgm-admin accessible via docker exec)
-- [ ] T069 [P] Verify docker-compose.yml starts full stack (postgres healthy → mcp-server starts → health check passes)
-- [ ] T070 Run full test suite with coverage, verify 80% minimum
-- [ ] T071 Run quickstart.md end-to-end validation (local dev setup → store → search → recall → task CRUD)
-- [ ] T072 Verify MCP client configuration from quickstart.md works (connect, list tools, store+search)
-- [ ] T073 [P] Backup/restore rehearsal: create backup with pgm backup --encrypt, restore to fresh DB with pg_restore, verify all entities and chunks preserved
-- [ ] T074 [P] Latency validation: measure p95 for store (< 200ms excluding enrichment), recall (< 200ms), search (< 500ms) against test dataset
-- [ ] T075 [P] Resource validation: verify docker compose stack uses < 512 MB total RAM (postgres + mcp-server) under steady state with 1k entities
+- [x] T067 [P] Add npm scripts to package.json: build, start, dev (tsx), test, test:coverage, lint, format, migrate
+- [x] T068 [P] Verify Dockerfile builds and runs successfully (multi-stage, includes migrations, pgm-admin accessible via docker exec)
+- [x] T069 [P] Verify docker-compose.yml starts full stack (postgres healthy → mcp-server starts → health check passes)
+- [x] T070 Run full test suite with coverage, verify 80% minimum
+- [x] T071 Run quickstart.md end-to-end validation (local dev setup → store → search → recall → task CRUD)
+- [x] T072 Verify MCP client configuration from quickstart.md works (connect, list tools, store+search)
+- [x] T073 [P] Backup/restore rehearsal: create backup with pgm backup --encrypt, restore to fresh DB with pg_restore, verify all entities and chunks preserved
+- [x] T074 [P] Latency validation: measure p95 for store (< 200ms excluding enrichment), recall (< 200ms), search (< 500ms) against test dataset
+- [x] T075 [P] Resource validation: verify docker compose stack uses < 512 MB total RAM (postgres + mcp-server) under steady state with 1k entities
 
 ---
 

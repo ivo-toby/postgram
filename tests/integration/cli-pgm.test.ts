@@ -298,9 +298,9 @@ describe('pgm CLI', () => {
       throw new Error('test database not initialized');
     }
 
-    const { mkdtemp, writeFile, rm } = await import('node:fs/promises');
-    const { tmpdir } = await import('node:os');
-    const { join } = await import('node:path');
+    const fsp = await import('node:fs/promises');
+    const os = await import('node:os');
+    const nodePath = await import('node:path');
 
     const createdKey = (await createKey(database.pool, {
       name: `sync-${crypto.randomUUID()}`,
@@ -313,9 +313,9 @@ describe('pgm CLI', () => {
       PGM_API_KEY: createdKey.plaintextKey
     };
 
-    const tempDir = await mkdtemp(join(tmpdir(), 'pgm-sync-test-'));
-    await writeFile(join(tempDir, 'alpha.md'), '# Alpha\n\nAlpha content.');
-    await writeFile(join(tempDir, 'beta.md'), 'Beta content without heading.');
+    const tempDir = await fsp.mkdtemp(nodePath.join(os.tmpdir(), 'pgm-sync-test-'));
+    await fsp.writeFile(nodePath.join(tempDir, 'alpha.md'), '# Alpha\n\nAlpha content.');
+    await fsp.writeFile(nodePath.join(tempDir, 'beta.md'), 'Beta content without heading.');
 
     const syncResult = await runPgm(
       ['sync', tempDir, '--json'],
@@ -339,6 +339,6 @@ describe('pgm CLI', () => {
     };
     expect(resyncBody.unchanged).toBe(2);
 
-    await rm(tempDir, { recursive: true });
+    await fsp.rm(tempDir, { recursive: true });
   }, 120_000);
 });

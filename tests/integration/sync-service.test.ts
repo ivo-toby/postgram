@@ -61,7 +61,7 @@ describe('sync-service', () => {
     const counts = result._unsafeUnwrap();
     expect(counts).toEqual({ created: 2, updated: 0, unchanged: 0, deleted: 0 });
 
-    const entities = await database.pool.query(
+    const entities = await database.pool.query<{ type: string; content: string; metadata: Record<string, unknown> }>(
       "SELECT type, content, metadata FROM entities WHERE type = 'document' ORDER BY created_at"
     );
     expect(entities.rows).toHaveLength(2);

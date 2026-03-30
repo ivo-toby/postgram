@@ -144,6 +144,50 @@ describe('pgm CLI', () => {
     expect(searchBody.results[0]?.chunk_content).toContain('pgvector');
   }, 120_000);
 
+  it('lists entities filtered by type', async () => {
+    if (!database) {
+      throw new Error('test database not initialized');
+    }
+
+    const createdKey = (await createKey(database.pool, {
+      name: `list-${crypto.randomUUID()}`,
+      scopes: ['read', 'write'],
+      allowedVisibility: ['shared']
+    }))._unsafeUnwrap();
+
+    const env = {
+      PGM_API_URL: baseUrl,
+      PGM_API_KEY: createdKey.plaintextKey
+    };
+
+    await runPgm(
+      ['store', 'first memory', '--type', 'memory', '--json'],
+      env
+    );
+    await runPgm(
+      ['store', 'a project', '--type', 'project', '--json'],
+      env
+    );
+
+    const listAll = await runPgm(['list', '--json'], env);
+    const allBody = parseJson(listAll.stdout) as {
+      items: Array<{ type: string }>;
+      total: number;
+    };
+    expect(allBody.total).toBe(2);
+
+    const listMemories = await runPgm(
+      ['list', '--type', 'memory', '--json'],
+      env
+    );
+    const memBody = parseJson(listMemories.stdout) as {
+      items: Array<{ type: string }>;
+      total: number;
+    };
+    expect(memBody.total).toBe(1);
+    expect(memBody.items[0]?.type).toBe('memory');
+  }, 120_000);
+
   it('adds, lists, updates, and completes tasks through REST', async () => {
     if (!database) {
       throw new Error('test database not initialized');

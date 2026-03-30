@@ -332,6 +332,55 @@ program
   });
 
 program
+  .command('list')
+  .description('List entities')
+  .option('--type <type>', 'filter by type')
+  .option('--status <status>', 'filter by status')
+  .option('--visibility <visibility>', 'filter by visibility')
+  .option('--tags <tags>', 'comma-separated tags')
+  .option('--limit <limit>', 'result limit', '50')
+  .option('--offset <offset>', 'result offset', '0')
+  .action(async (options, command) => {
+    await runWithClient(command, async (client, json) => {
+      const body = await client.listEntities({
+        type: options.type,
+        status: options.status,
+        visibility: options.visibility,
+        tags: parseCommaList(options.tags),
+        limit: Number(options.limit),
+        offset: Number(options.offset)
+      });
+
+      if (json) {
+        return body;
+      }
+
+      if (body.items.length === 0) {
+        return ['No entities'];
+      }
+
+      const lines = body.items.flatMap((item) => {
+        const preview = item.content
+          ? item.content.length > 60
+            ? `${item.content.slice(0, 60)}...`
+            : item.content
+          : '-';
+        return [
+          `${item.type} ${shortId(item.id)}  ${preview}`,
+          `  tags: ${item.tags.join(', ') || '-'} | ${item.visibility} | ${item.created_at.slice(0, 10)}`
+        ];
+      });
+
+      lines.push('');
+      lines.push(
+        `${body.total} entities (showing ${body.offset + 1}-${body.offset + body.items.length})`
+      );
+
+      return lines;
+    });
+  });
+
+program
   .command('update')
   .description('Update an entity')
   .argument('id', 'entity ID')

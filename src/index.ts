@@ -149,9 +149,27 @@ export async function startServer(): Promise<{
     );
   }
 
+  let callLlm: ((prompt: string) => Promise<string>) | undefined;
+  if (config.EXTRACTION_ENABLED) {
+    const { createLlmProvider } = await import('./services/llm-provider.js');
+    callLlm = createLlmProvider({
+      provider: config.EXTRACTION_PROVIDER,
+      model: config.EXTRACTION_MODEL,
+      openaiApiKey: config.OPENAI_API_KEY,
+      anthropicApiKey: config.ANTHROPIC_API_KEY,
+      ollamaBaseUrl: config.OLLAMA_BASE_URL
+    });
+    logger.info(
+      { provider: config.EXTRACTION_PROVIDER, model: config.EXTRACTION_MODEL },
+      'LLM extraction enabled'
+    );
+  }
+
   const worker = createEnrichmentWorker({
     pool,
-    embeddingService
+    embeddingService,
+    extractionEnabled: config.EXTRACTION_ENABLED,
+    callLlm
   });
   const interval = setInterval(() => {
     void worker.runOnce().catch((error) => {

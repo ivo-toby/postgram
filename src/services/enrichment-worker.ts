@@ -18,7 +18,7 @@ type EnrichmentWorkerOptions = {
   pool: Pool;
   embeddingService?: EmbeddingService;
   extractionEnabled?: boolean;
-  callLlm?: (prompt: string) => Promise<string>;
+  callLlm?: ((prompt: string) => Promise<string>) | undefined;
 };
 
 export function createEnrichmentWorker(options: EnrichmentWorkerOptions) {

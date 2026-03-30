@@ -70,7 +70,10 @@ export async function extractAndLinkRelationships(
   options: ExtractionOptions = {}
 ): Promise<number> {
   const prompt = buildExtractionPrompt(entityType, content);
-  const callLlm = options.callLlm ?? defaultCallLlm;
+  if (!options.callLlm) {
+    throw new Error('callLlm is required — configure an extraction provider');
+  }
+  const callLlm = options.callLlm;
 
   const response = await callLlm(prompt);
   const extractions = parseExtractionResponse(response);
@@ -109,32 +112,3 @@ export async function extractAndLinkRelationships(
   return linked;
 }
 
-async function defaultCallLlm(prompt: string): Promise<string> {
-  const apiKey = process.env.OPENAI_API_KEY;
-  if (!apiKey) throw new Error('OPENAI_API_KEY not set');
-
-  const model = process.env.EXTRACTION_MODEL ?? 'gpt-4o-mini';
-
-  const response = await fetch('https://api.openai.com/v1/chat/completions', {
-    method: 'POST',
-    headers: {
-      'Content-Type': 'application/json',
-      Authorization: `Bearer ${apiKey}`
-    },
-    body: JSON.stringify({
-      model,
-      messages: [{ role: 'user', content: prompt }],
-      temperature: 0
-    })
-  });
-
-  if (!response.ok) {
-    throw new Error(`LLM API error: ${response.status}`);
-  }
-
-  const body = (await response.json()) as {
-    choices: Array<{ message: { content: string } }>;
-  };
-
-  return body.choices[0]?.message?.content ?? '[]';
-}

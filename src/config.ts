@@ -12,7 +12,12 @@ const configSchema = z.object({
     .enum(['true', 'false'])
     .default('false')
     .transform((v) => v === 'true'),
-  EXTRACTION_MODEL: z.string().default('gpt-4o-mini')
+  EXTRACTION_PROVIDER: z
+    .enum(['openai', 'anthropic', 'ollama'])
+    .default('openai'),
+  EXTRACTION_MODEL: z.string().default('gpt-4o-mini'),
+  ANTHROPIC_API_KEY: z.string().optional(),
+  OLLAMA_BASE_URL: z.string().default('http://localhost:11434')
 });
 
 export type AppConfig = z.infer<typeof configSchema>;

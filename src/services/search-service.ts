@@ -278,8 +278,13 @@ async function runBm25OnlySearch(
     };
   });
 
+  const filtered = scored
+    .filter((result) => result.score >= ctx.threshold)
+    .sort((a, b) => b.score - a.score)
+    .slice(0, ctx.limit);
+
   return {
-    results: scored
+    results: filtered
   };
 }
 

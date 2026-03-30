@@ -119,6 +119,50 @@ describe('sync-service', () => {
     expect(staleSources.rows[0]?.sync_status).toBe('stale');
   }, 120_000);
 
+  it('restores previously deleted files when they reappear', async () => {
+    if (!database) {
+      throw new Error('test database not initialized');
+    }
+
+    // Initial sync with one file
+    await syncManifest(database.pool, makeAuthContext(), {
+      repo: 'test-repo',
+      files: [
+        { path: 'comeback.md', sha: 'sha-1', content: '# Comeback\n\nOriginal.' }
+      ]
+    });
+
+    // Remove the file
+    await syncManifest(database.pool, makeAuthContext(), {
+      repo: 'test-repo',
+      files: []
+    });
+
+    // Verify archived
+    const archived = await database.pool.query<{ status: string }>(
+      "SELECT e.status FROM entities e JOIN document_sources ds ON ds.entity_id = e.id WHERE ds.path = 'comeback.md'"
+    );
+    expect(archived.rows[0]?.status).toBe('archived');
+
+    // Bring it back with same SHA
+    const result = await syncManifest(database.pool, makeAuthContext(), {
+      repo: 'test-repo',
+      files: [
+        { path: 'comeback.md', sha: 'sha-1', content: '# Comeback\n\nOriginal.' }
+      ]
+    });
+
+    expect(result.isOk()).toBe(true);
+    expect(result._unsafeUnwrap().unchanged).toBe(1);
+
+    // Entity should be un-archived
+    const restored = await database.pool.query<{ status: string | null; sync_status: string }>(
+      "SELECT e.status, ds.sync_status FROM entities e JOIN document_sources ds ON ds.entity_id = e.id WHERE ds.path = 'comeback.md'"
+    );
+    expect(restored.rows[0]?.status).toBeNull();
+    expect(restored.rows[0]?.sync_status).toBe('current');
+  }, 120_000);
+
   it('returns sync status for a repo', async () => {
     if (!database) {
       throw new Error('test database not initialized');

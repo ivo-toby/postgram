@@ -145,7 +145,7 @@ export async function startServer(): Promise<{
   } catch (error) {
     logger.warn(
       { err: error },
-      'embedding service unavailable — search and enrichment will fail'
+      'embedding service unavailable — enrichment will be disabled and search will fall back to BM25-only'
     );
   }
 

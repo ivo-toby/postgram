@@ -3,7 +3,7 @@ import path from 'node:path';
 import { ResultAsync } from 'neverthrow';
 import type { Pool } from 'pg';
 
-import { checkVisibilityAccess, requireScope } from '../auth/key-service.js';
+import { checkTypeAccess, checkVisibilityAccess, requireScope } from '../auth/key-service.js';
 import type { AuthContext } from '../auth/types.js';
 import type { ServiceResult } from '../types/common.js';
 import { appendAuditEntry } from '../util/audit.js';
@@ -80,6 +80,7 @@ export function syncManifest(
     (async () => {
       requireScope(auth, 'write');
       requireScope(auth, 'delete');
+      checkTypeAccess(auth, 'document');
       checkVisibilityAccess(auth, 'shared');
 
       const client = await pool.connect();
@@ -142,10 +143,11 @@ export function syncManifest(
             );
             const currentVersion = versionRow.rows[0]?.version ?? 1;
 
-            await client.query(
+            const updateResult = await client.query(
               `
                 UPDATE entities
                 SET content = $1,
+                    status = NULL,
                     enrichment_status = 'pending',
                     enrichment_attempts = 0,
                     metadata = jsonb_set(
@@ -158,6 +160,13 @@ export function syncManifest(
               [file.content, existing.entity_id, title, file.path, currentVersion]
             );
 
+            if (updateResult.rowCount === 0) {
+              throw new AppError(
+                ErrorCode.CONFLICT,
+                `Version conflict updating synced entity for ${file.path}`
+              );
+            }
+
             await client.query(
               `
                 UPDATE document_sources
@@ -169,10 +178,22 @@ export function syncManifest(
 
             updated += 1;
           } else {
-            await client.query(
-              'UPDATE document_sources SET last_synced = now() WHERE id = $1',
-              [existing.id]
-            );
+            // Unchanged SHA — restore if previously stale
+            if (existing.sync_status === 'stale') {
+              await client.query(
+                "UPDATE entities SET status = NULL WHERE id = $1",
+                [existing.entity_id]
+              );
+              await client.query(
+                "UPDATE document_sources SET last_synced = now(), sync_status = 'current' WHERE id = $1",
+                [existing.id]
+              );
+            } else {
+              await client.query(
+                'UPDATE document_sources SET last_synced = now() WHERE id = $1',
+                [existing.id]
+              );
+            }
             unchanged += 1;
           }
         }
@@ -220,6 +241,7 @@ export function getSyncStatus(
   return ResultAsync.fromPromise(
     (async () => {
       requireScope(auth, 'read');
+      checkVisibilityAccess(auth, 'shared');
 
       const rows = await pool.query<SyncStatusRow>(
         `

@@ -1,11 +1,13 @@
 import type { Pool } from 'pg';
 
+import type { AuthContext } from '../auth/types.js';
 import { chunkText } from './chunking-service.js';
 import {
   createEmbeddingService,
   type EmbeddingService,
   vectorToSql
 } from './embedding-service.js';
+import { extractAndLinkRelationships } from './extraction-service.js';
 
 type PendingEntityRow = {
   id: string;
@@ -15,6 +17,8 @@ type PendingEntityRow = {
 type EnrichmentWorkerOptions = {
   pool: Pool;
   embeddingService?: EmbeddingService;
+  extractionEnabled?: boolean;
+  callLlm?: (prompt: string) => Promise<string>;
 };
 
 export function createEnrichmentWorker(options: EnrichmentWorkerOptions) {
@@ -92,7 +96,15 @@ export function createEnrichmentWorker(options: EnrichmentWorkerOptions) {
             }
 
             await client.query(
+              options.extractionEnabled
+                ? `
+                UPDATE entities
+                SET enrichment_status = 'completed',
+                    enrichment_attempts = 0,
+                    extraction_status = 'pending'
+                WHERE id = $1
               `
+                : `
                 UPDATE entities
                 SET enrichment_status = 'completed',
                     enrichment_attempts = 0
@@ -120,6 +132,47 @@ export function createEnrichmentWorker(options: EnrichmentWorkerOptions) {
         }
 
         processed += 1;
+      }
+
+      if (options.extractionEnabled) {
+        const extractionPending = await options.pool.query<PendingEntityRow & { type: string }>(
+          `
+            SELECT id, content, type
+            FROM entities
+            WHERE extraction_status = 'pending'
+              AND content IS NOT NULL
+            ORDER BY created_at ASC
+          `
+        );
+
+        const extractionAuth: AuthContext = {
+          apiKeyId: null as unknown as string,
+          keyName: 'system-extraction',
+          scopes: ['read', 'write', 'delete'],
+          allowedTypes: null,
+          allowedVisibility: ['personal', 'work', 'shared']
+        };
+
+        for (const entity of extractionPending.rows) {
+          try {
+            await extractAndLinkRelationships(
+              options.pool, extractionAuth, entity.id,
+              entity.type, entity.content,
+              options.callLlm ? { callLlm: options.callLlm } : {}
+            );
+            await options.pool.query(
+              "UPDATE entities SET extraction_status = 'completed' WHERE id = $1",
+              [entity.id]
+            );
+          } catch {
+            await options.pool.query(
+              "UPDATE entities SET extraction_status = 'failed' WHERE id = $1",
+              [entity.id]
+            );
+          }
+
+          processed += 1;
+        }
       }
 
       return processed;

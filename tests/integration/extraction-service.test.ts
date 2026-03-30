@@ -55,11 +55,11 @@ describe('extraction-service', () => {
       content: 'Alice is working on Project Alpha to build the knowledge graph'
     }))._unsafeUnwrap();
 
-    const mockLlm = async () => JSON.stringify([
+    const mockLlm = () => Promise.resolve(JSON.stringify([
       { target_name: 'Alice', target_type: 'person', relation: 'involves', confidence: 0.95 },
       { target_name: 'Project Alpha', target_type: 'project', relation: 'part_of', confidence: 0.9 },
       { target_name: 'Nonexistent', target_type: 'person', relation: 'involves', confidence: 0.8 }
-    ]);
+    ]));
 
     const linked = await extractAndLinkRelationships(
       database.pool, auth, source.id, source.type, source.content!,

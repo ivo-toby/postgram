@@ -44,6 +44,11 @@ export type SearchResult = {
   chunkContent: string;
   similarity: number;
   score: number;
+  related?: Array<{
+    entity: { id: string; type: string; content: string | null; metadata: Record<string, unknown> };
+    relation: string;
+    direction: 'outgoing' | 'incoming';
+  }> | undefined;
 };
 
 type SearchInput = {
@@ -53,6 +58,7 @@ type SearchInput = {
   limit?: number | undefined;
   threshold?: number | undefined;
   recencyWeight?: number | undefined;
+  expandGraph?: boolean | undefined;
 };
 
 type SearchOptions = {
@@ -313,9 +319,18 @@ export function searchEntities(
         // Embedding failed — fall through to BM25-only
       }
 
+      let results: { results: SearchResult[] };
+
       if (queryEmbedding) {
-        return runHybridSearch(pool, auth, input, {
+        results = await runHybridSearch(pool, auth, input, {
           queryEmbedding,
+          threshold,
+          recencyWeight,
+          limit,
+          now
+        });
+      } else {
+        results = await runBm25OnlySearch(pool, auth, input, {
           threshold,
           recencyWeight,
           limit,
@@ -323,12 +338,49 @@ export function searchEntities(
         });
       }
 
-      return runBm25OnlySearch(pool, auth, input, {
-        threshold,
-        recencyWeight,
-        limit,
-        now
-      });
+      if (input.expandGraph && results.results.length > 0) {
+        for (const result of results.results) {
+          const edgesResult = await pool.query<{
+            source_id: string; target_id: string; relation: string;
+          }>(
+            'SELECT source_id, target_id, relation FROM edges WHERE source_id = $1 OR target_id = $1',
+            [result.entityId]
+          );
+
+          const neighborIds = new Set<string>();
+          const edgeInfo: Array<{ entityId: string; relation: string; direction: 'outgoing' | 'incoming' }> = [];
+
+          for (const edge of edgesResult.rows) {
+            if (edge.source_id === result.entityId) {
+              neighborIds.add(edge.target_id);
+              edgeInfo.push({ entityId: edge.target_id, relation: edge.relation, direction: 'outgoing' });
+            } else {
+              neighborIds.add(edge.source_id);
+              edgeInfo.push({ entityId: edge.source_id, relation: edge.relation, direction: 'incoming' });
+            }
+          }
+
+          if (neighborIds.size > 0) {
+            const neighbors = await pool.query<{
+              id: string; type: string; content: string | null; metadata: Record<string, unknown>;
+            }>(
+              'SELECT id, type, content, metadata FROM entities WHERE id = ANY($1)',
+              [Array.from(neighborIds)]
+            );
+
+            const neighborMap = new Map(neighbors.rows.map((n) => [n.id, n]));
+            result.related = edgeInfo
+              .map((info) => {
+                const entity = neighborMap.get(info.entityId);
+                if (!entity) return null;
+                return { entity, relation: info.relation, direction: info.direction };
+              })
+              .filter((r): r is NonNullable<typeof r> => r !== null);
+          }
+        }
+      }
+
+      return results;
     })(),
     (error) => toAppError(error, 'Failed to search entities')
   );

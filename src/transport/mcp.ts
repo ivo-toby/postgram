@@ -248,7 +248,8 @@ function createSessionServer(
         tags: z.array(z.string()).optional(),
         limit: z.number().int().positive().optional(),
         threshold: z.number().min(0).max(1).optional(),
-        recency_weight: z.number().min(0).optional()
+        recency_weight: z.number().min(0).optional(),
+        expand_graph: z.boolean().optional()
       }
     },
     (args) =>
@@ -262,7 +263,8 @@ function createSessionServer(
             tags: args.tags,
             limit: args.limit,
             threshold: args.threshold,
-            recencyWeight: args.recency_weight
+            recencyWeight: args.recency_weight,
+            expandGraph: args.expand_graph
           },
           {
             embeddingService: options.embeddingService
@@ -273,7 +275,8 @@ function createSessionServer(
             entity: toStoredEntity(entry.entity),
             chunk_content: entry.chunkContent,
             similarity: entry.similarity,
-            score: entry.score
+            score: entry.score,
+            ...(entry.related ? { related: entry.related } : {})
           }))
         })
       )

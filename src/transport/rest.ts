@@ -58,7 +58,8 @@ const searchEntitiesSchema = z.object({
   tags: z.array(z.string()).optional(),
   limit: z.number().int().positive().max(50).optional(),
   threshold: z.number().min(0).max(1).optional(),
-  recency_weight: z.number().min(0).optional()
+  recency_weight: z.number().min(0).optional(),
+  expand_graph: z.boolean().optional()
 });
 
 const taskCreateSchema = z.object({
@@ -257,7 +258,8 @@ export function registerRestRoutes(
         tags: body.tags,
         limit: body.limit,
         threshold: body.threshold,
-        recencyWeight: body.recency_weight
+        recencyWeight: body.recency_weight,
+        expandGraph: body.expand_graph
       },
       {
         embeddingService: options.embeddingService
@@ -273,7 +275,8 @@ export function registerRestRoutes(
         entity: toStoredEntity(entry.entity),
         chunk_content: entry.chunkContent,
         similarity: entry.similarity,
-        score: entry.score
+        score: entry.score,
+        ...(entry.related ? { related: entry.related } : {})
       }))
     });
   });

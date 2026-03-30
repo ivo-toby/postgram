@@ -287,4 +287,70 @@ describe('pgm-admin CLI', () => {
     expect(seededKey.record.id).toBeTruthy();
     expect(seededEntity.id).toBeTruthy();
   }, 120_000);
+
+  it('re-embeds entities by clearing chunks and marking them pending', async () => {
+    if (!database) {
+      throw new Error('test database not initialized');
+    }
+
+    const databaseUrl = getDatabaseUrl(database);
+
+    const seededKey = (await createKey(database.pool, {
+      name: `reembed-${crypto.randomUUID()}`,
+      scopes: ['read', 'write', 'delete']
+    }))._unsafeUnwrap();
+
+    const stored = (await storeEntity(database.pool, makeAuthContext(seededKey.record.id), {
+      type: 'memory',
+      content: 'memory that needs re-embedding'
+    }))._unsafeUnwrap();
+
+    const { createEnrichmentWorker } = await import(
+      '../../src/services/enrichment-worker.js'
+    );
+    const { createEmbeddingService } = await import(
+      '../../src/services/embedding-service.js'
+    );
+    const worker = createEnrichmentWorker({
+      pool: database.pool,
+      embeddingService: createEmbeddingService()
+    });
+    await worker.runOnce();
+
+    const chunksBefore = await database.pool.query<{ count: string }>(
+      'SELECT count(*)::text AS count FROM chunks WHERE entity_id = $1',
+      [stored.id]
+    );
+    expect(Number(chunksBefore.rows[0]?.count ?? '0')).toBeGreaterThan(0);
+
+    const reembedResult = await runAdmin(
+      ['reembed', '--all', '--json'],
+      { DATABASE_URL: databaseUrl }
+    );
+    const reembedBody = parseJson(reembedResult.stdout) as {
+      markedCount: number;
+    };
+    expect(reembedBody.markedCount).toBeGreaterThanOrEqual(1);
+
+    const chunksAfter = await database.pool.query<{ count: string }>(
+      'SELECT count(*)::text AS count FROM chunks WHERE entity_id = $1',
+      [stored.id]
+    );
+    expect(Number(chunksAfter.rows[0]?.count ?? '0')).toBe(0);
+
+    const entityRow = await database.pool.query<{
+      enrichment_status: string;
+      enrichment_attempts: number;
+    }>(
+      'SELECT enrichment_status, enrichment_attempts FROM entities WHERE id = $1',
+      [stored.id]
+    );
+    expect(entityRow.rows[0]?.enrichment_status).toBe('pending');
+    expect(entityRow.rows[0]?.enrichment_attempts).toBe(0);
+
+    const auditRows = await database.pool.query<{ operation: string }>(
+      "SELECT operation FROM audit_log WHERE operation = 'reembed.start' ORDER BY timestamp DESC LIMIT 1"
+    );
+    expect(auditRows.rows[0]?.operation).toBe('reembed.start');
+  }, 120_000);
 });

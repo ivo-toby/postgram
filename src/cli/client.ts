@@ -154,6 +154,42 @@ export function createPgmClient(options: RestClientOptions) {
         }
       );
     },
+    listEntities(input: {
+      type?: string | undefined;
+      status?: string | undefined;
+      visibility?: string | undefined;
+      tags?: string[] | undefined;
+      limit?: number | undefined;
+      offset?: number | undefined;
+    } = {}) {
+      const params = new URLSearchParams();
+      if (input.type) {
+        params.set('type', input.type);
+      }
+      if (input.status) {
+        params.set('status', input.status);
+      }
+      if (input.visibility) {
+        params.set('visibility', input.visibility);
+      }
+      if (input.tags?.length) {
+        params.set('tags', input.tags.join(','));
+      }
+      if (input.limit !== undefined) {
+        params.set('limit', String(input.limit));
+      }
+      if (input.offset !== undefined) {
+        params.set('offset', String(input.offset));
+      }
+
+      const query = params.toString();
+      return request<{
+        items: StoredEntityResponse['entity'][];
+        total: number;
+        limit: number;
+        offset: number;
+      }>(options, `/api/entities${query ? `?${query}` : ''}`);
+    },
     createTask(input: {
       content: string;
       context?: string | undefined;
@@ -218,6 +254,32 @@ export function createPgmClient(options: RestClientOptions) {
           body: { version }
         }
       );
+    },
+    syncRepo(input: {
+      repo: string;
+      files: Array<{ path: string; sha: string; content: string }>;
+    }) {
+      return request<{
+        created: number;
+        updated: number;
+        unchanged: number;
+        deleted: number;
+      }>(options, '/api/sync', {
+        method: 'POST',
+        body: input
+      });
+    },
+    getSyncStatus(repo: string) {
+      return request<{
+        repo: string;
+        files: Array<{
+          path: string;
+          sha: string;
+          syncStatus: string;
+          lastSynced: string;
+          entityId: string;
+        }>;
+      }>(options, `/api/sync/status/${encodeURIComponent(repo)}`);
     }
   };
 }

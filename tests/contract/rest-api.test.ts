@@ -283,7 +283,7 @@ describe('REST entity endpoints', () => {
     });
   }, 120_000);
 
-  it('returns 502 when query embedding fails', async () => {
+  it('falls back to BM25 when query embedding fails', async () => {
     const { app, apiKey } = await createAuthorizedApp({
       embeddingService: createEmbeddingService({
         embedQuery: () =>
@@ -306,15 +306,62 @@ describe('REST entity endpoints', () => {
         query: 'postgres search'
       })
     });
-    const body: unknown = await response.json();
+    const body = (await response.json()) as { results: unknown[] };
 
-    expect(response.status).toBe(502);
-    expect(body).toEqual({
-      error: {
-        code: 'EMBEDDING_FAILED',
-        message: 'forced query embedding failure',
-        details: {}
+    expect(response.status).toBe(200);
+    expect(body).toHaveProperty('results');
+    expect(Array.isArray(body.results)).toBe(true);
+  }, 120_000);
+
+  it('syncs a document repo and returns sync status', async () => {
+    const { app, apiKey } = await createAuthorizedApp();
+
+    const syncResponse = await app.request('/api/sync', {
+      method: 'POST',
+      headers: {
+        Authorization: `Bearer ${apiKey}`,
+        'Content-Type': 'application/json'
+      },
+      body: JSON.stringify({
+        repo: 'contract-repo',
+        files: [
+          { path: 'readme.md', sha: 'abc123', content: '# Readme\n\nHello world.' },
+          { path: 'notes.md', sha: 'def456', content: 'Some notes here.' }
+        ]
+      })
+    });
+
+    expect(syncResponse.status).toBe(200);
+    const syncBody = (await syncResponse.json()) as {
+      created: number;
+      updated: number;
+      unchanged: number;
+      deleted: number;
+    };
+    expect(syncBody).toEqual({
+      created: 2,
+      updated: 0,
+      unchanged: 0,
+      deleted: 0
+    });
+
+    const statusResponse = await app.request('/api/sync/status/contract-repo', {
+      headers: {
+        Authorization: `Bearer ${apiKey}`
       }
+    });
+
+    expect(statusResponse.status).toBe(200);
+    const statusBody = (await statusResponse.json()) as {
+      repo: string;
+      files: Array<{ path: string; sha: string; syncStatus: string }>;
+    };
+    expect(statusBody.repo).toBe('contract-repo');
+    expect(statusBody.files).toHaveLength(2);
+    expect(statusBody.files[0]).toMatchObject({
+      path: 'notes.md',
+      sha: 'def456',
+      syncStatus: 'current'
     });
   }, 120_000);
 

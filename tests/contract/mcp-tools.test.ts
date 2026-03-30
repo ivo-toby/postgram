@@ -191,6 +191,8 @@ describe('MCP tools', () => {
         'recall',
         'search',
         'store',
+        'sync_push',
+        'sync_status',
         'task_complete',
         'task_create',
         'task_list',
@@ -340,7 +342,51 @@ describe('MCP tools', () => {
     }
   }, 120_000);
 
-  it('returns structured tool errors for embedding failures', async () => {
+  it('syncs documents and returns status via MCP tools', async () => {
+    const { client, close } = await startServerWithEmbeddingService(
+      createEmbeddingService()
+    );
+
+    try {
+      const pushResult = (await client.callTool({
+        name: 'sync_push',
+        arguments: {
+          repo: 'mcp-repo',
+          files: [
+            { path: 'test.md', sha: 'mcp-sha-1', content: '# MCP Test\n\nContent.' }
+          ]
+        }
+      })) as ToolResultPayload;
+
+      expect(pushResult.isError).toBeUndefined();
+      const pushPayload = extractStructuredPayload(pushResult) as {
+        created: number;
+        updated: number;
+      };
+      expect(pushPayload.created).toBe(1);
+      expect(pushPayload.updated).toBe(0);
+
+      const statusResult = (await client.callTool({
+        name: 'sync_status',
+        arguments: {
+          repo: 'mcp-repo'
+        }
+      })) as ToolResultPayload;
+
+      expect(statusResult.isError).toBeUndefined();
+      const statusPayload = extractStructuredPayload(statusResult) as {
+        repo: string;
+        files: Array<{ path: string; sha: string; syncStatus: string }>;
+      };
+      expect(statusPayload.repo).toBe('mcp-repo');
+      expect(statusPayload.files).toHaveLength(1);
+      expect(statusPayload.files[0]?.path).toBe('test.md');
+    } finally {
+      await close();
+    }
+  }, 120_000);
+
+  it('falls back to BM25 search when embedding fails', async () => {
     const failingEmbeddingService = createEmbeddingService({
       embedQuery: () => {
         throw new Error('forced query embedding failure');
@@ -358,11 +404,11 @@ describe('MCP tools', () => {
         }
       })) as ToolResultPayload;
 
-      expect(searchResult.isError).toBe(true);
+      expect(searchResult.isError).toBeUndefined();
       const payload = extractStructuredPayload(searchResult) as {
-        error: { code: string; message: string };
+        results: unknown[];
       };
-      expect(payload.error.code).toBe('INTERNAL');
+      expect(Array.isArray(payload.results)).toBe(true);
     } finally {
       await close();
     }

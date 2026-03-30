@@ -138,6 +138,17 @@ export async function startServer(): Promise<{
   await runMigrations(pool);
 
   const embeddingService = createEmbeddingService();
+
+  try {
+    await embeddingService.embedQuery('startup validation');
+    logger.info('embedding service validated');
+  } catch (error) {
+    logger.warn(
+      { err: error },
+      'embedding service unavailable — enrichment will be disabled and search will fall back to BM25-only'
+    );
+  }
+
   const worker = createEnrichmentWorker({
     pool,
     embeddingService

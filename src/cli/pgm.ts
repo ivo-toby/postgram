@@ -1,6 +1,7 @@
 import { spawn, spawnSync } from 'node:child_process';
+import { createHash } from 'node:crypto';
 import { createWriteStream } from 'node:fs';
-import { mkdir, stat } from 'node:fs/promises';
+import { mkdir, readdir, readFile as fsReadFile, stat } from 'node:fs/promises';
 import path from 'node:path';
 
 import { Command } from 'commander';
@@ -332,6 +333,55 @@ program
   });
 
 program
+  .command('list')
+  .description('List entities')
+  .option('--type <type>', 'filter by type')
+  .option('--status <status>', 'filter by status')
+  .option('--visibility <visibility>', 'filter by visibility')
+  .option('--tags <tags>', 'comma-separated tags')
+  .option('--limit <limit>', 'result limit', '50')
+  .option('--offset <offset>', 'result offset', '0')
+  .action(async (options, command) => {
+    await runWithClient(command, async (client, json) => {
+      const body = await client.listEntities({
+        type: options.type,
+        status: options.status,
+        visibility: options.visibility,
+        tags: parseCommaList(options.tags),
+        limit: Number(options.limit),
+        offset: Number(options.offset)
+      });
+
+      if (json) {
+        return body;
+      }
+
+      if (body.items.length === 0) {
+        return ['No entities'];
+      }
+
+      const lines = body.items.flatMap((item) => {
+        const preview = item.content
+          ? item.content.length > 60
+            ? `${item.content.slice(0, 60)}...`
+            : item.content
+          : '-';
+        return [
+          `${item.type} ${shortId(item.id)}  ${preview}`,
+          `  tags: ${item.tags.join(', ') || '-'} | ${item.visibility} | ${item.created_at.slice(0, 10)}`
+        ];
+      });
+
+      lines.push('');
+      lines.push(
+        `${body.total} entities (showing ${body.offset + 1}-${body.offset + body.items.length})`
+      );
+
+      return lines;
+    });
+  });
+
+program
   .command('update')
   .description('Update an entity')
   .argument('id', 'entity ID')
@@ -514,6 +564,108 @@ program
         printJson({ ok: true });
       } else {
         printHuman(['Backup completed']);
+      }
+    } catch (error) {
+      await handleCliFailure(error, json);
+    }
+  });
+
+program
+  .command('sync')
+  .description('Sync a local directory of markdown files')
+  .argument('<dir>', 'directory path to sync')
+  .option('--repo <name>', 'repo identifier (defaults to directory name)')
+  .option('--dry-run', 'show what would change without syncing')
+  .option('--quiet', 'suppress output')
+  .action(async (dir, options, command) => {
+    const json = isJsonMode(command);
+
+    try {
+      const resolvedDir = path.resolve(dir);
+      const repoName = options.repo ?? path.basename(resolvedDir);
+
+      const files: Array<{ path: string; sha: string; content: string }> = [];
+      const SKIP_DIRS = new Set(['.git', 'node_modules', '.obsidian', '.trash']);
+
+      async function walk(dirPath: string, prefix: string): Promise<void> {
+        const entries = await readdir(dirPath, { withFileTypes: true });
+        for (const entry of entries) {
+          if (entry.isDirectory()) {
+            if (!SKIP_DIRS.has(entry.name) && !entry.name.startsWith('.')) {
+              await walk(
+                path.join(dirPath, entry.name),
+                prefix ? `${prefix}/${entry.name}` : entry.name
+              );
+            }
+          } else if (entry.isFile() && entry.name.endsWith('.md')) {
+            const fullPath = path.join(dirPath, entry.name);
+            const content = await fsReadFile(fullPath, 'utf8');
+            const sha = createHash('sha256').update(content).digest('hex');
+            const relativePath = prefix
+              ? `${prefix}/${entry.name}`
+              : entry.name;
+            files.push({ path: relativePath, sha, content });
+          }
+        }
+      }
+
+      await walk(resolvedDir, '');
+
+      const config = await resolvePgmConfig();
+      const client = createPgmClient(config);
+
+      if (options.dryRun) {
+        const status = await client.getSyncStatus(repoName);
+        const existingByPath = new Map(
+          status.files.map((f) => [f.path, f])
+        );
+        const incomingPaths = new Set(files.map((f) => f.path));
+
+        let newCount = 0;
+        let changedCount = 0;
+        let unchangedCount = 0;
+        for (const file of files) {
+          const existing = existingByPath.get(file.path);
+          if (!existing) {
+            newCount += 1;
+          } else if (existing.sha !== file.sha) {
+            changedCount += 1;
+          } else {
+            unchangedCount += 1;
+          }
+        }
+        let deletedCount = 0;
+        for (const [existingPath, entry] of existingByPath) {
+          if (!incomingPaths.has(existingPath) && entry.syncStatus !== 'stale') {
+            deletedCount += 1;
+          }
+        }
+
+        const result = {
+          created: newCount,
+          updated: changedCount,
+          unchanged: unchangedCount,
+          deleted: deletedCount
+        };
+
+        if (json) {
+          printJson(result);
+        } else if (!options.quiet) {
+          printHuman([
+            `Dry run ${repoName}: ${result.created} to create, ${result.updated} to update, ${result.unchanged} unchanged, ${result.deleted} to delete`
+          ]);
+        }
+        return;
+      }
+
+      const result = await client.syncRepo({ repo: repoName, files });
+
+      if (json) {
+        printJson(result);
+      } else if (!options.quiet) {
+        printHuman([
+          `Synced ${repoName}: ${result.created} created, ${result.updated} updated, ${result.unchanged} unchanged, ${result.deleted} deleted`
+        ]);
       }
     } catch (error) {
       await handleCliFailure(error, json);

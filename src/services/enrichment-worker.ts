@@ -26,9 +26,18 @@ export function createEnrichmentWorker(options: EnrichmentWorkerOptions) {
         `
           SELECT id, content
           FROM entities
-          WHERE enrichment_status = 'pending'
-            AND content IS NOT NULL
-          ORDER BY created_at ASC
+          WHERE content IS NOT NULL
+            AND (
+              enrichment_status = 'pending'
+              OR (
+                enrichment_status = 'failed'
+                AND enrichment_attempts < 3
+                AND updated_at < now() - interval '5 minutes'
+              )
+            )
+          ORDER BY
+            CASE WHEN enrichment_status = 'pending' THEN 0 ELSE 1 END,
+            created_at ASC
         `
       );
 
@@ -85,7 +94,8 @@ export function createEnrichmentWorker(options: EnrichmentWorkerOptions) {
             await client.query(
               `
                 UPDATE entities
-                SET enrichment_status = 'completed'
+                SET enrichment_status = 'completed',
+                    enrichment_attempts = 0
                 WHERE id = $1
               `,
               [entity.id]
@@ -101,7 +111,8 @@ export function createEnrichmentWorker(options: EnrichmentWorkerOptions) {
           await options.pool.query(
             `
               UPDATE entities
-              SET enrichment_status = 'failed'
+              SET enrichment_status = 'failed',
+                  enrichment_attempts = enrichment_attempts + 1
               WHERE id = $1
             `,
             [entity.id]

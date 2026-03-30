@@ -73,6 +73,42 @@ describe('search-service', () => {
     expect(result._unsafeUnwrap().results).toHaveLength(0);
   }, 120_000);
 
+  it('boosts exact keyword matches via hybrid BM25+vector scoring', async () => {
+    if (!database) {
+      throw new Error('test database not initialized');
+    }
+
+    await storeEntity(database.pool, makeAuthContext(), {
+      type: 'memory',
+      content: 'pgvector lets postgres do vector search without a separate service',
+      tags: ['database']
+    });
+    await storeEntity(database.pool, makeAuthContext(), {
+      type: 'memory',
+      content: 'relational databases handle structured data well',
+      tags: ['database']
+    });
+
+    const embeddingService = createEmbeddingService();
+    const worker = createEnrichmentWorker({
+      pool: database.pool,
+      embeddingService
+    });
+    await worker.runOnce();
+
+    const result = await searchEntities(
+      database.pool,
+      makeAuthContext(),
+      { query: 'pgvector' },
+      { embeddingService }
+    );
+
+    expect(result.isOk()).toBe(true);
+    const results = result._unsafeUnwrap().results;
+    expect(results.length).toBeGreaterThan(0);
+    expect(results[0]?.entity.content).toContain('pgvector');
+  }, 120_000);
+
   it('returns enriched entities ranked by similarity with filters', async () => {
     if (!database) {
       throw new Error('test database not initialized');
@@ -116,5 +152,44 @@ describe('search-service', () => {
     expect(typeof firstResult?.similarity).toBe('number');
     expect(typeof firstResult?.score).toBe('number');
     expect(result._unsafeUnwrap().results).toHaveLength(1);
+  }, 120_000);
+
+  it('falls back to BM25-only search when embedding fails', async () => {
+    if (!database) {
+      throw new Error('test database not initialized');
+    }
+
+    const goodEmbeddingService = createEmbeddingService();
+
+    await storeEntity(database.pool, makeAuthContext(), {
+      type: 'memory',
+      content: 'kubernetes deployment strategies for production',
+      tags: ['infra']
+    });
+
+    const worker = createEnrichmentWorker({
+      pool: database.pool,
+      embeddingService: goodEmbeddingService
+    });
+    await worker.runOnce();
+
+    // Search with a broken embedding service
+    const failingEmbeddingService = createEmbeddingService({
+      embedQuery: () => Promise.reject(new Error('OpenAI is down')),
+      embedBatch: () => Promise.reject(new Error('OpenAI is down'))
+    });
+
+    const result = await searchEntities(
+      database.pool,
+      makeAuthContext(),
+      { query: 'kubernetes', threshold: 0 },
+      { embeddingService: failingEmbeddingService }
+    );
+
+    expect(result.isOk()).toBe(true);
+    const results = result._unsafeUnwrap().results;
+    expect(results.length).toBeGreaterThan(0);
+    expect(results[0]?.entity.content).toContain('kubernetes');
+    expect(results[0]?.similarity).toBe(0);
   }, 120_000);
 });

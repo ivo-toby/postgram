@@ -144,6 +144,50 @@ describe('pgm CLI', () => {
     expect(searchBody.results[0]?.chunk_content).toContain('pgvector');
   }, 120_000);
 
+  it('lists entities filtered by type', async () => {
+    if (!database) {
+      throw new Error('test database not initialized');
+    }
+
+    const createdKey = (await createKey(database.pool, {
+      name: `list-${crypto.randomUUID()}`,
+      scopes: ['read', 'write'],
+      allowedVisibility: ['shared']
+    }))._unsafeUnwrap();
+
+    const env = {
+      PGM_API_URL: baseUrl,
+      PGM_API_KEY: createdKey.plaintextKey
+    };
+
+    await runPgm(
+      ['store', 'first memory', '--type', 'memory', '--json'],
+      env
+    );
+    await runPgm(
+      ['store', 'a project', '--type', 'project', '--json'],
+      env
+    );
+
+    const listAll = await runPgm(['list', '--json'], env);
+    const allBody = parseJson(listAll.stdout) as {
+      items: Array<{ type: string }>;
+      total: number;
+    };
+    expect(allBody.total).toBe(2);
+
+    const listMemories = await runPgm(
+      ['list', '--type', 'memory', '--json'],
+      env
+    );
+    const memBody = parseJson(listMemories.stdout) as {
+      items: Array<{ type: string }>;
+      total: number;
+    };
+    expect(memBody.total).toBe(1);
+    expect(memBody.items[0]?.type).toBe('memory');
+  }, 120_000);
+
   it('adds, lists, updates, and completes tasks through REST', async () => {
     if (!database) {
       throw new Error('test database not initialized');
@@ -247,5 +291,54 @@ describe('pgm CLI', () => {
     expect(completeBody.entity.metadata.completed_at).toEqual(
       expect.any(String)
     );
+  }, 120_000);
+
+  it('syncs a local directory of markdown files', async () => {
+    if (!database) {
+      throw new Error('test database not initialized');
+    }
+
+    const fsp = await import('node:fs/promises');
+    const os = await import('node:os');
+    const nodePath = await import('node:path');
+
+    const createdKey = (await createKey(database.pool, {
+      name: `sync-${crypto.randomUUID()}`,
+      scopes: ['read', 'write', 'delete'],
+      allowedVisibility: ['shared']
+    }))._unsafeUnwrap();
+
+    const env = {
+      PGM_API_URL: baseUrl,
+      PGM_API_KEY: createdKey.plaintextKey
+    };
+
+    const tempDir = await fsp.mkdtemp(nodePath.join(os.tmpdir(), 'pgm-sync-test-'));
+    await fsp.writeFile(nodePath.join(tempDir, 'alpha.md'), '# Alpha\n\nAlpha content.');
+    await fsp.writeFile(nodePath.join(tempDir, 'beta.md'), 'Beta content without heading.');
+
+    const syncResult = await runPgm(
+      ['sync', tempDir, '--json'],
+      env
+    );
+    const syncBody = parseJson(syncResult.stdout) as {
+      created: number;
+      updated: number;
+      unchanged: number;
+      deleted: number;
+    };
+    expect(syncBody.created).toBe(2);
+    expect(syncBody.unchanged).toBe(0);
+
+    const resyncResult = await runPgm(
+      ['sync', tempDir, '--json'],
+      env
+    );
+    const resyncBody = parseJson(resyncResult.stdout) as {
+      unchanged: number;
+    };
+    expect(resyncBody.unchanged).toBe(2);
+
+    await fsp.rm(tempDir, { recursive: true });
   }, 120_000);
 });

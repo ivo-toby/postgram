@@ -433,6 +433,84 @@ modelCommand
   });
 
 program
+  .command('reembed')
+  .description('Mark entities for re-embedding')
+  .option('--model <id>', 'switch active model before re-embedding')
+  .option('--all', 're-embed all entities with content')
+  .option('--type <type>', 're-embed entities of this type only')
+  .action(async (options, command) => {
+    const json = isJsonMode(command);
+
+    if (!options.all && !options.type) {
+      await handleCliFailure(
+        new Error('Specify --all or --type <type> to confirm which entities to re-embed'),
+        json
+      );
+      return;
+    }
+
+    await runWithPool(json, async (pool) => {
+      const client = await pool.connect();
+      try {
+        await client.query('BEGIN');
+
+        if (options.model) {
+          await client.query('UPDATE embedding_models SET is_active = false');
+          const modelResult = await client.query<{ id: string }>(
+            'UPDATE embedding_models SET is_active = true WHERE id = $1 RETURNING id',
+            [options.model]
+          );
+          if (!modelResult.rows[0]) {
+            throw new Error('Model not found');
+          }
+        }
+
+        const conditions = ["content IS NOT NULL"];
+        const params: unknown[] = [];
+
+        if (options.type) {
+          params.push(options.type);
+          conditions.push(`type = $${params.length}`);
+        }
+
+        const whereClause = conditions.join(' AND ');
+
+        await client.query(
+          `DELETE FROM chunks WHERE entity_id IN (SELECT id FROM entities WHERE ${whereClause})`,
+          params
+        );
+
+        const updateResult = await client.query(
+          `UPDATE entities SET enrichment_status = 'pending', enrichment_attempts = 0 WHERE ${whereClause}`,
+          params
+        );
+
+        await client.query('COMMIT');
+
+        const markedCount = updateResult.rowCount ?? 0;
+
+        await appendAuditEntry(pool, {
+          operation: 'reembed.start',
+          details: {
+            markedCount,
+            model: options.model ?? null,
+            type: options.type ?? 'all'
+          }
+        });
+
+        return json
+          ? { markedCount }
+          : [`Marked ${markedCount} entities for re-embedding`];
+      } catch (error) {
+        await client.query('ROLLBACK');
+        throw error;
+      } finally {
+        client.release();
+      }
+    });
+  });
+
+program
   .command('stats')
   .description('Show system stats')
   .action(async (_options, command) => {

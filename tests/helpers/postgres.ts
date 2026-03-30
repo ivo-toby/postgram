@@ -67,6 +67,7 @@ export async function resetTestDatabase(pool: Pool): Promise<void> {
     TRUNCATE TABLE
       audit_log,
       chunks,
+      document_sources,
       entities,
       api_keys,
       embedding_models

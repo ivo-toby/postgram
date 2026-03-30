@@ -33,9 +33,9 @@ type CreateEdgeInput = {
   sourceId: string;
   targetId: string;
   relation: string;
-  confidence?: number;
-  source?: string;
-  metadata?: Record<string, unknown>;
+  confidence?: number | undefined;
+  source?: string | undefined;
+  metadata?: Record<string, unknown> | undefined;
 };
 
 function mapEdge(row: EdgeRow): Edge {
@@ -133,7 +133,7 @@ export function deleteEdge(
 
 export function listEdges(
   pool: Pool, auth: AuthContext, entityId: string,
-  options: { relation?: string; direction?: 'source' | 'target' | 'both' } = {}
+  options: { relation?: string | undefined; direction?: 'source' | 'target' | 'both' | undefined } = {}
 ): ServiceResult<Edge[]> {
   return ResultAsync.fromPromise(
     (async () => {
@@ -181,7 +181,7 @@ export type ExpandResult = {
 export function expandGraph(
   pool: Pool, auth: AuthContext,
   entityId: string,
-  options: { depth?: number; relationTypes?: string[] } = {}
+  options: { depth?: number | undefined; relationTypes?: string[] | undefined } = {}
 ): ServiceResult<ExpandResult> {
   return ResultAsync.fromPromise(
     (async () => {

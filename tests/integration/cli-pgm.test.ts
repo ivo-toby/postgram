@@ -293,6 +293,57 @@ describe('pgm CLI', () => {
     );
   }, 120_000);
 
+  it('links, expands, and unlinks entities', async () => {
+    if (!database) {
+      throw new Error('test database not initialized');
+    }
+
+    const createdKey = (await createKey(database.pool, {
+      name: `graph-${crypto.randomUUID()}`,
+      scopes: ['read', 'write', 'delete'],
+      allowedVisibility: ['shared']
+    }))._unsafeUnwrap();
+
+    const env = {
+      PGM_API_URL: baseUrl,
+      PGM_API_KEY: createdKey.plaintextKey
+    };
+
+    const storeA = await runPgm(['store', 'Alice', '--type', 'person', '--json'], env);
+    const entityA = (parseJson(storeA.stdout) as { entity: { id: string } }).entity;
+
+    const storeB = await runPgm(['store', 'Project X', '--type', 'project', '--json'], env);
+    const entityB = (parseJson(storeB.stdout) as { entity: { id: string } }).entity;
+
+    // Link
+    const linkResult = await runPgm(
+      ['link', entityA.id, entityB.id, '--relation', 'involves', '--json'],
+      env
+    );
+    const linkBody = parseJson(linkResult.stdout) as { edge: { id: string; relation: string } };
+    expect(linkBody.edge.relation).toBe('involves');
+
+    // Expand
+    const expandResult = await runPgm(
+      ['expand', entityA.id, '--json'],
+      env
+    );
+    const expandBody = parseJson(expandResult.stdout) as {
+      entities: Array<{ id: string }>;
+      edges: Array<{ id: string }>;
+    };
+    expect(expandBody.entities.length).toBeGreaterThanOrEqual(2);
+    expect(expandBody.edges).toHaveLength(1);
+
+    // Unlink
+    const unlinkResult = await runPgm(
+      ['unlink', linkBody.edge.id, '--json'],
+      env
+    );
+    const unlinkBody = parseJson(unlinkResult.stdout) as { deleted: boolean };
+    expect(unlinkBody.deleted).toBe(true);
+  }, 120_000);
+
   it('syncs a local directory of markdown files', async () => {
     if (!database) {
       throw new Error('test database not initialized');

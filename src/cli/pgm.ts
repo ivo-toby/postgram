@@ -672,4 +672,62 @@ program
     }
   });
 
+program
+  .command('link')
+  .description('Create an edge between two entities')
+  .argument('<source-id>', 'source entity ID')
+  .argument('<target-id>', 'target entity ID')
+  .requiredOption('--relation <relation>', 'relationship type')
+  .option('--confidence <n>', 'confidence score 0-1', '1.0')
+  .action(async (sourceId, targetId, options, command) => {
+    await runWithClient(command, async (client, json) => {
+      const body = await client.createEdge({
+        source_id: sourceId,
+        target_id: targetId,
+        relation: options.relation,
+        confidence: Number(options.confidence)
+      });
+
+      if (json) return body;
+      return [`Linked ${shortId(sourceId)} → ${shortId(targetId)} (${options.relation})`];
+    });
+  });
+
+program
+  .command('unlink')
+  .description('Delete an edge')
+  .argument('<edge-id>', 'edge ID')
+  .action(async (edgeId, _options, command) => {
+    await runWithClient(command, async (client, json) => {
+      const body = await client.deleteEdge(edgeId);
+      return json ? body : [`Deleted edge ${shortId(edgeId)}`];
+    });
+  });
+
+program
+  .command('expand')
+  .description('Show graph neighborhood of an entity')
+  .argument('<entity-id>', 'entity ID')
+  .option('--depth <n>', 'traversal depth (1-3)', '1')
+  .option('--relation <types>', 'comma-separated relation types')
+  .action(async (entityId, options, command) => {
+    await runWithClient(command, async (client, json) => {
+      const relationTypes = parseCommaList(options.relation);
+      const body = await client.expandGraph(entityId, {
+        depth: Number(options.depth),
+        ...(relationTypes !== undefined ? { relationTypes } : {})
+      });
+
+      if (json) return body;
+
+      const lines: string[] = [];
+      lines.push(`Graph for ${shortId(entityId)}:`);
+      lines.push(`  ${body.entities.length} entities, ${body.edges.length} edges`);
+      for (const edge of body.edges) {
+        lines.push(`  ${shortId(edge.source_id)} → ${shortId(edge.target_id)} (${edge.relation})`);
+      }
+      return lines;
+    });
+  });
+
 await program.parseAsync(process.argv);

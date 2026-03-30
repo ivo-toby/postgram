@@ -4,6 +4,7 @@ import type { Pool } from 'pg';
 
 import type { AuthContext } from '../auth/types.js';
 import type { EmbeddingService } from '../services/embedding-service.js';
+import { createEdge, deleteEdge, listEdges, expandGraph } from '../services/edge-service.js';
 import { listEntities, recallEntity, softDeleteEntity, storeEntity, updateEntity } from '../services/entity-service.js';
 import { searchEntities } from '../services/search-service.js';
 import { syncManifest, getSyncStatus } from '../services/sync-service.js';
@@ -81,6 +82,14 @@ const taskUpdateSchema = z.object({
 
 const taskCompleteSchema = z.object({
   version: z.number().int().positive()
+});
+
+const createEdgeSchema = z.object({
+  source_id: z.string().min(1),
+  target_id: z.string().min(1),
+  relation: z.string().min(1),
+  confidence: z.number().min(0).max(1).optional(),
+  metadata: z.record(z.unknown()).optional()
 });
 
 const syncManifestSchema = z.object({
@@ -376,5 +385,91 @@ export function registerRestRoutes(
       repo,
       files: result.value
     });
+  });
+
+  app.post('/api/edges', async (c) => {
+    const auth = c.get('auth');
+    const body = parseJsonBody(createEdgeSchema, await c.req.json());
+    const result = await createEdge(pool, auth, {
+      sourceId: body.source_id,
+      targetId: body.target_id,
+      relation: body.relation,
+      ...(body.confidence !== undefined ? { confidence: body.confidence } : {}),
+      ...(body.metadata !== undefined ? { metadata: body.metadata } : {})
+    });
+
+    if (result.isErr()) {
+      throw result.error;
+    }
+
+    const edge = result.value;
+    return c.json({
+      edge: {
+        id: edge.id,
+        source_id: edge.sourceId,
+        target_id: edge.targetId,
+        relation: edge.relation,
+        confidence: edge.confidence,
+        source: edge.source,
+        metadata: edge.metadata,
+        created_at: edge.createdAt
+      }
+    }, 201);
+  });
+
+  app.delete('/api/edges/:id', async (c) => {
+    const auth = c.get('auth');
+    const result = await deleteEdge(pool, auth, c.req.param('id'));
+
+    if (result.isErr()) {
+      throw result.error;
+    }
+
+    return c.json(result.value);
+  });
+
+  app.get('/api/entities/:id/edges', async (c) => {
+    const auth = c.get('auth');
+    const relation = c.req.query('relation');
+    const direction = c.req.query('direction') as 'source' | 'target' | 'both' | undefined;
+    const result = await listEdges(pool, auth, c.req.param('id'), {
+      ...(relation !== undefined ? { relation } : {}),
+      direction: direction ?? 'both'
+    });
+
+    if (result.isErr()) {
+      throw result.error;
+    }
+
+    return c.json({
+      edges: result.value.map((edge) => ({
+        id: edge.id,
+        source_id: edge.sourceId,
+        target_id: edge.targetId,
+        relation: edge.relation,
+        confidence: edge.confidence,
+        source: edge.source,
+        metadata: edge.metadata,
+        created_at: edge.createdAt
+      }))
+    });
+  });
+
+  app.get('/api/entities/:id/graph', async (c) => {
+    const auth = c.get('auth');
+    const depthRaw = c.req.query('depth');
+    const depth = depthRaw ? Number(depthRaw) : undefined;
+    const relationTypesRaw = c.req.query('relation_types');
+    const relationTypes = relationTypesRaw ? relationTypesRaw.split(',').filter(Boolean) : undefined;
+    const result = await expandGraph(pool, auth, c.req.param('id'), {
+      ...(depth !== undefined ? { depth } : {}),
+      ...(relationTypes !== undefined ? { relationTypes } : {})
+    });
+
+    if (result.isErr()) {
+      throw result.error;
+    }
+
+    return c.json(result.value);
   });
 }

@@ -188,6 +188,8 @@ describe('MCP tools', () => {
       const tools = await client.listTools();
       expect(tools.tools.map((tool) => tool.name).sort()).toEqual([
         'delete',
+        'expand',
+        'link',
         'recall',
         'search',
         'store',
@@ -197,6 +199,7 @@ describe('MCP tools', () => {
         'task_create',
         'task_list',
         'task_update',
+        'unlink',
         'update'
       ]);
     } finally {
@@ -381,6 +384,62 @@ describe('MCP tools', () => {
       expect(statusPayload.repo).toBe('mcp-repo');
       expect(statusPayload.files).toHaveLength(1);
       expect(statusPayload.files[0]?.path).toBe('test.md');
+    } finally {
+      await close();
+    }
+  }, 120_000);
+
+  it('creates edges and expands graph via MCP tools', async () => {
+    const { client, close } = await startServerWithEmbeddingService(
+      createEmbeddingService()
+    );
+
+    try {
+      // Create entities first
+      const personResult = (await client.callTool({
+        name: 'store',
+        arguments: { type: 'person', content: 'Bob' }
+      })) as ToolResultPayload;
+      const person = (extractStructuredPayload(personResult) as { entity: { id: string } }).entity;
+
+      const projectResult = (await client.callTool({
+        name: 'store',
+        arguments: { type: 'project', content: 'Beta' }
+      })) as ToolResultPayload;
+      const project = (extractStructuredPayload(projectResult) as { entity: { id: string } }).entity;
+
+      // Link them
+      const linkResult = (await client.callTool({
+        name: 'link',
+        arguments: {
+          source_id: person.id,
+          target_id: project.id,
+          relation: 'involves'
+        }
+      })) as ToolResultPayload;
+      expect(linkResult.isError).toBeUndefined();
+      const edge = (extractStructuredPayload(linkResult) as { edge: { id: string; relation: string } }).edge;
+      expect(edge.relation).toBe('involves');
+
+      // Expand graph
+      const expandResult = (await client.callTool({
+        name: 'expand',
+        arguments: { entity_id: person.id }
+      })) as ToolResultPayload;
+      expect(expandResult.isError).toBeUndefined();
+      const graph = extractStructuredPayload(expandResult) as {
+        entities: Array<{ id: string }>;
+        edges: Array<{ id: string }>;
+      };
+      expect(graph.entities.length).toBeGreaterThanOrEqual(2);
+      expect(graph.edges).toHaveLength(1);
+
+      // Unlink
+      const unlinkResult = (await client.callTool({
+        name: 'unlink',
+        arguments: { id: edge.id }
+      })) as ToolResultPayload;
+      expect(unlinkResult.isError).toBeUndefined();
     } finally {
       await close();
     }

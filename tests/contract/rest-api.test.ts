@@ -365,6 +365,59 @@ describe('REST entity endpoints', () => {
     });
   }, 120_000);
 
+  it('creates edges and expands graph between entities', async () => {
+    const { app, apiKey } = await createAuthorizedApp();
+
+    const personRes = await app.request('/api/entities', {
+      method: 'POST',
+      headers: { Authorization: `Bearer ${apiKey}`, 'Content-Type': 'application/json' },
+      body: JSON.stringify({ type: 'person', content: 'Alice' })
+    });
+    const person = ((await personRes.json()) as { entity: { id: string } }).entity;
+
+    const projectRes = await app.request('/api/entities', {
+      method: 'POST',
+      headers: { Authorization: `Bearer ${apiKey}`, 'Content-Type': 'application/json' },
+      body: JSON.stringify({ type: 'project', content: 'Alpha' })
+    });
+    const project = ((await projectRes.json()) as { entity: { id: string } }).entity;
+
+    const edgeRes = await app.request('/api/edges', {
+      method: 'POST',
+      headers: { Authorization: `Bearer ${apiKey}`, 'Content-Type': 'application/json' },
+      body: JSON.stringify({
+        source_id: person.id, target_id: project.id, relation: 'involves'
+      })
+    });
+    expect(edgeRes.status).toBe(201);
+    const edge = ((await edgeRes.json()) as { edge: { id: string; relation: string } }).edge;
+    expect(edge.relation).toBe('involves');
+
+    const listRes = await app.request(`/api/entities/${person.id}/edges`, {
+      headers: { Authorization: `Bearer ${apiKey}` }
+    });
+    expect(listRes.status).toBe(200);
+    const edges = ((await listRes.json()) as { edges: Array<{ id: string }> }).edges;
+    expect(edges).toHaveLength(1);
+
+    const graphRes = await app.request(`/api/entities/${person.id}/graph`, {
+      headers: { Authorization: `Bearer ${apiKey}` }
+    });
+    expect(graphRes.status).toBe(200);
+    const graph = (await graphRes.json()) as {
+      entities: Array<{ id: string }>;
+      edges: Array<{ id: string }>;
+    };
+    expect(graph.entities.length).toBeGreaterThanOrEqual(2);
+    expect(graph.edges).toHaveLength(1);
+
+    const deleteRes = await app.request(`/api/edges/${edge.id}`, {
+      method: 'DELETE',
+      headers: { Authorization: `Bearer ${apiKey}` }
+    });
+    expect(deleteRes.status).toBe(200);
+  }, 120_000);
+
   it('creates, lists, updates, and completes tasks', async () => {
     const { app, apiKey } = await createAuthorizedApp();
 

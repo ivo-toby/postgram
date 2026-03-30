@@ -7,7 +7,12 @@ const configSchema = z.object({
   LOG_LEVEL: z
     .enum(['trace', 'debug', 'info', 'warn', 'error', 'fatal'])
     .default('info'),
-  ENRICHMENT_POLL_INTERVAL_MS: z.coerce.number().int().positive().default(1000)
+  ENRICHMENT_POLL_INTERVAL_MS: z.coerce.number().int().positive().default(1000),
+  EXTRACTION_ENABLED: z
+    .enum(['true', 'false'])
+    .default('false')
+    .transform((v) => v === 'true'),
+  EXTRACTION_MODEL: z.string().default('gpt-4o-mini')
 });
 
 export type AppConfig = z.infer<typeof configSchema>;

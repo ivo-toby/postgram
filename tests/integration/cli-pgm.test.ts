@@ -292,4 +292,53 @@ describe('pgm CLI', () => {
       expect.any(String)
     );
   }, 120_000);
+
+  it('syncs a local directory of markdown files', async () => {
+    if (!database) {
+      throw new Error('test database not initialized');
+    }
+
+    const { mkdtemp, writeFile, rm } = await import('node:fs/promises');
+    const { tmpdir } = await import('node:os');
+    const { join } = await import('node:path');
+
+    const createdKey = (await createKey(database.pool, {
+      name: `sync-${crypto.randomUUID()}`,
+      scopes: ['read', 'write', 'delete'],
+      allowedVisibility: ['shared']
+    }))._unsafeUnwrap();
+
+    const env = {
+      PGM_API_URL: baseUrl,
+      PGM_API_KEY: createdKey.plaintextKey
+    };
+
+    const tempDir = await mkdtemp(join(tmpdir(), 'pgm-sync-test-'));
+    await writeFile(join(tempDir, 'alpha.md'), '# Alpha\n\nAlpha content.');
+    await writeFile(join(tempDir, 'beta.md'), 'Beta content without heading.');
+
+    const syncResult = await runPgm(
+      ['sync', tempDir, '--json'],
+      env
+    );
+    const syncBody = parseJson(syncResult.stdout) as {
+      created: number;
+      updated: number;
+      unchanged: number;
+      deleted: number;
+    };
+    expect(syncBody.created).toBe(2);
+    expect(syncBody.unchanged).toBe(0);
+
+    const resyncResult = await runPgm(
+      ['sync', tempDir, '--json'],
+      env
+    );
+    const resyncBody = parseJson(resyncResult.stdout) as {
+      unchanged: number;
+    };
+    expect(resyncBody.unchanged).toBe(2);
+
+    await rm(tempDir, { recursive: true });
+  }, 120_000);
 });

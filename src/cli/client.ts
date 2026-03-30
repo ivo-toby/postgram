@@ -254,6 +254,32 @@ export function createPgmClient(options: RestClientOptions) {
           body: { version }
         }
       );
+    },
+    syncRepo(input: {
+      repo: string;
+      files: Array<{ path: string; sha: string; content: string }>;
+    }) {
+      return request<{
+        created: number;
+        updated: number;
+        unchanged: number;
+        deleted: number;
+      }>(options, '/api/sync', {
+        method: 'POST',
+        body: input
+      });
+    },
+    getSyncStatus(repo: string) {
+      return request<{
+        repo: string;
+        files: Array<{
+          path: string;
+          sha: string;
+          syncStatus: string;
+          lastSynced: string;
+          entityId: string;
+        }>;
+      }>(options, `/api/sync/status/${encodeURIComponent(repo)}`);
     }
   };
 }

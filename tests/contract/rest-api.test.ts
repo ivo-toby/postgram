@@ -283,7 +283,7 @@ describe('REST entity endpoints', () => {
     });
   }, 120_000);
 
-  it('returns 502 when query embedding fails', async () => {
+  it('falls back to BM25 when query embedding fails', async () => {
     const { app, apiKey } = await createAuthorizedApp({
       embeddingService: createEmbeddingService({
         embedQuery: () =>
@@ -306,16 +306,11 @@ describe('REST entity endpoints', () => {
         query: 'postgres search'
       })
     });
-    const body: unknown = await response.json();
+    const body = (await response.json()) as { results: unknown[] };
 
-    expect(response.status).toBe(502);
-    expect(body).toEqual({
-      error: {
-        code: 'EMBEDDING_FAILED',
-        message: 'forced query embedding failure',
-        details: {}
-      }
-    });
+    expect(response.status).toBe(200);
+    expect(body).toHaveProperty('results');
+    expect(Array.isArray(body.results)).toBe(true);
   }, 120_000);
 
   it('creates, lists, updates, and completes tasks', async () => {

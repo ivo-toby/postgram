@@ -340,7 +340,7 @@ describe('MCP tools', () => {
     }
   }, 120_000);
 
-  it('returns structured tool errors for embedding failures', async () => {
+  it('falls back to BM25 search when embedding fails', async () => {
     const failingEmbeddingService = createEmbeddingService({
       embedQuery: () => {
         throw new Error('forced query embedding failure');
@@ -358,11 +358,11 @@ describe('MCP tools', () => {
         }
       })) as ToolResultPayload;
 
-      expect(searchResult.isError).toBe(true);
+      expect(searchResult.isError).toBeUndefined();
       const payload = extractStructuredPayload(searchResult) as {
-        error: { code: string; message: string };
+        results: unknown[];
       };
-      expect(payload.error.code).toBe('INTERNAL');
+      expect(Array.isArray(payload.results)).toBe(true);
     } finally {
       await close();
     }

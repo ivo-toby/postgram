@@ -73,6 +73,42 @@ describe('search-service', () => {
     expect(result._unsafeUnwrap().results).toHaveLength(0);
   }, 120_000);
 
+  it('boosts exact keyword matches via hybrid BM25+vector scoring', async () => {
+    if (!database) {
+      throw new Error('test database not initialized');
+    }
+
+    await storeEntity(database.pool, makeAuthContext(), {
+      type: 'memory',
+      content: 'pgvector lets postgres do vector search without a separate service',
+      tags: ['database']
+    });
+    await storeEntity(database.pool, makeAuthContext(), {
+      type: 'memory',
+      content: 'relational databases handle structured data well',
+      tags: ['database']
+    });
+
+    const embeddingService = createEmbeddingService();
+    const worker = createEnrichmentWorker({
+      pool: database.pool,
+      embeddingService
+    });
+    await worker.runOnce();
+
+    const result = await searchEntities(
+      database.pool,
+      makeAuthContext(),
+      { query: 'pgvector' },
+      { embeddingService }
+    );
+
+    expect(result.isOk()).toBe(true);
+    const results = result._unsafeUnwrap().results;
+    expect(results.length).toBeGreaterThan(0);
+    expect(results[0]?.entity.content).toContain('pgvector');
+  }, 120_000);
+
   it('returns enriched entities ranked by similarity with filters', async () => {
     if (!database) {
       throw new Error('test database not initialized');

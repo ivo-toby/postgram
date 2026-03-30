@@ -15,7 +15,7 @@ const configSchema = z.object({
   EXTRACTION_PROVIDER: z
     .enum(['openai', 'anthropic', 'ollama'])
     .default('openai'),
-  EXTRACTION_MODEL: z.string().default('gpt-4o-mini'),
+  EXTRACTION_MODEL: z.string().optional(),
   ANTHROPIC_API_KEY: z.string().optional(),
   OLLAMA_BASE_URL: z.string().default('http://localhost:11434')
 });

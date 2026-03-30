@@ -23,7 +23,8 @@ function createOpenAiProvider(apiKey: string, model: string): LlmProvider {
       body: JSON.stringify({
         model,
         messages: [{ role: 'user', content: prompt }],
-        temperature: 0
+        temperature: 0,
+        response_format: { type: 'json_object' }
       })
     });
 
@@ -48,6 +49,7 @@ function createAnthropicProvider(apiKey: string, model: string): LlmProvider {
       body: JSON.stringify({
         model,
         max_tokens: 1024,
+        system: 'You must respond with only valid JSON. No markdown, no explanation, just the JSON array.',
         messages: [{ role: 'user', content: prompt }]
       })
     });
@@ -70,7 +72,8 @@ function createOllamaProvider(baseUrl: string, model: string): LlmProvider {
       body: JSON.stringify({
         model,
         messages: [{ role: 'user', content: prompt }],
-        stream: false
+        stream: false,
+        format: 'json'
       })
     });
 
@@ -85,31 +88,39 @@ function createOllamaProvider(baseUrl: string, model: string): LlmProvider {
 
 export type ExtractionProvider = 'openai' | 'anthropic' | 'ollama';
 
+const DEFAULT_MODELS: Record<ExtractionProvider, string> = {
+  openai: 'gpt-4o-mini',
+  anthropic: 'claude-haiku-4-5-20251001',
+  ollama: 'llama3.2'
+};
+
 type ProviderConfig = {
   provider: ExtractionProvider;
-  model: string;
+  model?: string | undefined;
   openaiApiKey?: string | undefined;
   anthropicApiKey?: string | undefined;
   ollamaBaseUrl?: string | undefined;
 };
 
 export function createLlmProvider(config: ProviderConfig): LlmProvider {
+  const model = config.model ?? DEFAULT_MODELS[config.provider];
+
   switch (config.provider) {
     case 'openai': {
       if (!config.openaiApiKey) {
         throw new Error('OPENAI_API_KEY is required for openai extraction provider');
       }
-      return createOpenAiProvider(config.openaiApiKey, config.model);
+      return createOpenAiProvider(config.openaiApiKey, model);
     }
     case 'anthropic': {
       if (!config.anthropicApiKey) {
         throw new Error('ANTHROPIC_API_KEY is required for anthropic extraction provider');
       }
-      return createAnthropicProvider(config.anthropicApiKey, config.model);
+      return createAnthropicProvider(config.anthropicApiKey, model);
     }
     case 'ollama': {
       const baseUrl = config.ollamaBaseUrl ?? 'http://localhost:11434';
-      return createOllamaProvider(baseUrl, config.model);
+      return createOllamaProvider(baseUrl, model);
     }
   }
 }

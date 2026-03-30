@@ -245,7 +245,7 @@ Expected:
 |----------|----------|---------|-------------|
 | `EXTRACTION_ENABLED` | no | `false` | Enable LLM relationship extraction |
 | `EXTRACTION_PROVIDER` | no | `openai` | LLM provider: `openai`, `anthropic`, or `ollama` |
-| `EXTRACTION_MODEL` | no | `gpt-4o-mini` | Model name for the selected provider |
+| `EXTRACTION_MODEL` | no | per-provider | Model name (defaults: `gpt-4o-mini` for OpenAI, `claude-haiku-4-5-20251001` for Anthropic, `llama3.2` for Ollama) |
 | `ANTHROPIC_API_KEY` | when provider=anthropic | | Anthropic API key |
 | `OLLAMA_BASE_URL` | no | `http://localhost:11434` | Ollama server URL |
 

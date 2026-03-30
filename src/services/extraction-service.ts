@@ -58,7 +58,7 @@ Return [] if no relationships are found.`;
 }
 
 type ExtractionOptions = {
-  callLlm?: (prompt: string) => Promise<string>;
+  callLlm?: ((prompt: string) => Promise<string>) | undefined;
 };
 
 export async function extractAndLinkRelationships(

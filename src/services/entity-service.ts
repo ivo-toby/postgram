@@ -245,7 +245,8 @@ export function updateEntity(
             enrichment_status = $5,
             tags = $6,
             metadata = $7,
-            version = version + 1
+            version = version + 1,
+            enrichment_attempts = CASE WHEN $9 THEN 0 ELSE enrichment_attempts END
           WHERE id = $1
             AND version = $8
           RETURNING *
@@ -262,7 +263,8 @@ export function updateEntity(
             : null,
           input.tags ?? existing.tags,
           nextMetadata,
-          input.version
+          input.version,
+          contentChanged
         ]
       );
 

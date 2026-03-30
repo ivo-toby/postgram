@@ -313,6 +313,58 @@ describe('REST entity endpoints', () => {
     expect(Array.isArray(body.results)).toBe(true);
   }, 120_000);
 
+  it('syncs a document repo and returns sync status', async () => {
+    const { app, apiKey } = await createAuthorizedApp();
+
+    const syncResponse = await app.request('/api/sync', {
+      method: 'POST',
+      headers: {
+        Authorization: `Bearer ${apiKey}`,
+        'Content-Type': 'application/json'
+      },
+      body: JSON.stringify({
+        repo: 'contract-repo',
+        files: [
+          { path: 'readme.md', sha: 'abc123', content: '# Readme\n\nHello world.' },
+          { path: 'notes.md', sha: 'def456', content: 'Some notes here.' }
+        ]
+      })
+    });
+
+    expect(syncResponse.status).toBe(200);
+    const syncBody = (await syncResponse.json()) as {
+      created: number;
+      updated: number;
+      unchanged: number;
+      deleted: number;
+    };
+    expect(syncBody).toEqual({
+      created: 2,
+      updated: 0,
+      unchanged: 0,
+      deleted: 0
+    });
+
+    const statusResponse = await app.request('/api/sync/status/contract-repo', {
+      headers: {
+        Authorization: `Bearer ${apiKey}`
+      }
+    });
+
+    expect(statusResponse.status).toBe(200);
+    const statusBody = (await statusResponse.json()) as {
+      repo: string;
+      files: Array<{ path: string; sha: string; syncStatus: string }>;
+    };
+    expect(statusBody.repo).toBe('contract-repo');
+    expect(statusBody.files).toHaveLength(2);
+    expect(statusBody.files[0]).toMatchObject({
+      path: 'notes.md',
+      sha: 'def456',
+      syncStatus: 'current'
+    });
+  }, 120_000);
+
   it('creates, lists, updates, and completes tasks', async () => {
     const { app, apiKey } = await createAuthorizedApp();
 

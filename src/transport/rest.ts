@@ -6,6 +6,7 @@ import type { AuthContext } from '../auth/types.js';
 import type { EmbeddingService } from '../services/embedding-service.js';
 import { listEntities, recallEntity, softDeleteEntity, storeEntity, updateEntity } from '../services/entity-service.js';
 import { searchEntities } from '../services/search-service.js';
+import { syncManifest, getSyncStatus } from '../services/sync-service.js';
 import { completeTask, createTask, listTasks, updateTask } from '../services/task-service.js';
 import type { Entity, EntityStatus, EntityType, Visibility } from '../types/entities.js';
 import { AppError, ErrorCode } from '../util/errors.js';
@@ -80,6 +81,17 @@ const taskUpdateSchema = z.object({
 
 const taskCompleteSchema = z.object({
   version: z.number().int().positive()
+});
+
+const syncManifestSchema = z.object({
+  repo: z.string().min(1),
+  files: z.array(
+    z.object({
+      path: z.string().min(1),
+      sha: z.string().min(1),
+      content: z.string()
+    })
+  )
 });
 
 function toValidationError(message: string): AppError {
@@ -337,5 +349,32 @@ export function registerRestRoutes(
     }
 
     return c.json({ entity: toStoredEntity(result.value) });
+  });
+
+  app.post('/api/sync', async (c) => {
+    const auth = c.get('auth');
+    const body = parseJsonBody(syncManifestSchema, await c.req.json());
+    const result = await syncManifest(pool, auth, body);
+
+    if (result.isErr()) {
+      throw result.error;
+    }
+
+    return c.json(result.value);
+  });
+
+  app.get('/api/sync/status/:repo', async (c) => {
+    const auth = c.get('auth');
+    const repo = c.req.param('repo');
+    const result = await getSyncStatus(pool, auth, repo);
+
+    if (result.isErr()) {
+      throw result.error;
+    }
+
+    return c.json({
+      repo,
+      files: result.value
+    });
   });
 }

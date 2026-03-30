@@ -191,6 +191,8 @@ describe('MCP tools', () => {
         'recall',
         'search',
         'store',
+        'sync_push',
+        'sync_status',
         'task_complete',
         'task_create',
         'task_list',
@@ -335,6 +337,50 @@ describe('MCP tools', () => {
 
       expect(completed.entity.status).toBe('done');
       expect(typeof completed.entity.metadata.completed_at).toBe('string');
+    } finally {
+      await close();
+    }
+  }, 120_000);
+
+  it('syncs documents and returns status via MCP tools', async () => {
+    const { client, close } = await startServerWithEmbeddingService(
+      createEmbeddingService()
+    );
+
+    try {
+      const pushResult = (await client.callTool({
+        name: 'sync_push',
+        arguments: {
+          repo: 'mcp-repo',
+          files: [
+            { path: 'test.md', sha: 'mcp-sha-1', content: '# MCP Test\n\nContent.' }
+          ]
+        }
+      })) as ToolResultPayload;
+
+      expect(pushResult.isError).toBeUndefined();
+      const pushPayload = extractStructuredPayload(pushResult) as {
+        created: number;
+        updated: number;
+      };
+      expect(pushPayload.created).toBe(1);
+      expect(pushPayload.updated).toBe(0);
+
+      const statusResult = (await client.callTool({
+        name: 'sync_status',
+        arguments: {
+          repo: 'mcp-repo'
+        }
+      })) as ToolResultPayload;
+
+      expect(statusResult.isError).toBeUndefined();
+      const statusPayload = extractStructuredPayload(statusResult) as {
+        repo: string;
+        files: Array<{ path: string; sha: string; syncStatus: string }>;
+      };
+      expect(statusPayload.repo).toBe('mcp-repo');
+      expect(statusPayload.files).toHaveLength(1);
+      expect(statusPayload.files[0]?.path).toBe('test.md');
     } finally {
       await close();
     }

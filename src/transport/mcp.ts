@@ -13,6 +13,7 @@ import type { AuthContext } from '../auth/types.js';
 import type { EmbeddingService } from '../services/embedding-service.js';
 import { recallEntity, softDeleteEntity, storeEntity, updateEntity } from '../services/entity-service.js';
 import { searchEntities } from '../services/search-service.js';
+import { syncManifest, getSyncStatus } from '../services/sync-service.js';
 import { completeTask, createTask, listTasks, updateTask } from '../services/task-service.js';
 import type { ServiceResult } from '../types/common.js';
 import type { Entity } from '../types/entities.js';
@@ -419,6 +420,46 @@ function createSessionServer(
           version: args.version
         }),
         (entity) => ({ entity: toStoredEntity(entity) })
+      )
+  );
+
+  server.registerTool(
+    'sync_push',
+    {
+      description: 'Sync a document repository. Sends a manifest of files with content and SHA-256 hashes.',
+      inputSchema: {
+        repo: z.string().min(1),
+        files: z.array(
+          z.object({
+            path: z.string().min(1),
+            sha: z.string().min(1),
+            content: z.string()
+          })
+        )
+      }
+    },
+    (args) =>
+      toolFromService(
+        syncManifest(pool, auth, {
+          repo: args.repo,
+          files: args.files
+        }),
+        (value) => value
+      )
+  );
+
+  server.registerTool(
+    'sync_status',
+    {
+      description: 'Get the sync status of a document repository.',
+      inputSchema: {
+        repo: z.string().min(1)
+      }
+    },
+    (args) =>
+      toolFromService(
+        getSyncStatus(pool, auth, args.repo),
+        (files) => ({ repo: args.repo, files })
       )
   );
 

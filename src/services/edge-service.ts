@@ -4,6 +4,7 @@ import type { Pool } from 'pg';
 import { checkTypeAccess, checkVisibilityAccess, requireScope } from '../auth/key-service.js';
 import type { AuthContext } from '../auth/types.js';
 import type { ServiceResult } from '../types/common.js';
+import type { EntityType, Visibility } from '../types/entities.js';
 import { appendAuditEntry } from '../util/audit.js';
 import { AppError, ErrorCode } from '../util/errors.js';
 
@@ -66,7 +67,7 @@ export function createEdge(
       requireScope(auth, 'write');
 
       // Fetch both entities with type and visibility for auth checks
-      const entityRows = await pool.query<{ id: string; type: string; visibility: string }>(
+      const entityRows = await pool.query<{ id: string; type: EntityType; visibility: Visibility }>(
         'SELECT id, type, visibility FROM entities WHERE id = ANY($1) AND status IS DISTINCT FROM \'archived\'',
         [input.sourceId === input.targetId ? [input.sourceId] : [input.sourceId, input.targetId]]
       );
@@ -75,8 +76,8 @@ export function createEdge(
         throw new AppError(ErrorCode.NOT_FOUND, 'One or both entities not found');
       }
       for (const entity of entityRows.rows) {
-        checkTypeAccess(auth, entity.type as never);
-        checkVisibilityAccess(auth, entity.visibility as never);
+        checkTypeAccess(auth, entity.type);
+        checkVisibilityAccess(auth, entity.visibility);
       }
 
       const confidence = Math.max(0, Math.min(1, input.confidence ?? 1.0));
@@ -126,13 +127,13 @@ export function deleteEdge(
       if (!edge.rows[0]) {
         throw new AppError(ErrorCode.NOT_FOUND, 'Edge not found');
       }
-      const endpoints = await pool.query<{ type: string; visibility: string }>(
+      const endpoints = await pool.query<{ type: EntityType; visibility: Visibility }>(
         'SELECT type, visibility FROM entities WHERE id = ANY($1)',
         [[edge.rows[0].source_id, edge.rows[0].target_id]]
       );
       for (const entity of endpoints.rows) {
-        checkTypeAccess(auth, entity.type as never);
-        checkVisibilityAccess(auth, entity.visibility as never);
+        checkTypeAccess(auth, entity.type);
+        checkVisibilityAccess(auth, entity.visibility);
       }
       await pool.query('DELETE FROM edges WHERE id = $1', [edgeId]);
 
@@ -219,37 +220,42 @@ export function expandGraph(
         ? options.relationTypes
         : null;
 
-      const edgeRows = await pool.query<EdgeRow>(
+      // Two-phase approach: first find reachable node IDs via BFS,
+      // then fetch all edges between those nodes.
+      const nodesResult = await pool.query<{ id: string }>(
         `
-          WITH RECURSIVE graph AS (
-            SELECT e.*, 1 AS depth
-            FROM edges e
-            WHERE (e.source_id = $1 OR e.target_id = $1)
-              AND ($3::text[] IS NULL OR e.relation = ANY($3))
+          WITH RECURSIVE reachable AS (
+            SELECT $1::uuid AS id, 0 AS depth
 
             UNION
 
-            SELECT e.*, g.depth + 1
+            SELECT
+              CASE WHEN e.source_id = r.id THEN e.target_id ELSE e.source_id END AS id,
+              r.depth + 1
             FROM edges e
-            JOIN graph g ON (
-              e.source_id = g.target_id OR e.source_id = g.source_id
-              OR e.target_id = g.source_id OR e.target_id = g.target_id
-            )
-            WHERE g.depth < $2
+            JOIN reachable r ON (e.source_id = r.id OR e.target_id = r.id)
+            WHERE r.depth < $2
               AND ($3::text[] IS NULL OR e.relation = ANY($3))
-              AND e.id != g.id
           )
-          SELECT DISTINCT ON (id) id, source_id, target_id, relation, confidence, source, metadata, created_at
-          FROM graph
+          SELECT DISTINCT id FROM reachable
         `,
         [entityId, depth, relationFilter]
       );
 
-      const entityIds = new Set<string>([entityId]);
-      for (const row of edgeRows.rows) {
-        entityIds.add(row.source_id);
-        entityIds.add(row.target_id);
+      const reachableIds = nodesResult.rows.map((r) => r.id);
+      if (reachableIds.length === 0) {
+        reachableIds.push(entityId);
       }
+
+      // Fetch all edges between reachable nodes
+      const edgeRows = await pool.query<EdgeRow>(
+        `
+          SELECT * FROM edges
+          WHERE source_id = ANY($1) AND target_id = ANY($1)
+            AND ($2::text[] IS NULL OR relation = ANY($2))
+        `,
+        [reachableIds, relationFilter]
+      );
 
       const entityRows = await pool.query<{
         id: string; type: string; content: string | null; metadata: Record<string, unknown>;
@@ -259,7 +265,7 @@ export function expandGraph(
            AND status IS DISTINCT FROM 'archived'
            AND ($2::text[] IS NULL OR type = ANY($2))
            AND visibility = ANY($3)`,
-        [Array.from(entityIds), auth.allowedTypes, auth.allowedVisibility]
+        [reachableIds, auth.allowedTypes, auth.allowedVisibility]
       );
 
       // Filter edges to only include those where both endpoints are visible

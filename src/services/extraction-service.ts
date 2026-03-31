@@ -96,6 +96,12 @@ export async function extractAndLinkRelationships(
   let linked = 0;
 
   for (const extraction of extractions) {
+    // Escape ILIKE wildcards (% and _) in the target name
+    const escapedName = extraction.targetName
+      .replace(/\\/g, '\\\\')
+      .replace(/%/g, '\\%')
+      .replace(/_/g, '\\_');
+
     const matches = await pool.query<{ id: string }>(
       `
         SELECT id FROM entities
@@ -110,7 +116,7 @@ export async function extractAndLinkRelationships(
           created_at DESC
         LIMIT 1
       `,
-      [entityId, extraction.targetName, `%${extraction.targetName}%`]
+      [entityId, escapedName, `%${escapedName}%`]
     );
 
     const matchedEntity = matches.rows[0];

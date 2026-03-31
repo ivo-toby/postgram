@@ -321,6 +321,8 @@ export function createPgmClient(options: RestClientOptions) {
           target_id: string;
           relation: string;
           confidence: number;
+          source: string | null;
+          metadata: Record<string, unknown>;
           created_at: string;
         }>;
       }>(options, `/api/entities/${entityId}/edges${query ? `?${query}` : ''}`);
@@ -332,7 +334,16 @@ export function createPgmClient(options: RestClientOptions) {
       const query = qs.toString();
       return request<{
         entities: Array<{ id: string; type: string; content: string | null; metadata: Record<string, unknown> }>;
-        edges: Array<{ id: string; source_id: string; target_id: string; relation: string; confidence: number }>;
+        edges: Array<{
+          id: string;
+          source_id: string;
+          target_id: string;
+          relation: string;
+          confidence: number;
+          source: string | null;
+          metadata: Record<string, unknown>;
+          created_at: string;
+        }>;
       }>(options, `/api/entities/${entityId}/graph${query ? `?${query}` : ''}`);
     }
   };

@@ -154,7 +154,50 @@ describe('search-service', () => {
     expect(result._unsafeUnwrap().results).toHaveLength(1);
   }, 120_000);
 
-  it('falls back to BM25-only search when embedding fails', async () => {
+  it('respects explicit visibility filters', async () => {
+    if (!database) {
+      throw new Error('test database not initialized');
+    }
+
+    const embeddingService = createEmbeddingService();
+
+    await storeEntity(database.pool, makeAuthContext(), {
+      type: 'memory',
+      content: 'postgres notes shared with everyone',
+      tags: ['search'],
+      visibility: 'shared'
+    });
+    await storeEntity(database.pool, makeAuthContext(), {
+      type: 'memory',
+      content: 'postgres notes only for work',
+      tags: ['search'],
+      visibility: 'work'
+    });
+
+    const worker = createEnrichmentWorker({
+      pool: database.pool,
+      embeddingService
+    });
+    await worker.runOnce();
+
+    const result = await searchEntities(
+      database.pool,
+      makeAuthContext(),
+      {
+        query: 'postgres notes',
+        visibility: 'work' as never,
+        threshold: 0
+      },
+      { embeddingService }
+    );
+
+    expect(result.isOk()).toBe(true);
+    const results = result._unsafeUnwrap().results;
+    expect(results.length).toBeGreaterThan(0);
+    expect(results.every((entry) => entry.entity.visibility === 'work')).toBe(true);
+  }, 120_000);
+
+  it('returns EMBEDDING_FAILED when query embedding fails', async () => {
     if (!database) {
       throw new Error('test database not initialized');
     }
@@ -173,7 +216,6 @@ describe('search-service', () => {
     });
     await worker.runOnce();
 
-    // Search with a broken embedding service
     const failingEmbeddingService = createEmbeddingService({
       embedQuery: () => Promise.reject(new Error('OpenAI is down')),
       embedBatch: () => Promise.reject(new Error('OpenAI is down'))
@@ -186,10 +228,7 @@ describe('search-service', () => {
       { embeddingService: failingEmbeddingService }
     );
 
-    expect(result.isOk()).toBe(true);
-    const results = result._unsafeUnwrap().results;
-    expect(results.length).toBeGreaterThan(0);
-    expect(results[0]?.entity.content).toContain('kubernetes');
-    expect(results[0]?.similarity).toBe(0);
+    expect(result.isErr()).toBe(true);
+    expect(result._unsafeUnwrapErr().code).toBe('EMBEDDING_FAILED');
   }, 120_000);
 });

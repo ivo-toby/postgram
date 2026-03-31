@@ -140,12 +140,13 @@ export async function startServer(): Promise<{
   const embeddingService = createEmbeddingService();
 
   try {
-    await embeddingService.embedQuery('startup validation');
+    const activeModel = await embeddingService.getActiveModel(pool);
+    await embeddingService.embedQuery('startup validation', activeModel);
     logger.info('embedding service validated');
   } catch (error) {
     logger.warn(
       { err: error },
-      'embedding service unavailable — enrichment will be disabled and search will fall back to BM25-only'
+      'embedding service unavailable — enrichment and semantic search will fail until embeddings recover'
     );
   }
 

@@ -188,4 +188,38 @@ describe('enrichment-worker', () => {
     const processed = await failingWorker.runOnce();
     expect(processed).toBe(0);
   }, 120_000);
+
+  it('does not process the same entity twice when workers run concurrently', async () => {
+    if (!database) {
+      throw new Error('test database not initialized');
+    }
+
+    await storeEntity(database.pool, makeAuthContext(), {
+      type: 'memory',
+      content: 'only one worker should process this'
+    });
+
+    const delayedEmbeddingService = createEmbeddingService({
+      embedBatch: async (texts) => {
+        await new Promise((resolve) => setTimeout(resolve, 100));
+        return texts.map(() => new Array<number>(1536).fill(0));
+      }
+    });
+
+    const workerA = createEnrichmentWorker({
+      pool: database.pool,
+      embeddingService: delayedEmbeddingService
+    });
+    const workerB = createEnrichmentWorker({
+      pool: database.pool,
+      embeddingService: delayedEmbeddingService
+    });
+
+    const processed = await Promise.all([
+      workerA.runOnce(),
+      workerB.runOnce()
+    ]);
+
+    expect(processed.sort((left, right) => left - right)).toEqual([0, 1]);
+  }, 120_000);
 });

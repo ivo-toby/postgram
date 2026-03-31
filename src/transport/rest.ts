@@ -40,6 +40,7 @@ const storeEntitySchema = z.object({
   visibility: visibilitySchema.optional(),
   status: statusSchema.optional(),
   tags: z.array(z.string()).optional(),
+  source: z.string().optional(),
   metadata: z.record(z.unknown()).optional()
 });
 
@@ -49,6 +50,7 @@ const updateEntitySchema = z.object({
   visibility: visibilitySchema.optional(),
   status: statusSchema.nullable().optional(),
   tags: z.array(z.string()).optional(),
+  source: z.string().nullable().optional(),
   metadata: z.record(z.unknown()).optional()
 });
 
@@ -56,6 +58,7 @@ const searchEntitiesSchema = z.object({
   query: z.string().min(1),
   type: entityTypeSchema.optional(),
   tags: z.array(z.string()).optional(),
+  visibility: visibilitySchema.optional(),
   limit: z.number().int().positive().max(50).optional(),
   threshold: z.number().min(0).max(1).optional(),
   recency_weight: z.number().min(0).optional(),
@@ -68,7 +71,8 @@ const taskCreateSchema = z.object({
   status: statusSchema.optional(),
   due_date: z.string().optional(),
   tags: z.array(z.string()).optional(),
-  visibility: visibilitySchema.optional()
+  visibility: visibilitySchema.optional(),
+  metadata: z.record(z.unknown()).optional()
 });
 
 const taskUpdateSchema = z.object({
@@ -78,7 +82,8 @@ const taskUpdateSchema = z.object({
   status: statusSchema.nullable().optional(),
   due_date: z.string().optional(),
   tags: z.array(z.string()).optional(),
-  visibility: visibilitySchema.optional()
+  visibility: visibilitySchema.optional(),
+  metadata: z.record(z.unknown()).optional()
 });
 
 const taskCompleteSchema = z.object({
@@ -256,6 +261,7 @@ export function registerRestRoutes(
         query: body.query,
         type: body.type,
         tags: body.tags,
+        visibility: body.visibility,
         limit: body.limit,
         threshold: body.threshold,
         recencyWeight: body.recency_weight,
@@ -290,7 +296,8 @@ export function registerRestRoutes(
       status: body.status,
       dueDate: body.due_date,
       tags: body.tags,
-      visibility: body.visibility
+      visibility: body.visibility,
+      metadata: body.metadata
     });
 
     if (result.isErr()) {
@@ -338,7 +345,8 @@ export function registerRestRoutes(
       status: body.status,
       dueDate: body.due_date,
       tags: body.tags,
-      visibility: body.visibility
+      visibility: body.visibility,
+      metadata: body.metadata
     });
 
     if (result.isErr()) {

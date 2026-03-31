@@ -106,6 +106,7 @@ export function createPgmClient(options: RestClientOptions) {
       visibility?: string | undefined;
       status?: string | undefined;
       tags?: string[] | undefined;
+      source?: string | undefined;
       metadata?: Record<string, unknown> | undefined;
     }) {
       return request<StoredEntityResponse>(options, '/api/entities', {
@@ -120,6 +121,7 @@ export function createPgmClient(options: RestClientOptions) {
       query: string;
       type?: string | undefined;
       tags?: string[] | undefined;
+      visibility?: string | undefined;
       limit?: number | undefined;
       threshold?: number | undefined;
       recency_weight?: number | undefined;
@@ -137,6 +139,7 @@ export function createPgmClient(options: RestClientOptions) {
         visibility?: string | undefined;
         status?: string | null | undefined;
         tags?: string[] | undefined;
+        source?: string | null | undefined;
         metadata?: Record<string, unknown> | undefined;
       }
     ) {
@@ -196,6 +199,8 @@ export function createPgmClient(options: RestClientOptions) {
       status?: string | undefined;
       due_date?: string | undefined;
       tags?: string[] | undefined;
+      visibility?: string | undefined;
+      metadata?: Record<string, unknown> | undefined;
     }) {
       return request<StoredEntityResponse>(options, '/api/tasks', {
         method: 'POST',
@@ -238,6 +243,8 @@ export function createPgmClient(options: RestClientOptions) {
         status?: string | null | undefined;
         due_date?: string | undefined;
         tags?: string[] | undefined;
+        visibility?: string | undefined;
+        metadata?: Record<string, unknown> | undefined;
       }
     ) {
       return request<StoredEntityResponse>(options, `/api/tasks/${id}`, {

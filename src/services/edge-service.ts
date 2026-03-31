@@ -1,10 +1,18 @@
 import { ResultAsync } from 'neverthrow';
 import type { Pool } from 'pg';
 
-import { checkTypeAccess, checkVisibilityAccess, requireScope } from '../auth/key-service.js';
+import {
+  checkTypeAccess,
+  checkVisibilityAccess,
+  requireScope
+} from '../auth/key-service.js';
 import type { AuthContext } from '../auth/types.js';
 import type { ServiceResult } from '../types/common.js';
-import type { EntityType, Visibility } from '../types/entities.js';
+import type {
+  EntityStatus,
+  EntityType,
+  Visibility
+} from '../types/entities.js';
 import { appendAuditEntry } from '../util/audit.js';
 import { AppError, ErrorCode } from '../util/errors.js';
 
@@ -30,6 +38,13 @@ type EdgeRow = {
   created_at: Date;
 };
 
+type EntityAccessRow = {
+  id: string;
+  type: EntityType;
+  visibility: Visibility;
+  status: EntityStatus | null;
+};
+
 type CreateEdgeInput = {
   sourceId: string;
   targetId: string;
@@ -53,34 +68,112 @@ function mapEdge(row: EdgeRow): Edge {
 }
 
 function toAppError(error: unknown, fallbackMessage: string): AppError {
-  if (error instanceof AppError) return error;
-  if (error instanceof Error)
-    return new AppError(ErrorCode.INTERNAL, fallbackMessage, { cause: error.message });
+  if (error instanceof AppError) {
+    return error;
+  }
+  if (error instanceof Error) {
+    return new AppError(ErrorCode.INTERNAL, fallbackMessage, {
+      cause: error.message
+    });
+  }
   return new AppError(ErrorCode.INTERNAL, fallbackMessage);
 }
 
+function validateConfidence(confidence?: number): number {
+  const resolved = confidence ?? 1.0;
+
+  if (!Number.isFinite(resolved) || resolved < 0 || resolved > 1) {
+    throw new AppError(
+      ErrorCode.VALIDATION,
+      'Confidence must be between 0 and 1'
+    );
+  }
+
+  return resolved;
+}
+
+function validateDirection(
+  direction: 'source' | 'target' | 'both' | undefined
+): 'source' | 'target' | 'both' {
+  const resolved = direction ?? 'both';
+  if (!['source', 'target', 'both'].includes(resolved)) {
+    throw new AppError(
+      ErrorCode.VALIDATION,
+      'Direction must be source, target, or both'
+    );
+  }
+
+  return resolved;
+}
+
+function validateDepth(depth: number | undefined): number {
+  const resolved = depth ?? 1;
+
+  if (!Number.isInteger(resolved) || resolved < 1 || resolved > 3) {
+    throw new AppError(
+      ErrorCode.VALIDATION,
+      'Depth must be an integer between 1 and 3'
+    );
+  }
+
+  return resolved;
+}
+
+async function enforceEntityAccess(
+  pool: Pool,
+  auth: AuthContext,
+  entityIds: string[],
+  scope: 'read' | 'write' | 'delete'
+): Promise<Map<string, EntityAccessRow>> {
+  requireScope(auth, scope);
+
+  const uniqueIds = [...new Set(entityIds)];
+  const rows = await pool.query<EntityAccessRow>(
+    `
+      SELECT id, type, visibility, status
+      FROM entities
+      WHERE id = ANY($1)
+    `,
+    [uniqueIds]
+  );
+
+  const entityMap = new Map(rows.rows.map((row) => [row.id, row]));
+
+  for (const entityId of uniqueIds) {
+    const entity = entityMap.get(entityId);
+    if (!entity || entity.status === 'archived') {
+      throw new AppError(ErrorCode.NOT_FOUND, 'Entity not found');
+    }
+
+    checkTypeAccess(auth, entity.type);
+    checkVisibilityAccess(auth, entity.visibility);
+  }
+
+  return entityMap;
+}
+
 export function createEdge(
-  pool: Pool, auth: AuthContext, input: CreateEdgeInput
+  pool: Pool,
+  auth: AuthContext,
+  input: CreateEdgeInput
 ): ServiceResult<Edge> {
   return ResultAsync.fromPromise(
     (async () => {
-      requireScope(auth, 'write');
+      if (input.sourceId === input.targetId) {
+        throw new AppError(
+          ErrorCode.VALIDATION,
+          'Self-edges are not supported'
+        );
+      }
 
-      // Fetch both entities with type and visibility for auth checks
-      const entityRows = await pool.query<{ id: string; type: EntityType; visibility: Visibility }>(
-        'SELECT id, type, visibility FROM entities WHERE id = ANY($1) AND status IS DISTINCT FROM \'archived\'',
-        [input.sourceId === input.targetId ? [input.sourceId] : [input.sourceId, input.targetId]]
+      await enforceEntityAccess(
+        pool,
+        auth,
+        [input.sourceId, input.targetId],
+        'write'
       );
-      const expectedCount = input.sourceId === input.targetId ? 1 : 2;
-      if (entityRows.rows.length < expectedCount) {
-        throw new AppError(ErrorCode.NOT_FOUND, 'One or both entities not found');
-      }
-      for (const entity of entityRows.rows) {
-        checkTypeAccess(auth, entity.type);
-        checkVisibilityAccess(auth, entity.visibility);
-      }
 
-      const confidence = Math.max(0, Math.min(1, input.confidence ?? 1.0));
+      const confidence = validateConfidence(input.confidence);
 
       const result = await pool.query<EdgeRow>(
         `
@@ -91,14 +184,19 @@ export function createEdge(
           RETURNING *
         `,
         [
-          input.sourceId, input.targetId, input.relation,
-          confidence, input.source ?? 'manual',
+          input.sourceId,
+          input.targetId,
+          input.relation,
+          confidence,
+          input.source ?? 'manual',
           input.metadata ?? {}
         ]
       );
 
       const row = result.rows[0];
-      if (!row) throw new AppError(ErrorCode.INTERNAL, 'Failed to create edge');
+      if (!row) {
+        throw new AppError(ErrorCode.INTERNAL, 'Failed to create edge');
+      }
 
       await appendAuditEntry(pool, {
         apiKeyId: auth.apiKeyId,
@@ -114,7 +212,9 @@ export function createEdge(
 }
 
 export function deleteEdge(
-  pool: Pool, auth: AuthContext, edgeId: string
+  pool: Pool,
+  auth: AuthContext,
+  edgeId: string
 ): ServiceResult<{ id: string; deleted: true }> {
   return ResultAsync.fromPromise(
     (async () => {
@@ -124,17 +224,18 @@ export function deleteEdge(
         'SELECT * FROM edges WHERE id = $1',
         [edgeId]
       );
-      if (!edge.rows[0]) {
+      const existing = edge.rows[0];
+      if (!existing) {
         throw new AppError(ErrorCode.NOT_FOUND, 'Edge not found');
       }
-      const endpoints = await pool.query<{ type: EntityType; visibility: Visibility }>(
-        'SELECT type, visibility FROM entities WHERE id = ANY($1)',
-        [[edge.rows[0].source_id, edge.rows[0].target_id]]
+
+      await enforceEntityAccess(
+        pool,
+        auth,
+        [existing.source_id, existing.target_id],
+        'delete'
       );
-      for (const entity of endpoints.rows) {
-        checkTypeAccess(auth, entity.type);
-        checkVisibilityAccess(auth, entity.visibility);
-      }
+
       await pool.query('DELETE FROM edges WHERE id = $1', [edgeId]);
 
       await appendAuditEntry(pool, {
@@ -150,43 +251,51 @@ export function deleteEdge(
 }
 
 export function listEdges(
-  pool: Pool, auth: AuthContext, entityId: string,
-  options: { relation?: string | undefined; direction?: 'source' | 'target' | 'both' | undefined } = {}
+  pool: Pool,
+  auth: AuthContext,
+  entityId: string,
+  options: {
+    relation?: string | undefined;
+    direction?: 'source' | 'target' | 'both' | undefined;
+  } = {}
 ): ServiceResult<Edge[]> {
   return ResultAsync.fromPromise(
     (async () => {
-      requireScope(auth, 'read');
+      await enforceEntityAccess(pool, auth, [entityId], 'read');
 
-      const direction = options.direction ?? 'both';
+      const direction = validateDirection(options.direction);
       const conditions: string[] = [];
       const params: unknown[] = [entityId];
 
       if (direction === 'source') {
-        conditions.push('source_id = $1');
+        conditions.push('edges.source_id = $1');
       } else if (direction === 'target') {
-        conditions.push('target_id = $1');
+        conditions.push('edges.target_id = $1');
       } else {
-        conditions.push('(source_id = $1 OR target_id = $1)');
+        conditions.push('(edges.source_id = $1 OR edges.target_id = $1)');
       }
 
       let whereClause = conditions[0]!;
       if (options.relation) {
         params.push(options.relation);
-        whereClause = `${whereClause} AND relation = $${params.length}`;
+        whereClause = `${whereClause} AND edges.relation = $${params.length}`;
       }
 
       const result = await pool.query<EdgeRow>(
-        `SELECT edges.* FROM edges
-         JOIN entities src ON src.id = edges.source_id
-         JOIN entities tgt ON tgt.id = edges.target_id
-         WHERE ${whereClause}
-           AND src.status IS DISTINCT FROM 'archived'
-           AND tgt.status IS DISTINCT FROM 'archived'
-           AND ($${params.length + 1}::text[] IS NULL OR src.type = ANY($${params.length + 1}))
-           AND ($${params.length + 1}::text[] IS NULL OR tgt.type = ANY($${params.length + 1}))
-           AND src.visibility = ANY($${params.length + 2})
-           AND tgt.visibility = ANY($${params.length + 2})
-         ORDER BY edges.created_at DESC`,
+        `
+          SELECT edges.*
+          FROM edges
+          JOIN entities src ON src.id = edges.source_id
+          JOIN entities tgt ON tgt.id = edges.target_id
+          WHERE ${whereClause}
+            AND src.status IS DISTINCT FROM 'archived'
+            AND tgt.status IS DISTINCT FROM 'archived'
+            AND ($${params.length + 1}::text[] IS NULL OR src.type = ANY($${params.length + 1}))
+            AND ($${params.length + 1}::text[] IS NULL OR tgt.type = ANY($${params.length + 1}))
+            AND src.visibility = ANY($${params.length + 2})
+            AND tgt.visibility = ANY($${params.length + 2})
+          ORDER BY edges.created_at DESC
+        `,
         [...params, auth.allowedTypes, auth.allowedVisibility]
       );
 
@@ -207,21 +316,20 @@ export type ExpandResult = {
 };
 
 export function expandGraph(
-  pool: Pool, auth: AuthContext,
+  pool: Pool,
+  auth: AuthContext,
   entityId: string,
   options: { depth?: number | undefined; relationTypes?: string[] | undefined } = {}
 ): ServiceResult<ExpandResult> {
   return ResultAsync.fromPromise(
     (async () => {
-      requireScope(auth, 'read');
+      await enforceEntityAccess(pool, auth, [entityId], 'read');
 
-      const depth = Math.min(options.depth ?? 1, 3);
+      const depth = validateDepth(options.depth);
       const relationFilter = options.relationTypes?.length
         ? options.relationTypes
         : null;
 
-      // Two-phase approach: first find reachable node IDs via BFS,
-      // then fetch all edges between those nodes.
       const nodesResult = await pool.query<{ id: string }>(
         `
           WITH RECURSIVE reachable AS (
@@ -230,53 +338,65 @@ export function expandGraph(
             UNION
 
             SELECT
-              CASE WHEN e.source_id = r.id THEN e.target_id ELSE e.source_id END AS id,
+              CASE WHEN e.source_id = r.id THEN tgt.id ELSE src.id END AS id,
               r.depth + 1
             FROM edges e
             JOIN reachable r ON (e.source_id = r.id OR e.target_id = r.id)
+            JOIN entities src ON src.id = e.source_id
+            JOIN entities tgt ON tgt.id = e.target_id
             WHERE r.depth < $2
               AND ($3::text[] IS NULL OR e.relation = ANY($3))
+              AND src.status IS DISTINCT FROM 'archived'
+              AND tgt.status IS DISTINCT FROM 'archived'
+              AND ($4::text[] IS NULL OR src.type = ANY($4))
+              AND ($4::text[] IS NULL OR tgt.type = ANY($4))
+              AND src.visibility = ANY($5)
+              AND tgt.visibility = ANY($5)
           )
           SELECT DISTINCT id FROM reachable
         `,
-        [entityId, depth, relationFilter]
+        [
+          entityId,
+          depth,
+          relationFilter,
+          auth.allowedTypes,
+          auth.allowedVisibility
+        ]
       );
 
-      const reachableIds = nodesResult.rows.map((r) => r.id);
-      if (reachableIds.length === 0) {
-        reachableIds.push(entityId);
-      }
+      const reachableIds = nodesResult.rows.map((row) => row.id);
 
-      // Fetch all edges between reachable nodes
       const edgeRows = await pool.query<EdgeRow>(
         `
-          SELECT * FROM edges
-          WHERE source_id = ANY($1) AND target_id = ANY($1)
+          SELECT *
+          FROM edges
+          WHERE source_id = ANY($1)
+            AND target_id = ANY($1)
             AND ($2::text[] IS NULL OR relation = ANY($2))
         `,
         [reachableIds, relationFilter]
       );
 
       const entityRows = await pool.query<{
-        id: string; type: string; content: string | null; metadata: Record<string, unknown>;
+        id: string;
+        type: string;
+        content: string | null;
+        metadata: Record<string, unknown>;
       }>(
-        `SELECT id, type, content, metadata FROM entities
-         WHERE id = ANY($1)
-           AND status IS DISTINCT FROM 'archived'
-           AND ($2::text[] IS NULL OR type = ANY($2))
-           AND visibility = ANY($3)`,
+        `
+          SELECT id, type, content, metadata
+          FROM entities
+          WHERE id = ANY($1)
+            AND status IS DISTINCT FROM 'archived'
+            AND ($2::text[] IS NULL OR type = ANY($2))
+            AND visibility = ANY($3)
+        `,
         [reachableIds, auth.allowedTypes, auth.allowedVisibility]
       );
 
-      // Filter edges to only include those where both endpoints are visible
-      const visibleIds = new Set(entityRows.rows.map((e) => e.id));
-      const filteredEdges = edgeRows.rows
-        .filter((row) => visibleIds.has(row.source_id) && visibleIds.has(row.target_id))
-        .map(mapEdge);
-
       return {
         entities: entityRows.rows,
-        edges: filteredEdges
+        edges: edgeRows.rows.map(mapEdge)
       };
     })(),
     (error) => toAppError(error, 'Failed to expand graph')

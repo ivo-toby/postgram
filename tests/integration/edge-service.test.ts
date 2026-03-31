@@ -2,6 +2,7 @@ import { afterAll, beforeAll, beforeEach, describe, expect, it } from 'vitest';
 import { createEdge, deleteEdge, expandGraph, listEdges } from '../../src/services/edge-service.js';
 import { storeEntity } from '../../src/services/entity-service.js';
 import type { AuthContext } from '../../src/auth/types.js';
+import { ErrorCode } from '../../src/util/errors.js';
 import {
   createTestDatabase, resetTestDatabase, seedApiKey, type TestDatabase
 } from '../helpers/postgres.js';
@@ -131,5 +132,108 @@ describe('edge-service', () => {
     expect(result2.entities.map((e) => e.id).sort()).toEqual(
       [alice.id, project.id, task.id].sort()
     );
+  }, 120_000);
+
+  it('rejects self-edges and out-of-range confidence values', async () => {
+    if (!database) throw new Error('test database not initialized');
+    const auth = makeAuthContext();
+
+    const entity = (await storeEntity(database.pool, auth, {
+      type: 'person', content: 'Self reference'
+    }))._unsafeUnwrap();
+
+    const selfEdge = await createEdge(database.pool, auth, {
+      sourceId: entity.id,
+      targetId: entity.id,
+      relation: 'related_to'
+    });
+    expect(selfEdge.isErr()).toBe(true);
+    expect(selfEdge._unsafeUnwrapErr().code).toBe(ErrorCode.VALIDATION);
+
+    const other = (await storeEntity(database.pool, auth, {
+      type: 'project', content: 'Confidence target'
+    }))._unsafeUnwrap();
+
+    const badConfidence = await createEdge(database.pool, auth, {
+      sourceId: entity.id,
+      targetId: other.id,
+      relation: 'related_to',
+      confidence: 1.5
+    });
+    expect(badConfidence.isErr()).toBe(true);
+    expect(badConfidence._unsafeUnwrapErr().code).toBe(ErrorCode.VALIDATION);
+  }, 120_000);
+
+  it('validates list direction and graph depth at the service layer', async () => {
+    if (!database) throw new Error('test database not initialized');
+    const auth = makeAuthContext();
+
+    const entity = (await storeEntity(database.pool, auth, {
+      type: 'person', content: 'Validation root'
+    }))._unsafeUnwrap();
+
+    const badDirection = await listEdges(
+      database.pool,
+      auth,
+      entity.id,
+      { direction: 'sideways' as never }
+    );
+    expect(badDirection.isErr()).toBe(true);
+    expect(badDirection._unsafeUnwrapErr().code).toBe(ErrorCode.VALIDATION);
+
+    const badDepth = await expandGraph(
+      database.pool,
+      auth,
+      entity.id,
+      { depth: Number.NaN as never }
+    );
+    expect(badDepth.isErr()).toBe(true);
+    expect(badDepth._unsafeUnwrapErr().code).toBe(ErrorCode.VALIDATION);
+  }, 120_000);
+
+  it('does not allow traversing through hidden entities during graph expansion', async () => {
+    if (!database) throw new Error('test database not initialized');
+    const fullAuth = makeAuthContext();
+    const restrictedAuth: AuthContext = {
+      ...makeAuthContext(),
+      allowedVisibility: ['shared']
+    };
+
+    const alice = (await storeEntity(database.pool, fullAuth, {
+      type: 'person', content: 'Alice', visibility: 'shared'
+    }))._unsafeUnwrap();
+    const hiddenProject = (await storeEntity(database.pool, fullAuth, {
+      type: 'project', content: 'Hidden Project', visibility: 'work'
+    }))._unsafeUnwrap();
+    const publicTask = (await storeEntity(database.pool, fullAuth, {
+      type: 'task', content: 'Public Task', visibility: 'shared', status: 'inbox'
+    }))._unsafeUnwrap();
+
+    await createEdge(database.pool, fullAuth, {
+      sourceId: alice.id, targetId: hiddenProject.id, relation: 'involves'
+    });
+    await createEdge(database.pool, fullAuth, {
+      sourceId: hiddenProject.id, targetId: publicTask.id, relation: 'part_of'
+    });
+
+    const hiddenList = await listEdges(
+      database.pool,
+      restrictedAuth,
+      hiddenProject.id
+    );
+    expect(hiddenList.isErr()).toBe(true);
+    expect(hiddenList._unsafeUnwrapErr().code).toBe(ErrorCode.FORBIDDEN);
+
+    const expanded = await expandGraph(
+      database.pool,
+      restrictedAuth,
+      alice.id,
+      { depth: 2 }
+    );
+    expect(expanded.isOk()).toBe(true);
+    const graph = expanded._unsafeUnwrap();
+
+    expect(graph.entities.map((entity) => entity.id)).toEqual([alice.id]);
+    expect(graph.edges).toEqual([]);
   }, 120_000);
 });

@@ -276,6 +276,101 @@ describe('MCP tools', () => {
     }
   }, 120_000);
 
+  it('supports source, visibility-filtered search, and task metadata via MCP', async () => {
+    const { client, close } = await createClient();
+
+    try {
+      const sharedStore = extractStructuredPayload(
+        (await client.callTool({
+          name: 'store',
+          arguments: {
+            type: 'memory',
+            content: 'postgres notes for shared visibility',
+            visibility: 'shared',
+            source: 'mcp-shared'
+          }
+        })) as ToolResultPayload
+      ) as {
+        entity: { id: string; source: string | null };
+      };
+      expect(sharedStore.entity.source).toBe('mcp-shared');
+
+      await client.callTool({
+        name: 'store',
+        arguments: {
+          type: 'memory',
+          content: 'postgres notes for work visibility',
+          visibility: 'work',
+          source: 'mcp-work'
+        }
+      });
+
+      await createEnrichmentWorker({
+        pool: database!.pool,
+        embeddingService
+      }).runOnce();
+
+      const searched = extractStructuredPayload(
+        (await client.callTool({
+          name: 'search',
+          arguments: {
+            query: 'postgres notes',
+            visibility: 'work',
+            threshold: 0
+          }
+        })) as ToolResultPayload
+      ) as {
+        results: Array<{ entity: { visibility: string } }>;
+      };
+
+      expect(searched.results.length).toBeGreaterThan(0);
+      expect(searched.results.every((entry) => entry.entity.visibility === 'work')).toBe(true);
+
+      const createdTask = extractStructuredPayload(
+        (await client.callTool({
+          name: 'task_create',
+          arguments: {
+            content: 'write docs',
+            context: '@dev',
+            metadata: {
+              priority: 'high'
+            }
+          }
+        })) as ToolResultPayload
+      ) as {
+        entity: { id: string; version: number; metadata: Record<string, string> };
+      };
+
+      expect(createdTask.entity.metadata).toMatchObject({
+        context: '@dev',
+        priority: 'high'
+      });
+
+      const updatedTask = extractStructuredPayload(
+        (await client.callTool({
+          name: 'task_update',
+          arguments: {
+            id: createdTask.entity.id,
+            version: createdTask.entity.version,
+            metadata: {
+              owner: 'ivo'
+            }
+          }
+        })) as ToolResultPayload
+      ) as {
+        entity: { metadata: Record<string, string> };
+      };
+
+      expect(updatedTask.entity.metadata).toMatchObject({
+        context: '@dev',
+        priority: 'high',
+        owner: 'ivo'
+      });
+    } finally {
+      await close();
+    }
+  }, 120_000);
+
   it('keeps task tool behavior in parity with REST task operations', async () => {
     const { client, close } = await createClient();
 
@@ -445,7 +540,7 @@ describe('MCP tools', () => {
     }
   }, 120_000);
 
-  it('falls back to BM25 search when embedding fails', async () => {
+  it('returns EMBEDDING_FAILED when embedding fails', async () => {
     const failingEmbeddingService = createEmbeddingService({
       embedQuery: () => {
         throw new Error('forced query embedding failure');
@@ -463,11 +558,12 @@ describe('MCP tools', () => {
         }
       })) as ToolResultPayload;
 
-      expect(searchResult.isError).toBeUndefined();
+      expect(searchResult.isError).toBe(true);
       const payload = extractStructuredPayload(searchResult) as {
-        results: unknown[];
+        error: { code: string; message: string };
       };
-      expect(Array.isArray(payload.results)).toBe(true);
+      expect(payload.error.code).toBe('EMBEDDING_FAILED');
+      expect(payload.error.message).toBe('forced query embedding failure');
     } finally {
       await close();
     }

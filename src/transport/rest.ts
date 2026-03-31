@@ -434,10 +434,13 @@ export function registerRestRoutes(
   app.get('/api/entities/:id/edges', async (c) => {
     const auth = c.get('auth');
     const relation = c.req.query('relation');
-    const direction = c.req.query('direction') as 'source' | 'target' | 'both' | undefined;
+    const direction = c.req.query('direction');
+    if (direction && !['source', 'target', 'both'].includes(direction)) {
+      throw toValidationError('Invalid direction — must be source, target, or both');
+    }
     const result = await listEdges(pool, auth, c.req.param('id'), {
       ...(relation !== undefined ? { relation } : {}),
-      direction: direction ?? 'both'
+      direction: (direction ?? 'both') as 'source' | 'target' | 'both'
     });
 
     if (result.isErr()) {
@@ -460,8 +463,7 @@ export function registerRestRoutes(
 
   app.get('/api/entities/:id/graph', async (c) => {
     const auth = c.get('auth');
-    const depthRaw = c.req.query('depth');
-    const depth = depthRaw ? Number(depthRaw) : undefined;
+    const depth = c.req.query('depth') ? parseQueryNumber(c.req.query('depth'), 1) : undefined;
     const relationTypesRaw = c.req.query('relation_types');
     const relationTypes = relationTypesRaw ? relationTypesRaw.split(',').filter(Boolean) : undefined;
     const result = await expandGraph(pool, auth, c.req.param('id'), {
@@ -473,6 +475,19 @@ export function registerRestRoutes(
       throw result.error;
     }
 
-    return c.json(result.value);
+    const graph = result.value;
+    return c.json({
+      entities: graph.entities,
+      edges: graph.edges.map((edge) => ({
+        id: edge.id,
+        source_id: edge.sourceId,
+        target_id: edge.targetId,
+        relation: edge.relation,
+        confidence: edge.confidence,
+        source: edge.source,
+        metadata: edge.metadata,
+        created_at: edge.createdAt
+      }))
+    });
   });
 }

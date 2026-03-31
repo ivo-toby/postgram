@@ -145,13 +145,13 @@ export function createEnrichmentWorker(options: EnrichmentWorkerOptions) {
           `
         );
 
-        const extractionAuth: AuthContext = {
-          apiKeyId: null as unknown as string,
+        const extractionAuth = {
+          apiKeyId: '',
           keyName: 'system-extraction',
-          scopes: ['read', 'write', 'delete'],
+          scopes: ['read', 'write', 'delete'] as const,
           allowedTypes: null,
-          allowedVisibility: ['personal', 'work', 'shared']
-        };
+          allowedVisibility: ['personal', 'work', 'shared'] as const
+        } satisfies AuthContext;
 
         for (const entity of extractionPending.rows) {
           try {

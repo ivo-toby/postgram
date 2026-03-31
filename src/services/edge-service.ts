@@ -1,7 +1,7 @@
 import { ResultAsync } from 'neverthrow';
 import type { Pool } from 'pg';
 
-import { requireScope } from '../auth/key-service.js';
+import { checkTypeAccess, checkVisibilityAccess, requireScope } from '../auth/key-service.js';
 import type { AuthContext } from '../auth/types.js';
 import type { ServiceResult } from '../types/common.js';
 import { appendAuditEntry } from '../util/audit.js';
@@ -65,12 +65,18 @@ export function createEdge(
     (async () => {
       requireScope(auth, 'write');
 
-      const entities = await pool.query(
-        'SELECT id FROM entities WHERE id = ANY($1)',
-        [[input.sourceId, input.targetId]]
+      // Fetch both entities with type and visibility for auth checks
+      const entityRows = await pool.query<{ id: string; type: string; visibility: string }>(
+        'SELECT id, type, visibility FROM entities WHERE id = ANY($1) AND status IS DISTINCT FROM \'archived\'',
+        [input.sourceId === input.targetId ? [input.sourceId] : [input.sourceId, input.targetId]]
       );
-      if (entities.rows.length < 2) {
+      const expectedCount = input.sourceId === input.targetId ? 1 : 2;
+      if (entityRows.rows.length < expectedCount) {
         throw new AppError(ErrorCode.NOT_FOUND, 'One or both entities not found');
+      }
+      for (const entity of entityRows.rows) {
+        checkTypeAccess(auth, entity.type as never);
+        checkVisibilityAccess(auth, entity.visibility as never);
       }
 
       const result = await pool.query<EdgeRow>(
@@ -111,13 +117,22 @@ export function deleteEdge(
     (async () => {
       requireScope(auth, 'delete');
 
-      const result = await pool.query(
-        'DELETE FROM edges WHERE id = $1 RETURNING id',
+      const edge = await pool.query<EdgeRow>(
+        'SELECT * FROM edges WHERE id = $1',
         [edgeId]
       );
-      if (result.rowCount === 0) {
+      if (!edge.rows[0]) {
         throw new AppError(ErrorCode.NOT_FOUND, 'Edge not found');
       }
+      const endpoints = await pool.query<{ type: string; visibility: string }>(
+        'SELECT type, visibility FROM entities WHERE id = ANY($1)',
+        [[edge.rows[0].source_id, edge.rows[0].target_id]]
+      );
+      for (const entity of endpoints.rows) {
+        checkTypeAccess(auth, entity.type as never);
+        checkVisibilityAccess(auth, entity.visibility as never);
+      }
+      await pool.query('DELETE FROM edges WHERE id = $1', [edgeId]);
 
       await appendAuditEntry(pool, {
         apiKeyId: auth.apiKeyId,
@@ -158,8 +173,18 @@ export function listEdges(
       }
 
       const result = await pool.query<EdgeRow>(
-        `SELECT * FROM edges WHERE ${whereClause} ORDER BY created_at DESC`,
-        params
+        `SELECT edges.* FROM edges
+         JOIN entities src ON src.id = edges.source_id
+         JOIN entities tgt ON tgt.id = edges.target_id
+         WHERE ${whereClause}
+           AND src.status IS DISTINCT FROM 'archived'
+           AND tgt.status IS DISTINCT FROM 'archived'
+           AND ($${params.length + 1}::text[] IS NULL OR src.type = ANY($${params.length + 1}))
+           AND ($${params.length + 1}::text[] IS NULL OR tgt.type = ANY($${params.length + 1}))
+           AND src.visibility = ANY($${params.length + 2})
+           AND tgt.visibility = ANY($${params.length + 2})
+         ORDER BY edges.created_at DESC`,
+        [...params, auth.allowedTypes, auth.allowedVisibility]
       );
 
       return result.rows.map(mapEdge);
@@ -227,8 +252,12 @@ export function expandGraph(
       const entityRows = await pool.query<{
         id: string; type: string; content: string | null; metadata: Record<string, unknown>;
       }>(
-        'SELECT id, type, content, metadata FROM entities WHERE id = ANY($1)',
-        [Array.from(entityIds)]
+        `SELECT id, type, content, metadata FROM entities
+         WHERE id = ANY($1)
+           AND status IS DISTINCT FROM 'archived'
+           AND ($2::text[] IS NULL OR type = ANY($2))
+           AND visibility = ANY($3)`,
+        [Array.from(entityIds), auth.allowedTypes, auth.allowedVisibility]
       );
 
       return {

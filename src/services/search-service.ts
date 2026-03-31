@@ -364,8 +364,12 @@ export function searchEntities(
             const neighbors = await pool.query<{
               id: string; type: string; content: string | null; metadata: Record<string, unknown>;
             }>(
-              'SELECT id, type, content, metadata FROM entities WHERE id = ANY($1)',
-              [Array.from(neighborIds)]
+              `SELECT id, type, content, metadata FROM entities
+               WHERE id = ANY($1)
+                 AND status IS DISTINCT FROM 'archived'
+                 AND ($2::text[] IS NULL OR type = ANY($2))
+                 AND visibility = ANY($3)`,
+              [Array.from(neighborIds), auth.allowedTypes, auth.allowedVisibility]
             );
 
             const neighborMap = new Map(neighbors.rows.map((n) => [n.id, n]));

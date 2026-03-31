@@ -491,7 +491,19 @@ function createSessionServer(
           ...(args.depth !== undefined ? { depth: args.depth } : {}),
           ...(args.relation_types !== undefined ? { relationTypes: args.relation_types } : {})
         }),
-        (value) => value
+        (value) => ({
+          entities: value.entities,
+          edges: value.edges.map((edge) => ({
+            id: edge.id,
+            source_id: edge.sourceId,
+            target_id: edge.targetId,
+            relation: edge.relation,
+            confidence: edge.confidence,
+            source: edge.source,
+            metadata: edge.metadata,
+            created_at: edge.createdAt
+          }))
+        })
       )
   );
 

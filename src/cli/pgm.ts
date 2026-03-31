@@ -1,3 +1,5 @@
+#!/usr/bin/env node
+
 import { spawn, spawnSync } from 'node:child_process';
 import { createHash } from 'node:crypto';
 import { createWriteStream } from 'node:fs';

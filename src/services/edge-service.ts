@@ -79,6 +79,8 @@ export function createEdge(
         checkVisibilityAccess(auth, entity.visibility as never);
       }
 
+      const confidence = Math.max(0, Math.min(1, input.confidence ?? 1.0));
+
       const result = await pool.query<EdgeRow>(
         `
           INSERT INTO edges (source_id, target_id, relation, confidence, source, metadata)
@@ -89,7 +91,7 @@ export function createEdge(
         `,
         [
           input.sourceId, input.targetId, input.relation,
-          input.confidence ?? 1.0, input.source ?? 'manual',
+          confidence, input.source ?? 'manual',
           input.metadata ?? {}
         ]
       );

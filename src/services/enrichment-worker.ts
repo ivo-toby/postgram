@@ -22,6 +22,10 @@ type EnrichmentWorkerOptions = {
 };
 
 export function createEnrichmentWorker(options: EnrichmentWorkerOptions) {
+  if (options.extractionEnabled && !options.callLlm) {
+    throw new Error('callLlm is required when extractionEnabled is true');
+  }
+
   const embeddingService = options.embeddingService ?? createEmbeddingService();
 
   return {
@@ -145,13 +149,13 @@ export function createEnrichmentWorker(options: EnrichmentWorkerOptions) {
           `
         );
 
-        const extractionAuth = {
-          apiKeyId: '',
+        const extractionAuth: AuthContext = {
+          apiKeyId: null,
           keyName: 'system-extraction',
           scopes: ['read', 'write', 'delete'] as const,
           allowedTypes: null,
           allowedVisibility: ['personal', 'work', 'shared'] as const
-        } satisfies AuthContext;
+        };
 
         for (const entity of extractionPending.rows) {
           try {

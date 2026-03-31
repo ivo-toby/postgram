@@ -339,40 +339,51 @@ export function searchEntities(
       }
 
       if (input.expandGraph && results.results.length > 0) {
-        for (const result of results.results) {
-          const edgesResult = await pool.query<{
-            source_id: string; target_id: string; relation: string;
-          }>(
-            'SELECT source_id, target_id, relation FROM edges WHERE source_id = $1 OR target_id = $1',
-            [result.entityId]
-          );
+        // Batch graph expansion: 2 queries total instead of 2N
+        const resultEntityIds = results.results.map((r) => r.entityId);
 
-          const neighborIds = new Set<string>();
-          const edgeInfo: Array<{ entityId: string; relation: string; direction: 'outgoing' | 'incoming' }> = [];
+        const allEdges = await pool.query<{
+          source_id: string; target_id: string; relation: string;
+        }>(
+          'SELECT source_id, target_id, relation FROM edges WHERE source_id = ANY($1) OR target_id = ANY($1)',
+          [resultEntityIds]
+        );
 
-          for (const edge of edgesResult.rows) {
-            if (edge.source_id === result.entityId) {
-              neighborIds.add(edge.target_id);
-              edgeInfo.push({ entityId: edge.target_id, relation: edge.relation, direction: 'outgoing' });
-            } else {
-              neighborIds.add(edge.source_id);
-              edgeInfo.push({ entityId: edge.source_id, relation: edge.relation, direction: 'incoming' });
+        // Collect all neighbor IDs and build per-entity edge info
+        const edgesByEntityId = new Map<string, Array<{ entityId: string; relation: string; direction: 'outgoing' | 'incoming' }>>();
+        const allNeighborIds = new Set<string>();
+
+        for (const edge of allEdges.rows) {
+          for (const entityId of resultEntityIds) {
+            if (edge.source_id === entityId) {
+              if (!edgesByEntityId.has(entityId)) edgesByEntityId.set(entityId, []);
+              edgesByEntityId.get(entityId)!.push({ entityId: edge.target_id, relation: edge.relation, direction: 'outgoing' });
+              allNeighborIds.add(edge.target_id);
+            } else if (edge.target_id === entityId) {
+              if (!edgesByEntityId.has(entityId)) edgesByEntityId.set(entityId, []);
+              edgesByEntityId.get(entityId)!.push({ entityId: edge.source_id, relation: edge.relation, direction: 'incoming' });
+              allNeighborIds.add(edge.source_id);
             }
           }
+        }
 
-          if (neighborIds.size > 0) {
-            const neighbors = await pool.query<{
-              id: string; type: string; content: string | null; metadata: Record<string, unknown>;
-            }>(
-              `SELECT id, type, content, metadata FROM entities
-               WHERE id = ANY($1)
-                 AND status IS DISTINCT FROM 'archived'
-                 AND ($2::text[] IS NULL OR type = ANY($2))
-                 AND visibility = ANY($3)`,
-              [Array.from(neighborIds), auth.allowedTypes, auth.allowedVisibility]
-            );
+        if (allNeighborIds.size > 0) {
+          const neighbors = await pool.query<{
+            id: string; type: string; content: string | null; metadata: Record<string, unknown>;
+          }>(
+            `SELECT id, type, content, metadata FROM entities
+             WHERE id = ANY($1)
+               AND status IS DISTINCT FROM 'archived'
+               AND ($2::text[] IS NULL OR type = ANY($2))
+               AND visibility = ANY($3)`,
+            [Array.from(allNeighborIds), auth.allowedTypes, auth.allowedVisibility]
+          );
 
-            const neighborMap = new Map(neighbors.rows.map((n) => [n.id, n]));
+          const neighborMap = new Map(neighbors.rows.map((n) => [n.id, n]));
+
+          for (const result of results.results) {
+            const edgeInfo = edgesByEntityId.get(result.entityId);
+            if (!edgeInfo) continue;
             result.related = edgeInfo
               .map((info) => {
                 const entity = neighborMap.get(info.entityId);

@@ -5,7 +5,7 @@ CREATE TABLE edges (
   source_id  uuid NOT NULL REFERENCES entities(id) ON DELETE CASCADE,
   target_id  uuid NOT NULL REFERENCES entities(id) ON DELETE CASCADE,
   relation   text NOT NULL,
-  confidence float NOT NULL DEFAULT 1.0,
+  confidence float NOT NULL DEFAULT 1.0 CHECK (confidence >= 0 AND confidence <= 1),
   source     text,
   metadata   jsonb NOT NULL DEFAULT '{}',
   created_at timestamptz NOT NULL DEFAULT now(),

@@ -200,7 +200,7 @@ Response: `200 OK` with `{ "edges": Edge[] }`
 ### `GET /api/entities/:id/graph` — expand graph
 
 Query params: `depth` (default: 1, max: 3), `relation_types` (comma-separated)
-Response: `200 OK` with `{ "root": Entity, "entities": Entity[], "edges": Edge[] }`
+Response: `200 OK` with `{ "entities": Entity[], "edges": Edge[] }` — the requested entity is included in the entities list
 
 ### Search enhancement
 

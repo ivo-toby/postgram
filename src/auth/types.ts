@@ -16,7 +16,7 @@ export type ApiKeyRecord = {
 };
 
 export type AuthContext = {
-  apiKeyId: string;
+  apiKeyId: string | null;
   keyName: string;
   scopes: Scope[];
   allowedTypes: EntityType[] | null;

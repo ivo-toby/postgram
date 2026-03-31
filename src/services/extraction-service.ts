@@ -43,7 +43,9 @@ export function parseExtractionResponse(response: string): ExtractionResult[] {
         targetName: item.target_name!,
         targetType: item.target_type ?? 'memory',
         relation: item.relation!,
-        confidence: typeof item.confidence === 'number' ? item.confidence : 0.5
+        confidence: typeof item.confidence === 'number'
+          ? Math.max(0, Math.min(1, item.confidence))
+          : 0.5
       }));
   } catch {
     return [];
@@ -103,6 +105,9 @@ export async function extractAndLinkRelationships(
             metadata->>'title' ILIKE $2
             OR content ILIKE $3
           )
+        ORDER BY
+          CASE WHEN metadata->>'title' ILIKE $2 THEN 0 ELSE 1 END,
+          created_at DESC
         LIMIT 1
       `,
       [entityId, extraction.targetName, `%${extraction.targetName}%`]

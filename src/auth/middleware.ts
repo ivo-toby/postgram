@@ -50,7 +50,7 @@ export function createAuthMiddleware({
 
     const auth = validated.value;
     c.set('auth', auth);
-    void touchLastUsedAt(pool, auth.apiKeyId);
+    if (auth.apiKeyId) void touchLastUsedAt(pool, auth.apiKeyId);
     await next();
   };
 }

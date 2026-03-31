@@ -140,18 +140,37 @@ export async function startServer(): Promise<{
   const embeddingService = createEmbeddingService();
 
   try {
-    await embeddingService.embedQuery('startup validation');
+    const activeModel = await embeddingService.getActiveModel(pool);
+    await embeddingService.embedQuery('startup validation', activeModel);
     logger.info('embedding service validated');
   } catch (error) {
     logger.warn(
       { err: error },
-      'embedding service unavailable — enrichment will be disabled and search will fall back to BM25-only'
+      'embedding service unavailable — enrichment and semantic search will fail until embeddings recover'
+    );
+  }
+
+  let callLlm: ((prompt: string) => Promise<string>) | undefined;
+  if (config.EXTRACTION_ENABLED) {
+    const { createLlmProvider } = await import('./services/llm-provider.js');
+    callLlm = createLlmProvider({
+      provider: config.EXTRACTION_PROVIDER,
+      model: config.EXTRACTION_MODEL,
+      openaiApiKey: config.OPENAI_API_KEY,
+      anthropicApiKey: config.ANTHROPIC_API_KEY,
+      ollamaBaseUrl: config.OLLAMA_BASE_URL
+    });
+    logger.info(
+      { provider: config.EXTRACTION_PROVIDER, model: config.EXTRACTION_MODEL },
+      'LLM extraction enabled'
     );
   }
 
   const worker = createEnrichmentWorker({
     pool,
-    embeddingService
+    embeddingService,
+    extractionEnabled: config.EXTRACTION_ENABLED,
+    callLlm
   });
   const interval = setInterval(() => {
     void worker.runOnce().catch((error) => {

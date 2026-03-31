@@ -188,6 +188,8 @@ describe('MCP tools', () => {
       const tools = await client.listTools();
       expect(tools.tools.map((tool) => tool.name).sort()).toEqual([
         'delete',
+        'expand',
+        'link',
         'recall',
         'search',
         'store',
@@ -197,6 +199,7 @@ describe('MCP tools', () => {
         'task_create',
         'task_list',
         'task_update',
+        'unlink',
         'update'
       ]);
     } finally {
@@ -267,6 +270,101 @@ describe('MCP tools', () => {
       expect(deletePayload).toEqual({
         id: storePayload.entity.id,
         deleted: true
+      });
+    } finally {
+      await close();
+    }
+  }, 120_000);
+
+  it('supports source, visibility-filtered search, and task metadata via MCP', async () => {
+    const { client, close } = await createClient();
+
+    try {
+      const sharedStore = extractStructuredPayload(
+        (await client.callTool({
+          name: 'store',
+          arguments: {
+            type: 'memory',
+            content: 'postgres notes for shared visibility',
+            visibility: 'shared',
+            source: 'mcp-shared'
+          }
+        })) as ToolResultPayload
+      ) as {
+        entity: { id: string; source: string | null };
+      };
+      expect(sharedStore.entity.source).toBe('mcp-shared');
+
+      await client.callTool({
+        name: 'store',
+        arguments: {
+          type: 'memory',
+          content: 'postgres notes for work visibility',
+          visibility: 'work',
+          source: 'mcp-work'
+        }
+      });
+
+      await createEnrichmentWorker({
+        pool: database!.pool,
+        embeddingService
+      }).runOnce();
+
+      const searched = extractStructuredPayload(
+        (await client.callTool({
+          name: 'search',
+          arguments: {
+            query: 'postgres notes',
+            visibility: 'work',
+            threshold: 0
+          }
+        })) as ToolResultPayload
+      ) as {
+        results: Array<{ entity: { visibility: string } }>;
+      };
+
+      expect(searched.results.length).toBeGreaterThan(0);
+      expect(searched.results.every((entry) => entry.entity.visibility === 'work')).toBe(true);
+
+      const createdTask = extractStructuredPayload(
+        (await client.callTool({
+          name: 'task_create',
+          arguments: {
+            content: 'write docs',
+            context: '@dev',
+            metadata: {
+              priority: 'high'
+            }
+          }
+        })) as ToolResultPayload
+      ) as {
+        entity: { id: string; version: number; metadata: Record<string, string> };
+      };
+
+      expect(createdTask.entity.metadata).toMatchObject({
+        context: '@dev',
+        priority: 'high'
+      });
+
+      const updatedTask = extractStructuredPayload(
+        (await client.callTool({
+          name: 'task_update',
+          arguments: {
+            id: createdTask.entity.id,
+            version: createdTask.entity.version,
+            metadata: {
+              owner: 'ivo'
+            }
+          }
+        })) as ToolResultPayload
+      ) as {
+        entity: { metadata: Record<string, string> };
+      };
+
+      expect(updatedTask.entity.metadata).toMatchObject({
+        context: '@dev',
+        priority: 'high',
+        owner: 'ivo'
       });
     } finally {
       await close();
@@ -386,7 +484,63 @@ describe('MCP tools', () => {
     }
   }, 120_000);
 
-  it('falls back to BM25 search when embedding fails', async () => {
+  it('creates edges and expands graph via MCP tools', async () => {
+    const { client, close } = await startServerWithEmbeddingService(
+      createEmbeddingService()
+    );
+
+    try {
+      // Create entities first
+      const personResult = (await client.callTool({
+        name: 'store',
+        arguments: { type: 'person', content: 'Bob' }
+      })) as ToolResultPayload;
+      const person = (extractStructuredPayload(personResult) as { entity: { id: string } }).entity;
+
+      const projectResult = (await client.callTool({
+        name: 'store',
+        arguments: { type: 'project', content: 'Beta' }
+      })) as ToolResultPayload;
+      const project = (extractStructuredPayload(projectResult) as { entity: { id: string } }).entity;
+
+      // Link them
+      const linkResult = (await client.callTool({
+        name: 'link',
+        arguments: {
+          source_id: person.id,
+          target_id: project.id,
+          relation: 'involves'
+        }
+      })) as ToolResultPayload;
+      expect(linkResult.isError).toBeUndefined();
+      const edge = (extractStructuredPayload(linkResult) as { edge: { id: string; relation: string } }).edge;
+      expect(edge.relation).toBe('involves');
+
+      // Expand graph
+      const expandResult = (await client.callTool({
+        name: 'expand',
+        arguments: { entity_id: person.id }
+      })) as ToolResultPayload;
+      expect(expandResult.isError).toBeUndefined();
+      const graph = extractStructuredPayload(expandResult) as {
+        entities: Array<{ id: string }>;
+        edges: Array<{ id: string }>;
+      };
+      expect(graph.entities.length).toBeGreaterThanOrEqual(2);
+      expect(graph.edges).toHaveLength(1);
+
+      // Unlink
+      const unlinkResult = (await client.callTool({
+        name: 'unlink',
+        arguments: { id: edge.id }
+      })) as ToolResultPayload;
+      expect(unlinkResult.isError).toBeUndefined();
+    } finally {
+      await close();
+    }
+  }, 120_000);
+
+  it('returns EMBEDDING_FAILED when embedding fails', async () => {
     const failingEmbeddingService = createEmbeddingService({
       embedQuery: () => {
         throw new Error('forced query embedding failure');
@@ -404,11 +558,12 @@ describe('MCP tools', () => {
         }
       })) as ToolResultPayload;
 
-      expect(searchResult.isError).toBeUndefined();
+      expect(searchResult.isError).toBe(true);
       const payload = extractStructuredPayload(searchResult) as {
-        results: unknown[];
+        error: { code: string; message: string };
       };
-      expect(Array.isArray(payload.results)).toBe(true);
+      expect(payload.error.code).toBe('EMBEDDING_FAILED');
+      expect(payload.error.message).toBe('forced query embedding failure');
     } finally {
       await close();
     }

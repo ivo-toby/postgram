@@ -11,6 +11,7 @@ import type { Pool } from 'pg';
 import { validateKey } from '../auth/key-service.js';
 import type { AuthContext } from '../auth/types.js';
 import type { EmbeddingService } from '../services/embedding-service.js';
+import { createEdge, deleteEdge, expandGraph } from '../services/edge-service.js';
 import { recallEntity, softDeleteEntity, storeEntity, updateEntity } from '../services/entity-service.js';
 import { searchEntities } from '../services/search-service.js';
 import { syncManifest, getSyncStatus } from '../services/sync-service.js';
@@ -206,6 +207,7 @@ function createSessionServer(
         visibility: visibilitySchema.optional(),
         status: statusSchema.optional(),
         tags: z.array(z.string()).optional(),
+        source: z.string().optional(),
         metadata: z.record(z.unknown()).optional()
       }
     },
@@ -217,6 +219,7 @@ function createSessionServer(
           visibility: args.visibility,
           status: args.status,
           tags: args.tags,
+          source: args.source,
           metadata: args.metadata
         }),
         (entity) => ({ entity: toStoredEntity(entity) })
@@ -245,9 +248,11 @@ function createSessionServer(
         query: z.string().min(1),
         type: entityTypeSchema.optional(),
         tags: z.array(z.string()).optional(),
+        visibility: visibilitySchema.optional(),
         limit: z.number().int().positive().optional(),
         threshold: z.number().min(0).max(1).optional(),
-        recency_weight: z.number().min(0).optional()
+        recency_weight: z.number().min(0).optional(),
+        expand_graph: z.boolean().optional()
       }
     },
     (args) =>
@@ -259,9 +264,11 @@ function createSessionServer(
             query: args.query,
             type: args.type,
             tags: args.tags,
+            visibility: args.visibility,
             limit: args.limit,
             threshold: args.threshold,
-            recencyWeight: args.recency_weight
+            recencyWeight: args.recency_weight,
+            expandGraph: args.expand_graph
           },
           {
             embeddingService: options.embeddingService
@@ -272,7 +279,8 @@ function createSessionServer(
             entity: toStoredEntity(entry.entity),
             chunk_content: entry.chunkContent,
             similarity: entry.similarity,
-            score: entry.score
+            score: entry.score,
+            ...(entry.related ? { related: entry.related } : {})
           }))
         })
       )
@@ -289,6 +297,7 @@ function createSessionServer(
         visibility: visibilitySchema.optional(),
         status: statusSchema.nullable().optional(),
         tags: z.array(z.string()).optional(),
+        source: z.string().nullable().optional(),
         metadata: z.record(z.unknown()).optional()
       }
     },
@@ -301,6 +310,7 @@ function createSessionServer(
           visibility: args.visibility,
           status: args.status,
           tags: args.tags,
+          source: args.source,
           metadata: args.metadata
         }),
         (entity) => ({ entity: toStoredEntity(entity) })
@@ -328,7 +338,8 @@ function createSessionServer(
         status: statusSchema.optional(),
         due_date: z.string().optional(),
         tags: z.array(z.string()).optional(),
-        visibility: visibilitySchema.optional()
+        visibility: visibilitySchema.optional(),
+        metadata: z.record(z.unknown()).optional()
       }
     },
     (args) =>
@@ -339,7 +350,8 @@ function createSessionServer(
           status: args.status,
           dueDate: args.due_date,
           tags: args.tags,
-          visibility: args.visibility
+          visibility: args.visibility,
+          metadata: args.metadata
         }),
         (entity) => ({ entity: toStoredEntity(entity) })
       )
@@ -385,7 +397,8 @@ function createSessionServer(
         status: statusSchema.nullable().optional(),
         due_date: z.string().optional(),
         tags: z.array(z.string()).optional(),
-        visibility: visibilitySchema.optional()
+        visibility: visibilitySchema.optional(),
+        metadata: z.record(z.unknown()).optional()
       }
     },
     (args) =>
@@ -398,7 +411,8 @@ function createSessionServer(
           status: args.status,
           dueDate: args.due_date,
           tags: args.tags,
-          visibility: args.visibility
+          visibility: args.visibility,
+          metadata: args.metadata
         }),
         (entity) => ({ entity: toStoredEntity(entity) })
       )
@@ -420,6 +434,86 @@ function createSessionServer(
           version: args.version
         }),
         (entity) => ({ entity: toStoredEntity(entity) })
+      )
+  );
+
+  server.registerTool(
+    'link',
+    {
+      description: 'Create a relationship between two entities',
+      inputSchema: {
+        source_id: z.string().min(1),
+        target_id: z.string().min(1),
+        relation: z.string().min(1),
+        confidence: z.number().min(0).max(1).optional(),
+        metadata: z.record(z.unknown()).optional()
+      }
+    },
+    (args) =>
+      toolFromService(
+        createEdge(pool, auth, {
+          sourceId: args.source_id,
+          targetId: args.target_id,
+          relation: args.relation,
+          ...(args.confidence !== undefined ? { confidence: args.confidence } : {}),
+          ...(args.metadata !== undefined ? { metadata: args.metadata } : {})
+        }),
+        (edge) => ({
+          edge: {
+            id: edge.id,
+            source_id: edge.sourceId,
+            target_id: edge.targetId,
+            relation: edge.relation,
+            confidence: edge.confidence,
+            source: edge.source,
+            metadata: edge.metadata,
+            created_at: edge.createdAt
+          }
+        })
+      )
+  );
+
+  server.registerTool(
+    'unlink',
+    {
+      description: 'Remove a relationship between entities',
+      inputSchema: {
+        id: z.string().min(1)
+      }
+    },
+    (args) =>
+      toolFromService(deleteEdge(pool, auth, args.id), (value) => value)
+  );
+
+  server.registerTool(
+    'expand',
+    {
+      description: 'Get the graph neighborhood of an entity — connected entities up to N hops',
+      inputSchema: {
+        entity_id: z.string().min(1),
+        depth: z.number().int().min(1).max(3).optional(),
+        relation_types: z.array(z.string()).optional()
+      }
+    },
+    (args) =>
+      toolFromService(
+        expandGraph(pool, auth, args.entity_id, {
+          ...(args.depth !== undefined ? { depth: args.depth } : {}),
+          ...(args.relation_types !== undefined ? { relationTypes: args.relation_types } : {})
+        }),
+        (value) => ({
+          entities: value.entities,
+          edges: value.edges.map((edge) => ({
+            id: edge.id,
+            source_id: edge.sourceId,
+            target_id: edge.targetId,
+            relation: edge.relation,
+            confidence: edge.confidence,
+            source: edge.source,
+            metadata: edge.metadata,
+            created_at: edge.createdAt
+          }))
+        })
       )
   );
 

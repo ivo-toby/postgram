@@ -167,6 +167,10 @@ export function syncManifest(
               );
             }
 
+            await client.query('DELETE FROM chunks WHERE entity_id = $1', [
+              existing.entity_id
+            ]);
+
             await client.query(
               `
                 UPDATE document_sources

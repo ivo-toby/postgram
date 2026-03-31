@@ -7,7 +7,17 @@ const configSchema = z.object({
   LOG_LEVEL: z
     .enum(['trace', 'debug', 'info', 'warn', 'error', 'fatal'])
     .default('info'),
-  ENRICHMENT_POLL_INTERVAL_MS: z.coerce.number().int().positive().default(1000)
+  ENRICHMENT_POLL_INTERVAL_MS: z.coerce.number().int().positive().default(1000),
+  EXTRACTION_ENABLED: z
+    .enum(['true', 'false'])
+    .default('false')
+    .transform((v) => v === 'true'),
+  EXTRACTION_PROVIDER: z
+    .enum(['openai', 'anthropic', 'ollama'])
+    .default('openai'),
+  EXTRACTION_MODEL: z.string().optional(),
+  ANTHROPIC_API_KEY: z.string().optional(),
+  OLLAMA_BASE_URL: z.string().default('http://localhost:11434')
 });
 
 export type AppConfig = z.infer<typeof configSchema>;

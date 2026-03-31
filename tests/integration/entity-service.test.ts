@@ -182,6 +182,81 @@ describe('entity-service', () => {
     });
   }, 120_000);
 
+  it('allows delete-only keys to soft delete accessible entities', async () => {
+    if (!database) {
+      throw new Error('test database not initialized');
+    }
+
+    await seedApiKey(database.pool, {
+      id: '00000000-0000-0000-0000-000000000105',
+      name: 'delete-only-key',
+      scopes: ['delete'],
+      allowedVisibility: ['shared']
+    });
+
+    const stored = (await storeEntity(database.pool, makeAuthContext(), {
+      type: 'memory',
+      content: 'delete me',
+      visibility: 'shared'
+    }))._unsafeUnwrap();
+
+    const deleted = await softDeleteEntity(
+      database.pool,
+      makeAuthContext({
+        apiKeyId: '00000000-0000-0000-0000-000000000105',
+        keyName: 'delete-only-key',
+        scopes: ['delete'],
+        allowedVisibility: ['shared']
+      }),
+      stored.id
+    );
+
+    expect(deleted.isOk()).toBe(true);
+
+    const recalled = await recallEntity(
+      database.pool,
+      makeAuthContext(),
+      stored.id
+    );
+    expect(recalled.isOk()).toBe(true);
+    expect(recalled._unsafeUnwrap().status).toBe('archived');
+  }, 120_000);
+
+  it('removes stale chunks when content is cleared', async () => {
+    if (!database) {
+      throw new Error('test database not initialized');
+    }
+
+    const stored = (await storeEntity(database.pool, makeAuthContext(), {
+      type: 'memory',
+      content: 'pgvector keeps old chunks around'
+    }))._unsafeUnwrap();
+
+    await createEnrichmentWorker({
+      pool: database.pool,
+      embeddingService: createEmbeddingService()
+    }).runOnce();
+
+    const before = await database.pool.query<{ count: string }>(
+      'SELECT count(*)::text AS count FROM chunks WHERE entity_id = $1',
+      [stored.id]
+    );
+    expect(Number(before.rows[0]?.count ?? '0')).toBeGreaterThan(0);
+
+    const updated = await updateEntity(database.pool, makeAuthContext(), {
+      id: stored.id,
+      version: stored.version,
+      content: ''
+    });
+    expect(updated.isOk()).toBe(true);
+
+    const after = await database.pool.query<{ count: string }>(
+      'SELECT count(*)::text AS count FROM chunks WHERE entity_id = $1',
+      [stored.id]
+    );
+    expect(Number(after.rows[0]?.count ?? '0')).toBe(0);
+  }, 120_000);
+
   it('emits audit rows for mutating operations but not recall, list, or search', async () => {
     if (!database) {
       throw new Error('test database not initialized');

@@ -44,15 +44,22 @@ export type SearchResult = {
   chunkContent: string;
   similarity: number;
   score: number;
+  related?: Array<{
+    entity: { id: string; type: string; content: string | null; metadata: Record<string, unknown> };
+    relation: string;
+    direction: 'outgoing' | 'incoming';
+  }> | undefined;
 };
 
 type SearchInput = {
   query: string;
   type?: EntityType | undefined;
   tags?: string[] | undefined;
+  visibility?: Visibility | undefined;
   limit?: number | undefined;
   threshold?: number | undefined;
   recencyWeight?: number | undefined;
+  expandGraph?: boolean | undefined;
 };
 
 type SearchOptions = {
@@ -156,7 +163,7 @@ async function runHybridSearch(
   pool: Pool,
   auth: AuthContext,
   input: SearchInput,
-  ctx: SearchContext & { queryEmbedding: number[] }
+  ctx: SearchContext & { queryEmbedding: number[]; queryText: string }
 ): Promise<{ results: SearchResult[] }> {
   const rows = await pool.query<SearchRow & { bm25: number }>(
     `
@@ -164,7 +171,7 @@ async function runHybridSearch(
         e.*,
         c.content AS chunk_content,
         1 - (c.embedding <=> $1::vector) AS similarity,
-        ts_rank(e.search_tsvector, plainto_tsquery('simple', $6)) AS bm25
+        ts_rank(e.search_tsvector, plainto_tsquery('simple', $7)) AS bm25
       FROM chunks c
       JOIN entities e ON e.id = c.entity_id
       WHERE e.status IS DISTINCT FROM 'archived'
@@ -172,6 +179,7 @@ async function runHybridSearch(
         AND ($3::text[] IS NULL OR e.tags @> $3)
         AND ($4::text[] IS NULL OR e.type = ANY($4))
         AND e.visibility = ANY($5)
+        AND ($6::text IS NULL OR e.visibility = $6)
     `,
     [
       vectorToSql(ctx.queryEmbedding),
@@ -179,7 +187,8 @@ async function runHybridSearch(
       input.tags?.length ? input.tags : null,
       auth.allowedTypes,
       auth.allowedVisibility,
-      input.query
+      input.visibility ?? null,
+      ctx.queryText
     ]
   );
 
@@ -298,6 +307,11 @@ export function searchEntities(
     (async () => {
       requireScope(auth, 'read');
 
+      const query = input.query.trim();
+      if (!query) {
+        throw new AppError(ErrorCode.VALIDATION, 'Query must not be empty');
+      }
+
       const threshold = input.threshold ?? 0.35;
       const recencyWeight = input.recencyWeight ?? 0.1;
       const limit = input.limit ?? 10;
@@ -305,30 +319,89 @@ export function searchEntities(
 
       const embeddingService =
         options.embeddingService ?? createEmbeddingService();
+      const activeModel = await embeddingService.getActiveModel(pool);
 
-      let queryEmbedding: number[] | null = null;
+      let queryEmbedding: number[];
       try {
-        queryEmbedding = await embeddingService.embedQuery(input.query);
-      } catch {
-        // Embedding failed — fall through to BM25-only
+        queryEmbedding = await embeddingService.embedQuery(query, activeModel);
+      } catch (error) {
+        if (error instanceof AppError) {
+          throw error;
+        }
+
+        throw new AppError(
+          ErrorCode.EMBEDDING_FAILED,
+          error instanceof Error ? error.message : 'Failed to embed query text'
+        );
       }
 
-      if (queryEmbedding) {
-        return runHybridSearch(pool, auth, input, {
-          queryEmbedding,
-          threshold,
-          recencyWeight,
-          limit,
-          now
-        });
-      }
-
-      return runBm25OnlySearch(pool, auth, input, {
+      const results = await runHybridSearch(pool, auth, input, {
+        queryEmbedding,
+        queryText: query,
         threshold,
         recencyWeight,
         limit,
         now
       });
+
+      if (input.expandGraph && results.results.length > 0) {
+        // Batch graph expansion: 2 queries total instead of 2N
+        const resultEntityIds = results.results.map((r) => r.entityId);
+
+        const allEdges = await pool.query<{
+          source_id: string; target_id: string; relation: string;
+        }>(
+          'SELECT source_id, target_id, relation FROM edges WHERE source_id = ANY($1) OR target_id = ANY($1)',
+          [resultEntityIds]
+        );
+
+        // Collect all neighbor IDs and build per-entity edge info
+        const edgesByEntityId = new Map<string, Array<{ entityId: string; relation: string; direction: 'outgoing' | 'incoming' }>>();
+        const allNeighborIds = new Set<string>();
+
+        for (const edge of allEdges.rows) {
+          for (const entityId of resultEntityIds) {
+            if (edge.source_id === entityId) {
+              if (!edgesByEntityId.has(entityId)) edgesByEntityId.set(entityId, []);
+              edgesByEntityId.get(entityId)!.push({ entityId: edge.target_id, relation: edge.relation, direction: 'outgoing' });
+              allNeighborIds.add(edge.target_id);
+            } else if (edge.target_id === entityId) {
+              if (!edgesByEntityId.has(entityId)) edgesByEntityId.set(entityId, []);
+              edgesByEntityId.get(entityId)!.push({ entityId: edge.source_id, relation: edge.relation, direction: 'incoming' });
+              allNeighborIds.add(edge.source_id);
+            }
+          }
+        }
+
+        if (allNeighborIds.size > 0) {
+          const neighbors = await pool.query<{
+            id: string; type: string; content: string | null; metadata: Record<string, unknown>;
+          }>(
+            `SELECT id, type, content, metadata FROM entities
+             WHERE id = ANY($1)
+               AND status IS DISTINCT FROM 'archived'
+               AND ($2::text[] IS NULL OR type = ANY($2))
+               AND visibility = ANY($3)`,
+            [Array.from(allNeighborIds), auth.allowedTypes, auth.allowedVisibility]
+          );
+
+          const neighborMap = new Map(neighbors.rows.map((n) => [n.id, n]));
+
+          for (const result of results.results) {
+            const edgeInfo = edgesByEntityId.get(result.entityId);
+            if (!edgeInfo) continue;
+            result.related = edgeInfo
+              .map((info) => {
+                const entity = neighborMap.get(info.entityId);
+                if (!entity) return null;
+                return { entity, relation: info.relation, direction: info.direction };
+              })
+              .filter((r): r is NonNullable<typeof r> => r !== null);
+          }
+        }
+      }
+
+      return results;
     })(),
     (error) => toAppError(error, 'Failed to search entities')
   );

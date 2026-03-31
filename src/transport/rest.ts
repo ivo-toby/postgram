@@ -4,6 +4,7 @@ import type { Pool } from 'pg';
 
 import type { AuthContext } from '../auth/types.js';
 import type { EmbeddingService } from '../services/embedding-service.js';
+import { createEdge, deleteEdge, listEdges, expandGraph } from '../services/edge-service.js';
 import { listEntities, recallEntity, softDeleteEntity, storeEntity, updateEntity } from '../services/entity-service.js';
 import { searchEntities } from '../services/search-service.js';
 import { syncManifest, getSyncStatus } from '../services/sync-service.js';
@@ -39,6 +40,7 @@ const storeEntitySchema = z.object({
   visibility: visibilitySchema.optional(),
   status: statusSchema.optional(),
   tags: z.array(z.string()).optional(),
+  source: z.string().optional(),
   metadata: z.record(z.unknown()).optional()
 });
 
@@ -48,6 +50,7 @@ const updateEntitySchema = z.object({
   visibility: visibilitySchema.optional(),
   status: statusSchema.nullable().optional(),
   tags: z.array(z.string()).optional(),
+  source: z.string().nullable().optional(),
   metadata: z.record(z.unknown()).optional()
 });
 
@@ -55,9 +58,11 @@ const searchEntitiesSchema = z.object({
   query: z.string().min(1),
   type: entityTypeSchema.optional(),
   tags: z.array(z.string()).optional(),
+  visibility: visibilitySchema.optional(),
   limit: z.number().int().positive().max(50).optional(),
   threshold: z.number().min(0).max(1).optional(),
-  recency_weight: z.number().min(0).optional()
+  recency_weight: z.number().min(0).optional(),
+  expand_graph: z.boolean().optional()
 });
 
 const taskCreateSchema = z.object({
@@ -66,7 +71,8 @@ const taskCreateSchema = z.object({
   status: statusSchema.optional(),
   due_date: z.string().optional(),
   tags: z.array(z.string()).optional(),
-  visibility: visibilitySchema.optional()
+  visibility: visibilitySchema.optional(),
+  metadata: z.record(z.unknown()).optional()
 });
 
 const taskUpdateSchema = z.object({
@@ -76,11 +82,20 @@ const taskUpdateSchema = z.object({
   status: statusSchema.nullable().optional(),
   due_date: z.string().optional(),
   tags: z.array(z.string()).optional(),
-  visibility: visibilitySchema.optional()
+  visibility: visibilitySchema.optional(),
+  metadata: z.record(z.unknown()).optional()
 });
 
 const taskCompleteSchema = z.object({
   version: z.number().int().positive()
+});
+
+const createEdgeSchema = z.object({
+  source_id: z.string().min(1),
+  target_id: z.string().min(1),
+  relation: z.string().min(1),
+  confidence: z.number().min(0).max(1).optional(),
+  metadata: z.record(z.unknown()).optional()
 });
 
 const syncManifestSchema = z.object({
@@ -246,9 +261,11 @@ export function registerRestRoutes(
         query: body.query,
         type: body.type,
         tags: body.tags,
+        visibility: body.visibility,
         limit: body.limit,
         threshold: body.threshold,
-        recencyWeight: body.recency_weight
+        recencyWeight: body.recency_weight,
+        expandGraph: body.expand_graph
       },
       {
         embeddingService: options.embeddingService
@@ -264,7 +281,8 @@ export function registerRestRoutes(
         entity: toStoredEntity(entry.entity),
         chunk_content: entry.chunkContent,
         similarity: entry.similarity,
-        score: entry.score
+        score: entry.score,
+        ...(entry.related ? { related: entry.related } : {})
       }))
     });
   });
@@ -278,7 +296,8 @@ export function registerRestRoutes(
       status: body.status,
       dueDate: body.due_date,
       tags: body.tags,
-      visibility: body.visibility
+      visibility: body.visibility,
+      metadata: body.metadata
     });
 
     if (result.isErr()) {
@@ -326,7 +345,8 @@ export function registerRestRoutes(
       status: body.status,
       dueDate: body.due_date,
       tags: body.tags,
-      visibility: body.visibility
+      visibility: body.visibility,
+      metadata: body.metadata
     });
 
     if (result.isErr()) {
@@ -375,6 +395,107 @@ export function registerRestRoutes(
     return c.json({
       repo,
       files: result.value
+    });
+  });
+
+  app.post('/api/edges', async (c) => {
+    const auth = c.get('auth');
+    const body = parseJsonBody(createEdgeSchema, await c.req.json());
+    const result = await createEdge(pool, auth, {
+      sourceId: body.source_id,
+      targetId: body.target_id,
+      relation: body.relation,
+      ...(body.confidence !== undefined ? { confidence: body.confidence } : {}),
+      ...(body.metadata !== undefined ? { metadata: body.metadata } : {})
+    });
+
+    if (result.isErr()) {
+      throw result.error;
+    }
+
+    const edge = result.value;
+    return c.json({
+      edge: {
+        id: edge.id,
+        source_id: edge.sourceId,
+        target_id: edge.targetId,
+        relation: edge.relation,
+        confidence: edge.confidence,
+        source: edge.source,
+        metadata: edge.metadata,
+        created_at: edge.createdAt
+      }
+    }, 201);
+  });
+
+  app.delete('/api/edges/:id', async (c) => {
+    const auth = c.get('auth');
+    const result = await deleteEdge(pool, auth, c.req.param('id'));
+
+    if (result.isErr()) {
+      throw result.error;
+    }
+
+    return c.json(result.value);
+  });
+
+  app.get('/api/entities/:id/edges', async (c) => {
+    const auth = c.get('auth');
+    const relation = c.req.query('relation');
+    const direction = c.req.query('direction');
+    if (direction && !['source', 'target', 'both'].includes(direction)) {
+      throw toValidationError('Invalid direction — must be source, target, or both');
+    }
+    const result = await listEdges(pool, auth, c.req.param('id'), {
+      ...(relation !== undefined ? { relation } : {}),
+      direction: (direction ?? 'both') as 'source' | 'target' | 'both'
+    });
+
+    if (result.isErr()) {
+      throw result.error;
+    }
+
+    return c.json({
+      edges: result.value.map((edge) => ({
+        id: edge.id,
+        source_id: edge.sourceId,
+        target_id: edge.targetId,
+        relation: edge.relation,
+        confidence: edge.confidence,
+        source: edge.source,
+        metadata: edge.metadata,
+        created_at: edge.createdAt
+      }))
+    });
+  });
+
+  app.get('/api/entities/:id/graph', async (c) => {
+    const auth = c.get('auth');
+    const depth = c.req.query('depth') ? parseQueryNumber(c.req.query('depth'), 1) : undefined;
+    const relationTypesRaw = c.req.query('relation_types');
+    const relationTypes = relationTypesRaw ? relationTypesRaw.split(',').filter(Boolean) : undefined;
+    const result = await expandGraph(pool, auth, c.req.param('id'), {
+      ...(depth !== undefined ? { depth } : {}),
+      ...(relationTypes !== undefined ? { relationTypes } : {})
+    });
+
+    if (result.isErr()) {
+      throw result.error;
+    }
+
+    const graph = result.value;
+    return c.json({
+      entities: graph.entities,
+      edges: graph.edges.map((edge) => ({
+        id: edge.id,
+        source_id: edge.sourceId,
+        target_id: edge.targetId,
+        relation: edge.relation,
+        confidence: edge.confidence,
+        source: edge.source,
+        metadata: edge.metadata,
+        created_at: edge.createdAt
+      }))
     });
   });
 }

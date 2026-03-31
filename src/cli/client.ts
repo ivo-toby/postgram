@@ -106,6 +106,7 @@ export function createPgmClient(options: RestClientOptions) {
       visibility?: string | undefined;
       status?: string | undefined;
       tags?: string[] | undefined;
+      source?: string | undefined;
       metadata?: Record<string, unknown> | undefined;
     }) {
       return request<StoredEntityResponse>(options, '/api/entities', {
@@ -120,6 +121,7 @@ export function createPgmClient(options: RestClientOptions) {
       query: string;
       type?: string | undefined;
       tags?: string[] | undefined;
+      visibility?: string | undefined;
       limit?: number | undefined;
       threshold?: number | undefined;
       recency_weight?: number | undefined;
@@ -137,6 +139,7 @@ export function createPgmClient(options: RestClientOptions) {
         visibility?: string | undefined;
         status?: string | null | undefined;
         tags?: string[] | undefined;
+        source?: string | null | undefined;
         metadata?: Record<string, unknown> | undefined;
       }
     ) {
@@ -196,6 +199,8 @@ export function createPgmClient(options: RestClientOptions) {
       status?: string | undefined;
       due_date?: string | undefined;
       tags?: string[] | undefined;
+      visibility?: string | undefined;
+      metadata?: Record<string, unknown> | undefined;
     }) {
       return request<StoredEntityResponse>(options, '/api/tasks', {
         method: 'POST',
@@ -238,6 +243,8 @@ export function createPgmClient(options: RestClientOptions) {
         status?: string | null | undefined;
         due_date?: string | undefined;
         tags?: string[] | undefined;
+        visibility?: string | undefined;
+        metadata?: Record<string, unknown> | undefined;
       }
     ) {
       return request<StoredEntityResponse>(options, `/api/tasks/${id}`, {
@@ -280,6 +287,71 @@ export function createPgmClient(options: RestClientOptions) {
           entityId: string;
         }>;
       }>(options, `/api/sync/status/${encodeURIComponent(repo)}`);
+    },
+    createEdge(input: {
+      source_id: string;
+      target_id: string;
+      relation: string;
+      confidence?: number;
+      metadata?: Record<string, unknown>;
+    }) {
+      return request<{
+        edge: {
+          id: string;
+          source_id: string;
+          target_id: string;
+          relation: string;
+          confidence: number;
+          source: string | null;
+          metadata: Record<string, unknown>;
+          created_at: string;
+        };
+      }>(options, '/api/edges', {
+        method: 'POST',
+        body: input
+      });
+    },
+    deleteEdge(id: string) {
+      return request<{ id: string; deleted: true }>(options, `/api/edges/${id}`, {
+        method: 'DELETE'
+      });
+    },
+    listEdges(entityId: string, params: { relation?: string; direction?: string } = {}) {
+      const qs = new URLSearchParams();
+      if (params.relation) qs.set('relation', params.relation);
+      if (params.direction) qs.set('direction', params.direction);
+      const query = qs.toString();
+      return request<{
+        edges: Array<{
+          id: string;
+          source_id: string;
+          target_id: string;
+          relation: string;
+          confidence: number;
+          source: string | null;
+          metadata: Record<string, unknown>;
+          created_at: string;
+        }>;
+      }>(options, `/api/entities/${entityId}/edges${query ? `?${query}` : ''}`);
+    },
+    expandGraph(entityId: string, params: { depth?: number; relationTypes?: string[] } = {}) {
+      const qs = new URLSearchParams();
+      if (params.depth !== undefined) qs.set('depth', String(params.depth));
+      if (params.relationTypes?.length) qs.set('relation_types', params.relationTypes.join(','));
+      const query = qs.toString();
+      return request<{
+        entities: Array<{ id: string; type: string; content: string | null; metadata: Record<string, unknown> }>;
+        edges: Array<{
+          id: string;
+          source_id: string;
+          target_id: string;
+          relation: string;
+          confidence: number;
+          source: string | null;
+          metadata: Record<string, unknown>;
+          created_at: string;
+        }>;
+      }>(options, `/api/entities/${entityId}/graph${query ? `?${query}` : ''}`);
     }
   };
 }

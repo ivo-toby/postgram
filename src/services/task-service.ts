@@ -1,12 +1,34 @@
 import { ResultAsync } from 'neverthrow';
 import type { Pool } from 'pg';
 
+import { requireScope } from '../auth/key-service.js';
 import type { AuthContext } from '../auth/types.js';
 import type { PaginatedResult, ServiceResult } from '../types/common.js';
-import type { Entity, EntityStatus } from '../types/entities.js';
+import type {
+  Entity,
+  EntityStatus,
+  EnrichmentStatus,
+  Visibility
+} from '../types/entities.js';
 import { appendAuditEntry } from '../util/audit.js';
 import { AppError, ErrorCode } from '../util/errors.js';
-import { listEntities, storeEntity, updateEntity } from './entity-service.js';
+import { storeEntity, updateEntity } from './entity-service.js';
+
+type EntityRow = {
+  id: string;
+  type: 'task';
+  content: string | null;
+  visibility: Visibility;
+  status: EntityStatus | null;
+  enrichment_status: EnrichmentStatus;
+  version: number;
+  tags: string[];
+  source: string | null;
+  metadata: Record<string, unknown>;
+  created_at: Date;
+  updated_at: Date;
+  total_count?: string;
+};
 
 type CreateTaskInput = {
   content: string;
@@ -15,6 +37,7 @@ type CreateTaskInput = {
   dueDate?: string | undefined;
   tags?: string[] | undefined;
   visibility?: 'personal' | 'work' | 'shared' | undefined;
+  metadata?: Record<string, unknown> | undefined;
 };
 
 type ListTasksInput = {
@@ -33,6 +56,7 @@ type UpdateTaskInput = {
   dueDate?: string | undefined;
   tags?: string[] | undefined;
   visibility?: 'personal' | 'work' | 'shared' | undefined;
+  metadata?: Record<string, unknown> | undefined;
 };
 
 type CompleteTaskInput = {
@@ -44,8 +68,9 @@ function mergeTaskMetadata(input: {
   context?: string | undefined;
   dueDate?: string | undefined;
   completedAt?: string | undefined;
-}): Record<string, string> | undefined {
-  const metadata: Record<string, string> = {};
+  metadata?: Record<string, unknown> | undefined;
+}): Record<string, unknown> | undefined {
+  const metadata: Record<string, unknown> = {};
 
   if (input.context !== undefined) {
     metadata.context = input.context;
@@ -59,7 +84,15 @@ function mergeTaskMetadata(input: {
     metadata.completed_at = input.completedAt;
   }
 
-  return Object.keys(metadata).length > 0 ? metadata : undefined;
+  return Object.keys({
+    ...metadata,
+    ...(input.metadata ?? {})
+  }).length > 0
+    ? {
+        ...metadata,
+        ...(input.metadata ?? {})
+      }
+    : undefined;
 }
 
 function toAppError(error: unknown, fallbackMessage: string): AppError {
@@ -76,6 +109,23 @@ function toAppError(error: unknown, fallbackMessage: string): AppError {
   return new AppError(ErrorCode.INTERNAL, fallbackMessage);
 }
 
+function mapEntity(row: EntityRow): Entity {
+  return {
+    id: row.id,
+    type: row.type,
+    content: row.content,
+    visibility: row.visibility,
+    status: row.status,
+    enrichmentStatus: row.enrichment_status,
+    version: row.version,
+    tags: row.tags,
+    source: row.source,
+    metadata: row.metadata,
+    createdAt: row.created_at.toISOString(),
+    updatedAt: row.updated_at.toISOString()
+  };
+}
+
 export function createTask(
   pool: Pool,
   auth: AuthContext,
@@ -89,7 +139,8 @@ export function createTask(
     tags: input.tags,
     metadata: mergeTaskMetadata({
       context: input.context,
-      dueDate: input.dueDate
+      dueDate: input.dueDate,
+      metadata: input.metadata
     })
   });
 }
@@ -101,34 +152,48 @@ export function listTasks(
 ): ServiceResult<PaginatedResult<Entity>> {
   return ResultAsync.fromPromise(
     (async () => {
-      const listed = await listEntities(pool, auth, {
-        type: 'task',
-        status: input.status,
-        limit: 500,
-        offset: 0
-      });
+      requireScope(auth, 'read');
 
-      const base = listed.match(
-        (value) => value,
-        (error) => {
-          throw error;
-        }
+      if (auth.allowedTypes && !auth.allowedTypes.includes('task')) {
+        return {
+          items: [],
+          total: 0,
+          limit: input.limit ?? 50,
+          offset: input.offset ?? 0
+        } satisfies PaginatedResult<Entity>;
+      }
+
+      const limit = input.limit ?? 50;
+      const offset = input.offset ?? 0;
+
+      const result = await pool.query<EntityRow>(
+        `
+          SELECT
+            *,
+            COUNT(*) OVER()::text AS total_count
+          FROM entities
+          WHERE type = 'task'
+            AND ($1::text IS NULL OR status = $1)
+            AND ($2::text IS NULL OR metadata->>'context' = $2)
+            AND visibility = ANY($3)
+          ORDER BY created_at DESC
+          LIMIT $4
+          OFFSET $5
+        `,
+        [
+          input.status ?? null,
+          input.context ?? null,
+          auth.allowedVisibility,
+          limit,
+          offset
+        ]
       );
 
-      const filtered = base.items.filter((item) => {
-        if (input.context === undefined) {
-          return true;
-        }
-
-        return item.metadata.context === input.context;
-      });
-
-      const offset = input.offset ?? 0;
-      const limit = input.limit ?? 50;
-
       return {
-        items: filtered.slice(offset, offset + limit),
-        total: filtered.length,
+        items: result.rows.map(mapEntity),
+        total: result.rows[0]?.total_count
+          ? Number(result.rows[0].total_count)
+          : 0,
         limit,
         offset
       } satisfies PaginatedResult<Entity>;
@@ -151,7 +216,8 @@ export function updateTask(
     tags: input.tags,
     metadata: mergeTaskMetadata({
       context: input.context,
-      dueDate: input.dueDate
+      dueDate: input.dueDate,
+      metadata: input.metadata
     })
   });
 }

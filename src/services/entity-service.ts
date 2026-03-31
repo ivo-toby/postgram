@@ -47,6 +47,7 @@ type UpdateEntityInput = {
   visibility?: Visibility | undefined;
   status?: EntityStatus | null | undefined;
   tags?: string[] | undefined;
+  source?: string | null | undefined;
   metadata?: Record<string, unknown> | undefined;
 };
 
@@ -227,7 +228,8 @@ export function updateEntity(
 
       const nextContent =
         input.content === undefined ? existing.content : input.content;
-      const contentChanged = input.content !== undefined && input.content !== existing.content;
+      const contentChanged =
+        input.content !== undefined && input.content !== existing.content;
       const nextMetadata = input.metadata
         ? {
             ...existing.metadata,
@@ -235,44 +237,75 @@ export function updateEntity(
           }
         : existing.metadata;
 
-      const result = await pool.query<EntityRow>(
-        `
-          UPDATE entities
-          SET
-            content = $2,
-            visibility = $3,
-            status = $4,
-            enrichment_status = $5,
-            tags = $6,
-            metadata = $7,
-            version = version + 1,
-            enrichment_attempts = CASE WHEN $9 THEN 0 ELSE enrichment_attempts END
-          WHERE id = $1
-            AND version = $8
-          RETURNING *
-        `,
-        [
-          input.id,
-          nextContent ?? null,
-          nextVisibility,
-          input.status === undefined ? existing.status : input.status,
-          hasContent(nextContent)
-            ? contentChanged
-              ? 'pending'
-              : existing.enrichmentStatus
-            : null,
-          input.tags ?? existing.tags,
-          nextMetadata,
-          input.version,
-          contentChanged
-        ]
-      );
+      const client = await pool.connect();
+      let updatedRow: EntityRow | undefined;
 
-      const updatedRow = result.rows[0];
+      try {
+        await client.query('BEGIN');
+        const result = await client.query<EntityRow>(
+          `
+            UPDATE entities
+            SET
+              content = $2,
+              visibility = $3,
+              status = $4,
+              enrichment_status = $5,
+              tags = $6,
+              source = $7,
+              metadata = $8,
+              version = version + 1,
+              enrichment_attempts = CASE WHEN $10 THEN 0 ELSE enrichment_attempts END
+            WHERE id = $1
+              AND version = $9
+            RETURNING *
+          `,
+          [
+            input.id,
+            nextContent ?? null,
+            nextVisibility,
+            input.status === undefined ? existing.status : input.status,
+            hasContent(nextContent)
+              ? contentChanged
+                ? 'pending'
+                : existing.enrichmentStatus
+              : null,
+            input.tags ?? existing.tags,
+            input.source === undefined ? existing.source : input.source,
+            nextMetadata,
+            input.version,
+            contentChanged
+          ]
+        );
+
+        updatedRow = result.rows[0];
+        if (!updatedRow) {
+          await client.query('ROLLBACK');
+          const currentRow = await fetchEntityRow(pool, input.id);
+          throw new AppError(ErrorCode.CONFLICT, 'Version conflict', {
+            current: currentRow ? mapEntity(currentRow) : existing
+          });
+        }
+
+        if (contentChanged) {
+          await client.query('DELETE FROM chunks WHERE entity_id = $1', [
+            input.id
+          ]);
+        }
+
+        await client.query('COMMIT');
+      } catch (error) {
+        try {
+          await client.query('ROLLBACK');
+        } catch {
+          // Ignore rollback errors so the original failure is preserved.
+        }
+        throw error;
+      } finally {
+        client.release();
+      }
+
       if (!updatedRow) {
-        throw new AppError(ErrorCode.CONFLICT, 'Version conflict', {
-          current: existing
-        });
+        throw new AppError(ErrorCode.INTERNAL, 'Failed to update entity');
       }
 
       const updatedEntity = mapEntity(updatedRow);
@@ -298,12 +331,14 @@ export function softDeleteEntity(
 ): ServiceResult<{ id: string; deleted: true }> {
   return ResultAsync.fromPromise(
     (async () => {
-      const existing = await recallEntity(pool, auth, id).match(
-        (entity) => entity,
-        (error) => {
-          throw error;
-        }
-      );
+      requireScope(auth, 'delete');
+
+      const existingRow = await fetchEntityRow(pool, id);
+      if (!existingRow) {
+        throw new AppError(ErrorCode.NOT_FOUND, 'Entity not found');
+      }
+
+      const existing = mapEntity(existingRow);
 
       assertEntityAccess(auth, existing, 'delete');
 

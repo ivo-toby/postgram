@@ -49,7 +49,7 @@ describe('task-service', () => {
     }
   });
 
-  it('creates tasks with inbox status by default', async () => {
+  it('creates tasks with inbox status by default and merges arbitrary metadata', async () => {
     if (!database) {
       throw new Error('test database not initialized');
     }
@@ -57,7 +57,10 @@ describe('task-service', () => {
     const created = await createTask(database.pool, makeAuthContext(), {
       content: 'write MCP transport',
       context: '@dev',
-      dueDate: '2026-03-25'
+      dueDate: '2026-03-25',
+      metadata: {
+        priority: 'high'
+      } as never
     });
 
     expect(created.isOk()).toBe(true);
@@ -66,7 +69,8 @@ describe('task-service', () => {
       status: 'inbox',
       metadata: {
         context: '@dev',
-        due_date: '2026-03-25'
+        due_date: '2026-03-25',
+        priority: 'high'
       }
     });
   }, 120_000);
@@ -121,14 +125,18 @@ describe('task-service', () => {
       id: created.id,
       version: created.version,
       status: 'next',
-      context: '@deep-work'
+      context: '@deep-work',
+      metadata: {
+        owner: 'ivo'
+      } as never
     });
 
     expect(updated.isOk()).toBe(true);
     expect(updated._unsafeUnwrap()).toMatchObject({
       status: 'next',
       metadata: {
-        context: '@deep-work'
+        context: '@deep-work',
+        owner: 'ivo'
       }
     });
 
@@ -151,5 +159,38 @@ describe('task-service', () => {
     );
 
     expect(auditRows.rows.map((row) => row.operation)).toContain('task_complete');
+  }, 120_000);
+
+  it('lists context-filtered tasks correctly beyond 500 rows', async () => {
+    if (!database) {
+      throw new Error('test database not initialized');
+    }
+
+    for (let index = 0; index < 600; index += 1) {
+      await database.pool.query(
+        `
+          INSERT INTO entities (type, content, visibility, status, metadata)
+          VALUES ('task', $1, 'shared', 'next', $2)
+        `,
+        [
+          `task-${index}`,
+          JSON.stringify({
+            context: index < 550 ? '@dev' : '@other'
+          })
+        ]
+      );
+    }
+
+    const listed = await listTasks(database.pool, makeAuthContext(), {
+      status: 'next',
+      context: '@dev',
+      limit: 600
+    });
+
+    expect(listed.isOk()).toBe(true);
+    expect(listed._unsafeUnwrap()).toMatchObject({
+      total: 550
+    });
+    expect(listed._unsafeUnwrap().items).toHaveLength(550);
   }, 120_000);
 });

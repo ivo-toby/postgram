@@ -248,7 +248,9 @@ async function main(): Promise<void> {
   const [sqlitePath, ...argv] = process.argv.slice(2);
 
   if (!sqlitePath) {
-    throw new Error('Usage: migrate-talon <sqlite-path> [--dry-run] [--thread <id>]');
+    throw new Error(
+      'Usage: migrate-talon <sqlite-path> [--dry-run] [--thread <id>] [--api-base-url <url>] [--api-key <key>]'
+    );
   }
 
   let dryRun = false;
@@ -269,7 +271,7 @@ async function main(): Promise<void> {
       continue;
     }
 
-    if (arg === '--api-url') {
+    if (arg === '--api-base-url' || arg === '--api-url') {
       apiBaseUrl = argv[index + 1];
       index += 1;
       continue;

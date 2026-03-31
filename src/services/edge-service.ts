@@ -260,9 +260,15 @@ export function expandGraph(
         [Array.from(entityIds), auth.allowedTypes, auth.allowedVisibility]
       );
 
+      // Filter edges to only include those where both endpoints are visible
+      const visibleIds = new Set(entityRows.rows.map((e) => e.id));
+      const filteredEdges = edgeRows.rows
+        .filter((row) => visibleIds.has(row.source_id) && visibleIds.has(row.target_id))
+        .map(mapEdge);
+
       return {
         entities: entityRows.rows,
-        edges: edgeRows.rows.map(mapEdge)
+        edges: filteredEdges
       };
     })(),
     (error) => toAppError(error, 'Failed to expand graph')

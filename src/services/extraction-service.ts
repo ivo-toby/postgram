@@ -19,9 +19,22 @@ type RawExtraction = {
 export function parseExtractionResponse(response: string): ExtractionResult[] {
   try {
     const parsed: unknown = JSON.parse(response);
-    if (!Array.isArray(parsed)) return [];
 
-    return (parsed as RawExtraction[])
+    // Handle both raw array and object wrapper (OpenAI JSON mode returns objects)
+    let items: unknown[];
+    if (Array.isArray(parsed)) {
+      items = parsed;
+    } else if (parsed && typeof parsed === 'object') {
+      // Find the first array value in the object (e.g. { "relationships": [...] })
+      const values = Object.values(parsed as Record<string, unknown>);
+      const arrayValue = values.find((v) => Array.isArray(v));
+      if (!arrayValue) return [];
+      items = arrayValue as unknown[];
+    } else {
+      return [];
+    }
+
+    return (items as RawExtraction[])
       .filter((item) =>
         typeof item.target_name === 'string' && item.target_name.length > 0 &&
         typeof item.relation === 'string' && item.relation.length > 0

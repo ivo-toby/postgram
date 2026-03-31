@@ -16,7 +16,18 @@ describe('parseExtractionResponse', () => {
     expect(parseExtractionResponse('not json')).toEqual([]);
   });
 
-  it('returns empty array for non-array response', () => {
+  it('parses object-wrapped response from OpenAI JSON mode', () => {
+    const response = JSON.stringify({
+      relationships: [
+        { target_name: 'Bob', target_type: 'person', relation: 'involves', confidence: 0.85 }
+      ]
+    });
+    const result = parseExtractionResponse(response);
+    expect(result).toHaveLength(1);
+    expect(result[0]).toMatchObject({ targetName: 'Bob', relation: 'involves' });
+  });
+
+  it('returns empty array for object with no array values', () => {
     expect(parseExtractionResponse('{"key": "value"}')).toEqual([]);
   });
 

@@ -1,3 +1,4 @@
+import { statSync } from 'node:fs';
 import { readFile } from 'node:fs/promises';
 import os from 'node:os';
 import path from 'node:path';
@@ -35,7 +36,16 @@ export function parseJsonObject(
     return fallback;
   }
 
-  const parsed = JSON.parse(value);
+  let parsed: unknown;
+  try {
+    parsed = JSON.parse(value);
+  } catch (error) {
+    throw new AppError(
+      ErrorCode.VALIDATION,
+      `Invalid JSON: ${error instanceof Error ? error.message : 'parse failed'}`
+    );
+  }
+
   if (!parsed || typeof parsed !== 'object' || Array.isArray(parsed)) {
     throw new AppError(ErrorCode.VALIDATION, 'Metadata must be a JSON object');
   }
@@ -69,6 +79,8 @@ export type PgmConfig = {
   apiKey: string;
 };
 
+const INSECURE_PGMRC_MODE_MASK = 0o077;
+
 function normalizeUrl(url: string): string {
   return url.replace(/\/+$/, '');
 }
@@ -87,6 +99,13 @@ export async function resolvePgmConfig(): Promise<PgmConfig> {
   const rcPath = path.join(os.homedir(), '.pgmrc');
   try {
     const raw = await readFile(rcPath, 'utf8');
+    const fileStat = statSync(rcPath);
+    if ((fileStat.mode & INSECURE_PGMRC_MODE_MASK) !== 0) {
+      process.stderr.write(
+        "Warning: ~/.pgmrc is accessible by other users. Run 'chmod 600 ~/.pgmrc' to fix.\n"
+      );
+    }
+
     const parsed = JSON.parse(raw) as PgmRc;
 
     if (!parsed.api_url || !parsed.api_key) {

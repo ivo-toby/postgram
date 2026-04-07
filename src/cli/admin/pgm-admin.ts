@@ -1,3 +1,5 @@
+#!/usr/bin/env node
+
 import { Pool } from 'pg';
 import { Command } from 'commander';
 

@@ -158,7 +158,8 @@ export async function startServer(): Promise<{
       model: config.EXTRACTION_MODEL,
       openaiApiKey: config.OPENAI_API_KEY,
       anthropicApiKey: config.ANTHROPIC_API_KEY,
-      ollamaBaseUrl: config.OLLAMA_BASE_URL
+      ollamaBaseUrl: config.OLLAMA_BASE_URL,
+      ollamaApiKey: config.OLLAMA_API_KEY
     });
     logger.info(
       { provider: config.EXTRACTION_PROVIDER, model: config.EXTRACTION_MODEL },

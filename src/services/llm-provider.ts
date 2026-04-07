@@ -63,11 +63,16 @@ function createAnthropicProvider(apiKey: string, model: string): LlmProvider {
   };
 }
 
-function createOllamaProvider(baseUrl: string, model: string): LlmProvider {
+function createOllamaProvider(baseUrl: string, model: string, apiKey?: string): LlmProvider {
+  const headers: Record<string, string> = { 'Content-Type': 'application/json' };
+  if (apiKey) {
+    headers['Authorization'] = `Bearer ${apiKey}`;
+  }
+
   return async (prompt: string) => {
     const response = await fetch(`${baseUrl}/api/chat`, {
       method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
+      headers,
       body: JSON.stringify({
         model,
         messages: [{ role: 'user', content: prompt }],
@@ -99,6 +104,7 @@ type ProviderConfig = {
   openaiApiKey?: string | undefined;
   anthropicApiKey?: string | undefined;
   ollamaBaseUrl?: string | undefined;
+  ollamaApiKey?: string | undefined;
 };
 
 export function createLlmProvider(config: ProviderConfig): LlmProvider {
@@ -119,7 +125,7 @@ export function createLlmProvider(config: ProviderConfig): LlmProvider {
     }
     case 'ollama': {
       const baseUrl = config.ollamaBaseUrl ?? 'http://localhost:11434';
-      return createOllamaProvider(baseUrl, model);
+      return createOllamaProvider(baseUrl, model, config.ollamaApiKey);
     }
   }
 }

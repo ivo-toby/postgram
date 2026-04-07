@@ -17,6 +17,7 @@ const configSchema = z.object({
     .default('openai'),
   EXTRACTION_MODEL: z.string().optional(),
   ANTHROPIC_API_KEY: z.string().optional(),
+  OLLAMA_API_KEY: z.string().optional(),
   OLLAMA_BASE_URL: z.string().default('http://localhost:11434')
 });
 

@@ -21,7 +21,7 @@ import {
   resolvePgmConfig,
   shortId
 } from './shared.js';
-import { AppError, ErrorCode } from '../util/errors.js';
+import { AppError, ErrorCode } from './errors.js';
 
 function formatStoredEntity(entity: {
   id: string;

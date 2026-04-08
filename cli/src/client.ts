@@ -1,4 +1,4 @@
-import { AppError, ErrorCode } from '../util/errors.js';
+import { AppError, ErrorCode } from './errors.js';
 
 export type StoredEntityResponse = {
   entity: {

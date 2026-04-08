@@ -16,7 +16,7 @@ import {
 
 const execFileAsync = promisify(execFile);
 const TSX_BIN = path.resolve('node_modules/.bin/tsx');
-const PGM_ENTRYPOINT = path.resolve('src/cli/pgm.ts');
+const PGM_ENTRYPOINT = path.resolve('cli/src/pgm.ts');
 
 function parseJson(stdout: string): unknown {
   return JSON.parse(stdout.trim());

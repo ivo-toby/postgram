@@ -276,6 +276,123 @@ describe('MCP tools', () => {
     }
   }, 120_000);
 
+  it('supports owner-scoped store, recall, search, and graph expansion via MCP', async () => {
+    const { client, close } = await createClient();
+
+    try {
+      const shared = extractStructuredPayload(
+        (await client.callTool({
+          name: 'store',
+          arguments: {
+            type: 'memory',
+            content: 'shared planning notes for everyone'
+          }
+        })) as ToolResultPayload
+      ) as {
+        entity: { id: string };
+      };
+
+      const productManager = extractStructuredPayload(
+        (await client.callTool({
+          name: 'store',
+          arguments: {
+            type: 'memory',
+            content: 'product manager planning notes',
+            owner: 'product-manager'
+          }
+        })) as ToolResultPayload
+      ) as {
+        entity: { id: string; owner: string | null };
+      };
+      expect(productManager.entity.owner).toBe('product-manager');
+
+      const developer = extractStructuredPayload(
+        (await client.callTool({
+          name: 'store',
+          arguments: {
+            type: 'memory',
+            content: 'developer planning notes',
+            owner: 'developer'
+          }
+        })) as ToolResultPayload
+      ) as {
+        entity: { id: string };
+      };
+
+      await client.callTool({
+        name: 'link',
+        arguments: {
+          source_id: productManager.entity.id,
+          target_id: shared.entity.id,
+          relation: 'references'
+        }
+      });
+      await client.callTool({
+        name: 'link',
+        arguments: {
+          source_id: productManager.entity.id,
+          target_id: developer.entity.id,
+          relation: 'references'
+        }
+      });
+
+      await createEnrichmentWorker({
+        pool: database!.pool,
+        embeddingService
+      }).runOnce();
+
+      const recallResult = (await client.callTool({
+        name: 'recall',
+        arguments: {
+          id: developer.entity.id,
+          owner: 'product-manager'
+        }
+      })) as ToolResultPayload;
+      expect(recallResult.isError).toBe(true);
+      expect(extractStructuredPayload(recallResult)).toMatchObject({
+        error: {
+          code: 'NOT_FOUND'
+        }
+      });
+
+      const searchResult = extractStructuredPayload(
+        (await client.callTool({
+          name: 'search',
+          arguments: {
+            query: 'planning notes',
+            owner: 'product-manager',
+            threshold: 0
+          }
+        })) as ToolResultPayload
+      ) as {
+        results: Array<{ entity: { id: string } }>;
+      };
+      expect(searchResult.results.map((entry) => entry.entity.id).sort()).toEqual(
+        [shared.entity.id, productManager.entity.id].sort()
+      );
+
+      const expandResult = extractStructuredPayload(
+        (await client.callTool({
+          name: 'expand',
+          arguments: {
+            entity_id: productManager.entity.id,
+            depth: 1,
+            owner: 'product-manager'
+          }
+        })) as ToolResultPayload
+      ) as {
+        entities: Array<{ id: string }>;
+        edges: Array<{ id: string }>;
+      };
+      expect(expandResult.entities.map((entity) => entity.id).sort()).toEqual(
+        [shared.entity.id, productManager.entity.id].sort()
+      );
+      expect(expandResult.edges).toHaveLength(1);
+    } finally {
+      await close();
+    }
+  }, 120_000);
+
   it('supports source, visibility-filtered search, and task metadata via MCP', async () => {
     const { client, close } = await createClient();
 

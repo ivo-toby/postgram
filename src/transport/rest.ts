@@ -22,6 +22,7 @@ const entityTypeSchema = z.enum([
 ]);
 
 const visibilitySchema = z.enum(['personal', 'work', 'shared']);
+const ownerSchema = z.string().trim().min(1);
 
 const statusSchema = z.enum([
   'active',
@@ -38,6 +39,7 @@ const storeEntitySchema = z.object({
   type: entityTypeSchema,
   content: z.string().optional(),
   visibility: visibilitySchema.optional(),
+  owner: ownerSchema.optional(),
   status: statusSchema.optional(),
   tags: z.array(z.string()).optional(),
   source: z.string().optional(),
@@ -59,6 +61,7 @@ const searchEntitiesSchema = z.object({
   type: entityTypeSchema.optional(),
   tags: z.array(z.string()).optional(),
   visibility: visibilitySchema.optional(),
+  owner: ownerSchema.optional(),
   limit: z.number().int().positive().max(50).optional(),
   threshold: z.number().min(0).max(1).optional(),
   recency_weight: z.number().min(0).optional(),
@@ -142,6 +145,7 @@ function toStoredEntity(entity: Entity) {
     type: entity.type,
     content: entity.content,
     visibility: entity.visibility,
+    owner: entity.owner,
     status: entity.status,
     enrichment_status: entity.enrichmentStatus,
     version: entity.version,
@@ -176,7 +180,15 @@ export function registerRestRoutes(
 
   app.get('/api/entities/:id', async (c) => {
     const auth = c.get('auth');
-    const result = await recallEntity(pool, auth, c.req.param('id'));
+    const owner = c.req.query('owner');
+
+    if (owner && !ownerSchema.safeParse(owner).success) {
+      throw toValidationError('Invalid owner');
+    }
+
+    const result = await recallEntity(pool, auth, c.req.param('id'), {
+      ...(owner !== undefined ? { owner } : {})
+    });
 
     if (result.isErr()) {
       throw result.error;
@@ -217,6 +229,7 @@ export function registerRestRoutes(
     const type = c.req.query('type');
     const status = c.req.query('status');
     const visibility = c.req.query('visibility');
+    const owner = c.req.query('owner');
 
     if (type && !entityTypeSchema.safeParse(type).success) {
       throw toValidationError('Invalid entity type');
@@ -230,10 +243,15 @@ export function registerRestRoutes(
       throw toValidationError('Invalid visibility');
     }
 
+    if (owner && !ownerSchema.safeParse(owner).success) {
+      throw toValidationError('Invalid owner');
+    }
+
     const result = await listEntities(pool, auth, {
       type: type as EntityType | undefined,
       status: status as EntityStatus | undefined,
       visibility: visibility as Visibility | undefined,
+      owner,
       tags: tags ? tags.split(',').filter(Boolean) : undefined,
       limit: parseQueryNumber(c.req.query('limit'), 50),
       offset: parseQueryNumber(c.req.query('offset'), 0)
@@ -262,6 +280,7 @@ export function registerRestRoutes(
         type: body.type,
         tags: body.tags,
         visibility: body.visibility,
+        owner: body.owner,
         limit: body.limit,
         threshold: body.threshold,
         recencyWeight: body.recency_weight,
@@ -443,12 +462,17 @@ export function registerRestRoutes(
     const auth = c.get('auth');
     const relation = c.req.query('relation');
     const direction = c.req.query('direction');
+    const owner = c.req.query('owner');
     if (direction && !['source', 'target', 'both'].includes(direction)) {
       throw toValidationError('Invalid direction — must be source, target, or both');
     }
+    if (owner && !ownerSchema.safeParse(owner).success) {
+      throw toValidationError('Invalid owner');
+    }
     const result = await listEdges(pool, auth, c.req.param('id'), {
       ...(relation !== undefined ? { relation } : {}),
-      direction: (direction ?? 'both') as 'source' | 'target' | 'both'
+      direction: (direction ?? 'both') as 'source' | 'target' | 'both',
+      ...(owner !== undefined ? { owner } : {})
     });
 
     if (result.isErr()) {
@@ -473,10 +497,15 @@ export function registerRestRoutes(
     const auth = c.get('auth');
     const depth = c.req.query('depth') ? parseQueryNumber(c.req.query('depth'), 1) : undefined;
     const relationTypesRaw = c.req.query('relation_types');
+    const owner = c.req.query('owner');
     const relationTypes = relationTypesRaw ? relationTypesRaw.split(',').filter(Boolean) : undefined;
+    if (owner && !ownerSchema.safeParse(owner).success) {
+      throw toValidationError('Invalid owner');
+    }
     const result = await expandGraph(pool, auth, c.req.param('id'), {
       ...(depth !== undefined ? { depth } : {}),
-      ...(relationTypes !== undefined ? { relationTypes } : {})
+      ...(relationTypes !== undefined ? { relationTypes } : {}),
+      ...(owner !== undefined ? { owner } : {})
     });
 
     if (result.isErr()) {

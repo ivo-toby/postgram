@@ -41,6 +41,7 @@ const entityTypeSchema = z.enum([
 ]);
 
 const visibilitySchema = z.enum(['personal', 'work', 'shared']);
+const ownerSchema = z.string().trim().min(1);
 
 const statusSchema = z.enum([
   'active',
@@ -59,6 +60,7 @@ function toStoredEntity(entity: Entity) {
     type: entity.type,
     content: entity.content,
     visibility: entity.visibility,
+    owner: entity.owner,
     status: entity.status,
     enrichment_status: entity.enrichmentStatus,
     version: entity.version,
@@ -205,6 +207,7 @@ function createSessionServer(
         type: entityTypeSchema,
         content: z.string().optional(),
         visibility: visibilitySchema.optional(),
+        owner: ownerSchema.optional(),
         status: statusSchema.optional(),
         tags: z.array(z.string()).optional(),
         source: z.string().optional(),
@@ -217,6 +220,7 @@ function createSessionServer(
           type: args.type,
           content: args.content,
           visibility: args.visibility,
+          owner: args.owner,
           status: args.status,
           tags: args.tags,
           source: args.source,
@@ -231,11 +235,14 @@ function createSessionServer(
     {
       description: 'Recall an entity by ID',
       inputSchema: {
-        id: z.string()
+        id: z.string(),
+        owner: ownerSchema.optional()
       }
     },
     (args) =>
-      toolFromService(recallEntity(pool, auth, args.id), (entity) => ({
+      toolFromService(recallEntity(pool, auth, args.id, {
+        ...(args.owner !== undefined ? { owner: args.owner } : {})
+      }), (entity) => ({
         entity: toStoredEntity(entity)
       }))
   );
@@ -249,6 +256,7 @@ function createSessionServer(
         type: entityTypeSchema.optional(),
         tags: z.array(z.string()).optional(),
         visibility: visibilitySchema.optional(),
+        owner: ownerSchema.optional(),
         limit: z.number().int().positive().optional(),
         threshold: z.number().min(0).max(1).optional(),
         recency_weight: z.number().min(0).optional(),
@@ -265,6 +273,7 @@ function createSessionServer(
             type: args.type,
             tags: args.tags,
             visibility: args.visibility,
+            owner: args.owner,
             limit: args.limit,
             threshold: args.threshold,
             recencyWeight: args.recency_weight,
@@ -492,14 +501,16 @@ function createSessionServer(
       inputSchema: {
         entity_id: z.string().min(1),
         depth: z.number().int().min(1).max(3).optional(),
-        relation_types: z.array(z.string()).optional()
+        relation_types: z.array(z.string()).optional(),
+        owner: ownerSchema.optional()
       }
     },
     (args) =>
       toolFromService(
         expandGraph(pool, auth, args.entity_id, {
           ...(args.depth !== undefined ? { depth: args.depth } : {}),
-          ...(args.relation_types !== undefined ? { relationTypes: args.relation_types } : {})
+          ...(args.relation_types !== undefined ? { relationTypes: args.relation_types } : {}),
+          ...(args.owner !== undefined ? { owner: args.owner } : {})
         }),
         (value) => ({
           entities: value.entities,

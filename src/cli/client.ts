@@ -6,6 +6,7 @@ export type StoredEntityResponse = {
     type: string;
     content: string | null;
     visibility: string;
+    owner: string | null;
     status: string | null;
     enrichment_status: string | null;
     version: number;
@@ -104,6 +105,7 @@ export function createPgmClient(options: RestClientOptions) {
       type: string;
       content?: string | undefined;
       visibility?: string | undefined;
+      owner?: string | undefined;
       status?: string | undefined;
       tags?: string[] | undefined;
       source?: string | undefined;
@@ -114,14 +116,24 @@ export function createPgmClient(options: RestClientOptions) {
         body: input
       });
     },
-    recallEntity(id: string) {
-      return request<StoredEntityResponse>(options, `/api/entities/${id}`);
+    recallEntity(id: string, input: { owner?: string | undefined } = {}) {
+      const params = new URLSearchParams();
+      if (input.owner) {
+        params.set('owner', input.owner);
+      }
+
+      const query = params.toString();
+      return request<StoredEntityResponse>(
+        options,
+        `/api/entities/${id}${query ? `?${query}` : ''}`
+      );
     },
     searchEntities(input: {
       query: string;
       type?: string | undefined;
       tags?: string[] | undefined;
       visibility?: string | undefined;
+      owner?: string | undefined;
       limit?: number | undefined;
       threshold?: number | undefined;
       recency_weight?: number | undefined;
@@ -161,6 +173,7 @@ export function createPgmClient(options: RestClientOptions) {
       type?: string | undefined;
       status?: string | undefined;
       visibility?: string | undefined;
+      owner?: string | undefined;
       tags?: string[] | undefined;
       limit?: number | undefined;
       offset?: number | undefined;
@@ -174,6 +187,9 @@ export function createPgmClient(options: RestClientOptions) {
       }
       if (input.visibility) {
         params.set('visibility', input.visibility);
+      }
+      if (input.owner) {
+        params.set('owner', input.owner);
       }
       if (input.tags?.length) {
         params.set('tags', input.tags.join(','));
@@ -316,10 +332,11 @@ export function createPgmClient(options: RestClientOptions) {
         method: 'DELETE'
       });
     },
-    listEdges(entityId: string, params: { relation?: string; direction?: string } = {}) {
+    listEdges(entityId: string, params: { relation?: string; direction?: string; owner?: string } = {}) {
       const qs = new URLSearchParams();
       if (params.relation) qs.set('relation', params.relation);
       if (params.direction) qs.set('direction', params.direction);
+      if (params.owner) qs.set('owner', params.owner);
       const query = qs.toString();
       return request<{
         edges: Array<{
@@ -334,10 +351,11 @@ export function createPgmClient(options: RestClientOptions) {
         }>;
       }>(options, `/api/entities/${entityId}/edges${query ? `?${query}` : ''}`);
     },
-    expandGraph(entityId: string, params: { depth?: number; relationTypes?: string[] } = {}) {
+    expandGraph(entityId: string, params: { depth?: number; relationTypes?: string[]; owner?: string } = {}) {
       const qs = new URLSearchParams();
       if (params.depth !== undefined) qs.set('depth', String(params.depth));
       if (params.relationTypes?.length) qs.set('relation_types', params.relationTypes.join(','));
+      if (params.owner) qs.set('owner', params.owner);
       const query = qs.toString();
       return request<{
         entities: Array<{ id: string; type: string; content: string | null; metadata: Record<string, unknown> }>;

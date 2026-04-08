@@ -12,6 +12,7 @@ import type {
   Visibility
 } from '../types/entities.js';
 import { AppError, ErrorCode } from '../util/errors.js';
+import { ownerSqlCondition } from './owner-filter.js';
 import {
   createEmbeddingService,
   type EmbeddingService,
@@ -23,6 +24,7 @@ type EntityRow = {
   type: EntityType;
   content: string | null;
   visibility: Visibility;
+  owner: string | null;
   status: EntityStatus | null;
   enrichment_status: EnrichmentStatus;
   version: number;
@@ -56,6 +58,7 @@ type SearchInput = {
   type?: EntityType | undefined;
   tags?: string[] | undefined;
   visibility?: Visibility | undefined;
+  owner?: string | undefined;
   limit?: number | undefined;
   threshold?: number | undefined;
   recencyWeight?: number | undefined;
@@ -87,6 +90,7 @@ function mapEntity(row: EntityRow): Entity {
     type: row.type,
     content: row.content,
     visibility: row.visibility,
+    owner: row.owner,
     status: row.status,
     enrichmentStatus: row.enrichment_status,
     version: row.version,
@@ -171,7 +175,7 @@ async function runHybridSearch(
         e.*,
         c.content AS chunk_content,
         1 - (c.embedding <=> $1::vector) AS similarity,
-        ts_rank(e.search_tsvector, plainto_tsquery('simple', $7)) AS bm25
+        ts_rank(e.search_tsvector, plainto_tsquery('simple', $8)) AS bm25
       FROM chunks c
       JOIN entities e ON e.id = c.entity_id
       WHERE e.status IS DISTINCT FROM 'archived'
@@ -180,6 +184,7 @@ async function runHybridSearch(
         AND ($4::text[] IS NULL OR e.type = ANY($4))
         AND e.visibility = ANY($5)
         AND ($6::text IS NULL OR e.visibility = $6)
+        AND ${ownerSqlCondition('e.owner', '$7')}
     `,
     [
       vectorToSql(ctx.queryEmbedding),
@@ -188,6 +193,7 @@ async function runHybridSearch(
       auth.allowedTypes,
       auth.allowedVisibility,
       input.visibility ?? null,
+      input.owner ?? null,
       ctx.queryText
     ]
   );
@@ -225,75 +231,6 @@ async function runHybridSearch(
 
   return {
     results: deduplicateResults(scored).slice(0, ctx.limit)
-  };
-}
-
-async function runBm25OnlySearch(
-  pool: Pool,
-  auth: AuthContext,
-  input: SearchInput,
-  ctx: SearchContext
-): Promise<{ results: SearchResult[] }> {
-  const rows = await pool.query<EntityRow & { bm25: number }>(
-    `
-      SELECT
-        e.*,
-        ts_rank(e.search_tsvector, plainto_tsquery('simple', $1)) AS bm25
-      FROM entities e
-      WHERE e.status IS DISTINCT FROM 'archived'
-        AND e.content IS NOT NULL
-        AND e.search_tsvector @@ plainto_tsquery('simple', $1)
-        AND ($2::text IS NULL OR e.type = $2)
-        AND ($3::text[] IS NULL OR e.tags @> $3)
-        AND ($4::text[] IS NULL OR e.type = ANY($4))
-        AND e.visibility = ANY($5)
-      ORDER BY bm25 DESC
-      LIMIT $6
-    `,
-    [
-      input.query,
-      input.type ?? null,
-      input.tags?.length ? input.tags : null,
-      auth.allowedTypes,
-      auth.allowedVisibility,
-      ctx.limit
-    ]
-  );
-
-  const withNormalized = normalizeBm25Scores(
-    rows.rows.map((row) => ({
-      row,
-      bm25: Number(row.bm25)
-    }))
-  );
-
-  const scored = withNormalized.map(({ row, bm25 }) => {
-    const entity = mapEntity(row);
-    const ageDays =
-      (ctx.now.getTime() - row.created_at.getTime()) / (1000 * 60 * 60 * 24);
-    const score = applyRecencyBoost({
-      similarity: bm25,
-      ageDays,
-      recencyWeight: ctx.recencyWeight,
-      halfLifeDays: 30
-    });
-
-    return {
-      entity,
-      entityId: entity.id,
-      chunkContent: row.content ?? '',
-      similarity: 0,
-      score
-    };
-  });
-
-  const filtered = scored
-    .filter((result) => result.score >= ctx.threshold)
-    .sort((a, b) => b.score - a.score)
-    .slice(0, ctx.limit);
-
-  return {
-    results: filtered
   };
 }
 
@@ -381,8 +318,14 @@ export function searchEntities(
              WHERE id = ANY($1)
                AND status IS DISTINCT FROM 'archived'
                AND ($2::text[] IS NULL OR type = ANY($2))
-               AND visibility = ANY($3)`,
-            [Array.from(allNeighborIds), auth.allowedTypes, auth.allowedVisibility]
+               AND visibility = ANY($3)
+               AND ${ownerSqlCondition('owner', '$4')}`,
+            [
+              Array.from(allNeighborIds),
+              auth.allowedTypes,
+              auth.allowedVisibility,
+              input.owner ?? null
+            ]
           );
 
           const neighborMap = new Map(neighbors.rows.map((n) => [n.id, n]));

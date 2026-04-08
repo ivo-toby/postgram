@@ -188,6 +188,121 @@ describe('pgm CLI', () => {
     expect(memBody.items[0]?.type).toBe('memory');
   }, 120_000);
 
+  it('supports owner-scoped store, list, search, and graph expansion', async () => {
+    if (!database) {
+      throw new Error('test database not initialized');
+    }
+
+    const createdKey = (await createKey(database.pool, {
+      name: `owner-cli-${crypto.randomUUID()}`,
+      scopes: ['read', 'write', 'delete'],
+      allowedVisibility: ['shared']
+    }))._unsafeUnwrap();
+
+    const env = {
+      PGM_API_URL: baseUrl,
+      PGM_API_KEY: createdKey.plaintextKey
+    };
+
+    const sharedStore = await runPgm(
+      ['store', 'shared planning notes', '--type', 'memory', '--json'],
+      env
+    );
+    const shared = (parseJson(sharedStore.stdout) as {
+      entity: { id: string };
+    }).entity;
+
+    const pmStore = await runPgm(
+      [
+        'store',
+        'product manager planning notes',
+        '--type',
+        'memory',
+        '--owner',
+        'product-manager',
+        '--json'
+      ],
+      env
+    );
+    const productManager = (parseJson(pmStore.stdout) as {
+      entity: { id: string; owner: string | null };
+    }).entity;
+    expect(productManager.owner).toBe('product-manager');
+
+    const devStore = await runPgm(
+      [
+        'store',
+        'developer planning notes',
+        '--type',
+        'memory',
+        '--owner',
+        'developer',
+        '--json'
+      ],
+      env
+    );
+    const developer = (parseJson(devStore.stdout) as {
+      entity: { id: string };
+    }).entity;
+
+    await runPgm(
+      ['link', productManager.id, shared.id, '--relation', 'references', '--json'],
+      env
+    );
+    await runPgm(
+      ['link', productManager.id, developer.id, '--relation', 'references', '--json'],
+      env
+    );
+
+    await createEnrichmentWorker({
+      pool: database.pool,
+      embeddingService
+    }).runOnce();
+
+    const listResult = await runPgm(
+      ['list', '--owner', 'product-manager', '--json'],
+      env
+    );
+    const listBody = parseJson(listResult.stdout) as {
+      items: Array<{ id: string }>;
+    };
+    expect(listBody.items.map((item) => item.id).sort()).toEqual(
+      [shared.id, productManager.id].sort()
+    );
+
+    const searchResult = await runPgm(
+      [
+        'search',
+        'planning notes',
+        '--owner',
+        'product-manager',
+        '--threshold',
+        '0',
+        '--json'
+      ],
+      env
+    );
+    const searchBody = parseJson(searchResult.stdout) as {
+      results: Array<{ entity: { id: string } }>;
+    };
+    expect(searchBody.results.map((entry) => entry.entity.id).sort()).toEqual(
+      [shared.id, productManager.id].sort()
+    );
+
+    const expandResult = await runPgm(
+      ['expand', productManager.id, '--owner', 'product-manager', '--json'],
+      env
+    );
+    const expandBody = parseJson(expandResult.stdout) as {
+      entities: Array<{ id: string }>;
+      edges: Array<{ id: string }>;
+    };
+    expect(expandBody.entities.map((entity) => entity.id).sort()).toEqual(
+      [shared.id, productManager.id].sort()
+    );
+    expect(expandBody.edges).toHaveLength(1);
+  }, 120_000);
+
   it('adds, lists, updates, and completes tasks through REST', async () => {
     if (!database) {
       throw new Error('test database not initialized');

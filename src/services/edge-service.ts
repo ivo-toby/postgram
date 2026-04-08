@@ -15,6 +15,10 @@ import type {
 } from '../types/entities.js';
 import { appendAuditEntry } from '../util/audit.js';
 import { AppError, ErrorCode } from '../util/errors.js';
+import {
+  matchesOwnerFilter,
+  ownerSqlCondition
+} from './owner-filter.js';
 
 export type Edge = {
   id: string;
@@ -42,6 +46,7 @@ type EntityAccessRow = {
   id: string;
   type: EntityType;
   visibility: Visibility;
+  owner: string | null;
   status: EntityStatus | null;
 };
 
@@ -123,14 +128,15 @@ async function enforceEntityAccess(
   pool: Pool,
   auth: AuthContext,
   entityIds: string[],
-  scope: 'read' | 'write' | 'delete'
+  scope: 'read' | 'write' | 'delete',
+  owner?: string
 ): Promise<Map<string, EntityAccessRow>> {
   requireScope(auth, scope);
 
   const uniqueIds = [...new Set(entityIds)];
   const rows = await pool.query<EntityAccessRow>(
     `
-      SELECT id, type, visibility, status
+      SELECT id, type, visibility, owner, status
       FROM entities
       WHERE id = ANY($1)
     `,
@@ -147,6 +153,9 @@ async function enforceEntityAccess(
 
     checkTypeAccess(auth, entity.type);
     checkVisibilityAccess(auth, entity.visibility);
+    if (!matchesOwnerFilter(entity.owner, owner)) {
+      throw new AppError(ErrorCode.NOT_FOUND, 'Entity not found');
+    }
   }
 
   return entityMap;
@@ -257,11 +266,12 @@ export function listEdges(
   options: {
     relation?: string | undefined;
     direction?: 'source' | 'target' | 'both' | undefined;
+    owner?: string | undefined;
   } = {}
 ): ServiceResult<Edge[]> {
   return ResultAsync.fromPromise(
     (async () => {
-      await enforceEntityAccess(pool, auth, [entityId], 'read');
+      await enforceEntityAccess(pool, auth, [entityId], 'read', options.owner);
 
       const direction = validateDirection(options.direction);
       const conditions: string[] = [];
@@ -294,9 +304,11 @@ export function listEdges(
             AND ($${params.length + 1}::text[] IS NULL OR tgt.type = ANY($${params.length + 1}))
             AND src.visibility = ANY($${params.length + 2})
             AND tgt.visibility = ANY($${params.length + 2})
+            AND ${ownerSqlCondition('src.owner', `$${params.length + 3}`)}
+            AND ${ownerSqlCondition('tgt.owner', `$${params.length + 3}`)}
           ORDER BY edges.created_at DESC
         `,
-        [...params, auth.allowedTypes, auth.allowedVisibility]
+        [...params, auth.allowedTypes, auth.allowedVisibility, options.owner ?? null]
       );
 
       return result.rows.map(mapEdge);
@@ -319,11 +331,15 @@ export function expandGraph(
   pool: Pool,
   auth: AuthContext,
   entityId: string,
-  options: { depth?: number | undefined; relationTypes?: string[] | undefined } = {}
+  options: {
+    depth?: number | undefined;
+    relationTypes?: string[] | undefined;
+    owner?: string | undefined;
+  } = {}
 ): ServiceResult<ExpandResult> {
   return ResultAsync.fromPromise(
     (async () => {
-      await enforceEntityAccess(pool, auth, [entityId], 'read');
+      await enforceEntityAccess(pool, auth, [entityId], 'read', options.owner);
 
       const depth = validateDepth(options.depth);
       const relationFilter = options.relationTypes?.length
@@ -352,6 +368,8 @@ export function expandGraph(
               AND ($4::text[] IS NULL OR tgt.type = ANY($4))
               AND src.visibility = ANY($5)
               AND tgt.visibility = ANY($5)
+              AND ${ownerSqlCondition('src.owner', '$6')}
+              AND ${ownerSqlCondition('tgt.owner', '$6')}
           )
           SELECT DISTINCT id FROM reachable
         `,
@@ -360,7 +378,8 @@ export function expandGraph(
           depth,
           relationFilter,
           auth.allowedTypes,
-          auth.allowedVisibility
+          auth.allowedVisibility,
+          options.owner ?? null
         ]
       );
 
@@ -390,8 +409,9 @@ export function expandGraph(
             AND status IS DISTINCT FROM 'archived'
             AND ($2::text[] IS NULL OR type = ANY($2))
             AND visibility = ANY($3)
+            AND ${ownerSqlCondition('owner', '$4')}
         `,
-        [reachableIds, auth.allowedTypes, auth.allowedVisibility]
+        [reachableIds, auth.allowedTypes, auth.allowedVisibility, options.owner ?? null]
       );
 
       return {

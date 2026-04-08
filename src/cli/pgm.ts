@@ -29,11 +29,13 @@ function formatStoredEntity(entity: {
   content: string | null;
   status: string | null;
   visibility: string;
+  owner: string | null;
   tags: string[];
 }) {
   return [
     `${entity.type} ${shortId(entity.id)}${entity.status ? ` [${entity.status}]` : ''}`,
     `visibility: ${entity.visibility}`,
+    `owner: ${entity.owner ?? 'shared'}`,
     `tags: ${entity.tags.join(', ') || '-'}`,
     entity.content ? `content: ${entity.content}` : 'content: -'
   ];
@@ -268,10 +270,12 @@ program
 
 program
   .command('store')
+  .alias('add')
   .description('Store an entity')
   .argument('[content]', 'entity content')
   .option('--type <type>', 'entity type', 'memory')
   .option('--visibility <visibility>', 'entity visibility', 'shared')
+  .option('--owner <owner>', 'entity owner or namespace')
   .option('--status <status>', 'entity status')
   .option('--tags <tags>', 'comma-separated tags')
   .option('--source <source>', 'entity source')
@@ -282,6 +286,7 @@ program
         type: options.type,
         content: await resolveStoreContent(content),
         visibility: options.visibility,
+        owner: options.owner,
         status: options.status,
         tags: parseCommaList(options.tags),
         source: options.source,
@@ -296,6 +301,7 @@ program
             content: body.entity.content,
             status: body.entity.status,
             visibility: body.entity.visibility,
+            owner: body.entity.owner,
             tags: body.entity.tags
           });
     });
@@ -308,6 +314,7 @@ program
   .option('--type <type>', 'entity type')
   .option('--tags <tags>', 'comma-separated tags')
   .option('--visibility <visibility>', 'entity visibility filter')
+  .option('--owner <owner>', 'entity owner filter')
   .option('--limit <limit>', 'result limit', '10')
   .option('--threshold <threshold>', 'similarity threshold', '0.35')
   .option('--recency-weight <recencyWeight>', 'recency weight', '0.1')
@@ -318,6 +325,7 @@ program
         type: options.type,
         tags: parseCommaList(options.tags),
         visibility: options.visibility,
+        owner: options.owner,
         limit: Number(options.limit),
         threshold: Number(options.threshold),
         recency_weight: Number(options.recencyWeight)
@@ -331,9 +339,12 @@ program
   .command('recall')
   .description('Recall an entity by ID')
   .argument('id', 'entity ID')
-  .action(async (id, _options, command) => {
+  .option('--owner <owner>', 'entity owner filter')
+  .action(async (id, options, command) => {
     await runWithClient(command, async (client, json) => {
-      const body = await client.recallEntity(id);
+      const body = await client.recallEntity(id, {
+        owner: options.owner
+      });
       return json ? body : formatStoredEntity(body.entity);
     });
   });
@@ -344,6 +355,7 @@ program
   .option('--type <type>', 'filter by type')
   .option('--status <status>', 'filter by status')
   .option('--visibility <visibility>', 'filter by visibility')
+  .option('--owner <owner>', 'filter by owner')
   .option('--tags <tags>', 'comma-separated tags')
   .option('--limit <limit>', 'result limit', '50')
   .option('--offset <offset>', 'result offset', '0')
@@ -353,6 +365,7 @@ program
         type: options.type,
         status: options.status,
         visibility: options.visibility,
+        owner: options.owner,
         tags: parseCommaList(options.tags),
         limit: Number(options.limit),
         offset: Number(options.offset)
@@ -374,7 +387,7 @@ program
           : '-';
         return [
           `${item.type} ${shortId(item.id)}  ${preview}`,
-          `  tags: ${item.tags.join(', ') || '-'} | ${item.visibility} | ${item.created_at.slice(0, 10)}`
+          `  tags: ${item.tags.join(', ') || '-'} | owner=${item.owner ?? 'shared'} | ${item.visibility} | ${item.created_at.slice(0, 10)}`
         ];
       });
 
@@ -474,6 +487,7 @@ taskCommand
             content: body.entity.content,
             status: body.entity.status,
             visibility: body.entity.visibility,
+            owner: body.entity.owner,
             tags: body.entity.tags
           });
     });
@@ -536,6 +550,7 @@ taskCommand
             content: body.entity.content,
             status: body.entity.status,
             visibility: body.entity.visibility,
+            owner: body.entity.owner,
             tags: body.entity.tags
           });
     });
@@ -561,6 +576,7 @@ taskCommand
             content: body.entity.content,
             status: body.entity.status,
             visibility: body.entity.visibility,
+            owner: body.entity.owner,
             tags: body.entity.tags
           });
     });
@@ -726,12 +742,14 @@ program
   .argument('<entity-id>', 'entity ID')
   .option('--depth <n>', 'traversal depth (1-3)', '1')
   .option('--relation <types>', 'comma-separated relation types')
+  .option('--owner <owner>', 'owner filter')
   .action(async (entityId, options, command) => {
     await runWithClient(command, async (client, json) => {
       const relationTypes = parseCommaList(options.relation);
       const body = await client.expandGraph(entityId, {
         depth: Number(options.depth),
-        ...(relationTypes !== undefined ? { relationTypes } : {})
+        ...(relationTypes !== undefined ? { relationTypes } : {}),
+        ...(options.owner !== undefined ? { owner: options.owner } : {})
       });
 
       if (json) return body;

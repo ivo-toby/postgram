@@ -182,6 +182,66 @@ describe('entity-service', () => {
     });
   }, 120_000);
 
+  it('filters owner-scoped list and search results while keeping shared entities visible', async () => {
+    if (!database) {
+      throw new Error('test database not initialized');
+    }
+
+    const auth = makeAuthContext();
+    const embeddingService = createEmbeddingService();
+
+    const shared = (await storeEntity(database.pool, auth, {
+      type: 'memory',
+      content: 'shared planning notes for the whole team',
+      tags: ['owner-scope']
+    }))._unsafeUnwrap();
+    const productManager = (await storeEntity(database.pool, auth, {
+      type: 'memory',
+      content: 'product manager planning notes for sprint goals',
+      tags: ['owner-scope'],
+      owner: 'product-manager'
+    } as never))._unsafeUnwrap();
+    await storeEntity(database.pool, auth, {
+      type: 'memory',
+      content: 'developer planning notes for implementation spikes',
+      tags: ['owner-scope'],
+      owner: 'developer'
+    } as never);
+
+    await createEnrichmentWorker({
+      pool: database.pool,
+      embeddingService
+    }).runOnce();
+
+    const listed = await listEntities(database.pool, auth, {
+      tags: ['owner-scope'],
+      owner: 'product-manager'
+    } as never);
+
+    expect(listed.isOk()).toBe(true);
+    expect(listed._unsafeUnwrap().items.map((entity) => entity.id).sort()).toEqual(
+      [shared.id, productManager.id].sort()
+    );
+
+    const searched = await searchEntities(
+      database.pool,
+      auth,
+      {
+        query: 'planning notes',
+        owner: 'product-manager',
+        threshold: 0
+      } as never,
+      {
+        embeddingService
+      }
+    );
+
+    expect(searched.isOk()).toBe(true);
+    expect(searched._unsafeUnwrap().results.map((entry) => entry.entity.id).sort()).toEqual(
+      [shared.id, productManager.id].sort()
+    );
+  }, 120_000);
+
   it('allows delete-only keys to soft delete accessible entities', async () => {
     if (!database) {
       throw new Error('test database not initialized');

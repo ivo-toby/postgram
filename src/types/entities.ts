@@ -25,6 +25,7 @@ export type Entity = {
   type: EntityType;
   content: string | null;
   visibility: Visibility;
+  owner: string | null;
   status: EntityStatus | null;
   enrichmentStatus: EnrichmentStatus;
   version: number;

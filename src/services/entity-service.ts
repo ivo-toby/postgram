@@ -13,12 +13,18 @@ import type {
 } from '../types/entities.js';
 import { appendAuditEntry } from '../util/audit.js';
 import { AppError, ErrorCode } from '../util/errors.js';
+import {
+  matchesOwnerFilter,
+  normalizeOwner,
+  ownerSqlCondition
+} from './owner-filter.js';
 
 type EntityRow = {
   id: string;
   type: EntityType;
   content: string | null;
   visibility: Visibility;
+  owner: string | null;
   status: EntityStatus | null;
   enrichment_status: EnrichmentStatus;
   version: number;
@@ -34,6 +40,7 @@ type StoreEntityInput = {
   type: EntityType;
   content?: string | null | undefined;
   visibility?: Visibility | undefined;
+  owner?: string | null | undefined;
   status?: EntityStatus | null | undefined;
   tags?: string[] | undefined;
   source?: string | null | undefined;
@@ -55,6 +62,7 @@ type ListEntitiesInput = {
   type?: EntityType | undefined;
   status?: EntityStatus | undefined;
   visibility?: Visibility | undefined;
+  owner?: string | undefined;
   tags?: string[] | undefined;
   limit?: number | undefined;
   offset?: number | undefined;
@@ -80,6 +88,7 @@ function mapEntity(row: EntityRow): Entity {
     type: row.type,
     content: row.content,
     visibility: row.visibility,
+    owner: row.owner,
     status: row.status,
     enrichmentStatus: row.enrichment_status,
     version: row.version,
@@ -134,19 +143,21 @@ export function storeEntity(
             type,
             content,
             visibility,
+            owner,
             status,
             enrichment_status,
             tags,
             source,
             metadata
           )
-          VALUES ($1, $2, $3, $4, $5, $6, $7, $8)
+          VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9)
           RETURNING *
         `,
         [
           input.type,
           input.content ?? null,
           input.visibility ?? 'shared',
+          normalizeOwner(input.owner),
           input.status ?? null,
           hasContent(input.content) ? 'pending' : null,
           input.tags ?? [],
@@ -179,7 +190,10 @@ export function storeEntity(
 export function recallEntity(
   pool: Pool,
   auth: AuthContext,
-  id: string
+  id: string,
+  options: {
+    owner?: string | undefined;
+  } = {}
 ): ServiceResult<Entity> {
   return ResultAsync.fromPromise(
     (async () => {
@@ -193,6 +207,9 @@ export function recallEntity(
       const entity = mapEntity(row);
       checkTypeAccess(auth, entity.type);
       checkVisibilityAccess(auth, entity.visibility);
+      if (!matchesOwnerFilter(entity.owner, options.owner)) {
+        throw new AppError(ErrorCode.NOT_FOUND, 'Entity not found');
+      }
       return entity;
     })(),
     (error) => toAppError(error, 'Failed to recall entity')
@@ -394,17 +411,19 @@ export function listEntities(
           WHERE ($1::text IS NULL OR type = $1)
             AND ($2::text IS NULL OR status = $2)
             AND ($3::text IS NULL OR visibility = $3)
-            AND ($4::text[] IS NULL OR tags @> $4)
-            AND ($5::text[] IS NULL OR type = ANY($5))
-            AND visibility = ANY($6)
+            AND ${ownerSqlCondition('owner', '$4')}
+            AND ($5::text[] IS NULL OR tags @> $5)
+            AND ($6::text[] IS NULL OR type = ANY($6))
+            AND visibility = ANY($7)
           ORDER BY created_at DESC
-          LIMIT $7
-          OFFSET $8
+          LIMIT $8
+          OFFSET $9
         `,
         [
           input.type ?? null,
           input.status ?? null,
           input.visibility ?? null,
+          input.owner ?? null,
           input.tags?.length ? input.tags : null,
           auth.allowedTypes,
           auth.allowedVisibility,

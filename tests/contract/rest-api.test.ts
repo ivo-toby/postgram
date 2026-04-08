@@ -129,6 +129,135 @@ describe('REST entity endpoints', () => {
     });
   }, 120_000);
 
+  it('supports owner-scoped create, list, search, and graph queries', async () => {
+    if (!database) {
+      throw new Error('test database not initialized');
+    }
+
+    const embeddingService = createEmbeddingService();
+    const { app, apiKey } = await createAuthorizedApp({ embeddingService });
+
+    const createEntity = async (body: Record<string, unknown>) => {
+      const response = await app.request('/api/entities', {
+        method: 'POST',
+        headers: {
+          Authorization: `Bearer ${apiKey}`,
+          'Content-Type': 'application/json'
+        },
+        body: JSON.stringify(body)
+      });
+
+      expect(response.status).toBe(201);
+      return (await response.json()) as {
+        entity: { id: string; owner: string | null };
+      };
+    };
+
+    const shared = await createEntity({
+      type: 'memory',
+      content: 'shared planning notes for all personas'
+    });
+    const productManager = await createEntity({
+      type: 'memory',
+      content: 'product manager planning notes',
+      owner: 'product-manager'
+    });
+    const developer = await createEntity({
+      type: 'memory',
+      content: 'developer planning notes',
+      owner: 'developer'
+    });
+
+    expect(productManager.entity.owner).toBe('product-manager');
+
+    const edgeResponseA = await app.request('/api/edges', {
+      method: 'POST',
+      headers: {
+        Authorization: `Bearer ${apiKey}`,
+        'Content-Type': 'application/json'
+      },
+      body: JSON.stringify({
+        source_id: productManager.entity.id,
+        target_id: shared.entity.id,
+        relation: 'references'
+      })
+    });
+    expect(edgeResponseA.status).toBe(201);
+
+    const edgeResponseB = await app.request('/api/edges', {
+      method: 'POST',
+      headers: {
+        Authorization: `Bearer ${apiKey}`,
+        'Content-Type': 'application/json'
+      },
+      body: JSON.stringify({
+        source_id: productManager.entity.id,
+        target_id: developer.entity.id,
+        relation: 'references'
+      })
+    });
+    expect(edgeResponseB.status).toBe(201);
+
+    await createEnrichmentWorker({
+      pool: database.pool,
+      embeddingService
+    }).runOnce();
+
+    const listResponse = await app.request('/api/entities?owner=product-manager&limit=10', {
+      headers: {
+        Authorization: `Bearer ${apiKey}`
+      }
+    });
+    const listBody = (await listResponse.json()) as {
+      items: Array<{ id: string }>;
+    };
+
+    expect(listResponse.status).toBe(200);
+    expect(listBody.items.map((item) => item.id).sort()).toEqual(
+      [shared.entity.id, productManager.entity.id].sort()
+    );
+
+    const searchResponse = await app.request('/api/search', {
+      method: 'POST',
+      headers: {
+        Authorization: `Bearer ${apiKey}`,
+        'Content-Type': 'application/json'
+      },
+      body: JSON.stringify({
+        query: 'planning notes',
+        owner: 'product-manager',
+        threshold: 0
+      })
+    });
+    const searchBody = (await searchResponse.json()) as {
+      results: Array<{ entity: { id: string } }>;
+    };
+
+    expect(searchResponse.status).toBe(200);
+    expect(searchBody.results.map((entry) => entry.entity.id).sort()).toEqual(
+      [shared.entity.id, productManager.entity.id].sort()
+    );
+
+    const graphResponse = await app.request(
+      `/api/entities/${productManager.entity.id}/graph?owner=product-manager&depth=1`,
+      {
+        headers: {
+          Authorization: `Bearer ${apiKey}`
+        }
+      }
+    );
+    const graphBody = (await graphResponse.json()) as {
+      entities: Array<{ id: string }>;
+      edges: Array<{ id: string }>;
+    };
+
+    expect(graphResponse.status).toBe(200);
+    expect(graphBody.entities.map((entity) => entity.id).sort()).toEqual(
+      [shared.entity.id, productManager.entity.id].sort()
+    );
+    expect(graphBody.edges).toHaveLength(1);
+  }, 120_000);
+
   it('returns conflicts for stale updates and supports soft delete', async () => {
     const { app, apiKey } = await createAuthorizedApp();
 

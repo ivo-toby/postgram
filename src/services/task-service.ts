@@ -19,6 +19,7 @@ type EntityRow = {
   type: 'task';
   content: string | null;
   visibility: Visibility;
+  owner: string | null;
   status: EntityStatus | null;
   enrichment_status: EnrichmentStatus;
   version: number;
@@ -115,6 +116,7 @@ function mapEntity(row: EntityRow): Entity {
     type: row.type,
     content: row.content,
     visibility: row.visibility,
+    owner: row.owner,
     status: row.status,
     enrichmentStatus: row.enrichment_status,
     version: row.version,

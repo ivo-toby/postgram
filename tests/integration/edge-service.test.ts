@@ -236,4 +236,57 @@ describe('edge-service', () => {
     expect(graph.entities.map((entity) => entity.id)).toEqual([alice.id]);
     expect(graph.edges).toEqual([]);
   }, 120_000);
+
+  it('filters graph traversal by owner while still including shared neighbors', async () => {
+    if (!database) throw new Error('test database not initialized');
+    const auth = makeAuthContext();
+
+    const productManager = (await storeEntity(database.pool, auth, {
+      type: 'person',
+      content: 'Product Manager',
+      owner: 'product-manager'
+    } as never))._unsafeUnwrap();
+    const sharedProject = (await storeEntity(database.pool, auth, {
+      type: 'project',
+      content: 'Shared roadmap'
+    }))._unsafeUnwrap();
+    const developerTask = (await storeEntity(database.pool, auth, {
+      type: 'task',
+      content: 'Private implementation task',
+      status: 'inbox',
+      owner: 'developer'
+    } as never))._unsafeUnwrap();
+
+    await createEdge(database.pool, auth, {
+      sourceId: productManager.id, targetId: sharedProject.id, relation: 'tracks'
+    });
+    await createEdge(database.pool, auth, {
+      sourceId: productManager.id, targetId: developerTask.id, relation: 'tracks'
+    });
+
+    const listed = await listEdges(
+      database.pool,
+      auth,
+      productManager.id,
+      { owner: 'product-manager' } as never
+    );
+    expect(listed.isOk()).toBe(true);
+    expect(listed._unsafeUnwrap().map((edge) => edge.targetId)).toEqual([
+      sharedProject.id
+    ]);
+
+    const expanded = await expandGraph(
+      database.pool,
+      auth,
+      productManager.id,
+      { depth: 1, owner: 'product-manager' } as never
+    );
+    expect(expanded.isOk()).toBe(true);
+    const graph = expanded._unsafeUnwrap();
+
+    expect(graph.entities.map((entity) => entity.id).sort()).toEqual(
+      [productManager.id, sharedProject.id].sort()
+    );
+    expect(graph.edges).toHaveLength(1);
+  }, 120_000);
 });

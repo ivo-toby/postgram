@@ -3,8 +3,11 @@
   "version": "0.1.0",
   "private": true,
   "type": "module",
+  "workspaces": [
+    "cli"
+  ],
   "bin": {
-    "pgm": "dist/src/cli/pgm.js"
+    "pgm-admin": "dist/src/cli/admin/pgm-admin.js"
   },
   "engines": {
     "node": ">=22"

@@ -30,19 +30,13 @@ export default tseslint.config(
     }
   },
   {
-    files: ['src/cli/admin/**/*.ts', 'src/cli/shared.ts'],
+    files: ['src/**/*.ts'],
     rules: {
       '@typescript-eslint/no-unsafe-assignment': 'off',
       '@typescript-eslint/no-unsafe-argument': 'off',
       '@typescript-eslint/no-unsafe-member-access': 'off',
       '@typescript-eslint/no-unnecessary-type-assertion': 'off',
       '@typescript-eslint/require-await': 'off'
-    }
-  },
-  {
-    files: ['tests/integration/migration.test.ts'],
-    rules: {
-      '@typescript-eslint/no-unsafe-assignment': 'off'
     }
   }
 );

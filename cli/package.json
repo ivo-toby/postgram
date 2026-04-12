@@ -1,0 +1,33 @@
+{
+  "name": "@postgram/cli",
+  "version": "0.1.0",
+  "description": "Postgram CLI — store, search, and manage entities from the command line",
+  "type": "module",
+  "bin": {
+    "pgm": "./dist/src/pgm.js"
+  },
+  "files": [
+    "dist"
+  ],
+  "scripts": {
+    "build": "tsc -p tsconfig.json",
+    "test": "vitest run",
+    "test:watch": "vitest",
+    "lint": "eslint .",
+    "format": "prettier --write ."
+  },
+  "dependencies": {
+    "commander": "^14.0.1"
+  },
+  "devDependencies": {
+    "@eslint/js": "^9.38.0",
+    "eslint": "^9.38.0",
+    "typescript": "^5.9.3",
+    "typescript-eslint": "^8.46.1",
+    "vitest": "^3.2.4"
+  },
+  "engines": {
+    "node": ">=22"
+  },
+  "license": "MIT"
+}

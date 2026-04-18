@@ -234,10 +234,22 @@ Expected:
 | Variable | Required | Default | Description |
 |----------|----------|---------|-------------|
 | `DATABASE_URL` | yes | | Full Postgres connection string |
-| `OPENAI_API_KEY` | yes | | For embedding generation |
+| `OPENAI_API_KEY` | conditional | | Required when `EMBEDDING_PROVIDER=openai` OR (`EXTRACTION_ENABLED=true` AND `EXTRACTION_PROVIDER=openai`). Optional otherwise. |
 | `PORT` | no | `3100` | HTTP/MCP server port |
 | `LOG_LEVEL` | no | `info` | pino log level |
 | `ENRICHMENT_POLL_INTERVAL_MS` | no | `1000` | Enrichment worker poll interval |
+
+### Embeddings
+
+| Variable | Required | Default | Description |
+|----------|----------|---------|-------------|
+| `EMBEDDING_PROVIDER` | no | `openai` | `openai` or `ollama` |
+| `EMBEDDING_MODEL` | no | per-provider | Defaults: `text-embedding-3-small` (openai, 1536 dims), `bge-m3` (ollama, 1024 dims) |
+| `EMBEDDING_DIMENSIONS` | no | per-provider | Must match the active `embedding_models` row. Run `pgm-admin embeddings migrate --target-dimensions <N> --yes` to change. |
+| `EMBEDDING_BASE_URL` | when provider=ollama | falls back to `OLLAMA_BASE_URL` | Embedding host. Independent from LLM-extraction host so embeddings and inference can target different machines. |
+| `EMBEDDING_API_KEY` | no | | Optional bearer token for `EMBEDDING_BASE_URL`. |
+
+See [`specs/002-local-embeddings/quickstart.md`](specs/002-local-embeddings/quickstart.md) for a walkthrough of fresh-install-on-Ollama and migrating from OpenAI.
 
 ### LLM Extraction
 

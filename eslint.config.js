@@ -3,7 +3,7 @@ import tseslint from 'typescript-eslint';
 
 export default tseslint.config(
   {
-    ignores: ['dist/**', 'node_modules/**']
+    ignores: ['**/dist/**', '**/node_modules/**']
   },
   js.configs.recommended,
   ...tseslint.configs.recommended.map((config) => ({
@@ -30,7 +30,7 @@ export default tseslint.config(
     }
   },
   {
-    files: ['src/cli/admin/**/*.ts', 'src/cli/shared.ts'],
+    files: ['src/cli/admin/**/*.ts', 'src/cli/shared.ts', 'cli/src/**/*.ts'],
     rules: {
       '@typescript-eslint/no-unsafe-assignment': 'off',
       '@typescript-eslint/no-unsafe-argument': 'off',

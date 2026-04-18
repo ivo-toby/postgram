@@ -6,6 +6,14 @@ import { Command } from 'commander';
 import { createKey, revokeKey } from '../../auth/key-service.js';
 import type { Scope } from '../../auth/types.js';
 import type { EntityType, Visibility } from '../../types/entities.js';
+import { loadConfig } from '../../config.js';
+import { buildEmbeddingProviderConfig } from '../../index.js';
+import {
+  MigrateRefusal,
+  runMigrate,
+  type MigrateReport
+} from '../../services/embeddings/admin.js';
+import { AppError, ErrorCode, toErrorResponse } from '../../util/errors.js';
 import {
   handleCliFailure,
   isJsonMode,
@@ -558,5 +566,104 @@ program
       return formatStats(stats);
     });
   });
+
+const embeddingsCommand = program
+  .command('embeddings')
+  .description('Manage embedding storage');
+
+embeddingsCommand
+  .command('migrate')
+  .description('Migrate chunk embedding storage to a new dimension')
+  .requiredOption('--target-dimensions <n>', 'target embedding dimension')
+  .option('--dry-run', 'report affected counts without altering schema or data')
+  .option('--yes', 'confirm destructive migration (required outside --dry-run)')
+  .action(async (options, command) => {
+    const json = isJsonMode(command);
+    const targetDimensions = Number(options.targetDimensions);
+
+    if (!Number.isInteger(targetDimensions) || targetDimensions <= 0) {
+      const message = `--target-dimensions must be a positive integer (got ${options.targetDimensions})`;
+      if (json) {
+        printJson({ error: { code: 'VALIDATION', message } });
+      } else {
+        printHuman([`VALIDATION: ${message}`]);
+      }
+      process.exit(65);
+    }
+
+    let providerConfig;
+    try {
+      providerConfig = buildEmbeddingProviderConfig(loadConfig());
+    } catch (error) {
+      const appError =
+        error instanceof AppError
+          ? error
+          : new AppError(
+              ErrorCode.VALIDATION,
+              error instanceof Error ? error.message : 'invalid config'
+            );
+      if (json) {
+        printJson(toErrorResponse(appError));
+      } else {
+        printHuman([`${appError.code}: ${appError.message}`]);
+      }
+      process.exit(65);
+    }
+
+    const pool = createPool();
+
+    try {
+      const report = await runMigrate({
+        pool,
+        providerConfig,
+        targetDimensions,
+        dryRun: Boolean(options.dryRun),
+        yes: Boolean(options.yes)
+      });
+
+      if (json) {
+        printJson(report);
+      } else {
+        printHuman(formatMigrateReport(report));
+      }
+      process.exit(0);
+    } catch (error) {
+      if (error instanceof MigrateRefusal) {
+        if (json) {
+          printJson({ error: { code: 'VALIDATION', message: error.message } });
+        } else {
+          printHuman([`REFUSED: ${error.message}`]);
+        }
+        process.exit(error.exitCode);
+      }
+      const appError =
+        error instanceof AppError
+          ? error
+          : new AppError(
+              ErrorCode.INTERNAL,
+              error instanceof Error ? error.message : 'migration failed'
+            );
+      if (json) {
+        printJson(toErrorResponse(appError));
+      } else {
+        printHuman([`${appError.code}: ${appError.message}`]);
+      }
+      process.exit(70);
+    } finally {
+      await pool.end().catch(() => undefined);
+    }
+  });
+
+function formatMigrateReport(report: MigrateReport): string[] {
+  const header = report.dryRun ? 'dry run — no changes applied' : 'migration complete';
+  return [
+    header,
+    `previous: provider=${report.previous.provider ?? 'none'} name=${report.previous.name ?? 'none'} dimensions=${report.previous.dimensions ?? 'none'}`,
+    `target:   provider=${report.target.provider} name=${report.target.name} dimensions=${report.target.dimensions}`,
+    `effects:  chunks_discarded=${report.effects.chunksDiscarded} entities_marked_pending=${report.effects.entitiesMarkedPending}`,
+    report.newModelId ? `new_model_id=${report.newModelId}` : 'new_model_id=(dry-run)',
+    `elapsed_ms=${report.elapsedMs}`
+  ];
+}
 
 await program.parseAsync(process.argv);

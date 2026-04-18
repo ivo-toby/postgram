@@ -8,10 +8,18 @@ import type { Pool } from 'pg';
 import { createAuthMiddleware } from './auth/middleware.js';
 import type { AuthContext } from './auth/types.js';
 import { loadConfig } from './config.js';
+import type { AppConfig } from './config.js';
 import { checkDatabaseHealth, createPool } from './db/pool.js';
 import { runMigrations } from './db/migrate.js';
 import type { EmbeddingService } from './services/embedding-service.js';
 import { createEmbeddingService } from './services/embedding-service.js';
+import {
+  createEmbeddingProvider,
+  resolveEmbeddingDefaults,
+  type EmbeddingProvider,
+  type EmbeddingProviderConfig
+} from './services/embeddings/providers.js';
+import { assertEmbeddingDimensionAgreement } from './services/embeddings/admin.js';
 import { createEnrichmentWorker } from './services/enrichment-worker.js';
 import { registerMcpRoutes } from './transport/mcp.js';
 import { registerRestRoutes } from './transport/rest.js';
@@ -39,13 +47,62 @@ type AppOptions = {
   getHealthStatus?: () => Promise<HealthStatus> | HealthStatus;
 };
 
-const DEFAULT_EMBEDDING_MODEL = 'text-embedding-3-small';
-
 function getDefaultHealthStatus(): HealthStatus {
   return {
     postgres: 'disconnected',
     embeddingModel: null
   };
+}
+
+export function buildEmbeddingProviderConfig(
+  config: AppConfig
+): EmbeddingProviderConfig {
+  // Per-provider defaults apply only when BOTH model and dimensions are
+  // unset. If the operator picks a non-default model, they must also declare
+  // the dimension — otherwise we would silently send requests whose expected
+  // length does not match the model's actual output.
+  const hasExplicitModel = config.EMBEDDING_MODEL !== undefined;
+  const hasExplicitDimensions = config.EMBEDDING_DIMENSIONS !== undefined;
+  if (hasExplicitModel && !hasExplicitDimensions) {
+    throw new AppError(
+      ErrorCode.VALIDATION,
+      'EMBEDDING_MODEL is set but EMBEDDING_DIMENSIONS is not — declare the embedding dimension explicitly when overriding the model'
+    );
+  }
+
+  const { model, dimensions } = resolveEmbeddingDefaults(
+    config.EMBEDDING_PROVIDER,
+    config.EMBEDDING_MODEL,
+    config.EMBEDDING_DIMENSIONS
+  );
+
+  if (config.EMBEDDING_PROVIDER === 'openai') {
+    if (!config.OPENAI_API_KEY) {
+      throw new AppError(
+        ErrorCode.VALIDATION,
+        'OPENAI_API_KEY is required for EMBEDDING_PROVIDER=openai'
+      );
+    }
+    return {
+      provider: 'openai',
+      model,
+      dimensions,
+      apiKey: config.OPENAI_API_KEY
+    };
+  }
+
+  const baseUrl = config.EMBEDDING_BASE_URL ?? config.OLLAMA_BASE_URL;
+  return {
+    provider: 'ollama',
+    model,
+    dimensions,
+    baseUrl,
+    apiKey: config.EMBEDDING_API_KEY
+  };
+}
+
+function describeHost(providerConfig: EmbeddingProviderConfig): string {
+  return providerConfig.provider === 'ollama' ? providerConfig.baseUrl : 'api.openai.com';
 }
 
 export function createApp(
@@ -86,7 +143,7 @@ export function createApp(
       status: 'ok',
       version: '0.1.0',
       postgres: health.postgres,
-      embedding_model: health.embeddingModel ?? DEFAULT_EMBEDDING_MODEL
+      embedding_model: health.embeddingModel
     });
   });
 
@@ -137,7 +194,32 @@ export async function startServer(): Promise<{
 
   await runMigrations(pool);
 
-  const embeddingService = createEmbeddingService();
+  const providerConfig = buildEmbeddingProviderConfig(config);
+  const embeddingProvider: EmbeddingProvider = createEmbeddingProvider(providerConfig);
+  const embeddingService = createEmbeddingService({ provider: embeddingProvider });
+
+  logger.info(
+    {
+      provider: embeddingProvider.name,
+      model: embeddingProvider.model,
+      dimensions: embeddingProvider.dimensions,
+      host: describeHost(providerConfig)
+    },
+    'embedding provider active'
+  );
+
+  const mismatch = await assertEmbeddingDimensionAgreement(pool, {
+    provider: embeddingProvider.name,
+    model: embeddingProvider.model,
+    dimensions: embeddingProvider.dimensions
+  });
+  if (mismatch) {
+    logger.error(mismatch.message);
+    throw new AppError(ErrorCode.VALIDATION, mismatch.message, {
+      configured: mismatch.details.configured,
+      activeModel: mismatch.details.activeModel
+    });
+  }
 
   try {
     const activeModel = await embeddingService.getActiveModel(pool);
@@ -216,7 +298,11 @@ if (
   import.meta.url === pathToFileURL(process.argv[1]).href
 ) {
   void startServer().catch((error) => {
-    console.error(error);
+    if (error instanceof AppError) {
+      process.stderr.write(`${error.code}: ${error.message}\n`);
+    } else {
+      process.stderr.write(`${error instanceof Error ? error.message : String(error)}\n`);
+    }
     process.exitCode = 1;
   });
 }

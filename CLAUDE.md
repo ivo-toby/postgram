@@ -6,27 +6,21 @@ Auto-generated from all feature plans. Last updated: 2026-03-18
 
 - TypeScript on Node.js 22+ (LTS) + Hono (HTTP), @modelcontextprotocol/sdk (MCP SSE), (001-phase1-mvp)
 
-## Project Structure
-
-```text
-src/
-tests/
-```
-
-## Commands
-
-npm test && npm run lint
-
 ## Code Style
 
 TypeScript on Node.js 22+ (LTS): Follow standard conventions
+
+## Developement workflow
+
+Red/Green TDD with SDD specifications. 
+
+IMPORTANT: before pushing code, use /codex (skill-codex) to have your changes reviewed by Codex, fix all p0, p1 and p2 issues at before pushing, after fixing, ask for a review again, until no p0, p1 or p2 issues remain. After pushing, create a PR.
 
 ## Recent Changes
 
 - 001-phase1-mvp: Added TypeScript on Node.js 22+ (LTS) + Hono (HTTP), @modelcontextprotocol/sdk (MCP SSE),
 
 <!-- MANUAL ADDITIONS START -->
-
 ## E2E Smoke Testing with Sprite
 
 Use the sprite CLI to spin up a real environment and validate wiring end-to-end.

@@ -7,7 +7,7 @@
     "pgm": "dist/src/pgm.js"
   },
   "files": [
-    "dist",
+    "dist/src",
     "README.md"
   ],
   "repository": {

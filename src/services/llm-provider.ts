@@ -8,8 +8,13 @@ type AnthropicResponse = {
   content: Array<{ type: string; text: string }>;
 };
 
+// `/api/chat` responses come back in two shapes depending on the server:
+// - Native Ollama: { message: { content } }
+// - llama.cpp's Ollama-compatibility layer: { choices: [{ message: { content } }] }
+// Accept both so EXTRACTION_PROVIDER=ollama works against either.
 type OllamaResponse = {
-  message: { content: string };
+  message?: { content?: string };
+  choices?: Array<{ message?: { content?: string } }>;
 };
 
 function createOpenAiProvider(apiKey: string, model: string): LlmProvider {
@@ -86,7 +91,9 @@ function createOllamaProvider(baseUrl: string, model: string, apiKey?: string): 
     }
 
     const body = (await response.json()) as OllamaResponse;
-    return body.message?.content ?? '[]';
+    return body.message?.content
+      ?? body.choices?.[0]?.message?.content
+      ?? '[]';
   };
 }
 

@@ -26,20 +26,18 @@ jobs:
           fetch-depth: 0
           persist-credentials: true
 
+      # Node 24 ships with npm 11.x out of the box, which is what npm's
+      # trusted publishing (OIDC) needs (>= 11.5.1). Using 24 here instead
+      # of 22 avoids the `npm install -g npm@latest` self-upgrade path,
+      # which historically fails on Node 22 runners with MODULE_NOT_FOUND
+      # on promise-retry. The project's engines field (>=22) is
+      # unaffected; this choice only pins the publishing runtime.
       - name: Setup Node.js
         uses: actions/setup-node@v4
         with:
-          node-version: 22
+          node-version: 24
           registry-url: https://registry.npmjs.org
           cache: npm
-
-      # Trusted publishing to npm (OIDC) needs npm >= 11.5.1; Node 22 ships
-      # with npm 10.x, so upgrade explicitly. No NPM_TOKEN is used — the
-      # workflow's id-token is exchanged for a short-lived npm credential
-      # at publish time. Configure the trusted publisher on npmjs.com under
-      # package Settings → Publishing access.
-      - name: Upgrade npm
-        run: npm install -g npm@latest
 
       # Install workspace deps (root + cli via workspaces).
       - name: Install

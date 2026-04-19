@@ -283,7 +283,26 @@ See [`specs/002-local-embeddings/quickstart.md`](specs/002-local-embeddings/quic
 
 ## Running The Server
 
-Development:
+### Pre-built Docker image (recommended)
+
+Pull from GitHub Container Registry:
+
+```bash
+docker pull ghcr.io/ivo-toby/postgram:latest
+```
+
+Images are multi-arch (`linux/amd64`, `linux/arm64`). Tags available:
+
+- `latest` — most recent build of `main`
+- `main` — same as `latest`, explicit branch name
+- `sha-<short>` — pinned to a specific commit
+- `v<major>.<minor>.<patch>` — semver tags when a release is cut
+
+The `docker-compose.yml` in this repo builds locally by default; to use the
+pre-built image instead, replace `build: .` with `image: ghcr.io/ivo-toby/postgram:latest`
+for the `mcp-server` service.
+
+### Local development
 
 ```bash
 npm run dev
@@ -375,7 +394,21 @@ The MCP tool behavior is intentionally aligned with the REST surface.
 
 ## Human CLI (`pgm`)
 
-Use directly in development:
+### Install from npm
+
+```bash
+npm install -g @ivo-toby/postgram-cli
+```
+
+Then configure once:
+
+```bash
+export PGM_API_URL=http://<postgram-host>:3100
+export PGM_API_KEY=<your-api-key>
+# or persist them in ~/.pgmrc as JSON: { "api_url": "...", "api_key": "..." }
+```
+
+### Run from source (for development)
 
 ```bash
 npx tsx src/cli/pgm.ts <command>
@@ -524,10 +557,41 @@ Implemented phases:
 - LLM extraction is optional and disabled by default
 - Backup encryption requires `gpg`
 
+## Claude Code skill
+
+A portable Claude Code skill for using `pgm` from your own agent lives in
+[`skill/postgram/SKILL.md`](skill/postgram/SKILL.md). Copy the `skill/postgram/`
+directory into your own project's `.claude/skills/` (or your user-level
+`~/.claude/skills/`) and the agent will know when to invoke `pgm store`,
+`pgm search`, `pgm link`, etc. It assumes the CLI is on PATH and
+`PGM_API_URL` + `PGM_API_KEY` are set. The skill file is deliberately *not*
+under `.claude/` in this repo so you can decide where to put it.
+
+## Releases & CI
+
+The CLI package publishes to npm as
+[`@ivo-toby/postgram-cli`](https://www.npmjs.com/package/@ivo-toby/postgram-cli)
+on every merge to `main`, driven by [semantic-release](https://semantic-release.gitbook.io/)
+v25 and conventional commits scoped to `cli` (e.g. `feat(cli): ...`).
+Non-CLI-scoped commits don't bump the CLI version. Workflow:
+[`.github/workflows/release-cli.yml`](.github/workflows/release-cli.yml).
+
+Required repository secrets:
+
+- `NPM_TOKEN` — npm automation token with publish access to the `@ivo-toby` scope.
+
+The server's Docker image publishes to
+`ghcr.io/ivo-toby/postgram` on every merge to `main` and on semver tag
+pushes (multi-arch `amd64` + `arm64`). Workflow:
+[`.github/workflows/docker.yml`](.github/workflows/docker.yml). Uses the
+built-in `GITHUB_TOKEN`; no extra secret required, but repo `packages:write`
+permission must be enabled.
+
 ## Related Docs
 
 - [Phase 1 MVP spec](specs/001-phase1-mvp/spec.md)
 - [Phase 1 enhancements design](docs/superpowers/specs/2026-03-30-phase1-enhancements-design.md)
 - [Phase 2 document sync design](docs/superpowers/specs/2026-03-30-phase2-document-sync-design.md)
 - [Phase 3 knowledge graph design](docs/superpowers/specs/2026-03-30-phase3-knowledge-graph-design.md)
+- [Phase 4 local embeddings spec](specs/002-local-embeddings/spec.md)
 - [Manual test plan](docs/manual-test-plan.md)

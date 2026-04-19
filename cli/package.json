@@ -1,6 +1,6 @@
 {
   "name": "@ivotoby/postgram-cli",
-  "version": "1.0.5",
+  "version": "1.0.6",
   "description": "Postgram CLI — store, search, and manage entities from the command line",
   "type": "module",
   "bin": {

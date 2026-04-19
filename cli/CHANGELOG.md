@@ -1,3 +1,9 @@
+## [1.0.6](https://github.com/ivo-toby/postgram/compare/cli-v1.0.5...cli-v1.0.6) (2026-04-19)
+
+### Bug Fixes
+
+* package issues ([c842a85](https://github.com/ivo-toby/postgram/commit/c842a85924e1e561b971a5af5a7f08b242cad3e2))
+
 ## [1.0.5](https://github.com/ivo-toby/postgram/compare/cli-v1.0.4...cli-v1.0.5) (2026-04-19)
 
 ### Bug Fixes

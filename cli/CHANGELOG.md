@@ -1,3 +1,9 @@
+## [1.0.5](https://github.com/ivo-toby/postgram/compare/cli-v1.0.4...cli-v1.0.5) (2026-04-19)
+
+### Bug Fixes
+
+* **cli:** use dedicated build tsconfig so tests are not compiled into dist ([182fd94](https://github.com/ivo-toby/postgram/commit/182fd949dd4bc4a254192109ebbb4711adfb6da1))
+
 ## [1.0.4](https://github.com/ivo-toby/postgram/compare/cli-v1.0.3...cli-v1.0.4) (2026-04-19)
 
 ### Bug Fixes

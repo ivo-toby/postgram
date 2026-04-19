@@ -69,6 +69,26 @@ describe('createLlmProvider', () => {
         expect(result).toBe('[{"from":"A","to":"B","relation":"knows"}]');
       });
 
+      it('includes /no_think system message and chat_template_kwargs to disable Qwen3 reasoning', async () => {
+        (globalThis.fetch as unknown as ReturnType<typeof vi.fn>).mockResolvedValue(
+          new Response(JSON.stringify({ message: { content: '[]' } }), { status: 200 })
+        );
+        const provider = createLlmProvider({
+          provider: 'ollama',
+          ollamaBaseUrl: 'http://ollama.local'
+        });
+        await provider('anything');
+
+        const call = (globalThis.fetch as unknown as ReturnType<typeof vi.fn>).mock.calls[0];
+        const init = call?.[1] as RequestInit;
+        const body = JSON.parse(init.body as string) as {
+          messages: Array<{ role: string; content: string }>;
+          chat_template_kwargs?: { enable_thinking?: boolean };
+        };
+        expect(body.messages[0]).toEqual({ role: 'system', content: '/no_think' });
+        expect(body.chat_template_kwargs?.enable_thinking).toBe(false);
+      });
+
       it('parses OpenAI-shape response from llama.cpp Ollama emulation { choices: [{ message: { content } }] }', async () => {
         (globalThis.fetch as unknown as ReturnType<typeof vi.fn>).mockResolvedValue(
           new Response(

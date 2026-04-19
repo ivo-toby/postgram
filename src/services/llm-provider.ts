@@ -1,5 +1,33 @@
 type LlmProvider = (prompt: string) => Promise<string>;
 
+// Hard ceiling on any single LLM call. Prevents a hung server from blocking
+// the enrichment worker indefinitely. Overridable via env for operators who
+// run very slow local models; default is generous but finite.
+const DEFAULT_LLM_TIMEOUT_MS = (() => {
+  const raw = process.env.LLM_REQUEST_TIMEOUT_MS;
+  const parsed = raw ? Number(raw) : Number.NaN;
+  return Number.isFinite(parsed) && parsed > 0 ? parsed : 120_000;
+})();
+
+async function fetchWithTimeout(
+  input: RequestInfo | URL,
+  init: RequestInit,
+  timeoutMs: number = DEFAULT_LLM_TIMEOUT_MS
+): Promise<Response> {
+  const controller = new AbortController();
+  const timer = setTimeout(() => controller.abort(), timeoutMs);
+  try {
+    return await fetch(input, { ...init, signal: controller.signal });
+  } catch (error) {
+    if (error instanceof DOMException && error.name === 'AbortError') {
+      throw new Error(`LLM request timed out after ${timeoutMs}ms`);
+    }
+    throw error;
+  } finally {
+    clearTimeout(timer);
+  }
+}
+
 type OpenAiResponse = {
   choices: Array<{ message: { content: string } }>;
 };
@@ -19,7 +47,7 @@ type OllamaResponse = {
 
 function createOpenAiProvider(apiKey: string, model: string): LlmProvider {
   return async (prompt: string) => {
-    const response = await fetch('https://api.openai.com/v1/chat/completions', {
+    const response = await fetchWithTimeout('https://api.openai.com/v1/chat/completions', {
       method: 'POST',
       headers: {
         'Content-Type': 'application/json',
@@ -43,7 +71,7 @@ function createOpenAiProvider(apiKey: string, model: string): LlmProvider {
 
 function createAnthropicProvider(apiKey: string, model: string): LlmProvider {
   return async (prompt: string) => {
-    const response = await fetch('https://api.anthropic.com/v1/messages', {
+    const response = await fetchWithTimeout('https://api.anthropic.com/v1/messages', {
       method: 'POST',
       headers: {
         'Content-Type': 'application/json',
@@ -75,14 +103,24 @@ function createOllamaProvider(baseUrl: string, model: string, apiKey?: string): 
   }
 
   return async (prompt: string) => {
-    const response = await fetch(`${baseUrl}/api/chat`, {
+    // `/no_think` is Qwen3's inline switch to disable reasoning output —
+    // harmless to models that don't recognize it, but critical for Qwen3:
+    // reasoning tokens triple latency on structured extraction where we
+    // don't need a chain-of-thought.
+    // `chat_template_kwargs.enable_thinking: false` is the equivalent hint
+    // for vLLM / llama.cpp servers that honor it at the template level.
+    const response = await fetchWithTimeout(`${baseUrl}/api/chat`, {
       method: 'POST',
       headers,
       body: JSON.stringify({
         model,
-        messages: [{ role: 'user', content: prompt }],
+        messages: [
+          { role: 'system', content: '/no_think' },
+          { role: 'user', content: prompt }
+        ],
         stream: false,
-        format: 'json'
+        format: 'json',
+        chat_template_kwargs: { enable_thinking: false }
       })
     });
 

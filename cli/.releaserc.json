@@ -34,7 +34,14 @@
     [
       "@semantic-release/npm",
       {
-        "pkgRoot": "."
+        "pkgRoot": ".",
+        "npmPublish": false
+      }
+    ],
+    [
+      "@semantic-release/exec",
+      {
+        "publishCmd": "npm publish --access public --provenance"
       }
     ],
     [

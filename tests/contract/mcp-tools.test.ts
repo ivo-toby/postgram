@@ -1,7 +1,8 @@
 import { afterAll, beforeAll, beforeEach, describe, expect, it } from 'vitest';
 import { serve } from '@hono/node-server';
 import { Client } from '@modelcontextprotocol/sdk/client/index.js';
-import { SSEClientTransport } from '@modelcontextprotocol/sdk/client/sse.js';
+import { StreamableHTTPClientTransport } from '@modelcontextprotocol/sdk/client/streamableHttp.js';
+import type { Transport } from '@modelcontextprotocol/sdk/shared/transport.js';
 
 import { createKey } from '../../src/auth/key-service.js';
 import { createApp } from '../../src/index.js';
@@ -88,21 +89,11 @@ describe('MCP tools', () => {
       allowedVisibility: ['shared', 'work', 'personal']
     }))._unsafeUnwrap();
 
-    const transport = new SSEClientTransport(new URL('/mcp', baseUrl), {
+    const transport = new StreamableHTTPClientTransport(new URL('/mcp', baseUrl), {
       requestInit: {
         headers: {
           Authorization: `Bearer ${createdKey.plaintextKey}`
         }
-      },
-      eventSourceInit: {
-        fetch: async (url, init) =>
-          fetch(url, {
-            ...init,
-            headers: {
-              ...(init?.headers ?? {}),
-              Authorization: `Bearer ${createdKey.plaintextKey}`
-            }
-          })
       }
     });
     const client = new Client(
@@ -110,7 +101,9 @@ describe('MCP tools', () => {
       { capabilities: {} }
     );
 
-    await client.connect(transport);
+    // StreamableHTTPClientTransport.sessionId getter returns string|undefined but
+    // Transport interface declares sessionId?: string; incompatible under exactOptionalPropertyTypes
+    await client.connect(transport as unknown as Transport);
 
     return {
       client,
@@ -146,21 +139,11 @@ describe('MCP tools', () => {
       allowedVisibility: ['shared', 'work', 'personal']
     }))._unsafeUnwrap();
 
-    const transport = new SSEClientTransport(new URL('/mcp', localBaseUrl), {
+    const transport = new StreamableHTTPClientTransport(new URL('/mcp', localBaseUrl), {
       requestInit: {
         headers: {
           Authorization: `Bearer ${createdKey.plaintextKey}`
         }
-      },
-      eventSourceInit: {
-        fetch: async (url, init) =>
-          fetch(url, {
-            ...init,
-            headers: {
-              ...(init?.headers ?? {}),
-              Authorization: `Bearer ${createdKey.plaintextKey}`
-            }
-          })
       }
     });
 
@@ -168,7 +151,8 @@ describe('MCP tools', () => {
       { name: 'postgram-test-client', version: '0.1.0' },
       { capabilities: {} }
     );
-    await client.connect(transport);
+    // See same cast in createClient() above for explanation
+    await client.connect(transport as unknown as Transport);
 
     return {
       client,

@@ -1,3 +1,9 @@
+## [1.0.3](https://github.com/ivo-toby/postgram/compare/cli-v1.0.2...cli-v1.0.3) (2026-04-19)
+
+### Bug Fixes
+
+* **ci:** switch to NPM_TOKEN for reliable publishing ([7133a30](https://github.com/ivo-toby/postgram/commit/7133a302ba5f70c96e2eba69c5c3fb9748966627))
+
 ## [1.0.2](https://github.com/ivo-toby/postgram/compare/cli-v1.0.1...cli-v1.0.2) (2026-04-19)
 
 ### Bug Fixes

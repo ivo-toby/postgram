@@ -1,5 +1,5 @@
 {
-  "name": "@ivo-toby/postgram-cli",
+  "name": "@ivotoby/postgram-cli",
   "version": "0.0.0-semantic-release",
   "description": "Postgram CLI — store, search, and manage entities from the command line",
   "type": "module",

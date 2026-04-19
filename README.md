@@ -397,7 +397,7 @@ The MCP tool behavior is intentionally aligned with the REST surface.
 ### Install from npm
 
 ```bash
-npm install -g @ivo-toby/postgram-cli
+npm install -g @ivotoby/postgram-cli
 ```
 
 Then configure once:
@@ -570,7 +570,7 @@ under `.claude/` in this repo so you can decide where to put it.
 ## Releases & CI
 
 The CLI package publishes to npm as
-[`@ivo-toby/postgram-cli`](https://www.npmjs.com/package/@ivo-toby/postgram-cli)
+[`@ivotoby/postgram-cli`](https://www.npmjs.com/package/@ivotoby/postgram-cli)
 on every merge to `main`, driven by [semantic-release](https://semantic-release.gitbook.io/)
 v25 and conventional commits scoped to `cli` (e.g. `feat(cli): ...`).
 Non-CLI-scoped commits don't bump the CLI version. Workflow:

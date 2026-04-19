@@ -1,3 +1,9 @@
+## [1.1.0](https://github.com/ivo-toby/postgram/compare/cli-v1.0.6...cli-v1.1.0) (2026-04-19)
+
+### Features
+
+* **mcp:** replace deprecated SSE transport with Streamable HTTP ([6156b72](https://github.com/ivo-toby/postgram/commit/6156b72d8f75e075bce61b640115861281876f11))
+
 ## [1.0.6](https://github.com/ivo-toby/postgram/compare/cli-v1.0.5...cli-v1.0.6) (2026-04-19)
 
 ### Bug Fixes

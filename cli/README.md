@@ -1,11 +1,11 @@
-# @postgram/cli
+# @ivotoby/postgram-cli
 
-Command-line client for [Postgram](https://github.com/example/postgram).
+Command-line client for [Postgram](https://github.com/ivo-toby/postgram/).
 
 ## Install
 
 ```bash
-npm install -g @postgram/cli
+npm install -g @ivotoby/postgram-cli
 ```
 
 ## Configure
@@ -60,10 +60,19 @@ pgm sync ./notes --repo my-notes
 pgm store "hello" --json
 ```
 
+## Claude Code skill
+
+A portable Claude Code skill for using `pgm` from your agent lives in
+[`skill/postgram/SKILL.md`](https://github.com/ivo-toby/postgram/blob/main/skill/postgram/SKILL.md)
+in the main repo. Copy the `skill/postgram/` directory into your own project's
+`.claude/skills/` (or your user-level `~/.claude/skills/`) and the agent will
+know when to invoke `pgm store`, `pgm search`, `pgm link`, etc.
+
 ## Development
 
 ```bash
-cd cli
+git clone https://github.com/ivo-toby/postgram/
+cd postgram/cli
 npm install
 npm run build
 npm test

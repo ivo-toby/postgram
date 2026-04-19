@@ -553,7 +553,8 @@ Implemented phases:
 ## Notes And Limitations
 
 - Postgram is optimized for personal/small-team scale
-- Embedding generation requires an OpenAI API key
+- Embeddings default to OpenAI (`text-embedding-3-small`) but can run fully
+  locally via Ollama — set `EMBEDDING_PROVIDER=ollama`
 - LLM extraction is optional and disabled by default
 - Backup encryption requires `gpg`
 
@@ -576,24 +577,16 @@ v25 and conventional commits scoped to `cli` (e.g. `feat(cli): ...`).
 Non-CLI-scoped commits don't bump the CLI version. Workflow:
 [`.github/workflows/release-cli.yml`](.github/workflows/release-cli.yml).
 
-Publishing uses **npm trusted publishing** (OIDC) — no long-lived
-`NPM_TOKEN` secret. The workflow exchanges a short-lived GitHub Actions
-id-token for an npm credential at publish time.
+Publishing uses an npm **Automation token** stored as the `NPM_TOKEN`
+repository secret. The `--provenance` flag is passed at publish time so every
+release gets a Sigstore-signed provenance attestation regardless.
 
 First-time setup:
 
-1. Publish the package manually once to create it on npm (OIDC setup is
-   only available for existing packages):
-   ```bash
-   cd cli && npm publish --access public
-   ```
-2. On npmjs.com open the package **Settings → Publishing access → Add
-   trusted publisher**. Enter:
-   - GitHub repository: `ivo-toby/postgram`
-   - Workflow filename: `release-cli.yml`
-   - Environment: leave blank
-3. Subsequent publishes happen automatically from the workflow with zero
-   secrets.
+1. On npmjs.com: Avatar → Access Tokens → Generate New Token → **Automation**
+2. GitHub repo: Settings → Secrets and variables → Actions → New repository secret
+   → name `NPM_TOKEN`, value: the token from step 1
+3. Subsequent publishes happen automatically from the workflow.
 
 The server's Docker image publishes to
 `ghcr.io/ivo-toby/postgram` on every merge to `main` and on semver tag

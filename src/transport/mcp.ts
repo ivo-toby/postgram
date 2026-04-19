@@ -1,11 +1,7 @@
-import { randomUUID } from 'node:crypto';
-
-import { streamSSE, type SSEStreamingApi } from 'hono/streaming';
 import type { Hono } from 'hono';
 import { z } from 'zod';
 import { McpServer } from '@modelcontextprotocol/sdk/server/mcp.js';
-import type { JSONRPCMessage } from '@modelcontextprotocol/sdk/types.js';
-import type { Transport } from '@modelcontextprotocol/sdk/shared/transport.js';
+import { WebStandardStreamableHTTPServerTransport } from '@modelcontextprotocol/sdk/server/webStandardStreamableHttp.js';
 import type { Pool } from 'pg';
 
 import { validateKey } from '../auth/key-service.js';
@@ -23,13 +19,6 @@ import { AppError, ErrorCode, normalizeError, toErrorResponse, toHttpStatus } fr
 type McpApp = Hono<{ Variables: { auth: AuthContext } }>;
 
 type ToolPayload = Record<string, unknown>;
-
-type SessionRecord = {
-  server: McpServer;
-  transport: HonoSseTransport;
-};
-
-const sessions = new Map<string, SessionRecord>();
 
 const entityTypeSchema = z.enum([
   'memory',
@@ -131,61 +120,6 @@ async function authenticateSession(pool: Pool, token: string | null): Promise<Au
   );
 }
 
-class HonoSseTransport implements Transport {
-  sessionId = randomUUID();
-  onclose?: () => void;
-  onerror?: (error: Error) => void;
-  onmessage?: (message: JSONRPCMessage) => void;
-
-  #stream: SSEStreamingApi;
-  #endpointPath: string;
-  #closed = false;
-  #closedPromise: Promise<void>;
-  #resolveClosed: (() => void) | null = null;
-
-  constructor(stream: SSEStreamingApi, endpointPath: string) {
-    this.#stream = stream;
-    this.#endpointPath = endpointPath;
-    this.#closedPromise = new Promise<void>((resolve) => {
-      this.#resolveClosed = resolve;
-    });
-  }
-
-  async start(): Promise<void> {
-    await this.#stream.writeSSE({
-      event: 'endpoint',
-      data: `${this.#endpointPath}?sessionId=${this.sessionId}`
-    });
-  }
-
-  async send(message: JSONRPCMessage): Promise<void> {
-    await this.#stream.writeSSE({
-      event: 'message',
-      data: JSON.stringify(message)
-    });
-  }
-
-  close(): Promise<void> {
-    if (this.#closed) {
-      return Promise.resolve();
-    }
-
-    this.#closed = true;
-    this.#resolveClosed?.();
-    this.#resolveClosed = null;
-    this.onclose?.();
-    return Promise.resolve();
-  }
-
-  handleMessage(message: unknown): Promise<void> {
-    this.onmessage?.(message as JSONRPCMessage);
-    return Promise.resolve();
-  }
-
-  waitUntilClosed(): Promise<void> {
-    return this.#closedPromise;
-  }
-}
 
 function createSessionServer(
   pool: Pool,
@@ -578,7 +512,7 @@ export function registerMcpRoutes(
     embeddingService?: EmbeddingService | undefined;
   } = {}
 ): void {
-  app.get('/mcp', async (c) => {
+  app.all('/mcp', async (c) => {
     try {
       const token =
         getBearerToken(c.req.header('Authorization')) ??
@@ -586,28 +520,10 @@ export function registerMcpRoutes(
         null;
       const auth = await authenticateSession(pool, token);
 
-      return streamSSE(c, async (stream: SSEStreamingApi) => {
-        const transport = new HonoSseTransport(stream, '/mcp');
-        const server = createSessionServer(pool, auth, options);
-        sessions.set(transport.sessionId, { server, transport });
-
-        c.req.raw.signal.addEventListener('abort', () => {
-          void transport.close();
-        });
-
-        transport.onclose = () => {
-          sessions.delete(transport.sessionId);
-          void server.close();
-        };
-        transport.onerror = (error) => {
-          sessions.delete(transport.sessionId);
-          console.error(error);
-          stream.abort();
-        };
-
-        await server.connect(transport);
-        await transport.waitUntilClosed();
-      });
+      const transport = new WebStandardStreamableHTTPServerTransport();
+      const server = createSessionServer(pool, auth, options);
+      await server.connect(transport);
+      return transport.handleRequest(c.req.raw);
     } catch (error) {
       const appError = normalizeError(error);
       return c.json(
@@ -615,21 +531,5 @@ export function registerMcpRoutes(
         toHttpStatus(appError.code) as 401 | 403 | 404 | 409 | 500 | 502
       );
     }
-  });
-
-  app.post('/mcp', async (c) => {
-    const sessionId = c.req.query('sessionId');
-    const session = sessionId ? sessions.get(sessionId) : null;
-
-    if (!session) {
-      return c.json(
-        toErrorResponse(new AppError(ErrorCode.NOT_FOUND, 'MCP session not found')),
-        404
-      );
-    }
-
-    const message: unknown = await c.req.json();
-    await session.transport.handleMessage(message);
-    return c.body('Accepted', 202);
   });
 }

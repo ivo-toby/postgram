@@ -304,11 +304,10 @@ The server exposes:
 
 ## Authentication
 
-Create an API key:
+Create an API key (using the `bin/pgm` wrapper; see [Admin CLI](#admin-cli-pgm-admin) below for details):
 
 ```bash
-docker compose exec -T mcp-server \
-  node dist/cli/admin/pgm-admin.js key create \
+./bin/pgm key create \
   --name local \
   --scopes read,write,delete \
   --visibility personal,work,shared \
@@ -426,11 +425,44 @@ pgm backup --encrypt --output /tmp/postgram-backups/
 
 ## Admin CLI (`pgm-admin`)
 
-Recommended with the default compose setup:
+The easy way — use the `bin/pgm` wrapper shipped in the repo. It runs
+`pgm-admin` via `docker exec` when the container is up, and falls back to
+`docker compose run --rm` when it isn't (useful for first-boot migrations
+or when the startup dimension gate is refusing to boot):
 
 ```bash
-docker compose exec -T mcp-server \
-  node dist/cli/admin/pgm-admin.js <command>
+./bin/pgm <command> [args...]
+```
+
+Examples:
+
+```bash
+./bin/pgm key create --name local --scopes read,write,delete --visibility personal,work,shared
+./bin/pgm stats
+./bin/pgm embeddings migrate --target-dimensions 1024 --dry-run
+./bin/pgm embeddings migrate --target-dimensions 1024 --yes
+```
+
+Shell alias for daily use (add to `~/.bashrc` or `~/.zshrc` on your docker
+host):
+
+```bash
+alias pgm='/var/lib/docker/configs/postgram/bin/pgm'
+# then just: pgm stats
+```
+
+Override with env if your service/container names differ:
+
+```bash
+PGM_SERVICE=mcp-server PGM_CONTAINER=postgram-mcp-server-1 ./bin/pgm stats
+```
+
+Direct equivalent without the wrapper (for reference):
+
+```bash
+docker compose exec -T mcp-server pgm-admin <command>
+# or, when the container is down:
+docker compose run --rm mcp-server pgm-admin <command>
 ```
 
 Main commands:
@@ -440,6 +472,7 @@ Main commands:
 - `model list`, `model set-active`
 - `reembed --all` — mark entities for re-embedding
 - `stats` — entity counts, chunk count, DB size
+- `embeddings migrate` — switch embedding dimensions (see [`specs/002-local-embeddings/quickstart.md`](specs/002-local-embeddings/quickstart.md))
 
 ## Talon Migration
 

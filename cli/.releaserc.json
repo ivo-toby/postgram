@@ -4,53 +4,27 @@
   "plugins": [
     [
       "@semantic-release/commit-analyzer",
-      {
-        "preset": "conventionalcommits",
-        "releaseRules": [
-          { "scope": "cli", "type": "feat", "release": "minor" },
-          { "scope": "cli", "type": "fix", "release": "patch" },
-          { "scope": "cli", "type": "perf", "release": "patch" },
-          { "scope": "cli", "type": "refactor", "release": "patch" },
-          { "scope": "cli", "type": "docs", "release": "patch" },
-          { "scope": "cli", "type": "build", "release": "patch" },
-          { "scope": "cli", "type": "chore", "release": "patch" },
-          { "scope": "cli", "breaking": true, "release": "major" },
-          { "subject": "*", "release": false }
-        ]
-      }
+      { "preset": "conventionalcommits" }
     ],
     [
       "@semantic-release/release-notes-generator",
-      {
-        "preset": "conventionalcommits"
-      }
+      { "preset": "conventionalcommits" }
     ],
     [
       "@semantic-release/changelog",
-      {
-        "changelogFile": "CHANGELOG.md"
-      }
+      { "changelogFile": "CHANGELOG.md" }
     ],
     [
       "@semantic-release/npm",
-      {
-        "pkgRoot": ".",
-        "npmPublish": false
-      }
+      { "pkgRoot": ".", "npmPublish": false }
     ],
     [
       "@semantic-release/exec",
-      {
-        "publishCmd": "npm publish --access public --provenance"
-      }
+      { "publishCmd": "npm publish --access public --provenance" }
     ],
     [
       "@semantic-release/github",
-      {
-        "successComment": false,
-        "failComment": false,
-        "labels": false
-      }
+      { "successComment": false, "failComment": false, "labels": false }
     ],
     [
       "@semantic-release/git",

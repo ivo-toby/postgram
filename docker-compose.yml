@@ -21,11 +21,29 @@ services:
         condition: service_healthy
     environment:
       DATABASE_URL: postgres://postgram:${POSTGRES_PASSWORD}@postgres:5432/postgram
-      OPENAI_API_KEY: ${OPENAI_API_KEY}
+      OPENAI_API_KEY: ${OPENAI_API_KEY:-}
       LOG_LEVEL: ${LOG_LEVEL:-info}
       PORT: ${PORT:-3100}
+      # Embeddings
+      EMBEDDING_PROVIDER: ${EMBEDDING_PROVIDER:-openai}
+      EMBEDDING_MODEL: ${EMBEDDING_MODEL:-}
+      EMBEDDING_DIMENSIONS: ${EMBEDDING_DIMENSIONS:-}
+      EMBEDDING_BASE_URL: ${EMBEDDING_BASE_URL:-}
+      EMBEDDING_API_KEY: ${EMBEDDING_API_KEY:-}
+      # LLM extraction
+      EXTRACTION_ENABLED: ${EXTRACTION_ENABLED:-false}
+      EXTRACTION_PROVIDER: ${EXTRACTION_PROVIDER:-openai}
+      EXTRACTION_MODEL: ${EXTRACTION_MODEL:-}
+      ANTHROPIC_API_KEY: ${ANTHROPIC_API_KEY:-}
+      OLLAMA_BASE_URL: ${OLLAMA_BASE_URL:-http://localhost:11434}
+      OLLAMA_API_KEY: ${OLLAMA_API_KEY:-}
+      ENRICHMENT_POLL_INTERVAL_MS: ${ENRICHMENT_POLL_INTERVAL_MS:-1000}
     ports:
-      - '127.0.0.1:3100:3100'
+      # Defaults to loopback-only on the host (safest). To expose on the LAN
+      # for reachability from other machines, set PORT_BIND_HOST=0.0.0.0 in
+      # your .env. Prefer running behind a reverse proxy (Caddy) with TLS for
+      # anything beyond a trusted homelab.
+      - '${PORT_BIND_HOST:-127.0.0.1}:${PORT:-3100}:3100'
     restart: unless-stopped
 
 volumes:

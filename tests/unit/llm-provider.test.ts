@@ -1,4 +1,4 @@
-import { describe, expect, it } from 'vitest';
+import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import { createLlmProvider } from '../../src/services/llm-provider.js';
 
 describe('createLlmProvider', () => {
@@ -43,6 +43,83 @@ describe('createLlmProvider', () => {
         ollamaApiKey: 'test-key'
       });
       expect(typeof provider).toBe('function');
+    });
+
+    describe('response shape handling', () => {
+      const originalFetch = globalThis.fetch;
+      beforeEach(() => {
+        globalThis.fetch = vi.fn() as unknown as typeof fetch;
+      });
+      afterEach(() => {
+        globalThis.fetch = originalFetch;
+      });
+
+      it('parses native Ollama response shape { message: { content } }', async () => {
+        (globalThis.fetch as unknown as ReturnType<typeof vi.fn>).mockResolvedValue(
+          new Response(
+            JSON.stringify({ message: { content: '[{"from":"A","to":"B","relation":"knows"}]' } }),
+            { status: 200 }
+          )
+        );
+        const provider = createLlmProvider({
+          provider: 'ollama',
+          ollamaBaseUrl: 'http://ollama.local'
+        });
+        const result = await provider('extract relations from: A knows B');
+        expect(result).toBe('[{"from":"A","to":"B","relation":"knows"}]');
+      });
+
+      it('includes /no_think system message and chat_template_kwargs to disable Qwen3 reasoning', async () => {
+        (globalThis.fetch as unknown as ReturnType<typeof vi.fn>).mockResolvedValue(
+          new Response(JSON.stringify({ message: { content: '[]' } }), { status: 200 })
+        );
+        const provider = createLlmProvider({
+          provider: 'ollama',
+          ollamaBaseUrl: 'http://ollama.local'
+        });
+        await provider('anything');
+
+        const call = (globalThis.fetch as unknown as ReturnType<typeof vi.fn>).mock.calls[0];
+        const init = call?.[1] as RequestInit;
+        const body = JSON.parse(init.body as string) as {
+          messages: Array<{ role: string; content: string }>;
+          chat_template_kwargs?: { enable_thinking?: boolean };
+        };
+        expect(body.messages[0]).toEqual({ role: 'system', content: '/no_think' });
+        expect(body.chat_template_kwargs?.enable_thinking).toBe(false);
+      });
+
+      it('parses OpenAI-shape response from llama.cpp Ollama emulation { choices: [{ message: { content } }] }', async () => {
+        (globalThis.fetch as unknown as ReturnType<typeof vi.fn>).mockResolvedValue(
+          new Response(
+            JSON.stringify({
+              choices: [
+                { message: { role: 'assistant', content: '[{"from":"X","to":"Y","relation":"owns"}]' } }
+              ],
+              object: 'chat.completion'
+            }),
+            { status: 200 }
+          )
+        );
+        const provider = createLlmProvider({
+          provider: 'ollama',
+          ollamaBaseUrl: 'http://llamacpp.local'
+        });
+        const result = await provider('extract relations from: X owns Y');
+        expect(result).toBe('[{"from":"X","to":"Y","relation":"owns"}]');
+      });
+
+      it('falls back to [] when neither shape is present', async () => {
+        (globalThis.fetch as unknown as ReturnType<typeof vi.fn>).mockResolvedValue(
+          new Response(JSON.stringify({ weird: 'payload' }), { status: 200 })
+        );
+        const provider = createLlmProvider({
+          provider: 'ollama',
+          ollamaBaseUrl: 'http://ollama.local'
+        });
+        const result = await provider('anything');
+        expect(result).toBe('[]');
+      });
     });
   });
 

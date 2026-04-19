@@ -1,0 +1,68 @@
+name: release-cli
+
+on:
+  push:
+    branches: [main]
+  workflow_dispatch:
+
+# Only one release at a time
+concurrency:
+  group: release-cli
+  cancel-in-progress: false
+
+permissions:
+  contents: write          # tag, push CHANGELOG
+  issues: write            # semantic-release commenting
+  pull-requests: write
+  id-token: write          # npm provenance
+
+jobs:
+  release:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+          persist-credentials: true
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          registry-url: https://registry.npmjs.org
+          cache: npm
+
+      # Trusted publishing to npm (OIDC) needs npm >= 11.5.1; Node 22 ships
+      # with npm 10.x, so upgrade explicitly. No NPM_TOKEN is used — the
+      # workflow's id-token is exchanged for a short-lived npm credential
+      # at publish time. Configure the trusted publisher on npmjs.com under
+      # package Settings → Publishing access.
+      - name: Upgrade npm
+        run: npm install -g npm@latest
+
+      # Install workspace deps (root + cli via workspaces).
+      - name: Install
+        run: npm ci
+
+      - name: Lint CLI
+        working-directory: cli
+        run: npm run lint
+
+      - name: Build CLI
+        working-directory: cli
+        run: npm run build
+
+      - name: Test CLI
+        working-directory: cli
+        run: npm test
+
+      - name: Semantic release
+        working-directory: cli
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          # No NPM_TOKEN — @semantic-release/npm calls `npm publish`, which
+          # picks up OIDC credentials from GITHUB_ACTIONS when the package
+          # has a trusted publisher configured on npmjs.com.
+          NPM_CONFIG_PROVENANCE: "true"
+        run: npx semantic-release

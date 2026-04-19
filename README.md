@@ -234,10 +234,22 @@ Expected:
 | Variable | Required | Default | Description |
 |----------|----------|---------|-------------|
 | `DATABASE_URL` | yes | | Full Postgres connection string |
-| `OPENAI_API_KEY` | yes | | For embedding generation |
+| `OPENAI_API_KEY` | conditional | | Required when `EMBEDDING_PROVIDER=openai` OR (`EXTRACTION_ENABLED=true` AND `EXTRACTION_PROVIDER=openai`). Optional otherwise. |
 | `PORT` | no | `3100` | HTTP/MCP server port |
 | `LOG_LEVEL` | no | `info` | pino log level |
 | `ENRICHMENT_POLL_INTERVAL_MS` | no | `1000` | Enrichment worker poll interval |
+
+### Embeddings
+
+| Variable | Required | Default | Description |
+|----------|----------|---------|-------------|
+| `EMBEDDING_PROVIDER` | no | `openai` | `openai` or `ollama` |
+| `EMBEDDING_MODEL` | no | per-provider | Defaults: `text-embedding-3-small` (openai, 1536 dims), `bge-m3` (ollama, 1024 dims) |
+| `EMBEDDING_DIMENSIONS` | no | per-provider | Must match the active `embedding_models` row. Run `pgm-admin embeddings migrate --target-dimensions <N> --yes` to change. |
+| `EMBEDDING_BASE_URL` | when provider=ollama | falls back to `OLLAMA_BASE_URL` | Embedding host. Independent from LLM-extraction host so embeddings and inference can target different machines. |
+| `EMBEDDING_API_KEY` | no | | Optional bearer token for `EMBEDDING_BASE_URL`. |
+
+See [`specs/002-local-embeddings/quickstart.md`](specs/002-local-embeddings/quickstart.md) for a walkthrough of fresh-install-on-Ollama and migrating from OpenAI.
 
 ### LLM Extraction
 
@@ -271,7 +283,26 @@ Expected:
 
 ## Running The Server
 
-Development:
+### Pre-built Docker image (recommended)
+
+Pull from GitHub Container Registry:
+
+```bash
+docker pull ghcr.io/ivo-toby/postgram:latest
+```
+
+Images are multi-arch (`linux/amd64`, `linux/arm64`). Tags available:
+
+- `latest` — most recent build of `main`
+- `main` — same as `latest`, explicit branch name
+- `sha-<short>` — pinned to a specific commit
+- `v<major>.<minor>.<patch>` — semver tags when a release is cut
+
+The `docker-compose.yml` in this repo builds locally by default; to use the
+pre-built image instead, replace `build: .` with `image: ghcr.io/ivo-toby/postgram:latest`
+for the `mcp-server` service.
+
+### Local development
 
 ```bash
 npm run dev
@@ -292,11 +323,10 @@ The server exposes:
 
 ## Authentication
 
-Create an API key:
+Create an API key (using the `bin/pgm` wrapper; see [Admin CLI](#admin-cli-pgm-admin) below for details):
 
 ```bash
-docker compose exec -T mcp-server \
-  node dist/cli/admin/pgm-admin.js key create \
+./bin/pgm key create \
   --name local \
   --scopes read,write,delete \
   --visibility personal,work,shared \
@@ -364,7 +394,21 @@ The MCP tool behavior is intentionally aligned with the REST surface.
 
 ## Human CLI (`pgm`)
 
-Use directly in development:
+### Install from npm
+
+```bash
+npm install -g @ivotoby/postgram-cli
+```
+
+Then configure once:
+
+```bash
+export PGM_API_URL=http://<postgram-host>:3100
+export PGM_API_KEY=<your-api-key>
+# or persist them in ~/.pgmrc as JSON: { "api_url": "...", "api_key": "..." }
+```
+
+### Run from source (for development)
 
 ```bash
 npx tsx src/cli/pgm.ts <command>
@@ -414,11 +458,44 @@ pgm backup --encrypt --output /tmp/postgram-backups/
 
 ## Admin CLI (`pgm-admin`)
 
-Recommended with the default compose setup:
+The easy way — use the `bin/pgm` wrapper shipped in the repo. It runs
+`pgm-admin` via `docker exec` when the container is up, and falls back to
+`docker compose run --rm` when it isn't (useful for first-boot migrations
+or when the startup dimension gate is refusing to boot):
 
 ```bash
-docker compose exec -T mcp-server \
-  node dist/cli/admin/pgm-admin.js <command>
+./bin/pgm <command> [args...]
+```
+
+Examples:
+
+```bash
+./bin/pgm key create --name local --scopes read,write,delete --visibility personal,work,shared
+./bin/pgm stats
+./bin/pgm embeddings migrate --target-dimensions 1024 --dry-run
+./bin/pgm embeddings migrate --target-dimensions 1024 --yes
+```
+
+Shell alias for daily use (add to `~/.bashrc` or `~/.zshrc` on your docker
+host):
+
+```bash
+alias pgm='/var/lib/docker/configs/postgram/bin/pgm'
+# then just: pgm stats
+```
+
+Override with env if your service/container names differ:
+
+```bash
+PGM_SERVICE=mcp-server PGM_CONTAINER=postgram-mcp-server-1 ./bin/pgm stats
+```
+
+Direct equivalent without the wrapper (for reference):
+
+```bash
+docker compose exec -T mcp-server pgm-admin <command>
+# or, when the container is down:
+docker compose run --rm mcp-server pgm-admin <command>
 ```
 
 Main commands:
@@ -428,6 +505,7 @@ Main commands:
 - `model list`, `model set-active`
 - `reembed --all` — mark entities for re-embedding
 - `stats` — entity counts, chunk count, DB size
+- `embeddings migrate` — switch embedding dimensions (see [`specs/002-local-embeddings/quickstart.md`](specs/002-local-embeddings/quickstart.md))
 
 ## Talon Migration
 
@@ -479,10 +557,56 @@ Implemented phases:
 - LLM extraction is optional and disabled by default
 - Backup encryption requires `gpg`
 
+## Claude Code skill
+
+A portable Claude Code skill for using `pgm` from your own agent lives in
+[`skill/postgram/SKILL.md`](skill/postgram/SKILL.md). Copy the `skill/postgram/`
+directory into your own project's `.claude/skills/` (or your user-level
+`~/.claude/skills/`) and the agent will know when to invoke `pgm store`,
+`pgm search`, `pgm link`, etc. It assumes the CLI is on PATH and
+`PGM_API_URL` + `PGM_API_KEY` are set. The skill file is deliberately *not*
+under `.claude/` in this repo so you can decide where to put it.
+
+## Releases & CI
+
+The CLI package publishes to npm as
+[`@ivotoby/postgram-cli`](https://www.npmjs.com/package/@ivotoby/postgram-cli)
+on every merge to `main`, driven by [semantic-release](https://semantic-release.gitbook.io/)
+v25 and conventional commits scoped to `cli` (e.g. `feat(cli): ...`).
+Non-CLI-scoped commits don't bump the CLI version. Workflow:
+[`.github/workflows/release-cli.yml`](.github/workflows/release-cli.yml).
+
+Publishing uses **npm trusted publishing** (OIDC) — no long-lived
+`NPM_TOKEN` secret. The workflow exchanges a short-lived GitHub Actions
+id-token for an npm credential at publish time.
+
+First-time setup:
+
+1. Publish the package manually once to create it on npm (OIDC setup is
+   only available for existing packages):
+   ```bash
+   cd cli && npm publish --access public
+   ```
+2. On npmjs.com open the package **Settings → Publishing access → Add
+   trusted publisher**. Enter:
+   - GitHub repository: `ivo-toby/postgram`
+   - Workflow filename: `release-cli.yml`
+   - Environment: leave blank
+3. Subsequent publishes happen automatically from the workflow with zero
+   secrets.
+
+The server's Docker image publishes to
+`ghcr.io/ivo-toby/postgram` on every merge to `main` and on semver tag
+pushes (multi-arch `amd64` + `arm64`). Workflow:
+[`.github/workflows/docker.yml`](.github/workflows/docker.yml). Uses the
+built-in `GITHUB_TOKEN`; no extra secret required, but repo `packages:write`
+permission must be enabled.
+
 ## Related Docs
 
 - [Phase 1 MVP spec](specs/001-phase1-mvp/spec.md)
 - [Phase 1 enhancements design](docs/superpowers/specs/2026-03-30-phase1-enhancements-design.md)
 - [Phase 2 document sync design](docs/superpowers/specs/2026-03-30-phase2-document-sync-design.md)
 - [Phase 3 knowledge graph design](docs/superpowers/specs/2026-03-30-phase3-knowledge-graph-design.md)
+- [Phase 4 local embeddings spec](specs/002-local-embeddings/spec.md)
 - [Manual test plan](docs/manual-test-plan.md)

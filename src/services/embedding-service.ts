@@ -1,26 +1,11 @@
-import OpenAI from 'openai';
 import type { Pool } from 'pg';
 
 import { AppError, ErrorCode } from '../util/errors.js';
+import type { EmbeddingProvider } from './embeddings/providers.js';
 
 const DEFAULT_DIMENSIONS = 1536;
 
-type EmbeddingMode = 'deterministic' | 'openai';
-
-type OpenAIEmbeddingClient = {
-  embeddings: {
-    create: (params: {
-      model: string;
-      input: string[];
-      encoding_format: 'float';
-    }) => Promise<{
-      data: Array<{
-        index: number;
-        embedding: number[];
-      }>;
-    }>;
-  };
-};
+type EmbeddingMode = 'deterministic' | 'provider';
 
 type ActiveModelRow = {
   id: string;
@@ -46,8 +31,7 @@ export type ActiveEmbeddingModel = {
 
 type EmbeddingServiceOptions = {
   mode?: EmbeddingMode | undefined;
-  apiKey?: string | undefined;
-  client?: OpenAIEmbeddingClient | undefined;
+  provider?: EmbeddingProvider | undefined;
   embedBatch?:
     | ((texts: string[], model?: ActiveEmbeddingModel) => Promise<number[][]>)
     | undefined;
@@ -93,26 +77,16 @@ function embedDeterministically(text: string): number[] {
   return normalizeVector(vector);
 }
 
-function resolveDefaultMode(): EmbeddingMode {
+function resolveDefaultMode(options: EmbeddingServiceOptions): EmbeddingMode {
+  if (options.provider) {
+    return 'provider';
+  }
+
   if (process.env.NODE_ENV === 'test' || process.env.VITEST) {
     return 'deterministic';
   }
 
-  return 'openai';
-}
-
-function toEmbeddingError(error: unknown, fallbackMessage: string): AppError {
-  if (error instanceof AppError) {
-    return error;
-  }
-
-  if (error instanceof Error) {
-    return new AppError(ErrorCode.EMBEDDING_FAILED, error.message, {
-      cause: fallbackMessage
-    });
-  }
-
-  return new AppError(ErrorCode.EMBEDDING_FAILED, fallbackMessage);
+  return 'provider';
 }
 
 function mapActiveModel(row: ActiveModelRow): ActiveEmbeddingModel {
@@ -128,55 +102,12 @@ function mapActiveModel(row: ActiveModelRow): ActiveEmbeddingModel {
   };
 }
 
-function getClient(
-  options: EmbeddingServiceOptions
-): OpenAIEmbeddingClient {
-  if (options.client) {
-    return options.client;
-  }
-
-  const apiKey = options.apiKey ?? process.env.OPENAI_API_KEY;
-  if (!apiKey) {
-    throw new AppError(
-      ErrorCode.EMBEDDING_FAILED,
-      'OPENAI_API_KEY is required for embeddings'
-    );
-  }
-
-  return new OpenAI({ apiKey });
-}
-
-function assertOpenAIModel(
-  model: ActiveEmbeddingModel | undefined
-): ActiveEmbeddingModel {
-  if (!model) {
-    throw new AppError(
-      ErrorCode.EMBEDDING_FAILED,
-      'Active embedding model is required'
-    );
-  }
-
-  if (model.provider !== 'openai') {
-    throw new AppError(
-      ErrorCode.EMBEDDING_FAILED,
-      `Unsupported embedding provider '${model.provider}'`,
-      {
-        provider: model.provider
-      }
-    );
-  }
-
-  return model;
-}
-
 export function vectorToSql(vector: number[]): string {
   return `[${vector.join(',')}]`;
 }
 
-export function createEmbeddingService(
-  options: EmbeddingServiceOptions = {}
-) {
-  const mode = options.mode ?? resolveDefaultMode();
+export function createEmbeddingService(options: EmbeddingServiceOptions = {}) {
+  const mode = options.mode ?? resolveDefaultMode(options);
 
   const embedBatchImpl =
     options.embedBatch ??
@@ -185,50 +116,25 @@ export function createEmbeddingService(
         return texts.map((text) => embedDeterministically(text));
       }
 
-      const activeModel = assertOpenAIModel(model);
-      const client = getClient(options);
-
-      try {
-        const response = await client.embeddings.create({
-          model: activeModel.name,
-          input: texts,
-          encoding_format: 'float'
-        });
-
-        const embeddings = response.data
-          .slice()
-          .sort((left, right) => left.index - right.index)
-          .map((item) => item.embedding);
-
-        if (embeddings.length !== texts.length) {
-          throw new AppError(
-            ErrorCode.EMBEDDING_FAILED,
-            'Embedding API returned an unexpected number of vectors',
-            {
-              expected: texts.length,
-              actual: embeddings.length
-            }
-          );
-        }
-
-        for (const embedding of embeddings) {
-          if (embedding.length !== activeModel.dimensions) {
-            throw new AppError(
-              ErrorCode.EMBEDDING_FAILED,
-              'Embedding dimension mismatch',
-              {
-                expected: activeModel.dimensions,
-                actual: embedding.length,
-                model: activeModel.name
-              }
-            );
-          }
-        }
-
-        return embeddings;
-      } catch (error) {
-        throw toEmbeddingError(error, 'Failed to embed batch');
+      if (!options.provider) {
+        throw new AppError(
+          ErrorCode.EMBEDDING_FAILED,
+          'No embedding provider configured'
+        );
       }
+
+      if (model && model.dimensions !== options.provider.dimensions) {
+        throw new AppError(
+          ErrorCode.EMBEDDING_FAILED,
+          'Active model dimensions do not match provider dimensions',
+          {
+            activeModel: model.dimensions,
+            provider: options.provider.dimensions
+          }
+        );
+      }
+
+      return options.provider.embedBatch(texts);
     });
 
   const embedQueryImpl =
@@ -245,7 +151,7 @@ export function createEmbeddingService(
     });
 
   return {
-    dimensions: DEFAULT_DIMENSIONS,
+    dimensions: options.provider?.dimensions ?? DEFAULT_DIMENSIONS,
     async embedBatch(
       texts: string[],
       model?: ActiveEmbeddingModel

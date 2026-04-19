@@ -1,3 +1,9 @@
+## [1.0.2](https://github.com/ivo-toby/postgram/compare/cli-v1.0.1...cli-v1.0.2) (2026-04-19)
+
+### Bug Fixes
+
+* **ci:** remove registry-url from setup-node to unblock OIDC npm publish ([036b27e](https://github.com/ivo-toby/postgram/commit/036b27e147be3023c4b0bacb9b333f810748d36f))
+
 ## [1.0.1](https://github.com/ivo-toby/postgram/compare/cli-v1.0.0...cli-v1.0.1) (2026-04-19)
 
 ### Bug Fixes

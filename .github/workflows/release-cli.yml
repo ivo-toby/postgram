@@ -1,0 +1,58 @@
+name: release-cli
+
+on:
+  push:
+    branches: [main]
+  workflow_dispatch:
+
+# Only one release at a time
+concurrency:
+  group: release-cli
+  cancel-in-progress: false
+
+permissions:
+  contents: write          # tag, push CHANGELOG
+  issues: write            # semantic-release commenting
+  pull-requests: write
+  id-token: write          # npm provenance
+
+jobs:
+  release:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+          persist-credentials: true
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          registry-url: https://registry.npmjs.org
+          cache: npm
+
+      # Install workspace deps (root + cli via workspaces).
+      - name: Install
+        run: npm ci
+
+      - name: Lint CLI
+        working-directory: cli
+        run: npm run lint
+
+      - name: Build CLI
+        working-directory: cli
+        run: npm run build
+
+      - name: Test CLI
+        working-directory: cli
+        run: npm test
+
+      - name: Semantic release
+        working-directory: cli
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          NPM_TOKEN: ${{ secrets.NPM_TOKEN }}
+          NPM_CONFIG_PROVENANCE: "true"
+        run: npx semantic-release

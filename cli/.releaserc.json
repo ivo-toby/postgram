@@ -1,0 +1,56 @@
+{
+  "branches": ["main"],
+  "tagFormat": "cli-v${version}",
+  "plugins": [
+    [
+      "@semantic-release/commit-analyzer",
+      {
+        "preset": "conventionalcommits",
+        "releaseRules": [
+          { "scope": "cli", "type": "feat", "release": "minor" },
+          { "scope": "cli", "type": "fix", "release": "patch" },
+          { "scope": "cli", "type": "perf", "release": "patch" },
+          { "scope": "cli", "type": "refactor", "release": "patch" },
+          { "scope": "cli", "type": "docs", "release": "patch" },
+          { "scope": "cli", "type": "build", "release": "patch" },
+          { "scope": "cli", "type": "chore", "release": "patch" },
+          { "scope": "cli", "breaking": true, "release": "major" },
+          { "subject": "*", "release": false }
+        ]
+      }
+    ],
+    [
+      "@semantic-release/release-notes-generator",
+      {
+        "preset": "conventionalcommits"
+      }
+    ],
+    [
+      "@semantic-release/changelog",
+      {
+        "changelogFile": "CHANGELOG.md"
+      }
+    ],
+    [
+      "@semantic-release/npm",
+      {
+        "pkgRoot": "."
+      }
+    ],
+    [
+      "@semantic-release/github",
+      {
+        "successComment": false,
+        "failComment": false,
+        "labels": false
+      }
+    ],
+    [
+      "@semantic-release/git",
+      {
+        "assets": ["CHANGELOG.md", "package.json"],
+        "message": "chore(release): @ivo-toby/postgram-cli ${nextRelease.version} [skip ci]\n\n${nextRelease.notes}"
+      }
+    ]
+  ]
+}

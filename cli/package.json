@@ -1,27 +1,57 @@
 {
-  "name": "@postgram/cli",
-  "version": "0.1.0",
+  "name": "@ivo-toby/postgram-cli",
+  "version": "0.0.0-semantic-release",
   "description": "Postgram CLI — store, search, and manage entities from the command line",
   "type": "module",
   "bin": {
     "pgm": "./dist/src/pgm.js"
   },
   "files": [
-    "dist"
+    "dist",
+    "README.md"
   ],
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/ivo-toby/postgram.git",
+    "directory": "cli"
+  },
+  "homepage": "https://github.com/ivo-toby/postgram#readme",
+  "bugs": {
+    "url": "https://github.com/ivo-toby/postgram/issues"
+  },
+  "keywords": [
+    "postgram",
+    "pgm",
+    "knowledge-base",
+    "cli",
+    "pgvector",
+    "embeddings"
+  ],
+  "publishConfig": {
+    "access": "public"
+  },
   "scripts": {
     "build": "tsc -p tsconfig.json",
     "test": "vitest run",
     "test:watch": "vitest",
     "lint": "eslint .",
-    "format": "prettier --write ."
+    "format": "prettier --write .",
+    "semantic-release": "semantic-release"
   },
   "dependencies": {
     "commander": "^14.0.1"
   },
   "devDependencies": {
     "@eslint/js": "^9.38.0",
+    "@semantic-release/changelog": "^6.0.3",
+    "@semantic-release/commit-analyzer": "^13.0.1",
+    "@semantic-release/git": "^10.0.1",
+    "@semantic-release/github": "^11.0.6",
+    "@semantic-release/npm": "^12.0.2",
+    "@semantic-release/release-notes-generator": "^14.1.0",
+    "conventional-changelog-conventionalcommits": "^9.3.1",
     "eslint": "^9.38.0",
+    "semantic-release": "^25.0.3",
     "typescript": "^5.9.3",
     "typescript-eslint": "^8.46.1",
     "vitest": "^3.2.4"

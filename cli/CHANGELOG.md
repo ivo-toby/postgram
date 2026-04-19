@@ -1,3 +1,9 @@
+## [1.0.4](https://github.com/ivo-toby/postgram/compare/cli-v1.0.3...cli-v1.0.4) (2026-04-19)
+
+### Bug Fixes
+
+* **cli:** exclude test output from published package ([33fb722](https://github.com/ivo-toby/postgram/commit/33fb722421dd5364acd5c07ce18b42f64d8d54ce))
+
 ## [1.0.3](https://github.com/ivo-toby/postgram/compare/cli-v1.0.2...cli-v1.0.3) (2026-04-19)
 
 ### Bug Fixes

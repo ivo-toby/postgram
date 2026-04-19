@@ -4,10 +4,10 @@
   "description": "Postgram CLI — store, search, and manage entities from the command line",
   "type": "module",
   "bin": {
-    "pgm": "dist/src/pgm.js"
+    "pgm": "dist/pgm.js"
   },
   "files": [
-    "dist/src",
+    "dist",
     "README.md"
   ],
   "repository": {
@@ -32,6 +32,7 @@
   },
   "scripts": {
     "build": "tsc -p tsconfig.build.json",
+    "prepublishOnly": "npm run build",
     "test": "vitest run",
     "test:watch": "vitest",
     "lint": "eslint .",

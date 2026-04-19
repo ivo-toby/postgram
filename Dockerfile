@@ -14,6 +14,8 @@ COPY --from=builder /app/dist ./dist
 COPY --from=builder /app/node_modules ./node_modules
 COPY --from=builder /app/package.json ./
 COPY src/db/migrations ./dist/db/migrations
+RUN chmod +x /app/dist/cli/admin/pgm-admin.js \
+ && ln -s /app/dist/cli/admin/pgm-admin.js /usr/local/bin/pgm-admin
 EXPOSE 3100
 USER node
 ENTRYPOINT ["tini", "--"]

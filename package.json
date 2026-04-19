@@ -7,13 +7,14 @@
     "cli"
   ],
   "bin": {
-    "pgm-admin": "dist/src/cli/admin/pgm-admin.js"
+    "pgm-admin": "dist/cli/admin/pgm-admin.js"
   },
   "engines": {
     "node": ">=22"
   },
   "scripts": {
-    "build": "tsc -p tsconfig.json",
+    "build": "tsc -p tsconfig.build.json",
+    "typecheck": "tsc -p tsconfig.json --noEmit",
     "dev": "tsx watch src/index.ts",
     "start": "node dist/index.js",
     "test": "vitest run",

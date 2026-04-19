@@ -1,0 +1,35 @@
+#!/usr/bin/env bash
+# Shorthand for running pgm-admin inside the Postgram container.
+#
+# If the container is already running, this does `docker exec -it`.
+# If it isn't (e.g. the startup dimension gate is refusing to boot), this
+# falls back to `docker compose run --rm` so admin commands like
+# `embeddings migrate` still work.
+#
+# Usage:
+#   ./bin/pgm key create --name foo --scopes read,write,delete --visibility shared
+#   ./bin/pgm embeddings migrate --target-dimensions 1024 --yes
+#   ./bin/pgm stats
+#
+# Override with env:
+#   PGM_SERVICE=mcp-server        (compose service name)
+#   PGM_CONTAINER=postgram-mcp-server-1  (running container name)
+#
+# Tip: add an alias in your shell rc for one-handed use:
+#   alias pgm='./bin/pgm'
+
+set -euo pipefail
+
+SERVICE="${PGM_SERVICE:-mcp-server}"
+CONTAINER="${PGM_CONTAINER:-postgram-mcp-server-1}"
+
+# cd to repo root so `docker compose` finds docker-compose.yml regardless of
+# where the caller invoked the script from.
+script_dir="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
+cd "$(dirname "$script_dir")"
+
+if docker ps --format '{{.Names}}' | grep -qx "$CONTAINER"; then
+  exec docker exec -it "$CONTAINER" pgm-admin "$@"
+else
+  exec docker compose run --rm "$SERVICE" pgm-admin "$@"
+fi

@@ -18,4 +18,4 @@ EXPOSE 3100
 USER node
 ENTRYPOINT ["tini", "--"]
 CMD ["node", "dist/index.js"]
-HEALTHCHECK --interval=30s --timeout=5s --retries=3 CMD wget -qO- http://localhost:3100/health || exit 1
+HEALTHCHECK --interval=30s --timeout=5s --retries=3 CMD wget -qO- http://127.0.0.1:3100/health || exit 1

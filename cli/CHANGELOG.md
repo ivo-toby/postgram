@@ -1,3 +1,10 @@
+## [1.0.1](https://github.com/ivo-toby/postgram/compare/cli-v1.0.0...cli-v1.0.1) (2026-04-19)
+
+### Bug Fixes
+
+* **cli:** simplify release rules so conventional commits actually fire ([60a309e](https://github.com/ivo-toby/postgram/commit/60a309e16b363a3d85572aa5dec6043e880f33b5))
+* **cli:** trigger first CI-driven release ([e379823](https://github.com/ivo-toby/postgram/commit/e37982358befe42854414916d1933511b60cf13e))
+
 ## 1.0.0 (2026-04-19)
 
 ### Features

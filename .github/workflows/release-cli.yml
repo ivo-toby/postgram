@@ -14,7 +14,7 @@ permissions:
   contents: write          # tag, push CHANGELOG
   issues: write            # semantic-release commenting
   pull-requests: write
-  id-token: write          # npm provenance
+  id-token: write          # npm provenance attestation (Sigstore)
 
 jobs:
   release:
@@ -26,16 +26,11 @@ jobs:
           fetch-depth: 0
           persist-credentials: true
 
-      # Node 24 ships with npm 11.x out of the box, which is what npm's
-      # trusted publishing (OIDC) needs (>= 11.5.1). Using 24 here instead
-      # of 22 avoids the `npm install -g npm@latest` self-upgrade path,
-      # which historically fails on Node 22 runners with MODULE_NOT_FOUND
-      # on promise-retry. The project's engines field (>=22) is
-      # unaffected; this choice only pins the publishing runtime.
       - name: Setup Node.js
         uses: actions/setup-node@v4
         with:
           node-version: 24
+          registry-url: https://registry.npmjs.org
           cache: npm
 
       # Install workspace deps (root + cli via workspaces).
@@ -58,8 +53,6 @@ jobs:
         working-directory: cli
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-          # No NPM_TOKEN — @semantic-release/npm calls `npm publish`, which
-          # picks up OIDC credentials from GITHUB_ACTIONS when the package
-          # has a trusted publisher configured on npmjs.com.
+          NODE_AUTH_TOKEN: ${{ secrets.NPM_TOKEN }}
           NPM_CONFIG_PROVENANCE: "true"
         run: npx semantic-release

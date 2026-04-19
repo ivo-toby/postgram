@@ -33,6 +33,14 @@ jobs:
           registry-url: https://registry.npmjs.org
           cache: npm
 
+      # Trusted publishing to npm (OIDC) needs npm >= 11.5.1; Node 22 ships
+      # with npm 10.x, so upgrade explicitly. No NPM_TOKEN is used — the
+      # workflow's id-token is exchanged for a short-lived npm credential
+      # at publish time. Configure the trusted publisher on npmjs.com under
+      # package Settings → Publishing access.
+      - name: Upgrade npm
+        run: npm install -g npm@latest
+
       # Install workspace deps (root + cli via workspaces).
       - name: Install
         run: npm ci
@@ -53,6 +61,8 @@ jobs:
         working-directory: cli
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-          NPM_TOKEN: ${{ secrets.NPM_TOKEN }}
+          # No NPM_TOKEN — @semantic-release/npm calls `npm publish`, which
+          # picks up OIDC credentials from GITHUB_ACTIONS when the package
+          # has a trusted publisher configured on npmjs.com.
           NPM_CONFIG_PROVENANCE: "true"
         run: npx semantic-release

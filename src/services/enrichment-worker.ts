@@ -179,60 +179,67 @@ export function createEnrichmentWorker(options: EnrichmentWorkerOptions) {
   async function processNextExtractionEntity(
     extractionAuth: AuthContext
   ): Promise<boolean> {
-    const client = await options.pool.connect();
-    let entity: PendingExtractionRow | undefined;
+    // Do NOT hold a long row-level `FOR UPDATE` across the LLM call.
+    // createEdge (called inside extractAndLinkRelationships) runs on a
+    // different pool connection, and its INSERT INTO edges needs a FK
+    // share lock on the source entity — which would block forever behind
+    // our own transaction's FOR UPDATE lock (no cycle = no deadlock
+    // detection = stuck forever). Instead, use a short connection just
+    // for a per-entity advisory lock.
+    const candidates = await options.pool.query<PendingExtractionRow>(
+      `
+        SELECT id, content, type
+        FROM entities
+        WHERE extraction_status = 'pending'
+          AND content IS NOT NULL
+        ORDER BY created_at ASC
+        LIMIT 5
+      `
+    );
 
+    if (candidates.rows.length === 0) {
+      return false;
+    }
+
+    const lockClient = await options.pool.connect();
     try {
-      await client.query('BEGIN');
+      for (const entity of candidates.rows) {
+        const lockRes = await lockClient.query<{ locked: boolean }>(
+          'SELECT pg_try_advisory_lock(hashtext($1)) AS locked',
+          [entity.id]
+        );
+        if (!lockRes.rows[0]?.locked) {
+          continue;
+        }
 
-      const extractionPending = await client.query<PendingExtractionRow>(
-        `
-          SELECT id, content, type
-          FROM entities
-          WHERE extraction_status = 'pending'
-            AND content IS NOT NULL
-          ORDER BY created_at ASC
-          FOR UPDATE SKIP LOCKED
-          LIMIT 1
-        `
-      );
-
-      entity = extractionPending.rows[0];
-      if (!entity) {
-        await rollbackQuietly(client);
-        return false;
+        try {
+          await extractAndLinkRelationships(
+            options.pool,
+            extractionAuth,
+            entity.id,
+            entity.type,
+            entity.content,
+            options.callLlm ? { callLlm: options.callLlm } : {}
+          );
+          await options.pool.query(
+            "UPDATE entities SET extraction_status = 'completed' WHERE id = $1",
+            [entity.id]
+          );
+        } catch {
+          await options.pool.query(
+            "UPDATE entities SET extraction_status = 'failed' WHERE id = $1",
+            [entity.id]
+          );
+        } finally {
+          await lockClient
+            .query('SELECT pg_advisory_unlock(hashtext($1))', [entity.id])
+            .catch(() => undefined);
+        }
+        return true;
       }
-
-      await extractAndLinkRelationships(
-        options.pool,
-        extractionAuth,
-        entity.id,
-        entity.type,
-        entity.content,
-        options.callLlm ? { callLlm: options.callLlm } : {}
-      );
-
-      await client.query(
-        "UPDATE entities SET extraction_status = 'completed' WHERE id = $1",
-        [entity.id]
-      );
-      await client.query('COMMIT');
-      return true;
-    } catch (error) {
-      await rollbackQuietly(client);
-
-      if (!entity) {
-        throw error;
-      }
-
-      await options.pool.query(
-        "UPDATE entities SET extraction_status = 'failed' WHERE id = $1",
-        [entity.id]
-      );
-
-      return true;
+      return false;
     } finally {
-      client.release();
+      lockClient.release();
     }
   }
 

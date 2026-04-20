@@ -7,9 +7,11 @@ import SearchResults from './components/SearchResults.tsx';
 import FilterChips from './components/FilterChips.tsx';
 import RelationChips from './components/RelationChips.tsx';
 import DepthSlider from './components/DepthSlider.tsx';
+import StatusWidget from './components/StatusWidget.tsx';
 import { useApi } from './hooks/useApi.ts';
 import { useGraph } from './hooks/useGraph.ts';
 import { useSearch } from './hooks/useSearch.ts';
+import { useQueue } from './hooks/useQueue.ts';
 import type { Entity } from './lib/types.ts';
 
 const STORAGE_KEY = 'pgm_api_key';
@@ -37,6 +39,7 @@ export default function App() {
   const api = useApi({ apiKey: apiKey ?? '', onUnauthorized: handleLogout });
   const graphHook = useGraph();
   const searchHook = useSearch(api);
+  const queueHook = useQueue(api);
 
   useEffect(() => {
     if (!apiKey) return;
@@ -118,6 +121,10 @@ export default function App() {
 
       <div className="border-t border-gray-800 pt-3">
         <DepthSlider value={depth} onChange={setDepth} />
+      </div>
+
+      <div className="mt-auto -mx-3 -mb-3">
+        <StatusWidget status={queueHook.status} />
       </div>
     </div>
   );

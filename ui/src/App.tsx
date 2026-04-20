@@ -10,6 +10,7 @@ import DepthSlider from './components/DepthSlider.tsx';
 import StatusWidget from './components/StatusWidget.tsx';
 import EntityDetail from './components/EntityDetail.tsx';
 import EdgeList from './components/EdgeList.tsx';
+import EntityActions from './components/EntityActions.tsx';
 import { useApi } from './hooks/useApi.ts';
 import { useGraph } from './hooks/useGraph.ts';
 import { useSearch } from './hooks/useSearch.ts';
@@ -163,6 +164,15 @@ export default function App() {
               <EdgeList
                 edges={detailHook.edges}
                 onNavigate={handleNodeClick}
+              />
+            </div>
+            <div className="border-t border-gray-800 pt-4">
+              <EntityActions
+                entity={detailHook.entity}
+                api={api}
+                onDelete={() => { setRightOpen(false); setSelectedNodeId(null); }}
+                onNoteCreated={newEntity => { graphHook.addEntities([newEntity]); }}
+                onLinked={() => { /* edges reload on next expand */ }}
               />
             </div>
           </div>

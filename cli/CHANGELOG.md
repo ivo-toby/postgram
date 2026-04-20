@@ -1,3 +1,10 @@
+## [1.3.0](https://github.com/ivo-toby/postgram/compare/cli-v1.2.0...cli-v1.3.0) (2026-04-20)
+
+### Features
+
+* **mcp:** add queue tool to MCP server ([e7172e9](https://github.com/ivo-toby/postgram/commit/e7172e9c298e3b55b812d2536f520bc990583619))
+* **pgm:** add queue command to pgm CLI via REST API ([67647fc](https://github.com/ivo-toby/postgram/commit/67647fcc5f275873380af804f544930fc49ba722))
+
 ## [1.2.0](https://github.com/ivo-toby/postgram/compare/cli-v1.1.0...cli-v1.2.0) (2026-04-20)
 
 ### Features

@@ -100,7 +100,7 @@ export default function EntityDetail({ entity, api, onUpdate }: Props) {
           </div>
           <button
             onClick={() => setEditing(true)}
-            className="mt-2 text-xs text-gray-600 hover:text-gray-400 transition-colors"
+            className="mt-3 px-3 py-1.5 text-xs bg-gray-800 hover:bg-gray-700 text-gray-300 rounded-lg transition-colors"
           >
             Edit
           </button>

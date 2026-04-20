@@ -25,7 +25,7 @@ export type SearchResponse = {
     similarity: number;
     score: number;
     related?: Array<{
-      entity: StoredEntityResponse['entity'];
+      entity: { id: string; type: string; content: string | null; metadata: Record<string, unknown> };
       relation: string;
       direction: 'incoming' | 'outgoing';
     }>;

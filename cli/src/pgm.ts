@@ -45,7 +45,7 @@ function formatSearchResults(results: Array<{
   entity: { id: string; type: string; content: string | null };
   score: number;
   chunk_content: string;
-  related?: Array<{ entity: { id: string; type: string; content: string | null }; relation: string; direction: string }>;
+  related?: Array<{ entity: { id: string; type: string; content: string | null; metadata: Record<string, unknown> }; relation: string; direction: string }>;
 }>) {
   if (results.length === 0) {
     return ['No results'];

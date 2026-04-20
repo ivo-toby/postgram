@@ -5,6 +5,7 @@ type Props = {
   onLayoutChange: (layout: LayoutType) => void;
   onZoomIn: () => void;
   onZoomOut: () => void;
+  onRedraw: () => void;
   nodeCount: number;
 };
 
@@ -14,9 +15,18 @@ const LAYOUTS: { id: LayoutType; label: string; title: string }[] = [
   { id: 'hierarchy', label: '⊤', title: 'Hierarchy' },
 ];
 
-export default function GraphControls({ layout, onLayoutChange, onZoomIn, onZoomOut, nodeCount }: Props) {
+export default function GraphControls({ layout, onLayoutChange, onZoomIn, onZoomOut, onRedraw, nodeCount }: Props) {
   return (
     <div className="absolute bottom-4 right-4 flex flex-col gap-2">
+      <div className="flex flex-col bg-gray-800 border border-gray-700 rounded-lg overflow-hidden">
+        <button
+          onClick={onRedraw}
+          title="Redraw layout"
+          className="w-9 h-9 text-sm text-gray-400 hover:bg-gray-700 hover:text-white flex items-center justify-center transition-colors"
+        >
+          ↺
+        </button>
+      </div>
       <div className="flex flex-col bg-gray-800 border border-gray-700 rounded-lg overflow-hidden">
         {LAYOUTS.map(l => {
           const disabled = l.id === 'hierarchy' && nodeCount > 200;

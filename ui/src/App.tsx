@@ -25,6 +25,7 @@ export default function App() {
   const [apiKey, setApiKey] = useState<string | null>(() => localStorage.getItem(STORAGE_KEY));
   const [rightOpen, setRightOpen] = useState(false);
   const [selectedNodeId, setSelectedNodeId] = useState<string | null>(null);
+  const [focusNodeId, setFocusNodeId] = useState<string | null>(null);
   const [depth, setDepth] = useState(1);
   const [visibleTypes, setVisibleTypes] = useState<Set<string>>(new Set(ALL_ENTITY_TYPES));
   const [visibleRelations, setVisibleRelations] = useState<Set<string>>(new Set<string>());
@@ -73,6 +74,11 @@ export default function App() {
     setRightOpen(true);
   }, []);
 
+  const handleSearchSelect = useCallback((nodeId: string) => {
+    handleNodeClick(nodeId);
+    setFocusNodeId(nodeId);
+  }, [handleNodeClick]);
+
   const handleStageClick = useCallback(() => {
     setRightOpen(false);
     setSelectedNodeId(null);
@@ -106,7 +112,7 @@ export default function App() {
     <div className="flex flex-col gap-4 p-3 h-full">
       <SearchBox value={searchHook.query} onChange={searchHook.search} />
       {searchHook.loading && <p className="text-xs text-gray-500 px-1">Searching…</p>}
-      <SearchResults results={searchHook.results} onSelect={handleNodeClick} />
+      <SearchResults results={searchHook.results} onSelect={handleSearchSelect} />
 
       <div className="border-t border-gray-800 pt-3">
         <p className="text-xs text-gray-500 uppercase tracking-wide mb-2 px-1">Entity types</p>
@@ -145,6 +151,7 @@ export default function App() {
           depth={depth}
           onNodeClick={handleNodeClick}
           onStageClick={handleStageClick}
+          focusNodeId={focusNodeId}
         />
       }
       rightOpen={rightOpen}

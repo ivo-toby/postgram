@@ -12,11 +12,12 @@ type Props = {
   depth: number;
   onNodeClick: (nodeId: string) => void;
   onStageClick: () => void;
+  focusNodeId: string | null;
 };
 
 type ContextMenu = { nodeId: string; x: number; y: number } | null;
 
-export default function GraphCanvas({ graphHook, api, depth, onNodeClick, onStageClick }: Props) {
+export default function GraphCanvas({ graphHook, api, depth, onNodeClick, onStageClick, focusNodeId }: Props) {
   const containerRef = useRef<HTMLDivElement>(null);
   const [contextMenu, setContextMenu] = useState<ContextMenu>(null);
   const loadingRef = useRef(new Set<string>());
@@ -66,6 +67,13 @@ export default function GraphCanvas({ graphHook, api, depth, onNodeClick, onStag
   // Stop FA2 worker on unmount to avoid orphaned WebWorkers
   useEffect(() => () => layoutHook.stopWorker(), []);
 
+  // Focus on node when focusNodeId changes (e.g. from search result click)
+  useEffect(() => {
+    if (focusNodeId) {
+      sigmaControls.focusNode(focusNodeId, graphHook.graph);
+    }
+  }, [focusNodeId, sigmaControls, graphHook.graph]);
+
   const handleLayoutChange = useCallback((next: LayoutType) => {
     layoutHook.switchLayout(next);
     // Refresh sigma after layout positions have been written
@@ -88,6 +96,7 @@ export default function GraphCanvas({ graphHook, api, depth, onNodeClick, onStag
         onLayoutChange={handleLayoutChange}
         onZoomIn={sigmaControls.zoomIn}
         onZoomOut={sigmaControls.zoomOut}
+        onRedraw={() => { layoutHook.startForce(); sigmaControls.refresh(); }}
         nodeCount={graphHook.graph.order}
       />
 

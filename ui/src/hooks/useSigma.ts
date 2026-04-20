@@ -61,6 +61,56 @@ export function useSigma(
     };
   }, [events.onClickNode, events.onRightClickNode, events.onClickStage]);
 
+  useEffect(() => {
+    const sigma = sigmaRef.current;
+    if (!sigma) return;
+
+    let draggedNode: string | null = null;
+    let dragged = false;
+
+    const onDownNode: SigmaEventMap['downNode'] = ({ node }) => {
+      draggedNode = node;
+      dragged = false;
+      sigma.getCamera().disable();
+    };
+
+    const captor = sigma.getMouseCaptor();
+
+    const onMouseMove = ({ x, y }: { x: number; y: number }) => {
+      if (!draggedNode) return;
+      dragged = true;
+      const pos = sigma.viewportToGraph({ x, y });
+      graph.setNodeAttribute(draggedNode, 'x', pos.x);
+      graph.setNodeAttribute(draggedNode, 'y', pos.y);
+      sigma.refresh();
+    };
+
+    const onMouseUp = () => {
+      sigma.getCamera().enable();
+      draggedNode = null;
+    };
+
+    // Suppress clickNode when the user just finished dragging
+    const onClickNode: SigmaEventMap['clickNode'] = (e) => {
+      if (dragged) {
+        dragged = false;
+        if (typeof e.preventSigmaDefault === 'function') e.preventSigmaDefault();
+      }
+    };
+
+    sigma.on('downNode', onDownNode);
+    sigma.on('clickNode', onClickNode);
+    captor.on('mousemovebody', onMouseMove);
+    captor.on('mouseup', onMouseUp);
+
+    return () => {
+      sigma.off('downNode', onDownNode);
+      sigma.off('clickNode', onClickNode);
+      captor.off('mousemovebody', onMouseMove);
+      captor.off('mouseup', onMouseUp);
+    };
+  }, [graph]);
+
   const zoomIn = useCallback(() => {
     sigmaRef.current?.getCamera().animatedZoom({ duration: 300 });
   }, []);

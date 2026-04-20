@@ -165,6 +165,11 @@ export default function App() {
                 edges={detailHook.edges}
                 entityId={detailHook.entity.id}
                 onNavigate={handleNodeClick}
+                getLabel={(id) =>
+                  graphHook.graph.hasNode(id)
+                    ? String(graphHook.graph.getNodeAttribute(id, 'label') ?? id.slice(0, 8))
+                    : id.slice(0, 8)
+                }
               />
             </div>
             <div className="border-t border-gray-800 pt-4">

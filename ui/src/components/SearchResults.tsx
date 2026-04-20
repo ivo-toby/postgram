@@ -1,3 +1,4 @@
+import ReactMarkdown from 'react-markdown';
 import type { SearchResult } from '../lib/types.ts';
 import { ENTITY_COLORS } from '../lib/nodeStyles.ts';
 
@@ -24,7 +25,9 @@ export default function SearchResults({ results, onSelect }: Props) {
               <span className="text-xs text-gray-400 uppercase tracking-wide">{r.entity.type}</span>
               <span className="text-xs text-gray-600 ml-auto">{Math.round(r.score * 100)}%</span>
             </div>
-            <p className="text-sm text-gray-200 line-clamp-2">{r.chunk_content}</p>
+            <div className="text-sm text-gray-200 line-clamp-2 prose prose-sm prose-invert max-w-none">
+              <ReactMarkdown>{r.chunk_content}</ReactMarkdown>
+            </div>
           </button>
         );
       })}

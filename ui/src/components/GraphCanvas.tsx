@@ -88,6 +88,7 @@ export default function GraphCanvas({ graphHook, api, depth, onNodeClick, onStag
         onLayoutChange={handleLayoutChange}
         onZoomIn={sigmaControls.zoomIn}
         onZoomOut={sigmaControls.zoomOut}
+        nodeCount={graphHook.graph.order}
       />
 
       {/* Context menu */}

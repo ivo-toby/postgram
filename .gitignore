@@ -4,3 +4,4 @@ cli/dist/
 .envrc
 .env
 coverage/
+*.tsbuildinfo

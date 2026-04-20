@@ -1,3 +1,13 @@
+## [1.4.0](https://github.com/ivo-toby/postgram/compare/cli-v1.3.0...cli-v1.4.0) (2026-04-20)
+
+### Features
+
+* **cli:** add --expand-graph flag to pgm search for knowledge graph traversal ([685638f](https://github.com/ivo-toby/postgram/commit/685638fa24653646933e42672c46200023993e65))
+
+### Bug Fixes
+
+* **cli:** narrow related entity type to match actual wire shape ([1c9a723](https://github.com/ivo-toby/postgram/commit/1c9a72327958676cb45603a727d99b7be5c3dd7a))
+
 ## [1.3.0](https://github.com/ivo-toby/postgram/compare/cli-v1.2.0...cli-v1.3.0) (2026-04-20)
 
 ### Features

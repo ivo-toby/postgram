@@ -135,7 +135,7 @@ export default function MarkdownEditor({ value, onChange, disabled = false }: Pr
       </div>
 
       {/* Editor / Preview — single column */}
-      <div className="min-h-48">
+      <div className="min-h-96">
         {!previewOnly ? (
           <textarea
             ref={textareaRef}
@@ -143,11 +143,11 @@ export default function MarkdownEditor({ value, onChange, disabled = false }: Pr
             onChange={e => onChange(e.target.value)}
             onKeyDown={handleKeyDown}
             disabled={disabled}
-            className="w-full bg-gray-900 text-sm text-white p-3 resize-none focus:outline-none min-h-48 font-mono block"
+            className="w-full bg-gray-900 text-sm text-white p-3 resize-y focus:outline-none min-h-96 font-mono block"
             placeholder="Write in markdown…"
           />
         ) : (
-          <div className="p-3 bg-gray-900 min-h-48">
+          <div className="p-3 bg-gray-900 min-h-96">
             {value ? (
               <div className="prose prose-sm prose-invert max-w-none">
                 <ReactMarkdown>{value}</ReactMarkdown>

@@ -47,6 +47,15 @@ export default function EntityDetail({ entity, api, onUpdate }: Props) {
           {entity.type}
         </span>
         <span className="text-xs text-gray-500 font-mono">{entity.id.slice(0, 8)}</span>
+        <div className="flex-1" />
+        {!editing && (
+          <button
+            onClick={() => setEditing(true)}
+            className="px-3 py-1 text-xs bg-gray-800 hover:bg-gray-700 text-gray-300 rounded-lg transition-colors"
+          >
+            Edit
+          </button>
+        )}
       </div>
 
       <div className="text-xs text-gray-600 flex flex-col gap-0.5">
@@ -98,12 +107,6 @@ export default function EntityDetail({ entity, api, onUpdate }: Props) {
               : <span className="text-gray-600 italic">No content</span>
             }
           </div>
-          <button
-            onClick={() => setEditing(true)}
-            className="mt-3 px-3 py-1.5 text-xs bg-gray-800 hover:bg-gray-700 text-gray-300 rounded-lg transition-colors"
-          >
-            Edit
-          </button>
         </div>
       )}
     </div>

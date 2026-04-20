@@ -109,7 +109,15 @@ export default function GraphMinimap({ sigmaRef, sigmaReady, graph }: Props) {
 
     let dragging = false;
 
-    function graphCoordsFromMinimap(mx: number, my: number) {
+    function navigate(e: MouseEvent) {
+      const sigma = sigmaRef.current;
+      if (!sigma) return;
+      const rect = canvas!.getBoundingClientRect();
+      const mx = e.clientX - rect.left;
+      const my = e.clientY - rect.top;
+
+      // Find nearest node to the click in minimap space, then navigate
+      // using getNodeDisplayData which is in the same coordinate space as the camera.
       let minX = Infinity, minY = Infinity, maxX = -Infinity, maxY = -Infinity;
       graph.forEachNode((_, attrs) => {
         if (attrs['hidden']) return;
@@ -120,29 +128,30 @@ export default function GraphMinimap({ sigmaRef, sigmaReady, graph }: Props) {
         if (x > maxX) maxX = x;
         if (y > maxY) maxY = y;
       });
-      if (minX === Infinity) return null;
+      if (minX === Infinity) return;
       const rangeX = maxX - minX || 1;
       const rangeY = maxY - minY || 1;
       const drawW = WIDTH - PADDING * 2;
       const drawH = HEIGHT - PADDING * 2;
-      return {
-        x: minX + ((mx - PADDING) / drawW) * rangeX,
-        y: minY + ((my - PADDING) / drawH) * rangeY,
-      };
-    }
 
-    function navigate(e: MouseEvent) {
-      const sigma = sigmaRef.current;
-      if (!sigma) return;
-      const rect = canvas!.getBoundingClientRect();
-      const mx = e.clientX - rect.left;
-      const my = e.clientY - rect.top;
-      const coords = graphCoordsFromMinimap(mx, my);
-      if (!coords) return;
-      sigma.getCamera().animate(
-        { x: coords.x, y: coords.y },
-        { duration: 150 }
-      );
+      let nearestId: string | null = null;
+      let nearestDist = Infinity;
+      graph.forEachNode((nodeId, attrs) => {
+        if (attrs['hidden']) return;
+        const x = (attrs['x'] as number) ?? 0;
+        const y = (attrs['y'] as number) ?? 0;
+        const nx = PADDING + ((x - minX) / rangeX) * drawW;
+        const ny = PADDING + ((y - minY) / rangeY) * drawH;
+        const dist = Math.hypot(nx - mx, ny - my);
+        if (dist < nearestDist) { nearestDist = dist; nearestId = nodeId; }
+      });
+
+      if (nearestId) {
+        const display = sigma.getNodeDisplayData(nearestId);
+        if (display) {
+          sigma.getCamera().animate({ x: display.x, y: display.y }, { duration: 150 });
+        }
+      }
     }
 
     const onMouseDown = (e: MouseEvent) => { dragging = true; navigate(e); };

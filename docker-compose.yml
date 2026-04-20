@@ -49,11 +49,9 @@ services:
   postgram-ui:
     build: ./ui
     ports:
-      - "3000:3000"
+      - '${UI_BIND_HOST:-127.0.0.1}:3000:3000'
     depends_on:
       - postgram
-    networks:
-      - default
     restart: unless-stopped
 
 volumes:

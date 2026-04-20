@@ -419,6 +419,8 @@ npx tsx src/cli/pgm.ts <command>
 ```bash
 pgm store "decided to use pgvector" --type memory --tags decisions
 pgm search "database decisions"
+pgm search "database decisions" --type memory          # filter by entity type
+pgm search "who worked on embeddings" --expand-graph   # include graph neighbours
 pgm recall <id>
 pgm list --type memory
 pgm update <id> --content "updated text" --version 1
@@ -567,6 +569,16 @@ directory into your own project's `.claude/skills/` (or your user-level
 `pgm search`, `pgm link`, etc. It assumes the CLI is on PATH and
 `PGM_API_URL` + `PGM_API_KEY` are set. The skill file is deliberately *not*
 under `.claude/` in this repo so you can decide where to put it.
+
+### Optimising your global CLAUDE.md
+
+To get the most out of Postgram across sessions, add Postgram-aware guidance to
+your global `~/.claude/CLAUDE.md`. A ready-to-use template is provided at
+[`templates/CLAUDE.md`](templates/CLAUDE.md) — it covers when to search (with
+type filters), when to use `expand_graph`, when to store, when to link, and
+general principles. Copy the relevant sections into your own `CLAUDE.md` and
+Claude will proactively use the MCP tools to persist and recall knowledge
+without being asked.
 
 ## Releases & CI
 

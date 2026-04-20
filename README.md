@@ -1,8 +1,6 @@
 <p align="center">
-    <img src="assets/logo.png" alt="PostGram" width="200" />
+    <img src="assets/logo.png" alt="PostGram" width="400" />
   </p>
-
-# Postgram
 
 Postgram is a self-hosted knowledge store for humans and agents. It gives you a
 single place to store memories, notes, people, projects, and tasks, then

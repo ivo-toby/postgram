@@ -10,7 +10,8 @@ function makeNodeAttrs(type: string, content: string | null, enrichmentStatus: s
     size: getNodeSize(type, edgeCount),
     color: getNodeColor(type),
     label: (content ?? '').slice(0, 60) || type,
-    type,
+    type: 'circle',
+    entityType: type,
     enrichment_status: enrichmentStatus,
     hidden: false,
     opacity: getNodeOpacity(enrichmentStatus),
@@ -52,7 +53,7 @@ export function useGraph() {
 
   function setNodesHiddenByType(type: string, hidden: boolean) {
     graph.forEachNode((id, attrs) => {
-      if (attrs['type'] === type) {
+      if (attrs['entityType'] === type) {
         graph.setNodeAttribute(id, 'hidden', hidden);
       }
     });

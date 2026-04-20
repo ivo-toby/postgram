@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useState, type SyntheticEvent } from 'react';
 
 type Props = {
   onLogin: (apiKey: string) => void;
@@ -7,7 +7,7 @@ type Props = {
 export default function LoginScreen({ onLogin }: Props) {
   const [key, setKey] = useState('');
 
-  function handleSubmit(e: React.FormEvent) {
+  function handleSubmit(e: SyntheticEvent<HTMLFormElement>) {
     e.preventDefault();
     const trimmed = key.trim();
     if (trimmed) {

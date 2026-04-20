@@ -8,10 +8,13 @@ import FilterChips from './components/FilterChips.tsx';
 import RelationChips from './components/RelationChips.tsx';
 import DepthSlider from './components/DepthSlider.tsx';
 import StatusWidget from './components/StatusWidget.tsx';
+import EntityDetail from './components/EntityDetail.tsx';
+import EdgeList from './components/EdgeList.tsx';
 import { useApi } from './hooks/useApi.ts';
 import { useGraph } from './hooks/useGraph.ts';
 import { useSearch } from './hooks/useSearch.ts';
 import { useQueue } from './hooks/useQueue.ts';
+import { useEntityDetail } from './hooks/useEntityDetail.ts';
 import type { Entity } from './lib/types.ts';
 
 const STORAGE_KEY = 'pgm_api_key';
@@ -40,6 +43,7 @@ export default function App() {
   const graphHook = useGraph();
   const searchHook = useSearch(api);
   const queueHook = useQueue(api);
+  const detailHook = useEntityDetail(api, selectedNodeId);
 
   useEffect(() => {
     if (!apiKey) return;
@@ -145,9 +149,24 @@ export default function App() {
       rightOpen={rightOpen}
       onRightClose={() => setRightOpen(false)}
       rightContent={
-        selectedNodeId
-          ? <div className="text-gray-400 text-sm font-mono break-all">{selectedNodeId}</div>
-          : null
+        detailHook.loading ? (
+          <div className="text-gray-500 text-sm">Loading…</div>
+        ) : detailHook.entity ? (
+          <div className="flex flex-col gap-6">
+            <EntityDetail
+              entity={detailHook.entity}
+              api={api}
+              onUpdate={detailHook.updateEntity}
+            />
+            <div className="border-t border-gray-800 pt-4">
+              <p className="text-xs text-gray-500 uppercase tracking-wide mb-3">Connections</p>
+              <EdgeList
+                edges={detailHook.edges}
+                onNavigate={handleNodeClick}
+              />
+            </div>
+          </div>
+        ) : null
       }
     />
   );

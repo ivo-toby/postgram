@@ -66,8 +66,16 @@ export function useGraph() {
     });
   }
 
+  function getLoadedRelations(): Set<string> {
+    const relations = new Set<string>();
+    graph.forEachEdge((_, attrs) => {
+      if (attrs['label']) relations.add(attrs['label'] as string);
+    });
+    return relations;
+  }
+
   return useMemo(
-    () => ({ graph, addEntities, addNeighbours, addEdges, setNodesHiddenByType, setEdgesHiddenByRelation }),
+    () => ({ graph, addEntities, addNeighbours, addEdges, setNodesHiddenByType, setEdgesHiddenByRelation, getLoadedRelations }),
     // graph reference is stable — functions are recreated but graph identity is stable
     // eslint-disable-next-line react-hooks/exhaustive-deps
     []

@@ -184,7 +184,7 @@ function createSessionServer(
   server.registerTool(
     'search',
     {
-      description: 'Search stored knowledge',
+      description: 'Search stored knowledge using hybrid BM25 + vector similarity with recency weighting. Set expand_graph=true to also return graph-connected entities (requires extraction to have run on the matching documents — use the queue tool to check status). Use expand_graph when exploring relationships, tracing decisions, or understanding what else is connected to a topic.',
       inputSchema: {
         query: z.string().min(1),
         type: entityTypeSchema.optional(),

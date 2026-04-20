@@ -45,6 +45,7 @@ function formatSearchResults(results: Array<{
   entity: { id: string; type: string; content: string | null };
   score: number;
   chunk_content: string;
+  related?: Array<{ entity: { id: string; type: string; content: string | null; metadata: Record<string, unknown> }; relation: string; direction: string }>;
 }>) {
   if (results.length === 0) {
     return ['No results'];
@@ -58,6 +59,13 @@ function formatSearchResults(results: Array<{
     lines.push(`  ${result.chunk_content}`);
     if (result.entity.content && result.entity.content !== result.chunk_content) {
       lines.push(`  entity: ${result.entity.content}`);
+    }
+    if (result.related && result.related.length > 0) {
+      lines.push(`  related (${result.related.length}):`);
+      for (const rel of result.related) {
+        const arrow = rel.direction === 'outgoing' ? '->' : '<-';
+        lines.push(`    ${arrow} [${rel.relation}] ${rel.entity.type} ${shortId(rel.entity.id)}`);
+      }
     }
   }
 
@@ -318,6 +326,7 @@ program
   .option('--limit <limit>', 'result limit', '10')
   .option('--threshold <threshold>', 'similarity threshold', '0.35')
   .option('--recency-weight <recencyWeight>', 'recency weight', '0.1')
+  .option('--expand-graph', 'include graph-connected entities in results')
   .action(async (query, options, command) => {
     await runWithClient(command, async (client, json) => {
       const body = await client.searchEntities({
@@ -328,7 +337,8 @@ program
         owner: options.owner,
         limit: Number(options.limit),
         threshold: Number(options.threshold),
-        recency_weight: Number(options.recencyWeight)
+        recency_weight: Number(options.recencyWeight),
+        expand_graph: options.expandGraph === true ? true : undefined
       });
 
       return json ? body : formatSearchResults(body.results);

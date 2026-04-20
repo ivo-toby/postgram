@@ -24,6 +24,11 @@ export type SearchResponse = {
     chunk_content: string;
     similarity: number;
     score: number;
+    related?: Array<{
+      entity: { id: string; type: string; content: string | null; metadata: Record<string, unknown> };
+      relation: string;
+      direction: 'incoming' | 'outgoing';
+    }>;
   }>;
 };
 
@@ -137,6 +142,7 @@ export function createPgmClient(options: RestClientOptions) {
       limit?: number | undefined;
       threshold?: number | undefined;
       recency_weight?: number | undefined;
+      expand_graph?: boolean | undefined;
     }) {
       return request<SearchResponse>(options, '/api/search', {
         method: 'POST',

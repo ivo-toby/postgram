@@ -91,7 +91,7 @@ pgm list --type task --status next --limit 10
 
 ### Check enrichment queue
 
-Use this when search results seem stale or entities aren't showing up yet — enrichment may still be in progress.
+Use this when search results seem stale or entities aren't showing up yet — enrichment may still be in progress. Available as `pgm queue` (CLI) or the `queue` MCP tool.
 
 ```bash
 pgm queue

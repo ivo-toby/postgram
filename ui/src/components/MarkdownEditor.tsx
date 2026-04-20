@@ -134,31 +134,29 @@ export default function MarkdownEditor({ value, onChange, disabled = false }: Pr
         </button>
       </div>
 
-      {/* Editor / Preview */}
-      <div className="flex min-h-48">
-        {!previewOnly && (
+      {/* Editor / Preview — single column */}
+      <div className="min-h-48">
+        {!previewOnly ? (
           <textarea
             ref={textareaRef}
             value={value}
             onChange={e => onChange(e.target.value)}
             onKeyDown={handleKeyDown}
             disabled={disabled}
-            className="flex-1 bg-gray-900 text-sm text-white p-3 resize-none focus:outline-none min-h-48 font-mono"
+            className="w-full bg-gray-900 text-sm text-white p-3 resize-none focus:outline-none min-h-48 font-mono block"
             placeholder="Write in markdown…"
           />
+        ) : (
+          <div className="p-3 bg-gray-900 min-h-48">
+            {value ? (
+              <div className="prose prose-sm prose-invert max-w-none">
+                <ReactMarkdown>{value}</ReactMarkdown>
+              </div>
+            ) : (
+              <span className="text-gray-600 italic text-sm">Nothing to preview.</span>
+            )}
+          </div>
         )}
-        {!previewOnly && (
-          <div className="w-px bg-gray-700 shrink-0" />
-        )}
-        <div className={`flex-1 p-3 overflow-auto bg-gray-900 ${previewOnly ? 'w-full' : ''}`}>
-          {value ? (
-            <div className="prose prose-sm prose-invert max-w-none">
-              <ReactMarkdown>{value}</ReactMarkdown>
-            </div>
-          ) : (
-            <span className="text-gray-600 italic text-sm">Preview will appear here…</span>
-          )}
-        </div>
       </div>
     </div>
   );

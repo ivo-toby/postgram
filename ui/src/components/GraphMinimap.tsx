@@ -4,6 +4,7 @@ import type Graph from 'graphology';
 
 type Props = {
   sigmaRef: React.RefObject<Sigma | null>;
+  sigmaReady: boolean;
   graph: Graph;
 };
 
@@ -11,7 +12,7 @@ const WIDTH = 160;
 const HEIGHT = 120;
 const PADDING = 8;
 
-export default function GraphMinimap({ sigmaRef, graph }: Props) {
+export default function GraphMinimap({ sigmaRef, sigmaReady, graph }: Props) {
   const canvasRef = useRef<HTMLCanvasElement>(null);
 
   useEffect(() => {
@@ -99,7 +100,7 @@ export default function GraphMinimap({ sigmaRef, graph }: Props) {
     return () => {
       sigma.off('afterRender', draw);
     };
-  }, [sigmaRef, graph]);
+  }, [sigmaRef, sigmaReady, graph]);
 
   // Click/drag to navigate
   useEffect(() => {
@@ -157,7 +158,7 @@ export default function GraphMinimap({ sigmaRef, graph }: Props) {
       window.removeEventListener('mousemove', onMouseMove);
       window.removeEventListener('mouseup', onMouseUp);
     };
-  }, [sigmaRef, graph]);
+  }, [sigmaRef, sigmaReady, graph]);
 
   return (
     <canvas

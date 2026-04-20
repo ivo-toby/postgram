@@ -1,4 +1,4 @@
-import { useEffect, useRef, useCallback } from 'react';
+import { useEffect, useRef, useCallback, useState } from 'react';
 import Sigma from 'sigma';
 import type { SigmaEvents as SigmaEventMap } from 'sigma/types';
 import type Graph from 'graphology';
@@ -15,6 +15,7 @@ export function useSigma(
   events: SigmaEvents = {}
 ) {
   const sigmaRef = useRef<Sigma | null>(null);
+  const [sigmaReady, setSigmaReady] = useState(false);
 
   useEffect(() => {
     if (!containerRef.current) return;
@@ -29,10 +30,12 @@ export function useSigma(
     });
 
     sigmaRef.current = sigma;
+    setSigmaReady(true);
 
     return () => {
       sigma.kill();
       sigmaRef.current = null;
+      setSigmaReady(false);
     };
   }, [containerRef, graph]);
 
@@ -135,5 +138,5 @@ export function useSigma(
     sigmaRef.current?.refresh();
   }, []);
 
-  return { sigmaRef, zoomIn, zoomOut, focusNode, refresh };
+  return { sigmaRef, sigmaReady, zoomIn, zoomOut, focusNode, refresh };
 }

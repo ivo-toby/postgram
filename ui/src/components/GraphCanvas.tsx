@@ -101,7 +101,7 @@ export default function GraphCanvas({ graphHook, api, depth, onNodeClick, onStag
         nodeCount={graphHook.graph.order}
       />
 
-      <GraphMinimap sigmaRef={sigmaControls.sigmaRef} graph={graphHook.graph} />
+      <GraphMinimap sigmaRef={sigmaControls.sigmaRef} sigmaReady={sigmaControls.sigmaReady} graph={graphHook.graph} />
 
       {/* Context menu */}
       {contextMenu && (

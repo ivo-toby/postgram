@@ -1,3 +1,7 @@
+<p align="center">
+    <img src="assets/logo.png" alt="PostGram" width="200" />
+  </p>
+
 # Postgram
 
 Postgram is a self-hosted knowledge store for humans and agents. It gives you a
@@ -107,11 +111,11 @@ edges are created automatically.
 
 Supported providers:
 
-| Provider | Model default | Env vars required |
-|----------|---------------|-------------------|
-| OpenAI | `gpt-4o-mini` | `OPENAI_API_KEY` |
-| Anthropic | `claude-haiku-4-5-20251001` | `ANTHROPIC_API_KEY` |
-| Ollama | `llama3.2` | `OLLAMA_BASE_URL` (default: `http://localhost:11434`) |
+| Provider  | Model default               | Env vars required                                     |
+| --------- | --------------------------- | ----------------------------------------------------- |
+| OpenAI    | `gpt-4o-mini`               | `OPENAI_API_KEY`                                      |
+| Anthropic | `claude-haiku-4-5-20251001` | `ANTHROPIC_API_KEY`                                   |
+| Ollama    | `llama3.2`                  | `OLLAMA_BASE_URL` (default: `http://localhost:11434`) |
 
 ### 6. Document Sync
 
@@ -231,55 +235,55 @@ Expected:
 
 ### Server
 
-| Variable | Required | Default | Description |
-|----------|----------|---------|-------------|
-| `DATABASE_URL` | yes | | Full Postgres connection string |
-| `OPENAI_API_KEY` | conditional | | Required when `EMBEDDING_PROVIDER=openai` OR (`EXTRACTION_ENABLED=true` AND `EXTRACTION_PROVIDER=openai`). Optional otherwise. |
-| `PORT` | no | `3100` | HTTP/MCP server port |
-| `LOG_LEVEL` | no | `info` | pino log level |
-| `ENRICHMENT_POLL_INTERVAL_MS` | no | `1000` | Enrichment worker poll interval |
+| Variable                      | Required    | Default | Description                                                                                                                    |
+| ----------------------------- | ----------- | ------- | ------------------------------------------------------------------------------------------------------------------------------ |
+| `DATABASE_URL`                | yes         |         | Full Postgres connection string                                                                                                |
+| `OPENAI_API_KEY`              | conditional |         | Required when `EMBEDDING_PROVIDER=openai` OR (`EXTRACTION_ENABLED=true` AND `EXTRACTION_PROVIDER=openai`). Optional otherwise. |
+| `PORT`                        | no          | `3100`  | HTTP/MCP server port                                                                                                           |
+| `LOG_LEVEL`                   | no          | `info`  | pino log level                                                                                                                 |
+| `ENRICHMENT_POLL_INTERVAL_MS` | no          | `1000`  | Enrichment worker poll interval                                                                                                |
 
 ### Embeddings
 
-| Variable | Required | Default | Description |
-|----------|----------|---------|-------------|
-| `EMBEDDING_PROVIDER` | no | `openai` | `openai` or `ollama` |
-| `EMBEDDING_MODEL` | no | per-provider | Defaults: `text-embedding-3-small` (openai, 1536 dims), `bge-m3` (ollama, 1024 dims) |
-| `EMBEDDING_DIMENSIONS` | no | per-provider | Must match the active `embedding_models` row. Run `pgm-admin embeddings migrate --target-dimensions <N> --yes` to change. |
-| `EMBEDDING_BASE_URL` | when provider=ollama | falls back to `OLLAMA_BASE_URL` | Embedding host. Independent from LLM-extraction host so embeddings and inference can target different machines. |
-| `EMBEDDING_API_KEY` | no | | Optional bearer token for `EMBEDDING_BASE_URL`. |
+| Variable               | Required             | Default                         | Description                                                                                                               |
+| ---------------------- | -------------------- | ------------------------------- | ------------------------------------------------------------------------------------------------------------------------- |
+| `EMBEDDING_PROVIDER`   | no                   | `openai`                        | `openai` or `ollama`                                                                                                      |
+| `EMBEDDING_MODEL`      | no                   | per-provider                    | Defaults: `text-embedding-3-small` (openai, 1536 dims), `bge-m3` (ollama, 1024 dims)                                      |
+| `EMBEDDING_DIMENSIONS` | no                   | per-provider                    | Must match the active `embedding_models` row. Run `pgm-admin embeddings migrate --target-dimensions <N> --yes` to change. |
+| `EMBEDDING_BASE_URL`   | when provider=ollama | falls back to `OLLAMA_BASE_URL` | Embedding host. Independent from LLM-extraction host so embeddings and inference can target different machines.           |
+| `EMBEDDING_API_KEY`    | no                   |                                 | Optional bearer token for `EMBEDDING_BASE_URL`.                                                                           |
 
 See [`specs/002-local-embeddings/quickstart.md`](specs/002-local-embeddings/quickstart.md) for a walkthrough of fresh-install-on-Ollama and migrating from OpenAI.
 
 ### LLM Extraction
 
-| Variable | Required | Default | Description |
-|----------|----------|---------|-------------|
-| `EXTRACTION_ENABLED` | no | `false` | Enable LLM relationship extraction |
-| `EXTRACTION_PROVIDER` | no | `openai` | LLM provider: `openai`, `anthropic`, or `ollama` |
-| `EXTRACTION_MODEL` | no | per-provider | Model name (defaults: `gpt-4o-mini` for OpenAI, `claude-haiku-4-5-20251001` for Anthropic, `llama3.2` for Ollama) |
-| `ANTHROPIC_API_KEY` | when provider=anthropic | | Anthropic API key |
-| `OLLAMA_BASE_URL` | no | `http://localhost:11434` | Ollama server URL |
+| Variable              | Required                | Default                  | Description                                                                                                       |
+| --------------------- | ----------------------- | ------------------------ | ----------------------------------------------------------------------------------------------------------------- |
+| `EXTRACTION_ENABLED`  | no                      | `false`                  | Enable LLM relationship extraction                                                                                |
+| `EXTRACTION_PROVIDER` | no                      | `openai`                 | LLM provider: `openai`, `anthropic`, or `ollama`                                                                  |
+| `EXTRACTION_MODEL`    | no                      | per-provider             | Model name (defaults: `gpt-4o-mini` for OpenAI, `claude-haiku-4-5-20251001` for Anthropic, `llama3.2` for Ollama) |
+| `ANTHROPIC_API_KEY`   | when provider=anthropic |                          | Anthropic API key                                                                                                 |
+| `OLLAMA_BASE_URL`     | no                      | `http://localhost:11434` | Ollama server URL                                                                                                 |
 
 ### CLI
 
-| Variable | Required | Description |
-|----------|----------|-------------|
-| `PGM_API_URL` | yes | Server URL |
-| `PGM_API_KEY` | yes | API key for authentication |
+| Variable      | Required | Description                |
+| ------------- | -------- | -------------------------- |
+| `PGM_API_URL` | yes      | Server URL                 |
+| `PGM_API_KEY` | yes      | API key for authentication |
 
 ### Admin CLI
 
-| Variable | Required | Description |
-|----------|----------|-------------|
-| `DATABASE_URL` | yes | Direct DB connection for admin operations |
+| Variable       | Required | Description                               |
+| -------------- | -------- | ----------------------------------------- |
+| `DATABASE_URL` | yes      | Direct DB connection for admin operations |
 
 ### Backup
 
-| Variable | Required | Description |
-|----------|----------|-------------|
-| `DATABASE_URL` or `PGM_DATABASE_URL` | yes | Database connection |
-| `PGM_BACKUP_PASSPHRASE` | when using `--encrypt` | GPG encryption passphrase |
+| Variable                             | Required               | Description               |
+| ------------------------------------ | ---------------------- | ------------------------- |
+| `DATABASE_URL` or `PGM_DATABASE_URL` | yes                    | Database connection       |
+| `PGM_BACKUP_PASSPHRASE`              | when using `--encrypt` | GPG encryption passphrase |
 
 ## Running The Server
 
@@ -567,7 +571,7 @@ A portable Claude Code skill for using `pgm` from your own agent lives in
 directory into your own project's `.claude/skills/` (or your user-level
 `~/.claude/skills/`) and the agent will know when to invoke `pgm store`,
 `pgm search`, `pgm link`, etc. It assumes the CLI is on PATH and
-`PGM_API_URL` + `PGM_API_KEY` are set. The skill file is deliberately *not*
+`PGM_API_URL` + `PGM_API_KEY` are set. The skill file is deliberately _not_
 under `.claude/` in this repo so you can decide where to put it.
 
 ### Optimising your global CLAUDE.md

@@ -3,6 +3,7 @@ import ReactMarkdown from 'react-markdown';
 import type { Entity } from '../lib/types.ts';
 import type { ApiClient } from '../lib/api.ts';
 import { ENTITY_COLORS } from '../lib/nodeStyles.ts';
+import MarkdownEditor from './MarkdownEditor.tsx';
 
 type Props = {
   entity: Entity;
@@ -72,11 +73,7 @@ export default function EntityDetail({ entity, api, onUpdate }: Props) {
       {/* Content */}
       {editing ? (
         <div className="flex flex-col gap-2">
-          <textarea
-            value={draft}
-            onChange={e => setDraft(e.target.value)}
-            className="w-full bg-gray-800 border border-gray-700 rounded-lg p-3 text-sm text-white resize-none h-48 focus:outline-none focus:ring-1 focus:ring-blue-500"
-          />
+          <MarkdownEditor value={draft} onChange={setDraft} disabled={saving} />
           <div className="flex gap-2">
             <button
               onClick={handleSave}

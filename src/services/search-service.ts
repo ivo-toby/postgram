@@ -163,12 +163,20 @@ type SearchContext = {
   now: Date;
 };
 
+// Fetch at most this many candidates from DB for JS-side reranking.
+// Prevents OOM when the corpus is large — vector similarity is pre-sorted
+// so we get the best candidates and BM25/recency reranking still works correctly
+// over the candidate set.
+const CANDIDATE_CAP = 500;
+
 async function runHybridSearch(
   pool: Pool,
   auth: AuthContext,
   input: SearchInput,
   ctx: SearchContext & { queryEmbedding: number[]; queryText: string }
 ): Promise<{ results: SearchResult[] }> {
+  const candidateLimit = Math.min(ctx.limit * 20, CANDIDATE_CAP);
+
   const rows = await pool.query<SearchRow & { bm25: number }>(
     `
       SELECT
@@ -185,6 +193,8 @@ async function runHybridSearch(
         AND e.visibility = ANY($5)
         AND ($6::text IS NULL OR e.visibility = $6)
         AND ${ownerSqlCondition('e.owner', '$7')}
+      ORDER BY c.embedding <=> $1::vector
+      LIMIT $9
     `,
     [
       vectorToSql(ctx.queryEmbedding),
@@ -194,7 +204,8 @@ async function runHybridSearch(
       auth.allowedVisibility,
       input.visibility ?? null,
       input.owner ?? null,
-      ctx.queryText
+      ctx.queryText,
+      candidateLimit
     ]
   );
 

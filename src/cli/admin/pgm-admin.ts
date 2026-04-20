@@ -153,6 +153,27 @@ function formatStats(stats: {
   ];
 }
 
+function formatQueue(queue: {
+  embedding: { pending: number; completed: number; failed: number; retryEligible: number; oldestPendingSecs: number | null };
+  extraction: { pending: number; completed: number; failed: number } | null;
+}): string[] {
+  const lines: string[] = [];
+  const e = queue.embedding;
+  const age = e.oldestPendingSecs !== null ? ` oldest_pending=${Math.round(e.oldestPendingSecs)}s` : '';
+  lines.push(
+    `embedding:  pending=${e.pending}  completed=${e.completed}  failed=${e.failed}  retry_eligible=${e.retryEligible}${age}`
+  );
+  if (queue.extraction) {
+    const x = queue.extraction;
+    lines.push(
+      `extraction: pending=${x.pending}  completed=${x.completed}  failed=${x.failed}`
+    );
+  } else {
+    lines.push('extraction: disabled');
+  }
+  return lines;
+}
+
 async function runWithPool<T>(
   json: boolean,
   handler: (pool: Pool, json: boolean) => Promise<T>
@@ -564,6 +585,68 @@ program
       }
 
       return formatStats(stats);
+    });
+  });
+
+program
+  .command('queue')
+  .description('Show enrichment and extraction queue status')
+  .action(async (_options, command) => {
+    const json = isJsonMode(command);
+
+    await runWithPool(json, async (pool, mode) => {
+      type QueueRow = {
+        embedding_pending: string;
+        embedding_completed: string;
+        embedding_failed: string;
+        embedding_retry_eligible: string;
+        oldest_pending_secs: string | null;
+        extraction_pending: string;
+        extraction_completed: string;
+        extraction_failed: string;
+        extraction_any: string;
+      };
+
+      const result = await pool.query<QueueRow>(`
+        SELECT
+          COUNT(*) FILTER (WHERE enrichment_status = 'pending')::text                                                                                     AS embedding_pending,
+          COUNT(*) FILTER (WHERE enrichment_status = 'completed')::text                                                                                   AS embedding_completed,
+          COUNT(*) FILTER (WHERE enrichment_status = 'failed')::text                                                                                      AS embedding_failed,
+          COUNT(*) FILTER (WHERE enrichment_status = 'failed' AND enrichment_attempts < 3 AND updated_at < now() - interval '5 minutes')::text            AS embedding_retry_eligible,
+          EXTRACT(EPOCH FROM now() - MIN(updated_at) FILTER (WHERE enrichment_status = 'pending'))::text                                                  AS oldest_pending_secs,
+          COUNT(*) FILTER (WHERE extraction_status = 'pending')::text                                                                                     AS extraction_pending,
+          COUNT(*) FILTER (WHERE extraction_status = 'completed')::text                                                                                   AS extraction_completed,
+          COUNT(*) FILTER (WHERE extraction_status = 'failed')::text                                                                                      AS extraction_failed,
+          COUNT(*) FILTER (WHERE extraction_status IS NOT NULL)::text                                                                                     AS extraction_any
+        FROM entities
+        WHERE content IS NOT NULL
+      `);
+
+      const row = result.rows[0];
+      if (!row) {
+        return mode ? {} : ['No data'];
+      }
+
+      const extractionEnabled = Number(row.extraction_any) > 0;
+
+      const queue = {
+        embedding: {
+          pending: Number(row.embedding_pending),
+          completed: Number(row.embedding_completed),
+          failed: Number(row.embedding_failed),
+          retryEligible: Number(row.embedding_retry_eligible),
+          oldestPendingSecs: row.oldest_pending_secs !== null ? Number(row.oldest_pending_secs) : null
+        },
+        extraction: extractionEnabled
+          ? {
+              pending: Number(row.extraction_pending),
+              completed: Number(row.extraction_completed),
+              failed: Number(row.extraction_failed)
+            }
+          : null
+      };
+
+      return mode ? queue : formatQueue(queue);
     });
   });
 

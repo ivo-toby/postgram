@@ -43,7 +43,15 @@ services:
       # for reachability from other machines, set PORT_BIND_HOST=0.0.0.0 in
       # your .env. Prefer running behind a reverse proxy (Caddy) with TLS for
       # anything beyond a trusted homelab.
-      - '${PORT_BIND_HOST:-127.0.0.1}:${PORT:-3100}:3100'
+      - '${PORT_BIND_HOST:-127.0.0.1}:${PORT:-3101}:3100'
+    restart: unless-stopped
+
+  postgram-ui:
+    build: ./ui
+    ports:
+      - '${UI_BIND_HOST:-127.0.0.1}:3000:3000'
+    depends_on:
+      - mcp-server
     restart: unless-stopped
 
 volumes:

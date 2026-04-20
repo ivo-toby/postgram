@@ -5,6 +5,7 @@ import type { LayoutType } from '../hooks/useLayout.ts';
 import type { useGraph } from '../hooks/useGraph.ts';
 import type { ApiClient } from '../lib/api.ts';
 import GraphControls from './GraphControls.tsx';
+import GraphMinimap from './GraphMinimap.tsx';
 
 type Props = {
   graphHook: ReturnType<typeof useGraph>;
@@ -99,6 +100,8 @@ export default function GraphCanvas({ graphHook, api, depth, onNodeClick, onStag
         onRedraw={() => { layoutHook.startForce(); sigmaControls.refresh(); }}
         nodeCount={graphHook.graph.order}
       />
+
+      <GraphMinimap sigmaRef={sigmaControls.sigmaRef} graph={graphHook.graph} />
 
       {/* Context menu */}
       {contextMenu && (

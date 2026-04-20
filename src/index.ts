@@ -255,11 +255,20 @@ export async function startServer(): Promise<{
     extractionEnabled: config.EXTRACTION_ENABLED,
     callLlm
   });
-  const interval = setInterval(() => {
-    void worker.runOnce().catch((error) => {
-      logger.error({ err: error }, 'enrichment worker iteration failed');
-    });
-  }, config.ENRICHMENT_POLL_INTERVAL_MS);
+  let workerActive = true;
+  const workerLoop = async () => {
+    while (workerActive) {
+      try {
+        await worker.runOnce();
+      } catch (error) {
+        logger.error({ err: error }, 'enrichment worker iteration failed');
+      }
+      await new Promise<void>((resolve) => {
+        setTimeout(resolve, config.ENRICHMENT_POLL_INTERVAL_MS);
+      });
+    }
+  };
+  void workerLoop();
 
   const app = createApp({
     pool,
@@ -276,7 +285,7 @@ export async function startServer(): Promise<{
   logger.info({ port: config.PORT }, 'postgram server started');
 
   const close = async () => {
-    clearInterval(interval);
+    workerActive = false;
     await new Promise<void>((resolve) => {
       server.close(() => resolve());
     });

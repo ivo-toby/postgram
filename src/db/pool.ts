@@ -2,7 +2,10 @@ import { Pool } from 'pg';
 
 export function createPool(connectionString: string): Pool {
   return new Pool({
-    connectionString
+    connectionString,
+    connectionTimeoutMillis: 5000,
+    idleTimeoutMillis: 30000,
+    max: 20
   });
 }
 

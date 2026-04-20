@@ -14,7 +14,7 @@ services:
       retries: 5
     restart: unless-stopped
 
-  postgram:
+  mcp-server:
     build: .
     depends_on:
       postgres:
@@ -51,7 +51,7 @@ services:
     ports:
       - '${UI_BIND_HOST:-127.0.0.1}:3000:3000'
     depends_on:
-      - postgram
+      - mcp-server
     restart: unless-stopped
 
 volumes:

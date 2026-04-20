@@ -14,7 +14,7 @@ services:
       retries: 5
     restart: unless-stopped
 
-  mcp-server:
+  postgram:
     build: .
     depends_on:
       postgres:
@@ -44,6 +44,16 @@ services:
       # your .env. Prefer running behind a reverse proxy (Caddy) with TLS for
       # anything beyond a trusted homelab.
       - '${PORT_BIND_HOST:-127.0.0.1}:${PORT:-3100}:3100'
+    restart: unless-stopped
+
+  postgram-ui:
+    build: ./ui
+    ports:
+      - "3000:3000"
+    depends_on:
+      - postgram
+    networks:
+      - default
     restart: unless-stopped
 
 volumes:

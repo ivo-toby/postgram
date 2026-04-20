@@ -56,6 +56,9 @@ pgm task complete <task-id> --version 1
 # Sync markdown directory
 pgm sync ./notes --repo my-notes
 
+# Check enrichment/extraction queue status
+pgm queue
+
 # JSON output (all commands)
 pgm store "hello" --json
 ```

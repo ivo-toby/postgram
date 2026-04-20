@@ -163,6 +163,7 @@ export default function App() {
               <p className="text-xs text-gray-500 uppercase tracking-wide mb-3">Connections</p>
               <EdgeList
                 edges={detailHook.edges}
+                entityId={detailHook.entity.id}
                 onNavigate={handleNodeClick}
               />
             </div>

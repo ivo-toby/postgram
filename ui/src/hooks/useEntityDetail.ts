@@ -25,7 +25,7 @@ export function useEntityDetail(api: ApiClient, entityId: string | null) {
       setEntity(entityRes.entity);
       setEdges(edgesRes.edges);
     }).catch(console.error).finally(() => {
-      if (!cancelled) setLoading(false);
+      setLoading(false);
     });
 
     return () => { cancelled = true; };

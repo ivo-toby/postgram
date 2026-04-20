@@ -27,7 +27,9 @@ export default function GraphCanvas({ graphHook, api, depth, onNodeClick, onStag
     api.expandGraph(nodeId, { depth }).then(data => {
       graphHook.addNeighbours(data.entities);
       graphHook.addEdges(data.edges);
-    }).catch(console.error);
+    }).catch(console.error).finally(() => {
+      loadingRef.current.delete(nodeId);
+    });
   }, [api, depth, graphHook]);
 
   const handleClickNode = useCallback((nodeId: string) => {

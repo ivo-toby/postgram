@@ -59,7 +59,7 @@ export function useSigma(
       sigma.off('rightClickNode', handleRightClickNode);
       sigma.off('clickStage', handleClickStage);
     };
-  });
+  }, [events.onClickNode, events.onRightClickNode, events.onClickStage]);
 
   const zoomIn = useCallback(() => {
     sigmaRef.current?.getCamera().animatedZoom({ duration: 300 });

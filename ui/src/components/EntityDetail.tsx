@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import ReactMarkdown from 'react-markdown';
 import type { Entity } from '../lib/types.ts';
 import type { ApiClient } from '../lib/api.ts';
@@ -14,6 +14,12 @@ export default function EntityDetail({ entity, api, onUpdate }: Props) {
   const [editing, setEditing] = useState(false);
   const [draft, setDraft] = useState(entity.content ?? '');
   const [saving, setSaving] = useState(false);
+
+  // Reset draft when navigating to a different entity
+  useEffect(() => {
+    setDraft(entity.content ?? '');
+    setEditing(false);
+  }, [entity.id]);
   const color = ENTITY_COLORS[entity.type] ?? ENTITY_COLORS['default']!;
 
   async function handleSave() {

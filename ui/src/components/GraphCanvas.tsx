@@ -1,7 +1,10 @@
 import { useRef, useEffect, useCallback, useState } from 'react';
 import { useSigma } from '../hooks/useSigma.ts';
+import { useLayout } from '../hooks/useLayout.ts';
+import type { LayoutType } from '../hooks/useLayout.ts';
 import type { useGraph } from '../hooks/useGraph.ts';
 import type { ApiClient } from '../lib/api.ts';
+import GraphControls from './GraphControls.tsx';
 
 type Props = {
   graphHook: ReturnType<typeof useGraph>;
@@ -47,6 +50,26 @@ export default function GraphCanvas({ graphHook, api, depth, onNodeClick, onStag
     onClickStage: handleClickStage,
   });
 
+  const layoutHook = useLayout(graphHook.graph);
+
+  // Start force layout when the graph first receives nodes
+  useEffect(() => {
+    if (graphHook.graph.order > 0) {
+      layoutHook.startForce();
+    }
+    // Re-run only when node count transitions from 0 to >0
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [graphHook.graph.order > 0]);
+
+  // Stop FA2 worker on unmount to avoid orphaned WebWorkers
+  useEffect(() => () => layoutHook.stopWorker(), []);
+
+  const handleLayoutChange = useCallback((next: LayoutType) => {
+    layoutHook.switchLayout(next);
+    // Refresh sigma after layout positions have been written
+    sigmaControls.refresh();
+  }, [layoutHook, sigmaControls]);
+
   useEffect(() => {
     if (!contextMenu) return;
     const handleClick = () => setContextMenu(null);
@@ -58,21 +81,12 @@ export default function GraphCanvas({ graphHook, api, depth, onNodeClick, onStag
     <div className="relative w-full h-full">
       <div ref={containerRef} className="w-full h-full" />
 
-      {/* Zoom controls */}
-      <div className="absolute bottom-4 right-4 flex flex-col gap-1">
-        <button
-          onClick={sigmaControls.zoomIn}
-          className="w-9 h-9 bg-gray-800 border border-gray-700 rounded text-white text-lg hover:bg-gray-700 flex items-center justify-center"
-        >
-          +
-        </button>
-        <button
-          onClick={sigmaControls.zoomOut}
-          className="w-9 h-9 bg-gray-800 border border-gray-700 rounded text-white text-lg hover:bg-gray-700 flex items-center justify-center"
-        >
-          −
-        </button>
-      </div>
+      <GraphControls
+        layout={layoutHook.layout}
+        onLayoutChange={handleLayoutChange}
+        onZoomIn={sigmaControls.zoomIn}
+        onZoomOut={sigmaControls.zoomOut}
+      />
 
       {/* Context menu */}
       {contextMenu && (

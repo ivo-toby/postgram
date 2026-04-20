@@ -1,3 +1,34 @@
+## [1.5.0](https://github.com/ivo-toby/postgram/compare/cli-v1.4.0...cli-v1.5.0) (2026-04-20)
+
+### Features
+
+* **web-ui:** add auth gate with LoginScreen and localStorage key storage ([08dce3b](https://github.com/ivo-toby/postgram/commit/08dce3ba46a5c92c01655044ebf5c96d1e808299))
+* **web-ui:** add Docker + nginx packaging, add postgram-ui service to compose ([7a43c40](https://github.com/ivo-toby/postgram/commit/7a43c4080b2e435163f95efa41ebc23c7a5d9041))
+* **web-ui:** add entity actions — add note, link, delete ([002b16b](https://github.com/ivo-toby/postgram/commit/002b16b89811ad64f99489d498833e4ea68ebb9c))
+* **web-ui:** add entity detail panel with markdown, inline edit, edge list ([5c1f3a8](https://github.com/ivo-toby/postgram/commit/5c1f3a81626ef0cca81143174cf282626c849b4e))
+* **web-ui:** add graphology graph model and node style helpers ([2be8127](https://github.com/ivo-toby/postgram/commit/2be8127b74c21c919b689010fcc9f2ff4c288eb6))
+* **web-ui:** add layout shell with TopBar, LeftPanel, RightPanel, MainLayout and useApi hook ([6ebad63](https://github.com/ivo-toby/postgram/commit/6ebad63df5d22fbf0cc4703c7e8c9d4c0778f491))
+* **web-ui:** add layout switching — ForceAtlas2, radial, hierarchy ([c149515](https://github.com/ivo-toby/postgram/commit/c149515d17401791cf44e11e9e9bf44728ad4c4b))
+* **web-ui:** add queue status polling and StatusWidget ([b0c3c5d](https://github.com/ivo-toby/postgram/commit/b0c3c5d502e2844cb6a3ccbdce7a23a7d4ed7e09))
+* **web-ui:** add redraw button and zoom-to-node on search result click ([0430f90](https://github.com/ivo-toby/postgram/commit/0430f9069065373a70d7e3f887070bfdd1c0bd3f))
+* **web-ui:** add search, entity filters, relation chips, depth slider ([2d9aa57](https://github.com/ivo-toby/postgram/commit/2d9aa57a2e9c6be5b8688b3ee659b7787b04f914))
+* **web-ui:** add Sigma.js graph canvas with entity loading ([e1c43f6](https://github.com/ivo-toby/postgram/commit/e1c43f6f91bfdc3b5b159785e38177891b15f8bf))
+* **web-ui:** add typed API client and shared types ([c9ab9d4](https://github.com/ivo-toby/postgram/commit/c9ab9d44527bb494717a8c55217e747e90a2b106))
+* **web-ui:** disable hierarchy for large graphs, markdown previews, edge names, draggable nodes ([ebc2634](https://github.com/ivo-toby/postgram/commit/ebc2634de62d2781bc0d6d5d2ae4789af6f8619d))
+* **web-ui:** scaffold Vite + React 19 + Tailwind project ([a068218](https://github.com/ivo-toby/postgram/commit/a06821874fea98fd1c8f46b6ca43c25237812079))
+
+### Bug Fixes
+
+* **docker:** change default host port to 3101 to avoid conflict with existing MCP container ([2d0ab6b](https://github.com/ivo-toby/postgram/commit/2d0ab6b4b1dd95060fded7a7daf0f0aea53536c0))
+* **docker:** revert service rename back to mcp-server to avoid duplicate extraction containers ([45af4be](https://github.com/ivo-toby/postgram/commit/45af4be2718d11c350e743a8cbd1bacbffb44229))
+* **web-ui:** add .dockerignore, fix port binding, improve nginx proxy headers ([8466a9b](https://github.com/ivo-toby/postgram/commit/8466a9bb8d5b8ffea0e0cfcf7f30380c51970826))
+* **web-ui:** fix event listener leak, expand lock, loading state, draft reset, edge navigation ([344752a](https://github.com/ivo-toby/postgram/commit/344752a72c62a39bc5ca716f91f2d871c7c49da2))
+* **web-ui:** fix vite config types, exclude ui from root tsconfig ([9ff6210](https://github.com/ivo-toby/postgram/commit/9ff621048afd6a97ef82be7e6d7df7772a85b2b3))
+* **web-ui:** install @tailwindcss/typography so prose classes actually render markdown ([dc41e17](https://github.com/ivo-toby/postgram/commit/dc41e171e92e9f9def34c946766af9fd8164bd48))
+* **web-ui:** remove unused EntityType, throw on non-JSON responses ([f26fbc2](https://github.com/ivo-toby/postgram/commit/f26fbc27650a307eb0e752b584dc076be16a8f88))
+* **web-ui:** use entityType attribute instead of type to avoid Sigma renderer conflict ([7dd5d27](https://github.com/ivo-toby/postgram/commit/7dd5d27777b34cea9bffebdbfce4831ff389fd50))
+* **web-ui:** use SyntheticEvent instead of deprecated FormEvent ([b774e5a](https://github.com/ivo-toby/postgram/commit/b774e5a9c138e48532a9bae6fd4f898fea25b0e5))
+
 ## [1.4.0](https://github.com/ivo-toby/postgram/compare/cli-v1.3.0...cli-v1.4.0) (2026-04-20)
 
 ### Features

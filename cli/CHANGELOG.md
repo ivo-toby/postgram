@@ -1,3 +1,15 @@
+## [1.2.0](https://github.com/ivo-toby/postgram/compare/cli-v1.1.0...cli-v1.2.0) (2026-04-20)
+
+### Features
+
+* **admin:** add pgm-admin queue command for enrichment/extraction visibility ([e016786](https://github.com/ivo-toby/postgram/commit/e01678617c4aafa9aeba46f71a07820133fcc566))
+* **db/pool.ts:** add connection pool configuration options for timeout and max connections to enhance database performance ([4006ddc](https://github.com/ivo-toby/postgram/commit/4006ddc19ec80279fb0e88ca1df132f285775d40))
+
+### Bug Fixes
+
+* replace setInterval with sequential worker loop to prevent pool exhaustion ([7bc1099](https://github.com/ivo-toby/postgram/commit/7bc10992e2f8b79b92e6d8d50e72f851e0bc45c4))
+* **search:** cap DB result set to prevent OOM on large corpora ([6665693](https://github.com/ivo-toby/postgram/commit/66656933c2edb61df96fefb0f0dae2aafb3e90c1))
+
 ## [1.1.0](https://github.com/ivo-toby/postgram/compare/cli-v1.0.6...cli-v1.1.0) (2026-04-19)
 
 ### Features

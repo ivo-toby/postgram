@@ -89,6 +89,25 @@ Common relations: `involves`, `assigned_to`, `part_of`, `blocked_by`, `mentioned
 pgm list --type task --status next --limit 10
 ```
 
+### Check enrichment queue
+
+Use this when search results seem stale or entities aren't showing up yet — enrichment may still be in progress. Available as `pgm queue` (CLI) or the `queue` MCP tool.
+
+```bash
+pgm queue
+```
+
+Output:
+```
+embedding:  pending=12  completed=3421  failed=0  retry_eligible=0  oldest_pending=4s
+extraction: pending=8   completed=1230  failed=2
+```
+
+- `pending` — items waiting to be processed by the background worker
+- `oldest_pending_secs` — how long the oldest item has been waiting (a large value means the worker is stuck or slow)
+- `retry_eligible` — failed embedding jobs that will be retried automatically
+- `extraction: null / disabled` — extraction is off; enable with `EXTRACTION_ENABLED=true`
+
 ## Principles
 
 - **Prefer JSON output** (`--json`) when parsing results into further actions. Human table output is for direct display.

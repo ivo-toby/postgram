@@ -60,7 +60,23 @@ Statuses: `inbox` (unprocessed), `next` (actionable), `waiting` (blocked), `sche
 pgm search "what the user asked about" --limit 5
 ```
 
-Hybrid BM25 + vector with recency weighting. Add `--type project` or `--visibility work` to narrow. Add `--expand-graph` to include related entities in the response.
+Hybrid BM25 + vector with recency weighting. Add `--type project` or `--visibility work` to narrow.
+
+### Search with graph expansion
+
+```bash
+pgm search "what the user asked about" --limit 5 --expand-graph --json
+```
+
+Use `--expand-graph` whenever relationships matter — tracing a decision, understanding who worked on something, exploring what's connected to a topic. Each result gains a `related` array of graph-connected entities with their `relation` and `direction`.
+
+**When to use expand_graph:**
+- "Who was involved in X?" — edges like `involves`, `assigned_to`, `mentioned_in` surface people and meetings
+- "What led to this decision?" — follow `caused_by`, `depends_on`, `part_of` edges
+- "What else is connected to Y?" — open-ended graph neighbourhood traversal
+- Any time semantic search alone feels too flat
+
+**Important:** graph edges only exist for documents that have been through extraction (`extraction_status = completed`). Check `pgm queue` if `related` is empty — extraction may still be in progress.
 
 ### Recall by id
 
@@ -142,6 +158,14 @@ pgm search "embeddings" --visibility personal --limit 5 --json
 ```
 
 Summarize the top 2–3 hits in natural language. Include the short id so the user can drill in if they want.
+
+### User: "what else is connected to the open-brain RFC?"
+
+```bash
+pgm search "open-brain RFC" --limit 1 --expand-graph --json
+```
+
+The `related` field on each result shows graph neighbours — meetings that mentioned it, people involved, decisions caused by it. Summarize the connections, not just the document content.
 
 ### User: "link the homelab migration project to Ivo as the owner"
 

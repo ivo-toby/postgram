@@ -583,6 +583,32 @@ taskCommand
   });
 
 program
+  .command('queue')
+  .description('Show enrichment and extraction queue status')
+  .action(async (_options, command) => {
+    await runWithClient(command, async (client, json) => {
+      const body = await client.getQueueStatus();
+
+      if (json) return body;
+
+      const e = body.embedding;
+      const age = e.oldest_pending_secs !== null ? ` oldest_pending=${e.oldest_pending_secs}s` : '';
+      const lines = [
+        `embedding:  pending=${e.pending}  completed=${e.completed}  failed=${e.failed}  retry_eligible=${e.retry_eligible}${age}`
+      ];
+
+      if (body.extraction) {
+        const x = body.extraction;
+        lines.push(`extraction: pending=${x.pending}  completed=${x.completed}  failed=${x.failed}`);
+      } else {
+        lines.push('extraction: disabled');
+      }
+
+      return lines;
+    });
+  });
+
+program
   .command('backup')
   .description('Create a database backup')
   .option('--output <path>', 'backup output path')

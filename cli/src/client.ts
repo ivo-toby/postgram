@@ -351,6 +351,12 @@ export function createPgmClient(options: RestClientOptions) {
         }>;
       }>(options, `/api/entities/${entityId}/edges${query ? `?${query}` : ''}`);
     },
+    getQueueStatus() {
+      return request<{
+        embedding: { pending: number; completed: number; failed: number; retry_eligible: number; oldest_pending_secs: number | null };
+        extraction: { pending: number; completed: number; failed: number } | null;
+      }>(options, '/api/queue');
+    },
     expandGraph(entityId: string, params: { depth?: number; relationTypes?: string[]; owner?: string } = {}) {
       const qs = new URLSearchParams();
       if (params.depth !== undefined) qs.set('depth', String(params.depth));

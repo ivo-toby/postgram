@@ -1,5 +1,3 @@
-export type EntityType = 'document' | 'memory' | 'person' | 'project' | 'task' | 'interaction';
-
 export type Entity = {
   id: string;
   type: string;

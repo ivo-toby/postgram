@@ -40,10 +40,10 @@ async function request<T>(
   }
 
   const contentType = response.headers.get('content-type') ?? '';
-  if (contentType.includes('application/json')) {
-    return response.json() as Promise<T>;
+  if (!contentType.includes('application/json')) {
+    throw new Error(`Unexpected content-type: ${contentType}`);
   }
-  return response.text() as unknown as T;
+  return response.json() as Promise<T>;
 }
 
 export function createApiClient(options: ApiClientOptions) {

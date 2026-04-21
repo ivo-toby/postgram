@@ -8,7 +8,13 @@ import { createEdge, deleteEdge, listEdges, expandGraph } from '../services/edge
 import { getEntityEmbeddings } from '../services/embedding-query-service.js';
 import { listEntities, recallEntity, softDeleteEntity, storeEntity, updateEntity } from '../services/entity-service.js';
 import { searchEntities } from '../services/search-service.js';
-import { syncManifest, getSyncStatus } from '../services/sync-service.js';
+import {
+  syncManifest,
+  getSyncStatus,
+  diffSyncManifest,
+  uploadSyncFiles,
+  finalizeSyncManifest
+} from '../services/sync-service.js';
 import { completeTask, createTask, listTasks, updateTask } from '../services/task-service.js';
 import type { Entity, EntityStatus, EntityType, Visibility } from '../types/entities.js';
 import { AppError, ErrorCode } from '../util/errors.js';
@@ -120,6 +126,39 @@ const syncManifestSchema = z.object({
       path: z.string().min(1),
       sha: z.string().min(1),
       content: z.string()
+    })
+  )
+});
+
+const syncDiffSchema = z.object({
+  repo: z.string().min(1),
+  files: z.array(
+    z.object({
+      path: z.string().min(1),
+      sha: z.string().min(1)
+    })
+  )
+});
+
+const syncUploadSchema = z.object({
+  repo: z.string().min(1),
+  files: z
+    .array(
+      z.object({
+        path: z.string().min(1),
+        sha: z.string().min(1),
+        content: z.string()
+      })
+    )
+    .min(1)
+});
+
+const syncFinalizeSchema = z.object({
+  repo: z.string().min(1),
+  files: z.array(
+    z.object({
+      path: z.string().min(1),
+      sha: z.string().min(1)
     })
   )
 });
@@ -478,6 +517,42 @@ export function registerRestRoutes(
     const auth = c.get('auth');
     const body = parseJsonBody(syncManifestSchema, await c.req.json());
     const result = await syncManifest(pool, auth, body);
+
+    if (result.isErr()) {
+      throw result.error;
+    }
+
+    return c.json(result.value);
+  });
+
+  app.post('/api/sync/diff', async (c) => {
+    const auth = c.get('auth');
+    const body = parseJsonBody(syncDiffSchema, await c.req.json());
+    const result = await diffSyncManifest(pool, auth, body);
+
+    if (result.isErr()) {
+      throw result.error;
+    }
+
+    return c.json(result.value);
+  });
+
+  app.post('/api/sync/upload', async (c) => {
+    const auth = c.get('auth');
+    const body = parseJsonBody(syncUploadSchema, await c.req.json());
+    const result = await uploadSyncFiles(pool, auth, body);
+
+    if (result.isErr()) {
+      throw result.error;
+    }
+
+    return c.json(result.value);
+  });
+
+  app.post('/api/sync/finalize', async (c) => {
+    const auth = c.get('auth');
+    const body = parseJsonBody(syncFinalizeSchema, await c.req.json());
+    const result = await finalizeSyncManifest(pool, auth, body);
 
     if (result.isErr()) {
       throw result.error;

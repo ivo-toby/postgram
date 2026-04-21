@@ -365,8 +365,15 @@ export PGM_API_KEY='<plaintext-key>'
 
 ### Document sync
 
-- `POST /api/sync` — push file manifest
+- `POST /api/sync/diff` — diff local manifest against server; returns paths to upload and delete
+- `POST /api/sync/upload` — upload a batch of file contents
+- `POST /api/sync/finalize` — archive orphans and restore stale matches
+- `POST /api/sync` — single-shot push (retained for MCP and small syncs)
 - `GET /api/sync/status/:repo` — get sync status
+
+`pgm sync` uses the three-phase protocol (`diff` → batched `upload` → `finalize`)
+so large repos don't send a single oversized payload. Each upload batch is
+capped at ~50 files or ~4 MB, whichever comes first.
 
 ### Knowledge graph
 
@@ -412,8 +419,13 @@ export PGM_API_KEY=<your-api-key>
 
 ### Run from source (for development)
 
+From the repo root, invoke the TypeScript entrypoint directly — no build
+step needed, and it picks up local changes immediately:
+
 ```bash
-npx tsx src/cli/pgm.ts <command>
+npx tsx cli/src/pgm.ts <command>
+# e.g.
+npx tsx cli/src/pgm.ts sync ~/Documents/personal-notes --repo personal-notes
 ```
 
 ### Entity commands

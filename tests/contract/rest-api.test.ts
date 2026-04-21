@@ -618,6 +618,65 @@ describe('REST entity endpoints', () => {
     });
   }, 120_000);
 
+  it('syncs via three-phase protocol (diff, upload, finalize)', async () => {
+    const { app, apiKey } = await createAuthorizedApp();
+
+    const callJson = async (path: string, body: unknown) =>
+      app.request(path, {
+        method: 'POST',
+        headers: {
+          Authorization: `Bearer ${apiKey}`,
+          'Content-Type': 'application/json'
+        },
+        body: JSON.stringify(body)
+      });
+
+    // Seed one file with the single-shot endpoint so diff has existing state.
+    await callJson('/api/sync', {
+      repo: 'tp-contract',
+      files: [
+        { path: 'keep.md', sha: 'sha-keep', content: '# Keep' },
+        { path: 'drop.md', sha: 'sha-drop', content: '# Drop' }
+      ]
+    });
+
+    const diffRes = await callJson('/api/sync/diff', {
+      repo: 'tp-contract',
+      files: [
+        { path: 'keep.md', sha: 'sha-keep' },
+        { path: 'added.md', sha: 'sha-added' }
+      ]
+    });
+    expect(diffRes.status).toBe(200);
+    const diff = (await diffRes.json()) as {
+      toUpload: Array<{ path: string; sha: string; reason: string }>;
+      unchanged: number;
+      toDelete: string[];
+    };
+    expect(diff.unchanged).toBe(1);
+    expect(diff.toDelete).toEqual(['drop.md']);
+    expect(diff.toUpload).toEqual([
+      { path: 'added.md', sha: 'sha-added', reason: 'new' }
+    ]);
+
+    const uploadRes = await callJson('/api/sync/upload', {
+      repo: 'tp-contract',
+      files: [{ path: 'added.md', sha: 'sha-added', content: '# Added' }]
+    });
+    expect(uploadRes.status).toBe(200);
+    expect(await uploadRes.json()).toEqual({ created: 1, updated: 0 });
+
+    const finalizeRes = await callJson('/api/sync/finalize', {
+      repo: 'tp-contract',
+      files: [
+        { path: 'keep.md', sha: 'sha-keep' },
+        { path: 'added.md', sha: 'sha-added' }
+      ]
+    });
+    expect(finalizeRes.status).toBe(200);
+    expect(await finalizeRes.json()).toEqual({ deleted: 1 });
+  }, 120_000);
+
   it('creates edges and expands graph between entities', async () => {
     const { app, apiKey } = await createAuthorizedApp();
 

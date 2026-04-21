@@ -652,7 +652,8 @@ program
       const resolvedDir = path.resolve(dir);
       const repoName = options.repo ?? path.basename(resolvedDir);
 
-      const files: Array<{ path: string; sha: string; content: string }> = [];
+      type FileEntry = { path: string; sha: string; fullPath: string };
+      const manifest: FileEntry[] = [];
       const SKIP_DIRS = new Set(['.git', 'node_modules', '.obsidian', '.trash']);
 
       async function walk(dirPath: string, prefix: string): Promise<void> {
@@ -672,7 +673,7 @@ program
             const relativePath = prefix
               ? `${prefix}/${entry.name}`
               : entry.name;
-            files.push({ path: relativePath, sha, content });
+            manifest.push({ path: relativePath, sha, fullPath });
           }
         }
       }
@@ -682,38 +683,17 @@ program
       const config = await resolvePgmConfig();
       const client = createPgmClient(config);
 
+      const manifestForServer = manifest.map(({ path: p, sha }) => ({ path: p, sha }));
+      const diff = await client.diffSync({ repo: repoName, files: manifestForServer });
+
       if (options.dryRun) {
-        const status = await client.getSyncStatus(repoName);
-        const existingByPath = new Map(
-          status.files.map((f) => [f.path, f])
-        );
-        const incomingPaths = new Set(files.map((f) => f.path));
-
-        let newCount = 0;
-        let changedCount = 0;
-        let unchangedCount = 0;
-        for (const file of files) {
-          const existing = existingByPath.get(file.path);
-          if (!existing) {
-            newCount += 1;
-          } else if (existing.sha !== file.sha) {
-            changedCount += 1;
-          } else {
-            unchangedCount += 1;
-          }
-        }
-        let deletedCount = 0;
-        for (const [existingPath, entry] of existingByPath) {
-          if (!incomingPaths.has(existingPath) && entry.syncStatus !== 'stale') {
-            deletedCount += 1;
-          }
-        }
-
+        const newCount = diff.toUpload.filter((f) => f.reason === 'new').length;
+        const changedCount = diff.toUpload.filter((f) => f.reason === 'changed').length;
         const result = {
           created: newCount,
           updated: changedCount,
-          unchanged: unchangedCount,
-          deleted: deletedCount
+          unchanged: diff.unchanged,
+          deleted: diff.toDelete.length
         };
 
         if (json) {
@@ -726,7 +706,56 @@ program
         return;
       }
 
-      const result = await client.syncRepo({ repo: repoName, files });
+      const pathToFile = new Map(manifest.map((f) => [f.path, f]));
+      const BATCH_BYTES = 4 * 1024 * 1024;
+      const BATCH_FILES = 50;
+
+      let totalCreated = 0;
+      let totalUpdated = 0;
+      let batch: Array<{ path: string; sha: string; content: string }> = [];
+      let batchBytes = 0;
+
+      async function flushBatch(): Promise<void> {
+        if (batch.length === 0) return;
+        const result = await client.uploadSyncFiles({
+          repo: repoName,
+          files: batch
+        });
+        totalCreated += result.created;
+        totalUpdated += result.updated;
+        batch = [];
+        batchBytes = 0;
+      }
+
+      for (const toUpload of diff.toUpload) {
+        const entry = pathToFile.get(toUpload.path);
+        if (!entry) {
+          throw new AppError(
+            ErrorCode.INTERNAL,
+            `Server asked to upload ${toUpload.path} but it was not in the local manifest`
+          );
+        }
+        const content = await fsReadFile(entry.fullPath, 'utf8');
+        const size = Buffer.byteLength(content, 'utf8');
+        if (batch.length > 0 && (batch.length >= BATCH_FILES || batchBytes + size > BATCH_BYTES)) {
+          await flushBatch();
+        }
+        batch.push({ path: toUpload.path, sha: toUpload.sha, content });
+        batchBytes += size;
+      }
+      await flushBatch();
+
+      const finalize = await client.finalizeSync({
+        repo: repoName,
+        files: manifestForServer
+      });
+
+      const result = {
+        created: totalCreated,
+        updated: totalUpdated,
+        unchanged: diff.unchanged,
+        deleted: finalize.deleted
+      };
 
       if (json) {
         printJson(result);

@@ -298,6 +298,42 @@ export function createPgmClient(options: RestClientOptions) {
         body: input
       });
     },
+    diffSync(input: {
+      repo: string;
+      files: Array<{ path: string; sha: string }>;
+    }) {
+      return request<{
+        toUpload: Array<{ path: string; sha: string; reason: 'new' | 'changed' }>;
+        unchanged: number;
+        toDelete: string[];
+      }>(options, '/api/sync/diff', {
+        method: 'POST',
+        body: input
+      });
+    },
+    uploadSyncFiles(input: {
+      repo: string;
+      files: Array<{ path: string; sha: string; content: string }>;
+    }) {
+      return request<{
+        created: number;
+        updated: number;
+      }>(options, '/api/sync/upload', {
+        method: 'POST',
+        body: input
+      });
+    },
+    finalizeSync(input: {
+      repo: string;
+      files: Array<{ path: string; sha: string }>;
+    }) {
+      return request<{
+        deleted: number;
+      }>(options, '/api/sync/finalize', {
+        method: 'POST',
+        body: input
+      });
+    },
     getSyncStatus(repo: string) {
       return request<{
         repo: string;

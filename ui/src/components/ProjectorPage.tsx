@@ -237,6 +237,14 @@ export default function ProjectorPage({ api, onOpenInGraph, onOpenInSearch }: Pr
   }, [api, entities, algorithm]);
 
   useEffect(() => {
+    const onKey = (e: KeyboardEvent) => {
+      if (e.key === 'Escape') setSelectedId(null);
+    };
+    window.addEventListener('keydown', onKey);
+    return () => window.removeEventListener('keydown', onKey);
+  }, []);
+
+  useEffect(() => {
     return () => {
       if (workerRef.current) {
         workerRef.current.terminate();
@@ -293,7 +301,6 @@ export default function ProjectorPage({ api, onOpenInGraph, onOpenInSearch }: Pr
         >
           <Canvas
             camera={{ position: [0, 0, 25], fov: 55 }}
-            onPointerMissed={() => setSelectedId(null)}
             onCreated={({ raycaster }) => {
               // Default threshold is 1. We want a forgiving hit-radius so hover
               // feels natural; zoom-aware tuning happens each frame in RaycasterTuner.
@@ -375,6 +382,12 @@ type PointCloudProps = {
 function PointCloud({ points, selectedId, hoveredId, onSelect, onHover }: PointCloudProps) {
   const { gl } = useThree();
   const geometryRef = useRef<THREE.BufferGeometry>(null!);
+  const pointerDownRef = useRef<{
+    x: number;
+    y: number;
+    index: number;
+    time: number;
+  } | null>(null);
 
   const { positionArray, colorArray } = useMemo(() => {
     const pos = new Float32Array(points.length * 3);
@@ -409,9 +422,44 @@ function PointCloud({ points, selectedId, hoveredId, onSelect, onHover }: PointC
     gl.domElement.style.cursor = '';
   }, [onHover, gl]);
 
-  const handleClick = useCallback(
-    (event: { index?: number; stopPropagation: () => void }) => {
+  // Manual click detection with a movement tolerance — r3f's onClick is too
+  // strict once the raycaster threshold varies per-frame (RaycasterTuner).
+  const handlePointerDown = useCallback(
+    (event: {
+      index?: number;
+      nativeEvent?: PointerEvent;
+      stopPropagation: () => void;
+    }) => {
       if (event.index === undefined) return;
+      event.stopPropagation();
+      pointerDownRef.current = {
+        x: event.nativeEvent?.clientX ?? 0,
+        y: event.nativeEvent?.clientY ?? 0,
+        index: event.index,
+        time: Date.now(),
+      };
+    },
+    [],
+  );
+
+  const handlePointerUp = useCallback(
+    (event: {
+      index?: number;
+      nativeEvent?: PointerEvent;
+      stopPropagation: () => void;
+    }) => {
+      const down = pointerDownRef.current;
+      pointerDownRef.current = null;
+      if (!down) return;
+      if (event.index === undefined) return;
+
+      const dx = (event.nativeEvent?.clientX ?? 0) - down.x;
+      const dy = (event.nativeEvent?.clientY ?? 0) - down.y;
+      const movedSq = dx * dx + dy * dy;
+      const elapsed = Date.now() - down.time;
+      // Treat anything >6px movement or >500ms hold as a drag, not a click.
+      if (movedSq > 36 || elapsed > 500) return;
+
       event.stopPropagation();
       const p = points[event.index];
       if (p) onSelect(p.id);
@@ -444,7 +492,8 @@ function PointCloud({ points, selectedId, hoveredId, onSelect, onHover }: PointC
       <points
         onPointerMove={handlePointerMove}
         onPointerOut={handlePointerOut}
-        onClick={handleClick}
+        onPointerDown={handlePointerDown}
+        onPointerUp={handlePointerUp}
       >
         <bufferGeometry ref={geometryRef}>
           <bufferAttribute

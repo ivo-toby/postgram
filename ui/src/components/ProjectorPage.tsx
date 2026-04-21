@@ -83,11 +83,91 @@ export default function ProjectorPage({ api, onOpenInGraph, onOpenInSearch }: Pr
   const canvasWrapRef = useRef<HTMLDivElement>(null);
   const [cursor, setCursor] = useState<{ x: number; y: number } | null>(null);
   const hoveredIdRef = useRef<string | null>(null);
-  const mouseDownRef = useRef<{ x: number; y: number; time: number } | null>(null);
+  const pointsRef = useRef<PointRecord[]>([]);
+  const sceneApiRef = useRef<{
+    raycaster: THREE.Raycaster;
+    camera: THREE.Camera;
+    scene: THREE.Scene;
+  } | null>(null);
 
   useEffect(() => {
     hoveredIdRef.current = hoveredId;
   }, [hoveredId]);
+
+  // Tap-to-select: we wire the handlers natively at the wrapper (for pointerdown)
+  // and at the window level (for pointerup), because OrbitControls calls
+  // setPointerCapture on the canvas and React's synthetic onMouseUp on ancestor
+  // divs doesn't fire reliably in Firefox-based browsers (e.g. Zen) or in
+  // desktop layouts once the pointer has been captured.
+  useEffect(() => {
+    const el = canvasWrapRef.current;
+    if (!el) return;
+
+    let downState: { x: number; y: number; time: number } | null = null;
+
+    const onDown = (e: PointerEvent) => {
+      if (e.button !== 0) return; // primary button only
+      downState = { x: e.clientX, y: e.clientY, time: Date.now() };
+    };
+
+    const onUp = (e: PointerEvent) => {
+      const ds = downState;
+      downState = null;
+      if (!ds) return;
+      const dx = e.clientX - ds.x;
+      const dy = e.clientY - ds.y;
+      if (dx * dx + dy * dy > 36) return; // drag → ignore (6px tolerance)
+      if (Date.now() - ds.time > 500) return; // long hold → ignore
+
+      // Primary: the currently-hovered point (set by r3f's pointermove).
+      const hovered = hoveredIdRef.current;
+      if (hovered) {
+        setSelectedId(hovered);
+        return;
+      }
+
+      // Fallback: manual raycast from the release position. Handles cases
+      // where the browser didn't fire onPointerOut→onPointerMove fast
+      // enough (common in Firefox-based browsers after a drag-release).
+      const api = sceneApiRef.current;
+      if (!api) return;
+      const rect = el.getBoundingClientRect();
+      if (
+        e.clientX < rect.left ||
+        e.clientX > rect.right ||
+        e.clientY < rect.top ||
+        e.clientY > rect.bottom
+      ) {
+        return; // release outside canvas
+      }
+      const ndc = new THREE.Vector2(
+        ((e.clientX - rect.left) / rect.width) * 2 - 1,
+        -((e.clientY - rect.top) / rect.height) * 2 + 1,
+      );
+      api.raycaster.setFromCamera(ndc, api.camera);
+      const hits = api.raycaster.intersectObject(api.scene, true);
+      const pointHit = hits.find(
+        (i) => i.object.type === 'Points' && typeof i.index === 'number',
+      );
+      if (pointHit && typeof pointHit.index === 'number') {
+        const rec = pointsRef.current[pointHit.index];
+        if (rec) setSelectedId(rec.id);
+      }
+    };
+
+    const onCancel = () => {
+      downState = null;
+    };
+
+    el.addEventListener('pointerdown', onDown);
+    window.addEventListener('pointerup', onUp);
+    window.addEventListener('pointercancel', onCancel);
+    return () => {
+      el.removeEventListener('pointerdown', onDown);
+      window.removeEventListener('pointerup', onUp);
+      window.removeEventListener('pointercancel', onCancel);
+    };
+  }, []);
 
   // Fetch all entities on mount
   useEffect(() => {
@@ -274,6 +354,10 @@ export default function ProjectorPage({ api, onOpenInGraph, onOpenInSearch }: Pr
     return out;
   }, [positions, entities, colourBy]);
 
+  useEffect(() => {
+    pointsRef.current = points;
+  }, [points]);
+
   const selectedEntity = selectedId ? entities.get(selectedId) ?? null : null;
   const hoveredEntity = hoveredId ? entities.get(hoveredId) ?? null : null;
   const selectedNeighbours = selectedId ? knn[selectedId] ?? [] : [];
@@ -303,29 +387,6 @@ export default function ProjectorPage({ api, onOpenInGraph, onOpenInSearch }: Pr
             setCursor(null);
             setHoveredId(null);
           }}
-          onMouseDown={(e) => {
-            // Only primary button counts as a tap candidate.
-            if (e.button !== 0) return;
-            mouseDownRef.current = {
-              x: e.clientX,
-              y: e.clientY,
-              time: Date.now(),
-            };
-          }}
-          onMouseUp={(e) => {
-            const down = mouseDownRef.current;
-            mouseDownRef.current = null;
-            if (!down) return;
-            const dx = e.clientX - down.x;
-            const dy = e.clientY - down.y;
-            if (dx * dx + dy * dy > 36) return; // drag → ignore
-            if (Date.now() - down.time > 500) return; // long-hold → ignore
-            // A tap. Use the last-known hovered point; since r3f updates it
-            // each frame on pointermove, it reflects whatever the cursor is
-            // over at release time.
-            const target = hoveredIdRef.current;
-            if (target) setSelectedId(target);
-          }}
           className={`flex-1 min-h-0 relative ${selectedId ? 'hidden md:block' : ''}`}
         >
           <Canvas
@@ -339,6 +400,7 @@ export default function ProjectorPage({ api, onOpenInGraph, onOpenInSearch }: Pr
             <color attach="background" args={['#030712']} />
             <ambientLight intensity={0.8} />
             <RaycasterTuner />
+            <SceneBridge apiRef={sceneApiRef} />
             <PointCloud
               points={points}
               selectedId={selectedId}
@@ -601,6 +663,27 @@ function HoverTooltip({
       )}
     </div>
   );
+}
+
+// Exposes the three.js scene/camera/raycaster to the outer React component so
+// it can run a manual raycast on tap (fallback when the hovered id is stale).
+function SceneBridge({
+  apiRef,
+}: {
+  apiRef: React.MutableRefObject<{
+    raycaster: THREE.Raycaster;
+    camera: THREE.Camera;
+    scene: THREE.Scene;
+  } | null>;
+}) {
+  const { raycaster, camera, scene } = useThree();
+  useEffect(() => {
+    apiRef.current = { raycaster, camera, scene };
+    return () => {
+      apiRef.current = null;
+    };
+  }, [apiRef, raycaster, camera, scene]);
+  return null;
 }
 
 // Tunes the Points raycaster threshold to the current camera zoom so hovering

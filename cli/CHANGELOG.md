@@ -1,3 +1,13 @@
+## [1.7.0](https://github.com/ivo-toby/postgram/compare/cli-v1.6.0...cli-v1.7.0) (2026-04-21)
+
+### Features
+
+* **semantic-layout:** implement 2D semantic layout mode ([90b3fac](https://github.com/ivo-toby/postgram/commit/90b3fac51703a375091e5078de30f7eb22b9d591))
+
+### Bug Fixes
+
+* **embeddings:** switch endpoint from GET to POST to avoid 414 ([d43a95f](https://github.com/ivo-toby/postgram/commit/d43a95fe099327aacac5f2bf153a88c1829a2c40))
+
 ## [1.6.0](https://github.com/ivo-toby/postgram/compare/cli-v1.5.0...cli-v1.6.0) (2026-04-21)
 
 ### Features

@@ -774,4 +774,180 @@ describe('REST entity endpoints', () => {
     expect(completedEntity.status).toBe('done');
     expect(typeof completedEntity.metadata.completed_at).toBe('string');
   }, 120_000);
+
+  it('returns averaged chunk embeddings for the requested entity IDs', async () => {
+    if (!database) {
+      throw new Error('test database not initialized');
+    }
+
+    const embeddingService = createEmbeddingService();
+    const { app, apiKey } = await createAuthorizedApp({ embeddingService });
+
+    const createEntity = async (body: Record<string, unknown>) => {
+      const response = await app.request('/api/entities', {
+        method: 'POST',
+        headers: {
+          Authorization: `Bearer ${apiKey}`,
+          'Content-Type': 'application/json'
+        },
+        body: JSON.stringify(body)
+      });
+      expect(response.status).toBe(201);
+      return (await response.json()) as { entity: { id: string } };
+    };
+
+    const a = await createEntity({
+      type: 'memory',
+      content: 'alpha memory about gardening',
+      visibility: 'shared'
+    });
+    const b = await createEntity({
+      type: 'memory',
+      content: 'beta memory about cooking',
+      visibility: 'shared'
+    });
+    const pending = await createEntity({
+      type: 'memory',
+      content: 'pending entity not yet enriched',
+      visibility: 'shared'
+    });
+
+    // Run enrichment only for a and b by running the worker before creating `pending`?
+    // The worker processes all pending entities at once, so we need a different approach.
+    // We'll delete chunks for `pending` after enrichment to simulate missing embeddings.
+    await createEnrichmentWorker({
+      pool: database.pool,
+      embeddingService
+    }).runOnce();
+
+    await database.pool.query('DELETE FROM chunks WHERE entity_id = $1', [
+      pending.entity.id
+    ]);
+
+    const response = await app.request(
+      `/api/entities/embeddings?ids=${[a.entity.id, b.entity.id, pending.entity.id].join(',')}`,
+      {
+        headers: { Authorization: `Bearer ${apiKey}` }
+      }
+    );
+    const body: unknown = await response.json();
+
+    expect(response.status).toBe(200);
+    if (!body || typeof body !== 'object') {
+      throw new Error('expected JSON object');
+    }
+
+    const { embeddings } = body as {
+      embeddings: { id: string; embedding: number[] }[];
+    };
+
+    // Pending entity (no chunks) is omitted.
+    const returnedIds = embeddings.map((e) => e.id).sort();
+    expect(returnedIds).toEqual([a.entity.id, b.entity.id].sort());
+
+    for (const entry of embeddings) {
+      expect(Array.isArray(entry.embedding)).toBe(true);
+      expect(entry.embedding.length).toBe(1536);
+      expect(entry.embedding.every((v) => typeof v === 'number')).toBe(true);
+    }
+  }, 120_000);
+
+  it('rejects embeddings requests with invalid or missing ids', async () => {
+    const { app, apiKey } = await createAuthorizedApp();
+
+    const missing = await app.request('/api/entities/embeddings', {
+      headers: { Authorization: `Bearer ${apiKey}` }
+    });
+    expect(missing.status).toBe(400);
+
+    const invalid = await app.request(
+      '/api/entities/embeddings?ids=not-a-uuid',
+      {
+        headers: { Authorization: `Bearer ${apiKey}` }
+      }
+    );
+    expect(invalid.status).toBe(400);
+
+    const empty = await app.request('/api/entities/embeddings?ids=', {
+      headers: { Authorization: `Bearer ${apiKey}` }
+    });
+    expect(empty.status).toBe(400);
+
+    const tooMany = await app.request(
+      `/api/entities/embeddings?ids=${Array.from({ length: 501 }, () => crypto.randomUUID()).join(',')}`,
+      {
+        headers: { Authorization: `Bearer ${apiKey}` }
+      }
+    );
+    expect(tooMany.status).toBe(400);
+  }, 120_000);
+
+  it('filters embeddings by visibility scope', async () => {
+    if (!database) {
+      throw new Error('test database not initialized');
+    }
+
+    const embeddingService = createEmbeddingService();
+
+    // Key limited to shared visibility only.
+    const restrictedKey = (await createKey(database.pool, {
+      name: `rest-${crypto.randomUUID()}`,
+      scopes: ['read', 'write'],
+      allowedVisibility: ['shared']
+    }))._unsafeUnwrap();
+    const writerKey = (await createKey(database.pool, {
+      name: `rest-${crypto.randomUUID()}`,
+      scopes: ['read', 'write'],
+      allowedVisibility: ['shared', 'work']
+    }))._unsafeUnwrap();
+
+    const app = createApp({
+      pool: database.pool,
+      embeddingService
+    });
+
+    const createEntity = async (key: string, body: Record<string, unknown>) => {
+      const response = await app.request('/api/entities', {
+        method: 'POST',
+        headers: {
+          Authorization: `Bearer ${key}`,
+          'Content-Type': 'application/json'
+        },
+        body: JSON.stringify(body)
+      });
+      expect(response.status).toBe(201);
+      return (await response.json()) as { entity: { id: string } };
+    };
+
+    const sharedEntity = await createEntity(writerKey.plaintextKey, {
+      type: 'memory',
+      content: 'shared content',
+      visibility: 'shared'
+    });
+    const workEntity = await createEntity(writerKey.plaintextKey, {
+      type: 'memory',
+      content: 'work-only content',
+      visibility: 'work'
+    });
+
+    await createEnrichmentWorker({
+      pool: database.pool,
+      embeddingService
+    }).runOnce();
+
+    const response = await app.request(
+      `/api/entities/embeddings?ids=${[sharedEntity.entity.id, workEntity.entity.id].join(',')}`,
+      {
+        headers: { Authorization: `Bearer ${restrictedKey.plaintextKey}` }
+      }
+    );
+    const body: unknown = await response.json();
+
+    expect(response.status).toBe(200);
+    const { embeddings } = body as {
+      embeddings: { id: string; embedding: number[] }[];
+    };
+
+    expect(embeddings.map((e) => e.id)).toEqual([sharedEntity.entity.id]);
+  }, 120_000);
 });

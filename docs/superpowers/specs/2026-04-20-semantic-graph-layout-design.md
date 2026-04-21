@@ -29,11 +29,13 @@ Returns embedding vectors for a set of entity IDs.
 ```
 
 **Implementation notes:**
-- Embeddings are stored in the `entities` table as a `vector` column. Cast to `float4[]` for JSON serialisation: `embedding::float4[]`.
-- Entities with no embedding (status = `pending`) are omitted from the response — the caller handles missing nodes gracefully (they stay at their current position, or are excluded from the point cloud).
-- Auth: same API key bearer token as all other endpoints.
-- No pagination needed — 500 entities × 1536 floats × 4 bytes ≈ ~3 MB max payload, acceptable.
-- Callers that need more than 500 entities batch the request client-side and merge results.
+- Embeddings live in the `chunks` table (`entity_id`, `chunk_index`, `embedding vector(1536)`). A single entity can have multiple chunks for long documents, so the endpoint aggregates per entity with `AVG(chunks.embedding)` and returns the centroid.
+- Serialisation: cast `AVG(embedding)::text` to use pgvector's bracket text form (`[0.1,0.2,...]`) and `JSON.parse` server-side into a plain `number[]`. Works without a custom pg type parser.
+- Entities with no chunks (enrichment still `pending`, or entity has no textual content) are **omitted** from the response. Callers handle missing IDs gracefully (those nodes keep their current position or are excluded from the point cloud).
+- Scope enforcement: reuse `auth.allowedTypes`, `auth.allowedVisibility`, and `ownerSqlCondition` — keys only see embeddings for entities they can read. Requires the `read` scope.
+- Validation: UUID-shape each id with a regex and hard-cap the list at **500** per request. Beyond that, the client batches.
+- Auth: same API key bearer token as every other endpoint.
+- No pagination needed — 500 entities × 1536 floats × ~20 text bytes per float ≈ ~15 MB max payload (verify; gzipped ~3 MB). If this ever becomes a problem, switch to `::float4[]` binary output.
 
 ### API client method: `ui/src/lib/api.ts`
 

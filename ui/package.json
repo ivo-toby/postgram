@@ -20,7 +20,8 @@
     "react": "^19.0.0",
     "react-dom": "^19.0.0",
     "react-markdown": "^9.0.1",
-    "sigma": "^3.0.0"
+    "sigma": "^3.0.0",
+    "umap-js": "^1.4.0"
   },
   "devDependencies": {
     "@tailwindcss/typography": "^0.5.19",

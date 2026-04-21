@@ -53,4 +53,29 @@ describe('createApiClient', () => {
     const client = createApiClient({ apiKey: 'key', onUnauthorized: vi.fn() });
     await expect(client.getEntity('some-id')).rejects.toThrow('Not found');
   });
+
+  it('POSTs entity IDs in the body when fetching embeddings', async () => {
+    const mockFetch = vi.mocked(fetch);
+    mockFetch.mockResolvedValueOnce(
+      new Response(JSON.stringify({ embeddings: [] }), {
+        status: 200,
+        headers: { 'Content-Type': 'application/json' },
+      })
+    );
+
+    const client = createApiClient({ apiKey: 'key', onUnauthorized: vi.fn() });
+    await client.getEmbeddings(['id-1', 'id-2', 'id-3']);
+
+    expect(mockFetch).toHaveBeenCalledWith(
+      '/api/entities/embeddings',
+      expect.objectContaining({
+        method: 'POST',
+        headers: expect.objectContaining({
+          Authorization: 'Bearer key',
+          'Content-Type': 'application/json',
+        }),
+        body: JSON.stringify({ ids: ['id-1', 'id-2', 'id-3'] }),
+      })
+    );
+  });
 });

@@ -1,4 +1,4 @@
-import type { Entity, Edge, SearchResult, QueueStatus, GraphData, ListResponse } from './types.ts';
+import type { Entity, Edge, SearchResult, QueueStatus, GraphData, ListResponse, EntityEmbedding } from './types.ts';
 
 type ApiClientOptions = {
   apiKey: string;
@@ -151,6 +151,13 @@ export function createApiClient(options: ApiClientOptions) {
 
     getQueueStatus() {
       return r<QueueStatus>('/api/queue');
+    },
+
+    getEmbeddings(ids: string[]) {
+      return r<{ embeddings: EntityEmbedding[] }>('/api/entities/embeddings', {
+        method: 'POST',
+        body: { ids },
+      });
     },
 
     getHealth() {

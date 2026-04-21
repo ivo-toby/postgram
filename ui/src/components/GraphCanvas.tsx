@@ -76,10 +76,17 @@ export default function GraphCanvas({ graphHook, api, depth, onNodeClick, onStag
   }, [focusNodeId, sigmaControls, graphHook.graph, graphHook.graph.order]);
 
   const handleLayoutChange = useCallback((next: LayoutType) => {
-    layoutHook.switchLayout(next);
-    // Refresh sigma after layout positions have been written
+    layoutHook.switchLayout(next, next === 'semantic' ? { api } : undefined);
+    // Refresh sigma after layout positions have been written (semantic refreshes
+    // again when the worker resolves, which is handled inside the hook).
     sigmaControls.refresh();
-  }, [layoutHook, sigmaControls]);
+  }, [layoutHook, sigmaControls, api]);
+
+  // When the semantic layout finishes computing, the hook mutates node positions
+  // directly; trigger a sigma refresh so the new positions paint.
+  useEffect(() => {
+    if (!layoutHook.layoutLoading) sigmaControls.refresh();
+  }, [layoutHook.layoutLoading, sigmaControls]);
 
   useEffect(() => {
     if (!contextMenu) return;
@@ -99,6 +106,7 @@ export default function GraphCanvas({ graphHook, api, depth, onNodeClick, onStag
         onZoomOut={sigmaControls.zoomOut}
         onRedraw={() => { layoutHook.startForce(); sigmaControls.refresh(); }}
         nodeCount={graphHook.graph.order}
+        layoutLoading={layoutHook.layoutLoading}
       />
 
       {/* Context menu */}

@@ -5,6 +5,7 @@ import type { Pool } from 'pg';
 import type { AuthContext } from '../auth/types.js';
 import type { EmbeddingService } from '../services/embedding-service.js';
 import { createEdge, deleteEdge, listEdges, expandGraph } from '../services/edge-service.js';
+import { getEntityEmbeddings } from '../services/embedding-query-service.js';
 import { listEntities, recallEntity, softDeleteEntity, storeEntity, updateEntity } from '../services/entity-service.js';
 import { searchEntities } from '../services/search-service.js';
 import { syncManifest, getSyncStatus } from '../services/sync-service.js';
@@ -101,6 +102,17 @@ const createEdgeSchema = z.object({
   metadata: z.record(z.unknown()).optional()
 });
 
+const MAX_EMBEDDING_IDS = 500;
+const UUID_REGEX = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
+
+const embeddingsRequestSchema = z.object({
+  ids: z
+    .array(z.string().regex(UUID_REGEX, 'Invalid entity ID'))
+    .min(1, 'ids must contain at least one entity ID')
+    .max(MAX_EMBEDDING_IDS, `ids must contain at most ${MAX_EMBEDDING_IDS} entries`),
+  owner: ownerSchema.optional()
+});
+
 const syncManifestSchema = z.object({
   repo: z.string().min(1),
   files: z.array(
@@ -176,6 +188,27 @@ export function registerRestRoutes(
     }
 
     return c.json({ entity: toStoredEntity(result.value) }, 201);
+  });
+
+  app.post('/api/entities/embeddings', async (c) => {
+    const auth = c.get('auth');
+    const body = parseJsonBody(embeddingsRequestSchema, await c.req.json());
+
+    const result = await getEntityEmbeddings(pool, auth, {
+      ids: body.ids,
+      ...(body.owner !== undefined ? { owner: body.owner } : {})
+    });
+
+    if (result.isErr()) {
+      throw result.error;
+    }
+
+    return c.json({
+      embeddings: result.value.map((entry) => ({
+        id: entry.id,
+        embedding: entry.embedding
+      }))
+    });
   });
 
   app.get('/api/entities/:id', async (c) => {

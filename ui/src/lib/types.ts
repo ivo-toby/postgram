@@ -70,3 +70,8 @@ export type ListResponse<T> = {
   limit: number;
   offset: number;
 };
+
+export type EntityEmbedding = {
+  id: string;
+  embedding: number[];
+};

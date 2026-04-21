@@ -1,3 +1,9 @@
+## [1.8.0](https://github.com/ivo-toby/postgram/compare/cli-v1.7.0...cli-v1.8.0) (2026-04-21)
+
+### Features
+
+* **docs:** update README to reflect new sync API endpoints and usage ([d85593f](https://github.com/ivo-toby/postgram/commit/d85593f2e54c822d69d456b312f322b5fb0dd0d7))
+
 ## [1.7.0](https://github.com/ivo-toby/postgram/compare/cli-v1.6.0...cli-v1.7.0) (2026-04-21)
 
 ### Features

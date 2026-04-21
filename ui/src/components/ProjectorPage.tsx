@@ -2,10 +2,12 @@ import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { Canvas, useThree, useFrame } from '@react-three/fiber';
 import { OrbitControls } from '@react-three/drei';
 import * as THREE from 'three';
-import ReactMarkdown from 'react-markdown';
 import type { ApiClient } from '../lib/api.ts';
 import type { Entity } from '../lib/types.ts';
 import { ENTITY_COLORS } from '../lib/nodeStyles.ts';
+import { useEntityDetail } from '../hooks/useEntityDetail.ts';
+import EntityDetail from './EntityDetail.tsx';
+import EdgeList from './EdgeList.tsx';
 import type {
   ProjectionAlgorithm,
   ProjectionRequest,
@@ -62,11 +64,32 @@ function colourForEntity(entity: Entity, mode: ColourBy): string {
   return '#9CA3AF';
 }
 
-function truncateLabel(content: string | null, id: string, max = 40): string {
-  const text = (content ?? '').trim();
-  if (!text) return id.slice(0, 8);
-  const first = text.split('\n')[0]!.trim();
-  return first.length > max ? first.slice(0, max) + '…' : first;
+function stripFrontmatter(text: string): string {
+  if (!text.startsWith('---')) return text;
+  const rest = text.slice(3);
+  const close = rest.indexOf('\n---');
+  if (close === -1) return text;
+  return rest.slice(close + 4).trimStart();
+}
+
+function entityTitle(entity: Entity, max = 80): string {
+  const meta = entity.metadata as Record<string, unknown>;
+  const metaCandidates = ['title', 'name', 'path', 'summary'];
+  for (const key of metaCandidates) {
+    const v = meta?.[key];
+    if (typeof v === 'string' && v.trim()) {
+      const t = v.trim();
+      return t.length > max ? t.slice(0, max) + '…' : t;
+    }
+  }
+  const body = stripFrontmatter((entity.content ?? '').trim());
+  if (!body) return entity.id.slice(0, 8);
+  for (const rawLine of body.split('\n')) {
+    const line = rawLine.replace(/^#+\s+/, '').trim();
+    if (!line || line === '---') continue;
+    return line.length > max ? line.slice(0, max) + '…' : line;
+  }
+  return entity.id.slice(0, 8);
 }
 
 export default function ProjectorPage({ api, onOpenInGraph, onOpenInSearch }: Props) {
@@ -84,6 +107,8 @@ export default function ProjectorPage({ api, onOpenInGraph, onOpenInSearch }: Pr
   const projectionCacheRef = useRef<
     Map<string, { positions: Map<string, THREE.Vector3>; knn: Record<string, string[]> }>
   >(new Map());
+  const canvasWrapRef = useRef<HTMLDivElement>(null);
+  const [cursor, setCursor] = useState<{ x: number; y: number } | null>(null);
 
   // Fetch all entities on mount
   useEffect(() => {
@@ -280,13 +305,31 @@ export default function ProjectorPage({ api, onOpenInGraph, onOpenInSearch }: Pr
       />
 
       <div className="flex-1 min-h-0 flex flex-col md:flex-row overflow-hidden">
-        <div className={`flex-1 min-h-0 relative ${selectedId ? 'hidden md:block' : ''}`}>
+        <div
+          ref={canvasWrapRef}
+          onMouseMove={(e) => {
+            const rect = canvasWrapRef.current?.getBoundingClientRect();
+            if (!rect) return;
+            setCursor({ x: e.clientX - rect.left, y: e.clientY - rect.top });
+          }}
+          onMouseLeave={() => {
+            setCursor(null);
+            setHoveredId(null);
+          }}
+          className={`flex-1 min-h-0 relative ${selectedId ? 'hidden md:block' : ''}`}
+        >
           <Canvas
             camera={{ position: [0, 0, 25], fov: 55 }}
             onPointerMissed={() => setSelectedId(null)}
+            onCreated={({ raycaster }) => {
+              // Default threshold is 1. We want a forgiving hit-radius so hover
+              // feels natural; zoom-aware tuning happens each frame in RaycasterTuner.
+              raycaster.params.Points = { threshold: 0.5 };
+            }}
           >
             <color attach="background" args={['#030712']} />
             <ambientLight intensity={0.8} />
+            <RaycasterTuner />
             <PointCloud
               points={points}
               selectedId={selectedId}
@@ -311,26 +354,26 @@ export default function ProjectorPage({ api, onOpenInGraph, onOpenInSearch }: Pr
             />
           </Canvas>
 
-          {hoveredEntity && hoveredId !== selectedId && (
-            <HoverTooltip entity={hoveredEntity} />
+          {hoveredEntity && hoveredId !== selectedId && cursor && (
+            <HoverTooltip entity={hoveredEntity} cursor={cursor} />
           )}
 
           <Legend colourBy={colourBy} />
         </div>
 
         {selectedId && (
-          <aside className="md:w-[380px] md:border-l md:border-gray-800 bg-gray-900 flex-1 md:flex-initial overflow-y-auto">
+          <aside className="md:w-[420px] md:border-l md:border-gray-800 bg-gray-900 flex-1 md:flex-initial overflow-y-auto">
             <DetailPanel
-              entity={selectedEntity}
+              api={api}
+              selectedId={selectedId}
+              fallbackEntity={selectedEntity}
               neighbours={selectedNeighbours}
               entities={entities}
               onClose={() => setSelectedId(null)}
               onNavigate={(id) => setSelectedId(id)}
-              onOpenInGraph={() => selectedId && onOpenInGraph(selectedId)}
+              onOpenInGraph={() => onOpenInGraph(selectedId)}
               onOpenInSearch={
-                onOpenInSearch && selectedId
-                  ? () => onOpenInSearch(selectedId)
-                  : undefined
+                onOpenInSearch ? () => onOpenInSearch(selectedId) : undefined
               }
             />
           </aside>
@@ -510,19 +553,61 @@ function KnnLines({
   );
 }
 
-function HoverTooltip({ entity }: { entity: Entity }) {
+function HoverTooltip({
+  entity,
+  cursor,
+}: {
+  entity: Entity;
+  cursor: { x: number; y: number };
+}) {
+  const title = entityTitle(entity);
+  const color = ENTITY_COLORS[entity.type] ?? ENTITY_COLORS['default'] ?? '#9CA3AF';
+  const updated = new Date(entity.updated_at).toLocaleDateString();
+
   return (
-    <div className="pointer-events-none absolute top-3 left-1/2 -translate-x-1/2 bg-gray-900/90 border border-gray-700 rounded-lg px-3 py-2 text-xs text-gray-200 max-w-md">
-      <div className="flex items-center gap-2 mb-0.5">
-        <span
-          className="w-2 h-2 rounded-full"
-          style={{ backgroundColor: ENTITY_COLORS[entity.type] ?? ENTITY_COLORS['default'] }}
-        />
-        <span className="uppercase tracking-wider text-gray-400">{entity.type}</span>
+    <div
+      className="pointer-events-none absolute z-10 bg-gray-900/95 border border-gray-700 rounded-lg px-3 py-2 text-xs text-gray-200 shadow-lg max-w-sm"
+      style={{
+        left: cursor.x + 14,
+        top: cursor.y + 14,
+      }}
+    >
+      <div className="flex items-center gap-2 mb-1">
+        <span className="w-2 h-2 rounded-full shrink-0" style={{ backgroundColor: color }} />
+        <span className="uppercase tracking-wider text-gray-400 text-[10px]">{entity.type}</span>
+        {entity.status && (
+          <span className="text-gray-500 text-[10px]">· {entity.status}</span>
+        )}
+        <span className="ml-auto text-gray-600 text-[10px]">{updated}</span>
       </div>
-      <div className="truncate">{truncateLabel(entity.content, entity.id, 80)}</div>
+      <div className="text-sm text-white leading-snug line-clamp-2 break-words">{title}</div>
+      {entity.tags.length > 0 && (
+        <div className="mt-1 flex flex-wrap gap-1">
+          {entity.tags.slice(0, 5).map((t) => (
+            <span key={t} className="px-1.5 py-0.5 rounded text-[10px] bg-gray-800 text-gray-400">
+              {t}
+            </span>
+          ))}
+          {entity.tags.length > 5 && (
+            <span className="text-[10px] text-gray-500">+{entity.tags.length - 5}</span>
+          )}
+        </div>
+      )}
     </div>
   );
+}
+
+// Tunes the Points raycaster threshold to the current camera zoom so hovering
+// stays responsive whether the user is zoomed in or out.
+function RaycasterTuner() {
+  const { raycaster, camera } = useThree();
+  useFrame(() => {
+    const distance = camera.position.length();
+    // Empirical: at distance 25 we want ~0.6, scale linearly beyond that.
+    const threshold = Math.max(0.25, Math.min(2.5, 0.025 * distance));
+    raycaster.params.Points = { threshold };
+  });
+  return null;
 }
 
 function Legend({ colourBy }: { colourBy: ColourBy }) {
@@ -636,7 +721,9 @@ function ProjectorToolbar({
 }
 
 type DetailPanelProps = {
-  entity: Entity | null;
+  api: ApiClient;
+  selectedId: string;
+  fallbackEntity: Entity | null;
   neighbours: string[];
   entities: Map<string, Entity>;
   onClose: () => void;
@@ -646,7 +733,9 @@ type DetailPanelProps = {
 };
 
 function DetailPanel({
-  entity,
+  api,
+  selectedId,
+  fallbackEntity,
   neighbours,
   entities,
   onClose,
@@ -654,20 +743,8 @@ function DetailPanel({
   onOpenInGraph,
   onOpenInSearch,
 }: DetailPanelProps) {
-  if (!entity) {
-    return (
-      <div className="p-4 text-sm text-gray-500">
-        <button
-          onClick={onClose}
-          className="md:hidden text-sm text-gray-400 hover:text-white mb-3"
-        >
-          ‹ Back
-        </button>
-        Entity not found.
-      </div>
-    );
-  }
-  const color = ENTITY_COLORS[entity.type] ?? ENTITY_COLORS['default']!;
+  const detailHook = useEntityDetail(api, selectedId);
+  const entity = detailHook.entity ?? fallbackEntity;
 
   return (
     <div className="flex flex-col h-full">
@@ -678,7 +755,9 @@ function DetailPanel({
         >
           ‹ Back
         </button>
-        <span className="hidden md:inline text-xs text-gray-500 uppercase tracking-wide">Detail</span>
+        <span className="hidden md:inline text-xs text-gray-500 uppercase tracking-wide">
+          Detail
+        </span>
         <button
           onClick={onClose}
           className="hidden md:block text-gray-500 hover:text-white text-lg leading-none"
@@ -687,85 +766,83 @@ function DetailPanel({
         </button>
       </div>
 
-      <div className="flex-1 overflow-y-auto p-4 flex flex-col gap-4">
-        <div className="flex items-center gap-2 flex-wrap">
-          <span
-            className="px-2 py-0.5 rounded-full text-xs font-medium"
-            style={{ backgroundColor: color + '22', color }}
-          >
-            {entity.type}
-          </span>
-          {entity.status && (
-            <span className="px-2 py-0.5 rounded-full text-xs bg-gray-800 text-gray-300">{entity.status}</span>
-          )}
-          <span className="text-xs px-2 py-0.5 rounded-full bg-gray-800 text-gray-400">{entity.visibility}</span>
-          <span className="text-xs text-gray-500 font-mono ml-auto">{entity.id.slice(0, 8)}</span>
-        </div>
-
-        {entity.tags.length > 0 && (
-          <div className="flex flex-wrap gap-1">
-            {entity.tags.map((t) => (
-              <span key={t} className="px-2 py-0.5 rounded-full text-xs bg-gray-800 text-gray-300">
-                {t}
-              </span>
-            ))}
-          </div>
+      <div className="flex-1 overflow-y-auto p-4 flex flex-col gap-6">
+        {detailHook.loading && !entity && (
+          <div className="text-gray-500 text-sm">Loading…</div>
         )}
 
-        <div className="prose prose-sm prose-invert max-w-none text-sm text-gray-200 break-words">
-          {entity.content ? (
-            <ReactMarkdown>{entity.content}</ReactMarkdown>
-          ) : (
-            <span className="text-gray-600 italic">No content</span>
-          )}
-        </div>
+        {entity && (
+          <>
+            <EntityDetail
+              entity={entity}
+              api={api}
+              onUpdate={detailHook.updateEntity}
+            />
 
-        <div className="flex flex-wrap gap-2">
-          <button
-            onClick={onOpenInGraph}
-            className="px-3 py-1.5 rounded-lg bg-blue-600 hover:bg-blue-500 text-white text-sm"
-          >
-            Open in graph
-          </button>
-          {onOpenInSearch && (
-            <button
-              onClick={onOpenInSearch}
-              className="px-3 py-1.5 rounded-lg bg-gray-800 hover:bg-gray-700 text-gray-200 text-sm"
-            >
-              Open in search
-            </button>
-          )}
-        </div>
-
-        <div className="border-t border-gray-800 pt-3">
-          <p className="text-xs text-gray-500 uppercase tracking-wide mb-2">
-            Nearest in embedding space
-          </p>
-          {neighbours.length === 0 ? (
-            <p className="text-xs text-gray-600 italic">None.</p>
-          ) : (
-            <div className="flex flex-col gap-0.5">
-              {neighbours.map((id) => {
-                const n = entities.get(id);
-                const c = n
-                  ? ENTITY_COLORS[n.type] ?? ENTITY_COLORS['default']!
-                  : ENTITY_COLORS['default']!;
-                return (
-                  <button
-                    key={id}
-                    onClick={() => onNavigate(id)}
-                    className="flex items-center gap-2 text-left px-2 py-1.5 rounded hover:bg-gray-800 transition-colors"
-                  >
-                    <span className="w-2 h-2 rounded-full shrink-0" style={{ backgroundColor: c }} />
-                    <span className="text-sm text-gray-300 truncate">
-                      {n ? truncateLabel(n.content, n.id) : id.slice(0, 8)}
-                    </span>
-                  </button>
-                );
-              })}
+            <div className="flex flex-wrap gap-2">
+              <button
+                onClick={onOpenInGraph}
+                className="px-3 py-1.5 rounded-lg bg-blue-600 hover:bg-blue-500 text-white text-sm"
+              >
+                Open in graph
+              </button>
+              {onOpenInSearch && (
+                <button
+                  onClick={onOpenInSearch}
+                  className="px-3 py-1.5 rounded-lg bg-gray-800 hover:bg-gray-700 text-gray-200 text-sm"
+                >
+                  Open in search
+                </button>
+              )}
             </div>
-          )}
-        </div>
+
+            <div className="border-t border-gray-800 pt-4">
+              <p className="text-xs text-gray-500 uppercase tracking-wide mb-3">Connections</p>
+              <EdgeList
+                edges={detailHook.edges}
+                entityId={entity.id}
+                onNavigate={onNavigate}
+                getLabel={(id) => {
+                  const n = entities.get(id);
+                  return n ? entityTitle(n, 40) : id.slice(0, 8);
+                }}
+              />
+            </div>
+
+            <div className="border-t border-gray-800 pt-4">
+              <p className="text-xs text-gray-500 uppercase tracking-wide mb-2">
+                Nearest in embedding space
+              </p>
+              {neighbours.length === 0 ? (
+                <p className="text-xs text-gray-600 italic">None.</p>
+              ) : (
+                <div className="flex flex-col gap-0.5">
+                  {neighbours.map((id) => {
+                    const n = entities.get(id);
+                    const c = n
+                      ? ENTITY_COLORS[n.type] ?? ENTITY_COLORS['default']!
+                      : ENTITY_COLORS['default']!;
+                    return (
+                      <button
+                        key={id}
+                        onClick={() => onNavigate(id)}
+                        className="flex items-center gap-2 text-left px-2 py-1.5 rounded hover:bg-gray-800 transition-colors"
+                      >
+                        <span
+                          className="w-2 h-2 rounded-full shrink-0"
+                          style={{ backgroundColor: c }}
+                        />
+                        <span className="text-sm text-gray-300 truncate">
+                          {n ? entityTitle(n, 40) : id.slice(0, 8)}
+                        </span>
+                      </button>
+                    );
+                  })}
+                </div>
+              )}
+            </div>
+          </>
+        )}
       </div>
     </div>
   );

@@ -1,16 +1,18 @@
 # Semantic Graph Layout Design
 
-**Goal:** Place nodes in the graph canvas at 2D coordinates derived from their embedding vectors, so that semantically similar entities cluster spatially.
+**Goal:** Place nodes in the graph canvas at 2D coordinates derived from their embedding vectors, so that semantically similar entities cluster spatially. Available as an additional layout mode (**Semantic**) inside the existing Graph page, alongside Force / Radial / Hierarchy.
 
-**Architecture:** A new backend endpoint returns stored embedding vectors in bulk. The frontend projects them to 2D using UMAP (via `umap-js`) in a WebWorker, then writes the resulting coordinates back to the graphology graph. A new "Semantic" option is added to the layout switcher alongside the existing Force / Radial / Hierarchy options.
+**Scope:** This spec covers the 2D layout mode only. The standalone 3D embedding projector (separate top-bar tab) is covered in `2026-04-20-embedding-projector-design.md`. Both features share the backend endpoint and projection worker described below under *Shared Infrastructure*.
 
-**Tech Stack:** `umap-js` (npm), graphology, existing pgvector embeddings stored in the `entities` table.
+**Tech Stack:** `umap-js` (npm), graphology, Sigma.js, existing pgvector embeddings stored in the `entities` table.
 
 ---
 
-## Backend
+## Shared Infrastructure
 
-### New endpoint: `GET /api/entities/embeddings`
+The following pieces are reused by both the 2D layout mode (this spec) and the 3D embedding projector page (`2026-04-20-embedding-projector-design.md`). They are specified here because this spec lands first.
+
+### Backend endpoint: `GET /api/entities/embeddings`
 
 Returns embedding vectors for a set of entity IDs.
 
@@ -28,62 +30,13 @@ Returns embedding vectors for a set of entity IDs.
 
 **Implementation notes:**
 - Embeddings are stored in the `entities` table as a `vector` column. Cast to `float4[]` for JSON serialisation: `embedding::float4[]`.
-- Entities with no embedding (status = `pending`) are omitted from the response — the caller handles missing nodes gracefully (they stay at their current position).
+- Entities with no embedding (status = `pending`) are omitted from the response — the caller handles missing nodes gracefully (they stay at their current position, or are excluded from the point cloud).
 - Auth: same API key bearer token as all other endpoints.
-- No pagination needed — 500 entities × 1536 floats × 4 bytes = ~3 MB max payload, acceptable.
+- No pagination needed — 500 entities × 1536 floats × 4 bytes ≈ ~3 MB max payload, acceptable.
+- Callers that need more than 500 entities batch the request client-side and merge results.
 
----
+### API client method: `ui/src/lib/api.ts`
 
-## Frontend
-
-### WebWorker: `ui/src/workers/umap.worker.ts`
-
-Runs UMAP off the main thread to avoid blocking the UI.
-
-**Input message:**
-```ts
-{ ids: string[], embeddings: number[][] }
-```
-
-**Output message:**
-```ts
-{ positions: { id: string; x: number; y: number }[] }
-```
-
-**Implementation:**
-```ts
-import { UMAP } from 'umap-js';
-
-self.onmessage = (e) => {
-  const { ids, embeddings } = e.data;
-  const umap = new UMAP({ nComponents: 2, nNeighbors: 15, minDist: 0.1 });
-  const result = umap.fit(embeddings);
-  const positions = ids.map((id, i) => ({ id, x: result[i][0], y: result[i][1] }));
-  self.postMessage({ positions });
-};
-```
-
-UMAP parameters:
-- `nNeighbors: 15` — good default for knowledge graphs; increase for denser graphs
-- `minDist: 0.1` — keeps related clusters tight
-- Scale output coords by `×100` to match graphology's default coordinate space
-
-### Layout hook change: `ui/src/hooks/useLayout.ts`
-
-Add `'semantic'` to `LayoutType`. New `startSemantic(api)` method:
-
-1. Collect all node IDs from the graph in batches of 500
-2. Call `api.getEmbeddings(ids)` for each batch
-3. Post `{ ids, embeddings }` to the UMAP WebWorker
-4. On worker response: write `x`/`y` back to each node via `graph.setNodeAttribute`
-5. Call `sigma.refresh()`
-6. Nodes with no embedding returned keep their current position
-
-Show a loading indicator in `GraphControls` while the worker is running (new `layoutLoading: boolean` return value from `useLayout`).
-
-### API client change: `ui/src/lib/api.ts`
-
-New method:
 ```ts
 getEmbeddings(ids: string[]) {
   return r<{ embeddings: { id: string; embedding: number[] }[] }>(
@@ -92,9 +45,74 @@ getEmbeddings(ids: string[]) {
 }
 ```
 
+### Projection WebWorker: `ui/src/workers/projection.worker.ts`
+
+Single worker that handles both 2D and 3D projections. Lives off the main thread so long-running reductions don't block the UI.
+
+**Input message:**
+```ts
+{
+  ids: string[];
+  embeddings: number[][];
+  dim: 2 | 3;
+  algorithm?: 'umap' | 'pca'; // default 'umap'
+  params?: {
+    nNeighbors?: number;  // UMAP; default 15
+    minDist?: number;     // UMAP; default 0.1
+  };
+}
+```
+
+**Output messages:**
+```ts
+// Progress (optional, UMAP only)
+{ type: 'progress'; epoch: number; epochs: number }
+
+// Final
+{ type: 'result'; positions: { id: string; coords: number[] }[] }
+```
+
+`coords.length === dim`. For 2D the consumer reads `[x, y]`; for 3D `[x, y, z]`.
+
+**Implementation sketch (UMAP, 2D or 3D):**
+```ts
+import { UMAP } from 'umap-js';
+
+self.onmessage = (e) => {
+  const { ids, embeddings, dim = 2, params = {} } = e.data;
+  const umap = new UMAP({
+    nComponents: dim,
+    nNeighbors: params.nNeighbors ?? 15,
+    minDist: params.minDist ?? 0.1,
+  });
+  const result = umap.fit(embeddings);
+  const positions = ids.map((id, i) => ({ id, coords: result[i] }));
+  self.postMessage({ type: 'result', positions });
+};
+```
+
+**Coordinate scaling:** UMAP output is roughly `[-10, 10]` per axis. Consumers scale as needed (graphology layout scales by ×100; three.js scene uses the raw values).
+
+---
+
+## Layout mode: 2D Semantic (this spec)
+
+### Layout hook change: `ui/src/hooks/useLayout.ts`
+
+Add `'semantic'` to `LayoutType`. New `startSemantic(api)` method:
+
+1. Collect all visible node IDs from the graph in batches of 500.
+2. Call `api.getEmbeddings(ids)` for each batch and merge.
+3. Post `{ ids, embeddings, dim: 2 }` to the shared projection WebWorker.
+4. On worker `result` message: write `x`/`y` back to each node via `graph.setNodeAttribute`, scaling by ×100.
+5. Call `sigma.refresh()`.
+6. Nodes with no embedding returned keep their current position.
+
+Expose `layoutLoading: boolean` from the hook so the UI can show a spinner while the worker runs.
+
 ### UI change: `ui/src/components/GraphControls.tsx`
 
-Add "Semantic" button to the layout switcher. Disable it (greyed out, tooltip "Computing…") while `layoutLoading` is true.
+Add "Semantic" button to the layout switcher. Disable it (greyed, tooltip "Computing…") while `layoutLoading` is true. Show a small ⚡ icon to hint at the compute step.
 
 ---
 
@@ -106,13 +124,15 @@ Add "Semantic" button to the layout switcher. Disable it (greyed out, tooltip "C
 | 500 nodes | ~2–4s | ~3 MB |
 | 1000+ nodes | 10s+ | ~6 MB+ |
 
-For graphs over 500 nodes, subsample: run UMAP on the 500 most-connected nodes, place the rest using their nearest neighbour among the sampled set (cosine similarity against already-projected nodes). This keeps it interactive at scale.
+For graphs over 500 nodes, subsample: run UMAP on the 500 most-connected nodes, place the rest using their nearest neighbour among the sampled set (cosine similarity against already-projected nodes). Keeps layout interactive at scale.
+
+Cache the latest `{ id → coords }` map in the layout hook so re-selecting Semantic is instant unless the node set changed.
 
 ---
 
 ## Out of Scope
 
-- Persisting UMAP coordinates (recompute on demand each session)
-- Incremental layout updates as new nodes are added
-- Server-side dimensionality reduction
-- Changing UMAP parameters via UI
+- Persisting projected coordinates server-side (recompute per session).
+- Incremental layout updates as new nodes are added (user must re-apply the layout).
+- Exposing UMAP parameters via UI (use defaults; advanced controls live in the projector page).
+- t-SNE and PCA for the 2D layout mode — those are exposed only in the projector page. UMAP is the 2D-mode default because its cluster tightness translates well to the graph visualisation.

@@ -61,6 +61,8 @@ export default function SearchPage({ api, onOpenInGraph }: Props) {
   const [error, setError] = useState<string | null>(null);
   const [totalCount, setTotalCount] = useState<number | null>(null);
   const [selectedId, setSelectedId] = useState<string | null>(null);
+  const [fetchedItem, setFetchedItem] = useState<ResultItem | null>(null);
+  const [detailLoading, setDetailLoading] = useState(false);
   const searchTimer = useRef<ReturnType<typeof setTimeout> | null>(null);
 
   const update = useCallback(<K extends keyof Filters>(key: K, value: Filters[K]) => {
@@ -161,10 +163,30 @@ export default function SearchPage({ api, onOpenInGraph }: Props) {
 
   const reset = useCallback(() => { setFilters(initialFilters); }, []);
 
-  const selected = useMemo(
-    () => results.find(r => r.entity.id === selectedId) ?? null,
-    [results, selectedId],
-  );
+  useEffect(() => {
+    if (!selectedId) { setFetchedItem(null); setDetailLoading(false); return; }
+    if (results.find(r => r.entity.id === selectedId)) {
+      setFetchedItem(null);
+      setDetailLoading(false);
+      return;
+    }
+    if (fetchedItem && fetchedItem.entity.id === selectedId) return;
+    let cancelled = false;
+    setDetailLoading(true);
+    api.getEntity(selectedId)
+      .then(res => { if (!cancelled) setFetchedItem({ entity: res.entity }); })
+      .catch(err => { if (!cancelled) console.error(err); })
+      .finally(() => { if (!cancelled) setDetailLoading(false); });
+    return () => { cancelled = true; };
+  }, [selectedId, results, api, fetchedItem]);
+
+  const selected = useMemo(() => {
+    if (!selectedId) return null;
+    const fromResults = results.find(r => r.entity.id === selectedId);
+    if (fromResults) return fromResults;
+    if (fetchedItem && fetchedItem.entity.id === selectedId) return fetchedItem;
+    return null;
+  }, [results, selectedId, fetchedItem]);
 
   const activeFilterCount =
     filters.types.size +
@@ -396,7 +418,7 @@ export default function SearchPage({ api, onOpenInGraph }: Props) {
 
       {/* Results + detail */}
       <div className="flex-1 min-h-0 flex flex-col md:flex-row overflow-hidden">
-        <div className={`flex-1 overflow-y-auto ${selected ? 'hidden md:block' : ''}`}>
+        <div className={`flex-1 overflow-y-auto ${selectedId ? 'hidden md:block' : ''}`}>
           <div className="max-w-5xl mx-auto w-full px-3 sm:px-6 py-4">
             {error && (
               <div className="mb-3 px-3 py-2 rounded-lg bg-red-500/10 border border-red-500/30 text-sm text-red-300">
@@ -425,16 +447,32 @@ export default function SearchPage({ api, onOpenInGraph }: Props) {
           </div>
         </div>
 
-        {selected && (
+        {selectedId && (
           <aside className="md:w-[420px] md:border-l md:border-gray-800 bg-gray-900 flex-1 md:flex-initial overflow-y-auto">
-            <DetailPanel
-              api={api}
-              entity={selected.entity}
-              related={selected.related}
-              onClose={() => setSelectedId(null)}
-              onNavigate={id => setSelectedId(id)}
-              onOpenInGraph={() => onOpenInGraph(selected.entity.id)}
-            />
+            {selected ? (
+              <DetailPanel
+                api={api}
+                entity={selected.entity}
+                related={selected.related}
+                onClose={() => setSelectedId(null)}
+                onNavigate={id => setSelectedId(id)}
+                onOpenInGraph={() => onOpenInGraph(selected.entity.id)}
+              />
+            ) : (
+              <div className="flex flex-col h-full">
+                <div className="flex items-center justify-between px-4 py-2 border-b border-gray-800 shrink-0">
+                  <button
+                    onClick={() => setSelectedId(null)}
+                    className="text-sm text-gray-400 hover:text-white flex items-center gap-1"
+                  >
+                    ‹ Back
+                  </button>
+                </div>
+                <div className="p-4 text-sm text-gray-500">
+                  {detailLoading ? 'Loading…' : 'Entity not found'}
+                </div>
+              </div>
+            )}
           </aside>
         )}
       </div>

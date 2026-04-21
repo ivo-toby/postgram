@@ -125,7 +125,7 @@ export function useSigma(
     const nodePosition = sigma.getNodeDisplayData(nodeId);
     if (nodePosition) {
       sigma.getCamera().animate(
-        { x: nodePosition.x, y: nodePosition.y, ratio: 0.5 },
+        { x: nodePosition.x, y: nodePosition.y, ratio: 0.15 },
         { duration: 500 }
       );
     }

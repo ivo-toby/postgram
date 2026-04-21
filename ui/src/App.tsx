@@ -1,4 +1,4 @@
-import { useState, useCallback, useEffect } from 'react';
+import { useState, useCallback, useEffect, lazy, Suspense } from 'react';
 import LoginScreen from './components/LoginScreen.tsx';
 import MainLayout from './components/MainLayout.tsx';
 import GraphCanvas from './components/GraphCanvas.tsx';
@@ -13,6 +13,8 @@ import EdgeList from './components/EdgeList.tsx';
 import EntityActions from './components/EntityActions.tsx';
 import SearchPage from './components/SearchPage.tsx';
 import TopBar, { type Page } from './components/TopBar.tsx';
+
+const ProjectorPage = lazy(() => import('./components/ProjectorPage.tsx'));
 import { useApi } from './hooks/useApi.ts';
 import { useGraph } from './hooks/useGraph.ts';
 import { useSearch } from './hooks/useSearch.ts';
@@ -28,7 +30,8 @@ export default function App() {
   const [apiKey, setApiKey] = useState<string | null>(() => localStorage.getItem(STORAGE_KEY));
   const [currentPage, setCurrentPage] = useState<Page>(() => {
     const saved = localStorage.getItem(PAGE_STORAGE_KEY);
-    return saved === 'graph' ? 'graph' : 'search';
+    if (saved === 'graph' || saved === 'projector') return saved;
+    return 'search';
   });
   const [graphLoaded, setGraphLoaded] = useState(false);
   const [rightOpen, setRightOpen] = useState(false);
@@ -136,6 +139,25 @@ export default function App() {
         <TopBar onLogout={handleLogout} currentPage={currentPage} onNavigate={handleNavigate} />
         <div className="flex-1 min-h-0">
           <SearchPage api={api} onOpenInGraph={handleOpenInGraph} />
+        </div>
+      </div>
+    );
+  }
+
+  if (currentPage === 'projector') {
+    return (
+      <div className="flex flex-col h-full bg-gray-950">
+        <TopBar onLogout={handleLogout} currentPage={currentPage} onNavigate={handleNavigate} />
+        <div className="flex-1 min-h-0">
+          <Suspense
+            fallback={
+              <div className="flex items-center justify-center h-full text-sm text-gray-500">
+                Loading projector…
+              </div>
+            }
+          >
+            <ProjectorPage api={api} onOpenInGraph={handleOpenInGraph} />
+          </Suspense>
         </div>
       </div>
     );

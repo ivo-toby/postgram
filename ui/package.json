@@ -12,15 +12,19 @@
     "typecheck": "tsc --noEmit"
   },
   "dependencies": {
+    "@react-three/drei": "^10.7.7",
+    "@react-three/fiber": "^9.6.0",
     "@types/dagre": "^0.7.54",
     "dagre": "^0.8.5",
     "graphology": "^0.25.4",
     "graphology-layout": "^0.6.1",
     "graphology-layout-forceatlas2": "^0.10.1",
+    "ml-pca": "^4.1.1",
     "react": "^19.0.0",
     "react-dom": "^19.0.0",
     "react-markdown": "^9.0.1",
     "sigma": "^3.0.0",
+    "three": "^0.184.0",
     "umap-js": "^1.4.0"
   },
   "devDependencies": {
@@ -30,6 +34,7 @@
     "@testing-library/user-event": "^14.5.2",
     "@types/react": "^19.0.0",
     "@types/react-dom": "^19.0.0",
+    "@types/three": "^0.184.0",
     "@vitejs/plugin-react": "^4.3.4",
     "autoprefixer": "^10.4.20",
     "jsdom": "^25.0.1",

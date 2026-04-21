@@ -7,6 +7,8 @@ import { ENTITY_COLORS } from '../lib/nodeStyles.ts';
 const ALL_ENTITY_TYPES = ['document', 'memory', 'person', 'project', 'task', 'interaction'];
 const ALL_STATUSES = ['active', 'done', 'archived', 'inbox', 'next', 'waiting', 'scheduled', 'someday'];
 const ALL_VISIBILITIES = ['personal', 'work', 'shared'];
+const PAGE_SIZE = 20;
+const SEMANTIC_MAX = 50;
 
 type Props = {
   api: ApiClient;
@@ -27,7 +29,6 @@ type Filters = {
   threshold: number;
   recencyWeight: number;
   expandGraph: boolean;
-  limit: number;
 };
 
 const initialFilters: Filters = {
@@ -42,7 +43,6 @@ const initialFilters: Filters = {
   threshold: 0,
   recencyWeight: 0,
   expandGraph: true,
-  limit: 20,
 };
 
 type ResultItem = {
@@ -58,88 +58,140 @@ export default function SearchPage({ api, onOpenInGraph }: Props) {
   const [filtersOpen, setFiltersOpen] = useState(false);
   const [results, setResults] = useState<ResultItem[]>([]);
   const [loading, setLoading] = useState(false);
+  const [loadingMore, setLoadingMore] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [totalCount, setTotalCount] = useState<number | null>(null);
+  const [hasMore, setHasMore] = useState(false);
+  const [nextOffset, setNextOffset] = useState(0);
   const [selectedId, setSelectedId] = useState<string | null>(null);
   const [fetchedItem, setFetchedItem] = useState<ResultItem | null>(null);
   const [detailLoading, setDetailLoading] = useState(false);
   const searchTimer = useRef<ReturnType<typeof setTimeout> | null>(null);
+  const sentinelRef = useRef<HTMLDivElement>(null);
+  const scrollContainerRef = useRef<HTMLDivElement>(null);
+  const loadMoreRef = useRef<() => void>(() => {});
 
   const update = useCallback(<K extends keyof Filters>(key: K, value: Filters[K]) => {
     setFilters(prev => ({ ...prev, [key]: value }));
   }, []);
 
-  const runSearch = useCallback(async (f: Filters) => {
+  const fetchPage = useCallback(async (f: Filters, offset: number): Promise<{ items: ResultItem[]; total: number | null; hasMore: boolean }> => {
+    if (f.mode === 'semantic' && f.query.trim()) {
+      if (offset > 0) return { items: [], total: null, hasMore: false };
+      const primaryType = f.types.size === 1 ? [...f.types][0] : undefined;
+      const res = await api.searchEntities({
+        query: f.query,
+        ...(primaryType ? { type: primaryType } : {}),
+        ...(f.tags.length ? { tags: f.tags } : {}),
+        ...(f.visibility ? { visibility: f.visibility } : {}),
+        ...(f.owner.trim() ? { owner: f.owner.trim() } : {}),
+        limit: SEMANTIC_MAX,
+        ...(f.threshold > 0 ? { threshold: f.threshold } : {}),
+        ...(f.recencyWeight > 0 ? { recency_weight: f.recencyWeight } : {}),
+        expand_graph: f.expandGraph,
+      });
+      let items: ResultItem[] = res.results.map(r => ({
+        entity: r.entity,
+        chunk: r.chunk_content,
+        score: r.score,
+        similarity: r.similarity,
+        related: r.related,
+      }));
+      if (f.types.size > 1) items = items.filter(i => f.types.has(i.entity.type));
+      if (f.statuses.size > 0) items = items.filter(i => i.entity.status && f.statuses.has(i.entity.status));
+      return { items, total: items.length, hasMore: false };
+    }
+
+    const primaryType = f.types.size === 1 ? [...f.types][0] : undefined;
+    const primaryStatus = f.statuses.size === 1 ? [...f.statuses][0] : undefined;
+    const res = await api.listEntities({
+      ...(primaryType ? { type: primaryType } : {}),
+      ...(primaryStatus ? { status: primaryStatus } : {}),
+      ...(f.visibility ? { visibility: f.visibility } : {}),
+      ...(f.owner.trim() ? { owner: f.owner.trim() } : {}),
+      ...(f.tags.length ? { tags: f.tags } : {}),
+      limit: PAGE_SIZE,
+      offset,
+    });
+    let items: Entity[] = res.items as Entity[];
+    if (f.types.size > 1) items = items.filter(e => f.types.has(e.type));
+    if (f.statuses.size > 1) items = items.filter(e => e.status && f.statuses.has(e.status));
+    if (f.query.trim()) {
+      const q = f.query.toLowerCase();
+      items = items.filter(e =>
+        (e.content ?? '').toLowerCase().includes(q) ||
+        e.tags.some(t => t.toLowerCase().includes(q))
+      );
+    }
+    const pageHasMore = offset + res.items.length < res.total;
+    return {
+      items: items.map(e => ({ entity: e })),
+      total: res.total,
+      hasMore: pageHasMore,
+    };
+  }, [api]);
+
+  const loadInitial = useCallback(async (f: Filters) => {
     setLoading(true);
     setError(null);
     try {
-      if (f.mode === 'semantic' && f.query.trim()) {
-        const primaryType = f.types.size === 1 ? [...f.types][0] : undefined;
-        const res = await api.searchEntities({
-          query: f.query,
-          ...(primaryType ? { type: primaryType } : {}),
-          ...(f.tags.length ? { tags: f.tags } : {}),
-          ...(f.visibility ? { visibility: f.visibility } : {}),
-          ...(f.owner.trim() ? { owner: f.owner.trim() } : {}),
-          limit: f.limit,
-          ...(f.threshold > 0 ? { threshold: f.threshold } : {}),
-          ...(f.recencyWeight > 0 ? { recency_weight: f.recencyWeight } : {}),
-          expand_graph: f.expandGraph,
-        });
-        let items: ResultItem[] = res.results.map(r => ({
-          entity: r.entity,
-          chunk: r.chunk_content,
-          score: r.score,
-          similarity: r.similarity,
-          related: r.related,
-        }));
-        if (f.types.size > 1) {
-          items = items.filter(i => f.types.has(i.entity.type));
-        }
-        if (f.statuses.size > 0) {
-          items = items.filter(i => i.entity.status && f.statuses.has(i.entity.status));
-        }
-        setResults(items);
-        setTotalCount(items.length);
-      } else {
-        const primaryType = f.types.size === 1 ? [...f.types][0] : undefined;
-        const primaryStatus = f.statuses.size === 1 ? [...f.statuses][0] : undefined;
-        const res = await api.listEntities({
-          ...(primaryType ? { type: primaryType } : {}),
-          ...(primaryStatus ? { status: primaryStatus } : {}),
-          ...(f.visibility ? { visibility: f.visibility } : {}),
-          ...(f.owner.trim() ? { owner: f.owner.trim() } : {}),
-          ...(f.tags.length ? { tags: f.tags } : {}),
-          limit: f.limit,
-          offset: 0,
-        });
-        let items: Entity[] = res.items as Entity[];
-        if (f.types.size > 1) items = items.filter(e => f.types.has(e.type));
-        if (f.statuses.size > 1) items = items.filter(e => e.status && f.statuses.has(e.status));
-        if (f.query.trim()) {
-          const q = f.query.toLowerCase();
-          items = items.filter(e =>
-            (e.content ?? '').toLowerCase().includes(q) ||
-            e.tags.some(t => t.toLowerCase().includes(q))
-          );
-        }
-        setResults(items.map(e => ({ entity: e })));
-        setTotalCount(res.total);
-      }
+      const page = await fetchPage(f, 0);
+      setResults(page.items);
+      setTotalCount(page.total);
+      setNextOffset(PAGE_SIZE);
+      setHasMore(page.hasMore);
+      if (scrollContainerRef.current) scrollContainerRef.current.scrollTop = 0;
     } catch (e) {
       setError(e instanceof Error ? e.message : 'Search failed');
       setResults([]);
       setTotalCount(null);
+      setHasMore(false);
     } finally {
       setLoading(false);
     }
-  }, [api]);
+  }, [fetchPage]);
+
+  const loadMore = useCallback(async () => {
+    if (loadingMore || loading || !hasMore) return;
+    setLoadingMore(true);
+    try {
+      const page = await fetchPage(filters, nextOffset);
+      setResults(prev => {
+        const seen = new Set(prev.map(r => r.entity.id));
+        const merged = [...prev];
+        for (const item of page.items) {
+          if (!seen.has(item.entity.id)) merged.push(item);
+        }
+        return merged;
+      });
+      setNextOffset(n => n + PAGE_SIZE);
+      setHasMore(page.hasMore);
+    } catch (e) {
+      setError(e instanceof Error ? e.message : 'Failed to load more');
+      setHasMore(false);
+    } finally {
+      setLoadingMore(false);
+    }
+  }, [filters, nextOffset, hasMore, loading, loadingMore, fetchPage]);
+
+  loadMoreRef.current = loadMore;
 
   useEffect(() => {
     if (searchTimer.current) clearTimeout(searchTimer.current);
-    searchTimer.current = setTimeout(() => { runSearch(filters); }, 300);
+    searchTimer.current = setTimeout(() => { loadInitial(filters); }, 300);
     return () => { if (searchTimer.current) clearTimeout(searchTimer.current); };
-  }, [filters, runSearch]);
+  }, [filters, loadInitial]);
+
+  useEffect(() => {
+    const node = sentinelRef.current;
+    const root = scrollContainerRef.current;
+    if (!node || !root) return;
+    const observer = new IntersectionObserver(entries => {
+      if (entries.some(e => e.isIntersecting)) loadMoreRef.current();
+    }, { root, rootMargin: '200px' });
+    observer.observe(node);
+    return () => observer.disconnect();
+  }, [hasMore]);
 
   const toggleInSet = useCallback(<K extends 'types' | 'statuses'>(key: K, value: string) => {
     setFilters(prev => {
@@ -359,21 +411,6 @@ export default function SearchPage({ api, onOpenInGraph }: Props) {
                 />
               </Section>
 
-              <Section title="Result limit">
-                <div className="flex items-center gap-3">
-                  <input
-                    type="range"
-                    min={5}
-                    max={50}
-                    step={5}
-                    value={filters.limit}
-                    onChange={e => update('limit', Number(e.target.value))}
-                    className="flex-1"
-                  />
-                  <span className="text-sm text-gray-300 tabular-nums w-8 text-right">{filters.limit}</span>
-                </div>
-              </Section>
-
               {filters.mode === 'semantic' && (
                 <>
                   <Section title={`Similarity threshold (${filters.threshold.toFixed(2)})`}>
@@ -418,7 +455,10 @@ export default function SearchPage({ api, onOpenInGraph }: Props) {
 
       {/* Results + detail */}
       <div className="flex-1 min-h-0 flex flex-col md:flex-row overflow-hidden">
-        <div className={`flex-1 overflow-y-auto ${selectedId ? 'hidden md:block' : ''}`}>
+        <div
+          ref={scrollContainerRef}
+          className={`flex-1 overflow-y-auto ${selectedId ? 'hidden md:block' : ''}`}
+        >
           <div className="max-w-5xl mx-auto w-full px-3 sm:px-6 py-4">
             {error && (
               <div className="mb-3 px-3 py-2 rounded-lg bg-red-500/10 border border-red-500/30 text-sm text-red-300">
@@ -444,6 +484,14 @@ export default function SearchPage({ api, onOpenInGraph }: Props) {
                 />
               ))}
             </ul>
+            {hasMore && (
+              <div ref={sentinelRef} className="py-4 text-center text-xs text-gray-500">
+                {loadingMore ? 'Loading more…' : '·'}
+              </div>
+            )}
+            {!hasMore && !loading && results.length > 0 && (
+              <div className="py-4 text-center text-[11px] text-gray-600">End of results</div>
+            )}
           </div>
         </div>
 

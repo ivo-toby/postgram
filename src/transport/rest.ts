@@ -105,6 +105,14 @@ const createEdgeSchema = z.object({
 const MAX_EMBEDDING_IDS = 500;
 const UUID_REGEX = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
 
+const embeddingsRequestSchema = z.object({
+  ids: z
+    .array(z.string().regex(UUID_REGEX, 'Invalid entity ID'))
+    .min(1, 'ids must contain at least one entity ID')
+    .max(MAX_EMBEDDING_IDS, `ids must contain at most ${MAX_EMBEDDING_IDS} entries`),
+  owner: ownerSchema.optional()
+});
+
 const syncManifestSchema = z.object({
   repo: z.string().min(1),
   files: z.array(
@@ -182,40 +190,13 @@ export function registerRestRoutes(
     return c.json({ entity: toStoredEntity(result.value) }, 201);
   });
 
-  app.get('/api/entities/embeddings', async (c) => {
+  app.post('/api/entities/embeddings', async (c) => {
     const auth = c.get('auth');
-    const idsRaw = c.req.query('ids');
-    const owner = c.req.query('owner');
-
-    if (!idsRaw) {
-      throw toValidationError('ids query parameter is required');
-    }
-
-    const ids = idsRaw.split(',').map((id) => id.trim()).filter(Boolean);
-
-    if (ids.length === 0) {
-      throw toValidationError('ids must contain at least one entity ID');
-    }
-
-    if (ids.length > MAX_EMBEDDING_IDS) {
-      throw toValidationError(
-        `ids must contain at most ${MAX_EMBEDDING_IDS} entries`
-      );
-    }
-
-    for (const id of ids) {
-      if (!UUID_REGEX.test(id)) {
-        throw toValidationError(`Invalid entity ID: ${id}`);
-      }
-    }
-
-    if (owner && !ownerSchema.safeParse(owner).success) {
-      throw toValidationError('Invalid owner');
-    }
+    const body = parseJsonBody(embeddingsRequestSchema, await c.req.json());
 
     const result = await getEntityEmbeddings(pool, auth, {
-      ids,
-      ...(owner !== undefined ? { owner } : {})
+      ids: body.ids,
+      ...(body.owner !== undefined ? { owner: body.owner } : {})
     });
 
     if (result.isErr()) {

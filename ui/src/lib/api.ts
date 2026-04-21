@@ -154,8 +154,10 @@ export function createApiClient(options: ApiClientOptions) {
     },
 
     getEmbeddings(ids: string[]) {
-      const qs = new URLSearchParams({ ids: ids.join(',') });
-      return r<{ embeddings: EntityEmbedding[] }>(`/api/entities/embeddings?${qs}`);
+      return r<{ embeddings: EntityEmbedding[] }>('/api/entities/embeddings', {
+        method: 'POST',
+        body: { ids },
+      });
     },
 
     getHealth() {

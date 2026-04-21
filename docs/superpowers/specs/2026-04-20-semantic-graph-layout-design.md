@@ -12,12 +12,17 @@
 
 The following pieces are reused by both the 2D layout mode (this spec) and the 3D embedding projector page (`2026-04-20-embedding-projector-design.md`). They are specified here because this spec lands first.
 
-### Backend endpoint: `GET /api/entities/embeddings`
+### Backend endpoint: `POST /api/entities/embeddings`
 
-Returns embedding vectors for a set of entity IDs.
+Returns embedding vectors for a set of entity IDs. **POST, not GET** — 500 UUIDs comma-joined is ~18 KB, which blows past nginx's default 8 KB request-URI limit and produced 414 in practice.
 
-**Query params:**
-- `ids` — comma-separated entity UUIDs (max 500)
+**Request body:**
+```json
+{
+  "ids": ["uuid", "uuid", ...],
+  "owner": "optional-owner-scope"
+}
+```
 
 **Response:**
 ```json
@@ -42,7 +47,8 @@ Returns embedding vectors for a set of entity IDs.
 ```ts
 getEmbeddings(ids: string[]) {
   return r<{ embeddings: { id: string; embedding: number[] }[] }>(
-    `/api/entities/embeddings?ids=${ids.join(',')}`
+    '/api/entities/embeddings',
+    { method: 'POST', body: { ids } }
   );
 }
 ```

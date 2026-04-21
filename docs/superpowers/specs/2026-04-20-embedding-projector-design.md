@@ -5,7 +5,7 @@
 **Architecture:** A new top-bar tab — **Projector** — rendering a `<canvas>` driven by `@react-three/fiber` (react bindings for three.js). Points are projected from the stored embedding vectors with UMAP / PCA / t-SNE (user-selectable) in a WebWorker. Interaction (hover, select, kNN) uses three.js raycasting; filters reuse the SearchPage filter components.
 
 **Relationship to other specs:**
-- Reuses the `GET /api/entities/embeddings` endpoint and `projection.worker.ts` described in the *Shared Infrastructure* section of `2026-04-20-semantic-graph-layout-design.md`. This spec extends the worker with 3D output and additional algorithms.
+- Reuses the `POST /api/entities/embeddings` endpoint and `projection.worker.ts` described in the *Shared Infrastructure* section of `2026-04-20-semantic-graph-layout-design.md`. This spec extends the worker with 3D output and additional algorithms.
 - Does **not** replace the 2D Semantic layout mode inside the Graph page — that remains part of the graph exploration surface. The projector is a purer cluster-analysis tool with no edges or layout switching.
 
 **Tech Stack:** `three`, `@react-three/fiber`, `@react-three/drei` (OrbitControls, Text), `umap-js`, `ml-pca`, `tsne-js`, existing API client + search types.

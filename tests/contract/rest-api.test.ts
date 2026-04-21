@@ -824,12 +824,16 @@ describe('REST entity endpoints', () => {
       pending.entity.id
     ]);
 
-    const response = await app.request(
-      `/api/entities/embeddings?ids=${[a.entity.id, b.entity.id, pending.entity.id].join(',')}`,
-      {
-        headers: { Authorization: `Bearer ${apiKey}` }
-      }
-    );
+    const response = await app.request('/api/entities/embeddings', {
+      method: 'POST',
+      headers: {
+        Authorization: `Bearer ${apiKey}`,
+        'Content-Type': 'application/json'
+      },
+      body: JSON.stringify({
+        ids: [a.entity.id, b.entity.id, pending.entity.id]
+      })
+    });
     const body: unknown = await response.json();
 
     expect(response.status).toBe(200);
@@ -855,30 +859,28 @@ describe('REST entity endpoints', () => {
   it('rejects embeddings requests with invalid or missing ids', async () => {
     const { app, apiKey } = await createAuthorizedApp();
 
-    const missing = await app.request('/api/entities/embeddings', {
-      headers: { Authorization: `Bearer ${apiKey}` }
-    });
+    const postJson = (payload: unknown) =>
+      app.request('/api/entities/embeddings', {
+        method: 'POST',
+        headers: {
+          Authorization: `Bearer ${apiKey}`,
+          'Content-Type': 'application/json'
+        },
+        body: JSON.stringify(payload)
+      });
+
+    const missing = await postJson({});
     expect(missing.status).toBe(400);
 
-    const invalid = await app.request(
-      '/api/entities/embeddings?ids=not-a-uuid',
-      {
-        headers: { Authorization: `Bearer ${apiKey}` }
-      }
-    );
+    const invalid = await postJson({ ids: ['not-a-uuid'] });
     expect(invalid.status).toBe(400);
 
-    const empty = await app.request('/api/entities/embeddings?ids=', {
-      headers: { Authorization: `Bearer ${apiKey}` }
-    });
+    const empty = await postJson({ ids: [] });
     expect(empty.status).toBe(400);
 
-    const tooMany = await app.request(
-      `/api/entities/embeddings?ids=${Array.from({ length: 501 }, () => crypto.randomUUID()).join(',')}`,
-      {
-        headers: { Authorization: `Bearer ${apiKey}` }
-      }
-    );
+    const tooMany = await postJson({
+      ids: Array.from({ length: 501 }, () => crypto.randomUUID())
+    });
     expect(tooMany.status).toBe(400);
   }, 120_000);
 
@@ -935,12 +937,16 @@ describe('REST entity endpoints', () => {
       embeddingService
     }).runOnce();
 
-    const response = await app.request(
-      `/api/entities/embeddings?ids=${[sharedEntity.entity.id, workEntity.entity.id].join(',')}`,
-      {
-        headers: { Authorization: `Bearer ${restrictedKey.plaintextKey}` }
-      }
-    );
+    const response = await app.request('/api/entities/embeddings', {
+      method: 'POST',
+      headers: {
+        Authorization: `Bearer ${restrictedKey.plaintextKey}`,
+        'Content-Type': 'application/json'
+      },
+      body: JSON.stringify({
+        ids: [sharedEntity.entity.id, workEntity.entity.id]
+      })
+    });
     const body: unknown = await response.json();
 
     expect(response.status).toBe(200);

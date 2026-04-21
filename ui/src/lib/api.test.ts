@@ -54,7 +54,7 @@ describe('createApiClient', () => {
     await expect(client.getEntity('some-id')).rejects.toThrow('Not found');
   });
 
-  it('encodes entity IDs when fetching embeddings', async () => {
+  it('POSTs entity IDs in the body when fetching embeddings', async () => {
     const mockFetch = vi.mocked(fetch);
     mockFetch.mockResolvedValueOnce(
       new Response(JSON.stringify({ embeddings: [] }), {
@@ -67,9 +67,14 @@ describe('createApiClient', () => {
     await client.getEmbeddings(['id-1', 'id-2', 'id-3']);
 
     expect(mockFetch).toHaveBeenCalledWith(
-      '/api/entities/embeddings?ids=id-1%2Cid-2%2Cid-3',
+      '/api/entities/embeddings',
       expect.objectContaining({
-        headers: expect.objectContaining({ Authorization: 'Bearer key' }),
+        method: 'POST',
+        headers: expect.objectContaining({
+          Authorization: 'Bearer key',
+          'Content-Type': 'application/json',
+        }),
+        body: JSON.stringify({ ids: ['id-1', 'id-2', 'id-3'] }),
       })
     );
   });

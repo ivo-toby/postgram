@@ -21,12 +21,14 @@ export type ProjectionPosition = {
   coords: number[];
 };
 
+export type KnnEntry = { id: string; score: number };
+
 export type ProjectionResponse =
   | { type: 'progress'; epoch: number; epochs: number }
   | {
       type: 'result';
       positions: ProjectionPosition[];
-      knn?: Record<string, string[]>;
+      knn?: Record<string, KnnEntry[]>;
     }
   | { type: 'error'; message: string };
 
@@ -51,13 +53,13 @@ function computeKnn(
   ids: string[],
   embeddings: number[][],
   k: number,
-): Record<string, string[]> {
-  const map: Record<string, string[]> = {};
+): Record<string, KnnEntry[]> {
+  const map: Record<string, KnnEntry[]> = {};
   for (let i = 0; i < ids.length; i += 1) {
     const ei = embeddings[i];
     const currentId = ids[i];
     if (!ei || !currentId) continue;
-    const scored: { id: string; score: number }[] = [];
+    const scored: KnnEntry[] = [];
     for (let j = 0; j < ids.length; j += 1) {
       if (i === j) continue;
       const ej = embeddings[j];
@@ -66,7 +68,7 @@ function computeKnn(
       scored.push({ id: otherId, score: cosineSimilarity(ei, ej) });
     }
     scored.sort((a, b) => b.score - a.score);
-    map[currentId] = scored.slice(0, k).map((s) => s.id);
+    map[currentId] = scored.slice(0, k);
   }
   return map;
 }

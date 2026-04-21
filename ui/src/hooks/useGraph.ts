@@ -2,16 +2,24 @@ import { useRef, useMemo } from 'react';
 import Graph from 'graphology';
 import type { Entity, Edge, GraphNeighbour } from '../lib/types.ts';
 import { getNodeColor, getNodeSize, getNodeOpacity } from '../lib/nodeStyles.ts';
+import { entityTitle } from '../lib/entityTitle.ts';
 
-function makeNodeAttrs(type: string, content: string | null, enrichmentStatus: string | null, edgeCount = 0) {
+function makeNodeAttrs(entity: { id: string; type: string; content: string | null; metadata?: Record<string, unknown> }, enrichmentStatus: string | null, edgeCount = 0) {
+  // Construct a minimal Entity shape for the title helper.
+  const e = {
+    id: entity.id,
+    type: entity.type,
+    content: entity.content,
+    metadata: entity.metadata ?? {},
+  } as Entity;
   return {
     x: (Math.random() - 0.5) * 100,
     y: (Math.random() - 0.5) * 100,
-    size: getNodeSize(type, edgeCount),
-    color: getNodeColor(type),
-    label: (content ?? '').slice(0, 60) || type,
+    size: getNodeSize(entity.type, edgeCount),
+    color: getNodeColor(entity.type),
+    label: entityTitle(e, 60) || entity.type,
     type: 'circle',
-    entityType: type,
+    entityType: entity.type,
     enrichment_status: enrichmentStatus,
     hidden: false,
     opacity: getNodeOpacity(enrichmentStatus),
@@ -25,7 +33,7 @@ export function useGraph() {
   function addEntities(entities: Entity[]) {
     for (const entity of entities) {
       if (!graph.hasNode(entity.id)) {
-        graph.addNode(entity.id, makeNodeAttrs(entity.type, entity.content, entity.enrichment_status));
+        graph.addNode(entity.id, makeNodeAttrs(entity, entity.enrichment_status));
       }
     }
   }
@@ -33,7 +41,7 @@ export function useGraph() {
   function addNeighbours(neighbours: GraphNeighbour[]) {
     for (const n of neighbours) {
       if (!graph.hasNode(n.id)) {
-        graph.addNode(n.id, makeNodeAttrs(n.type, n.content, null));
+        graph.addNode(n.id, makeNodeAttrs(n, null));
       }
     }
   }

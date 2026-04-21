@@ -3,12 +3,13 @@ import { Canvas, useThree, useFrame } from '@react-three/fiber';
 import { OrbitControls } from '@react-three/drei';
 import * as THREE from 'three';
 import type { ApiClient } from '../lib/api.ts';
-import type { Entity } from '../lib/types.ts';
+import type { Edge, Entity } from '../lib/types.ts';
 import { ENTITY_COLORS } from '../lib/nodeStyles.ts';
-import { useEntityDetail } from '../hooks/useEntityDetail.ts';
+import { entityTitle } from '../lib/entityTitle.ts';
 import EntityDetail from './EntityDetail.tsx';
 import EdgeList from './EdgeList.tsx';
 import type {
+  KnnEntry,
   ProjectionAlgorithm,
   ProjectionRequest,
   ProjectionResponse,
@@ -64,38 +65,10 @@ function colourForEntity(entity: Entity, mode: ColourBy): string {
   return '#9CA3AF';
 }
 
-function stripFrontmatter(text: string): string {
-  if (!text.startsWith('---')) return text;
-  const rest = text.slice(3);
-  const close = rest.indexOf('\n---');
-  if (close === -1) return text;
-  return rest.slice(close + 4).trimStart();
-}
-
-function entityTitle(entity: Entity, max = 80): string {
-  const meta = entity.metadata as Record<string, unknown>;
-  const metaCandidates = ['title', 'name', 'path', 'summary'];
-  for (const key of metaCandidates) {
-    const v = meta?.[key];
-    if (typeof v === 'string' && v.trim()) {
-      const t = v.trim();
-      return t.length > max ? t.slice(0, max) + '…' : t;
-    }
-  }
-  const body = stripFrontmatter((entity.content ?? '').trim());
-  if (!body) return entity.id.slice(0, 8);
-  for (const rawLine of body.split('\n')) {
-    const line = rawLine.replace(/^#+\s+/, '').trim();
-    if (!line || line === '---') continue;
-    return line.length > max ? line.slice(0, max) + '…' : line;
-  }
-  return entity.id.slice(0, 8);
-}
-
 export default function ProjectorPage({ api, onOpenInGraph, onOpenInSearch }: Props) {
   const [entities, setEntities] = useState<Map<string, Entity>>(new Map());
   const [positions, setPositions] = useState<Map<string, THREE.Vector3>>(new Map());
-  const [knn, setKnn] = useState<Record<string, string[]>>({});
+  const [knn, setKnn] = useState<Record<string, KnnEntry[]>>({});
   const [loading, setLoading] = useState(true);
   const [loadingStage, setLoadingStage] = useState<string>('Fetching entities…');
   const [error, setError] = useState<string | null>(null);
@@ -105,7 +78,7 @@ export default function ProjectorPage({ api, onOpenInGraph, onOpenInSearch }: Pr
   const [hoveredId, setHoveredId] = useState<string | null>(null);
   const workerRef = useRef<Worker | null>(null);
   const projectionCacheRef = useRef<
-    Map<string, { positions: Map<string, THREE.Vector3>; knn: Record<string, string[]> }>
+    Map<string, { positions: Map<string, THREE.Vector3>; knn: Record<string, KnnEntry[]> }>
   >(new Map());
   const canvasWrapRef = useRef<HTMLDivElement>(null);
   const [cursor, setCursor] = useState<{ x: number; y: number } | null>(null);
@@ -365,8 +338,9 @@ export default function ProjectorPage({ api, onOpenInGraph, onOpenInSearch }: Pr
           <aside className="md:w-[420px] md:border-l md:border-gray-800 bg-gray-900 flex-1 md:flex-initial overflow-y-auto">
             <DetailPanel
               api={api}
-              selectedId={selectedId}
-              fallbackEntity={selectedEntity}
+              entity={selectedEntity}
+              entityId={selectedId}
+              position={positions.get(selectedId) ?? null}
               neighbours={selectedNeighbours}
               entities={entities}
               onClose={() => setSelectedId(null)}
@@ -375,6 +349,13 @@ export default function ProjectorPage({ api, onOpenInGraph, onOpenInSearch }: Pr
               onOpenInSearch={
                 onOpenInSearch ? () => onOpenInSearch(selectedId) : undefined
               }
+              onUpdateEntity={(updated) => {
+                setEntities((prev) => {
+                  const next = new Map(prev);
+                  next.set(updated.id, updated);
+                  return next;
+                });
+              }}
             />
           </aside>
         )}
@@ -522,7 +503,7 @@ function KnnLines({
   positions,
 }: {
   from: string;
-  to: string[];
+  to: KnnEntry[];
   positions: Map<string, THREE.Vector3>;
 }) {
   const fromPos = positions.get(from);
@@ -530,20 +511,22 @@ function KnnLines({
 
   return (
     <>
-      {to.map((id) => {
-        const pos = positions.get(id);
+      {to.map((entry) => {
+        const pos = positions.get(entry.id);
         if (!pos) return null;
         const points = [fromPos, pos];
         const geometry = new THREE.BufferGeometry().setFromPoints(points);
+        // Stronger opacity for higher-similarity neighbours.
+        const opacity = 0.15 + Math.max(0, entry.score) * 0.6;
         return (
           <primitive
-            key={id}
+            key={entry.id}
             object={new THREE.Line(
               geometry,
               new THREE.LineBasicMaterial({
                 color: '#3B82F6',
                 transparent: true,
-                opacity: 0.4,
+                opacity,
               }),
             )}
           />
@@ -722,29 +705,61 @@ function ProjectorToolbar({
 
 type DetailPanelProps = {
   api: ApiClient;
-  selectedId: string;
-  fallbackEntity: Entity | null;
-  neighbours: string[];
+  entity: Entity | null;
+  entityId: string;
+  position: THREE.Vector3 | null;
+  neighbours: KnnEntry[];
   entities: Map<string, Entity>;
   onClose: () => void;
   onNavigate: (id: string) => void;
   onOpenInGraph: () => void;
   onOpenInSearch?: (() => void) | undefined;
+  onUpdateEntity: (updated: Entity) => void;
 };
 
 function DetailPanel({
   api,
-  selectedId,
-  fallbackEntity,
+  entity,
+  entityId,
+  position,
   neighbours,
   entities,
   onClose,
   onNavigate,
   onOpenInGraph,
   onOpenInSearch,
+  onUpdateEntity,
 }: DetailPanelProps) {
-  const detailHook = useEntityDetail(api, selectedId);
-  const entity = detailHook.entity ?? fallbackEntity;
+  const [edges, setEdges] = useState<Edge[]>([]);
+  const [edgesLoading, setEdgesLoading] = useState(false);
+  const [edgesError, setEdgesError] = useState<string | null>(null);
+
+  // Fetch edges for the current selection. We do NOT re-fetch the entity —
+  // we trust the cached copy from the initial entity listing, so a failed
+  // edges request can never block the viewer from rendering.
+  useEffect(() => {
+    if (!entityId) return;
+    let cancelled = false;
+    setEdgesLoading(true);
+    setEdgesError(null);
+    setEdges([]);
+    api
+      .listEdges(entityId)
+      .then((res) => {
+        if (!cancelled) setEdges(res.edges);
+      })
+      .catch((err: unknown) => {
+        if (!cancelled) {
+          setEdgesError(err instanceof Error ? err.message : 'Failed to load edges');
+        }
+      })
+      .finally(() => {
+        if (!cancelled) setEdgesLoading(false);
+      });
+    return () => {
+      cancelled = true;
+    };
+  }, [api, entityId]);
 
   return (
     <div className="flex flex-col h-full">
@@ -767,17 +782,32 @@ function DetailPanel({
       </div>
 
       <div className="flex-1 overflow-y-auto p-4 flex flex-col gap-6">
-        {detailHook.loading && !entity && (
-          <div className="text-gray-500 text-sm">Loading…</div>
-        )}
-
-        {entity && (
+        {!entity ? (
+          <div className="text-gray-500 text-sm">
+            Entity {entityId.slice(0, 8)} not in current view.
+          </div>
+        ) : (
           <>
-            <EntityDetail
-              entity={entity}
-              api={api}
-              onUpdate={detailHook.updateEntity}
-            />
+            <EntityDetail entity={entity} api={api} onUpdate={onUpdateEntity} />
+
+            {position && (
+              <div className="rounded-lg border border-gray-800 bg-gray-950/50 px-3 py-2">
+                <p className="text-[10px] uppercase tracking-wider text-gray-500 mb-1">
+                  Projected position
+                </p>
+                <div className="grid grid-cols-3 gap-2 font-mono text-xs text-gray-300">
+                  <div>
+                    <span className="text-gray-500">x</span> {position.x.toFixed(2)}
+                  </div>
+                  <div>
+                    <span className="text-gray-500">y</span> {position.y.toFixed(2)}
+                  </div>
+                  <div>
+                    <span className="text-gray-500">z</span> {position.z.toFixed(2)}
+                  </div>
+                </div>
+              </div>
+            )}
 
             <div className="flex flex-wrap gap-2">
               <button
@@ -797,16 +827,24 @@ function DetailPanel({
             </div>
 
             <div className="border-t border-gray-800 pt-4">
-              <p className="text-xs text-gray-500 uppercase tracking-wide mb-3">Connections</p>
-              <EdgeList
-                edges={detailHook.edges}
-                entityId={entity.id}
-                onNavigate={onNavigate}
-                getLabel={(id) => {
-                  const n = entities.get(id);
-                  return n ? entityTitle(n, 40) : id.slice(0, 8);
-                }}
-              />
+              <p className="text-xs text-gray-500 uppercase tracking-wide mb-3">
+                Connections
+              </p>
+              {edgesLoading ? (
+                <p className="text-xs text-gray-500">Loading…</p>
+              ) : edgesError ? (
+                <p className="text-xs text-red-400">{edgesError}</p>
+              ) : (
+                <EdgeList
+                  edges={edges}
+                  entityId={entity.id}
+                  onNavigate={onNavigate}
+                  getLabel={(id) => {
+                    const n = entities.get(id);
+                    return n ? entityTitle(n, 40) : id.slice(0, 8);
+                  }}
+                />
+              )}
             </div>
 
             <div className="border-t border-gray-800 pt-4">
@@ -817,23 +855,26 @@ function DetailPanel({
                 <p className="text-xs text-gray-600 italic">None.</p>
               ) : (
                 <div className="flex flex-col gap-0.5">
-                  {neighbours.map((id) => {
-                    const n = entities.get(id);
+                  {neighbours.map((entry) => {
+                    const n = entities.get(entry.id);
                     const c = n
                       ? ENTITY_COLORS[n.type] ?? ENTITY_COLORS['default']!
                       : ENTITY_COLORS['default']!;
                     return (
                       <button
-                        key={id}
-                        onClick={() => onNavigate(id)}
+                        key={entry.id}
+                        onClick={() => onNavigate(entry.id)}
                         className="flex items-center gap-2 text-left px-2 py-1.5 rounded hover:bg-gray-800 transition-colors"
                       >
                         <span
                           className="w-2 h-2 rounded-full shrink-0"
                           style={{ backgroundColor: c }}
                         />
-                        <span className="text-sm text-gray-300 truncate">
-                          {n ? entityTitle(n, 40) : id.slice(0, 8)}
+                        <span className="text-sm text-gray-300 truncate flex-1">
+                          {n ? entityTitle(n, 40) : entry.id.slice(0, 8)}
+                        </span>
+                        <span className="text-[11px] text-gray-500 tabular-nums">
+                          {(entry.score * 100).toFixed(1)}%
                         </span>
                       </button>
                     );

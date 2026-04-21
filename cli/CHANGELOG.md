@@ -1,3 +1,15 @@
+## [1.6.0](https://github.com/ivo-toby/postgram/compare/cli-v1.5.0...cli-v1.6.0) (2026-04-21)
+
+### Features
+
+* **web-ui:** add advanced search page as default view ([0b227ae](https://github.com/ivo-toby/postgram/commit/0b227ae65ec1ced1b9860189e14cdb6bf6084844))
+* **web-ui:** drag neighbours along kinetically when pulling a node ([a42ec88](https://github.com/ivo-toby/postgram/commit/a42ec88dcc328861922dce96218062bddc21739d))
+* **web-ui:** lazy-load search results with infinite scroll ([cfb7e5b](https://github.com/ivo-toby/postgram/commit/cfb7e5b0a638ce31fc010fdedb0e3074a0363927))
+
+### Bug Fixes
+
+* **web-ui:** navigate to fetched entities from search detail; zoom in more ([68f6f08](https://github.com/ivo-toby/postgram/commit/68f6f0804e795d8532f9bd87668d6a92fb4e7470))
+
 ## [1.5.0](https://github.com/ivo-toby/postgram/compare/cli-v1.4.0...cli-v1.5.0) (2026-04-20)
 
 ### Features

@@ -1,10 +1,12 @@
 import type { ReactNode } from 'react';
-import TopBar from './TopBar.tsx';
+import TopBar, { type Page } from './TopBar.tsx';
 import LeftPanel from './LeftPanel.tsx';
 import RightPanel from './RightPanel.tsx';
 
 type Props = {
   onLogout: () => void;
+  currentPage: Page;
+  onNavigate: (page: Page) => void;
   leftContent: ReactNode;
   graphContent: ReactNode;
   rightOpen: boolean;
@@ -14,6 +16,8 @@ type Props = {
 
 export default function MainLayout({
   onLogout,
+  currentPage,
+  onNavigate,
   leftContent,
   graphContent,
   rightOpen,
@@ -22,7 +26,7 @@ export default function MainLayout({
 }: Props) {
   return (
     <div className="flex flex-col h-full bg-gray-950">
-      <TopBar onLogout={onLogout} />
+      <TopBar onLogout={onLogout} currentPage={currentPage} onNavigate={onNavigate} />
       <div className="flex flex-1 min-h-0">
         <LeftPanel>{leftContent}</LeftPanel>
         <main className="flex-1 relative min-w-0">{graphContent}</main>

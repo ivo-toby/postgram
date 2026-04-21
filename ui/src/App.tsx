@@ -11,6 +11,8 @@ import StatusWidget from './components/StatusWidget.tsx';
 import EntityDetail from './components/EntityDetail.tsx';
 import EdgeList from './components/EdgeList.tsx';
 import EntityActions from './components/EntityActions.tsx';
+import SearchPage from './components/SearchPage.tsx';
+import TopBar, { type Page } from './components/TopBar.tsx';
 import { useApi } from './hooks/useApi.ts';
 import { useGraph } from './hooks/useGraph.ts';
 import { useSearch } from './hooks/useSearch.ts';
@@ -19,10 +21,16 @@ import { useEntityDetail } from './hooks/useEntityDetail.ts';
 import type { Entity } from './lib/types.ts';
 
 const STORAGE_KEY = 'pgm_api_key';
+const PAGE_STORAGE_KEY = 'pgm_current_page';
 const ALL_ENTITY_TYPES = ['document', 'memory', 'person', 'project', 'task', 'interaction'];
 
 export default function App() {
   const [apiKey, setApiKey] = useState<string | null>(() => localStorage.getItem(STORAGE_KEY));
+  const [currentPage, setCurrentPage] = useState<Page>(() => {
+    const saved = localStorage.getItem(PAGE_STORAGE_KEY);
+    return saved === 'graph' ? 'graph' : 'search';
+  });
+  const [graphLoaded, setGraphLoaded] = useState(false);
   const [rightOpen, setRightOpen] = useState(false);
   const [selectedNodeId, setSelectedNodeId] = useState<string | null>(null);
   const [focusNodeId, setFocusNodeId] = useState<string | null>(null);
@@ -41,6 +49,11 @@ export default function App() {
     setApiKey(key);
   }, []);
 
+  const handleNavigate = useCallback((page: Page) => {
+    localStorage.setItem(PAGE_STORAGE_KEY, page);
+    setCurrentPage(page);
+  }, []);
+
   const api = useApi({ apiKey: apiKey ?? '', onUnauthorized: handleLogout });
   const graphHook = useGraph();
   const searchHook = useSearch(api);
@@ -49,6 +62,8 @@ export default function App() {
 
   useEffect(() => {
     if (!apiKey) return;
+    if (currentPage !== 'graph') return;
+    if (graphLoaded) return;
     let cancelled = false;
     async function load() {
       let offset = 0;
@@ -60,14 +75,14 @@ export default function App() {
         if (result.items.length < limit) break;
         offset += limit;
       }
-      // Scan edges present after initial load for relation chips
       if (!cancelled) {
         setLoadedRelations(graphHook.getLoadedRelations());
+        setGraphLoaded(true);
       }
     }
     load().catch(console.error);
     return () => { cancelled = true; };
-  }, [apiKey]);
+  }, [apiKey, currentPage, graphLoaded]);
 
   const handleNodeClick = useCallback((nodeId: string) => {
     setSelectedNodeId(nodeId);
@@ -78,6 +93,13 @@ export default function App() {
     handleNodeClick(nodeId);
     setFocusNodeId(nodeId);
   }, [handleNodeClick]);
+
+  const handleOpenInGraph = useCallback((nodeId: string) => {
+    handleNavigate('graph');
+    setSelectedNodeId(nodeId);
+    setRightOpen(true);
+    setFocusNodeId(nodeId);
+  }, [handleNavigate]);
 
   const handleStageClick = useCallback(() => {
     setRightOpen(false);
@@ -106,6 +128,17 @@ export default function App() {
 
   if (!apiKey) {
     return <LoginScreen onLogin={handleLogin} />;
+  }
+
+  if (currentPage === 'search') {
+    return (
+      <div className="flex flex-col h-full bg-gray-950">
+        <TopBar onLogout={handleLogout} currentPage={currentPage} onNavigate={handleNavigate} />
+        <div className="flex-1 min-h-0">
+          <SearchPage api={api} onOpenInGraph={handleOpenInGraph} />
+        </div>
+      </div>
+    );
   }
 
   const leftContent = (
@@ -143,6 +176,8 @@ export default function App() {
   return (
     <MainLayout
       onLogout={handleLogout}
+      currentPage={currentPage}
+      onNavigate={handleNavigate}
       leftContent={leftContent}
       graphContent={
         <GraphCanvas

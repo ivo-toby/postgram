@@ -67,12 +67,13 @@ export default function GraphCanvas({ graphHook, api, depth, onNodeClick, onStag
   // Stop FA2 worker on unmount to avoid orphaned WebWorkers
   useEffect(() => () => layoutHook.stopWorker(), []);
 
-  // Focus on node when focusNodeId changes (e.g. from search result click)
+  // Focus on node when focusNodeId changes (e.g. from search result click).
+  // Also re-run when nodes are added, so focus works on the first lazy load.
   useEffect(() => {
-    if (focusNodeId) {
-      sigmaControls.focusNode(focusNodeId, graphHook.graph);
-    }
-  }, [focusNodeId, sigmaControls, graphHook.graph]);
+    if (!focusNodeId) return;
+    if (!graphHook.graph.hasNode(focusNodeId)) return;
+    sigmaControls.focusNode(focusNodeId, graphHook.graph);
+  }, [focusNodeId, sigmaControls, graphHook.graph, graphHook.graph.order]);
 
   const handleLayoutChange = useCallback((next: LayoutType) => {
     layoutHook.switchLayout(next);

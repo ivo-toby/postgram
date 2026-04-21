@@ -82,6 +82,12 @@ export default function ProjectorPage({ api, onOpenInGraph, onOpenInSearch }: Pr
   >(new Map());
   const canvasWrapRef = useRef<HTMLDivElement>(null);
   const [cursor, setCursor] = useState<{ x: number; y: number } | null>(null);
+  const hoveredIdRef = useRef<string | null>(null);
+  const mouseDownRef = useRef<{ x: number; y: number; time: number } | null>(null);
+
+  useEffect(() => {
+    hoveredIdRef.current = hoveredId;
+  }, [hoveredId]);
 
   // Fetch all entities on mount
   useEffect(() => {
@@ -297,6 +303,29 @@ export default function ProjectorPage({ api, onOpenInGraph, onOpenInSearch }: Pr
             setCursor(null);
             setHoveredId(null);
           }}
+          onMouseDown={(e) => {
+            // Only primary button counts as a tap candidate.
+            if (e.button !== 0) return;
+            mouseDownRef.current = {
+              x: e.clientX,
+              y: e.clientY,
+              time: Date.now(),
+            };
+          }}
+          onMouseUp={(e) => {
+            const down = mouseDownRef.current;
+            mouseDownRef.current = null;
+            if (!down) return;
+            const dx = e.clientX - down.x;
+            const dy = e.clientY - down.y;
+            if (dx * dx + dy * dy > 36) return; // drag → ignore
+            if (Date.now() - down.time > 500) return; // long-hold → ignore
+            // A tap. Use the last-known hovered point; since r3f updates it
+            // each frame on pointermove, it reflects whatever the cursor is
+            // over at release time.
+            const target = hoveredIdRef.current;
+            if (target) setSelectedId(target);
+          }}
           className={`flex-1 min-h-0 relative ${selectedId ? 'hidden md:block' : ''}`}
         >
           <Canvas
@@ -314,7 +343,6 @@ export default function ProjectorPage({ api, onOpenInGraph, onOpenInSearch }: Pr
               points={points}
               selectedId={selectedId}
               hoveredId={hoveredId}
-              onSelect={setSelectedId}
               onHover={setHoveredId}
             />
             {selectedId && selectedNeighbours.length > 0 && (
@@ -375,19 +403,12 @@ type PointCloudProps = {
   points: PointRecord[];
   selectedId: string | null;
   hoveredId: string | null;
-  onSelect: (id: string | null) => void;
   onHover: (id: string | null) => void;
 };
 
-function PointCloud({ points, selectedId, hoveredId, onSelect, onHover }: PointCloudProps) {
+function PointCloud({ points, selectedId, hoveredId, onHover }: PointCloudProps) {
   const { gl } = useThree();
   const geometryRef = useRef<THREE.BufferGeometry>(null!);
-  const pointerDownRef = useRef<{
-    x: number;
-    y: number;
-    index: number;
-    time: number;
-  } | null>(null);
 
   const { positionArray, colorArray } = useMemo(() => {
     const pos = new Float32Array(points.length * 3);
@@ -422,51 +443,6 @@ function PointCloud({ points, selectedId, hoveredId, onSelect, onHover }: PointC
     gl.domElement.style.cursor = '';
   }, [onHover, gl]);
 
-  // Manual click detection with a movement tolerance — r3f's onClick is too
-  // strict once the raycaster threshold varies per-frame (RaycasterTuner).
-  const handlePointerDown = useCallback(
-    (event: {
-      index?: number;
-      nativeEvent?: PointerEvent;
-      stopPropagation: () => void;
-    }) => {
-      if (event.index === undefined) return;
-      event.stopPropagation();
-      pointerDownRef.current = {
-        x: event.nativeEvent?.clientX ?? 0,
-        y: event.nativeEvent?.clientY ?? 0,
-        index: event.index,
-        time: Date.now(),
-      };
-    },
-    [],
-  );
-
-  const handlePointerUp = useCallback(
-    (event: {
-      index?: number;
-      nativeEvent?: PointerEvent;
-      stopPropagation: () => void;
-    }) => {
-      const down = pointerDownRef.current;
-      pointerDownRef.current = null;
-      if (!down) return;
-      if (event.index === undefined) return;
-
-      const dx = (event.nativeEvent?.clientX ?? 0) - down.x;
-      const dy = (event.nativeEvent?.clientY ?? 0) - down.y;
-      const movedSq = dx * dx + dy * dy;
-      const elapsed = Date.now() - down.time;
-      // Treat anything >6px movement or >500ms hold as a drag, not a click.
-      if (movedSq > 36 || elapsed > 500) return;
-
-      event.stopPropagation();
-      const p = points[event.index];
-      if (p) onSelect(p.id);
-    },
-    [points, onSelect],
-  );
-
   // Dim non-selected points when a selection is active
   const material = useMemo(() => {
     const mat = new THREE.PointsMaterial({
@@ -492,8 +468,6 @@ function PointCloud({ points, selectedId, hoveredId, onSelect, onHover }: PointC
       <points
         onPointerMove={handlePointerMove}
         onPointerOut={handlePointerOut}
-        onPointerDown={handlePointerDown}
-        onPointerUp={handlePointerUp}
       >
         <bufferGeometry ref={geometryRef}>
           <bufferAttribute

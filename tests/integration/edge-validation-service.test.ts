@@ -172,6 +172,58 @@ describe('edge-validation-service', () => {
     expect(calls).toBe(1);
   }, 120_000);
 
+  it('excludes edges whose source or target has no content from the candidate set', async () => {
+    if (!database) throw new Error('test database not initialized');
+    const auth = makeAuthContext();
+
+    // Two contentful entities — these form a validatable edge.
+    const goodSrc = (await storeEntity(database.pool, auth, {
+      type: 'memory',
+      content: 'Alice mentioned Project Alpha.'
+    }))._unsafeUnwrap();
+    const goodTgt = (await storeEntity(database.pool, auth, {
+      type: 'project',
+      content: 'Project Alpha'
+    }))._unsafeUnwrap();
+
+    // A content-less entity that pairs with a contentful one to form an
+    // unvalidatable edge. Insert directly to bypass entity-service validation.
+    const stub = await database.pool.query<{ id: string }>(
+      `INSERT INTO entities (type, content, visibility, enrichment_status, tags)
+       VALUES ('person', NULL, 'shared', NULL, ARRAY['auto-created'])
+       RETURNING id`
+    );
+    const stubId = stub.rows[0]!.id;
+
+    // Older unvalidatable edge — must NOT consume the LIMIT.
+    await database.pool.query(
+      `INSERT INTO edges (source_id, target_id, relation, source, confidence, created_at)
+       VALUES ($1, $2, 'involves', 'llm-extraction', 0.9, now() - interval '1 hour')`,
+      [goodSrc.id, stubId]
+    );
+    // Newer validatable edge.
+    await createEdge(database.pool, auth, {
+      sourceId: goodSrc.id,
+      targetId: goodTgt.id,
+      relation: 'involves',
+      source: 'llm-extraction'
+    });
+
+    let calls = 0;
+    const callLlm = async () => {
+      calls += 1;
+      return '{"valid": true, "confidence": 0.9}';
+    };
+
+    const result = await validateEdgeBatch(database.pool, callLlm, { limit: 1 });
+
+    // The older unvalidatable edge is filtered out at the SQL layer, so the
+    // single LIMIT slot goes to the newer validatable edge — the LLM is
+    // invoked exactly once and the older row never starves it.
+    expect(calls).toBe(1);
+    expect(result).toMatchObject({ checked: 1, kept: 1, skipped: 0, errored: 0 });
+  }, 120_000);
+
   it('dry-run does not delete or update edges', async () => {
     if (!database) throw new Error('test database not initialized');
     const auth = makeAuthContext();

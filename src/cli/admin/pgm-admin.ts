@@ -725,32 +725,39 @@ program
       return;
     }
 
-    const config = loadConfig();
-    if (!config.EXTRACTION_ENABLED) {
-      await handleCliFailure(
-        new Error(
+    // Config + provider construction happens before runWithPool, so any
+    // failure (missing env, invalid provider creds) would otherwise throw
+    // outside the CLI's structured-error path and break --json output.
+    let callLlm: (prompt: string) => Promise<string>;
+    let logger: ReturnType<typeof import('../../util/logger.js').createLogger>;
+    let validateEdgeBatch: typeof import('../../services/edge-validation-service.js').validateEdgeBatch;
+    try {
+      const config = loadConfig();
+      if (!config.EXTRACTION_ENABLED) {
+        throw new Error(
           'EXTRACTION_ENABLED is not set — edge validation requires an extraction LLM. Set EXTRACTION_ENABLED=true and the provider credentials.'
-        ),
-        json
-      );
+        );
+      }
+
+      const { createLlmProvider } = await import('../../services/llm-provider.js');
+      const { createLogger } = await import('../../util/logger.js');
+      ({ validateEdgeBatch } = await import(
+        '../../services/edge-validation-service.js'
+      ));
+
+      callLlm = createLlmProvider({
+        provider: config.EXTRACTION_PROVIDER,
+        model: config.EXTRACTION_MODEL,
+        openaiApiKey: config.OPENAI_API_KEY,
+        anthropicApiKey: config.ANTHROPIC_API_KEY,
+        ollamaBaseUrl: config.OLLAMA_BASE_URL,
+        ollamaApiKey: config.OLLAMA_API_KEY
+      });
+      logger = createLogger(config.LOG_LEVEL);
+    } catch (error) {
+      await handleCliFailure(error, json);
       return;
     }
-
-    const { createLlmProvider } = await import('../../services/llm-provider.js');
-    const { createLogger } = await import('../../util/logger.js');
-    const { validateEdgeBatch } = await import(
-      '../../services/edge-validation-service.js'
-    );
-
-    const callLlm = createLlmProvider({
-      provider: config.EXTRACTION_PROVIDER,
-      model: config.EXTRACTION_MODEL,
-      openaiApiKey: config.OPENAI_API_KEY,
-      anthropicApiKey: config.ANTHROPIC_API_KEY,
-      ollamaBaseUrl: config.OLLAMA_BASE_URL,
-      ollamaApiKey: config.OLLAMA_API_KEY
-    });
-    const logger = createLogger(config.LOG_LEVEL);
 
     await runWithPool(json, async (pool) => {
       const result = await validateEdgeBatch(pool, callLlm, {

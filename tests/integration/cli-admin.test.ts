@@ -482,6 +482,36 @@ describe('pgm-admin CLI', () => {
     expect(afterById[autoStub.rows[0]!.id]?.extraction_status).toBe('pending');
   }, 120_000);
 
+  it('validate-edges returns a structured --json error when extraction is not configured', async () => {
+    if (!database) {
+      throw new Error('test database not initialized');
+    }
+
+    const databaseUrl = getDatabaseUrl(database);
+
+    // EXTRACTION_ENABLED unset → handleCliFailure should produce a
+    // structured JSON payload on stdout and exit non-zero. Without the fix,
+    // loadConfig/createLlmProvider failures would throw uncaught.
+    let exitCode: number | null = null;
+    let stdout = '';
+    try {
+      await runAdmin(['validate-edges', '--json'], {
+        DATABASE_URL: databaseUrl,
+        EXTRACTION_ENABLED: 'false',
+        OPENAI_API_KEY: 'sk-test-fake' // satisfy loadConfig's superRefine
+      });
+    } catch (error) {
+      const err = error as { code: number; stdout: string };
+      exitCode = err.code;
+      stdout = err.stdout;
+    }
+    expect(exitCode).toBe(1);
+    const parsed = JSON.parse(stdout.trim()) as {
+      error: { code: string; message: string };
+    };
+    expect(parsed.error.message).toMatch(/EXTRACTION_ENABLED/);
+  }, 120_000);
+
   it('reextract --clean-edges deletes prior llm-extraction edges', async () => {
     if (!database) {
       throw new Error('test database not initialized');

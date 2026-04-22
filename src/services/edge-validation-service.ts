@@ -111,7 +111,15 @@ export async function validateEdgeBatch(
   const now = options.now ?? (() => new Date());
   const logger = options.logger;
 
-  const conditions: string[] = [];
+  // Always exclude edges whose source or target has no content — we cannot
+  // judge the relationship without text. Filtering at the SQL layer (rather
+  // than just skipping in the runtime loop) prevents these unvalidatable
+  // rows from filling the LIMIT every run and starving newer candidates,
+  // since the candidate ordering is `created_at ASC`.
+  const conditions: string[] = [
+    'src.content IS NOT NULL',
+    'tgt.content IS NOT NULL'
+  ];
   const params: unknown[] = [];
 
   if (source !== 'any') {
@@ -130,7 +138,7 @@ export async function validateEdgeBatch(
   params.push(limit);
   const limitParamIndex = params.length;
 
-  const whereSql = conditions.length > 0 ? `WHERE ${conditions.join(' AND ')}` : '';
+  const whereSql = `WHERE ${conditions.join(' AND ')}`;
 
   const query = `
     SELECT

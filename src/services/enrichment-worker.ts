@@ -159,7 +159,14 @@ export function createEnrichmentWorker(options: EnrichmentWorkerOptions) {
               SET enrichment_status = 'completed',
                   enrichment_attempts = 0,
                   enrichment_error = NULL,
-                  extraction_status = 'pending',
+                  -- Auto-created stubs only have a name as content. Running
+                  -- extraction on them prompts the LLM with "what does Alice
+                  -- relate to?" with no context, which free-associates new
+                  -- stubs and loops. Skip them.
+                  extraction_status = CASE
+                    WHEN 'auto-created' = ANY(tags) THEN NULL
+                    ELSE 'pending'
+                  END,
                   extraction_error = NULL
               WHERE id = $1
             `

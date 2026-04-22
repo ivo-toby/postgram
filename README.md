@@ -272,7 +272,10 @@ with `content` = the extracted name, `tags` including `auto-created`, and
 `metadata.auto_created_by = 'llm-extraction'` plus
 `metadata.source_entity_id` pointing at the document that caused the
 creation. They enter the normal embedding queue so they become
-searchable. To review or clean them up:
+searchable, **but they are deliberately excluded from the extraction
+queue** — their only content is a bare name, so asking the LLM "what
+does Alice relate to?" with no context would just free-associate new
+stubs in a loop. To review or clean them up:
 
 ```bash
 pgm list --tags auto-created --type person

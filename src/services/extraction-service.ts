@@ -72,8 +72,15 @@ Only include clear, explicit relationships. Do not infer or speculate.
 Return [] if no relationships are found.`;
 }
 
+type AutoCreateOptions = {
+  enabled: boolean;
+  types: readonly string[];
+  minConfidence: number;
+};
+
 type ExtractionOptions = {
   callLlm?: ((prompt: string) => Promise<string>) | undefined;
+  autoCreate?: AutoCreateOptions | undefined;
 };
 
 export async function extractAndLinkRelationships(
@@ -94,6 +101,7 @@ export async function extractAndLinkRelationships(
   const extractions = parseExtractionResponse(response);
 
   let linked = 0;
+  const autoCreate = options.autoCreate;
 
   for (const extraction of extractions) {
     // Escape ILIKE wildcards (% and _) in the target name
@@ -119,12 +127,40 @@ export async function extractAndLinkRelationships(
       [entityId, escapedName, `%${escapedName}%`]
     );
 
-    const matchedEntity = matches.rows[0];
-    if (!matchedEntity) continue;
+    let matchedEntityId = matches.rows[0]?.id;
+
+    if (!matchedEntityId) {
+      if (
+        !autoCreate?.enabled ||
+        !autoCreate.types.includes(extraction.targetType) ||
+        extraction.confidence < autoCreate.minConfidence
+      ) {
+        continue;
+      }
+
+      const created = await pool.query<{ id: string }>(
+        `
+          INSERT INTO entities (type, content, visibility, enrichment_status, metadata, tags)
+          VALUES ($1, $2, 'shared', 'pending', $3, ARRAY['auto-created'])
+          RETURNING id
+        `,
+        [
+          extraction.targetType,
+          extraction.targetName,
+          JSON.stringify({
+            title: extraction.targetName,
+            auto_created_by: 'llm-extraction',
+            source_entity_id: entityId
+          })
+        ]
+      );
+      matchedEntityId = created.rows[0]?.id;
+      if (!matchedEntityId) continue;
+    }
 
     const result = await createEdge(pool, auth, {
       sourceId: entityId,
-      targetId: matchedEntity.id,
+      targetId: matchedEntityId,
       relation: extraction.relation,
       confidence: extraction.confidence,
       source: 'llm-extraction'

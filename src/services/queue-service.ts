@@ -1,0 +1,126 @@
+import type { Pool } from 'pg';
+
+export type QueueFailure = {
+  id: string;
+  type: string;
+  kind: 'enrichment' | 'extraction';
+  error: string;
+  path: string | null;
+  updatedAt: string;
+};
+
+export type QueueStatus = {
+  embedding: {
+    pending: number;
+    completed: number;
+    failed: number;
+    retry_eligible: number;
+    oldest_pending_secs: number | null;
+  };
+  extraction: {
+    pending: number;
+    completed: number;
+    failed: number;
+  } | null;
+  failures?: QueueFailure[];
+};
+
+type QueueRow = {
+  embedding_pending: string;
+  embedding_completed: string;
+  embedding_failed: string;
+  embedding_retry_eligible: string;
+  oldest_pending_secs: string | null;
+  extraction_pending: string;
+  extraction_completed: string;
+  extraction_failed: string;
+  extraction_any: string;
+};
+
+type FailureRow = {
+  id: string;
+  type: string;
+  kind: 'enrichment' | 'extraction';
+  error: string;
+  metadata: Record<string, unknown> | null;
+  updated_at: Date;
+};
+
+export async function getQueueStatus(
+  pool: Pool,
+  options: { includeFailures?: boolean; failureLimit?: number } = {}
+): Promise<QueueStatus> {
+  const countsResult = await pool.query<QueueRow>(`
+    SELECT
+      COUNT(*) FILTER (WHERE enrichment_status = 'pending')::text                                                                         AS embedding_pending,
+      COUNT(*) FILTER (WHERE enrichment_status = 'completed')::text                                                                       AS embedding_completed,
+      COUNT(*) FILTER (WHERE enrichment_status = 'failed')::text                                                                          AS embedding_failed,
+      COUNT(*) FILTER (WHERE enrichment_status = 'failed' AND enrichment_attempts < 3 AND updated_at < now() - interval '5 minutes')::text AS embedding_retry_eligible,
+      EXTRACT(EPOCH FROM now() - MIN(updated_at) FILTER (WHERE enrichment_status = 'pending'))::text                                      AS oldest_pending_secs,
+      COUNT(*) FILTER (WHERE extraction_status = 'pending')::text                                                                         AS extraction_pending,
+      COUNT(*) FILTER (WHERE extraction_status = 'completed')::text                                                                       AS extraction_completed,
+      COUNT(*) FILTER (WHERE extraction_status = 'failed')::text                                                                          AS extraction_failed,
+      COUNT(*) FILTER (WHERE extraction_status IS NOT NULL)::text                                                                         AS extraction_any
+    FROM entities
+    WHERE content IS NOT NULL
+  `);
+
+  const row = countsResult.rows[0];
+  const extractionEnabled = row ? Number(row.extraction_any) > 0 : false;
+
+  const status: QueueStatus = {
+    embedding: {
+      pending: Number(row?.embedding_pending ?? 0),
+      completed: Number(row?.embedding_completed ?? 0),
+      failed: Number(row?.embedding_failed ?? 0),
+      retry_eligible: Number(row?.embedding_retry_eligible ?? 0),
+      oldest_pending_secs:
+        row?.oldest_pending_secs !== null && row?.oldest_pending_secs !== undefined
+          ? Math.round(Number(row.oldest_pending_secs))
+          : null
+    },
+    extraction: extractionEnabled
+      ? {
+          pending: Number(row?.extraction_pending ?? 0),
+          completed: Number(row?.extraction_completed ?? 0),
+          failed: Number(row?.extraction_failed ?? 0)
+        }
+      : null
+  };
+
+  if (options.includeFailures) {
+    const limit = options.failureLimit ?? 20;
+    const failuresResult = await pool.query<FailureRow>(
+      `
+        SELECT id, type, kind, error, metadata, updated_at
+        FROM (
+          SELECT id, type, 'enrichment'::text AS kind, enrichment_error AS error, metadata, updated_at
+          FROM entities
+          WHERE enrichment_status = 'failed' AND enrichment_error IS NOT NULL
+          UNION ALL
+          SELECT id, type, 'extraction'::text AS kind, extraction_error AS error, metadata, updated_at
+          FROM entities
+          WHERE extraction_status = 'failed' AND extraction_error IS NOT NULL
+        ) AS failures
+        ORDER BY updated_at DESC
+        LIMIT $1
+      `,
+      [limit]
+    );
+
+    status.failures = failuresResult.rows.map((r) => {
+      const rawPath =
+        r.metadata && typeof r.metadata === 'object' ? r.metadata['path'] : null;
+      return {
+        id: r.id,
+        type: r.type,
+        kind: r.kind,
+        error: r.error,
+        path: typeof rawPath === 'string' ? rawPath : null,
+        updatedAt: r.updated_at.toISOString()
+      };
+    });
+  }
+
+  return status;
+}

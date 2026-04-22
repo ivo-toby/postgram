@@ -1,6 +1,8 @@
+import type { Logger } from 'pino';
 import type { Pool, PoolClient } from 'pg';
 
 import type { AuthContext } from '../auth/types.js';
+import { createLogger } from '../util/logger.js';
 import { chunkText } from './chunking-service.js';
 import {
   createEmbeddingService,
@@ -22,6 +24,12 @@ type EnrichmentWorkerOptions = {
   embeddingService?: EmbeddingService;
   extractionEnabled?: boolean;
   callLlm?: ((prompt: string) => Promise<string>) | undefined;
+  logger?: Logger;
+  autoCreate?: {
+    enabled: boolean;
+    types: readonly string[];
+    minConfidence: number;
+  };
 };
 
 async function rollbackQuietly(client: PoolClient): Promise<void> {
@@ -32,12 +40,23 @@ async function rollbackQuietly(client: PoolClient): Promise<void> {
   }
 }
 
+const MAX_ERROR_LENGTH = 2000;
+
+function truncateErrorMessage(error: unknown): string {
+  const raw =
+    error instanceof Error ? error.message : String(error ?? 'unknown error');
+  return raw.length > MAX_ERROR_LENGTH
+    ? `${raw.slice(0, MAX_ERROR_LENGTH)}…`
+    : raw;
+}
+
 export function createEnrichmentWorker(options: EnrichmentWorkerOptions) {
   if (options.extractionEnabled && !options.callLlm) {
     throw new Error('callLlm is required when extractionEnabled is true');
   }
 
   const embeddingService = options.embeddingService ?? createEmbeddingService();
+  const logger = options.logger ?? createLogger('info');
 
   async function hasPendingEnrichment(): Promise<boolean> {
     const result = await options.pool.query(
@@ -139,13 +158,16 @@ export function createEnrichmentWorker(options: EnrichmentWorkerOptions) {
               UPDATE entities
               SET enrichment_status = 'completed',
                   enrichment_attempts = 0,
-                  extraction_status = 'pending'
+                  enrichment_error = NULL,
+                  extraction_status = 'pending',
+                  extraction_error = NULL
               WHERE id = $1
             `
           : `
               UPDATE entities
               SET enrichment_status = 'completed',
-                  enrichment_attempts = 0
+                  enrichment_attempts = 0,
+                  enrichment_error = NULL
               WHERE id = $1
             `,
         [entity.id]
@@ -160,14 +182,17 @@ export function createEnrichmentWorker(options: EnrichmentWorkerOptions) {
         throw error;
       }
 
+      logger.warn({ err: error, entityId: entity.id }, 'enrichment failed');
+
       await options.pool.query(
         `
           UPDATE entities
           SET enrichment_status = 'failed',
-              enrichment_attempts = enrichment_attempts + 1
+              enrichment_attempts = enrichment_attempts + 1,
+              enrichment_error = $2
           WHERE id = $1
         `,
-        [entity.id]
+        [entity.id, truncateErrorMessage(error)]
       );
 
       return true;
@@ -219,16 +244,23 @@ export function createEnrichmentWorker(options: EnrichmentWorkerOptions) {
             entity.id,
             entity.type,
             entity.content,
-            options.callLlm ? { callLlm: options.callLlm } : {}
+            {
+              ...(options.callLlm ? { callLlm: options.callLlm } : {}),
+              ...(options.autoCreate ? { autoCreate: options.autoCreate } : {})
+            }
           );
           await options.pool.query(
-            "UPDATE entities SET extraction_status = 'completed' WHERE id = $1",
+            "UPDATE entities SET extraction_status = 'completed', extraction_error = NULL WHERE id = $1",
             [entity.id]
           );
-        } catch {
+        } catch (error) {
+          logger.warn(
+            { err: error, entityId: entity.id },
+            'extraction failed'
+          );
           await options.pool.query(
-            "UPDATE entities SET extraction_status = 'failed' WHERE id = $1",
-            [entity.id]
+            "UPDATE entities SET extraction_status = 'failed', extraction_error = $2 WHERE id = $1",
+            [entity.id, truncateErrorMessage(error)]
           );
         } finally {
           await lockClient

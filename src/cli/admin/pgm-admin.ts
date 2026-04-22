@@ -522,6 +522,253 @@ program
   });
 
 program
+  .command('reextract')
+  .description('Mark entities for re-extraction (knowledge-graph edges + tags)')
+  .option('--all', 're-extract all entities with content')
+  .option('--type <type>', 're-extract entities of this type only')
+  .option(
+    '--clean-edges',
+    "delete existing LLM-extracted edges (source='llm-extraction') for the in-scope entities before re-extraction — gives a clean slate rather than appending alongside old edges"
+  )
+  .action(async (options, command) => {
+    const json = isJsonMode(command);
+
+    if (!options.all && !options.type) {
+      await handleCliFailure(
+        new Error('Specify --all or --type <type> to confirm which entities to re-extract'),
+        json
+      );
+      return;
+    }
+
+    await runWithPool(json, async (pool) => {
+      const client = await pool.connect();
+      try {
+        await client.query('BEGIN');
+
+        const conditions = ['content IS NOT NULL'];
+        const params: unknown[] = [];
+
+        if (options.type) {
+          params.push(options.type);
+          conditions.push(`type = $${params.length}`);
+        }
+
+        const whereClause = conditions.join(' AND ');
+
+        let deletedEdges = 0;
+        if (options.cleanEdges) {
+          const deleteResult = await client.query(
+            `DELETE FROM edges
+             WHERE source = 'llm-extraction'
+               AND source_id IN (SELECT id FROM entities WHERE ${whereClause})`,
+            params
+          );
+          deletedEdges = deleteResult.rowCount ?? 0;
+        }
+
+        const updateResult = await client.query(
+          `UPDATE entities
+           SET extraction_status = 'pending',
+               extraction_error = NULL
+           WHERE ${whereClause}`,
+          params
+        );
+
+        await client.query('COMMIT');
+
+        const markedCount = updateResult.rowCount ?? 0;
+
+        await appendAuditEntry(pool, {
+          operation: 'reextract.start',
+          details: {
+            markedCount,
+            deletedEdges,
+            type: options.type ?? 'all',
+            cleanEdges: Boolean(options.cleanEdges)
+          }
+        });
+
+        return json
+          ? { markedCount, deletedEdges }
+          : [
+              `Marked ${markedCount} entities for re-extraction${
+                options.cleanEdges ? ` (deleted ${deletedEdges} prior edges)` : ''
+              }`
+            ];
+      } catch (error) {
+        await client.query('ROLLBACK');
+        throw error;
+      } finally {
+        client.release();
+      }
+    });
+  });
+
+program
+  .command('prune-edges')
+  .description('Delete edges below a confidence threshold (default scope: source=llm-extraction)')
+  .requiredOption('--below <threshold>', 'prune edges with confidence strictly below this value (0-1)')
+  .option('--source <source>', "only prune edges with this source (default 'llm-extraction', use 'any' to include all)", 'llm-extraction')
+  .option('--relation <relation>', 'only prune edges with this relation')
+  .option('--dry-run', 'report what would be pruned without deleting')
+  .action(async (options, command) => {
+    const json = isJsonMode(command);
+
+    const threshold = Number(options.below);
+    if (!Number.isFinite(threshold) || threshold < 0 || threshold > 1) {
+      await handleCliFailure(
+        new Error('--below must be a number in [0, 1]'),
+        json
+      );
+      return;
+    }
+
+    await runWithPool(json, async (pool) => {
+      const conditions: string[] = ['confidence < $1'];
+      const params: unknown[] = [threshold];
+
+      if (options.source && options.source !== 'any') {
+        params.push(options.source);
+        conditions.push(`source = $${params.length}`);
+      }
+
+      if (options.relation) {
+        params.push(options.relation);
+        conditions.push(`relation = $${params.length}`);
+      }
+
+      const whereClause = conditions.join(' AND ');
+
+      if (options.dryRun) {
+        const countResult = await pool.query<{ count: string }>(
+          `SELECT count(*)::text AS count FROM edges WHERE ${whereClause}`,
+          params
+        );
+        const wouldDelete = Number(countResult.rows[0]?.count ?? '0');
+        return json
+          ? { wouldDelete, threshold, source: options.source, relation: options.relation ?? null, dryRun: true }
+          : [`Would delete ${wouldDelete} edges below confidence ${threshold}`];
+      }
+
+      const deleteResult = await pool.query(
+        `DELETE FROM edges WHERE ${whereClause}`,
+        params
+      );
+      const deleted = deleteResult.rowCount ?? 0;
+
+      await appendAuditEntry(pool, {
+        operation: 'edges.prune',
+        details: {
+          deleted,
+          threshold,
+          source: options.source,
+          relation: options.relation ?? null
+        }
+      });
+
+      return json
+        ? { deleted, threshold, source: options.source, relation: options.relation ?? null }
+        : [`Deleted ${deleted} edges below confidence ${threshold}`];
+    });
+  });
+
+program
+  .command('validate-edges')
+  .description('Use the configured extraction LLM to validate edges and remove those it judges invalid')
+  .option('--source <source>', "only validate edges with this source (default 'llm-extraction', 'any' for all)", 'llm-extraction')
+  .option('--limit <n>', 'maximum edges to validate in this run (default 100)', '100')
+  .option('--min-confidence <value>', 'remove edges the LLM validates below this confidence (default 0.4)', '0.4')
+  .option('--skip-validated-days <n>', 'skip edges validated within the last N days (default 7)', '7')
+  .option('--force', 'revalidate edges regardless of last_validated_at metadata')
+  .option('--dry-run', 'report what would be removed without deleting or marking edges')
+  .action(async (options, command) => {
+    const json = isJsonMode(command);
+
+    const limit = Number.parseInt(options.limit, 10);
+    const minConfidence = Number(options.minConfidence);
+    const skipDays = Number.parseInt(options.skipValidatedDays, 10);
+
+    if (!Number.isFinite(limit) || limit <= 0) {
+      await handleCliFailure(new Error('--limit must be a positive integer'), json);
+      return;
+    }
+    if (!Number.isFinite(minConfidence) || minConfidence < 0 || minConfidence > 1) {
+      await handleCliFailure(
+        new Error('--min-confidence must be a number in [0, 1]'),
+        json
+      );
+      return;
+    }
+    if (!Number.isFinite(skipDays) || skipDays < 0) {
+      await handleCliFailure(
+        new Error('--skip-validated-days must be a non-negative integer'),
+        json
+      );
+      return;
+    }
+
+    const config = loadConfig();
+    if (!config.EXTRACTION_ENABLED) {
+      await handleCliFailure(
+        new Error(
+          'EXTRACTION_ENABLED is not set — edge validation requires an extraction LLM. Set EXTRACTION_ENABLED=true and the provider credentials.'
+        ),
+        json
+      );
+      return;
+    }
+
+    const { createLlmProvider } = await import('../../services/llm-provider.js');
+    const { createLogger } = await import('../../util/logger.js');
+    const { validateEdgeBatch } = await import(
+      '../../services/edge-validation-service.js'
+    );
+
+    const callLlm = createLlmProvider({
+      provider: config.EXTRACTION_PROVIDER,
+      model: config.EXTRACTION_MODEL,
+      openaiApiKey: config.OPENAI_API_KEY,
+      anthropicApiKey: config.ANTHROPIC_API_KEY,
+      ollamaBaseUrl: config.OLLAMA_BASE_URL,
+      ollamaApiKey: config.OLLAMA_API_KEY
+    });
+    const logger = createLogger(config.LOG_LEVEL);
+
+    await runWithPool(json, async (pool) => {
+      const result = await validateEdgeBatch(pool, callLlm, {
+        source: options.source,
+        limit,
+        minConfidence,
+        skipValidatedDays: skipDays,
+        force: Boolean(options.force),
+        dryRun: Boolean(options.dryRun),
+        logger
+      });
+
+      if (!options.dryRun) {
+        await appendAuditEntry(pool, {
+          operation: 'edges.validate',
+          details: {
+            ...result,
+            minConfidence,
+            source: options.source,
+            limit,
+            skipValidatedDays: skipDays,
+            force: Boolean(options.force)
+          }
+        });
+      }
+
+      return json
+        ? { ...result, dryRun: Boolean(options.dryRun) }
+        : [
+            `Validated ${result.checked} edges (${result.kept} kept, ${result.removed} ${options.dryRun ? 'would be removed' : 'removed'}, ${result.skipped} skipped, ${result.errored} errored)`
+          ];
+    });
+  });
+
+program
   .command('stats')
   .description('Show system stats')
   .action(async (_options, command) => {

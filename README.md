@@ -257,11 +257,29 @@ See [`specs/002-local-embeddings/quickstart.md`](specs/002-local-embeddings/quic
 
 | Variable              | Required                | Default                  | Description                                                                                                       |
 | --------------------- | ----------------------- | ------------------------ | ----------------------------------------------------------------------------------------------------------------- |
-| `EXTRACTION_ENABLED`  | no                      | `false`                  | Enable LLM relationship extraction                                                                                |
-| `EXTRACTION_PROVIDER` | no                      | `openai`                 | LLM provider: `openai`, `anthropic`, or `ollama`                                                                  |
-| `EXTRACTION_MODEL`    | no                      | per-provider             | Model name (defaults: `gpt-4o-mini` for OpenAI, `claude-haiku-4-5-20251001` for Anthropic, `llama3.2` for Ollama) |
-| `ANTHROPIC_API_KEY`   | when provider=anthropic |                          | Anthropic API key                                                                                                 |
-| `OLLAMA_BASE_URL`     | no                      | `http://localhost:11434` | Ollama server URL                                                                                                 |
+| `EXTRACTION_ENABLED`                     | no                      | `false`                         | Enable LLM relationship extraction                                                                                |
+| `EXTRACTION_PROVIDER`                    | no                      | `openai`                        | LLM provider: `openai`, `anthropic`, or `ollama`                                                                  |
+| `EXTRACTION_MODEL`                       | no                      | per-provider                    | Model name (defaults: `gpt-4o-mini` for OpenAI, `claude-haiku-4-5-20251001` for Anthropic, `llama3.2` for Ollama) |
+| `EXTRACTION_AUTO_CREATE_ENTITIES`        | no                      | `false`                         | When true, extraction creates stub entities for referenced targets that don't yet exist (e.g. a person named in a document gets a `person` entity automatically). Tagged `auto-created`; metadata records the originating document. |
+| `EXTRACTION_AUTO_CREATE_TYPES`           | no                      | `person,project,interaction`    | Comma-separated list of entity types eligible for auto-creation. `document`, `task`, `memory` are intentionally excluded from the default to keep those user-authored. |
+| `EXTRACTION_AUTO_CREATE_MIN_CONFIDENCE`  | no                      | `0.7`                           | Minimum per-extraction confidence (0–1) required to auto-create an entity. Raise to cut noise, lower for a denser graph. |
+| `ANTHROPIC_API_KEY`                      | when provider=anthropic |                                 | Anthropic API key                                                                                                 |
+| `OLLAMA_BASE_URL`                        | no                      | `http://localhost:11434`        | Ollama server URL                                                                                                 |
+
+**Auto-created entities**: when `EXTRACTION_AUTO_CREATE_ENTITIES=true`,
+entities that didn't exist before a document mentioned them are inserted
+with `content` = the extracted name, `tags` including `auto-created`, and
+`metadata.auto_created_by = 'llm-extraction'` plus
+`metadata.source_entity_id` pointing at the document that caused the
+creation. They enter the normal embedding queue so they become
+searchable. To review or clean them up:
+
+```bash
+pgm list --tags auto-created --type person
+# or wholesale prune:
+docker compose exec postgres psql -U postgram -d postgram -c \
+  "DELETE FROM entities WHERE 'auto-created' = ANY(tags);"
+```
 
 ### CLI
 
@@ -381,6 +399,25 @@ capped at ~50 files or ~4 MB, whichever comes first.
 - `DELETE /api/edges/:id` — delete edge
 - `GET /api/entities/:id/edges` — list edges for entity
 - `GET /api/entities/:id/graph` — expand graph neighborhood
+
+### Queue / enrichment
+
+- `GET /api/queue` — enrichment + extraction queue status.
+  Pass `?include_failures=true` (optionally `&failure_limit=N`, default 20,
+  max 100) to also receive the most recent failed entities with their
+  error messages, e.g.:
+
+  ```json
+  {
+    "embedding": {"pending": 0, "completed": 120, "failed": 0, "retry_eligible": 0, "oldest_pending_secs": null},
+    "extraction": {"pending": 2, "completed": 98, "failed": 3},
+    "failures": [
+      {"id": "…", "type": "document", "kind": "extraction",
+       "error": "llm context exceeded", "path": "notes/long.md",
+       "updatedAt": "2026-04-22T10:12:33Z"}
+    ]
+  }
+  ```
 
 All `/api/*` routes require `Authorization: Bearer <api-key>`.
 
@@ -519,7 +556,30 @@ Main commands:
 - `key create`, `key list`, `key revoke`
 - `audit` — query audit logs
 - `model list`, `model set-active`
-- `reembed --all` — mark entities for re-embedding
+- `reembed --all` — mark entities for re-embedding (optionally
+  `--type <type>`; pair with `--model <id>` to switch the active embedding
+  model in the same transaction)
+- `reextract --all` — reset `extraction_status = 'pending'` and clear any
+  stored `extraction_error` so the worker retries extraction (e.g. after
+  switching to a better LLM). Accepts `--type <type>` and `--clean-edges`
+  (deletes existing `source='llm-extraction'` edges for the in-scope
+  entities before re-extraction, giving a clean-slate "redo" rather than
+  appending alongside old edges). User-created edges with a different
+  `source` are never touched.
+- `prune-edges --below <threshold>` — delete edges with `confidence` below
+  the threshold. Scoped to `source='llm-extraction'` by default; pass
+  `--source any` to include all, or `--source <name>` for a specific one.
+  Supports `--relation <name>` and `--dry-run` for a safe preview.
+- `validate-edges` — run an LLM-as-judge quality pass. For each
+  `source='llm-extraction'` edge (configurable via `--source`), asks the
+  configured extraction LLM whether the relationship is supported by the
+  source content; removes edges it judges invalid or below
+  `--min-confidence` (default `0.4`). Tracks `last_validated_at` in edge
+  metadata and skips edges validated within `--skip-validated-days`
+  (default `7`) — run as a maintenance cron without redoing work. Flags:
+  `--limit <n>` (default 100), `--force`, `--dry-run`. Requires
+  `EXTRACTION_ENABLED=true` and the usual `EXTRACTION_PROVIDER` /
+  `EXTRACTION_MODEL` env vars; costs ≈ one LLM call per edge.
 - `stats` — entity counts, chunk count, DB size
 - `embeddings migrate` — switch embedding dimensions (see [`specs/002-local-embeddings/quickstart.md`](specs/002-local-embeddings/quickstart.md))
 

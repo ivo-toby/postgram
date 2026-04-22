@@ -73,4 +73,212 @@ describe('extraction-service', () => {
     expect(edges._unsafeUnwrap()).toHaveLength(2);
     expect(edges._unsafeUnwrap().map((e) => e.relation).sort()).toEqual(['involves', 'part_of']);
   }, 120_000);
+
+  describe('auto-create entities', () => {
+    it('skips missing targets when auto-create is disabled (default)', async () => {
+      if (!database) throw new Error('test database not initialized');
+      const auth = makeAuthContext();
+
+      const source = (await storeEntity(database.pool, auth, {
+        type: 'memory',
+        content: 'Alice is working on Project Alpha'
+      }))._unsafeUnwrap();
+
+      const mockLlm = () =>
+        Promise.resolve(
+          JSON.stringify([
+            { target_name: 'Alice', target_type: 'person', relation: 'involves', confidence: 0.95 }
+          ])
+        );
+
+      const linked = await extractAndLinkRelationships(
+        database.pool,
+        auth,
+        source.id,
+        source.type,
+        source.content!,
+        { callLlm: mockLlm }
+      );
+      expect(linked).toBe(0);
+
+      const count = await database.pool.query<{ count: string }>(
+        "SELECT count(*)::text FROM entities WHERE type = 'person'"
+      );
+      expect(Number(count.rows[0]?.count)).toBe(0);
+    }, 120_000);
+
+    it('creates stub entity with provenance metadata and tag when enabled', async () => {
+      if (!database) throw new Error('test database not initialized');
+      const auth = makeAuthContext();
+
+      const source = (await storeEntity(database.pool, auth, {
+        type: 'memory',
+        content: 'Alice is working on Project Alpha'
+      }))._unsafeUnwrap();
+
+      const mockLlm = () =>
+        Promise.resolve(
+          JSON.stringify([
+            { target_name: 'Alice', target_type: 'person', relation: 'involves', confidence: 0.95 }
+          ])
+        );
+
+      const linked = await extractAndLinkRelationships(
+        database.pool,
+        auth,
+        source.id,
+        source.type,
+        source.content!,
+        {
+          callLlm: mockLlm,
+          autoCreate: {
+            enabled: true,
+            types: ['person', 'project', 'interaction'],
+            minConfidence: 0.7
+          }
+        }
+      );
+      expect(linked).toBe(1);
+
+      const rows = await database.pool.query<{
+        type: string;
+        content: string | null;
+        metadata: Record<string, unknown>;
+        tags: string[];
+        enrichment_status: string;
+      }>(
+        `SELECT type, content, metadata, tags, enrichment_status
+         FROM entities WHERE type = 'person'`
+      );
+      expect(rows.rows).toHaveLength(1);
+      const created = rows.rows[0]!;
+      expect(created.content).toBe('Alice');
+      expect(created.metadata).toMatchObject({
+        title: 'Alice',
+        auto_created_by: 'llm-extraction',
+        source_entity_id: source.id
+      });
+      expect(created.tags).toContain('auto-created');
+      expect(created.enrichment_status).toBe('pending');
+    }, 120_000);
+
+    it('skips auto-create below min confidence', async () => {
+      if (!database) throw new Error('test database not initialized');
+      const auth = makeAuthContext();
+
+      const source = (await storeEntity(database.pool, auth, {
+        type: 'memory',
+        content: 'Alice might be involved'
+      }))._unsafeUnwrap();
+
+      const mockLlm = () =>
+        Promise.resolve(
+          JSON.stringify([
+            { target_name: 'Alice', target_type: 'person', relation: 'involves', confidence: 0.5 }
+          ])
+        );
+
+      const linked = await extractAndLinkRelationships(
+        database.pool,
+        auth,
+        source.id,
+        source.type,
+        source.content!,
+        {
+          callLlm: mockLlm,
+          autoCreate: {
+            enabled: true,
+            types: ['person', 'project', 'interaction'],
+            minConfidence: 0.7
+          }
+        }
+      );
+      expect(linked).toBe(0);
+
+      const count = await database.pool.query<{ count: string }>(
+        "SELECT count(*)::text FROM entities WHERE type = 'person'"
+      );
+      expect(Number(count.rows[0]?.count)).toBe(0);
+    }, 120_000);
+
+    it('skips types not in the allowlist', async () => {
+      if (!database) throw new Error('test database not initialized');
+      const auth = makeAuthContext();
+
+      const source = (await storeEntity(database.pool, auth, {
+        type: 'memory',
+        content: 'Mentions some task.md'
+      }))._unsafeUnwrap();
+
+      const mockLlm = () =>
+        Promise.resolve(
+          JSON.stringify([
+            { target_name: 'Run tests', target_type: 'task', relation: 'mentioned_in', confidence: 0.95 }
+          ])
+        );
+
+      const linked = await extractAndLinkRelationships(
+        database.pool,
+        auth,
+        source.id,
+        source.type,
+        source.content!,
+        {
+          callLlm: mockLlm,
+          autoCreate: {
+            enabled: true,
+            types: ['person', 'project', 'interaction'], // task not included
+            minConfidence: 0.7
+          }
+        }
+      );
+      expect(linked).toBe(0);
+
+      const count = await database.pool.query<{ count: string }>(
+        "SELECT count(*)::text FROM entities WHERE type = 'task'"
+      );
+      expect(Number(count.rows[0]?.count)).toBe(0);
+    }, 120_000);
+
+    it('dedupes repeated mentions within a single extraction pass', async () => {
+      if (!database) throw new Error('test database not initialized');
+      const auth = makeAuthContext();
+
+      const source = (await storeEntity(database.pool, auth, {
+        type: 'memory',
+        content: 'Alice reviewed Alice_s draft and Alice approved it'
+      }))._unsafeUnwrap();
+
+      const mockLlm = () =>
+        Promise.resolve(
+          JSON.stringify([
+            { target_name: 'Alice', target_type: 'person', relation: 'involves',     confidence: 0.95 },
+            { target_name: 'Alice', target_type: 'person', relation: 'assigned_to',  confidence: 0.9 },
+            { target_name: 'Alice', target_type: 'person', relation: 'mentioned_in', confidence: 0.85 }
+          ])
+        );
+
+      const linked = await extractAndLinkRelationships(
+        database.pool,
+        auth,
+        source.id,
+        source.type,
+        source.content!,
+        {
+          callLlm: mockLlm,
+          autoCreate: {
+            enabled: true,
+            types: ['person', 'project', 'interaction'],
+            minConfidence: 0.7
+          }
+        }
+      );
+      expect(linked).toBe(3);
+
+      const count = await database.pool.query<{ count: string }>(
+        "SELECT count(*)::text FROM entities WHERE type = 'person'"
+      );
+      expect(Number(count.rows[0]?.count)).toBe(1);
+    }, 120_000);
+  });
 });

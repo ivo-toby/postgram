@@ -7,6 +7,7 @@ import type { EmbeddingService } from '../services/embedding-service.js';
 import { createEdge, deleteEdge, listEdges, expandGraph } from '../services/edge-service.js';
 import { getEntityEmbeddings } from '../services/embedding-query-service.js';
 import { listEntities, recallEntity, softDeleteEntity, storeEntity, updateEntity } from '../services/entity-service.js';
+import { getQueueStatus } from '../services/queue-service.js';
 import { searchEntities } from '../services/search-service.js';
 import {
   syncManifest,
@@ -463,54 +464,17 @@ export function registerRestRoutes(
   });
 
   app.get('/api/queue', async (c) => {
-    type QueueRow = {
-      embedding_pending: string;
-      embedding_completed: string;
-      embedding_failed: string;
-      embedding_retry_eligible: string;
-      oldest_pending_secs: string | null;
-      extraction_pending: string;
-      extraction_completed: string;
-      extraction_failed: string;
-      extraction_any: string;
-    };
+    const auth = c.get('auth');
+    const includeFailures =
+      (c.req.query('include_failures') ?? '').toLowerCase() === 'true';
+    const failureLimitParam = c.req.query('failure_limit');
+    const failureLimit = Math.max(
+      1,
+      Math.min(100, Number.parseInt(failureLimitParam ?? '20', 10) || 20)
+    );
 
-    const result = await pool.query<QueueRow>(`
-      SELECT
-        COUNT(*) FILTER (WHERE enrichment_status = 'pending')::text                                                                         AS embedding_pending,
-        COUNT(*) FILTER (WHERE enrichment_status = 'completed')::text                                                                       AS embedding_completed,
-        COUNT(*) FILTER (WHERE enrichment_status = 'failed')::text                                                                          AS embedding_failed,
-        COUNT(*) FILTER (WHERE enrichment_status = 'failed' AND enrichment_attempts < 3 AND updated_at < now() - interval '5 minutes')::text AS embedding_retry_eligible,
-        EXTRACT(EPOCH FROM now() - MIN(updated_at) FILTER (WHERE enrichment_status = 'pending'))::text                                      AS oldest_pending_secs,
-        COUNT(*) FILTER (WHERE extraction_status = 'pending')::text                                                                         AS extraction_pending,
-        COUNT(*) FILTER (WHERE extraction_status = 'completed')::text                                                                       AS extraction_completed,
-        COUNT(*) FILTER (WHERE extraction_status = 'failed')::text                                                                          AS extraction_failed,
-        COUNT(*) FILTER (WHERE extraction_status IS NOT NULL)::text                                                                         AS extraction_any
-      FROM entities
-      WHERE content IS NOT NULL
-    `);
-
-    const row = result.rows[0];
-    const extractionEnabled = row ? Number(row.extraction_any) > 0 : false;
-
-    return c.json({
-      embedding: {
-        pending: Number(row?.embedding_pending ?? 0),
-        completed: Number(row?.embedding_completed ?? 0),
-        failed: Number(row?.embedding_failed ?? 0),
-        retry_eligible: Number(row?.embedding_retry_eligible ?? 0),
-        oldest_pending_secs: row?.oldest_pending_secs !== null && row?.oldest_pending_secs !== undefined
-          ? Math.round(Number(row.oldest_pending_secs))
-          : null
-      },
-      extraction: extractionEnabled
-        ? {
-            pending: Number(row?.extraction_pending ?? 0),
-            completed: Number(row?.extraction_completed ?? 0),
-            failed: Number(row?.extraction_failed ?? 0)
-          }
-        : null
-    });
+    const payload = await getQueueStatus(pool, auth, { includeFailures, failureLimit });
+    return c.json(payload);
   });
 
   app.post('/api/sync', async (c) => {

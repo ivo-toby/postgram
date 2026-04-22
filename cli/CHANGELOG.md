@@ -1,3 +1,16 @@
+## [1.9.0](https://github.com/ivo-toby/postgram/compare/cli-v1.8.0...cli-v1.9.0) (2026-04-22)
+
+### Features
+
+* **extraction:** graph maintenance + error visibility + auto-create ([32f5930](https://github.com/ivo-toby/postgram/commit/32f5930276fc61f39a2c55bc2aa16e28d4b5478c))
+
+### Bug Fixes
+
+* **extraction:** exclude auto-created entities from extraction queue ([c94e6b9](https://github.com/ivo-toby/postgram/commit/c94e6b9e0cbee5c1c0efb9c2b44c2af7e090e1f6))
+* **review:** address P1 + P2 Codex feedback on dce88e3 ([a07765d](https://github.com/ivo-toby/postgram/commit/a07765d3597d50b59a563bdb52f3df097d548579))
+* **review:** address P1 + P2 Codex feedback on PR [#17](https://github.com/ivo-toby/postgram/issues/17) ([89262b3](https://github.com/ivo-toby/postgram/commit/89262b35eda3c2d1ba95b1e24b083e005bb04dd8))
+* **review:** address remaining Codex P1s on PR [#17](https://github.com/ivo-toby/postgram/issues/17) ([dce88e3](https://github.com/ivo-toby/postgram/commit/dce88e331bb2ad85cd20403ddac209cef46c692c))
+
 ## [1.8.0](https://github.com/ivo-toby/postgram/compare/cli-v1.7.0...cli-v1.8.0) (2026-04-21)
 
 ### Features

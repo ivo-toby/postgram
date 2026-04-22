@@ -174,6 +174,7 @@ describe('MCP tools', () => {
         'delete',
         'expand',
         'link',
+        'queue',
         'recall',
         'search',
         'store',

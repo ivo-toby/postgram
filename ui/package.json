@@ -15,6 +15,7 @@
     "@react-three/drei": "^10.7.7",
     "@react-three/fiber": "^9.6.0",
     "@types/dagre": "^0.7.54",
+    "@uiw/react-md-editor": "^4.1.0",
     "dagre": "^0.8.5",
     "graphology": "^0.25.4",
     "graphology-layout": "^0.6.1",

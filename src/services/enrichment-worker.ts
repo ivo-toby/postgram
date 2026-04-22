@@ -17,6 +17,8 @@ type PendingEntityRow = {
 
 type PendingExtractionRow = PendingEntityRow & {
   type: string;
+  visibility: string;
+  owner: string | null;
 };
 
 type EnrichmentWorkerOptions = {
@@ -220,7 +222,7 @@ export function createEnrichmentWorker(options: EnrichmentWorkerOptions) {
     // for a per-entity advisory lock.
     const candidates = await options.pool.query<PendingExtractionRow>(
       `
-        SELECT id, content, type
+        SELECT id, content, type, visibility, owner
         FROM entities
         WHERE extraction_status = 'pending'
           AND content IS NOT NULL
@@ -248,9 +250,13 @@ export function createEnrichmentWorker(options: EnrichmentWorkerOptions) {
           await extractAndLinkRelationships(
             options.pool,
             extractionAuth,
-            entity.id,
-            entity.type,
-            entity.content,
+            {
+              id: entity.id,
+              type: entity.type,
+              content: entity.content,
+              visibility: entity.visibility,
+              owner: entity.owner
+            },
             {
               ...(options.callLlm ? { callLlm: options.callLlm } : {}),
               ...(options.autoCreate ? { autoCreate: options.autoCreate } : {})

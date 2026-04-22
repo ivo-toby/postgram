@@ -62,7 +62,15 @@ describe('extraction-service', () => {
     ]));
 
     const linked = await extractAndLinkRelationships(
-      database.pool, auth, source.id, source.type, source.content!,
+      database.pool,
+      auth,
+      {
+        id: source.id,
+        type: source.type,
+        content: source.content!,
+        visibility: source.visibility,
+        owner: source.owner
+      },
       { callLlm: mockLlm }
     );
 
@@ -94,9 +102,13 @@ describe('extraction-service', () => {
       const linked = await extractAndLinkRelationships(
         database.pool,
         auth,
-        source.id,
-        source.type,
-        source.content!,
+        {
+          id: source.id,
+          type: source.type,
+          content: source.content!,
+          visibility: source.visibility,
+          owner: source.owner
+        },
         { callLlm: mockLlm }
       );
       expect(linked).toBe(0);
@@ -126,9 +138,13 @@ describe('extraction-service', () => {
       const linked = await extractAndLinkRelationships(
         database.pool,
         auth,
-        source.id,
-        source.type,
-        source.content!,
+        {
+          id: source.id,
+          type: source.type,
+          content: source.content!,
+          visibility: source.visibility,
+          owner: source.owner
+        },
         {
           callLlm: mockLlm,
           autoCreate: {
@@ -181,9 +197,13 @@ describe('extraction-service', () => {
       const linked = await extractAndLinkRelationships(
         database.pool,
         auth,
-        source.id,
-        source.type,
-        source.content!,
+        {
+          id: source.id,
+          type: source.type,
+          content: source.content!,
+          visibility: source.visibility,
+          owner: source.owner
+        },
         {
           callLlm: mockLlm,
           autoCreate: {
@@ -220,9 +240,13 @@ describe('extraction-service', () => {
       const linked = await extractAndLinkRelationships(
         database.pool,
         auth,
-        source.id,
-        source.type,
-        source.content!,
+        {
+          id: source.id,
+          type: source.type,
+          content: source.content!,
+          visibility: source.visibility,
+          owner: source.owner
+        },
         {
           callLlm: mockLlm,
           autoCreate: {
@@ -238,6 +262,54 @@ describe('extraction-service', () => {
         "SELECT count(*)::text FROM entities WHERE type = 'task'"
       );
       expect(Number(count.rows[0]?.count)).toBe(0);
+    }, 120_000);
+
+    it('inherits visibility and owner from the source entity', async () => {
+      if (!database) throw new Error('test database not initialized');
+      const auth = makeAuthContext();
+
+      const source = (await storeEntity(database.pool, auth, {
+        type: 'memory',
+        content: '1:1 notes mentioning Alice',
+        visibility: 'personal',
+        owner: 'ivo'
+      }))._unsafeUnwrap();
+
+      const mockLlm = () =>
+        Promise.resolve(
+          JSON.stringify([
+            { target_name: 'Alice', target_type: 'person', relation: 'involves', confidence: 0.95 }
+          ])
+        );
+
+      await extractAndLinkRelationships(
+        database.pool,
+        auth,
+        {
+          id: source.id,
+          type: source.type,
+          content: source.content!,
+          visibility: source.visibility,
+          owner: source.owner
+        },
+        {
+          callLlm: mockLlm,
+          autoCreate: {
+            enabled: true,
+            types: ['person', 'project', 'interaction'],
+            minConfidence: 0.7
+          }
+        }
+      );
+
+      const rows = await database.pool.query<{
+        visibility: string;
+        owner: string | null;
+      }>(
+        "SELECT visibility, owner FROM entities WHERE type = 'person'"
+      );
+      expect(rows.rows).toHaveLength(1);
+      expect(rows.rows[0]).toEqual({ visibility: 'personal', owner: 'ivo' });
     }, 120_000);
 
     it('dedupes repeated mentions within a single extraction pass', async () => {
@@ -261,9 +333,13 @@ describe('extraction-service', () => {
       const linked = await extractAndLinkRelationships(
         database.pool,
         auth,
-        source.id,
-        source.type,
-        source.content!,
+        {
+          id: source.id,
+          type: source.type,
+          content: source.content!,
+          visibility: source.visibility,
+          owner: source.owner
+        },
         {
           callLlm: mockLlm,
           autoCreate: {

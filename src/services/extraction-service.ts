@@ -83,15 +83,21 @@ type ExtractionOptions = {
   autoCreate?: AutoCreateOptions | undefined;
 };
 
+export type ExtractionSource = {
+  id: string;
+  type: string;
+  content: string;
+  visibility: string;
+  owner: string | null;
+};
+
 export async function extractAndLinkRelationships(
   pool: Pool,
   auth: AuthContext,
-  entityId: string,
-  entityType: string,
-  content: string,
+  source: ExtractionSource,
   options: ExtractionOptions = {}
 ): Promise<number> {
-  const prompt = buildExtractionPrompt(entityType, content);
+  const prompt = buildExtractionPrompt(source.type, source.content);
   if (!options.callLlm) {
     throw new Error('callLlm is required — configure an extraction provider');
   }
@@ -124,7 +130,7 @@ export async function extractAndLinkRelationships(
           created_at DESC
         LIMIT 1
       `,
-      [entityId, escapedName, `%${escapedName}%`]
+      [source.id, escapedName, `%${escapedName}%`]
     );
 
     let matchedEntityId = matches.rows[0]?.id;
@@ -138,10 +144,14 @@ export async function extractAndLinkRelationships(
         continue;
       }
 
+      // Inherit visibility + owner from the source entity so that references
+      // extracted from a personal/work note do not leak into globally visible
+      // stubs. `shared` source → `shared` stub, `personal` source owned by
+      // Ivo → `personal` stub owned by Ivo.
       const created = await pool.query<{ id: string }>(
         `
-          INSERT INTO entities (type, content, visibility, enrichment_status, metadata, tags)
-          VALUES ($1, $2, 'shared', 'pending', $3, ARRAY['auto-created'])
+          INSERT INTO entities (type, content, visibility, owner, enrichment_status, metadata, tags)
+          VALUES ($1, $2, $4, $5, 'pending', $3, ARRAY['auto-created'])
           RETURNING id
         `,
         [
@@ -150,8 +160,10 @@ export async function extractAndLinkRelationships(
           JSON.stringify({
             title: extraction.targetName,
             auto_created_by: 'llm-extraction',
-            source_entity_id: entityId
-          })
+            source_entity_id: source.id
+          }),
+          source.visibility,
+          source.owner
         ]
       );
       matchedEntityId = created.rows[0]?.id;
@@ -159,7 +171,7 @@ export async function extractAndLinkRelationships(
     }
 
     const result = await createEdge(pool, auth, {
-      sourceId: entityId,
+      sourceId: source.id,
       targetId: matchedEntityId,
       relation: extraction.relation,
       confidence: extraction.confidence,

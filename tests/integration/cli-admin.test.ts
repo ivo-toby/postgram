@@ -461,6 +461,25 @@ describe('pgm-admin CLI', () => {
     expect(byId[active.id]?.extraction_status).toBe('pending');
     expect(byId[archived.id]?.extraction_status).toBe('completed');
     expect(byId[autoStub.rows[0]!.id]?.extraction_status).toBeNull();
+
+    // --include-auto-created re-queues auto-created stubs (archived still skipped).
+    const forced = await runAdmin(
+      ['reextract', '--all', '--include-auto-created', '--json'],
+      { DATABASE_URL: databaseUrl }
+    );
+    const forcedBody = parseJson(forced.stdout) as { markedCount: number };
+    expect(forcedBody.markedCount).toBe(2);
+
+    const after = await database.pool.query<{
+      id: string;
+      extraction_status: string | null;
+    }>(
+      'SELECT id, extraction_status FROM entities WHERE id = ANY($1)',
+      [[archived.id, autoStub.rows[0]!.id]]
+    );
+    const afterById = Object.fromEntries(after.rows.map((r) => [r.id, r]));
+    expect(afterById[archived.id]?.extraction_status).toBe('completed');
+    expect(afterById[autoStub.rows[0]!.id]?.extraction_status).toBe('pending');
   }, 120_000);
 
   it('reextract --clean-edges deletes prior llm-extraction edges', async () => {

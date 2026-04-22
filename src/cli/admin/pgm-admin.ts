@@ -530,6 +530,10 @@ program
     '--clean-edges',
     "delete existing LLM-extracted edges (source='llm-extraction') for the in-scope entities before re-extraction — gives a clean slate rather than appending alongside old edges"
   )
+  .option(
+    '--include-auto-created',
+    "also re-queue entities tagged 'auto-created' (excluded by default because their only content is a bare name, which the LLM free-associates into new stubs and loops). Only use if you've manually enriched those entities' content."
+  )
   .action(async (options, command) => {
     const json = isJsonMode(command);
 
@@ -550,12 +554,15 @@ program
         // re-extracting them would cause pointless LLM calls and, with
         // auto-create enabled, spawn new stubs from data the user already
         // decided to retire. Auto-created stubs (content = just a name)
-        // loop the extraction pipeline and are also excluded.
+        // loop the extraction pipeline and are excluded by default; pass
+        // --include-auto-created to override.
         const conditions = [
           'content IS NOT NULL',
-          "status IS DISTINCT FROM 'archived'",
-          "NOT ('auto-created' = ANY(tags))"
+          "status IS DISTINCT FROM 'archived'"
         ];
+        if (!options.includeAutoCreated) {
+          conditions.push("NOT ('auto-created' = ANY(tags))");
+        }
         const params: unknown[] = [];
 
         if (options.type) {
@@ -594,7 +601,8 @@ program
             markedCount,
             deletedEdges,
             type: options.type ?? 'all',
-            cleanEdges: Boolean(options.cleanEdges)
+            cleanEdges: Boolean(options.cleanEdges),
+            includeAutoCreated: Boolean(options.includeAutoCreated)
           }
         });
 

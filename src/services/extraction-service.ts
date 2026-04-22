@@ -72,19 +72,32 @@ Only include clear, explicit relationships. Do not infer or speculate.
 Return [] if no relationships are found.`;
 }
 
+type AutoCreateOptions = {
+  enabled: boolean;
+  types: readonly string[];
+  minConfidence: number;
+};
+
 type ExtractionOptions = {
   callLlm?: ((prompt: string) => Promise<string>) | undefined;
+  autoCreate?: AutoCreateOptions | undefined;
+};
+
+export type ExtractionSource = {
+  id: string;
+  type: string;
+  content: string;
+  visibility: string;
+  owner: string | null;
 };
 
 export async function extractAndLinkRelationships(
   pool: Pool,
   auth: AuthContext,
-  entityId: string,
-  entityType: string,
-  content: string,
+  source: ExtractionSource,
   options: ExtractionOptions = {}
 ): Promise<number> {
-  const prompt = buildExtractionPrompt(entityType, content);
+  const prompt = buildExtractionPrompt(source.type, source.content);
   if (!options.callLlm) {
     throw new Error('callLlm is required — configure an extraction provider');
   }
@@ -94,6 +107,7 @@ export async function extractAndLinkRelationships(
   const extractions = parseExtractionResponse(response);
 
   let linked = 0;
+  const autoCreate = options.autoCreate;
 
   for (const extraction of extractions) {
     // Escape ILIKE wildcards (% and _) in the target name
@@ -116,15 +130,49 @@ export async function extractAndLinkRelationships(
           created_at DESC
         LIMIT 1
       `,
-      [entityId, escapedName, `%${escapedName}%`]
+      [source.id, escapedName, `%${escapedName}%`]
     );
 
-    const matchedEntity = matches.rows[0];
-    if (!matchedEntity) continue;
+    let matchedEntityId = matches.rows[0]?.id;
+
+    if (!matchedEntityId) {
+      if (
+        !autoCreate?.enabled ||
+        !autoCreate.types.includes(extraction.targetType) ||
+        extraction.confidence < autoCreate.minConfidence
+      ) {
+        continue;
+      }
+
+      // Inherit visibility + owner from the source entity so that references
+      // extracted from a personal/work note do not leak into globally visible
+      // stubs. `shared` source → `shared` stub, `personal` source owned by
+      // Ivo → `personal` stub owned by Ivo.
+      const created = await pool.query<{ id: string }>(
+        `
+          INSERT INTO entities (type, content, visibility, owner, enrichment_status, metadata, tags)
+          VALUES ($1, $2, $4, $5, 'pending', $3, ARRAY['auto-created'])
+          RETURNING id
+        `,
+        [
+          extraction.targetType,
+          extraction.targetName,
+          JSON.stringify({
+            title: extraction.targetName,
+            auto_created_by: 'llm-extraction',
+            source_entity_id: source.id
+          }),
+          source.visibility,
+          source.owner
+        ]
+      );
+      matchedEntityId = created.rows[0]?.id;
+      if (!matchedEntityId) continue;
+    }
 
     const result = await createEdge(pool, auth, {
-      sourceId: entityId,
-      targetId: matchedEntity.id,
+      sourceId: source.id,
+      targetId: matchedEntityId,
       relation: extraction.relation,
       confidence: extraction.confidence,
       source: 'llm-extraction'

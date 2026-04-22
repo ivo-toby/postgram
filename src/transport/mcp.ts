@@ -485,7 +485,7 @@ function createSessionServer(
       }
     },
     async ({ include_failures, failure_limit }) => {
-      const payload = await getQueueStatus(pool, {
+      const payload = await getQueueStatus(pool, auth, {
         includeFailures: Boolean(include_failures),
         ...(failure_limit !== undefined ? { failureLimit: failure_limit } : {})
       });

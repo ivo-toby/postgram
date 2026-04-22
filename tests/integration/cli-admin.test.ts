@@ -405,6 +405,64 @@ describe('pgm-admin CLI', () => {
     expect(auditRows.rows[0]?.operation).toBe('reextract.start');
   }, 120_000);
 
+  it('reextract skips archived and auto-created entities', async () => {
+    if (!database) {
+      throw new Error('test database not initialized');
+    }
+
+    const databaseUrl = getDatabaseUrl(database);
+
+    const seededKey = (await createKey(database.pool, {
+      name: `scope-${crypto.randomUUID()}`,
+      scopes: ['read', 'write', 'delete']
+    }))._unsafeUnwrap();
+
+    const active = (await storeEntity(database.pool, makeAuthContext(seededKey.record.id), {
+      type: 'memory',
+      content: 'normal entity that should be reextracted'
+    }))._unsafeUnwrap();
+    const archived = (await storeEntity(database.pool, makeAuthContext(seededKey.record.id), {
+      type: 'memory',
+      content: 'archived entity that should NOT be touched'
+    }))._unsafeUnwrap();
+    await database.pool.query(
+      "UPDATE entities SET status = 'archived', extraction_status = 'completed' WHERE id = $1",
+      [archived.id]
+    );
+
+    // Simulate an auto-created stub — should also be skipped to prevent loop.
+    const autoStub = await database.pool.query<{ id: string }>(
+      `INSERT INTO entities (type, content, visibility, enrichment_status, extraction_status, tags)
+       VALUES ('person', 'Alice', 'shared', 'completed', NULL, ARRAY['auto-created'])
+       RETURNING id`
+    );
+
+    // Ensure the active entity is in a post-extraction state so we can verify it resets.
+    await database.pool.query(
+      "UPDATE entities SET extraction_status = 'completed' WHERE id = $1",
+      [active.id]
+    );
+
+    const result = await runAdmin(
+      ['reextract', '--all', '--json'],
+      { DATABASE_URL: databaseUrl }
+    );
+    const body = parseJson(result.stdout) as { markedCount: number };
+    expect(body.markedCount).toBe(1);
+
+    const rows = await database.pool.query<{
+      id: string;
+      extraction_status: string | null;
+    }>(
+      'SELECT id, extraction_status FROM entities WHERE id = ANY($1)',
+      [[active.id, archived.id, autoStub.rows[0]!.id]]
+    );
+    const byId = Object.fromEntries(rows.rows.map((r) => [r.id, r]));
+    expect(byId[active.id]?.extraction_status).toBe('pending');
+    expect(byId[archived.id]?.extraction_status).toBe('completed');
+    expect(byId[autoStub.rows[0]!.id]?.extraction_status).toBeNull();
+  }, 120_000);
+
   it('reextract --clean-edges deletes prior llm-extraction edges', async () => {
     if (!database) {
       throw new Error('test database not initialized');

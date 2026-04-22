@@ -546,7 +546,16 @@ program
       try {
         await client.query('BEGIN');
 
-        const conditions = ['content IS NOT NULL'];
+        // Archived entities are explicitly out-of-scope for graph writes —
+        // re-extracting them would cause pointless LLM calls and, with
+        // auto-create enabled, spawn new stubs from data the user already
+        // decided to retire. Auto-created stubs (content = just a name)
+        // loop the extraction pipeline and are also excluded.
+        const conditions = [
+          'content IS NOT NULL',
+          "status IS DISTINCT FROM 'archived'",
+          "NOT ('auto-created' = ANY(tags))"
+        ];
         const params: unknown[] = [];
 
         if (options.type) {

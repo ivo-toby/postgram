@@ -464,6 +464,7 @@ export function registerRestRoutes(
   });
 
   app.get('/api/queue', async (c) => {
+    const auth = c.get('auth');
     const includeFailures =
       (c.req.query('include_failures') ?? '').toLowerCase() === 'true';
     const failureLimitParam = c.req.query('failure_limit');
@@ -472,7 +473,7 @@ export function registerRestRoutes(
       Math.min(100, Number.parseInt(failureLimitParam ?? '20', 10) || 20)
     );
 
-    const payload = await getQueueStatus(pool, { includeFailures, failureLimit });
+    const payload = await getQueueStatus(pool, auth, { includeFailures, failureLimit });
     return c.json(payload);
   });
 

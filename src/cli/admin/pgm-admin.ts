@@ -751,7 +751,8 @@ program
         openaiApiKey: config.OPENAI_API_KEY,
         anthropicApiKey: config.ANTHROPIC_API_KEY,
         ollamaBaseUrl: config.OLLAMA_BASE_URL,
-        ollamaApiKey: config.OLLAMA_API_KEY
+        ollamaApiKey: config.OLLAMA_API_KEY,
+        disableThinking: config.EXTRACTION_DISABLE_THINKING
       });
       logger = createLogger(config.LOG_LEVEL);
     } catch (error) {

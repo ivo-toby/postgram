@@ -241,7 +241,8 @@ export async function startServer(): Promise<{
       openaiApiKey: config.OPENAI_API_KEY,
       anthropicApiKey: config.ANTHROPIC_API_KEY,
       ollamaBaseUrl: config.OLLAMA_BASE_URL,
-      ollamaApiKey: config.OLLAMA_API_KEY
+      ollamaApiKey: config.OLLAMA_API_KEY,
+      disableThinking: config.EXTRACTION_DISABLE_THINKING
     });
     logger.info(
       { provider: config.EXTRACTION_PROVIDER, model: config.EXTRACTION_MODEL },

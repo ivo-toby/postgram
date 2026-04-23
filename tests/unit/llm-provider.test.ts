@@ -69,7 +69,7 @@ describe('createLlmProvider', () => {
         expect(result).toBe('[{"from":"A","to":"B","relation":"knows"}]');
       });
 
-      it('includes /no_think system message and chat_template_kwargs to disable Qwen3 reasoning', async () => {
+      it('sends all three reasoning-off hints by default (think:false + /no_think + enable_thinking:false)', async () => {
         (globalThis.fetch as unknown as ReturnType<typeof vi.fn>).mockResolvedValue(
           new Response(JSON.stringify({ message: { content: '[]' } }), { status: 200 })
         );
@@ -82,11 +82,36 @@ describe('createLlmProvider', () => {
         const call = (globalThis.fetch as unknown as ReturnType<typeof vi.fn>).mock.calls[0];
         const init = call?.[1] as RequestInit;
         const body = JSON.parse(init.body as string) as {
+          think?: boolean;
           messages: Array<{ role: string; content: string }>;
           chat_template_kwargs?: { enable_thinking?: boolean };
         };
         expect(body.messages[0]).toEqual({ role: 'system', content: '/no_think' });
         expect(body.chat_template_kwargs?.enable_thinking).toBe(false);
+        expect(body.think).toBe(false);
+      });
+
+      it('omits reasoning-off hints when disableThinking is false', async () => {
+        (globalThis.fetch as unknown as ReturnType<typeof vi.fn>).mockResolvedValue(
+          new Response(JSON.stringify({ message: { content: '[]' } }), { status: 200 })
+        );
+        const provider = createLlmProvider({
+          provider: 'ollama',
+          ollamaBaseUrl: 'http://ollama.local',
+          disableThinking: false
+        });
+        await provider('anything');
+
+        const call = (globalThis.fetch as unknown as ReturnType<typeof vi.fn>).mock.calls[0];
+        const init = call?.[1] as RequestInit;
+        const body = JSON.parse(init.body as string) as {
+          think?: boolean;
+          messages: Array<{ role: string; content: string }>;
+          chat_template_kwargs?: unknown;
+        };
+        expect(body.messages[0]).toEqual({ role: 'user', content: 'anything' });
+        expect(body.think).toBeUndefined();
+        expect(body.chat_template_kwargs).toBeUndefined();
       });
 
       it('parses OpenAI-shape response from llama.cpp Ollama emulation { choices: [{ message: { content } }] }', async () => {

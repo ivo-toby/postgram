@@ -1,3 +1,9 @@
+## [1.12.0](https://github.com/ivo-toby/postgram/compare/cli-v1.11.0...cli-v1.12.0) (2026-04-23)
+
+### Features
+
+* **extraction:** EXTRACTION_DISABLE_THINKING env + ollama think:false ([70ac069](https://github.com/ivo-toby/postgram/commit/70ac0698971bcb6a46dd5a6b281992b6ffc53354))
+
 ## [1.11.0](https://github.com/ivo-toby/postgram/compare/cli-v1.10.0...cli-v1.11.0) (2026-04-23)
 
 ### Features

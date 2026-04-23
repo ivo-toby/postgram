@@ -1,3 +1,9 @@
+## [1.11.0](https://github.com/ivo-toby/postgram/compare/cli-v1.10.0...cli-v1.11.0) (2026-04-23)
+
+### Features
+
+* **web-ui:** WYSIWYG editor, resizable sidebars, projector/graph UX fixes ([a7fed8c](https://github.com/ivo-toby/postgram/commit/a7fed8c2b154334f013eb30bbfdf0b86cf447e25))
+
 ## [1.10.0](https://github.com/ivo-toby/postgram/compare/cli-v1.9.0...cli-v1.10.0) (2026-04-23)
 
 ### Features

@@ -1,8 +1,16 @@
+import type { Pool } from 'pg';
 import { afterAll, beforeAll, beforeEach, describe, expect, it } from 'vitest';
+import { chunkText } from '../../src/services/chunking-service.js';
+import {
+  createEmbeddingService,
+  vectorToSql,
+  type EmbeddingService
+} from '../../src/services/embedding-service.js';
 import { extractAndLinkRelationships } from '../../src/services/extraction-service.js';
 import { storeEntity } from '../../src/services/entity-service.js';
 import { listEdges } from '../../src/services/edge-service.js';
 import type { AuthContext } from '../../src/auth/types.js';
+import type { Entity } from '../../src/types/entities.js';
 import {
   createTestDatabase, resetTestDatabase, seedApiKey, type TestDatabase
 } from '../helpers/postgres.js';
@@ -15,6 +23,48 @@ function makeAuthContext(): AuthContext {
     allowedTypes: null,
     allowedVisibility: ['personal', 'work', 'shared']
   };
+}
+
+// The extraction service now matches targets by vector similarity against
+// existing chunks. In production this is populated by the enrichment
+// worker; for tests we seed it directly so each `it` block stays focused
+// on the extraction behaviour rather than the full enrichment pipeline.
+async function seedChunksFor(
+  pool: Pool,
+  embeddingService: EmbeddingService,
+  entity: Pick<Entity, 'id' | 'content'>
+): Promise<void> {
+  const content = entity.content ?? '';
+  const drafts = chunkText(content);
+  if (drafts.length === 0) return;
+  const modelResult = await pool.query<{ id: string }>(
+    `SELECT id FROM embedding_models WHERE is_active = true LIMIT 1`
+  );
+  const modelId = modelResult.rows[0]?.id;
+  if (!modelId) throw new Error('no active embedding model in test db');
+
+  const embeddings = await embeddingService.embedBatch(
+    drafts.map((d) => d.content)
+  );
+
+  for (const draft of drafts) {
+    const embedding = embeddings[draft.chunkIndex];
+    if (!embedding) throw new Error('missing embedding for chunk');
+    await pool.query(
+      `
+        INSERT INTO chunks (entity_id, chunk_index, content, embedding, model_id, token_count)
+        VALUES ($1, $2, $3, $4::vector, $5, $6)
+      `,
+      [
+        entity.id,
+        draft.chunkIndex,
+        draft.content,
+        vectorToSql(embedding),
+        modelId,
+        draft.tokenCount
+      ]
+    );
+  }
 }
 
 describe('extraction-service', () => {
@@ -37,18 +87,24 @@ describe('extraction-service', () => {
     if (database) await database.close();
   });
 
-  it('creates edges when LLM identifies matching entities', async () => {
+  it('creates edges when semantic match clears the similarity threshold', async () => {
     if (!database) throw new Error('test database not initialized');
     const auth = makeAuthContext();
+    const embeddingService = createEmbeddingService();
 
-    await storeEntity(database.pool, auth, {
-      type: 'person', content: 'Alice is a senior engineer',
-      metadata: { title: 'Alice' }
-    });
-    await storeEntity(database.pool, auth, {
-      type: 'project', content: 'Project Alpha is a knowledge store',
+    // Content is deliberately the same single token as the target name so
+    // the deterministic test embedder yields cosine similarity ≈ 1.0.
+    // Real-world embedders tolerate much looser matches.
+    const alice = (await storeEntity(database.pool, auth, {
+      type: 'person', content: 'Alice', metadata: { title: 'Alice' }
+    }))._unsafeUnwrap();
+    await seedChunksFor(database.pool, embeddingService, alice);
+
+    const projectAlpha = (await storeEntity(database.pool, auth, {
+      type: 'project', content: 'Project Alpha',
       metadata: { title: 'Project Alpha' }
-    });
+    }))._unsafeUnwrap();
+    await seedChunksFor(database.pool, embeddingService, projectAlpha);
 
     const source = (await storeEntity(database.pool, auth, {
       type: 'memory',
@@ -71,7 +127,7 @@ describe('extraction-service', () => {
         visibility: source.visibility,
         owner: source.owner
       },
-      { callLlm: mockLlm }
+      { callLlm: mockLlm, embeddingService, matchMinSimilarity: 0.5 }
     );
 
     expect(linked).toBe(2);
@@ -82,10 +138,166 @@ describe('extraction-service', () => {
     expect(edges._unsafeUnwrap().map((e) => e.relation).sort()).toEqual(['involves', 'part_of']);
   }, 120_000);
 
+  it('skips matches whose similarity is below the threshold', async () => {
+    if (!database) throw new Error('test database not initialized');
+    const auth = makeAuthContext();
+    const embeddingService = createEmbeddingService();
+
+    // Entity content shares no tokens with the target name, so under the
+    // deterministic embedder cosine ≈ 0 — well below any sane threshold.
+    const unrelated = (await storeEntity(database.pool, auth, {
+      type: 'person', content: 'entirely unrelated content xyzzy',
+      metadata: { title: 'Unrelated' }
+    }))._unsafeUnwrap();
+    await seedChunksFor(database.pool, embeddingService, unrelated);
+
+    const source = (await storeEntity(database.pool, auth, {
+      type: 'memory', content: 'Memo mentioning someone called Alice'
+    }))._unsafeUnwrap();
+
+    const mockLlm = () => Promise.resolve(JSON.stringify([
+      { target_name: 'Alice', target_type: 'person', relation: 'involves', confidence: 0.9 }
+    ]));
+
+    const linked = await extractAndLinkRelationships(
+      database.pool,
+      auth,
+      {
+        id: source.id,
+        type: source.type,
+        content: source.content!,
+        visibility: source.visibility,
+        owner: source.owner
+      },
+      { callLlm: mockLlm, embeddingService, matchMinSimilarity: 0.5 }
+    );
+
+    expect(linked).toBe(0);
+  }, 120_000);
+
+  it('still links via chunks when the LLM omits target_type (schema-less providers)', async () => {
+    if (!database) throw new Error('test database not initialized');
+    const auth = makeAuthContext();
+    const embeddingService = createEmbeddingService();
+
+    const bob = (await storeEntity(database.pool, auth, {
+      type: 'person', content: 'Bob Smith',
+      metadata: { title: 'Bob Smith' }
+    }))._unsafeUnwrap();
+    await seedChunksFor(database.pool, embeddingService, bob);
+
+    const source = (await storeEntity(database.pool, auth, {
+      type: 'memory', content: 'Bob Smith joined the review'
+    }))._unsafeUnwrap();
+
+    // Provider (e.g. OpenAI without structured-output JSON) returns no
+    // target_type. Extraction must still be able to resolve `Bob` → Bob Smith
+    // via the chunk-stage match, since the type filter is relaxed when the
+    // target_type is unknown.
+    const mockLlm = () => Promise.resolve(JSON.stringify([
+      { target_name: 'Bob', relation: 'involves', confidence: 0.9 }
+    ]));
+
+    const linked = await extractAndLinkRelationships(
+      database.pool,
+      auth,
+      {
+        id: source.id,
+        type: source.type,
+        content: source.content!,
+        visibility: source.visibility,
+        owner: source.owner
+      },
+      { callLlm: mockLlm, embeddingService, matchMinSimilarity: 0.5 }
+    );
+
+    expect(linked).toBe(1);
+  }, 120_000);
+
+  it('matches an existing entity with no title and no chunks yet (exact content)', async () => {
+    if (!database) throw new Error('test database not initialized');
+    const auth = makeAuthContext();
+    const embeddingService = createEmbeddingService();
+
+    // A freshly-stored entity whose enrichment has not yet run: no title in
+    // metadata, no chunks in the DB. Matching must still work for these —
+    // auto-created stubs and user-stored entities both fall into this state
+    // briefly.
+    (await storeEntity(database.pool, auth, {
+      type: 'person', content: 'Alice'
+    }))._unsafeUnwrap();
+
+    const source = (await storeEntity(database.pool, auth, {
+      type: 'memory', content: 'Alice helped review the design'
+    }))._unsafeUnwrap();
+
+    const mockLlm = () => Promise.resolve(JSON.stringify([
+      { target_name: 'Alice', target_type: 'person', relation: 'involves', confidence: 0.9 }
+    ]));
+
+    const linked = await extractAndLinkRelationships(
+      database.pool,
+      auth,
+      {
+        id: source.id,
+        type: source.type,
+        content: source.content!,
+        visibility: source.visibility,
+        owner: source.owner
+      },
+      { callLlm: mockLlm, embeddingService, matchMinSimilarity: 0.5 }
+    );
+
+    expect(linked).toBe(1);
+    const edges = await listEdges(database.pool, auth, source.id);
+    expect(edges._unsafeUnwrap()).toHaveLength(1);
+  }, 120_000);
+
+  it('chunk-stage match filters by target_type (no cross-type hub links)', async () => {
+    if (!database) throw new Error('test database not initialized');
+    const auth = makeAuthContext();
+    const embeddingService = createEmbeddingService();
+
+    // Title and content are intentionally *not* exactly "Alice", so stage 1
+    // (exact title/content match) misses. The chunk similarity "Alice" vs
+    // "Alice Person" is ~0.71 under the deterministic embedder — well above
+    // threshold — so the only thing preventing a match is the type filter
+    // on the chunk-stage query.
+    const wrongType = (await storeEntity(database.pool, auth, {
+      type: 'project', content: 'Alice Person',
+      metadata: { title: 'Alice Person' }
+    }))._unsafeUnwrap();
+    await seedChunksFor(database.pool, embeddingService, wrongType);
+
+    const source = (await storeEntity(database.pool, auth, {
+      type: 'memory', content: 'Alice reviewed the draft'
+    }))._unsafeUnwrap();
+
+    const mockLlm = () => Promise.resolve(JSON.stringify([
+      { target_name: 'Alice', target_type: 'person', relation: 'involves', confidence: 0.95 }
+    ]));
+
+    const linked = await extractAndLinkRelationships(
+      database.pool,
+      auth,
+      {
+        id: source.id,
+        type: source.type,
+        content: source.content!,
+        visibility: source.visibility,
+        owner: source.owner
+      },
+      { callLlm: mockLlm, embeddingService, matchMinSimilarity: 0.5 }
+    );
+
+    expect(linked).toBe(0);
+  }, 120_000);
+
   describe('auto-create entities', () => {
     it('skips missing targets when auto-create is disabled (default)', async () => {
       if (!database) throw new Error('test database not initialized');
       const auth = makeAuthContext();
+      const embeddingService = createEmbeddingService();
 
       const source = (await storeEntity(database.pool, auth, {
         type: 'memory',
@@ -109,7 +321,7 @@ describe('extraction-service', () => {
           visibility: source.visibility,
           owner: source.owner
         },
-        { callLlm: mockLlm }
+        { callLlm: mockLlm, embeddingService, matchMinSimilarity: 0.5 }
       );
       expect(linked).toBe(0);
 
@@ -122,6 +334,7 @@ describe('extraction-service', () => {
     it('creates stub entity with provenance metadata and tag when enabled', async () => {
       if (!database) throw new Error('test database not initialized');
       const auth = makeAuthContext();
+      const embeddingService = createEmbeddingService();
 
       const source = (await storeEntity(database.pool, auth, {
         type: 'memory',
@@ -147,6 +360,8 @@ describe('extraction-service', () => {
         },
         {
           callLlm: mockLlm,
+          embeddingService,
+          matchMinSimilarity: 0.5,
           autoCreate: {
             enabled: true,
             types: ['person', 'project', 'interaction'],
@@ -181,6 +396,7 @@ describe('extraction-service', () => {
     it('skips auto-create below min confidence', async () => {
       if (!database) throw new Error('test database not initialized');
       const auth = makeAuthContext();
+      const embeddingService = createEmbeddingService();
 
       const source = (await storeEntity(database.pool, auth, {
         type: 'memory',
@@ -206,6 +422,8 @@ describe('extraction-service', () => {
         },
         {
           callLlm: mockLlm,
+          embeddingService,
+          matchMinSimilarity: 0.5,
           autoCreate: {
             enabled: true,
             types: ['person', 'project', 'interaction'],
@@ -224,6 +442,7 @@ describe('extraction-service', () => {
     it('skips types not in the allowlist', async () => {
       if (!database) throw new Error('test database not initialized');
       const auth = makeAuthContext();
+      const embeddingService = createEmbeddingService();
 
       const source = (await storeEntity(database.pool, auth, {
         type: 'memory',
@@ -249,6 +468,8 @@ describe('extraction-service', () => {
         },
         {
           callLlm: mockLlm,
+          embeddingService,
+          matchMinSimilarity: 0.5,
           autoCreate: {
             enabled: true,
             types: ['person', 'project', 'interaction'], // task not included
@@ -267,6 +488,7 @@ describe('extraction-service', () => {
     it('inherits visibility and owner from the source entity', async () => {
       if (!database) throw new Error('test database not initialized');
       const auth = makeAuthContext();
+      const embeddingService = createEmbeddingService();
 
       const source = (await storeEntity(database.pool, auth, {
         type: 'memory',
@@ -294,6 +516,8 @@ describe('extraction-service', () => {
         },
         {
           callLlm: mockLlm,
+          embeddingService,
+          matchMinSimilarity: 0.5,
           autoCreate: {
             enabled: true,
             types: ['person', 'project', 'interaction'],
@@ -315,6 +539,7 @@ describe('extraction-service', () => {
     it('dedupes repeated mentions within a single extraction pass', async () => {
       if (!database) throw new Error('test database not initialized');
       const auth = makeAuthContext();
+      const embeddingService = createEmbeddingService();
 
       const source = (await storeEntity(database.pool, auth, {
         type: 'memory',
@@ -342,6 +567,8 @@ describe('extraction-service', () => {
         },
         {
           callLlm: mockLlm,
+          embeddingService,
+          matchMinSimilarity: 0.5,
           autoCreate: {
             enabled: true,
             types: ['person', 'project', 'interaction'],

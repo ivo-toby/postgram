@@ -8,7 +8,10 @@ import {
   createEmbeddingService,
   type EmbeddingService
 } from './embedding-service.js';
-import { extractAndLinkRelationships } from './extraction-service.js';
+import {
+  extractAndLinkRelationships,
+  SemanticMatchUnavailableError
+} from './extraction-service.js';
 
 type PendingEntityRow = {
   id: string;
@@ -34,6 +37,7 @@ type EnrichmentWorkerOptions = {
     types: readonly string[];
     minConfidence: number;
   };
+  extractionMatchMinSimilarity?: number;
 };
 
 async function rollbackQuietly(client: PoolClient): Promise<void> {
@@ -261,7 +265,11 @@ export function createEnrichmentWorker(options: EnrichmentWorkerOptions) {
             },
             {
               ...(options.callLlm ? { callLlm: options.callLlm } : {}),
-              ...(options.autoCreate ? { autoCreate: options.autoCreate } : {})
+              ...(options.autoCreate ? { autoCreate: options.autoCreate } : {}),
+              embeddingService,
+              ...(options.extractionMatchMinSimilarity !== undefined
+                ? { matchMinSimilarity: options.extractionMatchMinSimilarity }
+                : {})
             }
           );
           await options.pool.query(
@@ -269,14 +277,25 @@ export function createEnrichmentWorker(options: EnrichmentWorkerOptions) {
             [entity.id]
           );
         } catch (error) {
-          logger.warn(
-            { err: error, entityId: entity.id },
-            'extraction failed'
-          );
-          await options.pool.query(
-            "UPDATE entities SET extraction_status = 'failed', extraction_error = $2 WHERE id = $1",
-            [entity.id, truncateErrorMessage(error)]
-          );
+          if (error instanceof SemanticMatchUnavailableError) {
+            // Leave extraction_status = 'pending' so the next poll retries
+            // the entity once embeddings recover. Any edges already linked
+            // in this pass are committed (createEdge upserts on conflict,
+            // so the retry is idempotent).
+            logger.warn(
+              { entityId: entity.id, linkedSoFar: error.linkedSoFar },
+              'extraction deferred — embeddings unavailable, will retry'
+            );
+          } else {
+            logger.warn(
+              { err: error, entityId: entity.id },
+              'extraction failed'
+            );
+            await options.pool.query(
+              "UPDATE entities SET extraction_status = 'failed', extraction_error = $2 WHERE id = $1",
+              [entity.id, truncateErrorMessage(error)]
+            );
+          }
         } finally {
           await lockClient
             .query('SELECT pg_advisory_unlock(hashtext($1))', [entity.id])

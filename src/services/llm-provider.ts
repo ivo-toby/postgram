@@ -45,19 +45,28 @@ type OllamaResponse = {
   choices?: Array<{ message?: { content?: string } }>;
 };
 
-function createOpenAiProvider(apiKey: string, model: string): LlmProvider {
+function createOpenAiProvider(
+  apiKey: string,
+  model: string,
+  disableThinking: boolean
+): LlmProvider {
   return async (prompt: string) => {
+    // `reasoning_effort: 'minimal'` applies to o-series and gpt-5 reasoning
+    // models. Non-reasoning models (gpt-4o-mini etc.) ignore the field.
+    const payload: Record<string, unknown> = {
+      model,
+      messages: [{ role: 'user', content: prompt }],
+      temperature: 0
+    };
+    if (disableThinking) payload['reasoning_effort'] = 'minimal';
+
     const response = await fetchWithTimeout('https://api.openai.com/v1/chat/completions', {
       method: 'POST',
       headers: {
         'Content-Type': 'application/json',
         Authorization: `Bearer ${apiKey}`
       },
-      body: JSON.stringify({
-        model,
-        messages: [{ role: 'user', content: prompt }],
-        temperature: 0
-      })
+      body: JSON.stringify(payload)
     });
 
     if (!response.ok) {
@@ -96,32 +105,46 @@ function createAnthropicProvider(apiKey: string, model: string): LlmProvider {
   };
 }
 
-function createOllamaProvider(baseUrl: string, model: string, apiKey?: string): LlmProvider {
+function createOllamaProvider(
+  baseUrl: string,
+  model: string,
+  disableThinking: boolean,
+  apiKey?: string
+): LlmProvider {
   const headers: Record<string, string> = { 'Content-Type': 'application/json' };
   if (apiKey) {
     headers['Authorization'] = `Bearer ${apiKey}`;
   }
 
   return async (prompt: string) => {
-    // `/no_think` is Qwen3's inline switch to disable reasoning output —
-    // harmless to models that don't recognize it, but critical for Qwen3:
-    // reasoning tokens triple latency on structured extraction where we
-    // don't need a chain-of-thought.
-    // `chat_template_kwargs.enable_thinking: false` is the equivalent hint
-    // for vLLM / llama.cpp servers that honor it at the template level.
+    // Reasoning-mode output triples latency on structured extraction where
+    // we don't need a chain-of-thought. Different servers/models honour
+    // different switches, so when disableThinking is on we send all three:
+    //   - `think: false`: Ollama's top-level switch (newer, canonical)
+    //   - `/no_think` system: Qwen3's inline trigger
+    //   - `chat_template_kwargs.enable_thinking: false`: vLLM / llama.cpp
+    //     template-level hint honoured by GLM and some Qwen variants.
+    // If a particular model reacts badly, set EXTRACTION_DISABLE_THINKING=false
+    // to drop all three.
+    const messages: Array<{ role: string; content: string }> = [];
+    if (disableThinking) messages.push({ role: 'system', content: '/no_think' });
+    messages.push({ role: 'user', content: prompt });
+
+    const payload: Record<string, unknown> = {
+      model,
+      messages,
+      stream: false,
+      format: 'json'
+    };
+    if (disableThinking) {
+      payload['think'] = false;
+      payload['chat_template_kwargs'] = { enable_thinking: false };
+    }
+
     const response = await fetchWithTimeout(`${baseUrl}/api/chat`, {
       method: 'POST',
       headers,
-      body: JSON.stringify({
-        model,
-        messages: [
-          { role: 'system', content: '/no_think' },
-          { role: 'user', content: prompt }
-        ],
-        stream: false,
-        format: 'json',
-        chat_template_kwargs: { enable_thinking: false }
-      })
+      body: JSON.stringify(payload)
     });
 
     if (!response.ok) {
@@ -150,17 +173,24 @@ type ProviderConfig = {
   anthropicApiKey?: string | undefined;
   ollamaBaseUrl?: string | undefined;
   ollamaApiKey?: string | undefined;
+  /**
+   * When true (default), send provider-specific hints to disable reasoning /
+   * chain-of-thought output. Extraction is structured JSON — thinking tokens
+   * just add latency. Set to false if a model misbehaves with the hints.
+   */
+  disableThinking?: boolean | undefined;
 };
 
 export function createLlmProvider(config: ProviderConfig): LlmProvider {
   const model = config.model ?? DEFAULT_MODELS[config.provider];
+  const disableThinking = config.disableThinking ?? true;
 
   switch (config.provider) {
     case 'openai': {
       if (!config.openaiApiKey) {
         throw new Error('OPENAI_API_KEY is required for openai extraction provider');
       }
-      return createOpenAiProvider(config.openaiApiKey, model);
+      return createOpenAiProvider(config.openaiApiKey, model, disableThinking);
     }
     case 'anthropic': {
       if (!config.anthropicApiKey) {
@@ -170,7 +200,7 @@ export function createLlmProvider(config: ProviderConfig): LlmProvider {
     }
     case 'ollama': {
       const baseUrl = config.ollamaBaseUrl ?? 'http://localhost:11434';
-      return createOllamaProvider(baseUrl, model, config.ollamaApiKey);
+      return createOllamaProvider(baseUrl, model, disableThinking, config.ollamaApiKey);
     }
   }
 }

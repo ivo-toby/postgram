@@ -24,6 +24,10 @@ const configSchema = z
       .enum(['openai', 'anthropic', 'ollama'])
       .default('openai'),
     EXTRACTION_MODEL: optionalString,
+    EXTRACTION_DISABLE_THINKING: z
+      .enum(['true', 'false'])
+      .default('true')
+      .transform((v) => v === 'true'),
     EXTRACTION_AUTO_CREATE_ENTITIES: z
       .enum(['true', 'false'])
       .default('false')

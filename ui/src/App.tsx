@@ -24,6 +24,7 @@ import type { Entity } from './lib/types.ts';
 
 const STORAGE_KEY = 'pgm_api_key';
 const PAGE_STORAGE_KEY = 'pgm_current_page';
+const SHOW_ARCHIVED_KEY = 'pgm_show_archived';
 const ALL_ENTITY_TYPES = ['document', 'memory', 'person', 'project', 'task', 'interaction'];
 
 export default function App() {
@@ -41,6 +42,9 @@ export default function App() {
   const [visibleTypes, setVisibleTypes] = useState<Set<string>>(new Set(ALL_ENTITY_TYPES));
   const [visibleRelations, setVisibleRelations] = useState<Set<string>>(new Set<string>());
   const [loadedRelations, setLoadedRelations] = useState<Set<string>>(new Set<string>());
+  const [showArchived, setShowArchived] = useState<boolean>(() => {
+    return localStorage.getItem(SHOW_ARCHIVED_KEY) === 'true';
+  });
 
   const handleLogout = useCallback(() => {
     localStorage.removeItem(STORAGE_KEY);
@@ -74,7 +78,13 @@ export default function App() {
       while (true) {
         const result = await api.listEntities({ limit, offset });
         if (cancelled) return;
-        graphHook.addEntities(result.items as Entity[]);
+        // `/api/search` and graph expansion both hide archived entities on
+        // the server; exclude them here too so the graph matches unless the
+        // user explicitly opts in.
+        const items = showArchived
+          ? (result.items as Entity[])
+          : (result.items as Entity[]).filter(e => e.status !== 'archived');
+        graphHook.addEntities(items);
         if (result.items.length < limit) break;
         offset += limit;
       }
@@ -85,7 +95,19 @@ export default function App() {
     }
     load().catch(console.error);
     return () => { cancelled = true; };
-  }, [apiKey, currentPage, graphLoaded]);
+  }, [apiKey, currentPage, graphLoaded, showArchived]);
+
+  const handleToggleArchived = useCallback(() => {
+    setShowArchived(prev => {
+      const next = !prev;
+      localStorage.setItem(SHOW_ARCHIVED_KEY, String(next));
+      // Clear the current graph and force a reload so the toggle applies.
+      graphHook.clear();
+      setLoadedRelations(new Set());
+      setGraphLoaded(false);
+      return next;
+    });
+  }, [graphHook]);
 
   const handleNodeClick = useCallback((nodeId: string) => {
     setSelectedNodeId(nodeId);
@@ -189,6 +211,21 @@ export default function App() {
         <DepthSlider value={depth} onChange={setDepth} />
       </div>
 
+      <div className="border-t border-gray-800 pt-3 px-1">
+        <label className="flex items-center gap-2 text-xs text-gray-300 cursor-pointer">
+          <input
+            type="checkbox"
+            checked={showArchived}
+            onChange={handleToggleArchived}
+            className="accent-blue-500"
+          />
+          <span>Include archived</span>
+        </label>
+        <p className="text-[10px] text-gray-600 mt-1">
+          Search and expansion hide archived entities server-side.
+        </p>
+      </div>
+
       <div className="mt-auto -mx-3 -mb-3">
         <StatusWidget status={queueHook.status} />
       </div>
@@ -216,6 +253,15 @@ export default function App() {
       rightContent={
         detailHook.loading ? (
           <div className="text-gray-500 text-sm">Loading…</div>
+        ) : detailHook.error && !detailHook.entity ? (
+          <div className="flex flex-col gap-3 text-sm">
+            <div className="px-3 py-2 rounded-lg bg-red-500/10 border border-red-500/30 text-red-300">
+              Could not load entity: {detailHook.error}
+            </div>
+            <p className="text-gray-500 text-xs">
+              This node may have been deleted or is archived. Enable “Include archived” in the sidebar to see archived entities in the graph.
+            </p>
+          </div>
         ) : detailHook.entity ? (
           <div className="flex flex-col gap-6">
             <EntityDetail

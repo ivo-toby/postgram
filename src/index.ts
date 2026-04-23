@@ -253,7 +253,13 @@ export async function startServer(): Promise<{
     pool,
     embeddingService,
     extractionEnabled: config.EXTRACTION_ENABLED,
-    callLlm
+    callLlm,
+    logger,
+    autoCreate: {
+      enabled: config.EXTRACTION_AUTO_CREATE_ENTITIES,
+      types: config.EXTRACTION_AUTO_CREATE_TYPES,
+      minConfidence: config.EXTRACTION_AUTO_CREATE_MIN_CONFIDENCE
+    }
   });
   let workerActive = true;
   const workerLoop = async () => {

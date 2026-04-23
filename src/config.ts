@@ -24,6 +24,30 @@ const configSchema = z
       .enum(['openai', 'anthropic', 'ollama'])
       .default('openai'),
     EXTRACTION_MODEL: optionalString,
+    EXTRACTION_AUTO_CREATE_ENTITIES: z
+      .enum(['true', 'false'])
+      .default('false')
+      .transform((v) => v === 'true'),
+    EXTRACTION_AUTO_CREATE_TYPES: z
+      .preprocess(
+        emptyToUndefined,
+        z.string().default('person,project,interaction')
+      )
+      .transform((value) =>
+        value
+          .split(',')
+          .map((part) => part.trim())
+          .filter((part) => part.length > 0)
+      )
+      .pipe(
+        z.array(
+          z.enum(['memory', 'person', 'project', 'task', 'interaction', 'document'])
+        )
+      ),
+    EXTRACTION_AUTO_CREATE_MIN_CONFIDENCE: z.preprocess(
+      emptyToUndefined,
+      z.coerce.number().min(0).max(1).default(0.7)
+    ),
     ANTHROPIC_API_KEY: optionalString,
     OLLAMA_API_KEY: optionalString,
     OLLAMA_BASE_URL: z.preprocess(

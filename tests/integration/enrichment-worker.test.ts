@@ -189,6 +189,56 @@ describe('enrichment-worker', () => {
     expect(processed).toBe(0);
   }, 120_000);
 
+  it('does not queue auto-created entities for extraction', async () => {
+    if (!database) {
+      throw new Error('test database not initialized');
+    }
+
+    // Stub auto-created entity, as if produced by extraction-service.
+    const inserted = await database.pool.query<{ id: string }>(
+      `INSERT INTO entities (type, content, visibility, enrichment_status, tags, metadata)
+       VALUES ('person', 'Alice', 'shared', 'pending', ARRAY['auto-created'], '{}'::jsonb)
+       RETURNING id`
+    );
+    const autoId = inserted.rows[0]!.id;
+
+    // And a regular entity, to confirm the normal path still queues extraction.
+    const normal = (await storeEntity(database.pool, makeAuthContext(), {
+      type: 'memory',
+      content: 'normal entity that should get extracted'
+    }))._unsafeUnwrap();
+
+    const worker = createEnrichmentWorker({
+      pool: database.pool,
+      embeddingService: createEmbeddingService(),
+      extractionEnabled: true,
+      callLlm: () => Promise.resolve('[]')
+    });
+
+    await worker.runOnce();
+    await worker.runOnce();
+
+    const rows = await database.pool.query<{
+      id: string;
+      enrichment_status: string;
+      extraction_status: string | null;
+    }>(
+      'SELECT id, enrichment_status, extraction_status FROM entities WHERE id = ANY($1)',
+      [[autoId, normal.id]]
+    );
+    const byId = Object.fromEntries(rows.rows.map((r) => [r.id, r]));
+
+    // Auto-created: embedded, but NOT pushed into the extraction queue —
+    // extraction_status must stay NULL so the loop terminates.
+    expect(byId[autoId]?.enrichment_status).toBe('completed');
+    expect(byId[autoId]?.extraction_status).toBeNull();
+
+    // Normal entity: embedded AND processed by extraction (LLM returned [],
+    // so it transitions pending → completed in the same pass).
+    expect(byId[normal.id]?.enrichment_status).toBe('completed');
+    expect(byId[normal.id]?.extraction_status).toBe('completed');
+  }, 120_000);
+
   it('does not process the same entity twice when workers run concurrently', async () => {
     if (!database) {
       throw new Error('test database not initialized');

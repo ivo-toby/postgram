@@ -353,4 +353,260 @@ describe('pgm-admin CLI', () => {
     );
     expect(auditRows.rows[0]?.operation).toBe('reembed.start');
   }, 120_000);
+
+  it('re-extracts entities by resetting extraction_status and clearing errors', async () => {
+    if (!database) {
+      throw new Error('test database not initialized');
+    }
+
+    const databaseUrl = getDatabaseUrl(database);
+
+    const seededKey = (await createKey(database.pool, {
+      name: `reextract-${crypto.randomUUID()}`,
+      scopes: ['read', 'write', 'delete']
+    }))._unsafeUnwrap();
+
+    const stored = (await storeEntity(database.pool, makeAuthContext(seededKey.record.id), {
+      type: 'memory',
+      content: 'memory that needs re-extraction'
+    }))._unsafeUnwrap();
+
+    // Simulate a prior failed extraction with an error message.
+    await database.pool.query(
+      `UPDATE entities
+       SET extraction_status = 'failed',
+           extraction_error = 'llm timed out'
+       WHERE id = $1`,
+      [stored.id]
+    );
+
+    const reextractResult = await runAdmin(
+      ['reextract', '--all', '--json'],
+      { DATABASE_URL: databaseUrl }
+    );
+    const reextractBody = parseJson(reextractResult.stdout) as {
+      markedCount: number;
+    };
+    expect(reextractBody.markedCount).toBeGreaterThanOrEqual(1);
+
+    const entityRow = await database.pool.query<{
+      extraction_status: string;
+      extraction_error: string | null;
+    }>(
+      'SELECT extraction_status, extraction_error FROM entities WHERE id = $1',
+      [stored.id]
+    );
+    expect(entityRow.rows[0]?.extraction_status).toBe('pending');
+    expect(entityRow.rows[0]?.extraction_error).toBeNull();
+
+    const auditRows = await database.pool.query<{ operation: string }>(
+      "SELECT operation FROM audit_log WHERE operation = 'reextract.start' ORDER BY timestamp DESC LIMIT 1"
+    );
+    expect(auditRows.rows[0]?.operation).toBe('reextract.start');
+  }, 120_000);
+
+  it('reextract skips archived and auto-created entities', async () => {
+    if (!database) {
+      throw new Error('test database not initialized');
+    }
+
+    const databaseUrl = getDatabaseUrl(database);
+
+    const seededKey = (await createKey(database.pool, {
+      name: `scope-${crypto.randomUUID()}`,
+      scopes: ['read', 'write', 'delete']
+    }))._unsafeUnwrap();
+
+    const active = (await storeEntity(database.pool, makeAuthContext(seededKey.record.id), {
+      type: 'memory',
+      content: 'normal entity that should be reextracted'
+    }))._unsafeUnwrap();
+    const archived = (await storeEntity(database.pool, makeAuthContext(seededKey.record.id), {
+      type: 'memory',
+      content: 'archived entity that should NOT be touched'
+    }))._unsafeUnwrap();
+    await database.pool.query(
+      "UPDATE entities SET status = 'archived', extraction_status = 'completed' WHERE id = $1",
+      [archived.id]
+    );
+
+    // Simulate an auto-created stub — should also be skipped to prevent loop.
+    const autoStub = await database.pool.query<{ id: string }>(
+      `INSERT INTO entities (type, content, visibility, enrichment_status, extraction_status, tags)
+       VALUES ('person', 'Alice', 'shared', 'completed', NULL, ARRAY['auto-created'])
+       RETURNING id`
+    );
+
+    // Ensure the active entity is in a post-extraction state so we can verify it resets.
+    await database.pool.query(
+      "UPDATE entities SET extraction_status = 'completed' WHERE id = $1",
+      [active.id]
+    );
+
+    const result = await runAdmin(
+      ['reextract', '--all', '--json'],
+      { DATABASE_URL: databaseUrl }
+    );
+    const body = parseJson(result.stdout) as { markedCount: number };
+    expect(body.markedCount).toBe(1);
+
+    const rows = await database.pool.query<{
+      id: string;
+      extraction_status: string | null;
+    }>(
+      'SELECT id, extraction_status FROM entities WHERE id = ANY($1)',
+      [[active.id, archived.id, autoStub.rows[0]!.id]]
+    );
+    const byId = Object.fromEntries(rows.rows.map((r) => [r.id, r]));
+    expect(byId[active.id]?.extraction_status).toBe('pending');
+    expect(byId[archived.id]?.extraction_status).toBe('completed');
+    expect(byId[autoStub.rows[0]!.id]?.extraction_status).toBeNull();
+
+    // --include-auto-created re-queues auto-created stubs (archived still skipped).
+    const forced = await runAdmin(
+      ['reextract', '--all', '--include-auto-created', '--json'],
+      { DATABASE_URL: databaseUrl }
+    );
+    const forcedBody = parseJson(forced.stdout) as { markedCount: number };
+    expect(forcedBody.markedCount).toBe(2);
+
+    const after = await database.pool.query<{
+      id: string;
+      extraction_status: string | null;
+    }>(
+      'SELECT id, extraction_status FROM entities WHERE id = ANY($1)',
+      [[archived.id, autoStub.rows[0]!.id]]
+    );
+    const afterById = Object.fromEntries(after.rows.map((r) => [r.id, r]));
+    expect(afterById[archived.id]?.extraction_status).toBe('completed');
+    expect(afterById[autoStub.rows[0]!.id]?.extraction_status).toBe('pending');
+  }, 120_000);
+
+  it('validate-edges returns a structured --json error when extraction is not configured', async () => {
+    if (!database) {
+      throw new Error('test database not initialized');
+    }
+
+    const databaseUrl = getDatabaseUrl(database);
+
+    // EXTRACTION_ENABLED unset → handleCliFailure should produce a
+    // structured JSON payload on stdout and exit non-zero. Without the fix,
+    // loadConfig/createLlmProvider failures would throw uncaught.
+    let exitCode: number | null = null;
+    let stdout = '';
+    try {
+      await runAdmin(['validate-edges', '--json'], {
+        DATABASE_URL: databaseUrl,
+        EXTRACTION_ENABLED: 'false',
+        OPENAI_API_KEY: 'sk-test-fake' // satisfy loadConfig's superRefine
+      });
+    } catch (error) {
+      const err = error as { code: number; stdout: string };
+      exitCode = err.code;
+      stdout = err.stdout;
+    }
+    expect(exitCode).toBe(1);
+    const parsed = JSON.parse(stdout.trim()) as {
+      error: { code: string; message: string };
+    };
+    expect(parsed.error.message).toMatch(/EXTRACTION_ENABLED/);
+  }, 120_000);
+
+  it('reextract --clean-edges deletes prior llm-extraction edges', async () => {
+    if (!database) {
+      throw new Error('test database not initialized');
+    }
+
+    const databaseUrl = getDatabaseUrl(database);
+
+    const seededKey = (await createKey(database.pool, {
+      name: `clean-edges-${crypto.randomUUID()}`,
+      scopes: ['read', 'write', 'delete']
+    }))._unsafeUnwrap();
+
+    const src = (await storeEntity(database.pool, makeAuthContext(seededKey.record.id), {
+      type: 'memory', content: 'source'
+    }))._unsafeUnwrap();
+    const tgt = (await storeEntity(database.pool, makeAuthContext(seededKey.record.id), {
+      type: 'project', content: 'target'
+    }))._unsafeUnwrap();
+
+    await database.pool.query(
+      `INSERT INTO edges (source_id, target_id, relation, source, confidence)
+       VALUES ($1, $2, 'involves', 'llm-extraction', 0.9),
+              ($1, $2, 'part_of',  'manual',         1.0)`,
+      [src.id, tgt.id]
+    );
+
+    const result = await runAdmin(
+      ['reextract', '--all', '--clean-edges', '--json'],
+      { DATABASE_URL: databaseUrl }
+    );
+    const body = parseJson(result.stdout) as {
+      markedCount: number;
+      deletedEdges: number;
+    };
+    expect(body.deletedEdges).toBe(1);
+
+    const remaining = await database.pool.query<{ source: string }>(
+      'SELECT source FROM edges'
+    );
+    expect(remaining.rows).toHaveLength(1);
+    expect(remaining.rows[0]?.source).toBe('manual');
+  }, 120_000);
+
+  it('prune-edges deletes edges below threshold and supports --dry-run', async () => {
+    if (!database) {
+      throw new Error('test database not initialized');
+    }
+
+    const databaseUrl = getDatabaseUrl(database);
+
+    const seededKey = (await createKey(database.pool, {
+      name: `prune-${crypto.randomUUID()}`,
+      scopes: ['read', 'write', 'delete']
+    }))._unsafeUnwrap();
+
+    const src = (await storeEntity(database.pool, makeAuthContext(seededKey.record.id), {
+      type: 'memory', content: 'source'
+    }))._unsafeUnwrap();
+    const tgt = (await storeEntity(database.pool, makeAuthContext(seededKey.record.id), {
+      type: 'project', content: 'target'
+    }))._unsafeUnwrap();
+
+    await database.pool.query(
+      `INSERT INTO edges (source_id, target_id, relation, source, confidence)
+       VALUES ($1, $2, 'involves',  'llm-extraction', 0.2),
+              ($1, $2, 'part_of',   'llm-extraction', 0.5),
+              ($1, $2, 'related_to', 'manual',         0.1)`,
+      [src.id, tgt.id]
+    );
+
+    const dryRun = await runAdmin(
+      ['prune-edges', '--below', '0.4', '--json', '--dry-run'],
+      { DATABASE_URL: databaseUrl }
+    );
+    const dryBody = parseJson(dryRun.stdout) as { wouldDelete: number };
+    expect(dryBody.wouldDelete).toBe(1);
+
+    const countBefore = await database.pool.query<{ count: string }>(
+      'SELECT count(*)::text FROM edges'
+    );
+    expect(Number(countBefore.rows[0]?.count)).toBe(3);
+
+    const actual = await runAdmin(
+      ['prune-edges', '--below', '0.4', '--json'],
+      { DATABASE_URL: databaseUrl }
+    );
+    const actualBody = parseJson(actual.stdout) as { deleted: number };
+    expect(actualBody.deleted).toBe(1);
+
+    const remaining = await database.pool.query<{ relation: string; source: string }>(
+      'SELECT relation, source FROM edges ORDER BY relation'
+    );
+    expect(remaining.rows).toEqual([
+      { relation: 'part_of', source: 'llm-extraction' },
+      { relation: 'related_to', source: 'manual' }
+    ]);
+  }, 120_000);
 });

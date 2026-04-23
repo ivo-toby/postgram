@@ -3,6 +3,7 @@ import ReactMarkdown from 'react-markdown';
 import type { Entity } from '../lib/types.ts';
 import type { ApiClient } from '../lib/api.ts';
 import { ENTITY_COLORS } from '../lib/nodeStyles.ts';
+import EntityEditor from './EntityEditor.tsx';
 
 type Props = {
   entity: Entity;
@@ -12,28 +13,17 @@ type Props = {
 
 export default function EntityDetail({ entity, api, onUpdate }: Props) {
   const [editing, setEditing] = useState(false);
-  const [draft, setDraft] = useState(entity.content ?? '');
-  const [saving, setSaving] = useState(false);
 
-  // Reset draft when navigating to a different entity
   useEffect(() => {
-    setDraft(entity.content ?? '');
     setEditing(false);
   }, [entity.id]);
-  const color = ENTITY_COLORS[entity.type] ?? ENTITY_COLORS['default']!;
 
-  async function handleSave() {
-    setSaving(true);
-    try {
-      const res = await api.updateEntity(entity.id, { version: entity.version, content: draft });
-      onUpdate(res.entity);
-      setEditing(false);
-    } catch (e) {
-      console.error(e);
-    } finally {
-      setSaving(false);
-    }
-  }
+  const color = ENTITY_COLORS[entity.type] ?? ENTITY_COLORS['default']!;
+  const metadata = entity.metadata ?? {};
+  const dueDate = typeof metadata.due_date === 'string' ? metadata.due_date : null;
+  const scheduledFor = typeof metadata.scheduled_for === 'string' ? metadata.scheduled_for : null;
+  const context = typeof metadata.context === 'string' ? metadata.context : null;
+  const priority = metadata.priority;
 
   return (
     <div className="flex flex-col gap-4">
@@ -45,6 +35,9 @@ export default function EntityDetail({ entity, api, onUpdate }: Props) {
         >
           {entity.type}
         </span>
+        {entity.status && (
+          <span className="px-2 py-0.5 rounded-full text-xs bg-gray-800 text-gray-300">{entity.status}</span>
+        )}
         <span className="text-xs text-gray-500 font-mono">{entity.id.slice(0, 8)}</span>
       </div>
 
@@ -58,8 +51,34 @@ export default function EntityDetail({ entity, api, onUpdate }: Props) {
         )}
       </div>
 
+      {/* Task/project metadata badges */}
+      {(entity.type === 'task' || entity.type === 'project') && (
+        <div className="flex flex-wrap gap-1.5 text-xs">
+          {dueDate && (
+            <span className="px-2 py-0.5 rounded-full bg-yellow-500/10 border border-yellow-500/30 text-yellow-300">
+              Due {dueDate}
+            </span>
+          )}
+          {scheduledFor && (
+            <span className="px-2 py-0.5 rounded-full bg-blue-500/10 border border-blue-500/30 text-blue-300">
+              Scheduled {scheduledFor}
+            </span>
+          )}
+          {context && (
+            <span className="px-2 py-0.5 rounded-full bg-gray-800 border border-gray-700 text-gray-300">
+              {context}
+            </span>
+          )}
+          {priority !== undefined && priority !== '' && (
+            <span className="px-2 py-0.5 rounded-full bg-purple-500/10 border border-purple-500/30 text-purple-300">
+              Priority {String(priority)}
+            </span>
+          )}
+        </div>
+      )}
+
       {/* Tags */}
-      {entity.tags.length > 0 && (
+      {!editing && entity.tags.length > 0 && (
         <div className="flex flex-wrap gap-1">
           {entity.tags.map(tag => (
             <span key={tag} className="px-2 py-0.5 rounded-full text-xs bg-gray-800 text-gray-300">
@@ -71,28 +90,12 @@ export default function EntityDetail({ entity, api, onUpdate }: Props) {
 
       {/* Content */}
       {editing ? (
-        <div className="flex flex-col gap-2">
-          <textarea
-            value={draft}
-            onChange={e => setDraft(e.target.value)}
-            className="w-full bg-gray-800 border border-gray-700 rounded-lg p-3 text-sm text-white resize-none h-48 focus:outline-none focus:ring-1 focus:ring-blue-500"
-          />
-          <div className="flex gap-2">
-            <button
-              onClick={handleSave}
-              disabled={saving}
-              className="px-3 py-1.5 bg-blue-600 hover:bg-blue-500 text-white text-xs rounded-lg disabled:opacity-50"
-            >
-              {saving ? 'Saving…' : 'Save'}
-            </button>
-            <button
-              onClick={() => { setEditing(false); setDraft(entity.content ?? ''); }}
-              className="px-3 py-1.5 bg-gray-800 hover:bg-gray-700 text-gray-300 text-xs rounded-lg"
-            >
-              Cancel
-            </button>
-          </div>
-        </div>
+        <EntityEditor
+          entity={entity}
+          api={api}
+          onSaved={updated => { onUpdate(updated); setEditing(false); }}
+          onCancel={() => setEditing(false)}
+        />
       ) : (
         <div>
           <div className="prose prose-sm prose-invert max-w-none text-sm text-gray-300 break-words">

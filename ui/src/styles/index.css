@@ -12,3 +12,48 @@ html, body, #root {
   padding: 0;
   overflow: hidden;
 }
+
+/* WYSIWYG markdown editor dark theme tweaks */
+.pgm-md-editor .w-md-editor {
+  background-color: rgb(17 24 39) !important;
+  border: 1px solid rgb(55 65 81) !important;
+  border-radius: 0.5rem;
+  color: #e5e7eb;
+  box-shadow: none !important;
+}
+.pgm-md-editor .w-md-editor-toolbar {
+  background-color: rgb(17 24 39) !important;
+  border-bottom: 1px solid rgb(55 65 81) !important;
+}
+.pgm-md-editor .w-md-editor-toolbar ul > li > button {
+  color: rgb(156 163 175) !important;
+}
+.pgm-md-editor .w-md-editor-toolbar ul > li > button:hover {
+  color: #fff !important;
+  background-color: rgb(31 41 55) !important;
+}
+.pgm-md-editor .w-md-editor-text,
+.pgm-md-editor .w-md-editor-text-input,
+.pgm-md-editor .w-md-editor-text-pre > code,
+.pgm-md-editor textarea {
+  background-color: rgb(31 41 55) !important;
+  color: #e5e7eb !important;
+  -webkit-text-fill-color: #e5e7eb !important;
+  caret-color: #e5e7eb !important;
+}
+.pgm-md-editor .w-md-editor-preview {
+  background-color: rgb(17 24 39) !important;
+  color: #e5e7eb !important;
+}
+.pgm-md-editor .wmde-markdown {
+  background-color: transparent !important;
+  color: #e5e7eb !important;
+}
+
+/* Make toolbar scrollable on small screens so all actions remain reachable */
+@media (max-width: 640px) {
+  .pgm-md-editor .w-md-editor-toolbar ul {
+    flex-wrap: nowrap !important;
+    overflow-x: auto;
+  }
+}

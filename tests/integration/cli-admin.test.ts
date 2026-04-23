@@ -555,6 +555,128 @@ describe('pgm-admin CLI', () => {
     expect(remaining.rows[0]?.source).toBe('manual');
   }, 120_000);
 
+  it('reextract --only-failed re-queues only failed entities', async () => {
+    if (!database) {
+      throw new Error('test database not initialized');
+    }
+
+    const databaseUrl = getDatabaseUrl(database);
+
+    const seededKey = (await createKey(database.pool, {
+      name: `reextract-failed-${crypto.randomUUID()}`,
+      scopes: ['read', 'write', 'delete']
+    }))._unsafeUnwrap();
+
+    const failed = (await storeEntity(database.pool, makeAuthContext(seededKey.record.id), {
+      type: 'memory',
+      content: 'entity that failed extraction'
+    }))._unsafeUnwrap();
+    const completed = (await storeEntity(database.pool, makeAuthContext(seededKey.record.id), {
+      type: 'memory',
+      content: 'entity that succeeded extraction'
+    }))._unsafeUnwrap();
+
+    await database.pool.query(
+      `UPDATE entities
+       SET extraction_status = 'failed',
+           extraction_error = 'llm timed out'
+       WHERE id = $1`,
+      [failed.id]
+    );
+    await database.pool.query(
+      "UPDATE entities SET extraction_status = 'completed' WHERE id = $1",
+      [completed.id]
+    );
+
+    const result = await runAdmin(
+      ['reextract', '--only-failed', '--json'],
+      { DATABASE_URL: databaseUrl }
+    );
+    const body = parseJson(result.stdout) as { markedCount: number };
+    expect(body.markedCount).toBe(1);
+
+    const rows = await database.pool.query<{
+      id: string;
+      extraction_status: string | null;
+      extraction_error: string | null;
+    }>(
+      'SELECT id, extraction_status, extraction_error FROM entities WHERE id = ANY($1)',
+      [[failed.id, completed.id]]
+    );
+    const byId = Object.fromEntries(rows.rows.map((r) => [r.id, r]));
+    expect(byId[failed.id]?.extraction_status).toBe('pending');
+    expect(byId[failed.id]?.extraction_error).toBeNull();
+    expect(byId[completed.id]?.extraction_status).toBe('completed');
+
+    const auditRows = await database.pool.query<{ details: { onlyFailed: boolean } }>(
+      "SELECT details FROM audit_log WHERE operation = 'reextract.start' ORDER BY timestamp DESC LIMIT 1"
+    );
+    expect(auditRows.rows[0]?.details.onlyFailed).toBe(true);
+  }, 120_000);
+
+  it('reembed --only-failed re-queues only failed entities', async () => {
+    if (!database) {
+      throw new Error('test database not initialized');
+    }
+
+    const databaseUrl = getDatabaseUrl(database);
+
+    const seededKey = (await createKey(database.pool, {
+      name: `reembed-failed-${crypto.randomUUID()}`,
+      scopes: ['read', 'write', 'delete']
+    }))._unsafeUnwrap();
+
+    const failed = (await storeEntity(database.pool, makeAuthContext(seededKey.record.id), {
+      type: 'memory',
+      content: 'entity that failed enrichment'
+    }))._unsafeUnwrap();
+    const completed = (await storeEntity(database.pool, makeAuthContext(seededKey.record.id), {
+      type: 'memory',
+      content: 'entity that succeeded enrichment'
+    }))._unsafeUnwrap();
+
+    await database.pool.query(
+      `UPDATE entities
+       SET enrichment_status = 'failed',
+           enrichment_attempts = 3
+       WHERE id = $1`,
+      [failed.id]
+    );
+    await database.pool.query(
+      `UPDATE entities
+       SET enrichment_status = 'completed',
+           enrichment_attempts = 1
+       WHERE id = $1`,
+      [completed.id]
+    );
+
+    const result = await runAdmin(
+      ['reembed', '--only-failed', '--json'],
+      { DATABASE_URL: databaseUrl }
+    );
+    const body = parseJson(result.stdout) as { markedCount: number };
+    expect(body.markedCount).toBe(1);
+
+    const rows = await database.pool.query<{
+      id: string;
+      enrichment_status: string | null;
+      enrichment_attempts: number;
+    }>(
+      'SELECT id, enrichment_status, enrichment_attempts FROM entities WHERE id = ANY($1)',
+      [[failed.id, completed.id]]
+    );
+    const byId = Object.fromEntries(rows.rows.map((r) => [r.id, r]));
+    expect(byId[failed.id]?.enrichment_status).toBe('pending');
+    expect(byId[failed.id]?.enrichment_attempts).toBe(0);
+    expect(byId[completed.id]?.enrichment_status).toBe('completed');
+    expect(byId[completed.id]?.enrichment_attempts).toBe(1);
+
+    const auditRows = await database.pool.query<{ details: { onlyFailed: boolean } }>(
+      "SELECT details FROM audit_log WHERE operation = 'reembed.start' ORDER BY timestamp DESC LIMIT 1"
+    );
+    expect(auditRows.rows[0]?.details.onlyFailed).toBe(true);
+  }, 120_000);
+
   it('prune-edges deletes edges below threshold and supports --dry-run', async () => {
     if (!database) {
       throw new Error('test database not initialized');

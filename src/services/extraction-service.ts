@@ -52,7 +52,7 @@ export const EXTRACTION_SCHEMA = {
           relation: { type: 'string', enum: [...RELATIONS] },
           confidence: { type: 'number', minimum: 0, maximum: 1 }
         },
-        required: ['target_name', 'relation']
+        required: ['target_name', 'target_type', 'relation']
       }
     }
   },

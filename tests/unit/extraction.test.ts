@@ -79,7 +79,7 @@ describe('EXTRACTION_SCHEMA', () => {
     const rel = EXTRACTION_SCHEMA.properties.relationships;
     expect(rel.type).toBe('array');
     expect(rel.items.type).toBe('object');
-    expect(rel.items.required).toEqual(['target_name', 'relation']);
+    expect(rel.items.required).toEqual(['target_name', 'target_type', 'relation']);
   });
 
   it('constrains target_type and relation to the supported enums', () => {

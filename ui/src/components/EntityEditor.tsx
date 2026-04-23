@@ -157,7 +157,7 @@ export default function EntityEditor({ entity, api, onSaved, onCancel }: Props) 
           value={draft.content}
           onChange={v => patch('content', v)}
           placeholder="Write markdown…"
-          minHeight={entity.type === 'document' ? 360 : 220}
+          minHeight={entity.type === 'document' ? 520 : 360}
         />
       </div>
 

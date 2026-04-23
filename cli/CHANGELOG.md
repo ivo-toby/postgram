@@ -1,3 +1,14 @@
+## [1.13.0](https://github.com/ivo-toby/postgram/compare/cli-v1.12.0...cli-v1.13.0) (2026-04-23)
+
+### Features
+
+* **extraction-service:** enhance LLM caller to accept an optional schema parameter for structured outputs ([0cdd604](https://github.com/ivo-toby/postgram/commit/0cdd604d3dcedb0c40be2797398e3fe9e973e573))
+* **ui:** add favicon and wire postgram logo into the web UI ([7b87d84](https://github.com/ivo-toby/postgram/commit/7b87d84f99045665c2547c880865261a47faa4e2))
+
+### Bug Fixes
+
+* **extraction:** require target_type in structured-output schema ([45cfd16](https://github.com/ivo-toby/postgram/commit/45cfd1690ae5aedd85d279db27c0615d6d13d6f8))
+
 ## [1.12.0](https://github.com/ivo-toby/postgram/compare/cli-v1.11.0...cli-v1.12.0) (2026-04-23)
 
 ### Features

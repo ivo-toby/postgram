@@ -6,6 +6,7 @@ import { ENTITY_COLORS } from '../lib/nodeStyles.ts';
 import EntityEditor from './EntityEditor.tsx';
 import LinkModal from './LinkModal.tsx';
 import CreateEntityModal from './CreateEntityModal.tsx';
+import { useResizable } from '../hooks/useResizable.ts';
 
 const ALL_ENTITY_TYPES = ['document', 'memory', 'person', 'project', 'task', 'interaction'];
 const ALL_STATUSES = ['active', 'done', 'archived', 'inbox', 'next', 'waiting', 'scheduled', 'someday'];
@@ -57,6 +58,14 @@ type ResultItem = {
 };
 
 export default function SearchPage({ api, onOpenInGraph }: Props) {
+  const sidebar = useResizable({
+    initial: 480,
+    min: 320,
+    max: 900,
+    storageKey: 'pgm_search_sidebar_width',
+    direction: 'left',
+  });
+  const isDesktop = useIsDesktop();
   const [filters, setFilters] = useState<Filters>(initialFilters);
   const [filtersOpen, setFiltersOpen] = useState(false);
   const [results, setResults] = useState<ResultItem[]>([]);
@@ -530,7 +539,20 @@ export default function SearchPage({ api, onOpenInGraph }: Props) {
         )}
 
         {selectedId && (
-          <aside className="md:w-[480px] md:border-l md:border-gray-800 bg-gray-900 flex-1 md:flex-initial overflow-y-auto">
+          <aside
+            className="md:border-l md:border-gray-800 bg-gray-900 flex-1 md:flex-initial overflow-y-auto relative"
+            style={isDesktop ? { width: sidebar.width } : undefined}
+          >
+            <div
+              onMouseDown={sidebar.onMouseDown}
+              className={`hidden md:block absolute left-0 top-0 bottom-0 w-1.5 -ml-0.5 cursor-col-resize group z-10 ${
+                sidebar.dragging ? 'bg-blue-500/40' : 'hover:bg-blue-500/30'
+              }`}
+              title="Drag to resize"
+              aria-label="Resize sidebar"
+            >
+              <span className="absolute inset-y-0 left-1/2 -translate-x-1/2 w-px bg-gray-700 group-hover:bg-blue-500" />
+            </div>
             {selected ? (
               <DetailPanel
                 api={api}
@@ -995,4 +1017,18 @@ function truncateLabel(content: string | null | undefined, id: string): string {
   if (!text) return id.slice(0, 8);
   const firstLine = text.split('\n')[0]!.trim();
   return firstLine.length > 40 ? firstLine.slice(0, 40) + '…' : firstLine;
+}
+
+function useIsDesktop(): boolean {
+  const [isDesktop, setIsDesktop] = useState(() =>
+    typeof window !== 'undefined' && window.matchMedia('(min-width: 768px)').matches
+  );
+  useEffect(() => {
+    if (typeof window === 'undefined') return;
+    const mq = window.matchMedia('(min-width: 768px)');
+    const handler = (e: MediaQueryListEvent) => setIsDesktop(e.matches);
+    mq.addEventListener('change', handler);
+    return () => mq.removeEventListener('change', handler);
+  }, []);
+  return isDesktop;
 }

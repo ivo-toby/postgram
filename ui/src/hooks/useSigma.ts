@@ -1,4 +1,4 @@
-import { useEffect, useRef, useCallback } from 'react';
+import { useEffect, useRef, useCallback, useMemo } from 'react';
 import Sigma from 'sigma';
 import type { SigmaEvents as SigmaEventMap } from 'sigma/types';
 import type Graph from 'graphology';
@@ -19,7 +19,12 @@ export function useSigma(
   useEffect(() => {
     if (!containerRef.current) return;
 
+    // `allowInvalidContainer: true` lets Sigma initialise even when the host
+    // element has not yet been sized by the layout engine (e.g. the right
+    // sidebar just opened and the flex container is mid-transition). Sigma
+    // observes the container and will resize when it gets a real width.
     const sigma = new Sigma(graph, containerRef.current, {
+      allowInvalidContainer: true,
       renderEdgeLabels: false,
       defaultEdgeColor: '#374151',
       defaultNodeColor: '#3B82F6',
@@ -30,7 +35,28 @@ export function useSigma(
 
     sigmaRef.current = sigma;
 
+    // Sigma only listens to `window` resize out of the box. When an adjacent
+    // panel toggles, the container resizes without a window event — observe it
+    // directly so the camera/renderer stay in sync with the visible area.
+    let resizeObserver: ResizeObserver | null = null;
+    if (typeof ResizeObserver !== 'undefined') {
+      resizeObserver = new ResizeObserver(() => {
+        const s = sigmaRef.current;
+        if (!s) return;
+        try {
+          s.resize();
+          s.refresh();
+        } catch {
+          // allowInvalidContainer keeps us running even when the host has 0px
+          // mid-transition, but in case a version of sigma ever throws we
+          // swallow it — the next tick will retry.
+        }
+      });
+      resizeObserver.observe(containerRef.current);
+    }
+
     return () => {
+      resizeObserver?.disconnect();
       sigma.kill();
       sigmaRef.current = null;
     };
@@ -210,5 +236,10 @@ export function useSigma(
     sigmaRef.current?.refresh();
   }, []);
 
-  return { sigmaRef, zoomIn, zoomOut, focusNode, refresh };
+  // Stable return — all callbacks above have empty-deps so their identity
+  // never changes; wrapping in useMemo avoids effect churn in consumers.
+  return useMemo(
+    () => ({ sigmaRef, zoomIn, zoomOut, focusNode, refresh }),
+    [zoomIn, zoomOut, focusNode, refresh],
+  );
 }

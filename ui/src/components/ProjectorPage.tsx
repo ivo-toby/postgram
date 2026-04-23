@@ -75,6 +75,7 @@ export default function ProjectorPage({ api, onOpenInGraph, onOpenInSearch }: Pr
   const [algorithm, setAlgorithm] = useState<ProjectionAlgorithm>('umap');
   const [colourBy, setColourBy] = useState<ColourBy>('type');
   const [selectedId, setSelectedId] = useState<string | null>(null);
+  const [detailsOpen, setDetailsOpen] = useState(false);
   const [hoveredId, setHoveredId] = useState<string | null>(null);
   const workerRef = useRef<Worker | null>(null);
   const projectionCacheRef = useRef<
@@ -183,6 +184,7 @@ export default function ProjectorPage({ api, onOpenInGraph, onOpenInSearch }: Pr
           const res = await api.listEntities({ limit: ENTITY_PAGE_SIZE, offset });
           if (cancelled) return;
           all.push(...(res.items as Entity[]));
+          setLoadingStage(`Fetching entities (${all.length}/${res.total})…`);
           if (res.items.length < ENTITY_PAGE_SIZE) break;
           offset += ENTITY_PAGE_SIZE;
         }
@@ -220,7 +222,7 @@ export default function ProjectorPage({ api, onOpenInGraph, onOpenInSearch }: Pr
         return;
       }
 
-      setLoadingStage('Fetching embeddings…');
+      setLoadingStage(`Fetching embeddings (0/${entityIds.length})…`);
       try {
         const embeddingMap = new Map<string, number[]>();
         for (let i = 0; i < entityIds.length; i += EMBEDDING_BATCH) {
@@ -228,6 +230,9 @@ export default function ProjectorPage({ api, onOpenInGraph, onOpenInSearch }: Pr
           const res = await api.getEmbeddings(batch);
           if (cancelled) return;
           for (const e of res.embeddings) embeddingMap.set(e.id, e.embedding);
+          setLoadingStage(
+            `Fetching embeddings (${Math.min(i + EMBEDDING_BATCH, entityIds.length)}/${entityIds.length})…`,
+          );
         }
 
         const embeddedIds: string[] = [];
@@ -248,7 +253,12 @@ export default function ProjectorPage({ api, onOpenInGraph, onOpenInSearch }: Pr
           return;
         }
 
-        setLoadingStage(`Projecting ${embeddings.length} points…`);
+        const missing = entityIds.length - embeddings.length;
+        setLoadingStage(
+          missing > 0
+            ? `Running ${algorithm.toUpperCase()} on ${embeddings.length} points (${missing} without embeddings skipped)…`
+            : `Running ${algorithm.toUpperCase()} on ${embeddings.length} points…`,
+        );
 
         if (workerRef.current) workerRef.current.terminate();
         const worker = new Worker(
@@ -263,7 +273,7 @@ export default function ProjectorPage({ api, onOpenInGraph, onOpenInSearch }: Pr
             if (msg.type === 'progress') {
               if (!cancelled) {
                 setLoadingStage(
-                  `Projecting ${embeddings.length} points (${msg.epoch}/${msg.epochs})…`,
+                  `Running ${algorithm.toUpperCase()} on ${embeddings.length} points — epoch ${msg.epoch}/${msg.epochs}…`,
                 );
               }
             } else if (msg.type === 'result') {
@@ -324,11 +334,19 @@ export default function ProjectorPage({ api, onOpenInGraph, onOpenInSearch }: Pr
 
   useEffect(() => {
     const onKey = (e: KeyboardEvent) => {
-      if (e.key === 'Escape') setSelectedId(null);
+      if (e.key !== 'Escape') return;
+      // Esc closes the details sidebar first, then clears the selection.
+      if (detailsOpen) setDetailsOpen(false);
+      else setSelectedId(null);
     };
     window.addEventListener('keydown', onKey);
     return () => window.removeEventListener('keydown', onKey);
-  }, []);
+  }, [detailsOpen]);
+
+  // Clearing the selection always closes the details panel too.
+  useEffect(() => {
+    if (!selectedId) setDetailsOpen(false);
+  }, [selectedId]);
 
   useEffect(() => {
     return () => {
@@ -375,7 +393,16 @@ export default function ProjectorPage({ api, onOpenInGraph, onOpenInSearch }: Pr
         pointCount={points.length}
       />
 
-      <div className="flex-1 min-h-0 flex flex-col md:flex-row overflow-hidden">
+      {selectedId && selectedEntity && (
+        <SelectionBar
+          entity={selectedEntity}
+          detailsOpen={detailsOpen}
+          onToggleDetails={() => setDetailsOpen((v) => !v)}
+          onClose={() => setSelectedId(null)}
+        />
+      )}
+
+      <div className="flex-1 min-h-0 flex flex-row overflow-hidden relative">
         <div
           ref={canvasWrapRef}
           onMouseMove={(e) => {
@@ -387,7 +414,7 @@ export default function ProjectorPage({ api, onOpenInGraph, onOpenInSearch }: Pr
             setCursor(null);
             setHoveredId(null);
           }}
-          className={`flex-1 min-h-0 relative ${selectedId ? 'hidden md:block' : ''}`}
+          className="flex-1 min-w-0 min-h-0 relative"
         >
           <Canvas
             camera={{ position: [0, 0, 25], fov: 55 }}
@@ -431,8 +458,8 @@ export default function ProjectorPage({ api, onOpenInGraph, onOpenInSearch }: Pr
           <Legend colourBy={colourBy} />
         </div>
 
-        {selectedId && (
-          <aside className="md:w-[420px] md:border-l md:border-gray-800 bg-gray-900 flex-1 md:flex-initial overflow-y-auto">
+        {selectedId && detailsOpen && (
+          <aside className="w-full max-w-md md:w-[420px] md:max-w-none md:border-l md:border-gray-800 bg-gray-900 overflow-y-auto absolute md:static inset-y-0 right-0 z-20 md:z-auto shadow-xl md:shadow-none">
             <DetailPanel
               api={api}
               entity={selectedEntity}
@@ -440,7 +467,7 @@ export default function ProjectorPage({ api, onOpenInGraph, onOpenInSearch }: Pr
               position={positions.get(selectedId) ?? null}
               neighbours={selectedNeighbours}
               entities={entities}
-              onClose={() => setSelectedId(null)}
+              onClose={() => setDetailsOpen(false)}
               onNavigate={(id) => setSelectedId(id)}
               onOpenInGraph={() => onOpenInGraph(selectedId)}
               onOpenInSearch={
@@ -456,6 +483,54 @@ export default function ProjectorPage({ api, onOpenInGraph, onOpenInSearch }: Pr
             />
           </aside>
         )}
+      </div>
+    </div>
+  );
+}
+
+type SelectionBarProps = {
+  entity: Entity;
+  detailsOpen: boolean;
+  onToggleDetails: () => void;
+  onClose: () => void;
+};
+
+function SelectionBar({ entity, detailsOpen, onToggleDetails, onClose }: SelectionBarProps) {
+  const color = ENTITY_COLORS[entity.type] ?? ENTITY_COLORS['default'] ?? '#9CA3AF';
+  const title = entityTitle(entity, 120);
+  return (
+    <div className="shrink-0 border-b border-gray-800 bg-gray-900">
+      <div className="max-w-6xl mx-auto w-full px-3 sm:px-6 py-2 flex items-center gap-3 text-sm">
+        <span
+          className="px-2 py-0.5 rounded-full text-[11px] font-medium shrink-0"
+          style={{ backgroundColor: color + '22', color }}
+        >
+          {entity.type}
+        </span>
+        <span className="text-gray-100 truncate flex-1 min-w-0" title={title}>{title}</span>
+        <div className="flex items-center gap-1 shrink-0">
+          <button
+            type="button"
+            onClick={onToggleDetails}
+            aria-pressed={detailsOpen}
+            className={`px-3 py-1 rounded-md text-xs border transition-colors ${
+              detailsOpen
+                ? 'bg-blue-600 border-blue-500 text-white'
+                : 'bg-gray-800 border-gray-700 text-gray-200 hover:bg-gray-700'
+            }`}
+          >
+            {detailsOpen ? 'Hide details' : 'Details'}
+          </button>
+          <button
+            type="button"
+            onClick={onClose}
+            aria-label="Clear selection"
+            title="Clear selection (Esc)"
+            className="px-2 py-1 rounded-md text-gray-400 hover:text-white hover:bg-gray-800 text-lg leading-none"
+          >
+            ×
+          </button>
+        </div>
       </div>
     </div>
   );
@@ -870,18 +945,12 @@ function DetailPanel({
   return (
     <div className="flex flex-col h-full">
       <div className="flex items-center justify-between px-4 py-2 border-b border-gray-800 shrink-0">
+        <span className="text-xs text-gray-500 uppercase tracking-wide">Detail</span>
         <button
           onClick={onClose}
-          className="md:hidden text-sm text-gray-400 hover:text-white"
-        >
-          ‹ Back
-        </button>
-        <span className="hidden md:inline text-xs text-gray-500 uppercase tracking-wide">
-          Detail
-        </span>
-        <button
-          onClick={onClose}
-          className="hidden md:block text-gray-500 hover:text-white text-lg leading-none"
+          aria-label="Close details"
+          title="Close details"
+          className="text-gray-500 hover:text-white text-lg leading-none"
         >
           ×
         </button>

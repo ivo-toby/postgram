@@ -145,6 +145,43 @@ describe('createLlmProvider', () => {
         const result = await provider('anything');
         expect(result).toBe('[]');
       });
+
+      it('sends format: "json" when no schema is passed (legacy fallback)', async () => {
+        (globalThis.fetch as unknown as ReturnType<typeof vi.fn>).mockResolvedValue(
+          new Response(JSON.stringify({ message: { content: '[]' } }), { status: 200 })
+        );
+        const provider = createLlmProvider({
+          provider: 'ollama',
+          ollamaBaseUrl: 'http://ollama.local'
+        });
+        await provider('anything');
+
+        const call = (globalThis.fetch as unknown as ReturnType<typeof vi.fn>).mock.calls[0];
+        const init = call?.[1] as RequestInit;
+        const body = JSON.parse(init.body as string) as { format?: unknown };
+        expect(body.format).toBe('json');
+      });
+
+      it('forwards a JSON schema as the Ollama format when provided', async () => {
+        (globalThis.fetch as unknown as ReturnType<typeof vi.fn>).mockResolvedValue(
+          new Response(JSON.stringify({ message: { content: '[]' } }), { status: 200 })
+        );
+        const provider = createLlmProvider({
+          provider: 'ollama',
+          ollamaBaseUrl: 'http://ollama.local'
+        });
+        const schema = {
+          type: 'object',
+          properties: { foo: { type: 'string' } },
+          required: ['foo']
+        };
+        await provider('anything', schema);
+
+        const call = (globalThis.fetch as unknown as ReturnType<typeof vi.fn>).mock.calls[0];
+        const init = call?.[1] as RequestInit;
+        const body = JSON.parse(init.body as string) as { format?: unknown };
+        expect(body.format).toEqual(schema);
+      });
     });
   });
 

@@ -1,7 +1,7 @@
 import type { Logger } from 'pino';
 import type { Pool } from 'pg';
 
-type LlmCaller = (prompt: string) => Promise<string>;
+type LlmCaller = (prompt: string, schema?: object) => Promise<string>;
 
 export type EdgeValidationOptions = {
   source?: string | undefined;

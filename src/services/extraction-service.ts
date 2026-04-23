@@ -16,20 +16,85 @@ type RawExtraction = {
   confidence?: number;
 };
 
+const TARGET_TYPES = [
+  'memory',
+  'person',
+  'project',
+  'task',
+  'interaction',
+  'document'
+] as const;
+
+const RELATIONS = [
+  'involves',
+  'assigned_to',
+  'part_of',
+  'blocked_by',
+  'mentioned_in',
+  'related_to'
+] as const;
+
+// JSON Schema passed to Ollama's `format` field. Ollama's structured-output
+// mode constrains the model's decoder to emit JSON that validates against
+// this schema — models like Gemma3 that don't reliably follow prose
+// instructions ("return a JSON array …") still produce the right shape here
+// because the constraint is enforced at token-sampling time.
+export const EXTRACTION_SCHEMA = {
+  type: 'object',
+  properties: {
+    relationships: {
+      type: 'array',
+      items: {
+        type: 'object',
+        properties: {
+          target_name: { type: 'string' },
+          target_type: { type: 'string', enum: [...TARGET_TYPES] },
+          relation: { type: 'string', enum: [...RELATIONS] },
+          confidence: { type: 'number', minimum: 0, maximum: 1 }
+        },
+        required: ['target_name', 'target_type', 'relation']
+      }
+    }
+  },
+  required: ['relationships']
+} as const;
+
+function stripMarkdownFences(input: string): string {
+  const trimmed = input.trim();
+  if (!trimmed.startsWith('```')) return trimmed;
+  // Drop the opening fence (``` or ```json etc.) up to and including its newline.
+  const afterOpen = trimmed.replace(/^```[^\n]*\n?/, '');
+  // Drop a trailing fence if present.
+  return afterOpen.replace(/\n?```\s*$/, '').trim();
+}
+
+function looksLikeSingleExtraction(value: Record<string, unknown>): boolean {
+  return (
+    typeof value.target_name === 'string' &&
+    typeof value.relation === 'string'
+  );
+}
+
 export function parseExtractionResponse(response: string): ExtractionResult[] {
   try {
-    const parsed: unknown = JSON.parse(response);
+    const parsed: unknown = JSON.parse(stripMarkdownFences(response));
 
-    // Handle both raw array and object wrapper (OpenAI JSON mode returns objects)
     let items: unknown[];
     if (Array.isArray(parsed)) {
       items = parsed;
     } else if (parsed && typeof parsed === 'object') {
-      // Find the first array value in the object (e.g. { "relationships": [...] })
-      const values = Object.values(parsed as Record<string, unknown>);
-      const arrayValue = values.find((v) => Array.isArray(v));
-      if (!arrayValue) return [];
-      items = arrayValue as unknown[];
+      const obj = parsed as Record<string, unknown>;
+      // Lax models sometimes return a single relationship object directly
+      // instead of wrapping it in a list. Treat that as a one-item array so
+      // we don't silently drop the extraction.
+      if (looksLikeSingleExtraction(obj)) {
+        items = [obj];
+      } else {
+        // Otherwise find the first array value (e.g. { "relationships": [...] }).
+        const arrayValue = Object.values(obj).find((v) => Array.isArray(v));
+        if (!arrayValue) return [];
+        items = arrayValue as unknown[];
+      }
     } else {
       return [];
     }
@@ -58,18 +123,20 @@ export function buildExtractionPrompt(type: string, content: string): string {
 Entity type: ${type}
 Content: ${content}
 
-Return a JSON array of relationships:
-[
-  {
-    "target_name": "name of the referenced entity",
-    "target_type": "person|project|task|memory|interaction|document",
-    "relation": "involves|assigned_to|part_of|blocked_by|mentioned_in|related_to",
-    "confidence": 0.0-1.0
-  }
-]
+Return a JSON object with a "relationships" array:
+{
+  "relationships": [
+    {
+      "target_name": "name of the referenced entity",
+      "target_type": "person|project|task|memory|interaction|document",
+      "relation": "involves|assigned_to|part_of|blocked_by|mentioned_in|related_to",
+      "confidence": 0.0-1.0
+    }
+  ]
+}
 
 Only include clear, explicit relationships. Do not infer or speculate.
-Return [] if no relationships are found.`;
+Return {"relationships": []} if no relationships are found.`;
 }
 
 type AutoCreateOptions = {
@@ -79,7 +146,9 @@ type AutoCreateOptions = {
 };
 
 type ExtractionOptions = {
-  callLlm?: ((prompt: string) => Promise<string>) | undefined;
+  callLlm?:
+    | ((prompt: string, schema?: object) => Promise<string>)
+    | undefined;
   autoCreate?: AutoCreateOptions | undefined;
 };
 
@@ -103,7 +172,7 @@ export async function extractAndLinkRelationships(
   }
   const callLlm = options.callLlm;
 
-  const response = await callLlm(prompt);
+  const response = await callLlm(prompt, EXTRACTION_SCHEMA);
   const extractions = parseExtractionResponse(response);
 
   let linked = 0;

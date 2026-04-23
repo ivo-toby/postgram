@@ -9,7 +9,10 @@ type Props = {
 export default function TopBar({ onLogout, currentPage, onNavigate }: Props) {
   return (
     <header className="flex items-center gap-2 sm:gap-4 px-3 sm:px-4 h-12 bg-gray-900 border-b border-gray-800 shrink-0">
-      <span className="text-white font-semibold text-sm tracking-wide">Postgram</span>
+      <div className="flex items-center gap-2">
+        <img src="/logo-mark.png" alt="" className="h-7 w-7" />
+        <span className="text-white font-semibold text-sm tracking-wide">Postgram</span>
+      </div>
       <nav className="flex items-center gap-1 ml-2 sm:ml-4">
         <TabButton active={currentPage === 'search'} onClick={() => onNavigate('search')}>Search</TabButton>
         <TabButton active={currentPage === 'graph'} onClick={() => onNavigate('graph')}>Graph</TabButton>

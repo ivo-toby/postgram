@@ -18,8 +18,8 @@ export default function LoginScreen({ onLogin }: Props) {
   return (
     <div className="flex items-center justify-center h-full bg-gray-950">
       <div className="bg-gray-900 border border-gray-800 rounded-xl p-8 w-full max-w-sm shadow-2xl">
-        <h1 className="text-white text-2xl font-semibold mb-1">Postgram</h1>
-        <p className="text-gray-400 text-sm mb-6">Enter your API key to continue</p>
+        <img src="/logo.png" alt="Postgram" className="h-20 w-auto mx-auto mb-4" />
+        <p className="text-gray-400 text-sm text-center mb-6">Enter your API key to continue</p>
         <form onSubmit={handleSubmit} className="flex flex-col gap-3">
           <input
             type="password"

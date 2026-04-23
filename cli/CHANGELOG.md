@@ -1,3 +1,19 @@
+## [1.10.0](https://github.com/ivo-toby/postgram/compare/cli-v1.9.0...cli-v1.10.0) (2026-04-23)
+
+### Features
+
+* **projector:** add 3D embedding projector page ([92f5a64](https://github.com/ivo-toby/postgram/commit/92f5a64e5d78ec17d8ee453b944d74a306c5839c))
+* **ui:** shared entityTitle helper; projector shows embedding data ([08ded89](https://github.com/ivo-toby/postgram/commit/08ded898ab2d4e8a760f84ed13b94bed2aeeff10))
+* **web-ui:** search-as-editor with WYSIWYG markdown, task metadata, advanced linking ([37a471e](https://github.com/ivo-toby/postgram/commit/37a471e4db1a56b02a5a3819793914f059a95658))
+
+### Bug Fixes
+
+* **projector:** clicks on points now select reliably ([5a217a6](https://github.com/ivo-toby/postgram/commit/5a217a667c7d41d7fb30e1f218475a8923cf988a))
+* **projector:** detect taps at the DOM wrapper so OrbitControls can't eat them ([105db43](https://github.com/ivo-toby/postgram/commit/105db43c603639e41ba7382e54100e2d7e60b35c))
+* **projector:** tap detection works on desktop + landscape ([e0954e6](https://github.com/ivo-toby/postgram/commit/e0954e65239693bd03bf3e2660f865f3ad1517e2))
+* **projector:** usable hover + real titles + full entity viewer ([b6f4f1e](https://github.com/ivo-toby/postgram/commit/b6f4f1e52675a02392081284a135b15053d11a43))
+* **web-ui:** hide archived entities from graph and recover sidebar load ([645d35d](https://github.com/ivo-toby/postgram/commit/645d35d405fd2d244f2afabb6a8c535f46151829))
+
 ## [1.9.0](https://github.com/ivo-toby/postgram/compare/cli-v1.8.0...cli-v1.9.0) (2026-04-22)
 
 ### Features

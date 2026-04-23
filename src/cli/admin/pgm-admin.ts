@@ -728,7 +728,7 @@ program
     // Config + provider construction happens before runWithPool, so any
     // failure (missing env, invalid provider creds) would otherwise throw
     // outside the CLI's structured-error path and break --json output.
-    let callLlm: (prompt: string) => Promise<string>;
+    let callLlm: (prompt: string, schema?: object) => Promise<string>;
     let logger: ReturnType<typeof import('../../util/logger.js').createLogger>;
     let validateEdgeBatch: typeof import('../../services/edge-validation-service.js').validateEdgeBatch;
     try {

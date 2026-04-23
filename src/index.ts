@@ -232,7 +232,9 @@ export async function startServer(): Promise<{
     );
   }
 
-  let callLlm: ((prompt: string) => Promise<string>) | undefined;
+  let callLlm:
+    | ((prompt: string, schema?: object) => Promise<string>)
+    | undefined;
   if (config.EXTRACTION_ENABLED) {
     const { createLlmProvider } = await import('./services/llm-provider.js');
     callLlm = createLlmProvider({

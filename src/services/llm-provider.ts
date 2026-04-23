@@ -1,4 +1,10 @@
-type LlmProvider = (prompt: string) => Promise<string>;
+/**
+ * Optional JSON schema forwarded to providers that support structured
+ * outputs (today: Ollama's `format` field). Callers that want to constrain
+ * the model's response shape at decode time pass the schema here; providers
+ * that don't support it may ignore it.
+ */
+type LlmProvider = (prompt: string, schema?: object) => Promise<string>;
 
 // Hard ceiling on any single LLM call. Prevents a hung server from blocking
 // the enrichment worker indefinitely. Overridable via env for operators who
@@ -116,7 +122,7 @@ function createOllamaProvider(
     headers['Authorization'] = `Bearer ${apiKey}`;
   }
 
-  return async (prompt: string) => {
+  return async (prompt: string, schema?: object) => {
     // Reasoning-mode output triples latency on structured extraction where
     // we don't need a chain-of-thought. Different servers/models honour
     // different switches, so when disableThinking is on we send all three:
@@ -130,11 +136,16 @@ function createOllamaProvider(
     if (disableThinking) messages.push({ role: 'system', content: '/no_think' });
     messages.push({ role: 'user', content: prompt });
 
+    // When the caller supplies a JSON schema, forward it as Ollama's
+    // structured-output `format` (constrains the decoder to that shape).
+    // Without a schema, fall back to plain `'json'` — guarantees valid JSON
+    // but not a particular shape, which is enough for callers that parse
+    // flexibly.
     const payload: Record<string, unknown> = {
       model,
       messages,
       stream: false,
-      format: 'json'
+      format: schema ?? 'json'
     };
     if (disableThinking) {
       payload['think'] = false;

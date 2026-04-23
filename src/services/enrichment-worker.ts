@@ -25,7 +25,9 @@ type EnrichmentWorkerOptions = {
   pool: Pool;
   embeddingService?: EmbeddingService;
   extractionEnabled?: boolean;
-  callLlm?: ((prompt: string) => Promise<string>) | undefined;
+  callLlm?:
+    | ((prompt: string, schema?: object) => Promise<string>)
+    | undefined;
   logger?: Logger;
   autoCreate?: {
     enabled: boolean;

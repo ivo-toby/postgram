@@ -1,3 +1,13 @@
+## [1.15.0](https://github.com/ivo-toby/postgram/compare/cli-v1.14.0...cli-v1.15.0) (2026-04-24)
+
+### Features
+
+* **sync:** add ignore-file support (.pgmignore, .noindex) ([f7eeade](https://github.com/ivo-toby/postgram/commit/f7eeade745d09fcaa371ed35e23974e372fb52e9))
+
+### Bug Fixes
+
+* **tests:** make resolvePgmConfig tests env-independent ([e019c98](https://github.com/ivo-toby/postgram/commit/e019c987e94cd63d228ca2f03b1f92f9d1c3657e))
+
 ## [1.14.0](https://github.com/ivo-toby/postgram/compare/cli-v1.13.0...cli-v1.14.0) (2026-04-24)
 
 ### Features

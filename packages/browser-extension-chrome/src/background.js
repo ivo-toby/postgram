@@ -93,13 +93,16 @@ function isRestrictedUrl(url) {
 }
 
 async function ensureHostPermission(endpoint) {
-  let origin;
+  // Match patterns disallow literal ports, so build from protocol + hostname.
+  let pattern;
   try {
-    origin = new URL(endpoint).origin + '/*';
+    const url = new URL(endpoint);
+    if (!url.protocol || !url.hostname) return false;
+    pattern = `${url.protocol}//${url.hostname}/*`;
   } catch {
     return false;
   }
-  const has = await ext.permissions.contains({ origins: [origin] });
+  const has = await ext.permissions.contains({ origins: [pattern] });
   return has;
 }
 

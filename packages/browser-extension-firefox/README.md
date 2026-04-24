@@ -3,8 +3,9 @@
 A Manifest V3 extension that saves the current page (or a text selection) to
 your self-hosted [Postgram](../../README.md) server.
 
-Requires Firefox 121+ (earlier versions lack full MV3 support for
-`scripting.executeScript` with the `func` variant).
+Requires Firefox 128+ (earlier versions don't support the
+`optional_host_permissions` manifest key, which this extension relies on to
+scope network access to your configured Postgram endpoint).
 
 ## Install (temporary add-on, for development)
 

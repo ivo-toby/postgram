@@ -16,9 +16,15 @@ function normalizeEndpoint(value) {
     .replace(/\/+$/, '');
 }
 
+// Chromium and Firefox match patterns do not accept port numbers — a literal
+// port makes the pattern invalid. Strip it so `http://localhost:3210` →
+// `http://localhost/*` (which matches any port on that host, as the browsers
+// require).
 function originPattern(endpoint) {
   try {
-    return new URL(endpoint).origin + '/*';
+    const url = new URL(endpoint);
+    if (!url.protocol || !url.hostname) return null;
+    return `${url.protocol}//${url.hostname}/*`;
   } catch {
     return null;
   }

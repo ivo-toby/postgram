@@ -1,3 +1,9 @@
+## [1.14.0](https://github.com/ivo-toby/postgram/compare/cli-v1.13.0...cli-v1.14.0) (2026-04-24)
+
+### Features
+
+* **pgm-admin:** add --only-failed to reextract and reembed ([727e7c6](https://github.com/ivo-toby/postgram/commit/727e7c6fb8f9f085c307b4d44d9ddccf49baa805))
+
 ## [1.13.0](https://github.com/ivo-toby/postgram/compare/cli-v1.12.0...cli-v1.13.0) (2026-04-23)
 
 ### Features

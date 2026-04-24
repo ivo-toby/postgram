@@ -85,7 +85,7 @@ function normalizeUrl(url: string): string {
   return url.replace(/\/+$/, '');
 }
 
-export async function resolvePgmConfig(): Promise<PgmConfig> {
+export async function resolvePgmConfig(homeDir = os.homedir()): Promise<PgmConfig> {
   const envUrl = process.env.PGM_API_URL;
   const envKey = process.env.PGM_API_KEY;
 
@@ -96,7 +96,7 @@ export async function resolvePgmConfig(): Promise<PgmConfig> {
     };
   }
 
-  const rcPath = path.join(os.homedir(), '.pgmrc');
+  const rcPath = path.join(homeDir, '.pgmrc');
   try {
     const raw = await readFile(rcPath, 'utf8');
     const fileStat = statSync(rcPath);

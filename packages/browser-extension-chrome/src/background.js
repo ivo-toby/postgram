@@ -280,7 +280,7 @@ function capturePageContent() {
     if (!node) return '';
     const clone = node.cloneNode(true);
     clone.querySelectorAll(
-      'script,style,noscript,iframe,svg,canvas,nav,header footer,[aria-hidden="true"]'
+      'script,style,noscript,iframe,svg,canvas,nav,header,footer,aside,[aria-hidden="true"],[role="navigation"],[role="banner"],[role="contentinfo"]'
     ).forEach((el) => el.remove());
     return (clone.innerText || clone.textContent || '')
       .replace(/\u00a0/g, ' ')

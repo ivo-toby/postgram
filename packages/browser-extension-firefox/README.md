@@ -3,9 +3,15 @@
 A Manifest V3 extension that saves the current page (or a text selection) to
 your self-hosted [Postgram](../../README.md) server.
 
-Requires Firefox 128+ (earlier versions don't support the
-`optional_host_permissions` manifest key, which this extension relies on to
-scope network access to your configured Postgram endpoint).
+Requires Firefox 140+ (desktop). The extension needs:
+
+- `optional_host_permissions` (Firefox 128+) to scope network access to your
+  configured Postgram endpoint.
+- The built-in data-collection consent UI for
+  `browser_specific_settings.gecko.data_collection_permissions`, which Mozilla
+  only ships in Firefox desktop 140+ (and Android 142+). On older versions the
+  declaration is silently ignored, so the user doesn't see the disclosure
+  Mozilla requires for AMO submissions.
 
 ## Install (temporary add-on, for development)
 

@@ -6,6 +6,25 @@ export default tseslint.config(
     ignores: ['**/dist/**', '**/node_modules/**']
   },
   js.configs.recommended,
+  {
+    files: ['packages/browser-extension-*/src/**/*.js'],
+    languageOptions: {
+      globals: {
+        chrome: 'readonly',
+        browser: 'readonly',
+        window: 'readonly',
+        document: 'readonly',
+        location: 'readonly',
+        console: 'readonly',
+        fetch: 'readonly',
+        URL: 'readonly',
+        URLSearchParams: 'readonly',
+        Response: 'readonly',
+        setTimeout: 'readonly',
+        clearTimeout: 'readonly'
+      }
+    }
+  },
   ...tseslint.configs.recommended.map((config) => ({
     ...config,
     files: ['**/*.ts']

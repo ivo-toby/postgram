@@ -1,9 +1,8 @@
 #!/usr/bin/env node
 
 import { spawn, spawnSync } from 'node:child_process';
-import { createHash } from 'node:crypto';
 import { createWriteStream } from 'node:fs';
-import { mkdir, readdir, readFile as fsReadFile, stat } from 'node:fs/promises';
+import { mkdir, readFile as fsReadFile, stat } from 'node:fs/promises';
 import path from 'node:path';
 
 import { Command } from 'commander';
@@ -22,6 +21,7 @@ import {
   shortId
 } from './shared.js';
 import { AppError, ErrorCode } from './errors.js';
+import { buildSyncManifest } from './sync-walk.js';
 
 function formatStoredEntity(entity: {
   id: string;
@@ -652,33 +652,7 @@ program
       const resolvedDir = path.resolve(dir);
       const repoName = options.repo ?? path.basename(resolvedDir);
 
-      type FileEntry = { path: string; sha: string; fullPath: string };
-      const manifest: FileEntry[] = [];
-      const SKIP_DIRS = new Set(['.git', 'node_modules', '.obsidian', '.trash']);
-
-      async function walk(dirPath: string, prefix: string): Promise<void> {
-        const entries = await readdir(dirPath, { withFileTypes: true });
-        for (const entry of entries) {
-          if (entry.isDirectory()) {
-            if (!SKIP_DIRS.has(entry.name) && !entry.name.startsWith('.')) {
-              await walk(
-                path.join(dirPath, entry.name),
-                prefix ? `${prefix}/${entry.name}` : entry.name
-              );
-            }
-          } else if (entry.isFile() && entry.name.endsWith('.md')) {
-            const fullPath = path.join(dirPath, entry.name);
-            const content = await fsReadFile(fullPath, 'utf8');
-            const sha = createHash('sha256').update(content).digest('hex');
-            const relativePath = prefix
-              ? `${prefix}/${entry.name}`
-              : entry.name;
-            manifest.push({ path: relativePath, sha, fullPath });
-          }
-        }
-      }
-
-      await walk(resolvedDir, '');
+      const manifest = await buildSyncManifest(resolvedDir);
 
       const config = await resolvePgmConfig();
       const client = createPgmClient(config);

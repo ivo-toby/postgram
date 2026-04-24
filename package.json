@@ -4,7 +4,9 @@
   "private": true,
   "type": "module",
   "workspaces": [
-    "cli"
+    "cli",
+    "packages/browser-extension-chrome",
+    "packages/browser-extension-firefox"
   ],
   "bin": {
     "pgm-admin": "dist/cli/admin/pgm-admin.js"

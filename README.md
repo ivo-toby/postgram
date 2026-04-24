@@ -154,6 +154,9 @@ The same service layer is exposed through:
 - MCP SSE endpoint
 - `pgm` CLI
 - `pgm-admin` CLI
+- Browser extensions for [Chrome](./packages/browser-extension-chrome) and
+  [Firefox](./packages/browser-extension-firefox) — one-click web clipper
+  that captures the current page or text selection via the REST API.
 
 ## Repository Layout
 
@@ -167,6 +170,10 @@ src/
   transport/       REST and MCP adapters
   types/           Shared types
   util/            Errors, audit, logging
+
+packages/
+  browser-extension-chrome/   Chromium web clipper (MV3)
+  browser-extension-firefox/  Firefox web clipper (MV3)
 
 tests/
   contract/        REST and MCP contract tests

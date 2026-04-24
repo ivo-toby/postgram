@@ -1,0 +1,134 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>Postgram Web Clipper — Options</title>
+    <link rel="stylesheet" href="options.css" />
+  </head>
+  <body>
+    <main>
+      <header>
+        <h1>Postgram Web Clipper</h1>
+        <p class="subtitle">
+          Capture the current page (or a text selection) and save it to your
+          self-hosted Postgram server.
+        </p>
+      </header>
+
+      <form id="options-form">
+        <fieldset>
+          <legend>Server</legend>
+
+          <label>
+            <span>Endpoint URL</span>
+            <input
+              id="endpoint"
+              type="url"
+              placeholder="https://postgram.example.com"
+              required
+              autocomplete="off"
+              spellcheck="false"
+            />
+            <small
+              >The base URL of your Postgram server. No trailing slash
+              required.</small
+            >
+          </label>
+
+          <label>
+            <span>API Key</span>
+            <input
+              id="api-key"
+              type="password"
+              placeholder="pgm_…"
+              required
+              autocomplete="off"
+              spellcheck="false"
+            />
+            <small
+              >Create one with
+              <code>pgm-admin key create --scopes read,write</code>.</small
+            >
+          </label>
+
+          <div class="row">
+            <button type="button" id="grant-btn" class="secondary">
+              Grant access to endpoint
+            </button>
+            <span id="permission-status" class="status muted"></span>
+          </div>
+        </fieldset>
+
+        <fieldset>
+          <legend>Capture defaults</legend>
+
+          <label>
+            <span>Visibility</span>
+            <select id="visibility">
+              <option value="personal">personal</option>
+              <option value="work">work</option>
+              <option value="shared">shared</option>
+            </select>
+          </label>
+
+          <label>
+            <span>Owner (optional)</span>
+            <input
+              id="owner"
+              type="text"
+              placeholder="alice@example.com"
+              autocomplete="off"
+              spellcheck="false"
+            />
+            <small
+              >Leave blank to use the default owner for your API key.</small
+            >
+          </label>
+
+          <label>
+            <span>Extra tags (optional)</span>
+            <input
+              id="extra-tags"
+              type="text"
+              placeholder="research, inbox"
+              autocomplete="off"
+              spellcheck="false"
+            />
+            <small
+              >Comma-separated. <code>web-clip</code> and the capture mode
+              (<code>web-page</code> / <code>web-selection</code>) are added
+              automatically.</small
+            >
+          </label>
+        </fieldset>
+
+        <div class="actions">
+          <button type="submit" class="primary">Save</button>
+          <button type="button" id="test-btn" class="secondary">
+            Test connection
+          </button>
+          <span id="save-status" class="status muted"></span>
+        </div>
+      </form>
+
+      <section class="how">
+        <h2>How it works</h2>
+        <ol>
+          <li>Configure the endpoint and API key above, then click Save.</li>
+          <li>
+            Click <strong>Grant access</strong> so the extension can reach your
+            server (the browser will prompt you).
+          </li>
+          <li>
+            Visit any page and click the Postgram toolbar icon. If you have
+            text selected, only the selection is captured; otherwise the whole
+            page is captured.
+          </li>
+        </ol>
+      </section>
+    </main>
+
+    <script src="options.js"></script>
+  </body>
+</html>

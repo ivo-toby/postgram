@@ -449,12 +449,15 @@ program
   .option('--model <id>', 'switch active model before re-embedding')
   .option('--all', 're-embed all entities with content')
   .option('--type <type>', 're-embed entities of this type only')
+  .option('--only-failed', "only re-queue entities whose enrichment_status = 'failed'")
   .action(async (options, command) => {
     const json = isJsonMode(command);
 
-    if (!options.all && !options.type) {
+    if (!options.all && !options.type && !options.onlyFailed) {
       await handleCliFailure(
-        new Error('Specify --all or --type <type> to confirm which entities to re-embed'),
+        new Error(
+          'Specify --all, --type <type>, or --only-failed to confirm which entities to re-embed'
+        ),
         json
       );
       return;
@@ -484,6 +487,10 @@ program
           conditions.push(`type = $${params.length}`);
         }
 
+        if (options.onlyFailed) {
+          conditions.push("enrichment_status = 'failed'");
+        }
+
         const whereClause = conditions.join(' AND ');
 
         await client.query(
@@ -505,13 +512,18 @@ program
           details: {
             markedCount,
             model: options.model ?? null,
-            type: options.type ?? 'all'
+            type: options.type ?? 'all',
+            onlyFailed: Boolean(options.onlyFailed)
           }
         });
 
         return json
           ? { markedCount }
-          : [`Marked ${markedCount} entities for re-embedding`];
+          : [
+              `Marked ${markedCount} entities for re-embedding${
+                options.onlyFailed ? ' (only failed)' : ''
+              }`
+            ];
       } catch (error) {
         await client.query('ROLLBACK');
         throw error;
@@ -526,6 +538,7 @@ program
   .description('Mark entities for re-extraction (knowledge-graph edges + tags)')
   .option('--all', 're-extract all entities with content')
   .option('--type <type>', 're-extract entities of this type only')
+  .option('--only-failed', "only re-queue entities whose extraction_status = 'failed'")
   .option(
     '--clean-edges',
     "delete existing LLM-extracted edges (source='llm-extraction') for the in-scope entities before re-extraction — gives a clean slate rather than appending alongside old edges"
@@ -537,9 +550,11 @@ program
   .action(async (options, command) => {
     const json = isJsonMode(command);
 
-    if (!options.all && !options.type) {
+    if (!options.all && !options.type && !options.onlyFailed) {
       await handleCliFailure(
-        new Error('Specify --all or --type <type> to confirm which entities to re-extract'),
+        new Error(
+          'Specify --all, --type <type>, or --only-failed to confirm which entities to re-extract'
+        ),
         json
       );
       return;
@@ -568,6 +583,10 @@ program
         if (options.type) {
           params.push(options.type);
           conditions.push(`type = $${params.length}`);
+        }
+
+        if (options.onlyFailed) {
+          conditions.push("extraction_status = 'failed'");
         }
 
         const whereClause = conditions.join(' AND ');
@@ -602,17 +621,19 @@ program
             deletedEdges,
             type: options.type ?? 'all',
             cleanEdges: Boolean(options.cleanEdges),
-            includeAutoCreated: Boolean(options.includeAutoCreated)
+            includeAutoCreated: Boolean(options.includeAutoCreated),
+            onlyFailed: Boolean(options.onlyFailed)
           }
         });
 
+        const suffixes: string[] = [];
+        if (options.onlyFailed) suffixes.push('only failed');
+        if (options.cleanEdges) suffixes.push(`deleted ${deletedEdges} prior edges`);
+        const suffix = suffixes.length > 0 ? ` (${suffixes.join('; ')})` : '';
+
         return json
           ? { markedCount, deletedEdges }
-          : [
-              `Marked ${markedCount} entities for re-extraction${
-                options.cleanEdges ? ` (deleted ${deletedEdges} prior edges)` : ''
-              }`
-            ];
+          : [`Marked ${markedCount} entities for re-extraction${suffix}`];
       } catch (error) {
         await client.query('ROLLBACK');
         throw error;

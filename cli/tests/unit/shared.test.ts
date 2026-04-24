@@ -79,6 +79,8 @@ describe('shortId', () => {
 
 describe('resolvePgmConfig', () => {
   it('warns when ~/.pgmrc has insecure permissions', async () => {
+    vi.stubEnv('PGM_API_URL', '');
+    vi.stubEnv('PGM_API_KEY', '');
     tempHomeDir = await mkdtemp(path.join(os.tmpdir(), 'pgmrc-test-'));
     const rcPath = path.join(tempHomeDir, '.pgmrc');
 
@@ -91,12 +93,11 @@ describe('resolvePgmConfig', () => {
     );
     await chmod(rcPath, 0o644);
 
-    vi.spyOn(os, 'homedir').mockReturnValue(tempHomeDir);
     const stderrWrite = vi
       .spyOn(process.stderr, 'write')
       .mockReturnValue(true);
 
-    const config = await resolvePgmConfig();
+    const config = await resolvePgmConfig(tempHomeDir);
 
     expect(config).toEqual({
       apiUrl: 'http://localhost:3100',
@@ -108,6 +109,8 @@ describe('resolvePgmConfig', () => {
   });
 
   it('does not warn when ~/.pgmrc permissions are restricted', async () => {
+    vi.stubEnv('PGM_API_URL', '');
+    vi.stubEnv('PGM_API_KEY', '');
     tempHomeDir = await mkdtemp(path.join(os.tmpdir(), 'pgmrc-test-'));
     const rcPath = path.join(tempHomeDir, '.pgmrc');
 
@@ -120,12 +123,11 @@ describe('resolvePgmConfig', () => {
     );
     await chmod(rcPath, 0o600);
 
-    vi.spyOn(os, 'homedir').mockReturnValue(tempHomeDir);
     const stderrWrite = vi
       .spyOn(process.stderr, 'write')
       .mockReturnValue(true);
 
-    const config = await resolvePgmConfig();
+    const config = await resolvePgmConfig(tempHomeDir);
 
     expect(config).toEqual({
       apiUrl: 'http://localhost:3100',

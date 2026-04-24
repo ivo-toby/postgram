@@ -52,6 +52,10 @@ const configSchema = z
       emptyToUndefined,
       z.coerce.number().min(0).max(1).default(0.7)
     ),
+    EXTRACTION_MATCH_MIN_SIMILARITY: z.preprocess(
+      emptyToUndefined,
+      z.coerce.number().min(0).max(1).default(0.5)
+    ),
     ANTHROPIC_API_KEY: optionalString,
     OLLAMA_API_KEY: optionalString,
     OLLAMA_BASE_URL: z.preprocess(

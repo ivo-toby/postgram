@@ -1,3 +1,9 @@
+## [1.16.1](https://github.com/ivo-toby/postgram/compare/cli-v1.16.0...cli-v1.16.1) (2026-04-26)
+
+### Bug Fixes
+
+* pass LLM_REQUEST_TIMEOUT_MS through to mcp-server container ([cd1ab1d](https://github.com/ivo-toby/postgram/commit/cd1ab1da9b1865d91e1b52608a43bb4dab016d01))
+
 ## [1.16.0](https://github.com/ivo-toby/postgram/compare/cli-v1.15.0...cli-v1.16.0) (2026-04-26)
 
 ### Features

@@ -1,3 +1,9 @@
+## [1.17.1](https://github.com/ivo-toby/postgram/compare/cli-v1.17.0...cli-v1.17.1) (2026-04-26)
+
+### Bug Fixes
+
+* forward EXTRACTION_REASONING_EFFORT to validate-edges command ([fc15ca8](https://github.com/ivo-toby/postgram/commit/fc15ca83a372d6a986ed23ab59a19cb8c7f543af)), closes [#28](https://github.com/ivo-toby/postgram/issues/28)
+
 ## [1.17.0](https://github.com/ivo-toby/postgram/compare/cli-v1.16.1...cli-v1.17.0) (2026-04-26)
 
 ### Features

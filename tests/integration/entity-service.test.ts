@@ -380,7 +380,7 @@ describe('entity-service', () => {
     });
     expect(archivedResult.isOk()).toBe(true);
     const archived = archivedResult._unsafeUnwrap();
-    await softDeleteEntity(database.pool, auth, archived.id);
+    expect((await softDeleteEntity(database.pool, auth, archived.id)).isOk()).toBe(true);
 
     const result = await listEntities(database.pool, auth, {});
     expect(result.isOk()).toBe(true);
@@ -397,7 +397,7 @@ describe('entity-service', () => {
     });
     expect(archivedResult.isOk()).toBe(true);
     const archived = archivedResult._unsafeUnwrap();
-    await softDeleteEntity(database.pool, auth, archived.id);
+    expect((await softDeleteEntity(database.pool, auth, archived.id)).isOk()).toBe(true);
 
     const result = await listEntities(database.pool, auth, { includeArchived: true });
     expect(result.isOk()).toBe(true);

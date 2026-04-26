@@ -73,7 +73,8 @@ const searchEntitiesSchema = z.object({
   limit: z.number().int().positive().max(50).optional(),
   threshold: z.number().min(0).max(1).optional(),
   recency_weight: z.number().min(0).optional(),
-  expand_graph: z.boolean().optional()
+  expand_graph: z.boolean().optional(),
+  include_archived: z.boolean().optional()
 });
 
 const taskCreateSchema = z.object({
@@ -320,6 +321,8 @@ export function registerRestRoutes(
       throw toValidationError('Invalid owner');
     }
 
+    const includeArchived = c.req.query('include_archived') === 'true';
+
     const result = await listEntities(pool, auth, {
       type: type as EntityType | undefined,
       status: status as EntityStatus | undefined,
@@ -327,7 +330,8 @@ export function registerRestRoutes(
       owner,
       tags: tags ? tags.split(',').filter(Boolean) : undefined,
       limit: parseQueryNumber(c.req.query('limit'), 50),
-      offset: parseQueryNumber(c.req.query('offset'), 0)
+      offset: parseQueryNumber(c.req.query('offset'), 0),
+      includeArchived
     });
 
     if (result.isErr()) {
@@ -357,7 +361,8 @@ export function registerRestRoutes(
         limit: body.limit,
         threshold: body.threshold,
         recencyWeight: body.recency_weight,
-        expandGraph: body.expand_graph
+        expandGraph: body.expand_graph,
+        includeArchived: body.include_archived
       },
       {
         embeddingService: options.embeddingService
@@ -407,11 +412,14 @@ export function registerRestRoutes(
       throw toValidationError('Invalid entity status');
     }
 
+    const includeArchived = c.req.query('include_archived') === 'true';
+
     const result = await listTasks(pool, auth, {
       status: status as EntityStatus | undefined,
       context: c.req.query('context') ?? undefined,
       limit: parseQueryNumber(c.req.query('limit'), 50),
-      offset: parseQueryNumber(c.req.query('offset'), 0)
+      offset: parseQueryNumber(c.req.query('offset'), 0),
+      includeArchived
     });
 
     if (result.isErr()) {

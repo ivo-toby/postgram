@@ -54,17 +54,21 @@ type OllamaResponse = {
 function createOpenAiProvider(
   apiKey: string,
   model: string,
-  disableThinking: boolean
+  disableThinking: boolean,
+  reasoningEffort: ReasoningEffort | undefined
 ): LlmProvider {
   return async (prompt: string) => {
-    // `reasoning_effort: 'minimal'` applies to o-series and gpt-5 reasoning
-    // models. Non-reasoning models (gpt-4o-mini etc.) ignore the field.
+    // `reasoning_effort` applies to o-series and gpt-5 reasoning models.
+    // Non-reasoning models (gpt-4o-mini etc.) ignore the field. Explicit
+    // EXTRACTION_REASONING_EFFORT wins; otherwise disableThinking implies
+    // 'minimal' for back-compat with existing deployments.
     const payload: Record<string, unknown> = {
       model,
       messages: [{ role: 'user', content: prompt }],
       temperature: 0
     };
-    if (disableThinking) payload['reasoning_effort'] = 'minimal';
+    const effort = reasoningEffort ?? (disableThinking ? 'minimal' : undefined);
+    if (effort) payload['reasoning_effort'] = effort;
 
     const response = await fetchWithTimeout('https://api.openai.com/v1/chat/completions', {
       method: 'POST',
@@ -115,6 +119,7 @@ function createOllamaProvider(
   baseUrl: string,
   model: string,
   disableThinking: boolean,
+  reasoningEffort: ReasoningEffort | undefined,
   apiKey?: string
 ): LlmProvider {
   const headers: Record<string, string> = { 'Content-Type': 'application/json' };
@@ -151,6 +156,10 @@ function createOllamaProvider(
       payload['think'] = false;
       payload['chat_template_kwargs'] = { enable_thinking: false };
     }
+    // gpt-oss and other OpenAI-style reasoning models on Ollama honour
+    // `reasoning_effort` as a top-level chat field. Models that don't
+    // recognise it ignore the unknown key.
+    if (reasoningEffort) payload['reasoning_effort'] = reasoningEffort;
 
     const response = await fetchWithTimeout(`${baseUrl}/api/chat`, {
       method: 'POST',
@@ -171,6 +180,8 @@ function createOllamaProvider(
 
 export type ExtractionProvider = 'openai' | 'anthropic' | 'ollama';
 
+export type ReasoningEffort = 'minimal' | 'low' | 'medium' | 'high';
+
 const DEFAULT_MODELS: Record<ExtractionProvider, string> = {
   openai: 'gpt-4o-mini',
   anthropic: 'claude-haiku-4-5-20251001',
@@ -190,6 +201,13 @@ type ProviderConfig = {
    * just add latency. Set to false if a model misbehaves with the hints.
    */
   disableThinking?: boolean | undefined;
+  /**
+   * Explicit reasoning budget for OpenAI-style reasoning models (o-series,
+   * gpt-5, gpt-oss). Forwarded as `reasoning_effort` to OpenAI and Ollama.
+   * When set, takes precedence over the implicit 'minimal' that
+   * disableThinking sends to OpenAI.
+   */
+  reasoningEffort?: ReasoningEffort | undefined;
 };
 
 export function createLlmProvider(config: ProviderConfig): LlmProvider {
@@ -201,7 +219,12 @@ export function createLlmProvider(config: ProviderConfig): LlmProvider {
       if (!config.openaiApiKey) {
         throw new Error('OPENAI_API_KEY is required for openai extraction provider');
       }
-      return createOpenAiProvider(config.openaiApiKey, model, disableThinking);
+      return createOpenAiProvider(
+        config.openaiApiKey,
+        model,
+        disableThinking,
+        config.reasoningEffort
+      );
     }
     case 'anthropic': {
       if (!config.anthropicApiKey) {
@@ -211,7 +234,13 @@ export function createLlmProvider(config: ProviderConfig): LlmProvider {
     }
     case 'ollama': {
       const baseUrl = config.ollamaBaseUrl ?? 'http://localhost:11434';
-      return createOllamaProvider(baseUrl, model, disableThinking, config.ollamaApiKey);
+      return createOllamaProvider(
+        baseUrl,
+        model,
+        disableThinking,
+        config.reasoningEffort,
+        config.ollamaApiKey
+      );
     }
   }
 }

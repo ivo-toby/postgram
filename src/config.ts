@@ -28,6 +28,11 @@ const configSchema = z
       .enum(['true', 'false'])
       .default('true')
       .transform((v) => v === 'true'),
+    EXTRACTION_REASONING_EFFORT: z
+      .preprocess(
+        emptyToUndefined,
+        z.enum(['minimal', 'low', 'medium', 'high']).optional()
+      ),
     EXTRACTION_AUTO_CREATE_ENTITIES: z
       .enum(['true', 'false'])
       .default('false')

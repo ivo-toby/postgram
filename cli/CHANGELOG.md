@@ -1,3 +1,9 @@
+## [1.16.0](https://github.com/ivo-toby/postgram/compare/cli-v1.15.0...cli-v1.16.0) (2026-04-26)
+
+### Features
+
+* **extraction:** semantic target matching replaces ILIKE ([d0d2dac](https://github.com/ivo-toby/postgram/commit/d0d2dac5118d02f938bb549c1a538815d6856db9))
+
 ## [1.15.0](https://github.com/ivo-toby/postgram/compare/cli-v1.14.0...cli-v1.15.0) (2026-04-24)
 
 ### Features

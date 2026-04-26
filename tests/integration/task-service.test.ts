@@ -6,6 +6,7 @@ import {
   listTasks,
   updateTask
 } from '../../src/services/task-service.js';
+import { softDeleteEntity } from '../../src/services/entity-service.js';
 import type { AuthContext } from '../../src/auth/types.js';
 import {
   createTestDatabase,
@@ -192,5 +193,42 @@ describe('task-service', () => {
       total: 550
     });
     expect(listed._unsafeUnwrap().items).toHaveLength(550);
+  }, 120_000);
+
+  it('excludes archived tasks from listTasks by default', async () => {
+    if (!database) throw new Error('test database not initialized');
+    const auth = makeAuthContext();
+
+    await createTask(database.pool, auth, {
+      content: 'active task', visibility: 'personal'
+    });
+    const archivedResult = await createTask(database.pool, auth, {
+      content: 'archived task', visibility: 'personal'
+    });
+    expect(archivedResult.isOk()).toBe(true);
+    const archived = archivedResult._unsafeUnwrap();
+    expect((await softDeleteEntity(database.pool, auth, archived.id)).isOk()).toBe(true);
+
+    const result = await listTasks(database.pool, auth, {});
+    expect(result.isOk()).toBe(true);
+    const ids = result._unsafeUnwrap().items.map(e => e.id);
+    expect(ids).not.toContain(archived.id);
+  }, 120_000);
+
+  it('includes archived tasks when includeArchived is true', async () => {
+    if (!database) throw new Error('test database not initialized');
+    const auth = makeAuthContext();
+
+    const archivedResult = await createTask(database.pool, auth, {
+      content: 'archived task', visibility: 'personal'
+    });
+    expect(archivedResult.isOk()).toBe(true);
+    const archived = archivedResult._unsafeUnwrap();
+    expect((await softDeleteEntity(database.pool, auth, archived.id)).isOk()).toBe(true);
+
+    const result = await listTasks(database.pool, auth, { includeArchived: true });
+    expect(result.isOk()).toBe(true);
+    const ids = result._unsafeUnwrap().items.map(e => e.id);
+    expect(ids).toContain(archived.id);
   }, 120_000);
 });

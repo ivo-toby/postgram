@@ -46,6 +46,7 @@ type ListTasksInput = {
   context?: string | undefined;
   limit?: number | undefined;
   offset?: number | undefined;
+  includeArchived?: boolean | undefined;
 };
 
 type UpdateTaskInput = {
@@ -176,14 +177,16 @@ export function listTasks(
           FROM entities
           WHERE type = 'task'
             AND ($1::text IS NULL OR status = $1)
-            AND ($2::text IS NULL OR metadata->>'context' = $2)
-            AND visibility = ANY($3)
+            AND ($2::boolean = true OR status IS DISTINCT FROM 'archived')
+            AND ($3::text IS NULL OR metadata->>'context' = $3)
+            AND visibility = ANY($4)
           ORDER BY created_at DESC
-          LIMIT $4
-          OFFSET $5
+          LIMIT $5
+          OFFSET $6
         `,
         [
           input.status ?? null,
+          input.includeArchived ?? false,
           input.context ?? null,
           auth.allowedVisibility,
           limit,

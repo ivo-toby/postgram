@@ -157,6 +157,9 @@ The same service layer is exposed through:
 - Browser extensions for [Chrome](./packages/browser-extension-chrome) and
   [Firefox](./packages/browser-extension-firefox) — one-click web clipper
   that captures the current page or text selection via the REST API.
+  Build with `npm run -w @ivotoby/postgram-browser-extension-chrome package`
+  (or the Firefox equivalent); install unpacked from the per-package
+  README.
 
 ## Repository Layout
 

@@ -773,7 +773,8 @@ program
         anthropicApiKey: config.ANTHROPIC_API_KEY,
         ollamaBaseUrl: config.OLLAMA_BASE_URL,
         ollamaApiKey: config.OLLAMA_API_KEY,
-        disableThinking: config.EXTRACTION_DISABLE_THINKING
+        disableThinking: config.EXTRACTION_DISABLE_THINKING,
+        reasoningEffort: config.EXTRACTION_REASONING_EFFORT
       });
       logger = createLogger(config.LOG_LEVEL);
     } catch (error) {

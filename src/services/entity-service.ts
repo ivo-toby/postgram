@@ -424,7 +424,7 @@ export function listEntities(
         [
           input.type ?? null,
           input.status ?? null,
-          input.includeArchived ?? false,
+          (input.includeArchived ?? false) || input.status === 'archived',
           input.visibility ?? null,
           input.owner ?? null,
           input.tags?.length ? input.tags : null,

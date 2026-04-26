@@ -186,7 +186,7 @@ export function listTasks(
         `,
         [
           input.status ?? null,
-          input.includeArchived ?? false,
+          (input.includeArchived ?? false) || input.status === 'archived',
           input.context ?? null,
           auth.allowedVisibility,
           limit,

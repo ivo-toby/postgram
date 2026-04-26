@@ -162,6 +162,39 @@ describe('createLlmProvider', () => {
         expect(body.format).toBe('json');
       });
 
+      it('omits reasoning_effort when not configured', async () => {
+        (globalThis.fetch as unknown as ReturnType<typeof vi.fn>).mockResolvedValue(
+          new Response(JSON.stringify({ message: { content: '[]' } }), { status: 200 })
+        );
+        const provider = createLlmProvider({
+          provider: 'ollama',
+          ollamaBaseUrl: 'http://ollama.local'
+        });
+        await provider('anything');
+
+        const call = (globalThis.fetch as unknown as ReturnType<typeof vi.fn>).mock.calls[0];
+        const init = call?.[1] as RequestInit;
+        const body = JSON.parse(init.body as string) as { reasoning_effort?: unknown };
+        expect(body.reasoning_effort).toBeUndefined();
+      });
+
+      it('forwards reasoning_effort top-level when configured', async () => {
+        (globalThis.fetch as unknown as ReturnType<typeof vi.fn>).mockResolvedValue(
+          new Response(JSON.stringify({ message: { content: '[]' } }), { status: 200 })
+        );
+        const provider = createLlmProvider({
+          provider: 'ollama',
+          ollamaBaseUrl: 'http://ollama.local',
+          reasoningEffort: 'low'
+        });
+        await provider('anything');
+
+        const call = (globalThis.fetch as unknown as ReturnType<typeof vi.fn>).mock.calls[0];
+        const init = call?.[1] as RequestInit;
+        const body = JSON.parse(init.body as string) as { reasoning_effort?: unknown };
+        expect(body.reasoning_effort).toBe('low');
+      });
+
       it('forwards a JSON schema as the Ollama format when provided', async () => {
         (globalThis.fetch as unknown as ReturnType<typeof vi.fn>).mockResolvedValue(
           new Response(JSON.stringify({ message: { content: '[]' } }), { status: 200 })
@@ -192,6 +225,75 @@ describe('createLlmProvider', () => {
         openaiApiKey: 'sk-test'
       });
       expect(typeof provider).toBe('function');
+    });
+
+    describe('reasoning_effort', () => {
+      const originalFetch = globalThis.fetch;
+      beforeEach(() => {
+        globalThis.fetch = vi.fn() as unknown as typeof fetch;
+      });
+      afterEach(() => {
+        globalThis.fetch = originalFetch;
+      });
+
+      it("defaults to 'minimal' when disableThinking is on (back-compat)", async () => {
+        (globalThis.fetch as unknown as ReturnType<typeof vi.fn>).mockResolvedValue(
+          new Response(
+            JSON.stringify({ choices: [{ message: { content: '[]' } }] }),
+            { status: 200 }
+          )
+        );
+        const provider = createLlmProvider({
+          provider: 'openai',
+          openaiApiKey: 'sk-test'
+        });
+        await provider('anything');
+
+        const call = (globalThis.fetch as unknown as ReturnType<typeof vi.fn>).mock.calls[0];
+        const init = call?.[1] as RequestInit;
+        const body = JSON.parse(init.body as string) as { reasoning_effort?: unknown };
+        expect(body.reasoning_effort).toBe('minimal');
+      });
+
+      it('explicit reasoningEffort overrides the disableThinking default', async () => {
+        (globalThis.fetch as unknown as ReturnType<typeof vi.fn>).mockResolvedValue(
+          new Response(
+            JSON.stringify({ choices: [{ message: { content: '[]' } }] }),
+            { status: 200 }
+          )
+        );
+        const provider = createLlmProvider({
+          provider: 'openai',
+          openaiApiKey: 'sk-test',
+          reasoningEffort: 'high'
+        });
+        await provider('anything');
+
+        const call = (globalThis.fetch as unknown as ReturnType<typeof vi.fn>).mock.calls[0];
+        const init = call?.[1] as RequestInit;
+        const body = JSON.parse(init.body as string) as { reasoning_effort?: unknown };
+        expect(body.reasoning_effort).toBe('high');
+      });
+
+      it('omits reasoning_effort when disableThinking=false and no explicit effort', async () => {
+        (globalThis.fetch as unknown as ReturnType<typeof vi.fn>).mockResolvedValue(
+          new Response(
+            JSON.stringify({ choices: [{ message: { content: '[]' } }] }),
+            { status: 200 }
+          )
+        );
+        const provider = createLlmProvider({
+          provider: 'openai',
+          openaiApiKey: 'sk-test',
+          disableThinking: false
+        });
+        await provider('anything');
+
+        const call = (globalThis.fetch as unknown as ReturnType<typeof vi.fn>).mock.calls[0];
+        const init = call?.[1] as RequestInit;
+        const body = JSON.parse(init.body as string) as { reasoning_effort?: unknown };
+        expect(body.reasoning_effort).toBeUndefined();
+      });
     });
   });
 

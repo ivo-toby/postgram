@@ -265,6 +265,8 @@ See [`specs/002-local-embeddings/quickstart.md`](specs/002-local-embeddings/quic
 | `EXTRACTION_AUTO_CREATE_MIN_CONFIDENCE`  | no                      | `0.7`                           | Minimum per-extraction confidence (0–1) required to auto-create an entity. Raise to cut noise, lower for a denser graph. |
 | `ANTHROPIC_API_KEY`                      | when provider=anthropic |                                 | Anthropic API key                                                                                                 |
 | `OLLAMA_BASE_URL`                        | no                      | `http://localhost:11434`        | Ollama server URL                                                                                                 |
+| `EXTRACTION_REASONING_EFFORT`            | no                      | unset                           | `minimal` \| `low` \| `medium` \| `high`. Forwarded as `reasoning_effort` to OpenAI and Ollama for reasoning models (o-series, gpt-5, gpt-oss). When set, overrides the implicit `minimal` that `EXTRACTION_DISABLE_THINKING=true` sends to OpenAI. |
+| `LLM_REQUEST_TIMEOUT_MS`                 | no                      | `120000`                        | Hard cap per LLM call in milliseconds. Bump this when running slow local models (e.g. `gpt-oss:120b-cloud`).      |
 
 **Auto-created entities**: when `EXTRACTION_AUTO_CREATE_ENTITIES=true`,
 entities that didn't exist before a document mentioned them are inserted

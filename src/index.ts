@@ -244,7 +244,8 @@ export async function startServer(): Promise<{
       anthropicApiKey: config.ANTHROPIC_API_KEY,
       ollamaBaseUrl: config.OLLAMA_BASE_URL,
       ollamaApiKey: config.OLLAMA_API_KEY,
-      disableThinking: config.EXTRACTION_DISABLE_THINKING
+      disableThinking: config.EXTRACTION_DISABLE_THINKING,
+      reasoningEffort: config.EXTRACTION_REASONING_EFFORT
     });
     logger.info(
       { provider: config.EXTRACTION_PROVIDER, model: config.EXTRACTION_MODEL },

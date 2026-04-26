@@ -1,3 +1,9 @@
+## [1.17.0](https://github.com/ivo-toby/postgram/compare/cli-v1.16.1...cli-v1.17.0) (2026-04-26)
+
+### Features
+
+* add EXTRACTION_REASONING_EFFORT for OpenAI-style reasoning models ([20d344e](https://github.com/ivo-toby/postgram/commit/20d344ee1efe98aa3c6b97144c5ea6d2c8e74f11))
+
 ## [1.16.1](https://github.com/ivo-toby/postgram/compare/cli-v1.16.0...cli-v1.16.1) (2026-04-26)
 
 ### Bug Fixes

@@ -11,6 +11,11 @@
   },
   "scripts": {
     "package": "mkdir -p dist && zip -qr dist/postgram-web-clipper-firefox.zip manifest.json src -x '*.DS_Store'",
+    "lint:webext": "web-ext lint --source-dir=.",
+    "sign": "mkdir -p dist && web-ext sign --channel=unlisted --source-dir=. --artifacts-dir=dist",
     "validate": "node -e \"JSON.parse(require('fs').readFileSync('manifest.json','utf8')); console.log('manifest.json is valid JSON')\""
+  },
+  "devDependencies": {
+    "web-ext": "^10.1.0"
   }
 }

@@ -73,32 +73,70 @@ changes without restarting, click **Reload** on the add-on's row in
 
 ### B. Persistent install via signed XPI
 
-Standard Firefox release/beta builds **require signed extensions**. To
-install persistently you must either:
+Standard Firefox release/beta/ESR/Android builds **require signed
+extensions** — there is no `about:config` flag that disables signing on
+those channels. You have two practical paths:
 
-1. **Submit to AMO**:
-   1. Run `npm run -w @ivotoby/postgram-browser-extension-firefox package`.
-   2. Upload the resulting zip to
-      [addons.mozilla.org → Add a new add-on](https://addons.mozilla.org/en-US/developers/addon/submit/).
-      Choose **On your own** if you don't want public listing.
-   3. Mozilla returns a signed `.xpi`. Drag-and-drop it into Firefox to
-      install.
+#### B1. Self-distribute a signed XPI via AMO (recommended)
 
-2. **Or use a build that allows unsigned add-ons** —
-   [Firefox Developer Edition](https://www.mozilla.org/firefox/developer/),
-   [Nightly](https://www.mozilla.org/firefox/channel/desktop/#nightly),
-   or
-   [ESR for unbranded builds](https://wiki.mozilla.org/Add-ons/Extension_Signing#Unbranded_Builds):
+This stays off the public AMO catalogue but produces an `.xpi` any
+Firefox install can use. Mozilla calls this "unlisted" / "On your own"
+distribution; it's free and there's no human review (only an automated
+scan).
 
-   1. Open `about:config`, set `xpinstall.signatures.required` to
-      `false`.
-   2. `npm run -w @ivotoby/postgram-browser-extension-firefox package`.
-   3. Rename the resulting zip to `.xpi` and drag it into Firefox.
+1. **Get AMO API credentials**. Sign in at
+   [addons.mozilla.org](https://addons.mozilla.org/en-US/firefox/users/login/)
+   with a Firefox Account, then visit
+   [Manage API Keys](https://addons.mozilla.org/en-US/developers/addon/api/key/)
+   and click **Generate new credentials**. You'll get:
+   - **JWT issuer** — looks like `user:1234567:89`
+   - **JWT secret** — a long hex string (shown once — copy it now)
+2. **Run the signing script** with those values exported:
 
-> Plain Firefox release / Firefox ESR / Firefox for Android cannot
-> install unsigned `.xpi` files even with the about:config flag — the
-> flag is only honored on Developer Edition, Nightly, and unbranded
-> ESR builds. For all other channels you must go through AMO.
+   ```bash
+   export WEB_EXT_API_KEY="user:1234567:89"
+   export WEB_EXT_API_SECRET="<the long hex secret>"
+   npm run -w @ivotoby/postgram-browser-extension-firefox sign
+   ```
+
+   This uploads the source to AMO, waits for the signing pipeline (~1–3
+   minutes), and downloads the signed `.xpi` into
+   `packages/browser-extension-firefox/dist/`. The first run also
+   reserves the extension's add-on ID
+   (`postgram-web-clipper@postgram.dev`) under your AMO account; reuse
+   the same credentials for future versions.
+
+3. **Install the signed XPI**. Drag the resulting
+   `postgram_web_clipper-<version>.xpi` into a Firefox window, or visit
+   `about:addons` → ⚙ → **Install Add-on From File…** and pick it.
+   Distribute the same `.xpi` to anyone else who needs it — it works on
+   plain Firefox release.
+
+> Bumping the `version` in `manifest.json` is required for each new
+> signed build; AMO rejects re-uploads of an already-signed version.
+
+> Optional: `npm run -w @ivotoby/postgram-browser-extension-firefox lint:webext`
+> runs the same `web-ext lint` check Mozilla applies during signing —
+> handy for catching manifest issues before submitting.
+
+#### B2. Skip signing on a non-release channel
+
+If you only need this for yourself and don't want an AMO account, use a
+Firefox build that honours `xpinstall.signatures.required = false`:
+
+- [Firefox Developer Edition](https://www.mozilla.org/firefox/developer/)
+- [Nightly](https://www.mozilla.org/firefox/channel/desktop/#nightly)
+- [Unbranded ESR](https://wiki.mozilla.org/Add-ons/Extension_Signing#Unbranded_Builds)
+
+Then:
+
+1. Open `about:config`, set `xpinstall.signatures.required` to `false`.
+2. `npm run -w @ivotoby/postgram-browser-extension-firefox package`.
+3. Rename the resulting zip to `.xpi` and drag it into Firefox.
+
+> Plain Firefox release / Firefox ESR / Firefox for Android **cannot**
+> install unsigned `.xpi` files even with the about:config flag set.
+> Use path B1 for those.
 
 ## Configure
 

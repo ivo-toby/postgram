@@ -262,7 +262,8 @@ export async function startServer(): Promise<{
       enabled: config.EXTRACTION_AUTO_CREATE_ENTITIES,
       types: config.EXTRACTION_AUTO_CREATE_TYPES,
       minConfidence: config.EXTRACTION_AUTO_CREATE_MIN_CONFIDENCE
-    }
+    },
+    extractionMatchMinSimilarity: config.EXTRACTION_MATCH_MIN_SIMILARITY
   });
   let workerActive = true;
   const workerLoop = async () => {

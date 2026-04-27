@@ -960,4 +960,99 @@ function formatMigrateReport(report: MigrateReport): string[] {
   ];
 }
 
+function parseDuration(value: string): string {
+  const match = /^(\d+)(d|w)$/.exec(value);
+  if (!match) {
+    throw new Error(`Invalid duration '${value}'. Use format like '30d' or '4w'.`);
+  }
+  const [, amount, unit] = match;
+  if (unit === 'd') return `${amount} days`;
+  return `${Number(amount) * 7} days`;
+}
+
+program
+  .command('purge')
+  .description('Permanently delete archived entities (chunks, edges, and document_sources cascade automatically)')
+  .option('--all', 'purge all archived entities')
+  .option('--type <type>', 'limit purge to this entity type')
+  .option('--older-than <duration>', 'only purge archived items older than this (e.g. 30d, 4w)')
+  .option('--owner <owner>', 'limit purge to this owner')
+  .option('--dry-run', 'print what would be deleted without deleting')
+  .action(async (options, command) => {
+    const json = isJsonMode(command);
+
+    if (!options.all && !options.type && !options.olderThan) {
+      await handleCliFailure(
+        new Error('Specify --all, --type <type>, or --older-than <duration> to confirm scope'),
+        json
+      );
+      return;
+    }
+
+    await runWithPool(json, async (pool) => {
+      const conditions: string[] = ["status = 'archived'"];
+      const params: unknown[] = [];
+
+      if (options.type) {
+        params.push(options.type);
+        conditions.push(`type = $${params.length}`);
+      }
+
+      if (options.owner) {
+        params.push(options.owner);
+        conditions.push(`owner = $${params.length}`);
+      }
+
+      if (options.olderThan) {
+        const interval = parseDuration(options.olderThan);
+        params.push(interval);
+        conditions.push(`updated_at < NOW() - $${params.length}::interval`);
+      }
+
+      const whereClause = conditions.join(' AND ');
+
+      const countResult = await pool.query<{ count: string }>(
+        `SELECT COUNT(*)::text AS count FROM entities WHERE ${whereClause}`,
+        params
+      );
+      const count = Number(countResult.rows[0]?.count ?? 0);
+
+      if (options.dryRun) {
+        await appendAuditEntry(pool, {
+          operation: 'purge.dry_run',
+          details: {
+            wouldDelete: count,
+            type: options.type ?? 'all',
+            olderThan: options.olderThan ?? null,
+            owner: options.owner ?? null
+          }
+        });
+
+        return json
+          ? { dryRun: true, wouldDelete: count }
+          : [`Would delete ${count} archived entit${count === 1 ? 'y' : 'ies'} (dry run — no changes made)`];
+      }
+
+      const deleteResult = await pool.query(
+        `DELETE FROM entities WHERE ${whereClause}`,
+        params
+      );
+      const deleted = deleteResult.rowCount ?? 0;
+
+      await appendAuditEntry(pool, {
+        operation: 'purge',
+        details: {
+          deleted,
+          type: options.type ?? 'all',
+          olderThan: options.olderThan ?? null,
+          owner: options.owner ?? null
+        }
+      });
+
+      return json
+        ? { deleted }
+        : [`Permanently deleted ${deleted} archived entit${deleted === 1 ? 'y' : 'ies'}`];
+    });
+  });
+
 await program.parseAsync(process.argv);

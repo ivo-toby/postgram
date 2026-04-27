@@ -960,14 +960,17 @@ function formatMigrateReport(report: MigrateReport): string[] {
   ];
 }
 
-function parseDuration(value: string): string {
+export function parseDuration(value: string): string {
   const match = /^(\d+)(d|w)$/.exec(value);
   if (!match) {
     throw new Error(`Invalid duration '${value}'. Use format like '30d' or '4w'.`);
   }
   const [, amount, unit] = match;
-  if (unit === 'd') return `${amount} days`;
-  return `${Number(amount) * 7} days`;
+  const days = unit === 'd' ? Number(amount) : Number(amount) * 7;
+  if (days > 3650) {
+    throw new Error(`Duration '${value}' exceeds the maximum allowed (3650 days / ~10 years).`);
+  }
+  return `${days} days`;
 }
 
 program

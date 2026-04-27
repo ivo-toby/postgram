@@ -1,0 +1,16 @@
+{
+  "name": "@ivotoby/postgram-browser-extension-chrome",
+  "version": "0.1.0",
+  "private": true,
+  "description": "Chromium (Chrome / Edge / Brave) web clipper that saves pages and selections to a Postgram server.",
+  "license": "MIT",
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/ivo-toby/postgram.git",
+    "directory": "packages/browser-extension-chrome"
+  },
+  "scripts": {
+    "package": "mkdir -p dist && zip -qr dist/postgram-web-clipper-chrome.zip manifest.json src -x '*.DS_Store'",
+    "validate": "node -e \"JSON.parse(require('fs').readFileSync('manifest.json','utf8')); console.log('manifest.json is valid JSON')\""
+  }
+}

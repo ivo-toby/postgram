@@ -547,6 +547,10 @@ program
     '--include-auto-created',
     "also re-queue entities tagged 'auto-created' (excluded by default because their only content is a bare name, which the LLM free-associates into new stubs and loops). Only use if you've manually enriched those entities' content."
   )
+  .option(
+    '--show-skipped',
+    "report how many entities matching --type/--only-failed were skipped by guardrails (no content, archived, auto-created), broken down by category. Helps explain markedCount when it's smaller than expected."
+  )
   .action(async (options, command) => {
     const json = isJsonMode(command);
 
@@ -610,6 +614,60 @@ program
           params
         );
 
+        // The skipped breakdown re-runs the user-specified filters
+        // (--type, --only-failed) without the guardrails, then buckets
+        // each non-marked match into the FIRST guardrail it tripped, in
+        // priority order: no_content → archived → auto_created. This
+        // keeps the buckets disjoint so marked + skipped totals add up.
+        let skipped:
+          | { noContent: number; archived: number; autoCreated: number }
+          | undefined;
+        if (options.showSkipped) {
+          const userConditions: string[] = [];
+          const userParams: unknown[] = [];
+          if (options.type) {
+            userParams.push(options.type);
+            userConditions.push(`type = $${userParams.length}`);
+          }
+          if (options.onlyFailed) {
+            userConditions.push("extraction_status = 'failed'");
+          }
+          const userWhere = userConditions.length
+            ? userConditions.join(' AND ')
+            : 'TRUE';
+
+          const autoCreatedFilter = options.includeAutoCreated
+            ? '0'
+            : `count(*) FILTER (
+                 WHERE content IS NOT NULL
+                   AND status IS DISTINCT FROM 'archived'
+                   AND 'auto-created' = ANY(tags)
+               )`;
+
+          const skippedResult = await client.query<{
+            no_content: string;
+            archived: string;
+            auto_created: string;
+          }>(
+            `SELECT
+               count(*) FILTER (WHERE content IS NULL) AS no_content,
+               count(*) FILTER (
+                 WHERE content IS NOT NULL
+                   AND status = 'archived'
+               ) AS archived,
+               ${autoCreatedFilter} AS auto_created
+             FROM entities
+             WHERE ${userWhere}`,
+            userParams
+          );
+          const row = skippedResult.rows[0];
+          skipped = {
+            noContent: Number(row?.no_content ?? '0'),
+            archived: Number(row?.archived ?? '0'),
+            autoCreated: Number(row?.auto_created ?? '0')
+          };
+        }
+
         await client.query('COMMIT');
 
         const markedCount = updateResult.rowCount ?? 0;
@@ -631,9 +689,20 @@ program
         if (options.cleanEdges) suffixes.push(`deleted ${deletedEdges} prior edges`);
         const suffix = suffixes.length > 0 ? ` (${suffixes.join('; ')})` : '';
 
-        return json
-          ? { markedCount, deletedEdges }
-          : [`Marked ${markedCount} entities for re-extraction${suffix}`];
+        if (json) {
+          return skipped
+            ? { markedCount, deletedEdges, skipped }
+            : { markedCount, deletedEdges };
+        }
+        const lines = [`Marked ${markedCount} entities for re-extraction${suffix}`];
+        if (skipped) {
+          const total =
+            skipped.noContent + skipped.archived + skipped.autoCreated;
+          lines.push(
+            `Skipped ${total} (no_content=${skipped.noContent}, archived=${skipped.archived}, auto_created=${skipped.autoCreated})`
+          );
+        }
+        return lines;
       } catch (error) {
         await client.query('ROLLBACK');
         throw error;

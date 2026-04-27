@@ -39,47 +39,75 @@ own signing key.
 
 ## Install manually
 
-You need either a checkout of this repo or the built `.zip` from the
-previous step.
+Stock Chrome / Edge / Brave **only trust extensions installed from the
+Web Store**. Until/unless this extension is published there, the
+supported install paths for personal use are loading the unpacked
+folder or installing a self-packed `.crx` via enterprise policy. For
+99% of users, the unpacked path below is the right one.
 
-### A. Load unpacked from source (recommended for development)
+### A. Load unpacked (recommended for self-hosted use)
+
+You only need a checkout of this repo (no build step).
 
 1. Open `chrome://extensions/` (or `edge://extensions/`,
-   `brave://extensions/`, etc.).
-2. Toggle **Developer mode** on (top-right corner).
+   `brave://extensions/`, `arc://extensions/`, etc.).
+2. Toggle **Developer mode** on (top-right corner). Chrome will show a
+   yellow banner saying "Disable developer mode extensions" on every
+   startup — you can ignore it; click **Cancel** / dismiss. The banner
+   exists because Chrome can't auto-update unpacked extensions, not
+   because anything is wrong.
 3. Click **Load unpacked** and select the
-   `packages/browser-extension-chrome/` folder from your checkout.
-4. The Postgram icon appears in the toolbar. The options page opens
-   automatically the first time.
+   `packages/browser-extension-chrome/` folder from your checkout
+   (point at the folder containing `manifest.json`, not the file
+   itself).
+4. **Pin the toolbar icon** so single-click capture works: click the 🧩
+   puzzle-piece icon in the Chrome toolbar → find **Postgram Web
+   Clipper** → click the pin icon next to it. Otherwise the icon stays
+   hidden and the extension only opens via the puzzle menu.
+5. The options page opens automatically the first time. Configure
+   endpoint + API key (see [Configure](#configure) below).
 
-The unpacked extension stays loaded across browser restarts. To pick up
-code changes, click the ↻ refresh icon on the extension's card on
-`chrome://extensions/`.
+The extension stays loaded across browser restarts. Chrome will not
+auto-update it — that's expected for unpacked extensions.
 
-### B. Install from the built `.zip`
+### Updating after `git pull`
 
-1. Run `npm run -w @ivotoby/postgram-browser-extension-chrome package`
-   to produce `dist/postgram-web-clipper-chrome.zip`.
-2. Unzip it somewhere persistent
-   (e.g. `~/Library/Application Support/postgram-web-clipper/`).
-3. Open `chrome://extensions/`, enable **Developer mode**, click
-   **Load unpacked**, and select the unzipped folder.
+```bash
+cd <repo>
+git pull
+```
 
-> Chromium browsers refuse to install loose `.crx` files outside the Web
-> Store unless they are signed with a registered key, so end users without
-> a Web Store listing should follow this path. Drag-and-drop install of a
-> raw `.zip` only works for Web-Store-signed packages.
+Then either:
 
-### C. Pack a signed `.crx` (advanced)
+- Open `chrome://extensions/` → find Postgram Web Clipper → click the
+  ↻ refresh icon on its card, or
+- Toggle the extension off and on, or
+- Restart the browser.
 
-1. On `chrome://extensions/`, enable **Developer mode** and click
-   **Pack extension…**.
-2. Set **Extension root directory** to
-   `packages/browser-extension-chrome/` and leave the private key blank
-   (Chrome generates `.pem` on first run; reuse it for subsequent
-   versions).
-3. Distribute the resulting `postgram-web-clipper-chrome.crx` and `.pem`
-   to anyone who needs to install the same signed build.
+(Chrome reads `manifest.json` and `src/` directly off disk, so a
+refresh is enough — no rebuild, no reinstall.)
+
+### B. Distributing to others
+
+There is no good way to do this without the Chrome Web Store on stock
+Chrome. Two real options:
+
+1. **Publish to the Chrome Web Store** ($5 one-time developer fee).
+   Upload the zip from `npm run -w … package`. You can list it as
+   "Unlisted" so it doesn't appear in search but anyone with the URL
+   can install. Stock Chrome installs it normally and auto-updates it
+   through the Store.
+2. **Enterprise / managed deployment**. If you control the user's
+   Chrome via policy (`ExtensionInstallForcelist`,
+   `ExtensionInstallSources`, etc.), you can host the `.crx` yourself
+   and force-install it. See the
+   [Chrome enterprise extension policies](https://support.google.com/chrome/a/answer/9296680).
+
+`chrome://extensions/` → **Pack extension…** produces a `.crx`, but
+stock Chrome (Stable/Beta channel) **silently disables** any
+externally-installed `.crx` on next launch. The file format works;
+the install policy doesn't trust it. So packing a `.crx` is only
+useful if you go through one of the two distribution paths above.
 
 ## Configure
 

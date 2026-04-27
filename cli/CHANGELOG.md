@@ -1,3 +1,9 @@
+## [1.18.0](https://github.com/ivo-toby/postgram/compare/cli-v1.17.1...cli-v1.18.0) (2026-04-27)
+
+### Features
+
+* add --show-skipped to reextract for guardrail visibility ([e295b8f](https://github.com/ivo-toby/postgram/commit/e295b8f20a839de689c7dc40b82c1fcd93c4180b))
+
 ## [1.17.1](https://github.com/ivo-toby/postgram/compare/cli-v1.17.0...cli-v1.17.1) (2026-04-26)
 
 ### Bug Fixes

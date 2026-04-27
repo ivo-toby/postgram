@@ -1,3 +1,17 @@
+## [1.19.0](https://github.com/ivo-toby/postgram/compare/cli-v1.18.0...cli-v1.19.0) (2026-04-27)
+
+### Features
+
+* **extensions/firefox:** add web-ext sign + lint scripts ([11975e8](https://github.com/ivo-toby/postgram/commit/11975e8b0784daae95b75774b9b6d64f83b095a4))
+* **extensions:** add Chrome and Firefox web clippers ([487dbe7](https://github.com/ivo-toby/postgram/commit/487dbe771d3fd8867c045b36cccf21b5976d3dcd))
+
+### Bug Fixes
+
+* **extensions/firefox:** make sign/lint scripts work without npm install ([e781cbc](https://github.com/ivo-toby/postgram/commit/e781cbcbe3b0e2a5f64d43108b8c3fdc910ec1a8))
+* **extensions/firefox:** raise strict_min_version to 140.0 ([0d2b56c](https://github.com/ivo-toby/postgram/commit/0d2b56c83750ef074a408b3f167f37e558fad539))
+* **extensions:** drop port from match patterns + Firefox AMO compliance ([7bea897](https://github.com/ivo-toby/postgram/commit/7bea89728dfb9befa175d38d36b72f85a19d665a))
+* **extensions:** strip header/footer/aside, not just `header footer` ([0b843e1](https://github.com/ivo-toby/postgram/commit/0b843e17f2e1bb1a557d5d2a7c7bcffa820bc527))
+
 ## [1.18.0](https://github.com/ivo-toby/postgram/compare/cli-v1.17.1...cli-v1.18.0) (2026-04-27)
 
 ### Features

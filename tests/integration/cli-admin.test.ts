@@ -482,6 +482,63 @@ describe('pgm-admin CLI', () => {
     expect(afterById[autoStub.rows[0]!.id]?.extraction_status).toBe('pending');
   }, 120_000);
 
+  it('reextract --show-skipped reports per-category skipped counts', async () => {
+    if (!database) {
+      throw new Error('test database not initialized');
+    }
+
+    const databaseUrl = getDatabaseUrl(database);
+
+    const seededKey = (await createKey(database.pool, {
+      name: `skipped-${crypto.randomUUID()}`,
+      scopes: ['read', 'write', 'delete']
+    }))._unsafeUnwrap();
+
+    // 1 normal entity (will be marked), 1 archived, 1 auto-created. The
+    // no-content bucket is harder to seed via storeEntity (it requires
+    // content), so a direct insert with NULL content covers that case.
+    const active = (await storeEntity(database.pool, makeAuthContext(seededKey.record.id), {
+      type: 'memory',
+      content: 'normal entity that should be reextracted'
+    }))._unsafeUnwrap();
+    const archived = (await storeEntity(database.pool, makeAuthContext(seededKey.record.id), {
+      type: 'memory',
+      content: 'archived entity'
+    }))._unsafeUnwrap();
+    await database.pool.query(
+      "UPDATE entities SET status = 'archived' WHERE id = $1",
+      [archived.id]
+    );
+    await database.pool.query(
+      `INSERT INTO entities (type, content, visibility, enrichment_status, extraction_status, tags)
+       VALUES ('memory', 'Bob', 'shared', 'completed', 'completed', ARRAY['auto-created'])`
+    );
+    await database.pool.query(
+      `INSERT INTO entities (type, content, visibility, enrichment_status, extraction_status)
+       VALUES ('memory', NULL, 'shared', 'completed', 'completed')`
+    );
+
+    const result = await runAdmin(
+      ['reextract', '--type', 'memory', '--show-skipped', '--json'],
+      { DATABASE_URL: databaseUrl }
+    );
+    const body = parseJson(result.stdout) as {
+      markedCount: number;
+      skipped: { noContent: number; archived: number; autoCreated: number };
+    };
+    expect(body.markedCount).toBeGreaterThanOrEqual(1);
+    expect(body.skipped.archived).toBeGreaterThanOrEqual(1);
+    expect(body.skipped.autoCreated).toBeGreaterThanOrEqual(1);
+    expect(body.skipped.noContent).toBeGreaterThanOrEqual(1);
+
+    // Ensure the active entity was the one marked.
+    const entityRow = await database.pool.query<{ extraction_status: string }>(
+      'SELECT extraction_status FROM entities WHERE id = $1',
+      [active.id]
+    );
+    expect(entityRow.rows[0]?.extraction_status).toBe('pending');
+  }, 120_000);
+
   it('validate-edges returns a structured --json error when extraction is not configured', async () => {
     if (!database) {
       throw new Error('test database not initialized');

@@ -36,8 +36,10 @@ type EnrichmentWorkerOptions = {
     enabled: boolean;
     types: readonly string[];
     minConfidence: number;
+    minConfidenceByType?: Readonly<Record<string, number>> | undefined;
   };
   extractionMatchMinSimilarity?: number;
+  extractionMinContentChars?: number;
 };
 
 async function rollbackQuietly(client: PoolClient): Promise<void> {
@@ -269,6 +271,9 @@ export function createEnrichmentWorker(options: EnrichmentWorkerOptions) {
               embeddingService,
               ...(options.extractionMatchMinSimilarity !== undefined
                 ? { matchMinSimilarity: options.extractionMatchMinSimilarity }
+                : {}),
+              ...(options.extractionMinContentChars !== undefined
+                ? { minContentChars: options.extractionMinContentChars }
                 : {})
             }
           );

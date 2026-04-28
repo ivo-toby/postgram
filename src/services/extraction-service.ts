@@ -38,13 +38,23 @@ const TARGET_TYPES = [
   'document'
 ] as const;
 
-const RELATIONS = [
+// Relation vocabulary. Order matters only for prompt readability — the schema
+// enforces membership at decode time. The richer set (supersedes, derived_from,
+// caused_by, discussed_with, references) was added to give the model better
+// alternatives to `mentioned_in`, which previously dominated extracted edges
+// because it was the safest fallback.
+export const RELATIONS = [
   'involves',
   'assigned_to',
   'part_of',
   'blocked_by',
-  'mentioned_in',
-  'related_to'
+  'related_to',
+  'supersedes',
+  'derived_from',
+  'caused_by',
+  'discussed_with',
+  'references',
+  'mentioned_in'
 ] as const;
 
 // JSON Schema passed to Ollama's `format` field. Ollama's structured-output
@@ -135,31 +145,88 @@ export function parseExtractionResponse(response: string): ExtractionResult[] {
 }
 
 export function buildExtractionPrompt(type: string, content: string): string {
-  return `Given this knowledge entity, identify relationships to other entities.
+  return `Given this knowledge entity, identify relationships from this entity (the source) to other entities it references.
 
-Entity type: ${type}
-Content: ${content}
+Source entity:
+  Type: ${type}
+  Content: ${content}
 
-Return a JSON object with a "relationships" array:
-{
-  "relationships": [
-    {
-      "target_name": "name of the referenced entity",
-      "target_type": "person|project|task|memory|interaction|document",
-      "relation": "involves|assigned_to|part_of|blocked_by|mentioned_in|related_to",
-      "confidence": 0.0-1.0
-    }
-  ]
-}
+Schema:
+  - target_name: the name or title of the referenced entity (string)
+  - target_type: one of person | project | task | memory | interaction | document
+  - relation: one of ${RELATIONS.join(' | ')}
+  - confidence: 0.0–1.0
 
-Only include clear, explicit relationships. Do not infer or speculate.
-Return {"relationships": []} if no relationships are found.`;
+Direction:
+  Edges go FROM this entity TO the target. "A part_of B" means this entity (A) is part of B.
+
+Type guidance:
+  - person: a named human individual
+  - project: a named system, product, or initiative
+  - task: a discrete work item
+  - interaction: a meeting, conversation, or event
+  - memory: a recorded preference, decision, or observation
+  - document: a written artifact (PRD, proposal, post)
+
+Relation guidance — prefer specific relations over mentioned_in:
+  - involves: this entity actively engages target (e.g. a meeting involves a person)
+  - assigned_to: this entity is owned by or directed at target
+  - part_of: this entity is a component of a larger target
+  - blocked_by: this entity cannot proceed until target resolves
+  - related_to: this entity is thematically connected without a clearer relation
+  - supersedes: this entity replaces the target (newer decision, doc version)
+  - derived_from: this entity was based on or derived from the target
+  - caused_by: this entity exists because of the target (e.g. a bug caused by a config change)
+  - discussed_with: this entity was discussed with the target person
+  - references: explicit citation of the target (stronger than mentioned_in)
+  - mentioned_in: target is referenced in passing only; reserve for weak signal
+
+Examples:
+  - Document about a meeting with a named individual:
+    { "target_name": "Alice", "target_type": "person", "relation": "involves", "confidence": 0.95 }
+  - Task assigned to a person:
+    { "target_name": "Alice", "target_type": "person", "relation": "assigned_to", "confidence": 0.9 }
+  - Section of a project roadmap:
+    { "target_name": "Platform 2026", "target_type": "project", "relation": "part_of", "confidence": 0.9 }
+  - PRD that depends on another PRD:
+    { "target_name": "Auth Rework PRD", "target_type": "document", "relation": "blocked_by", "confidence": 0.8 }
+  - Memo loosely related to another topic:
+    { "target_name": "Onboarding revamp", "target_type": "memory", "relation": "related_to", "confidence": 0.7 }
+  - Decision that replaces an older one:
+    { "target_name": "ADR-012", "target_type": "document", "relation": "supersedes", "confidence": 0.9 }
+  - Architecture doc derived from an earlier proposal:
+    { "target_name": "Original Sync Proposal", "target_type": "document", "relation": "derived_from", "confidence": 0.9 }
+  - Bug caused by a config change:
+    { "target_name": "Cache TTL change", "target_type": "memory", "relation": "caused_by", "confidence": 0.8 }
+  - 1:1 notes with a teammate:
+    { "target_name": "Bob", "target_type": "person", "relation": "discussed_with", "confidence": 0.9 }
+  - Memory citing a decision document:
+    { "target_name": "ADR-014", "target_type": "document", "relation": "references", "confidence": 0.85 }
+  - Document referenced in passing:
+    { "target_name": "Quarterly review", "target_type": "document", "relation": "mentioned_in", "confidence": 0.5 }
+
+Short content can still have relationships. If the content names a person, project, or other entity, emit an edge — do not return [] just because the content is brief.
+
+Only include clear, explicit references. Do not invent targets that are not present in the content.
+Return {"relationships": []} if and only if the content references no other entities.`;
 }
 
 type AutoCreateOptions = {
   enabled: boolean;
   types: readonly string[];
+  /**
+   * Global confidence floor. Used as the fallback when the extraction's
+   * target type has no entry in `minConfidenceByType`.
+   */
   minConfidence: number;
+  /**
+   * Per-type confidence overrides. A single global threshold is too blunt:
+   * persons are routinely emitted at 0.5–0.7 even when clearly named, so a
+   * 0.7 floor blocks every first-mention person and the graph stays
+   * person-less forever. Default config sets `person: 0.5, project: 0.6` and
+   * everything else falls through to `minConfidence`.
+   */
+  minConfidenceByType?: Readonly<Record<string, number>> | undefined;
 };
 
 type ExtractionOptions = {
@@ -178,6 +245,14 @@ type ExtractionOptions = {
    * Production operators should tune via EXTRACTION_MATCH_MIN_SIMILARITY.
    */
   matchMinSimilarity?: number | undefined;
+  /**
+   * Skip extraction entirely when source content is shorter than this many
+   * characters. Tiny personality/prompt fragment files were producing
+   * `Ollama API error: 400` failures and polluting operational dashboards.
+   * Default 0 (no skip) preserves prior behaviour for callers that don't
+   * pass this option.
+   */
+  minContentChars?: number | undefined;
 };
 
 export type ExtractionSource = {
@@ -368,7 +443,6 @@ export async function extractAndLinkRelationships(
   source: ExtractionSource,
   options: ExtractionOptions = {}
 ): Promise<number> {
-  const prompt = buildExtractionPrompt(source.type, source.content);
   if (!options.callLlm) {
     throw new Error('callLlm is required — configure an extraction provider');
   }
@@ -377,6 +451,18 @@ export async function extractAndLinkRelationships(
       'embeddingService is required — semantic matching replaces the old ILIKE lookup'
     );
   }
+  // Skip tiny inputs before they reach the LLM. Short personality/prompt
+  // fragment files were the dominant source of `Ollama API error: 400` in
+  // production — there's nothing useful to extract from <80 chars and the
+  // failures pollute the dashboard. Counting trimmed chars so whitespace-only
+  // padding doesn't sneak through.
+  const trimmedLength = source.content.trim().length;
+  const minContentChars = options.minContentChars ?? 0;
+  if (minContentChars > 0 && trimmedLength < minContentChars) {
+    return 0;
+  }
+
+  const prompt = buildExtractionPrompt(source.type, source.content);
   const callLlm = options.callLlm;
   const embeddingService = options.embeddingService;
   const minSimilarity = options.matchMinSimilarity ?? DEFAULT_MATCH_MIN_SIMILARITY;
@@ -424,9 +510,15 @@ export async function extractAndLinkRelationships(
       if (
         !autoCreate?.enabled ||
         extraction.targetType === null ||
-        !autoCreate.types.includes(extraction.targetType) ||
-        extraction.confidence < autoCreate.minConfidence
+        !autoCreate.types.includes(extraction.targetType)
       ) {
+        continue;
+      }
+      const perTypeFloor =
+        autoCreate.minConfidenceByType?.[extraction.targetType];
+      const requiredConfidence =
+        perTypeFloor !== undefined ? perTypeFloor : autoCreate.minConfidence;
+      if (extraction.confidence < requiredConfidence) {
         continue;
       }
 

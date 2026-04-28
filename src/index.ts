@@ -262,9 +262,11 @@ export async function startServer(): Promise<{
     autoCreate: {
       enabled: config.EXTRACTION_AUTO_CREATE_ENTITIES,
       types: config.EXTRACTION_AUTO_CREATE_TYPES,
-      minConfidence: config.EXTRACTION_AUTO_CREATE_MIN_CONFIDENCE
+      minConfidence: config.EXTRACTION_AUTO_CREATE_MIN_CONFIDENCE,
+      minConfidenceByType: config.EXTRACTION_AUTO_CREATE_MIN_CONFIDENCE_BY_TYPE
     },
-    extractionMatchMinSimilarity: config.EXTRACTION_MATCH_MIN_SIMILARITY
+    extractionMatchMinSimilarity: config.EXTRACTION_MATCH_MIN_SIMILARITY,
+    extractionMinContentChars: config.EXTRACTION_MIN_CONTENT_CHARS
   });
   let workerActive = true;
   const workerLoop = async () => {

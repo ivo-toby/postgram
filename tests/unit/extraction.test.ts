@@ -1,6 +1,8 @@
 import { describe, expect, it } from 'vitest';
 import {
+  buildExtractionPrompt,
   EXTRACTION_SCHEMA,
+  RELATIONS,
   parseExtractionResponse
 } from '../../src/services/extraction-service.js';
 
@@ -92,13 +94,74 @@ describe('EXTRACTION_SCHEMA', () => {
       'interaction',
       'document'
     ]);
-    expect(props.relation.enum).toEqual([
+    // The expanded vocabulary gives the model alternatives to mentioned_in
+    // (which previously dominated extracted edges). All relations referenced
+    // in the prompt examples must be present in the schema enum.
+    expect(props.relation.enum).toEqual([...RELATIONS]);
+    for (const expected of [
       'involves',
       'assigned_to',
       'part_of',
       'blocked_by',
-      'mentioned_in',
-      'related_to'
-    ]);
+      'related_to',
+      'supersedes',
+      'derived_from',
+      'caused_by',
+      'discussed_with',
+      'references',
+      'mentioned_in'
+    ]) {
+      expect(props.relation.enum).toContain(expected);
+    }
+  });
+});
+
+describe('buildExtractionPrompt', () => {
+  it('embeds the entity type and content', () => {
+    const prompt = buildExtractionPrompt('memory', 'Alice helped review the design');
+    expect(prompt).toContain('Type: memory');
+    expect(prompt).toContain('Alice helped review the design');
+  });
+
+  it('explains edge direction (source -> target)', () => {
+    const prompt = buildExtractionPrompt('memory', 'x');
+    // The model previously had no direction guidance and produced bidirectional-
+    // feeling `mentioned_in` for everything. Direction must be explicit.
+    expect(prompt.toLowerCase()).toContain('from this entity');
+    expect(prompt.toLowerCase()).toContain('to the target');
+  });
+
+  it('lists every relation in the schema enum', () => {
+    const prompt = buildExtractionPrompt('memory', 'x');
+    for (const relation of RELATIONS) {
+      expect(prompt).toContain(relation);
+    }
+  });
+
+  it('includes at least one example per relation type', () => {
+    const prompt = buildExtractionPrompt('memory', 'x');
+    // Every relation should appear inside a JSON-shaped example block.
+    // Counting `"relation": "<name>"` occurrences keeps the assertion robust
+    // against prompt rewording.
+    for (const relation of RELATIONS) {
+      expect(prompt).toContain(`"relation": "${relation}"`);
+    }
+  });
+
+  it('tells the model to prefer specific relations over mentioned_in', () => {
+    const prompt = buildExtractionPrompt('memory', 'x');
+    expect(prompt.toLowerCase()).toContain('prefer specific relations over mentioned_in');
+  });
+
+  it('tells the model that short content can still have relationships', () => {
+    const prompt = buildExtractionPrompt('memory', 'x');
+    expect(prompt.toLowerCase()).toContain('short content');
+  });
+
+  it('includes type guidance for person, project, task, interaction, memory, document', () => {
+    const prompt = buildExtractionPrompt('memory', 'x');
+    for (const type of ['person', 'project', 'task', 'interaction', 'memory', 'document']) {
+      expect(prompt).toContain(`- ${type}:`);
+    }
   });
 });

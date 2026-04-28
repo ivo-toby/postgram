@@ -293,6 +293,108 @@ describe('extraction-service', () => {
     expect(linked).toBe(0);
   }, 120_000);
 
+  it('skips extraction (and does not call the LLM) when content is below minContentChars', async () => {
+    if (!database) throw new Error('test database not initialized');
+    const auth = makeAuthContext();
+    const embeddingService = createEmbeddingService();
+
+    const source = (await storeEntity(database.pool, auth, {
+      type: 'memory', content: 'tiny'
+    }))._unsafeUnwrap();
+
+    let llmCalls = 0;
+    const mockLlm = () => {
+      llmCalls += 1;
+      return Promise.resolve(JSON.stringify([
+        { target_name: 'Alice', target_type: 'person', relation: 'involves', confidence: 0.95 }
+      ]));
+    };
+
+    const linked = await extractAndLinkRelationships(
+      database.pool,
+      auth,
+      {
+        id: source.id,
+        type: source.type,
+        content: source.content!,
+        visibility: source.visibility,
+        owner: source.owner
+      },
+      { callLlm: mockLlm, embeddingService, matchMinSimilarity: 0.5, minContentChars: 80 }
+    );
+
+    expect(linked).toBe(0);
+    expect(llmCalls).toBe(0);
+  }, 120_000);
+
+  it('treats whitespace-only padding as below minContentChars', async () => {
+    if (!database) throw new Error('test database not initialized');
+    const auth = makeAuthContext();
+    const embeddingService = createEmbeddingService();
+
+    const source = (await storeEntity(database.pool, auth, {
+      type: 'memory', content: '   \n\nhi\n   '
+    }))._unsafeUnwrap();
+
+    let llmCalls = 0;
+    const mockLlm = () => {
+      llmCalls += 1;
+      return Promise.resolve(JSON.stringify([]));
+    };
+
+    await extractAndLinkRelationships(
+      database.pool,
+      auth,
+      {
+        id: source.id,
+        type: source.type,
+        content: source.content!,
+        visibility: source.visibility,
+        owner: source.owner
+      },
+      { callLlm: mockLlm, embeddingService, matchMinSimilarity: 0.5, minContentChars: 20 }
+    );
+    expect(llmCalls).toBe(0);
+  }, 120_000);
+
+  it('preserves the new relation vocabulary on extracted edges', async () => {
+    if (!database) throw new Error('test database not initialized');
+    const auth = makeAuthContext();
+    const embeddingService = createEmbeddingService();
+
+    const target = (await storeEntity(database.pool, auth, {
+      type: 'document', content: 'ADR-012',
+      metadata: { title: 'ADR-012' }
+    }))._unsafeUnwrap();
+    await seedChunksFor(database.pool, embeddingService, target);
+
+    const source = (await storeEntity(database.pool, auth, {
+      type: 'document',
+      content: 'ADR-013 supersedes the earlier ADR-012 decision on auth'
+    }))._unsafeUnwrap();
+
+    const mockLlm = () => Promise.resolve(JSON.stringify([
+      { target_name: 'ADR-012', target_type: 'document', relation: 'supersedes', confidence: 0.95 }
+    ]));
+
+    const linked = await extractAndLinkRelationships(
+      database.pool,
+      auth,
+      {
+        id: source.id,
+        type: source.type,
+        content: source.content!,
+        visibility: source.visibility,
+        owner: source.owner
+      },
+      { callLlm: mockLlm, embeddingService, matchMinSimilarity: 0.5 }
+    );
+    expect(linked).toBe(1);
+
+    const edges = await listEdges(database.pool, auth, source.id);
+    expect(edges._unsafeUnwrap()[0]?.relation).toBe('supersedes');
+  }, 120_000);
+
   describe('auto-create entities', () => {
     it('skips missing targets when auto-create is disabled (default)', async () => {
       if (!database) throw new Error('test database not initialized');
@@ -534,6 +636,143 @@ describe('extraction-service', () => {
       );
       expect(rows.rows).toHaveLength(1);
       expect(rows.rows[0]).toEqual({ visibility: 'personal', owner: 'ivo' });
+    }, 120_000);
+
+    it('uses minConfidenceByType when present (lets first-mention persons through)', async () => {
+      if (!database) throw new Error('test database not initialized');
+      const auth = makeAuthContext();
+      const embeddingService = createEmbeddingService();
+
+      const source = (await storeEntity(database.pool, auth, {
+        type: 'memory',
+        content: 'Quick note that mentions Alice'
+      }))._unsafeUnwrap();
+
+      // 0.55 is below the global 0.7 floor but above the per-type 0.5 floor
+      // for `person`. This is the production scenario the issue describes:
+      // first-mention persons emit at 0.5–0.7 and would otherwise never
+      // become nodes.
+      const mockLlm = () =>
+        Promise.resolve(
+          JSON.stringify([
+            { target_name: 'Alice', target_type: 'person', relation: 'involves', confidence: 0.55 }
+          ])
+        );
+
+      const linked = await extractAndLinkRelationships(
+        database.pool,
+        auth,
+        {
+          id: source.id,
+          type: source.type,
+          content: source.content!,
+          visibility: source.visibility,
+          owner: source.owner
+        },
+        {
+          callLlm: mockLlm,
+          embeddingService,
+          matchMinSimilarity: 0.5,
+          autoCreate: {
+            enabled: true,
+            types: ['person', 'project', 'interaction'],
+            minConfidence: 0.7,
+            minConfidenceByType: { person: 0.5 }
+          }
+        }
+      );
+      expect(linked).toBe(1);
+
+      const count = await database.pool.query<{ count: string }>(
+        "SELECT count(*)::text FROM entities WHERE type = 'person'"
+      );
+      expect(Number(count.rows[0]?.count)).toBe(1);
+    }, 120_000);
+
+    it('still rejects below the per-type floor', async () => {
+      if (!database) throw new Error('test database not initialized');
+      const auth = makeAuthContext();
+      const embeddingService = createEmbeddingService();
+
+      const source = (await storeEntity(database.pool, auth, {
+        type: 'memory',
+        content: 'Vague reference to someone called Alice'
+      }))._unsafeUnwrap();
+
+      const mockLlm = () =>
+        Promise.resolve(
+          JSON.stringify([
+            { target_name: 'Alice', target_type: 'person', relation: 'involves', confidence: 0.4 }
+          ])
+        );
+
+      const linked = await extractAndLinkRelationships(
+        database.pool,
+        auth,
+        {
+          id: source.id,
+          type: source.type,
+          content: source.content!,
+          visibility: source.visibility,
+          owner: source.owner
+        },
+        {
+          callLlm: mockLlm,
+          embeddingService,
+          matchMinSimilarity: 0.5,
+          autoCreate: {
+            enabled: true,
+            types: ['person', 'project', 'interaction'],
+            minConfidence: 0.7,
+            minConfidenceByType: { person: 0.5 }
+          }
+        }
+      );
+      expect(linked).toBe(0);
+    }, 120_000);
+
+    it('falls back to global minConfidence for types without an override', async () => {
+      if (!database) throw new Error('test database not initialized');
+      const auth = makeAuthContext();
+      const embeddingService = createEmbeddingService();
+
+      const source = (await storeEntity(database.pool, auth, {
+        type: 'memory',
+        content: 'Reference to the Alpha initiative'
+      }))._unsafeUnwrap();
+
+      const mockLlm = () =>
+        Promise.resolve(
+          JSON.stringify([
+            { target_name: 'Alpha', target_type: 'project', relation: 'part_of', confidence: 0.65 }
+          ])
+        );
+
+      // No `project` override → falls back to global 0.7. 0.65 < 0.7, so no
+      // edge.
+      const linked = await extractAndLinkRelationships(
+        database.pool,
+        auth,
+        {
+          id: source.id,
+          type: source.type,
+          content: source.content!,
+          visibility: source.visibility,
+          owner: source.owner
+        },
+        {
+          callLlm: mockLlm,
+          embeddingService,
+          matchMinSimilarity: 0.5,
+          autoCreate: {
+            enabled: true,
+            types: ['person', 'project'],
+            minConfidence: 0.7,
+            minConfidenceByType: { person: 0.5 }
+          }
+        }
+      );
+      expect(linked).toBe(0);
     }, 120_000);
 
     it('dedupes repeated mentions within a single extraction pass', async () => {

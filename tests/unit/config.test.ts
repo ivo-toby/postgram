@@ -163,6 +163,18 @@ describe('config', () => {
     );
     expect(cfg.EXTRACTION_MIN_CONTENT_CHARS).toBe(0);
   });
+
+  it('defaults EXTRACTION_DEBUG_LOG to false', () => {
+    const cfg = loadConfig(baseEnv({ OPENAI_API_KEY: 'sk-test' }));
+    expect(cfg.EXTRACTION_DEBUG_LOG).toBe(false);
+  });
+
+  it('parses EXTRACTION_DEBUG_LOG=true', () => {
+    const cfg = loadConfig(
+      baseEnv({ OPENAI_API_KEY: 'sk-test', EXTRACTION_DEBUG_LOG: 'true' })
+    );
+    expect(cfg.EXTRACTION_DEBUG_LOG).toBe(true);
+  });
 });
 
 describe('buildEmbeddingProviderConfig', () => {

@@ -253,7 +253,41 @@ type ExtractionOptions = {
    * pass this option.
    */
   minContentChars?: number | undefined;
+  /**
+   * Diagnostic callback invoked at every decision point in the extraction
+   * pipeline. Off by default — enable via EXTRACTION_DEBUG_LOG to figure
+   * out where extractions are being lost (LLM didn't emit them /
+   * matcher discarded them / auto-create floor blocked them). Receives
+   * structured events: `extraction.skipped_min_chars`,
+   * `extraction.llm_response`, `extraction.decision`. Payloads include
+   * the source entity id so events can be correlated to one entity.
+   */
+  debugLog?: ExtractionDebugLogger | undefined;
 };
+
+/**
+ * Structured event names emitted to `debugLog`. Stable strings so
+ * dashboards/log queries can pin to them.
+ */
+export type ExtractionDebugEvent =
+  | 'extraction.skipped_min_chars'
+  | 'extraction.llm_response'
+  | 'extraction.decision';
+
+export type ExtractionDecision =
+  | 'matched_existing'
+  | 'auto_created'
+  | 'skipped_below_confidence'
+  | 'skipped_type_not_allowed'
+  | 'skipped_auto_create_disabled'
+  | 'skipped_type_unknown'
+  | 'deferred_semantic_skipped'
+  | 'edge_failed';
+
+export type ExtractionDebugLogger = (
+  event: ExtractionDebugEvent,
+  payload: Record<string, unknown>
+) => void;
 
 export type ExtractionSource = {
   id: string;
@@ -451,6 +485,8 @@ export async function extractAndLinkRelationships(
       'embeddingService is required — semantic matching replaces the old ILIKE lookup'
     );
   }
+  const debugLog = options.debugLog;
+
   // Skip tiny inputs before they reach the LLM. Short personality/prompt
   // fragment files were the dominant source of `Ollama API error: 400` in
   // production — there's nothing useful to extract from <80 chars and the
@@ -459,6 +495,12 @@ export async function extractAndLinkRelationships(
   const trimmedLength = source.content.trim().length;
   const minContentChars = options.minContentChars ?? 0;
   if (minContentChars > 0 && trimmedLength < minContentChars) {
+    debugLog?.('extraction.skipped_min_chars', {
+      entityId: source.id,
+      type: source.type,
+      contentChars: trimmedLength,
+      minContentChars
+    });
     return 0;
   }
 
@@ -469,6 +511,20 @@ export async function extractAndLinkRelationships(
 
   const response = await callLlm(prompt, EXTRACTION_SCHEMA);
   const extractions = parseExtractionResponse(response);
+
+  debugLog?.('extraction.llm_response', {
+    entityId: source.id,
+    type: source.type,
+    contentChars: trimmedLength,
+    raw: response,
+    parsedCount: extractions.length,
+    parsed: extractions.map((e) => ({
+      targetName: e.targetName,
+      targetType: e.targetType,
+      relation: e.relation,
+      confidence: e.confidence
+    }))
+  });
 
   let linked = 0;
   const autoCreate = options.autoCreate;
@@ -486,6 +542,13 @@ export async function extractAndLinkRelationships(
   let deferredCount = 0;
 
   for (const extraction of extractions) {
+    const baseLog = {
+      entityId: source.id,
+      target: extraction.targetName,
+      targetType: extraction.targetType,
+      relation: extraction.relation,
+      confidence: extraction.confidence
+    };
     const matchResult = await findMatchingEntityByName(pool, embeddingService, {
       targetName: extraction.targetName,
       targetType: extraction.targetType,
@@ -495,6 +558,7 @@ export async function extractAndLinkRelationships(
     });
 
     let matchedEntityId: string | null = matchResult.id;
+    let wasAutoCreated = false;
 
     if (!matchedEntityId) {
       // If the semantic stage couldn't run (embedding provider down, no
@@ -504,14 +568,33 @@ export async function extractAndLinkRelationships(
       // We track these as deferred and throw at the end so the caller can
       // leave the entity retry-eligible.
       if ('reason' in matchResult && matchResult.reason === 'semantic_skipped') {
+        debugLog?.('extraction.decision', {
+          ...baseLog,
+          decision: 'deferred_semantic_skipped'
+        });
         deferredCount += 1;
         continue;
       }
-      if (
-        !autoCreate?.enabled ||
-        extraction.targetType === null ||
-        !autoCreate.types.includes(extraction.targetType)
-      ) {
+      if (!autoCreate?.enabled) {
+        debugLog?.('extraction.decision', {
+          ...baseLog,
+          decision: 'skipped_auto_create_disabled'
+        });
+        continue;
+      }
+      if (extraction.targetType === null) {
+        debugLog?.('extraction.decision', {
+          ...baseLog,
+          decision: 'skipped_type_unknown'
+        });
+        continue;
+      }
+      if (!autoCreate.types.includes(extraction.targetType)) {
+        debugLog?.('extraction.decision', {
+          ...baseLog,
+          decision: 'skipped_type_not_allowed',
+          allowedTypes: [...autoCreate.types]
+        });
         continue;
       }
       const perTypeFloor =
@@ -519,6 +602,11 @@ export async function extractAndLinkRelationships(
       const requiredConfidence =
         perTypeFloor !== undefined ? perTypeFloor : autoCreate.minConfidence;
       if (extraction.confidence < requiredConfidence) {
+        debugLog?.('extraction.decision', {
+          ...baseLog,
+          decision: 'skipped_below_confidence',
+          requiredConfidence
+        });
         continue;
       }
 
@@ -545,7 +633,15 @@ export async function extractAndLinkRelationships(
         ]
       );
       matchedEntityId = created.rows[0]?.id ?? null;
-      if (!matchedEntityId) continue;
+      if (!matchedEntityId) {
+        debugLog?.('extraction.decision', {
+          ...baseLog,
+          decision: 'edge_failed',
+          reason: 'auto_create_returned_no_id'
+        });
+        continue;
+      }
+      wasAutoCreated = true;
     }
 
     const result = await createEdge(pool, auth, {
@@ -556,7 +652,21 @@ export async function extractAndLinkRelationships(
       source: 'llm-extraction'
     });
 
-    if (result.isOk()) linked += 1;
+    if (result.isOk()) {
+      linked += 1;
+      debugLog?.('extraction.decision', {
+        ...baseLog,
+        decision: wasAutoCreated ? 'auto_created' : 'matched_existing',
+        matchedEntityId
+      });
+    } else {
+      debugLog?.('extraction.decision', {
+        ...baseLog,
+        decision: 'edge_failed',
+        matchedEntityId,
+        error: result.error.message
+      });
+    }
   }
 
   if (deferredCount > 0) {

@@ -266,7 +266,8 @@ export async function startServer(): Promise<{
       minConfidenceByType: config.EXTRACTION_AUTO_CREATE_MIN_CONFIDENCE_BY_TYPE
     },
     extractionMatchMinSimilarity: config.EXTRACTION_MATCH_MIN_SIMILARITY,
-    extractionMinContentChars: config.EXTRACTION_MIN_CONTENT_CHARS
+    extractionMinContentChars: config.EXTRACTION_MIN_CONTENT_CHARS,
+    extractionDebugLog: config.EXTRACTION_DEBUG_LOG
   });
   let workerActive = true;
   const workerLoop = async () => {

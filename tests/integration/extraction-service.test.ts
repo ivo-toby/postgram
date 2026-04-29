@@ -357,6 +357,250 @@ describe('extraction-service', () => {
     expect(llmCalls).toBe(0);
   }, 120_000);
 
+  describe('debugLog diagnostic callback', () => {
+    it('emits llm_response and a matched_existing decision', async () => {
+      if (!database) throw new Error('test database not initialized');
+      const auth = makeAuthContext();
+      const embeddingService = createEmbeddingService();
+
+      const alice = (await storeEntity(database.pool, auth, {
+        type: 'person', content: 'Alice', metadata: { title: 'Alice' }
+      }))._unsafeUnwrap();
+      await seedChunksFor(database.pool, embeddingService, alice);
+
+      const source = (await storeEntity(database.pool, auth, {
+        type: 'memory',
+        content: 'Alice helped review the design and approved the change'
+      }))._unsafeUnwrap();
+
+      const events: Array<{ event: string; payload: Record<string, unknown> }> = [];
+      const debugLog = (event: string, payload: Record<string, unknown>) => {
+        events.push({ event, payload });
+      };
+
+      const mockLlm = () =>
+        Promise.resolve(
+          JSON.stringify([
+            { target_name: 'Alice', target_type: 'person', relation: 'involves', confidence: 0.95 }
+          ])
+        );
+
+      await extractAndLinkRelationships(
+        database.pool,
+        auth,
+        {
+          id: source.id,
+          type: source.type,
+          content: source.content!,
+          visibility: source.visibility,
+          owner: source.owner
+        },
+        { callLlm: mockLlm, embeddingService, matchMinSimilarity: 0.5, debugLog }
+      );
+
+      const response = events.find((e) => e.event === 'extraction.llm_response');
+      expect(response).toBeDefined();
+      expect(response!.payload).toMatchObject({
+        entityId: source.id,
+        parsedCount: 1
+      });
+
+      const decision = events.find((e) => e.event === 'extraction.decision');
+      expect(decision).toBeDefined();
+      expect(decision!.payload).toMatchObject({
+        entityId: source.id,
+        target: 'Alice',
+        decision: 'matched_existing'
+      });
+    }, 120_000);
+
+    it('emits skipped_below_confidence when per-type floor blocks auto-create', async () => {
+      if (!database) throw new Error('test database not initialized');
+      const auth = makeAuthContext();
+      const embeddingService = createEmbeddingService();
+
+      const source = (await storeEntity(database.pool, auth, {
+        type: 'memory',
+        content: 'Quick note that mentions Alice in passing'
+      }))._unsafeUnwrap();
+
+      const events: Array<{ event: string; payload: Record<string, unknown> }> = [];
+      const debugLog = (event: string, payload: Record<string, unknown>) => {
+        events.push({ event, payload });
+      };
+
+      const mockLlm = () =>
+        Promise.resolve(
+          JSON.stringify([
+            { target_name: 'Alice', target_type: 'person', relation: 'involves', confidence: 0.4 }
+          ])
+        );
+
+      await extractAndLinkRelationships(
+        database.pool,
+        auth,
+        {
+          id: source.id,
+          type: source.type,
+          content: source.content!,
+          visibility: source.visibility,
+          owner: source.owner
+        },
+        {
+          callLlm: mockLlm,
+          embeddingService,
+          matchMinSimilarity: 0.5,
+          autoCreate: {
+            enabled: true,
+            types: ['person'],
+            minConfidence: 0.7,
+            minConfidenceByType: { person: 0.5 }
+          },
+          debugLog
+        }
+      );
+
+      const decision = events.find((e) => e.event === 'extraction.decision');
+      expect(decision!.payload).toMatchObject({
+        decision: 'skipped_below_confidence',
+        target: 'Alice',
+        confidence: 0.4,
+        requiredConfidence: 0.5
+      });
+    }, 120_000);
+
+    it('emits skipped_type_not_allowed and skipped_auto_create_disabled per scenario', async () => {
+      if (!database) throw new Error('test database not initialized');
+      const auth = makeAuthContext();
+      const embeddingService = createEmbeddingService();
+
+      const source = (await storeEntity(database.pool, auth, {
+        type: 'memory',
+        content: 'Alice and a task called Run tests are mentioned here'
+      }))._unsafeUnwrap();
+
+      const events: Array<{ event: string; payload: Record<string, unknown> }> = [];
+      const debugLog = (event: string, payload: Record<string, unknown>) => {
+        events.push({ event, payload });
+      };
+
+      const mockLlm = () =>
+        Promise.resolve(
+          JSON.stringify([
+            { target_name: 'Run tests', target_type: 'task', relation: 'mentioned_in', confidence: 0.95 },
+            { target_name: 'Alice', target_type: 'person', relation: 'involves', confidence: 0.95 }
+          ])
+        );
+
+      // First call: auto-create disabled → both should emit skipped_auto_create_disabled
+      await extractAndLinkRelationships(
+        database.pool,
+        auth,
+        {
+          id: source.id,
+          type: source.type,
+          content: source.content!,
+          visibility: source.visibility,
+          owner: source.owner
+        },
+        { callLlm: mockLlm, embeddingService, matchMinSimilarity: 0.5, debugLog }
+      );
+
+      expect(
+        events.filter(
+          (e) =>
+            e.event === 'extraction.decision' &&
+            e.payload.decision === 'skipped_auto_create_disabled'
+        )
+      ).toHaveLength(2);
+
+      // Second call: enable auto-create but exclude `task` → task should
+      // emit skipped_type_not_allowed, person should auto-create.
+      events.length = 0;
+      await extractAndLinkRelationships(
+        database.pool,
+        auth,
+        {
+          id: source.id,
+          type: source.type,
+          content: source.content!,
+          visibility: source.visibility,
+          owner: source.owner
+        },
+        {
+          callLlm: mockLlm,
+          embeddingService,
+          matchMinSimilarity: 0.5,
+          autoCreate: {
+            enabled: true,
+            types: ['person'],
+            minConfidence: 0.7
+          },
+          debugLog
+        }
+      );
+
+      const taskDecision = events.find(
+        (e) =>
+          e.event === 'extraction.decision' && e.payload.target === 'Run tests'
+      );
+      expect(taskDecision!.payload).toMatchObject({
+        decision: 'skipped_type_not_allowed'
+      });
+      expect(taskDecision!.payload.allowedTypes).toEqual(['person']);
+
+      const personDecision = events.find(
+        (e) =>
+          e.event === 'extraction.decision' && e.payload.target === 'Alice'
+      );
+      expect(personDecision!.payload).toMatchObject({
+        decision: 'auto_created'
+      });
+    }, 120_000);
+
+    it('emits skipped_min_chars when content is below the threshold', async () => {
+      if (!database) throw new Error('test database not initialized');
+      const auth = makeAuthContext();
+      const embeddingService = createEmbeddingService();
+
+      const source = (await storeEntity(database.pool, auth, {
+        type: 'memory', content: 'tiny'
+      }))._unsafeUnwrap();
+
+      const events: Array<{ event: string; payload: Record<string, unknown> }> = [];
+      const debugLog = (event: string, payload: Record<string, unknown>) => {
+        events.push({ event, payload });
+      };
+
+      const mockLlm = () => Promise.resolve('[]');
+
+      await extractAndLinkRelationships(
+        database.pool,
+        auth,
+        {
+          id: source.id,
+          type: source.type,
+          content: source.content!,
+          visibility: source.visibility,
+          owner: source.owner
+        },
+        {
+          callLlm: mockLlm,
+          embeddingService,
+          matchMinSimilarity: 0.5,
+          minContentChars: 80,
+          debugLog
+        }
+      );
+
+      expect(events).toHaveLength(1);
+      expect(events[0]).toMatchObject({
+        event: 'extraction.skipped_min_chars',
+        payload: { entityId: source.id, contentChars: 4, minContentChars: 80 }
+      });
+    }, 120_000);
+  });
+
   it('preserves the new relation vocabulary on extracted edges', async () => {
     if (!database) throw new Error('test database not initialized');
     const auth = makeAuthContext();

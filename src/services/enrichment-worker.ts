@@ -40,6 +40,13 @@ type EnrichmentWorkerOptions = {
   };
   extractionMatchMinSimilarity?: number;
   extractionMinContentChars?: number;
+  /**
+   * When true, the worker passes a debug callback to extraction that logs
+   * raw LLM responses and per-target decisions at info level. Used to
+   * diagnose "no person entities" / "edges look wrong" without redeploying
+   * with LOG_LEVEL=debug (which is much noisier).
+   */
+  extractionDebugLog?: boolean;
 };
 
 async function rollbackQuietly(client: PoolClient): Promise<void> {
@@ -274,6 +281,12 @@ export function createEnrichmentWorker(options: EnrichmentWorkerOptions) {
                 : {}),
               ...(options.extractionMinContentChars !== undefined
                 ? { minContentChars: options.extractionMinContentChars }
+                : {}),
+              ...(options.extractionDebugLog
+                ? {
+                    debugLog: (event, payload) =>
+                      logger.info({ event, ...payload }, event)
+                  }
                 : {})
             }
           );

@@ -116,6 +116,17 @@ const configSchema = z
       emptyToUndefined,
       z.coerce.number().int().min(0).default(80)
     ),
+    // When true, the enrichment worker logs the raw LLM response and a
+    // per-target decision (matched_existing / auto_created /
+    // skipped_below_confidence / skipped_type_not_allowed /
+    // skipped_auto_create_disabled / skipped_type_unknown /
+    // deferred_semantic_skipped / edge_failed) for every extraction it
+    // processes. Off by default — turn on briefly to diagnose "why are
+    // person edges missing?" without globally raising LOG_LEVEL to debug.
+    EXTRACTION_DEBUG_LOG: z
+      .enum(['true', 'false'])
+      .default('false')
+      .transform((v) => v === 'true'),
     ANTHROPIC_API_KEY: optionalString,
     OLLAMA_API_KEY: optionalString,
     OLLAMA_BASE_URL: z.preprocess(

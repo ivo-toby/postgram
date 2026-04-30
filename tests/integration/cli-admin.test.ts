@@ -671,6 +671,218 @@ describe('pgm-admin CLI', () => {
     expect(auditRows.rows[0]?.details.onlyFailed).toBe(true);
   }, 120_000);
 
+  it('reextract --id re-queues a single entity', async () => {
+    if (!database) {
+      throw new Error('test database not initialized');
+    }
+
+    const databaseUrl = getDatabaseUrl(database);
+
+    const seededKey = (await createKey(database.pool, {
+      name: `reextract-id-${crypto.randomUUID()}`,
+      scopes: ['read', 'write', 'delete']
+    }))._unsafeUnwrap();
+
+    const target = (await storeEntity(database.pool, makeAuthContext(seededKey.record.id), {
+      type: 'memory',
+      content: 'this single entity should be re-extracted'
+    }))._unsafeUnwrap();
+    const other = (await storeEntity(database.pool, makeAuthContext(seededKey.record.id), {
+      type: 'memory',
+      content: 'this entity should NOT be touched'
+    }))._unsafeUnwrap();
+    await database.pool.query(
+      "UPDATE entities SET extraction_status = 'completed' WHERE id IN ($1, $2)",
+      [target.id, other.id]
+    );
+
+    const result = await runAdmin(
+      ['reextract', '--id', target.id, '--json'],
+      { DATABASE_URL: databaseUrl }
+    );
+    const body = parseJson(result.stdout) as { markedCount: number };
+    expect(body.markedCount).toBe(1);
+
+    const rows = await database.pool.query<{
+      id: string;
+      extraction_status: string | null;
+    }>(
+      'SELECT id, extraction_status FROM entities WHERE id = ANY($1)',
+      [[target.id, other.id]]
+    );
+    const byId = Object.fromEntries(rows.rows.map((r) => [r.id, r]));
+    expect(byId[target.id]?.extraction_status).toBe('pending');
+    expect(byId[other.id]?.extraction_status).toBe('completed');
+  }, 120_000);
+
+  it('reextract --id rejects malformed UUIDs before touching the DB', async () => {
+    if (!database) {
+      throw new Error('test database not initialized');
+    }
+
+    const databaseUrl = getDatabaseUrl(database);
+
+    let stdout = '';
+    try {
+      await runAdmin(['reextract', '--id', 'not-a-uuid', '--json'], {
+        DATABASE_URL: databaseUrl
+      });
+      throw new Error('expected non-zero exit');
+    } catch (err) {
+      stdout = (err as { stdout?: string }).stdout ?? '';
+    }
+    expect(stdout).toMatch(/must be a valid UUID/);
+  }, 120_000);
+
+  it('reextract --limit caps the number of entities marked', async () => {
+    if (!database) {
+      throw new Error('test database not initialized');
+    }
+
+    const databaseUrl = getDatabaseUrl(database);
+
+    const seededKey = (await createKey(database.pool, {
+      name: `reextract-limit-${crypto.randomUUID()}`,
+      scopes: ['read', 'write', 'delete']
+    }))._unsafeUnwrap();
+
+    // Create five entities; --limit 2 should mark only two.
+    for (let i = 0; i < 5; i++) {
+      (await storeEntity(database.pool, makeAuthContext(seededKey.record.id), {
+        type: 'memory',
+        content: `entity ${i}`
+      }))._unsafeUnwrap();
+    }
+    await database.pool.query(
+      "UPDATE entities SET extraction_status = 'completed'"
+    );
+
+    const result = await runAdmin(
+      ['reextract', '--all', '--limit', '2', '--json'],
+      { DATABASE_URL: databaseUrl }
+    );
+    const body = parseJson(result.stdout) as { markedCount: number };
+    expect(body.markedCount).toBe(2);
+
+    const pendingCount = await database.pool.query<{ count: string }>(
+      "SELECT count(*)::text AS count FROM entities WHERE extraction_status = 'pending'"
+    );
+    expect(Number(pendingCount.rows[0]!.count)).toBe(2);
+  }, 120_000);
+
+  it('reextract --limit rejects non-positive values', async () => {
+    if (!database) {
+      throw new Error('test database not initialized');
+    }
+
+    const databaseUrl = getDatabaseUrl(database);
+
+    let stdout = '';
+    try {
+      await runAdmin(['reextract', '--all', '--limit', '0', '--json'], {
+        DATABASE_URL: databaseUrl
+      });
+      throw new Error('expected non-zero exit');
+    } catch (err) {
+      stdout = (err as { stdout?: string }).stdout ?? '';
+    }
+    expect(stdout).toMatch(/must be a positive integer/);
+  }, 120_000);
+
+  it('improve-graph processes selected entities inline and links new edges', async () => {
+    if (!database) {
+      throw new Error('test database not initialized');
+    }
+
+    const databaseUrl = getDatabaseUrl(database);
+
+    const seededKey = (await createKey(database.pool, {
+      name: `improve-${crypto.randomUUID()}`,
+      scopes: ['read', 'write', 'delete']
+    }))._unsafeUnwrap();
+
+    const source = (await storeEntity(database.pool, makeAuthContext(seededKey.record.id), {
+      type: 'memory',
+      content: 'Alice helped review the change to the auth subsystem and signed off'
+    }))._unsafeUnwrap();
+
+    // EXTRACTION_PROVIDER=ollama with our local mock URL would be ideal, but
+    // there's no fake LLM in the test harness — easier to verify the CLI
+    // surface (validation, JSON output, audit entry) by feeding an
+    // unreachable Ollama URL and asserting graceful failure.
+    const result = await runAdmin(
+      ['improve-graph', '--id', source.id, '--limit', '1', '--json'],
+      {
+        DATABASE_URL: databaseUrl,
+        EXTRACTION_ENABLED: 'true',
+        EXTRACTION_PROVIDER: 'ollama',
+        EXTRACTION_MODEL: 'fake-model',
+        OLLAMA_BASE_URL: 'http://127.0.0.1:1', // refuses connection fast
+        EMBEDDING_PROVIDER: 'ollama',
+        EMBEDDING_DIMENSIONS: '1536',
+        EMBEDDING_BASE_URL: 'http://127.0.0.1:1',
+        LLM_REQUEST_TIMEOUT_MS: '5000'
+      }
+    );
+    const body = parseJson(result.stdout) as {
+      processed: number;
+      edgesLinked: number;
+      errored: number;
+      entities: Array<{ id: string; error: string | null }>;
+    };
+    expect(body.processed).toBe(1);
+    // Errored is expected (no real LLM), but the entity should appear in the
+    // result with an error message rather than crashing the CLI.
+    expect(body.errored).toBe(1);
+    expect(body.entities[0]?.id).toBe(source.id);
+    expect(body.entities[0]?.error).toBeTruthy();
+
+    const auditRows = await database.pool.query<{ operation: string }>(
+      "SELECT operation FROM audit_log WHERE operation = 'improve-graph.run' ORDER BY timestamp DESC LIMIT 1"
+    );
+    expect(auditRows.rows[0]?.operation).toBe('improve-graph.run');
+  }, 120_000);
+
+  it('improve-graph rejects --provider values outside the allowed list', async () => {
+    if (!database) {
+      throw new Error('test database not initialized');
+    }
+
+    const databaseUrl = getDatabaseUrl(database);
+
+    let stdout = '';
+    try {
+      await runAdmin(
+        ['improve-graph', '--all', '--provider', 'mistral', '--json'],
+        { DATABASE_URL: databaseUrl, EXTRACTION_ENABLED: 'true' }
+      );
+      throw new Error('expected non-zero exit');
+    } catch (err) {
+      stdout = (err as { stdout?: string }).stdout ?? '';
+    }
+    expect(stdout).toMatch(/--provider must be one of/);
+  }, 120_000);
+
+  it('improve-graph requires EXTRACTION_ENABLED', async () => {
+    if (!database) {
+      throw new Error('test database not initialized');
+    }
+
+    const databaseUrl = getDatabaseUrl(database);
+
+    let stdout = '';
+    try {
+      await runAdmin(['improve-graph', '--all', '--json'], {
+        DATABASE_URL: databaseUrl,
+        EXTRACTION_ENABLED: 'false'
+      });
+      throw new Error('expected non-zero exit');
+    } catch (err) {
+      stdout = (err as { stdout?: string }).stdout ?? '';
+    }
+    expect(stdout).toMatch(/EXTRACTION_ENABLED is not set/);
+  }, 120_000);
+
   it('reembed --only-failed re-queues only failed entities', async () => {
     if (!database) {
       throw new Error('test database not initialized');

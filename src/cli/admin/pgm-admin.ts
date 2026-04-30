@@ -24,6 +24,11 @@ import {
   shortId
 } from '../shared.js';
 
+// Lowercase 8-4-4-4-12 UUID. Postgres would reject malformed casts, but a
+// CLI-side check produces a friendlier error than an SQL exception.
+const UUID_REGEX =
+  /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
+
 type ApiKeyRow = {
   id: string;
   name: string;
@@ -538,7 +543,12 @@ program
   .description('Mark entities for re-extraction (knowledge-graph edges + tags)')
   .option('--all', 're-extract all entities with content')
   .option('--type <type>', 're-extract entities of this type only')
+  .option('--id <uuid>', 're-extract a single entity by id (composes with --clean-edges; ignores other selectors)')
   .option('--only-failed', "only re-queue entities whose extraction_status = 'failed'")
+  .option(
+    '--limit <n>',
+    'cap the number of entities marked (composes with --all/--type/--only-failed; ignored with --id). Selects oldest-first by created_at.'
+  )
   .option(
     '--clean-edges',
     "delete existing LLM-extracted edges (source='llm-extraction') for the in-scope entities before re-extraction — gives a clean slate rather than appending alongside old edges"
@@ -549,19 +559,40 @@ program
   )
   .option(
     '--show-skipped',
-    "report how many entities matching --type/--only-failed were skipped by guardrails (no content, archived, auto-created), broken down by category. Helps explain markedCount when it's smaller than expected."
+    "report how many entities matching --type/--only-failed/--id were skipped by guardrails (no content, archived, auto-created), broken down by category. Counts ignore --limit so you see the full picture."
   )
   .action(async (options, command) => {
     const json = isJsonMode(command);
 
-    if (!options.all && !options.type && !options.onlyFailed) {
+    if (!options.all && !options.type && !options.onlyFailed && !options.id) {
       await handleCliFailure(
         new Error(
-          'Specify --all, --type <type>, or --only-failed to confirm which entities to re-extract'
+          'Specify --all, --type <type>, --only-failed, or --id <uuid> to confirm which entities to re-extract'
         ),
         json
       );
       return;
+    }
+
+    if (options.id && !UUID_REGEX.test(options.id)) {
+      await handleCliFailure(
+        new Error(`--id must be a valid UUID (got "${options.id}")`),
+        json
+      );
+      return;
+    }
+
+    let limit: number | undefined;
+    if (options.limit !== undefined) {
+      const parsed = Number.parseInt(options.limit, 10);
+      if (!Number.isInteger(parsed) || parsed <= 0) {
+        await handleCliFailure(
+          new Error('--limit must be a positive integer'),
+          json
+        );
+        return;
+      }
+      limit = parsed;
     }
 
     await runWithPool(json, async (pool) => {
@@ -584,53 +615,83 @@ program
         }
         const params: unknown[] = [];
 
-        if (options.type) {
-          params.push(options.type);
-          conditions.push(`type = $${params.length}`);
-        }
-
-        if (options.onlyFailed) {
-          conditions.push("extraction_status = 'failed'");
+        // --id is exclusive: when given it pinpoints a single row, so
+        // --type / --only-failed / --limit on top of it are nonsense.
+        // The guardrails (content/status/auto-created) still apply and
+        // surface as a 0-rows result rather than a misleading success.
+        if (options.id) {
+          params.push(options.id);
+          conditions.push(`id = $${params.length}::uuid`);
+        } else {
+          if (options.type) {
+            params.push(options.type);
+            conditions.push(`type = $${params.length}`);
+          }
+          if (options.onlyFailed) {
+            conditions.push("extraction_status = 'failed'");
+          }
         }
 
         const whereClause = conditions.join(' AND ');
+
+        // PostgreSQL doesn't allow LIMIT directly on UPDATE/DELETE, so we
+        // wrap the selection in a subquery. Both the DELETE (for
+        // --clean-edges) and the UPDATE use the same subquery shape — in a
+        // single transaction this resolves to the same entity set, so
+        // edges are cleaned for exactly the rows that are then re-queued.
+        const selectionSubquery =
+          limit !== undefined
+            ? `SELECT id FROM entities WHERE ${whereClause} ORDER BY created_at ASC LIMIT ${limit}`
+            : `SELECT id FROM entities WHERE ${whereClause}`;
 
         let deletedEdges = 0;
         if (options.cleanEdges) {
           const deleteResult = await client.query(
             `DELETE FROM edges
              WHERE source = 'llm-extraction'
-               AND source_id IN (SELECT id FROM entities WHERE ${whereClause})`,
+               AND source_id IN (${selectionSubquery})`,
             params
           );
           deletedEdges = deleteResult.rowCount ?? 0;
         }
 
         const updateResult = await client.query(
-          `UPDATE entities
-           SET extraction_status = 'pending',
-               extraction_error = NULL
-           WHERE ${whereClause}`,
+          limit !== undefined
+            ? `UPDATE entities
+               SET extraction_status = 'pending',
+                   extraction_error = NULL
+               WHERE id IN (${selectionSubquery})`
+            : `UPDATE entities
+               SET extraction_status = 'pending',
+                   extraction_error = NULL
+               WHERE ${whereClause}`,
           params
         );
 
         // The skipped breakdown re-runs the user-specified filters
-        // (--type, --only-failed) without the guardrails, then buckets
-        // each non-marked match into the FIRST guardrail it tripped, in
-        // priority order: no_content → archived → auto_created. This
-        // keeps the buckets disjoint so marked + skipped totals add up.
+        // (--type, --only-failed, --id) without the guardrails, then
+        // buckets each non-marked match into the FIRST guardrail it
+        // tripped, in priority order: no_content → archived →
+        // auto_created. This keeps the buckets disjoint so marked +
+        // skipped totals add up. --limit is intentionally NOT applied to
+        // the skipped query so operators see the full guardrail picture.
         let skipped:
           | { noContent: number; archived: number; autoCreated: number }
           | undefined;
         if (options.showSkipped) {
           const userConditions: string[] = [];
           const userParams: unknown[] = [];
-          if (options.type) {
-            userParams.push(options.type);
-            userConditions.push(`type = $${userParams.length}`);
-          }
-          if (options.onlyFailed) {
-            userConditions.push("extraction_status = 'failed'");
+          if (options.id) {
+            userParams.push(options.id);
+            userConditions.push(`id = $${userParams.length}::uuid`);
+          } else {
+            if (options.type) {
+              userParams.push(options.type);
+              userConditions.push(`type = $${userParams.length}`);
+            }
+            if (options.onlyFailed) {
+              userConditions.push("extraction_status = 'failed'");
+            }
           }
           const userWhere = userConditions.length
             ? userConditions.join(' AND ')
@@ -677,7 +738,9 @@ program
           details: {
             markedCount,
             deletedEdges,
-            type: options.type ?? 'all',
+            type: options.type ?? (options.id ? null : 'all'),
+            id: options.id ?? null,
+            limit: limit ?? null,
             cleanEdges: Boolean(options.cleanEdges),
             includeAutoCreated: Boolean(options.includeAutoCreated),
             onlyFailed: Boolean(options.onlyFailed)
@@ -686,6 +749,7 @@ program
 
         const suffixes: string[] = [];
         if (options.onlyFailed) suffixes.push('only failed');
+        if (limit !== undefined) suffixes.push(`limit ${limit}`);
         if (options.cleanEdges) suffixes.push(`deleted ${deletedEdges} prior edges`);
         const suffix = suffixes.length > 0 ? ` (${suffixes.join('; ')})` : '';
 
@@ -881,6 +945,368 @@ program
         : [
             `Validated ${result.checked} edges (${result.kept} kept, ${result.removed} ${options.dryRun ? 'would be removed' : 'removed'}, ${result.skipped} skipped, ${result.errored} errored)`
           ];
+    });
+  });
+
+program
+  .command('improve-graph')
+  .description(
+    'Run extraction inline against existing entities, optionally with a different model, to enrich the current graph without wiping edges. Existing edges stay; new ones are added; overlapping edges have their confidence overwritten by the new run (so "improvement" with a less-confident model can lower individual confidences).'
+  )
+  .option('--all', 'process every entity with content (combine with --limit to bound cost)')
+  .option('--type <type>', 'process entities of this type only')
+  .option('--id <uuid>', 'process a single entity by id')
+  .option('--limit <n>', 'cap the number of entities processed (oldest-first by created_at)')
+  .option('--include-auto-created', "also process entities tagged 'auto-created' (off by default — their content is just a name and free-associates)")
+  .option('--model <name>', 'extraction model override (e.g. claude-sonnet-4-6). Otherwise uses EXTRACTION_MODEL.')
+  .option('--provider <name>', 'extraction provider override: openai | anthropic | ollama. Otherwise uses EXTRACTION_PROVIDER.')
+  .option('--concurrency <n>', 'parallel extraction workers (default 1)', '1')
+  .option('--debug', 'enable per-target decision logging at info level (same events as EXTRACTION_DEBUG_LOG)')
+  .action(async (options, command) => {
+    const json = isJsonMode(command);
+
+    if (!options.all && !options.type && !options.id) {
+      await handleCliFailure(
+        new Error(
+          'Specify --all, --type <type>, or --id <uuid> to confirm which entities to process'
+        ),
+        json
+      );
+      return;
+    }
+    if (options.id && !UUID_REGEX.test(options.id)) {
+      await handleCliFailure(
+        new Error(`--id must be a valid UUID (got "${options.id}")`),
+        json
+      );
+      return;
+    }
+
+    let limit: number | undefined;
+    if (options.limit !== undefined) {
+      const parsed = Number.parseInt(options.limit, 10);
+      if (!Number.isInteger(parsed) || parsed <= 0) {
+        await handleCliFailure(
+          new Error('--limit must be a positive integer'),
+          json
+        );
+        return;
+      }
+      limit = parsed;
+    }
+
+    const concurrency = Number.parseInt(options.concurrency, 10);
+    if (!Number.isInteger(concurrency) || concurrency <= 0 || concurrency > 16) {
+      await handleCliFailure(
+        new Error('--concurrency must be an integer between 1 and 16'),
+        json
+      );
+      return;
+    }
+
+    const allowedProviders = ['openai', 'anthropic', 'ollama'] as const;
+    type ProviderName = (typeof allowedProviders)[number];
+    if (
+      options.provider !== undefined &&
+      !(allowedProviders as readonly string[]).includes(options.provider)
+    ) {
+      await handleCliFailure(
+        new Error(
+          `--provider must be one of ${allowedProviders.join(', ')} (got "${options.provider}")`
+        ),
+        json
+      );
+      return;
+    }
+
+    // Build LLM + embedding services up front so misconfiguration fails
+    // before we touch the DB or print a misleading "started" line.
+    type AutoCreateConfig = {
+      enabled: boolean;
+      types: readonly string[];
+      minConfidence: number;
+      minConfidenceByType?: Readonly<Record<string, number>>;
+    };
+
+    let callLlm: (prompt: string, schema?: object) => Promise<string>;
+    let embeddingService: import('../../services/embedding-service.js').EmbeddingService;
+    let logger: ReturnType<typeof import('../../util/logger.js').createLogger>;
+    let extractAndLinkRelationships: typeof import('../../services/extraction-service.js').extractAndLinkRelationships;
+    let autoCreate: AutoCreateConfig | undefined;
+    let matchMinSimilarity: number;
+    let minContentChars: number;
+
+    try {
+      const config = loadConfig();
+      if (!config.EXTRACTION_ENABLED) {
+        throw new Error(
+          'EXTRACTION_ENABLED is not set — improve-graph runs the extraction LLM. Set EXTRACTION_ENABLED=true and the provider credentials.'
+        );
+      }
+
+      const { createLlmProvider } = await import('../../services/llm-provider.js');
+      const { createLogger } = await import('../../util/logger.js');
+      const embeddingsModule = await import('../../services/embedding-service.js');
+      const providersModule = await import('../../services/embeddings/providers.js');
+      ({ extractAndLinkRelationships } = await import(
+        '../../services/extraction-service.js'
+      ));
+
+      const provider: ProviderName = (options.provider as ProviderName | undefined) ?? config.EXTRACTION_PROVIDER;
+      const model = options.model ?? config.EXTRACTION_MODEL;
+
+      callLlm = createLlmProvider({
+        provider,
+        model,
+        openaiApiKey: config.OPENAI_API_KEY,
+        anthropicApiKey: config.ANTHROPIC_API_KEY,
+        ollamaBaseUrl: config.OLLAMA_BASE_URL,
+        ollamaApiKey: config.OLLAMA_API_KEY,
+        disableThinking: config.EXTRACTION_DISABLE_THINKING,
+        reasoningEffort: config.EXTRACTION_REASONING_EFFORT
+      });
+
+      // Mirror startServer's embedding setup. Extraction needs an embedder
+      // for the chunk-similarity matching stage even when the run is
+      // initiated from the CLI rather than the worker.
+      const embeddingProviderConfig = buildEmbeddingProviderConfig(config);
+      const embeddingProvider = providersModule.createEmbeddingProvider(
+        embeddingProviderConfig
+      );
+      embeddingService = embeddingsModule.createEmbeddingService({
+        provider: embeddingProvider
+      });
+      logger = createLogger(config.LOG_LEVEL);
+
+      autoCreate = config.EXTRACTION_AUTO_CREATE_ENTITIES
+        ? {
+            enabled: true,
+            types: config.EXTRACTION_AUTO_CREATE_TYPES,
+            minConfidence: config.EXTRACTION_AUTO_CREATE_MIN_CONFIDENCE,
+            minConfidenceByType:
+              config.EXTRACTION_AUTO_CREATE_MIN_CONFIDENCE_BY_TYPE
+          }
+        : undefined;
+      matchMinSimilarity = config.EXTRACTION_MATCH_MIN_SIMILARITY;
+      minContentChars = config.EXTRACTION_MIN_CONTENT_CHARS;
+    } catch (error) {
+      await handleCliFailure(error, json);
+      return;
+    }
+
+    await runWithPool(json, async (pool) => {
+      // Selection mirrors reextract's guardrails: skip no-content,
+      // archived, and (by default) auto-created stubs.
+      const conditions = [
+        'content IS NOT NULL',
+        "status IS DISTINCT FROM 'archived'"
+      ];
+      if (!options.includeAutoCreated) {
+        conditions.push("NOT ('auto-created' = ANY(tags))");
+      }
+      const params: unknown[] = [];
+
+      if (options.id) {
+        params.push(options.id);
+        conditions.push(`id = $${params.length}::uuid`);
+      } else if (options.type) {
+        params.push(options.type);
+        conditions.push(`type = $${params.length}`);
+      }
+
+      const whereClause = conditions.join(' AND ');
+      const limitClause = limit !== undefined ? `LIMIT ${limit}` : '';
+
+      const candidates = await pool.query<{
+        id: string;
+        type: string;
+        content: string;
+        visibility: string;
+        owner: string | null;
+      }>(
+        `SELECT id, type, content, visibility, owner
+         FROM entities
+         WHERE ${whereClause}
+         ORDER BY created_at ASC
+         ${limitClause}`,
+        params
+      );
+
+      if (candidates.rows.length === 0) {
+        const result = {
+          processed: 0,
+          edgesLinked: 0,
+          deferred: 0,
+          errored: 0,
+          entities: [] as Array<{
+            id: string;
+            edgesLinked: number;
+            deferred: boolean;
+            error: string | null;
+          }>
+        };
+        return json ? result : ['No entities matched the selectors'];
+      }
+
+      // Per-entity advisory lock matches the worker's lock convention so
+      // CLI runs and worker runs can't double-extract the same entity.
+      // The outer pool connection is just for the lock; extraction itself
+      // borrows from the main pool.
+      const lockClient = await pool.connect();
+      const debugLog = options.debug
+        ? (event: string, payload: Record<string, unknown>) =>
+            logger.info({ event, ...payload }, event)
+        : undefined;
+
+      type EntityResult = {
+        id: string;
+        edgesLinked: number;
+        deferred: boolean;
+        error: string | null;
+        skipped: 'lock_held' | null;
+      };
+
+      const queue = [...candidates.rows];
+      const results: EntityResult[] = [];
+
+      const worker = async (): Promise<void> => {
+        for (;;) {
+          const entity = queue.shift();
+          if (!entity) return;
+
+          const lockRes = await lockClient.query<{ locked: boolean }>(
+            'SELECT pg_try_advisory_lock(hashtext($1)) AS locked',
+            [entity.id]
+          );
+          if (!lockRes.rows[0]?.locked) {
+            results.push({
+              id: entity.id,
+              edgesLinked: 0,
+              deferred: false,
+              error: null,
+              skipped: 'lock_held'
+            });
+            continue;
+          }
+
+          try {
+            const linked = await extractAndLinkRelationships(
+              pool,
+              {
+                apiKeyId: null,
+                keyName: 'cli-improve-graph',
+                scopes: ['read', 'write', 'delete'] as const,
+                allowedTypes: null,
+                allowedVisibility: ['personal', 'work', 'shared'] as const
+              },
+              {
+                id: entity.id,
+                type: entity.type,
+                content: entity.content,
+                visibility: entity.visibility,
+                owner: entity.owner
+              },
+              {
+                callLlm,
+                embeddingService,
+                matchMinSimilarity,
+                minContentChars,
+                ...(autoCreate ? { autoCreate } : {}),
+                ...(debugLog ? { debugLog } : {})
+              }
+            );
+            results.push({
+              id: entity.id,
+              edgesLinked: linked,
+              deferred: false,
+              error: null,
+              skipped: null
+            });
+          } catch (error) {
+            // SemanticMatchUnavailableError surfaces as an error here; the
+            // worker treats it specially because it leaves entities
+            // retry-eligible, but for an inline CLI run there's nothing to
+            // retry against, so we record it like any other failure.
+            const message =
+              error instanceof Error ? error.message : String(error);
+            const deferred =
+              error instanceof Error &&
+              error.name === 'SemanticMatchUnavailableError';
+            results.push({
+              id: entity.id,
+              edgesLinked: 0,
+              deferred,
+              error: deferred ? null : message,
+              skipped: null
+            });
+          } finally {
+            await lockClient
+              .query('SELECT pg_advisory_unlock(hashtext($1))', [entity.id])
+              .catch(() => undefined);
+          }
+        }
+      };
+
+      try {
+        await Promise.all(
+          Array.from({ length: concurrency }, () => worker())
+        );
+      } finally {
+        lockClient.release();
+      }
+
+      const summary = {
+        processed: results.filter((r) => r.skipped === null).length,
+        edgesLinked: results.reduce((sum, r) => sum + r.edgesLinked, 0),
+        deferred: results.filter((r) => r.deferred).length,
+        errored: results.filter((r) => r.error !== null).length,
+        skippedLockHeld: results.filter((r) => r.skipped === 'lock_held').length
+      };
+
+      await appendAuditEntry(pool, {
+        operation: 'improve-graph.run',
+        details: {
+          ...summary,
+          model: options.model ?? null,
+          provider: options.provider ?? null,
+          id: options.id ?? null,
+          type: options.type ?? null,
+          all: Boolean(options.all),
+          limit: limit ?? null
+        }
+      });
+
+      if (json) {
+        return {
+          ...summary,
+          entities: results.map((r) => ({
+            id: r.id,
+            edgesLinked: r.edgesLinked,
+            deferred: r.deferred,
+            error: r.error,
+            skipped: r.skipped
+          }))
+        };
+      }
+
+      const lines = [
+        `Processed ${summary.processed} entities, linked ${summary.edgesLinked} edges` +
+          (summary.deferred > 0 ? `, ${summary.deferred} deferred (semantic match unavailable)` : '') +
+          (summary.errored > 0 ? `, ${summary.errored} errored` : '') +
+          (summary.skippedLockHeld > 0 ? `, ${summary.skippedLockHeld} skipped (lock held by worker)` : '')
+      ];
+      for (const r of results) {
+        if (r.error) {
+          lines.push(`  ${shortId(r.id)} error: ${r.error}`);
+        } else if (r.deferred) {
+          lines.push(`  ${shortId(r.id)} deferred (embeddings unavailable)`);
+        } else if (r.skipped === 'lock_held') {
+          lines.push(`  ${shortId(r.id)} skipped (lock held)`);
+        } else {
+          lines.push(`  ${shortId(r.id)} +${r.edgesLinked} edges`);
+        }
+      }
+      return lines;
     });
   });
 

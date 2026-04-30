@@ -951,24 +951,32 @@ program
 program
   .command('improve-graph')
   .description(
-    'Run extraction inline against existing entities, optionally with a different model, to enrich the current graph without wiping edges. Existing edges stay; new ones are added; overlapping edges have their confidence overwritten by the new run (so "improvement" with a less-confident model can lower individual confidences).'
+    "Queue entities for re-extraction by the worker, optionally with a per-run model/provider override stored on the row. The worker reads `extraction_model_override` / `extraction_provider_override` and uses them instead of the env-configured default for that entity, then clears the columns on success. Existing edges are kept (no wipe) — overlapping edges' confidence is overwritten by the new run, so a less-confident model can lower individual confidences."
   )
-  .option('--all', 'process every entity with content (combine with --limit to bound cost)')
-  .option('--type <type>', 'process entities of this type only')
-  .option('--id <uuid>', 'process a single entity by id')
-  .option('--limit <n>', 'cap the number of entities processed (oldest-first by created_at)')
-  .option('--include-auto-created', "also process entities tagged 'auto-created' (off by default — their content is just a name and free-associates)")
-  .option('--model <name>', 'extraction model override (e.g. claude-sonnet-4-6). Otherwise uses EXTRACTION_MODEL.')
-  .option('--provider <name>', 'extraction provider override: openai | anthropic | ollama. Otherwise uses EXTRACTION_PROVIDER.')
-  .option('--concurrency <n>', 'parallel extraction workers (default 1)', '1')
-  .option('--debug', 'enable per-target decision logging at info level (same events as EXTRACTION_DEBUG_LOG)')
+  .option('--all', 'queue every entity with content (combine with --limit to bound cost)')
+  .option('--type <type>', 'queue entities of this type only')
+  .option('--id <uuid>', 'queue a single entity by id')
+  .option('--limit <n>', 'cap the number of entities queued (oldest-first by created_at)')
+  .option('--include-auto-created', "also queue entities tagged 'auto-created' (off by default — their content is just a name and free-associates)")
+  .option(
+    '--model <name>',
+    'extraction model override stored on each queued row (e.g. claude-sonnet-4-6). Worker reads this when picking the entity up. Cleared on successful extraction.'
+  )
+  .option(
+    '--provider <name>',
+    'extraction provider override: openai | anthropic | ollama. Stored on each queued row alongside --model. Cleared on success.'
+  )
+  .option(
+    '--clean-edges',
+    "delete existing LLM-extracted edges (source='llm-extraction') for the queued entities before queueing. Off by default — improve runs are typically additive."
+  )
   .action(async (options, command) => {
     const json = isJsonMode(command);
 
     if (!options.all && !options.type && !options.id) {
       await handleCliFailure(
         new Error(
-          'Specify --all, --type <type>, or --id <uuid> to confirm which entities to process'
+          'Specify --all, --type <type>, or --id <uuid> to confirm which entities to queue'
         ),
         json
       );
@@ -995,17 +1003,7 @@ program
       limit = parsed;
     }
 
-    const concurrency = Number.parseInt(options.concurrency, 10);
-    if (!Number.isInteger(concurrency) || concurrency <= 0 || concurrency > 16) {
-      await handleCliFailure(
-        new Error('--concurrency must be an integer between 1 and 16'),
-        json
-      );
-      return;
-    }
-
     const allowedProviders = ['openai', 'anthropic', 'ollama'] as const;
-    type ProviderName = (typeof allowedProviders)[number];
     if (
       options.provider !== undefined &&
       !(allowedProviders as readonly string[]).includes(options.provider)
@@ -1019,294 +1017,118 @@ program
       return;
     }
 
-    // Build LLM + embedding services up front so misconfiguration fails
-    // before we touch the DB or print a misleading "started" line.
-    type AutoCreateConfig = {
-      enabled: boolean;
-      types: readonly string[];
-      minConfidence: number;
-      minConfidenceByType?: Readonly<Record<string, number>>;
-    };
-
-    let callLlm: (prompt: string, schema?: object) => Promise<string>;
-    let embeddingService: import('../../services/embedding-service.js').EmbeddingService;
-    let logger: ReturnType<typeof import('../../util/logger.js').createLogger>;
-    let extractAndLinkRelationships: typeof import('../../services/extraction-service.js').extractAndLinkRelationships;
-    let autoCreate: AutoCreateConfig | undefined;
-    let matchMinSimilarity: number;
-    let minContentChars: number;
-
-    try {
-      const config = loadConfig();
-      if (!config.EXTRACTION_ENABLED) {
-        throw new Error(
-          'EXTRACTION_ENABLED is not set — improve-graph runs the extraction LLM. Set EXTRACTION_ENABLED=true and the provider credentials.'
-        );
-      }
-
-      const { createLlmProvider } = await import('../../services/llm-provider.js');
-      const { createLogger } = await import('../../util/logger.js');
-      const embeddingsModule = await import('../../services/embedding-service.js');
-      const providersModule = await import('../../services/embeddings/providers.js');
-      ({ extractAndLinkRelationships } = await import(
-        '../../services/extraction-service.js'
-      ));
-
-      const provider: ProviderName = (options.provider as ProviderName | undefined) ?? config.EXTRACTION_PROVIDER;
-      const model = options.model ?? config.EXTRACTION_MODEL;
-
-      callLlm = createLlmProvider({
-        provider,
-        model,
-        openaiApiKey: config.OPENAI_API_KEY,
-        anthropicApiKey: config.ANTHROPIC_API_KEY,
-        ollamaBaseUrl: config.OLLAMA_BASE_URL,
-        ollamaApiKey: config.OLLAMA_API_KEY,
-        disableThinking: config.EXTRACTION_DISABLE_THINKING,
-        reasoningEffort: config.EXTRACTION_REASONING_EFFORT
-      });
-
-      // Mirror startServer's embedding setup. Extraction needs an embedder
-      // for the chunk-similarity matching stage even when the run is
-      // initiated from the CLI rather than the worker.
-      const embeddingProviderConfig = buildEmbeddingProviderConfig(config);
-      const embeddingProvider = providersModule.createEmbeddingProvider(
-        embeddingProviderConfig
-      );
-      embeddingService = embeddingsModule.createEmbeddingService({
-        provider: embeddingProvider
-      });
-      logger = createLogger(config.LOG_LEVEL);
-
-      autoCreate = config.EXTRACTION_AUTO_CREATE_ENTITIES
-        ? {
-            enabled: true,
-            types: config.EXTRACTION_AUTO_CREATE_TYPES,
-            minConfidence: config.EXTRACTION_AUTO_CREATE_MIN_CONFIDENCE,
-            minConfidenceByType:
-              config.EXTRACTION_AUTO_CREATE_MIN_CONFIDENCE_BY_TYPE
-          }
-        : undefined;
-      matchMinSimilarity = config.EXTRACTION_MATCH_MIN_SIMILARITY;
-      minContentChars = config.EXTRACTION_MIN_CONTENT_CHARS;
-    } catch (error) {
-      await handleCliFailure(error, json);
-      return;
-    }
-
     await runWithPool(json, async (pool) => {
-      // Selection mirrors reextract's guardrails: skip no-content,
-      // archived, and (by default) auto-created stubs.
-      const conditions = [
-        'content IS NOT NULL',
-        "status IS DISTINCT FROM 'archived'"
-      ];
-      if (!options.includeAutoCreated) {
-        conditions.push("NOT ('auto-created' = ANY(tags))");
-      }
-      const params: unknown[] = [];
-
-      if (options.id) {
-        params.push(options.id);
-        conditions.push(`id = $${params.length}::uuid`);
-      } else if (options.type) {
-        params.push(options.type);
-        conditions.push(`type = $${params.length}`);
-      }
-
-      const whereClause = conditions.join(' AND ');
-      const limitClause = limit !== undefined ? `LIMIT ${limit}` : '';
-
-      const candidates = await pool.query<{
-        id: string;
-        type: string;
-        content: string;
-        visibility: string;
-        owner: string | null;
-      }>(
-        `SELECT id, type, content, visibility, owner
-         FROM entities
-         WHERE ${whereClause}
-         ORDER BY created_at ASC
-         ${limitClause}`,
-        params
-      );
-
-      if (candidates.rows.length === 0) {
-        const result = {
-          processed: 0,
-          edgesLinked: 0,
-          deferred: 0,
-          errored: 0,
-          entities: [] as Array<{
-            id: string;
-            edgesLinked: number;
-            deferred: boolean;
-            error: string | null;
-          }>
-        };
-        return json ? result : ['No entities matched the selectors'];
-      }
-
-      // Per-entity advisory lock matches the worker's lock convention so
-      // CLI runs and worker runs can't double-extract the same entity.
-      // The outer pool connection is just for the lock; extraction itself
-      // borrows from the main pool.
-      const lockClient = await pool.connect();
-      const debugLog = options.debug
-        ? (event: string, payload: Record<string, unknown>) =>
-            logger.info({ event, ...payload }, event)
-        : undefined;
-
-      type EntityResult = {
-        id: string;
-        edgesLinked: number;
-        deferred: boolean;
-        error: string | null;
-        skipped: 'lock_held' | null;
-      };
-
-      const queue = [...candidates.rows];
-      const results: EntityResult[] = [];
-
-      const worker = async (): Promise<void> => {
-        for (;;) {
-          const entity = queue.shift();
-          if (!entity) return;
-
-          const lockRes = await lockClient.query<{ locked: boolean }>(
-            'SELECT pg_try_advisory_lock(hashtext($1)) AS locked',
-            [entity.id]
-          );
-          if (!lockRes.rows[0]?.locked) {
-            results.push({
-              id: entity.id,
-              edgesLinked: 0,
-              deferred: false,
-              error: null,
-              skipped: 'lock_held'
-            });
-            continue;
-          }
-
-          try {
-            const linked = await extractAndLinkRelationships(
-              pool,
-              {
-                apiKeyId: null,
-                keyName: 'cli-improve-graph',
-                scopes: ['read', 'write', 'delete'] as const,
-                allowedTypes: null,
-                allowedVisibility: ['personal', 'work', 'shared'] as const
-              },
-              {
-                id: entity.id,
-                type: entity.type,
-                content: entity.content,
-                visibility: entity.visibility,
-                owner: entity.owner
-              },
-              {
-                callLlm,
-                embeddingService,
-                matchMinSimilarity,
-                minContentChars,
-                ...(autoCreate ? { autoCreate } : {}),
-                ...(debugLog ? { debugLog } : {})
-              }
-            );
-            results.push({
-              id: entity.id,
-              edgesLinked: linked,
-              deferred: false,
-              error: null,
-              skipped: null
-            });
-          } catch (error) {
-            // SemanticMatchUnavailableError surfaces as an error here; the
-            // worker treats it specially because it leaves entities
-            // retry-eligible, but for an inline CLI run there's nothing to
-            // retry against, so we record it like any other failure.
-            const message =
-              error instanceof Error ? error.message : String(error);
-            const deferred =
-              error instanceof Error &&
-              error.name === 'SemanticMatchUnavailableError';
-            results.push({
-              id: entity.id,
-              edgesLinked: 0,
-              deferred,
-              error: deferred ? null : message,
-              skipped: null
-            });
-          } finally {
-            await lockClient
-              .query('SELECT pg_advisory_unlock(hashtext($1))', [entity.id])
-              .catch(() => undefined);
-          }
-        }
-      };
-
+      const client = await pool.connect();
       try {
-        await Promise.all(
-          Array.from({ length: concurrency }, () => worker())
+        await client.query('BEGIN');
+
+        const conditions = [
+          'content IS NOT NULL',
+          "status IS DISTINCT FROM 'archived'"
+        ];
+        if (!options.includeAutoCreated) {
+          conditions.push("NOT ('auto-created' = ANY(tags))");
+        }
+        const params: unknown[] = [];
+
+        if (options.id) {
+          params.push(options.id);
+          conditions.push(`id = $${params.length}::uuid`);
+        } else if (options.type) {
+          params.push(options.type);
+          conditions.push(`type = $${params.length}`);
+        }
+
+        const whereClause = conditions.join(' AND ');
+
+        // Same selection-subquery trick reextract uses, so DELETE
+        // (--clean-edges) and UPDATE see the same rows under --limit.
+        const selectionSubquery =
+          limit !== undefined
+            ? `SELECT id FROM entities WHERE ${whereClause} ORDER BY created_at ASC LIMIT ${limit}`
+            : `SELECT id FROM entities WHERE ${whereClause}`;
+
+        let deletedEdges = 0;
+        if (options.cleanEdges) {
+          const deleteResult = await client.query(
+            `DELETE FROM edges
+             WHERE source = 'llm-extraction'
+               AND source_id IN (${selectionSubquery})`,
+            params
+          );
+          deletedEdges = deleteResult.rowCount ?? 0;
+        }
+
+        // Append model/provider params after the existing selection params,
+        // so $-numbering stays consistent.
+        const updateParams = [...params];
+        updateParams.push(options.model ?? null);
+        const modelParam = `$${updateParams.length}`;
+        updateParams.push(options.provider ?? null);
+        const providerParam = `$${updateParams.length}`;
+
+        const updateResult = await client.query(
+          limit !== undefined
+            ? `UPDATE entities
+               SET extraction_status = 'pending',
+                   extraction_error = NULL,
+                   extraction_model_override = ${modelParam},
+                   extraction_provider_override = ${providerParam}
+               WHERE id IN (${selectionSubquery})`
+            : `UPDATE entities
+               SET extraction_status = 'pending',
+                   extraction_error = NULL,
+                   extraction_model_override = ${modelParam},
+                   extraction_provider_override = ${providerParam}
+               WHERE ${whereClause}`,
+          updateParams
         );
+
+        await client.query('COMMIT');
+
+        const markedCount = updateResult.rowCount ?? 0;
+
+        await appendAuditEntry(pool, {
+          operation: 'improve-graph.queue',
+          details: {
+            markedCount,
+            deletedEdges,
+            model: options.model ?? null,
+            provider: options.provider ?? null,
+            id: options.id ?? null,
+            type: options.type ?? null,
+            all: Boolean(options.all),
+            limit: limit ?? null,
+            includeAutoCreated: Boolean(options.includeAutoCreated),
+            cleanEdges: Boolean(options.cleanEdges)
+          }
+        });
+
+        if (json) {
+          return {
+            markedCount,
+            deletedEdges,
+            model: options.model ?? null,
+            provider: options.provider ?? null
+          };
+        }
+
+        const overrideSuffix =
+          options.model || options.provider
+            ? ` with override [${options.provider ?? 'env'}/${options.model ?? 'env'}]`
+            : '';
+        const cleanSuffix = options.cleanEdges
+          ? ` (deleted ${deletedEdges} prior edges)`
+          : '';
+        return [
+          `Queued ${markedCount} entities for improvement${overrideSuffix}${cleanSuffix}`
+        ];
+      } catch (error) {
+        await client.query('ROLLBACK');
+        throw error;
       } finally {
-        lockClient.release();
+        client.release();
       }
-
-      const summary = {
-        processed: results.filter((r) => r.skipped === null).length,
-        edgesLinked: results.reduce((sum, r) => sum + r.edgesLinked, 0),
-        deferred: results.filter((r) => r.deferred).length,
-        errored: results.filter((r) => r.error !== null).length,
-        skippedLockHeld: results.filter((r) => r.skipped === 'lock_held').length
-      };
-
-      await appendAuditEntry(pool, {
-        operation: 'improve-graph.run',
-        details: {
-          ...summary,
-          model: options.model ?? null,
-          provider: options.provider ?? null,
-          id: options.id ?? null,
-          type: options.type ?? null,
-          all: Boolean(options.all),
-          limit: limit ?? null
-        }
-      });
-
-      if (json) {
-        return {
-          ...summary,
-          entities: results.map((r) => ({
-            id: r.id,
-            edgesLinked: r.edgesLinked,
-            deferred: r.deferred,
-            error: r.error,
-            skipped: r.skipped
-          }))
-        };
-      }
-
-      const lines = [
-        `Processed ${summary.processed} entities, linked ${summary.edgesLinked} edges` +
-          (summary.deferred > 0 ? `, ${summary.deferred} deferred (semantic match unavailable)` : '') +
-          (summary.errored > 0 ? `, ${summary.errored} errored` : '') +
-          (summary.skippedLockHeld > 0 ? `, ${summary.skippedLockHeld} skipped (lock held by worker)` : '')
-      ];
-      for (const r of results) {
-        if (r.error) {
-          lines.push(`  ${shortId(r.id)} error: ${r.error}`);
-        } else if (r.deferred) {
-          lines.push(`  ${shortId(r.id)} deferred (embeddings unavailable)`);
-        } else if (r.skipped === 'lock_held') {
-          lines.push(`  ${shortId(r.id)} skipped (lock held)`);
-        } else {
-          lines.push(`  ${shortId(r.id)} +${r.edgesLinked} edges`);
-        }
-      }
-      return lines;
     });
   });
 

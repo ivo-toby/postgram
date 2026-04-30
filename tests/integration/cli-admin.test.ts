@@ -789,7 +789,7 @@ describe('pgm-admin CLI', () => {
     expect(stdout).toMatch(/must be a positive integer/);
   }, 120_000);
 
-  it('improve-graph processes selected entities inline and links new edges', async () => {
+  it('improve-graph queues selected entities and stores model/provider override', async () => {
     if (!database) {
       throw new Error('test database not initialized');
     }
@@ -805,42 +805,151 @@ describe('pgm-admin CLI', () => {
       type: 'memory',
       content: 'Alice helped review the change to the auth subsystem and signed off'
     }))._unsafeUnwrap();
+    const other = (await storeEntity(database.pool, makeAuthContext(seededKey.record.id), {
+      type: 'memory',
+      content: 'unrelated entity'
+    }))._unsafeUnwrap();
+    await database.pool.query(
+      "UPDATE entities SET extraction_status = 'completed'"
+    );
 
-    // EXTRACTION_PROVIDER=ollama with our local mock URL would be ideal, but
-    // there's no fake LLM in the test harness — easier to verify the CLI
-    // surface (validation, JSON output, audit entry) by feeding an
-    // unreachable Ollama URL and asserting graceful failure.
     const result = await runAdmin(
-      ['improve-graph', '--id', source.id, '--limit', '1', '--json'],
-      {
-        DATABASE_URL: databaseUrl,
-        EXTRACTION_ENABLED: 'true',
-        EXTRACTION_PROVIDER: 'ollama',
-        EXTRACTION_MODEL: 'fake-model',
-        OLLAMA_BASE_URL: 'http://127.0.0.1:1', // refuses connection fast
-        EMBEDDING_PROVIDER: 'ollama',
-        EMBEDDING_DIMENSIONS: '1536',
-        EMBEDDING_BASE_URL: 'http://127.0.0.1:1',
-        LLM_REQUEST_TIMEOUT_MS: '5000'
-      }
+      [
+        'improve-graph',
+        '--id', source.id,
+        '--model', 'claude-sonnet-4-6',
+        '--provider', 'anthropic',
+        '--json'
+      ],
+      { DATABASE_URL: databaseUrl }
     );
     const body = parseJson(result.stdout) as {
-      processed: number;
-      edgesLinked: number;
-      errored: number;
-      entities: Array<{ id: string; error: string | null }>;
+      markedCount: number;
+      model: string | null;
+      provider: string | null;
     };
-    expect(body.processed).toBe(1);
-    // Errored is expected (no real LLM), but the entity should appear in the
-    // result with an error message rather than crashing the CLI.
-    expect(body.errored).toBe(1);
-    expect(body.entities[0]?.id).toBe(source.id);
-    expect(body.entities[0]?.error).toBeTruthy();
+    expect(body.markedCount).toBe(1);
+    expect(body.model).toBe('claude-sonnet-4-6');
+    expect(body.provider).toBe('anthropic');
 
-    const auditRows = await database.pool.query<{ operation: string }>(
-      "SELECT operation FROM audit_log WHERE operation = 'improve-graph.run' ORDER BY timestamp DESC LIMIT 1"
+    const rows = await database.pool.query<{
+      id: string;
+      extraction_status: string | null;
+      extraction_model_override: string | null;
+      extraction_provider_override: string | null;
+    }>(
+      `SELECT id, extraction_status,
+              extraction_model_override, extraction_provider_override
+       FROM entities WHERE id = ANY($1)`,
+      [[source.id, other.id]]
     );
-    expect(auditRows.rows[0]?.operation).toBe('improve-graph.run');
+    const byId = Object.fromEntries(rows.rows.map((r) => [r.id, r]));
+    expect(byId[source.id]).toMatchObject({
+      extraction_status: 'pending',
+      extraction_model_override: 'claude-sonnet-4-6',
+      extraction_provider_override: 'anthropic'
+    });
+    // Other entity untouched: still completed, no override.
+    expect(byId[other.id]).toMatchObject({
+      extraction_status: 'completed',
+      extraction_model_override: null,
+      extraction_provider_override: null
+    });
+
+    const auditRows = await database.pool.query<{
+      operation: string;
+      details: { markedCount: number; model: string };
+    }>(
+      "SELECT operation, details FROM audit_log WHERE operation = 'improve-graph.queue' ORDER BY timestamp DESC LIMIT 1"
+    );
+    expect(auditRows.rows[0]?.operation).toBe('improve-graph.queue');
+    expect(auditRows.rows[0]?.details.model).toBe('claude-sonnet-4-6');
+  }, 120_000);
+
+  it('improve-graph without --model leaves override columns null (worker uses env default)', async () => {
+    if (!database) {
+      throw new Error('test database not initialized');
+    }
+
+    const databaseUrl = getDatabaseUrl(database);
+
+    const seededKey = (await createKey(database.pool, {
+      name: `improve-noopt-${crypto.randomUUID()}`,
+      scopes: ['read', 'write', 'delete']
+    }))._unsafeUnwrap();
+
+    const source = (await storeEntity(database.pool, makeAuthContext(seededKey.record.id), {
+      type: 'memory',
+      content: 'entity to be improved with default model'
+    }))._unsafeUnwrap();
+    await database.pool.query(
+      "UPDATE entities SET extraction_status = 'completed' WHERE id = $1",
+      [source.id]
+    );
+
+    await runAdmin(
+      ['improve-graph', '--id', source.id, '--json'],
+      { DATABASE_URL: databaseUrl }
+    );
+
+    const row = await database.pool.query<{
+      extraction_status: string | null;
+      extraction_model_override: string | null;
+      extraction_provider_override: string | null;
+    }>(
+      `SELECT extraction_status, extraction_model_override, extraction_provider_override
+       FROM entities WHERE id = $1`,
+      [source.id]
+    );
+    expect(row.rows[0]).toMatchObject({
+      extraction_status: 'pending',
+      extraction_model_override: null,
+      extraction_provider_override: null
+    });
+  }, 120_000);
+
+  it('improve-graph --clean-edges deletes prior llm-extraction edges for queued rows', async () => {
+    if (!database) {
+      throw new Error('test database not initialized');
+    }
+
+    const databaseUrl = getDatabaseUrl(database);
+
+    const seededKey = (await createKey(database.pool, {
+      name: `improve-clean-${crypto.randomUUID()}`,
+      scopes: ['read', 'write', 'delete']
+    }))._unsafeUnwrap();
+
+    const source = (await storeEntity(database.pool, makeAuthContext(seededKey.record.id), {
+      type: 'memory',
+      content: 'source for improve-graph clean-edges test'
+    }))._unsafeUnwrap();
+    const target = (await storeEntity(database.pool, makeAuthContext(seededKey.record.id), {
+      type: 'person',
+      content: 'Alice'
+    }))._unsafeUnwrap();
+    await database.pool.query(
+      `INSERT INTO edges (source_id, target_id, relation, confidence, source)
+       VALUES ($1, $2, 'mentioned_in', 0.9, 'llm-extraction')`,
+      [source.id, target.id]
+    );
+
+    const result = await runAdmin(
+      ['improve-graph', '--id', source.id, '--clean-edges', '--json'],
+      { DATABASE_URL: databaseUrl }
+    );
+    const body = parseJson(result.stdout) as {
+      markedCount: number;
+      deletedEdges: number;
+    };
+    expect(body.markedCount).toBe(1);
+    expect(body.deletedEdges).toBe(1);
+
+    const remaining = await database.pool.query<{ count: string }>(
+      `SELECT count(*)::text AS count FROM edges WHERE source_id = $1`,
+      [source.id]
+    );
+    expect(Number(remaining.rows[0]!.count)).toBe(0);
   }, 120_000);
 
   it('improve-graph rejects --provider values outside the allowed list', async () => {
@@ -854,33 +963,13 @@ describe('pgm-admin CLI', () => {
     try {
       await runAdmin(
         ['improve-graph', '--all', '--provider', 'mistral', '--json'],
-        { DATABASE_URL: databaseUrl, EXTRACTION_ENABLED: 'true' }
+        { DATABASE_URL: databaseUrl }
       );
       throw new Error('expected non-zero exit');
     } catch (err) {
       stdout = (err as { stdout?: string }).stdout ?? '';
     }
     expect(stdout).toMatch(/--provider must be one of/);
-  }, 120_000);
-
-  it('improve-graph requires EXTRACTION_ENABLED', async () => {
-    if (!database) {
-      throw new Error('test database not initialized');
-    }
-
-    const databaseUrl = getDatabaseUrl(database);
-
-    let stdout = '';
-    try {
-      await runAdmin(['improve-graph', '--all', '--json'], {
-        DATABASE_URL: databaseUrl,
-        EXTRACTION_ENABLED: 'false'
-      });
-      throw new Error('expected non-zero exit');
-    } catch (err) {
-      stdout = (err as { stdout?: string }).stdout ?? '';
-    }
-    expect(stdout).toMatch(/EXTRACTION_ENABLED is not set/);
   }, 120_000);
 
   it('reembed --only-failed re-queues only failed entities', async () => {

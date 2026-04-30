@@ -239,6 +239,83 @@ describe('enrichment-worker', () => {
     expect(byId[normal.id]?.extraction_status).toBe('completed');
   }, 120_000);
 
+  it('uses per-entity LLM override (model+provider) when columns are set, and clears them on success', async () => {
+    if (!database) {
+      throw new Error('test database not initialized');
+    }
+
+    // Two entities both queued for extraction. Only one has an override set
+    // — verifies the worker dispatches per-row, not in batch.
+    const overridden = (await storeEntity(database.pool, makeAuthContext(), {
+      type: 'memory',
+      content: 'entity that should be extracted with the override model'
+    }))._unsafeUnwrap();
+    const defaulted = (await storeEntity(database.pool, makeAuthContext(), {
+      type: 'memory',
+      content: 'entity that should be extracted with the default model'
+    }))._unsafeUnwrap();
+    await database.pool.query(
+      `UPDATE entities
+       SET extraction_model_override = 'claude-sonnet-4-6',
+           extraction_provider_override = 'anthropic'
+       WHERE id = $1`,
+      [overridden.id]
+    );
+
+    const factoryCalls: Array<{ provider: string | null; model: string | null }> = [];
+    const callLlmDefault = () => Promise.resolve('[]');
+    const factory = (provider: string | null, model: string | null) => {
+      factoryCalls.push({ provider, model });
+      return () => Promise.resolve('[]');
+    };
+
+    const worker = createEnrichmentWorker({
+      pool: database.pool,
+      embeddingService: createEmbeddingService(),
+      extractionEnabled: true,
+      callLlm: callLlmDefault,
+      callLlmFactory: factory
+    });
+
+    // Run repeatedly until both entities are processed (enrichment then
+    // extraction; each pass picks one).
+    for (let i = 0; i < 8 && (await worker.runOnce()) > 0; i++) {
+      // loop body intentionally empty
+    }
+
+    const rows = await database.pool.query<{
+      id: string;
+      extraction_status: string | null;
+      extraction_model_override: string | null;
+      extraction_provider_override: string | null;
+    }>(
+      `SELECT id, extraction_status, extraction_model_override, extraction_provider_override
+       FROM entities WHERE id = ANY($1)`,
+      [[overridden.id, defaulted.id]]
+    );
+    const byId = Object.fromEntries(rows.rows.map((r) => [r.id, r]));
+
+    expect(byId[overridden.id]?.extraction_status).toBe('completed');
+    // Cleared on success so the next reextract pass uses env defaults.
+    expect(byId[overridden.id]?.extraction_model_override).toBeNull();
+    expect(byId[overridden.id]?.extraction_provider_override).toBeNull();
+
+    expect(byId[defaulted.id]?.extraction_status).toBe('completed');
+    // Defaulted entity never touched the override columns.
+    expect(byId[defaulted.id]?.extraction_model_override).toBeNull();
+    expect(byId[defaulted.id]?.extraction_provider_override).toBeNull();
+
+    // The factory should have been called exactly once for the override —
+    // the cache reuses the closure for any further entities sharing
+    // (anthropic, claude-sonnet-4-6). The defaulted entity should have used
+    // options.callLlm directly (no factory call).
+    const overrideCalls = factoryCalls.filter(
+      (c) =>
+        c.provider === 'anthropic' && c.model === 'claude-sonnet-4-6'
+    );
+    expect(overrideCalls).toHaveLength(1);
+  }, 120_000);
+
   it('does not process the same entity twice when workers run concurrently', async () => {
     if (!database) {
       throw new Error('test database not initialized');

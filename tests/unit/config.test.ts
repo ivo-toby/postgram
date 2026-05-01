@@ -106,6 +106,75 @@ describe('config', () => {
       )
     ).toThrow();
   });
+
+  it('parses EXTRACTION_AUTO_CREATE_MIN_CONFIDENCE_BY_TYPE into a per-type map', () => {
+    const cfg = loadConfig(
+      baseEnv({
+        OPENAI_API_KEY: 'sk-test',
+        EXTRACTION_AUTO_CREATE_MIN_CONFIDENCE_BY_TYPE:
+          'person:0.4, project:0.55 ,task:0.8'
+      })
+    );
+    expect(cfg.EXTRACTION_AUTO_CREATE_MIN_CONFIDENCE_BY_TYPE).toEqual({
+      person: 0.4,
+      project: 0.55,
+      task: 0.8
+    });
+  });
+
+  it('defaults EXTRACTION_AUTO_CREATE_MIN_CONFIDENCE_BY_TYPE to person+project overrides', () => {
+    const cfg = loadConfig(baseEnv({ OPENAI_API_KEY: 'sk-test' }));
+    expect(cfg.EXTRACTION_AUTO_CREATE_MIN_CONFIDENCE_BY_TYPE).toEqual({
+      person: 0.5,
+      project: 0.6
+    });
+  });
+
+  it('rejects EXTRACTION_AUTO_CREATE_MIN_CONFIDENCE_BY_TYPE with unknown type', () => {
+    expect(() =>
+      loadConfig(
+        baseEnv({
+          OPENAI_API_KEY: 'sk-test',
+          EXTRACTION_AUTO_CREATE_MIN_CONFIDENCE_BY_TYPE: 'alien:0.5'
+        })
+      )
+    ).toThrow(/Unknown type/);
+  });
+
+  it('rejects EXTRACTION_AUTO_CREATE_MIN_CONFIDENCE_BY_TYPE with out-of-range value', () => {
+    expect(() =>
+      loadConfig(
+        baseEnv({
+          OPENAI_API_KEY: 'sk-test',
+          EXTRACTION_AUTO_CREATE_MIN_CONFIDENCE_BY_TYPE: 'person:1.5'
+        })
+      )
+    ).toThrow(/must be 0/);
+  });
+
+  it('defaults EXTRACTION_MIN_CONTENT_CHARS to 80', () => {
+    const cfg = loadConfig(baseEnv({ OPENAI_API_KEY: 'sk-test' }));
+    expect(cfg.EXTRACTION_MIN_CONTENT_CHARS).toBe(80);
+  });
+
+  it('honors EXTRACTION_MIN_CONTENT_CHARS=0 to disable the skip', () => {
+    const cfg = loadConfig(
+      baseEnv({ OPENAI_API_KEY: 'sk-test', EXTRACTION_MIN_CONTENT_CHARS: '0' })
+    );
+    expect(cfg.EXTRACTION_MIN_CONTENT_CHARS).toBe(0);
+  });
+
+  it('defaults EXTRACTION_DEBUG_LOG to false', () => {
+    const cfg = loadConfig(baseEnv({ OPENAI_API_KEY: 'sk-test' }));
+    expect(cfg.EXTRACTION_DEBUG_LOG).toBe(false);
+  });
+
+  it('parses EXTRACTION_DEBUG_LOG=true', () => {
+    const cfg = loadConfig(
+      baseEnv({ OPENAI_API_KEY: 'sk-test', EXTRACTION_DEBUG_LOG: 'true' })
+    );
+    expect(cfg.EXTRACTION_DEBUG_LOG).toBe(true);
+  });
 });
 
 describe('buildEmbeddingProviderConfig', () => {

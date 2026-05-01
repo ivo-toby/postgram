@@ -1,3 +1,15 @@
+## [1.20.0](https://github.com/ivo-toby/postgram/compare/cli-v1.19.0...cli-v1.20.0) (2026-05-01)
+
+### Features
+
+* **cli:** finer reextract control + new improve-graph command ([#31](https://github.com/ivo-toby/postgram/issues/31)) ([7439d03](https://github.com/ivo-toby/postgram/commit/7439d03b653f35730f17cf6bc90de47061c9d68e))
+* **extraction:** gated debug logging for extraction decisions ([#31](https://github.com/ivo-toby/postgram/issues/31)) ([82b6f9c](https://github.com/ivo-toby/postgram/commit/82b6f9c6ca4fbf9a92e1795fe88318333786ccfb))
+* **extraction:** improve-graph runs through worker with per-entity model override ([#31](https://github.com/ivo-toby/postgram/issues/31)) ([e3599e8](https://github.com/ivo-toby/postgram/commit/e3599e8595ab47badc23a2297a1daa0ab568ffbc))
+
+### Bug Fixes
+
+* **extraction:** improve graph extraction quality ([#31](https://github.com/ivo-toby/postgram/issues/31)) ([804e297](https://github.com/ivo-toby/postgram/commit/804e2979129c36159967a6fa1e3fec0ec0fd4f67))
+
 ## [1.19.0](https://github.com/ivo-toby/postgram/compare/cli-v1.18.0...cli-v1.19.0) (2026-04-27)
 
 ### Features

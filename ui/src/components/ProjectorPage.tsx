@@ -181,7 +181,7 @@ export default function ProjectorPage({ api, onOpenInGraph, onOpenInSearch }: Pr
         const all: Entity[] = [];
         let offset = 0;
         while (true) {
-          const res = await api.listEntities({ limit: ENTITY_PAGE_SIZE, offset, include_archived: false });
+          const res = await api.listEntities({ limit: ENTITY_PAGE_SIZE, offset });
           if (cancelled) return;
           all.push(...(res.items as Entity[]));
           setLoadingStage(`Fetching entities (${all.length}/${res.total})…`);

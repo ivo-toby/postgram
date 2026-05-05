@@ -637,6 +637,82 @@ Main commands:
 - `stats` — entity counts, chunk count, DB size
 - `embeddings migrate` — switch embedding dimensions (see [`specs/002-local-embeddings/quickstart.md`](specs/002-local-embeddings/quickstart.md))
 
+## Graph Maintenance
+
+The knowledge graph builds up over time as LLM extraction links entities
+together. Occasionally edges go missing (e.g. after a provider change, a
+`max_tokens` limit being hit, or a model outage) or need refreshing. The admin
+CLI has tools to handle this without re-processing the entire graph.
+
+### Finding gaps
+
+Entities that completed extraction but produced no edges are the primary signal
+of a silent failure:
+
+```bash
+pgm-admin sql "
+  SELECT id, char_length(content) AS chars, created_at
+  FROM entities
+  WHERE type = 'document'
+    AND extraction_status = 'completed'
+    AND NOT EXISTS (
+      SELECT 1 FROM edges WHERE source_id = id AND source = 'llm-extraction'
+    )
+  ORDER BY chars DESC
+  LIMIT 20
+"
+```
+
+### Targeted re-extraction (no wipe)
+
+Re-queue only the entities with no edges. Existing edges on other entities are
+untouched:
+
+```bash
+# Using the default extraction model
+pgm-admin reextract --type document --no-edges-only
+
+# Using a local Ollama model (zero API cost)
+pgm-admin improve-graph --type document --no-edges-only --provider ollama --model <model>
+```
+
+### Full re-extraction pass
+
+When you want to redo everything (e.g. after switching to a better model):
+
+```bash
+# Wipe and redo — gives a clean slate
+pgm-admin reextract --all --clean-edges
+
+# Or scope to documents only
+pgm-admin reextract --type document --clean-edges
+```
+
+### Confidence pruning
+
+Remove low-confidence edges left behind by older or weaker models:
+
+```bash
+pgm-admin prune-edges --below 0.5 --dry-run   # preview
+pgm-admin prune-edges --below 0.5             # apply
+```
+
+### Edge validation
+
+Run an LLM-as-judge pass to remove edges not supported by the source content:
+
+```bash
+pgm-admin validate-edges --dry-run --limit 200
+pgm-admin validate-edges --limit 200
+```
+
+### Monitoring queue progress
+
+```bash
+pgm queue                              # via pgm CLI
+pgm-admin sql "SELECT extraction_status, COUNT(*) FROM entities GROUP BY 1"
+```
+
 ## Talon Migration
 
 ```bash

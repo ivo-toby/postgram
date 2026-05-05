@@ -1,3 +1,23 @@
+## [1.21.0](https://github.com/ivo-toby/postgram/compare/cli-v1.20.0...cli-v1.21.0) (2026-05-05)
+
+### Features
+
+* **admin:** add purge command to permanently delete archived entities ([1c4d98f](https://github.com/ivo-toby/postgram/commit/1c4d98f1d8fc35ffe7327f0f7266d78acffbbb93))
+* **cli:** add --include-archived flag to list, search, and task list commands ([830eb8a](https://github.com/ivo-toby/postgram/commit/830eb8aa5a931160d4f9905181b364de0b07e830))
+* **entity-service:** exclude archived entities by default in listEntities ([9414d51](https://github.com/ivo-toby/postgram/commit/9414d515f0c0a34fd047e7a5d19e67565c721ca9))
+* **mcp:** add include_archived param to search and task_list tools ([ac44715](https://github.com/ivo-toby/postgram/commit/ac447150818e38ec5a63ec388aac7382110a0084))
+* **rest:** add include_archived param to list and search endpoints ([b6da76a](https://github.com/ivo-toby/postgram/commit/b6da76af1ec384f339854d2d182708888f00ea57))
+* **search-service:** exclude archived entities by default in searchEntities ([c267b43](https://github.com/ivo-toby/postgram/commit/c267b43127df90fd26d348fc7449b9997b965fba))
+* **task-service:** exclude archived tasks by default in listTasks ([3889bc8](https://github.com/ivo-toby/postgram/commit/3889bc8a90fc3d80625a6ff45494b07e53d8200e))
+* **ui:** exclude archived entities by default, add Show archived toggle ([9a489bc](https://github.com/ivo-toby/postgram/commit/9a489bcb85b6363591f68aa18aeafa789319aaa8))
+
+### Bug Fixes
+
+* **admin:** strengthen parseDuration bounds check, export for testability, add --older-than test ([b5d1663](https://github.com/ivo-toby/postgram/commit/b5d166314d3c5ed6300acb44d77bb26cba0d0140))
+* **services:** explicit status='archived' filter implicitly opts in to includeArchived ([08d07db](https://github.com/ivo-toby/postgram/commit/08d07db6631590970fed7a0620ec3efd017f8c5c))
+* **test:** assert softDeleteEntity result in archived exclusion tests ([6af67fe](https://github.com/ivo-toby/postgram/commit/6af67fe439e2017be524f637608c8d65ff9f2261))
+* **ui:** remove misleading include_archived: false from ProjectorPage listEntities call ([4c11e45](https://github.com/ivo-toby/postgram/commit/4c11e458f1600d41762b05da04511e3cd767d94b))
+
 ## [1.20.0](https://github.com/ivo-toby/postgram/compare/cli-v1.19.0...cli-v1.20.0) (2026-05-01)
 
 ### Features

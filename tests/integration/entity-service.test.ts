@@ -367,4 +367,41 @@ describe('entity-service', () => {
       { operation: 'delete', entity_id: stored.id }
     ]);
   }, 120_000);
+
+  it('excludes archived entities from listEntities by default', async () => {
+    if (!database) throw new Error('test database not initialized');
+    const auth = makeAuthContext();
+
+    await storeEntity(database.pool, auth, {
+      type: 'memory', content: 'active entity', visibility: 'personal'
+    });
+    const archivedResult = await storeEntity(database.pool, auth, {
+      type: 'memory', content: 'archived entity', visibility: 'personal'
+    });
+    expect(archivedResult.isOk()).toBe(true);
+    const archived = archivedResult._unsafeUnwrap();
+    expect((await softDeleteEntity(database.pool, auth, archived.id)).isOk()).toBe(true);
+
+    const result = await listEntities(database.pool, auth, {});
+    expect(result.isOk()).toBe(true);
+    const ids = result._unsafeUnwrap().items.map(e => e.id);
+    expect(ids).not.toContain(archived.id);
+  }, 120_000);
+
+  it('includes archived entities when includeArchived is true', async () => {
+    if (!database) throw new Error('test database not initialized');
+    const auth = makeAuthContext();
+
+    const archivedResult = await storeEntity(database.pool, auth, {
+      type: 'memory', content: 'archived entity', visibility: 'personal'
+    });
+    expect(archivedResult.isOk()).toBe(true);
+    const archived = archivedResult._unsafeUnwrap();
+    expect((await softDeleteEntity(database.pool, auth, archived.id)).isOk()).toBe(true);
+
+    const result = await listEntities(database.pool, auth, { includeArchived: true });
+    expect(result.isOk()).toBe(true);
+    const ids = result._unsafeUnwrap().items.map(e => e.id);
+    expect(ids).toContain(archived.id);
+  }, 120_000);
 });

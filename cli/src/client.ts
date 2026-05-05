@@ -143,6 +143,7 @@ export function createPgmClient(options: RestClientOptions) {
       threshold?: number | undefined;
       recency_weight?: number | undefined;
       expand_graph?: boolean | undefined;
+      include_archived?: boolean | undefined;
     }) {
       return request<SearchResponse>(options, '/api/search', {
         method: 'POST',
@@ -183,6 +184,7 @@ export function createPgmClient(options: RestClientOptions) {
       tags?: string[] | undefined;
       limit?: number | undefined;
       offset?: number | undefined;
+      include_archived?: boolean | undefined;
     } = {}) {
       const params = new URLSearchParams();
       if (input.type) {
@@ -205,6 +207,9 @@ export function createPgmClient(options: RestClientOptions) {
       }
       if (input.offset !== undefined) {
         params.set('offset', String(input.offset));
+      }
+      if (input.include_archived) {
+        params.set('include_archived', 'true');
       }
 
       const query = params.toString();
@@ -234,6 +239,7 @@ export function createPgmClient(options: RestClientOptions) {
       context?: string | undefined;
       limit?: number | undefined;
       offset?: number | undefined;
+      include_archived?: boolean | undefined;
     } = {}) {
       const params = new URLSearchParams();
       if (input.status) {
@@ -247,6 +253,9 @@ export function createPgmClient(options: RestClientOptions) {
       }
       if (input.offset !== undefined) {
         params.set('offset', String(input.offset));
+      }
+      if (input.include_archived) {
+        params.set('include_archived', 'true');
       }
 
       return request<{

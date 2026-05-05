@@ -327,6 +327,7 @@ program
   .option('--threshold <threshold>', 'similarity threshold', '0.35')
   .option('--recency-weight <recencyWeight>', 'recency weight', '0.1')
   .option('--expand-graph', 'include graph-connected entities in results')
+  .option('--include-archived', 'include archived entities in results')
   .action(async (query, options, command) => {
     await runWithClient(command, async (client, json) => {
       const body = await client.searchEntities({
@@ -338,7 +339,8 @@ program
         limit: Number(options.limit),
         threshold: Number(options.threshold),
         recency_weight: Number(options.recencyWeight),
-        expand_graph: options.expandGraph === true ? true : undefined
+        expand_graph: options.expandGraph === true ? true : undefined,
+        include_archived: options.includeArchived === true ? true : undefined
       });
 
       return json ? body : formatSearchResults(body.results);
@@ -369,6 +371,7 @@ program
   .option('--tags <tags>', 'comma-separated tags')
   .option('--limit <limit>', 'result limit', '50')
   .option('--offset <offset>', 'result offset', '0')
+  .option('--include-archived', 'include archived entities')
   .action(async (options, command) => {
     await runWithClient(command, async (client, json) => {
       const body = await client.listEntities({
@@ -378,7 +381,8 @@ program
         owner: options.owner,
         tags: parseCommaList(options.tags),
         limit: Number(options.limit),
-        offset: Number(options.offset)
+        offset: Number(options.offset),
+        include_archived: options.includeArchived === true ? true : undefined
       });
 
       if (json) {
@@ -510,13 +514,15 @@ taskCommand
   .option('--context <context>', 'filter by context')
   .option('--limit <limit>', 'result limit', '50')
   .option('--offset <offset>', 'result offset', '0')
+  .option('--include-archived', 'include archived tasks')
   .action(async (options, command) => {
     await runWithClient(command, async (client, json) => {
       const body = await client.listTasks({
         status: options.status,
         context: options.context,
         limit: Number(options.limit),
-        offset: Number(options.offset)
+        offset: Number(options.offset),
+        include_archived: options.includeArchived === true ? true : undefined
       });
 
       return json ? body : formatTaskList(body.items);

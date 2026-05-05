@@ -66,6 +66,7 @@ type ListEntitiesInput = {
   tags?: string[] | undefined;
   limit?: number | undefined;
   offset?: number | undefined;
+  includeArchived?: boolean | undefined;
 };
 
 function toAppError(error: unknown, fallbackMessage: string): AppError {
@@ -410,18 +411,20 @@ export function listEntities(
           FROM entities
           WHERE ($1::text IS NULL OR type = $1)
             AND ($2::text IS NULL OR status = $2)
-            AND ($3::text IS NULL OR visibility = $3)
-            AND ${ownerSqlCondition('owner', '$4')}
-            AND ($5::text[] IS NULL OR tags @> $5)
-            AND ($6::text[] IS NULL OR type = ANY($6))
-            AND visibility = ANY($7)
+            AND ($3::boolean = true OR status IS DISTINCT FROM 'archived')
+            AND ($4::text IS NULL OR visibility = $4)
+            AND ${ownerSqlCondition('owner', '$5')}
+            AND ($6::text[] IS NULL OR tags @> $6)
+            AND ($7::text[] IS NULL OR type = ANY($7))
+            AND visibility = ANY($8)
           ORDER BY created_at DESC
-          LIMIT $8
-          OFFSET $9
+          LIMIT $9
+          OFFSET $10
         `,
         [
           input.type ?? null,
           input.status ?? null,
+          (input.includeArchived ?? false) || input.status === 'archived',
           input.visibility ?? null,
           input.owner ?? null,
           input.tags?.length ? input.tags : null,

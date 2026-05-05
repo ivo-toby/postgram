@@ -3,7 +3,7 @@ import { afterAll, beforeAll, beforeEach, describe, expect, it } from 'vitest';
 import { createEmbeddingService } from '../../src/services/embedding-service.js';
 import { createEnrichmentWorker } from '../../src/services/enrichment-worker.js';
 import { searchEntities } from '../../src/services/search-service.js';
-import { storeEntity } from '../../src/services/entity-service.js';
+import { softDeleteEntity, storeEntity } from '../../src/services/entity-service.js';
 import type { AuthContext } from '../../src/auth/types.js';
 import {
   createTestDatabase,
@@ -195,6 +195,77 @@ describe('search-service', () => {
     const results = result._unsafeUnwrap().results;
     expect(results.length).toBeGreaterThan(0);
     expect(results.every((entry) => entry.entity.visibility === 'work')).toBe(true);
+  }, 120_000);
+
+  it('excludes archived entities from search by default', async () => {
+    if (!database) {
+      throw new Error('test database not initialized');
+    }
+
+    const embeddingService = createEmbeddingService();
+
+    const stored = await storeEntity(database.pool, makeAuthContext(), {
+      type: 'memory',
+      content: 'archived entity about quantum computing research',
+      tags: ['science']
+    });
+    expect(stored.isOk()).toBe(true);
+    const entityId = stored._unsafeUnwrap().id;
+
+    await storeEntity(database.pool, makeAuthContext(), {
+      type: 'memory',
+      content: 'active entity about quantum computing research',
+      tags: ['science']
+    });
+
+    const worker = createEnrichmentWorker({ pool: database.pool, embeddingService });
+    await worker.runOnce();
+
+    expect((await softDeleteEntity(database.pool, makeAuthContext(), entityId)).isOk()).toBe(true);
+
+    const result = await searchEntities(
+      database.pool,
+      makeAuthContext(),
+      { query: 'quantum computing research', threshold: 0 },
+      { embeddingService }
+    );
+
+    expect(result.isOk()).toBe(true);
+    const results = result._unsafeUnwrap().results;
+    expect(results.every((r) => r.entityId !== entityId)).toBe(true);
+    expect(results.some((r) => r.entity.content?.includes('active entity'))).toBe(true);
+  }, 120_000);
+
+  it('includes archived entities in search when includeArchived is true', async () => {
+    if (!database) {
+      throw new Error('test database not initialized');
+    }
+
+    const embeddingService = createEmbeddingService();
+
+    const stored = await storeEntity(database.pool, makeAuthContext(), {
+      type: 'memory',
+      content: 'archived entity about quantum computing research',
+      tags: ['science']
+    });
+    expect(stored.isOk()).toBe(true);
+    const entityId = stored._unsafeUnwrap().id;
+
+    const worker = createEnrichmentWorker({ pool: database.pool, embeddingService });
+    await worker.runOnce();
+
+    expect((await softDeleteEntity(database.pool, makeAuthContext(), entityId)).isOk()).toBe(true);
+
+    const result = await searchEntities(
+      database.pool,
+      makeAuthContext(),
+      { query: 'quantum computing research', threshold: 0, includeArchived: true },
+      { embeddingService }
+    );
+
+    expect(result.isOk()).toBe(true);
+    const results = result._unsafeUnwrap().results;
+    expect(results.some((r) => r.entityId === entityId)).toBe(true);
   }, 120_000);
 
   it('returns EMBEDDING_FAILED when query embedding fails', async () => {

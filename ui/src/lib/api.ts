@@ -59,6 +59,7 @@ export function createApiClient(options: ApiClientOptions) {
       tags?: string[];
       limit?: number;
       offset?: number;
+      include_archived?: boolean;
     }) {
       const qs = new URLSearchParams();
       if (params.type) qs.set('type', params.type);
@@ -68,6 +69,7 @@ export function createApiClient(options: ApiClientOptions) {
       if (params.tags?.length) qs.set('tags', params.tags.join(','));
       qs.set('limit', String(params.limit ?? 100));
       qs.set('offset', String(params.offset ?? 0));
+      if (params.include_archived) qs.set('include_archived', 'true');
       return r<ListResponse<Entity>>(`/api/entities?${qs}`);
     },
 
@@ -114,6 +116,7 @@ export function createApiClient(options: ApiClientOptions) {
       threshold?: number;
       recency_weight?: number;
       expand_graph?: boolean;
+      include_archived?: boolean;
     }) {
       return r<{ results: SearchResult[] }>('/api/search', { method: 'POST', body: input });
     },

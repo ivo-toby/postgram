@@ -1035,6 +1035,166 @@ describe('pgm-admin CLI', () => {
     expect(auditRows.rows[0]?.details.onlyFailed).toBe(true);
   }, 120_000);
 
+  describe('purge command', () => {
+    it('permanently deletes archived entities', async () => {
+      if (!database) throw new Error('test database not initialized');
+      const seededKey = (await createKey(database.pool, {
+        name: `purge-all-${crypto.randomUUID()}`,
+        scopes: ['read', 'write', 'delete']
+      }))._unsafeUnwrap();
+      const auth = makeAuthContext(seededKey.record.id);
+      const dbUrl = getDatabaseUrl(database);
+
+      const r1 = await storeEntity(database.pool, auth, {
+        type: 'memory', content: 'to be purged', visibility: 'personal'
+      });
+      const r2 = await storeEntity(database.pool, auth, {
+        type: 'memory', content: 'also purged', visibility: 'personal'
+      });
+      expect(r1.isOk()).toBe(true);
+      expect(r2.isOk()).toBe(true);
+      const e1 = r1._unsafeUnwrap();
+      const e2 = r2._unsafeUnwrap();
+
+      await database.pool.query(
+        "UPDATE entities SET status = 'archived' WHERE id = ANY($1)",
+        [[e1.id, e2.id]]
+      );
+
+      const { stdout } = await runAdmin(['purge', '--all'], { DATABASE_URL: dbUrl });
+      expect(stdout).toMatch(/Permanently deleted 2/);
+
+      const check = await database.pool.query(
+        'SELECT id FROM entities WHERE id = ANY($1)', [[e1.id, e2.id]]
+      );
+      expect(check.rows).toHaveLength(0);
+    }, 120_000);
+
+    it('respects --type filter', async () => {
+      if (!database) throw new Error('test database not initialized');
+      const seededKey = (await createKey(database.pool, {
+        name: `purge-type-${crypto.randomUUID()}`,
+        scopes: ['read', 'write', 'delete']
+      }))._unsafeUnwrap();
+      const auth = makeAuthContext(seededKey.record.id);
+      const dbUrl = getDatabaseUrl(database);
+
+      const r1 = await storeEntity(database.pool, auth, {
+        type: 'memory', content: 'memory entity', visibility: 'personal'
+      });
+      const r2 = await storeEntity(database.pool, auth, {
+        type: 'document', content: 'document entity', visibility: 'personal'
+      });
+      expect(r1.isOk()).toBe(true);
+      expect(r2.isOk()).toBe(true);
+      const e1 = r1._unsafeUnwrap();
+      const e2 = r2._unsafeUnwrap();
+
+      await database.pool.query(
+        "UPDATE entities SET status = 'archived' WHERE id = ANY($1)",
+        [[e1.id, e2.id]]
+      );
+
+      const { stdout } = await runAdmin(['purge', '--all', '--type', 'memory'], { DATABASE_URL: dbUrl });
+      expect(stdout).toMatch(/Permanently deleted 1/);
+
+      const check = await database.pool.query(
+        'SELECT id, type FROM entities WHERE id = ANY($1)', [[e1.id, e2.id]]
+      );
+      expect(check.rows).toHaveLength(1);
+      expect(check.rows[0].type).toBe('document');
+    }, 120_000);
+
+    it('dry-run does not delete anything', async () => {
+      if (!database) throw new Error('test database not initialized');
+      const seededKey = (await createKey(database.pool, {
+        name: `purge-dry-${crypto.randomUUID()}`,
+        scopes: ['read', 'write', 'delete']
+      }))._unsafeUnwrap();
+      const auth = makeAuthContext(seededKey.record.id);
+      const dbUrl = getDatabaseUrl(database);
+
+      const r1 = await storeEntity(database.pool, auth, {
+        type: 'memory', content: 'dry run target', visibility: 'personal'
+      });
+      expect(r1.isOk()).toBe(true);
+      const e1 = r1._unsafeUnwrap();
+
+      await database.pool.query(
+        "UPDATE entities SET status = 'archived' WHERE id = $1", [e1.id]
+      );
+
+      const { stdout } = await runAdmin(['purge', '--all', '--dry-run'], { DATABASE_URL: dbUrl });
+      expect(stdout).toMatch(/Would delete 1/);
+
+      const check = await database.pool.query('SELECT id FROM entities WHERE id = $1', [e1.id]);
+      expect(check.rows).toHaveLength(1);
+    }, 120_000);
+
+    it('requires --all or --type or --older-than to confirm scope', async () => {
+      if (!database) throw new Error('test database not initialized');
+      const dbUrl = getDatabaseUrl(database);
+
+      let exitCode: number | null = null;
+      let stdout = '';
+      try {
+        await runAdmin(['purge'], { DATABASE_URL: dbUrl });
+      } catch (error) {
+        const err = error as { code: number; stdout: string };
+        exitCode = err.code;
+        stdout = err.stdout;
+      }
+      expect(exitCode).toBe(1);
+      expect(stdout).toMatch(/Specify --all/);
+    }, 120_000);
+
+    it('respects --older-than filter', async () => {
+      if (!database) throw new Error('test database not initialized');
+      const seededKey = (await createKey(database.pool, {
+        name: `purge-older-${crypto.randomUUID()}`,
+        scopes: ['read', 'write', 'delete']
+      }))._unsafeUnwrap();
+      const auth = makeAuthContext(seededKey.record.id);
+      const dbUrl = getDatabaseUrl(database);
+
+      // Create and archive two entities
+      const r1 = await storeEntity(database.pool, auth, {
+        type: 'memory', content: 'old archived', visibility: 'personal'
+      });
+      const r2 = await storeEntity(database.pool, auth, {
+        type: 'memory', content: 'recent archived', visibility: 'personal'
+      });
+      expect(r1.isOk()).toBe(true);
+      expect(r2.isOk()).toBe(true);
+      const e1 = r1._unsafeUnwrap();
+      const e2 = r2._unsafeUnwrap();
+
+      // Archive both, then backdate e1's updated_at to 40 days ago.
+      // The trigger trg_entities_updated_at fires on every UPDATE, so we
+      // disable it for the backdate operation and re-enable immediately after.
+      await database.pool.query(
+        "UPDATE entities SET status = 'archived' WHERE id = ANY($1)",
+        [[e1.id, e2.id]]
+      );
+      await database.pool.query('ALTER TABLE entities DISABLE TRIGGER trg_entities_updated_at');
+      await database.pool.query(
+        "UPDATE entities SET updated_at = NOW() - INTERVAL '40 days' WHERE id = $1",
+        [e1.id]
+      );
+      await database.pool.query('ALTER TABLE entities ENABLE TRIGGER trg_entities_updated_at');
+
+      // Purge --all --older-than 30d should only delete e1
+      const { stdout } = await runAdmin(['purge', '--all', '--older-than', '30d'], { DATABASE_URL: dbUrl });
+      expect(stdout).toMatch(/Permanently deleted 1/);
+
+      const check = await database.pool.query(
+        'SELECT id FROM entities WHERE id = ANY($1)', [[e1.id, e2.id]]
+      );
+      expect(check.rows).toHaveLength(1);
+      expect(check.rows[0].id).toBe(e2.id);
+    }, 120_000);
+  });
+
   it('prune-edges deletes edges below threshold and supports --dry-run', async () => {
     if (!database) {
       throw new Error('test database not initialized');

@@ -63,6 +63,7 @@ type SearchInput = {
   threshold?: number | undefined;
   recencyWeight?: number | undefined;
   expandGraph?: boolean | undefined;
+  includeArchived?: boolean | undefined;
 };
 
 type SearchOptions = {
@@ -186,7 +187,7 @@ async function runHybridSearch(
         ts_rank(e.search_tsvector, plainto_tsquery('simple', $8)) AS bm25
       FROM chunks c
       JOIN entities e ON e.id = c.entity_id
-      WHERE e.status IS DISTINCT FROM 'archived'
+      WHERE ($10::boolean = true OR e.status IS DISTINCT FROM 'archived')
         AND ($2::text IS NULL OR e.type = $2)
         AND ($3::text[] IS NULL OR e.tags @> $3)
         AND ($4::text[] IS NULL OR e.type = ANY($4))
@@ -205,7 +206,8 @@ async function runHybridSearch(
       input.visibility ?? null,
       input.owner ?? null,
       ctx.queryText,
-      candidateLimit
+      candidateLimit,
+      input.includeArchived ?? false
     ]
   );
 

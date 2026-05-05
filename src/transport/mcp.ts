@@ -195,7 +195,8 @@ function createSessionServer(
         limit: z.number().int().positive().optional(),
         threshold: z.number().min(0).max(1).optional(),
         recency_weight: z.number().min(0).optional(),
-        expand_graph: z.boolean().optional()
+        expand_graph: z.boolean().optional(),
+        include_archived: z.boolean().optional()
       }
     },
     (args) =>
@@ -212,7 +213,8 @@ function createSessionServer(
             limit: args.limit,
             threshold: args.threshold,
             recencyWeight: args.recency_weight,
-            expandGraph: args.expand_graph
+            expandGraph: args.expand_graph,
+            includeArchived: args.include_archived
           },
           {
             embeddingService: options.embeddingService
@@ -309,7 +311,8 @@ function createSessionServer(
         status: statusSchema.optional(),
         context: z.string().optional(),
         limit: z.number().int().positive().optional(),
-        offset: z.number().int().nonnegative().optional()
+        offset: z.number().int().nonnegative().optional(),
+        include_archived: z.boolean().optional()
       }
     },
     (args) =>
@@ -318,7 +321,8 @@ function createSessionServer(
           status: args.status,
           context: args.context,
           limit: args.limit,
-          offset: args.offset
+          offset: args.offset,
+          includeArchived: args.include_archived
         }),
         (value) => ({
           items: value.items.map(toStoredEntity),

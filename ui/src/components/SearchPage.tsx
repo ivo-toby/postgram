@@ -9,7 +9,7 @@ import CreateEntityModal from './CreateEntityModal.tsx';
 import { useResizable } from '../hooks/useResizable.ts';
 
 const ALL_ENTITY_TYPES = ['document', 'memory', 'person', 'project', 'task', 'interaction'];
-const ALL_STATUSES = ['active', 'done', 'archived', 'inbox', 'next', 'waiting', 'scheduled', 'someday'];
+const ALL_STATUSES = ['active', 'done', 'inbox', 'next', 'waiting', 'scheduled', 'someday'];
 const ALL_VISIBILITIES = ['personal', 'work', 'shared'];
 const PAGE_SIZE = 20;
 const SEMANTIC_MAX = 50;
@@ -33,6 +33,7 @@ type Filters = {
   threshold: number;
   recencyWeight: number;
   expandGraph: boolean;
+  showArchived: boolean;
 };
 
 const initialFilters: Filters = {
@@ -47,6 +48,7 @@ const initialFilters: Filters = {
   threshold: 0,
   recencyWeight: 0,
   expandGraph: true,
+  showArchived: false,
 };
 
 type ResultItem = {
@@ -103,6 +105,7 @@ export default function SearchPage({ api, onOpenInGraph }: Props) {
         ...(f.threshold > 0 ? { threshold: f.threshold } : {}),
         ...(f.recencyWeight > 0 ? { recency_weight: f.recencyWeight } : {}),
         expand_graph: f.expandGraph,
+        ...(f.showArchived ? { include_archived: true } : {}),
       });
       let items: ResultItem[] = res.results.map(r => ({
         entity: r.entity,
@@ -126,6 +129,7 @@ export default function SearchPage({ api, onOpenInGraph }: Props) {
       ...(f.tags.length ? { tags: f.tags } : {}),
       limit: PAGE_SIZE,
       offset,
+      ...(f.showArchived ? { include_archived: true } : {}),
     });
     let items: Entity[] = res.items as Entity[];
     if (f.types.size > 1) items = items.filter(e => f.types.has(e.type));
@@ -272,7 +276,8 @@ export default function SearchPage({ api, onOpenInGraph }: Props) {
     (filters.visibility ? 1 : 0) +
     (filters.owner.trim() ? 1 : 0) +
     (filters.threshold > 0 ? 1 : 0) +
-    (filters.recencyWeight > 0 ? 1 : 0);
+    (filters.recencyWeight > 0 ? 1 : 0) +
+    (filters.showArchived ? 1 : 0);
 
   return (
     <div className="flex flex-col h-full bg-gray-950 overflow-hidden">
@@ -384,6 +389,15 @@ export default function SearchPage({ api, onOpenInGraph }: Props) {
                     );
                   })}
                 </div>
+                <label className="flex items-center gap-2 text-xs text-gray-400 mt-2 cursor-pointer">
+                  <input
+                    type="checkbox"
+                    checked={filters.showArchived}
+                    onChange={e => update('showArchived', e.target.checked)}
+                    className="accent-blue-500"
+                  />
+                  Show archived
+                </label>
               </Section>
 
               <Section title="Visibility">

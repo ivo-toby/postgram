@@ -7,6 +7,7 @@ import EntityEditor from './EntityEditor.tsx';
 import LinkModal from './LinkModal.tsx';
 import CreateEntityModal from './CreateEntityModal.tsx';
 import { useResizable } from '../hooks/useResizable.ts';
+import CopyUuid from './CopyUuid.tsx';
 
 const ALL_ENTITY_TYPES = ['document', 'memory', 'person', 'project', 'task', 'interaction'];
 const ALL_STATUSES = ['active', 'done', 'archived', 'inbox', 'next', 'waiting', 'scheduled', 'someday'];
@@ -679,7 +680,7 @@ function ResultCard({ item, active, onSelect, onOpenInGraph, onSelectRelated }: 
         >
           Open in graph →
         </button>
-        <span className="text-gray-600 font-mono">{entity.id.slice(0, 8)}</span>
+        <CopyUuid id={entity.id} className="text-gray-600" />
       </div>
     </li>
   );
@@ -817,7 +818,7 @@ function DetailPanel({ api, entity, related, onClose, onNavigate, onOpenInGraph,
             <span className="px-2 py-0.5 rounded-full text-xs bg-gray-800 text-gray-300">{entity.status}</span>
           )}
           <span className="text-xs px-2 py-0.5 rounded-full bg-gray-800 text-gray-400">{entity.visibility}</span>
-          <span className="text-xs text-gray-500 font-mono ml-auto">{entity.id.slice(0, 8)}</span>
+          <CopyUuid id={entity.id} className="ml-auto" />
         </div>
 
         {(entity.type === 'task' || entity.type === 'project') && (dueDate || scheduledFor || contextStr || priority !== undefined) && (

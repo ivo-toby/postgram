@@ -1,3 +1,9 @@
+## [1.23.0](https://github.com/ivo-toby/postgram/compare/cli-v1.22.0...cli-v1.23.0) (2026-05-05)
+
+### Features
+
+* **docker-compose:** add EXTRACTION_DEBUG_LOG environment variable for enhanced logging control ([547c5c8](https://github.com/ivo-toby/postgram/commit/547c5c8cb8992089f5a4f729caeafe1ee98c9eef))
+
 ## [1.22.0](https://github.com/ivo-toby/postgram/compare/cli-v1.21.0...cli-v1.22.0) (2026-05-05)
 
 ### Features

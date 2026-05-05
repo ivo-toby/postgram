@@ -576,11 +576,37 @@ Main commands:
   model in the same transaction)
 - `reextract --all` — reset `extraction_status = 'pending'` and clear any
   stored `extraction_error` so the worker retries extraction (e.g. after
-  switching to a better LLM). Accepts `--type <type>` and `--clean-edges`
-  (deletes existing `source='llm-extraction'` edges for the in-scope
-  entities before re-extraction, giving a clean-slate "redo" rather than
-  appending alongside old edges). User-created edges with a different
-  `source` are never touched.
+  switching to a better LLM). Key flags:
+  - `--type <type>` — scope to a specific entity type
+  - `--only-failed` — only re-queue entities whose extraction previously failed
+  - `--no-edges-only` — only re-queue entities that have **no** LLM-extracted
+    edges; useful for targeted maintenance without re-processing entities that
+    already linked correctly (combine with `--type document` to catch large
+    documents that silently produced no edges)
+  - `--clean-edges` — delete existing `source='llm-extraction'` edges for the
+    in-scope entities before re-queuing, giving a clean-slate redo rather than
+    appending alongside old edges
+  - `--limit <n>` — cap how many entities are queued (oldest-first)
+
+  User-created edges (`source != 'llm-extraction'`) are never touched.
+
+- `improve-graph` — queue entities for re-extraction with an optional per-run
+  model/provider override stored on the row. The worker uses the override
+  instead of the env-configured default, then clears it on success. Existing
+  edges are kept by default (no wipe) — overlapping edges have their confidence
+  overwritten by the new run. Key flags:
+  - `--all`, `--type <type>`, `--id <uuid>` — scope what to queue
+  - `--model <name>` — e.g. `claude-sonnet-4-6`; stored per-row
+  - `--provider <name>` — `openai | anthropic | ollama`; stored per-row
+  - `--no-edges-only` — only queue entities with no LLM-extracted edges
+  - `--clean-edges` — wipe existing LLM edges before queueing
+  - `--limit <n>` — cap the queue size
+
+  Typical maintenance run targeting gaps without paying for the full graph:
+
+  ```bash
+  pgm-admin improve-graph --type document --no-edges-only --provider ollama --model <model>
+  ```
 - `prune-edges --below <threshold>` — delete edges with `confidence` below
   the threshold. Scoped to `source='llm-extraction'` by default; pass
   `--source any` to include all, or `--source <name>` for a specific one.
@@ -595,8 +621,97 @@ Main commands:
   `--limit <n>` (default 100), `--force`, `--dry-run`. Requires
   `EXTRACTION_ENABLED=true` and the usual `EXTRACTION_PROVIDER` /
   `EXTRACTION_MODEL` env vars; costs ≈ one LLM call per edge.
+- `sql "<statement>"` — execute a raw SQL statement against the database.
+  Accepts a positional argument or reads from stdin for multi-line queries.
+  SELECT results are printed tab-separated (or as JSON with `--json`); DML
+  commands print the affected row count.
+
+  ```bash
+  pgm-admin sql "SELECT id, type, extraction_status FROM entities LIMIT 5"
+  pgm-admin sql --json "SELECT COUNT(*) FROM edges WHERE source = 'llm-extraction'"
+
+  # pipe multi-line SQL from a file
+  cat fix.sql | pgm-admin sql
+  ```
+
 - `stats` — entity counts, chunk count, DB size
 - `embeddings migrate` — switch embedding dimensions (see [`specs/002-local-embeddings/quickstart.md`](specs/002-local-embeddings/quickstart.md))
+
+## Graph Maintenance
+
+The knowledge graph builds up over time as LLM extraction links entities
+together. Occasionally edges go missing (e.g. after a provider change, a
+`max_tokens` limit being hit, or a model outage) or need refreshing. The admin
+CLI has tools to handle this without re-processing the entire graph.
+
+### Finding gaps
+
+Entities that completed extraction but produced no edges are the primary signal
+of a silent failure:
+
+```bash
+pgm-admin sql "
+  SELECT id, char_length(content) AS chars, created_at
+  FROM entities
+  WHERE type = 'document'
+    AND extraction_status = 'completed'
+    AND NOT EXISTS (
+      SELECT 1 FROM edges WHERE source_id = id AND source = 'llm-extraction'
+    )
+  ORDER BY chars DESC
+  LIMIT 20
+"
+```
+
+### Targeted re-extraction (no wipe)
+
+Re-queue only the entities with no edges. Existing edges on other entities are
+untouched:
+
+```bash
+# Using the default extraction model
+pgm-admin reextract --type document --no-edges-only
+
+# Using a local Ollama model (zero API cost)
+pgm-admin improve-graph --type document --no-edges-only --provider ollama --model <model>
+```
+
+### Full re-extraction pass
+
+When you want to redo everything (e.g. after switching to a better model):
+
+```bash
+# Wipe and redo — gives a clean slate
+pgm-admin reextract --all --clean-edges
+
+# Or scope to documents only
+pgm-admin reextract --type document --clean-edges
+```
+
+### Confidence pruning
+
+Remove low-confidence edges left behind by older or weaker models:
+
+```bash
+pgm-admin prune-edges --below 0.5 --dry-run   # preview
+pgm-admin prune-edges --below 0.5             # apply
+```
+
+### Edge validation
+
+Run an LLM-as-judge pass to remove edges not supported by the source content:
+
+```bash
+pgm-admin validate-edges --dry-run --limit 200
+pgm-admin validate-edges --limit 200
+```
+
+### Monitoring queue progress
+
+```bash
+pgm queue                              # via pgm CLI
+pgm-admin sql "SELECT extraction_status, COUNT(*) FROM entities GROUP BY 1"
+```
 
 ## Talon Migration
 

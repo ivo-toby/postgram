@@ -20,6 +20,7 @@ import {
   parseCommaList,
   printHuman,
   printJson,
+  readStdinText,
   resolveAdminDatabaseUrl,
   shortId
 } from '../shared.js';
@@ -558,6 +559,10 @@ program
     "also re-queue entities tagged 'auto-created' (excluded by default because their only content is a bare name, which the LLM free-associates into new stubs and loops). Only use if you've manually enriched those entities' content."
   )
   .option(
+    '--no-edges-only',
+    "only re-queue entities that have no LLM-extracted edges — useful for targeted maintenance without re-processing entities that already linked correctly"
+  )
+  .option(
     '--show-skipped',
     "report how many entities matching --type/--only-failed/--id were skipped by guardrails (no content, archived, auto-created), broken down by category. Counts ignore --limit so you see the full picture."
   )
@@ -612,6 +617,11 @@ program
         ];
         if (!options.includeAutoCreated) {
           conditions.push("NOT ('auto-created' = ANY(tags))");
+        }
+        if (options.noEdgesOnly) {
+          conditions.push(
+            "NOT EXISTS (SELECT 1 FROM edges WHERE source_id = id AND source = 'llm-extraction')"
+          );
         }
         const params: unknown[] = [];
 
@@ -967,6 +977,10 @@ program
     'extraction provider override: openai | anthropic | ollama. Stored on each queued row alongside --model. Cleared on success.'
   )
   .option(
+    '--no-edges-only',
+    "only queue entities that have no LLM-extracted edges — targets the gaps without re-processing entities that already linked correctly"
+  )
+  .option(
     '--clean-edges',
     "delete existing LLM-extracted edges (source='llm-extraction') for the queued entities before queueing. Off by default — improve runs are typically additive."
   )
@@ -1028,6 +1042,11 @@ program
         ];
         if (!options.includeAutoCreated) {
           conditions.push("NOT ('auto-created' = ANY(tags))");
+        }
+        if (options.noEdgesOnly) {
+          conditions.push(
+            "NOT EXISTS (SELECT 1 FROM edges WHERE source_id = id AND source = 'llm-extraction')"
+          );
         }
         const params: unknown[] = [];
 
@@ -1373,6 +1392,41 @@ program
       return json
         ? { deleted }
         : [`Permanently deleted ${deleted} archived entit${deleted === 1 ? 'y' : 'ies'}`];
+    });
+  });
+
+program
+  .command('sql')
+  .description('Execute a raw SQL statement against the database (reads from stdin if no argument given)')
+  .argument('[sql]', 'SQL statement to execute')
+  .action(async (sqlArg, _options, command) => {
+    const json = isJsonMode(command);
+    const sql = sqlArg ?? await readStdinText();
+    if (!sql.trim()) {
+      await handleCliFailure(
+        new Error('No SQL provided — pass as argument or pipe via stdin'),
+        json
+      );
+      return;
+    }
+
+    await runWithPool(json, async (pool) => {
+      const result = await pool.query(sql);
+
+      if (json) {
+        return { command: result.command, rowCount: result.rowCount ?? 0, rows: result.rows };
+      }
+
+      if (result.rows.length > 0) {
+        const cols = Object.keys(result.rows[0]);
+        const header = cols.join('\t');
+        const rows = (result.rows as Record<string, unknown>[]).map((row) =>
+          cols.map((c) => String(row[c] ?? '')).join('\t')
+        );
+        return [header, ...rows];
+      }
+
+      return [`${result.command} ${result.rowCount ?? 0}`];
     });
   });
 

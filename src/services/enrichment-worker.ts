@@ -8,7 +8,10 @@ import {
   createEmbeddingService,
   type EmbeddingService
 } from './embedding-service.js';
-import { extractAndLinkRelationships } from './extraction-service.js';
+import {
+  extractAndLinkRelationships,
+  SemanticMatchUnavailableError
+} from './extraction-service.js';
 
 type PendingEntityRow = {
   id: string;
@@ -19,21 +22,49 @@ type PendingExtractionRow = PendingEntityRow & {
   type: string;
   visibility: string;
   owner: string | null;
+  extraction_model_override: string | null;
+  extraction_provider_override: string | null;
 };
+
+type CallLlm = (prompt: string, schema?: object) => Promise<string>;
+
+/**
+ * Factory used when an entity has an `extraction_model_override` or
+ * `extraction_provider_override` set — typically by `pgm-admin
+ * improve-graph --model X --provider Y`. Returning a function that builds a
+ * `callLlm` lets the worker swap models per-entity without rebuilding
+ * provider state on every call (the worker caches the result by
+ * `provider:model`). When neither override is set the worker falls back to
+ * `options.callLlm` (the env-configured default), so existing tests and
+ * deployments don't need to provide a factory.
+ */
+type CallLlmFactory = (
+  provider: string | null,
+  model: string | null
+) => CallLlm;
 
 type EnrichmentWorkerOptions = {
   pool: Pool;
   embeddingService?: EmbeddingService;
   extractionEnabled?: boolean;
-  callLlm?:
-    | ((prompt: string, schema?: object) => Promise<string>)
-    | undefined;
+  callLlm?: CallLlm | undefined;
+  callLlmFactory?: CallLlmFactory | undefined;
   logger?: Logger;
   autoCreate?: {
     enabled: boolean;
     types: readonly string[];
     minConfidence: number;
+    minConfidenceByType?: Readonly<Record<string, number>> | undefined;
   };
+  extractionMatchMinSimilarity?: number;
+  extractionMinContentChars?: number;
+  /**
+   * When true, the worker passes a debug callback to extraction that logs
+   * raw LLM responses and per-target decisions at info level. Used to
+   * diagnose "no person entities" / "edges look wrong" without redeploying
+   * with LOG_LEVEL=debug (which is much noisier).
+   */
+  extractionDebugLog?: boolean;
 };
 
 async function rollbackQuietly(client: PoolClient): Promise<void> {
@@ -55,8 +86,10 @@ function truncateErrorMessage(error: unknown): string {
 }
 
 export function createEnrichmentWorker(options: EnrichmentWorkerOptions) {
-  if (options.extractionEnabled && !options.callLlm) {
-    throw new Error('callLlm is required when extractionEnabled is true');
+  if (options.extractionEnabled && !options.callLlm && !options.callLlmFactory) {
+    throw new Error(
+      'callLlm or callLlmFactory is required when extractionEnabled is true'
+    );
   }
 
   const embeddingService = options.embeddingService ?? createEmbeddingService();
@@ -212,6 +245,43 @@ export function createEnrichmentWorker(options: EnrichmentWorkerOptions) {
     }
   }
 
+  // Cache of pre-built provider functions, keyed by `provider:model`. This
+  // matters when `improve-graph --model X --provider Y --limit 500` queues
+  // 500 entities all pointing at the same override — building 500 provider
+  // closures (each with its own captured config) is wasteful, and some
+  // providers do non-trivial work in their factory (e.g. validating creds).
+  const llmCache = new Map<string, CallLlm>();
+  const resolveCallLlm = (
+    providerOverride: string | null,
+    modelOverride: string | null
+  ): CallLlm | undefined => {
+    if (!providerOverride && !modelOverride) {
+      return options.callLlm;
+    }
+    if (!options.callLlmFactory) {
+      // Override columns set but no factory configured. Log once per unique
+      // (provider, model) pair so a misconfigured deployment shows up in
+      // logs rather than silently degrading to the default model.
+      const key = `MISSING_FACTORY:${providerOverride ?? ''}:${modelOverride ?? ''}`;
+      if (!llmCache.has(key)) {
+        logger.warn(
+          { providerOverride, modelOverride },
+          'extraction model override set on entity but worker has no callLlmFactory configured — falling back to default'
+        );
+        // Sentinel so we don't log again.
+        llmCache.set(key, options.callLlm ?? (() => Promise.resolve('[]')));
+      }
+      return options.callLlm;
+    }
+    const cacheKey = `${providerOverride ?? ''}:${modelOverride ?? ''}`;
+    let entry = llmCache.get(cacheKey);
+    if (!entry) {
+      entry = options.callLlmFactory(providerOverride, modelOverride);
+      llmCache.set(cacheKey, entry);
+    }
+    return entry;
+  };
+
   async function processNextExtractionEntity(
     extractionAuth: AuthContext
   ): Promise<boolean> {
@@ -224,7 +294,8 @@ export function createEnrichmentWorker(options: EnrichmentWorkerOptions) {
     // for a per-entity advisory lock.
     const candidates = await options.pool.query<PendingExtractionRow>(
       `
-        SELECT id, content, type, visibility, owner
+        SELECT id, content, type, visibility, owner,
+               extraction_model_override, extraction_provider_override
         FROM entities
         WHERE extraction_status = 'pending'
           AND content IS NOT NULL
@@ -248,6 +319,11 @@ export function createEnrichmentWorker(options: EnrichmentWorkerOptions) {
           continue;
         }
 
+        const entityCallLlm = resolveCallLlm(
+          entity.extraction_provider_override,
+          entity.extraction_model_override
+        );
+
         try {
           await extractAndLinkRelationships(
             options.pool,
@@ -260,23 +336,58 @@ export function createEnrichmentWorker(options: EnrichmentWorkerOptions) {
               owner: entity.owner
             },
             {
-              ...(options.callLlm ? { callLlm: options.callLlm } : {}),
-              ...(options.autoCreate ? { autoCreate: options.autoCreate } : {})
+              ...(entityCallLlm ? { callLlm: entityCallLlm } : {}),
+              ...(options.autoCreate ? { autoCreate: options.autoCreate } : {}),
+              embeddingService,
+              ...(options.extractionMatchMinSimilarity !== undefined
+                ? { matchMinSimilarity: options.extractionMatchMinSimilarity }
+                : {}),
+              ...(options.extractionMinContentChars !== undefined
+                ? { minContentChars: options.extractionMinContentChars }
+                : {}),
+              ...(options.extractionDebugLog
+                ? {
+                    debugLog: (event, payload) =>
+                      logger.info({ event, ...payload }, event)
+                  }
+                : {})
             }
           );
+          // Clear the override columns on success so the next time this
+          // entity is re-queued (e.g. via plain `reextract`), it falls back
+          // to the env-configured default model rather than silently
+          // continuing with the per-run override forever.
           await options.pool.query(
-            "UPDATE entities SET extraction_status = 'completed', extraction_error = NULL WHERE id = $1",
+            `UPDATE entities
+             SET extraction_status = 'completed',
+                 extraction_error = NULL,
+                 extraction_model_override = NULL,
+                 extraction_provider_override = NULL
+             WHERE id = $1`,
             [entity.id]
           );
         } catch (error) {
-          logger.warn(
-            { err: error, entityId: entity.id },
-            'extraction failed'
-          );
-          await options.pool.query(
-            "UPDATE entities SET extraction_status = 'failed', extraction_error = $2 WHERE id = $1",
-            [entity.id, truncateErrorMessage(error)]
-          );
+          if (error instanceof SemanticMatchUnavailableError) {
+            // Leave extraction_status = 'pending' AND the override columns
+            // so the next poll retries with the same model. Any edges
+            // already linked in this pass are committed (createEdge upserts
+            // on conflict, so the retry is idempotent).
+            logger.warn(
+              { entityId: entity.id, linkedSoFar: error.linkedSoFar },
+              'extraction deferred — embeddings unavailable, will retry'
+            );
+          } else {
+            logger.warn(
+              { err: error, entityId: entity.id },
+              'extraction failed'
+            );
+            // Don't clear override columns here either — operator may want
+            // the failure mode investigated against the same model.
+            await options.pool.query(
+              "UPDATE entities SET extraction_status = 'failed', extraction_error = $2 WHERE id = $1",
+              [entity.id, truncateErrorMessage(error)]
+            );
+          }
         } finally {
           await lockClient
             .query('SELECT pg_advisory_unlock(hashtext($1))', [entity.id])

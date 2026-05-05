@@ -154,6 +154,12 @@ The same service layer is exposed through:
 - MCP SSE endpoint
 - `pgm` CLI
 - `pgm-admin` CLI
+- Browser extensions for [Chrome](./packages/browser-extension-chrome) and
+  [Firefox](./packages/browser-extension-firefox) — one-click web clipper
+  that captures the current page or text selection via the REST API.
+  Build with `npm run -w @ivotoby/postgram-browser-extension-chrome package`
+  (or the Firefox equivalent); install unpacked from the per-package
+  README.
 
 ## Repository Layout
 
@@ -167,6 +173,10 @@ src/
   transport/       REST and MCP adapters
   types/           Shared types
   util/            Errors, audit, logging
+
+packages/
+  browser-extension-chrome/   Chromium web clipper (MV3)
+  browser-extension-firefox/  Firefox web clipper (MV3)
 
 tests/
   contract/        REST and MCP contract tests
@@ -265,6 +275,8 @@ See [`specs/002-local-embeddings/quickstart.md`](specs/002-local-embeddings/quic
 | `EXTRACTION_AUTO_CREATE_MIN_CONFIDENCE`  | no                      | `0.7`                           | Minimum per-extraction confidence (0–1) required to auto-create an entity. Raise to cut noise, lower for a denser graph. |
 | `ANTHROPIC_API_KEY`                      | when provider=anthropic |                                 | Anthropic API key                                                                                                 |
 | `OLLAMA_BASE_URL`                        | no                      | `http://localhost:11434`        | Ollama server URL                                                                                                 |
+| `EXTRACTION_REASONING_EFFORT`            | no                      | unset                           | `minimal` \| `low` \| `medium` \| `high`. Forwarded as `reasoning_effort` to OpenAI and Ollama for reasoning models (o-series, gpt-5, gpt-oss). When set, overrides the implicit `minimal` that `EXTRACTION_DISABLE_THINKING=true` sends to OpenAI. |
+| `LLM_REQUEST_TIMEOUT_MS`                 | no                      | `120000`                        | Hard cap per LLM call in milliseconds. Bump this when running slow local models (e.g. `gpt-oss:120b-cloud`).      |
 
 **Auto-created entities**: when `EXTRACTION_AUTO_CREATE_ENTITIES=true`,
 entities that didn't exist before a document mentioned them are inserted

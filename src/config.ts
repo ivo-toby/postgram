@@ -28,6 +28,11 @@ const configSchema = z
       .enum(['true', 'false'])
       .default('true')
       .transform((v) => v === 'true'),
+    EXTRACTION_REASONING_EFFORT: z
+      .preprocess(
+        emptyToUndefined,
+        z.enum(['minimal', 'low', 'medium', 'high']).optional()
+      ),
     EXTRACTION_AUTO_CREATE_ENTITIES: z
       .enum(['true', 'false'])
       .default('false')
@@ -52,6 +57,76 @@ const configSchema = z
       emptyToUndefined,
       z.coerce.number().min(0).max(1).default(0.7)
     ),
+    // Per-type confidence floor overrides for auto-create. Format:
+    // `person:0.5,project:0.6`. Types not listed fall back to
+    // EXTRACTION_AUTO_CREATE_MIN_CONFIDENCE. Default targets the dominant
+    // failure mode in production: persons emitted at 0.5–0.7 were blocked by
+    // the global 0.7 threshold and never became nodes.
+    EXTRACTION_AUTO_CREATE_MIN_CONFIDENCE_BY_TYPE: z
+      .preprocess(
+        emptyToUndefined,
+        z.string().default('person:0.5,project:0.6')
+      )
+      .transform((value, ctx) => {
+        const result: Record<string, number> = {};
+        const parts = value
+          .split(',')
+          .map((part) => part.trim())
+          .filter((part) => part.length > 0);
+        for (const part of parts) {
+          const [rawType, rawValue] = part.split(':').map((s) => s.trim());
+          if (!rawType || !rawValue) {
+            ctx.addIssue({
+              code: z.ZodIssueCode.custom,
+              message: `Expected "type:number" pair, got "${part}"`
+            });
+            return z.NEVER;
+          }
+          if (
+            !['memory', 'person', 'project', 'task', 'interaction', 'document']
+              .includes(rawType)
+          ) {
+            ctx.addIssue({
+              code: z.ZodIssueCode.custom,
+              message: `Unknown type "${rawType}" in EXTRACTION_AUTO_CREATE_MIN_CONFIDENCE_BY_TYPE`
+            });
+            return z.NEVER;
+          }
+          const num = Number(rawValue);
+          if (!Number.isFinite(num) || num < 0 || num > 1) {
+            ctx.addIssue({
+              code: z.ZodIssueCode.custom,
+              message: `Confidence for "${rawType}" must be 0..1, got "${rawValue}"`
+            });
+            return z.NEVER;
+          }
+          result[rawType] = num;
+        }
+        return result;
+      }),
+    EXTRACTION_MATCH_MIN_SIMILARITY: z.preprocess(
+      emptyToUndefined,
+      z.coerce.number().min(0).max(1).default(0.5)
+    ),
+    // Inputs shorter than this many trimmed characters are skipped before
+    // hitting the LLM. Default 80 covers the cluster of short
+    // personality/prompt fragment files that produced `Ollama API error: 400`
+    // in production. Set to 0 to disable.
+    EXTRACTION_MIN_CONTENT_CHARS: z.preprocess(
+      emptyToUndefined,
+      z.coerce.number().int().min(0).default(80)
+    ),
+    // When true, the enrichment worker logs the raw LLM response and a
+    // per-target decision (matched_existing / auto_created /
+    // skipped_below_confidence / skipped_type_not_allowed /
+    // skipped_auto_create_disabled / skipped_type_unknown /
+    // deferred_semantic_skipped / edge_failed) for every extraction it
+    // processes. Off by default — turn on briefly to diagnose "why are
+    // person edges missing?" without globally raising LOG_LEVEL to debug.
+    EXTRACTION_DEBUG_LOG: z
+      .enum(['true', 'false'])
+      .default('false')
+      .transform((v) => v === 'true'),
     ANTHROPIC_API_KEY: optionalString,
     OLLAMA_API_KEY: optionalString,
     OLLAMA_BASE_URL: z.preprocess(

@@ -1,3 +1,59 @@
+## [1.20.0](https://github.com/ivo-toby/postgram/compare/cli-v1.19.0...cli-v1.20.0) (2026-05-01)
+
+### Features
+
+* **cli:** finer reextract control + new improve-graph command ([#31](https://github.com/ivo-toby/postgram/issues/31)) ([7439d03](https://github.com/ivo-toby/postgram/commit/7439d03b653f35730f17cf6bc90de47061c9d68e))
+* **extraction:** gated debug logging for extraction decisions ([#31](https://github.com/ivo-toby/postgram/issues/31)) ([82b6f9c](https://github.com/ivo-toby/postgram/commit/82b6f9c6ca4fbf9a92e1795fe88318333786ccfb))
+* **extraction:** improve-graph runs through worker with per-entity model override ([#31](https://github.com/ivo-toby/postgram/issues/31)) ([e3599e8](https://github.com/ivo-toby/postgram/commit/e3599e8595ab47badc23a2297a1daa0ab568ffbc))
+
+### Bug Fixes
+
+* **extraction:** improve graph extraction quality ([#31](https://github.com/ivo-toby/postgram/issues/31)) ([804e297](https://github.com/ivo-toby/postgram/commit/804e2979129c36159967a6fa1e3fec0ec0fd4f67))
+
+## [1.19.0](https://github.com/ivo-toby/postgram/compare/cli-v1.18.0...cli-v1.19.0) (2026-04-27)
+
+### Features
+
+* **extensions/firefox:** add web-ext sign + lint scripts ([11975e8](https://github.com/ivo-toby/postgram/commit/11975e8b0784daae95b75774b9b6d64f83b095a4))
+* **extensions:** add Chrome and Firefox web clippers ([487dbe7](https://github.com/ivo-toby/postgram/commit/487dbe771d3fd8867c045b36cccf21b5976d3dcd))
+
+### Bug Fixes
+
+* **extensions/firefox:** make sign/lint scripts work without npm install ([e781cbc](https://github.com/ivo-toby/postgram/commit/e781cbcbe3b0e2a5f64d43108b8c3fdc910ec1a8))
+* **extensions/firefox:** raise strict_min_version to 140.0 ([0d2b56c](https://github.com/ivo-toby/postgram/commit/0d2b56c83750ef074a408b3f167f37e558fad539))
+* **extensions:** drop port from match patterns + Firefox AMO compliance ([7bea897](https://github.com/ivo-toby/postgram/commit/7bea89728dfb9befa175d38d36b72f85a19d665a))
+* **extensions:** strip header/footer/aside, not just `header footer` ([0b843e1](https://github.com/ivo-toby/postgram/commit/0b843e17f2e1bb1a557d5d2a7c7bcffa820bc527))
+
+## [1.18.0](https://github.com/ivo-toby/postgram/compare/cli-v1.17.1...cli-v1.18.0) (2026-04-27)
+
+### Features
+
+* add --show-skipped to reextract for guardrail visibility ([e295b8f](https://github.com/ivo-toby/postgram/commit/e295b8f20a839de689c7dc40b82c1fcd93c4180b))
+
+## [1.17.1](https://github.com/ivo-toby/postgram/compare/cli-v1.17.0...cli-v1.17.1) (2026-04-26)
+
+### Bug Fixes
+
+* forward EXTRACTION_REASONING_EFFORT to validate-edges command ([fc15ca8](https://github.com/ivo-toby/postgram/commit/fc15ca83a372d6a986ed23ab59a19cb8c7f543af)), closes [#28](https://github.com/ivo-toby/postgram/issues/28)
+
+## [1.17.0](https://github.com/ivo-toby/postgram/compare/cli-v1.16.1...cli-v1.17.0) (2026-04-26)
+
+### Features
+
+* add EXTRACTION_REASONING_EFFORT for OpenAI-style reasoning models ([20d344e](https://github.com/ivo-toby/postgram/commit/20d344ee1efe98aa3c6b97144c5ea6d2c8e74f11))
+
+## [1.16.1](https://github.com/ivo-toby/postgram/compare/cli-v1.16.0...cli-v1.16.1) (2026-04-26)
+
+### Bug Fixes
+
+* pass LLM_REQUEST_TIMEOUT_MS through to mcp-server container ([cd1ab1d](https://github.com/ivo-toby/postgram/commit/cd1ab1da9b1865d91e1b52608a43bb4dab016d01))
+
+## [1.16.0](https://github.com/ivo-toby/postgram/compare/cli-v1.15.0...cli-v1.16.0) (2026-04-26)
+
+### Features
+
+* **extraction:** semantic target matching replaces ILIKE ([d0d2dac](https://github.com/ivo-toby/postgram/commit/d0d2dac5118d02f938bb549c1a538815d6856db9))
+
 ## [1.15.0](https://github.com/ivo-toby/postgram/compare/cli-v1.14.0...cli-v1.15.0) (2026-04-24)
 
 ### Features

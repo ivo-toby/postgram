@@ -235,17 +235,35 @@ export async function startServer(): Promise<{
   let callLlm:
     | ((prompt: string, schema?: object) => Promise<string>)
     | undefined;
+  let callLlmFactory:
+    | ((provider: string | null, model: string | null) =>
+        (prompt: string, schema?: object) => Promise<string>)
+    | undefined;
   if (config.EXTRACTION_ENABLED) {
     const { createLlmProvider } = await import('./services/llm-provider.js');
-    callLlm = createLlmProvider({
-      provider: config.EXTRACTION_PROVIDER,
-      model: config.EXTRACTION_MODEL,
-      openaiApiKey: config.OPENAI_API_KEY,
-      anthropicApiKey: config.ANTHROPIC_API_KEY,
-      ollamaBaseUrl: config.OLLAMA_BASE_URL,
-      ollamaApiKey: config.OLLAMA_API_KEY,
-      disableThinking: config.EXTRACTION_DISABLE_THINKING
-    });
+    type ExtractionProvider = Parameters<typeof createLlmProvider>[0]['provider'];
+    const allowedProviders: readonly ExtractionProvider[] = [
+      'openai',
+      'anthropic',
+      'ollama'
+    ];
+    callLlmFactory = (providerOverride, modelOverride) => {
+      const provider: ExtractionProvider = providerOverride
+        && (allowedProviders as readonly string[]).includes(providerOverride)
+        ? (providerOverride as ExtractionProvider)
+        : config.EXTRACTION_PROVIDER;
+      return createLlmProvider({
+        provider,
+        model: modelOverride ?? config.EXTRACTION_MODEL,
+        openaiApiKey: config.OPENAI_API_KEY,
+        anthropicApiKey: config.ANTHROPIC_API_KEY,
+        ollamaBaseUrl: config.OLLAMA_BASE_URL,
+        ollamaApiKey: config.OLLAMA_API_KEY,
+        disableThinking: config.EXTRACTION_DISABLE_THINKING,
+        reasoningEffort: config.EXTRACTION_REASONING_EFFORT
+      });
+    };
+    callLlm = callLlmFactory(null, null);
     logger.info(
       { provider: config.EXTRACTION_PROVIDER, model: config.EXTRACTION_MODEL },
       'LLM extraction enabled'
@@ -257,12 +275,17 @@ export async function startServer(): Promise<{
     embeddingService,
     extractionEnabled: config.EXTRACTION_ENABLED,
     callLlm,
+    callLlmFactory,
     logger,
     autoCreate: {
       enabled: config.EXTRACTION_AUTO_CREATE_ENTITIES,
       types: config.EXTRACTION_AUTO_CREATE_TYPES,
-      minConfidence: config.EXTRACTION_AUTO_CREATE_MIN_CONFIDENCE
-    }
+      minConfidence: config.EXTRACTION_AUTO_CREATE_MIN_CONFIDENCE,
+      minConfidenceByType: config.EXTRACTION_AUTO_CREATE_MIN_CONFIDENCE_BY_TYPE
+    },
+    extractionMatchMinSimilarity: config.EXTRACTION_MATCH_MIN_SIMILARITY,
+    extractionMinContentChars: config.EXTRACTION_MIN_CONTENT_CHARS,
+    extractionDebugLog: config.EXTRACTION_DEBUG_LOG
   });
   let workerActive = true;
   const workerLoop = async () => {

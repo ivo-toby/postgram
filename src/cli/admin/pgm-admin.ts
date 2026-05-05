@@ -24,6 +24,11 @@ import {
   shortId
 } from '../shared.js';
 
+// Lowercase 8-4-4-4-12 UUID. Postgres would reject malformed casts, but a
+// CLI-side check produces a friendlier error than an SQL exception.
+const UUID_REGEX =
+  /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
+
 type ApiKeyRow = {
   id: string;
   name: string;
@@ -538,7 +543,12 @@ program
   .description('Mark entities for re-extraction (knowledge-graph edges + tags)')
   .option('--all', 're-extract all entities with content')
   .option('--type <type>', 're-extract entities of this type only')
+  .option('--id <uuid>', 're-extract a single entity by id (composes with --clean-edges; ignores other selectors)')
   .option('--only-failed', "only re-queue entities whose extraction_status = 'failed'")
+  .option(
+    '--limit <n>',
+    'cap the number of entities marked (composes with --all/--type/--only-failed; ignored with --id). Selects oldest-first by created_at.'
+  )
   .option(
     '--clean-edges',
     "delete existing LLM-extracted edges (source='llm-extraction') for the in-scope entities before re-extraction — gives a clean slate rather than appending alongside old edges"
@@ -547,17 +557,42 @@ program
     '--include-auto-created',
     "also re-queue entities tagged 'auto-created' (excluded by default because their only content is a bare name, which the LLM free-associates into new stubs and loops). Only use if you've manually enriched those entities' content."
   )
+  .option(
+    '--show-skipped',
+    "report how many entities matching --type/--only-failed/--id were skipped by guardrails (no content, archived, auto-created), broken down by category. Counts ignore --limit so you see the full picture."
+  )
   .action(async (options, command) => {
     const json = isJsonMode(command);
 
-    if (!options.all && !options.type && !options.onlyFailed) {
+    if (!options.all && !options.type && !options.onlyFailed && !options.id) {
       await handleCliFailure(
         new Error(
-          'Specify --all, --type <type>, or --only-failed to confirm which entities to re-extract'
+          'Specify --all, --type <type>, --only-failed, or --id <uuid> to confirm which entities to re-extract'
         ),
         json
       );
       return;
+    }
+
+    if (options.id && !UUID_REGEX.test(options.id)) {
+      await handleCliFailure(
+        new Error(`--id must be a valid UUID (got "${options.id}")`),
+        json
+      );
+      return;
+    }
+
+    let limit: number | undefined;
+    if (options.limit !== undefined) {
+      const parsed = Number.parseInt(options.limit, 10);
+      if (!Number.isInteger(parsed) || parsed <= 0) {
+        await handleCliFailure(
+          new Error('--limit must be a positive integer'),
+          json
+        );
+        return;
+      }
+      limit = parsed;
     }
 
     await runWithPool(json, async (pool) => {
@@ -580,35 +615,119 @@ program
         }
         const params: unknown[] = [];
 
-        if (options.type) {
-          params.push(options.type);
-          conditions.push(`type = $${params.length}`);
-        }
-
-        if (options.onlyFailed) {
-          conditions.push("extraction_status = 'failed'");
+        // --id is exclusive: when given it pinpoints a single row, so
+        // --type / --only-failed / --limit on top of it are nonsense.
+        // The guardrails (content/status/auto-created) still apply and
+        // surface as a 0-rows result rather than a misleading success.
+        if (options.id) {
+          params.push(options.id);
+          conditions.push(`id = $${params.length}::uuid`);
+        } else {
+          if (options.type) {
+            params.push(options.type);
+            conditions.push(`type = $${params.length}`);
+          }
+          if (options.onlyFailed) {
+            conditions.push("extraction_status = 'failed'");
+          }
         }
 
         const whereClause = conditions.join(' AND ');
+
+        // PostgreSQL doesn't allow LIMIT directly on UPDATE/DELETE, so we
+        // wrap the selection in a subquery. Both the DELETE (for
+        // --clean-edges) and the UPDATE use the same subquery shape — in a
+        // single transaction this resolves to the same entity set, so
+        // edges are cleaned for exactly the rows that are then re-queued.
+        const selectionSubquery =
+          limit !== undefined
+            ? `SELECT id FROM entities WHERE ${whereClause} ORDER BY created_at ASC LIMIT ${limit}`
+            : `SELECT id FROM entities WHERE ${whereClause}`;
 
         let deletedEdges = 0;
         if (options.cleanEdges) {
           const deleteResult = await client.query(
             `DELETE FROM edges
              WHERE source = 'llm-extraction'
-               AND source_id IN (SELECT id FROM entities WHERE ${whereClause})`,
+               AND source_id IN (${selectionSubquery})`,
             params
           );
           deletedEdges = deleteResult.rowCount ?? 0;
         }
 
         const updateResult = await client.query(
-          `UPDATE entities
-           SET extraction_status = 'pending',
-               extraction_error = NULL
-           WHERE ${whereClause}`,
+          limit !== undefined
+            ? `UPDATE entities
+               SET extraction_status = 'pending',
+                   extraction_error = NULL
+               WHERE id IN (${selectionSubquery})`
+            : `UPDATE entities
+               SET extraction_status = 'pending',
+                   extraction_error = NULL
+               WHERE ${whereClause}`,
           params
         );
+
+        // The skipped breakdown re-runs the user-specified filters
+        // (--type, --only-failed, --id) without the guardrails, then
+        // buckets each non-marked match into the FIRST guardrail it
+        // tripped, in priority order: no_content → archived →
+        // auto_created. This keeps the buckets disjoint so marked +
+        // skipped totals add up. --limit is intentionally NOT applied to
+        // the skipped query so operators see the full guardrail picture.
+        let skipped:
+          | { noContent: number; archived: number; autoCreated: number }
+          | undefined;
+        if (options.showSkipped) {
+          const userConditions: string[] = [];
+          const userParams: unknown[] = [];
+          if (options.id) {
+            userParams.push(options.id);
+            userConditions.push(`id = $${userParams.length}::uuid`);
+          } else {
+            if (options.type) {
+              userParams.push(options.type);
+              userConditions.push(`type = $${userParams.length}`);
+            }
+            if (options.onlyFailed) {
+              userConditions.push("extraction_status = 'failed'");
+            }
+          }
+          const userWhere = userConditions.length
+            ? userConditions.join(' AND ')
+            : 'TRUE';
+
+          const autoCreatedFilter = options.includeAutoCreated
+            ? '0'
+            : `count(*) FILTER (
+                 WHERE content IS NOT NULL
+                   AND status IS DISTINCT FROM 'archived'
+                   AND 'auto-created' = ANY(tags)
+               )`;
+
+          const skippedResult = await client.query<{
+            no_content: string;
+            archived: string;
+            auto_created: string;
+          }>(
+            `SELECT
+               count(*) FILTER (WHERE content IS NULL) AS no_content,
+               count(*) FILTER (
+                 WHERE content IS NOT NULL
+                   AND status = 'archived'
+               ) AS archived,
+               ${autoCreatedFilter} AS auto_created
+             FROM entities
+             WHERE ${userWhere}`,
+            userParams
+          );
+          const row = skippedResult.rows[0];
+          skipped = {
+            noContent: Number(row?.no_content ?? '0'),
+            archived: Number(row?.archived ?? '0'),
+            autoCreated: Number(row?.auto_created ?? '0')
+          };
+        }
 
         await client.query('COMMIT');
 
@@ -619,7 +738,9 @@ program
           details: {
             markedCount,
             deletedEdges,
-            type: options.type ?? 'all',
+            type: options.type ?? (options.id ? null : 'all'),
+            id: options.id ?? null,
+            limit: limit ?? null,
             cleanEdges: Boolean(options.cleanEdges),
             includeAutoCreated: Boolean(options.includeAutoCreated),
             onlyFailed: Boolean(options.onlyFailed)
@@ -628,12 +749,24 @@ program
 
         const suffixes: string[] = [];
         if (options.onlyFailed) suffixes.push('only failed');
+        if (limit !== undefined) suffixes.push(`limit ${limit}`);
         if (options.cleanEdges) suffixes.push(`deleted ${deletedEdges} prior edges`);
         const suffix = suffixes.length > 0 ? ` (${suffixes.join('; ')})` : '';
 
-        return json
-          ? { markedCount, deletedEdges }
-          : [`Marked ${markedCount} entities for re-extraction${suffix}`];
+        if (json) {
+          return skipped
+            ? { markedCount, deletedEdges, skipped }
+            : { markedCount, deletedEdges };
+        }
+        const lines = [`Marked ${markedCount} entities for re-extraction${suffix}`];
+        if (skipped) {
+          const total =
+            skipped.noContent + skipped.archived + skipped.autoCreated;
+          lines.push(
+            `Skipped ${total} (no_content=${skipped.noContent}, archived=${skipped.archived}, auto_created=${skipped.autoCreated})`
+          );
+        }
+        return lines;
       } catch (error) {
         await client.query('ROLLBACK');
         throw error;
@@ -773,7 +906,8 @@ program
         anthropicApiKey: config.ANTHROPIC_API_KEY,
         ollamaBaseUrl: config.OLLAMA_BASE_URL,
         ollamaApiKey: config.OLLAMA_API_KEY,
-        disableThinking: config.EXTRACTION_DISABLE_THINKING
+        disableThinking: config.EXTRACTION_DISABLE_THINKING,
+        reasoningEffort: config.EXTRACTION_REASONING_EFFORT
       });
       logger = createLogger(config.LOG_LEVEL);
     } catch (error) {
@@ -811,6 +945,190 @@ program
         : [
             `Validated ${result.checked} edges (${result.kept} kept, ${result.removed} ${options.dryRun ? 'would be removed' : 'removed'}, ${result.skipped} skipped, ${result.errored} errored)`
           ];
+    });
+  });
+
+program
+  .command('improve-graph')
+  .description(
+    "Queue entities for re-extraction by the worker, optionally with a per-run model/provider override stored on the row. The worker reads `extraction_model_override` / `extraction_provider_override` and uses them instead of the env-configured default for that entity, then clears the columns on success. Existing edges are kept (no wipe) — overlapping edges' confidence is overwritten by the new run, so a less-confident model can lower individual confidences."
+  )
+  .option('--all', 'queue every entity with content (combine with --limit to bound cost)')
+  .option('--type <type>', 'queue entities of this type only')
+  .option('--id <uuid>', 'queue a single entity by id')
+  .option('--limit <n>', 'cap the number of entities queued (oldest-first by created_at)')
+  .option('--include-auto-created', "also queue entities tagged 'auto-created' (off by default — their content is just a name and free-associates)")
+  .option(
+    '--model <name>',
+    'extraction model override stored on each queued row (e.g. claude-sonnet-4-6). Worker reads this when picking the entity up. Cleared on successful extraction.'
+  )
+  .option(
+    '--provider <name>',
+    'extraction provider override: openai | anthropic | ollama. Stored on each queued row alongside --model. Cleared on success.'
+  )
+  .option(
+    '--clean-edges',
+    "delete existing LLM-extracted edges (source='llm-extraction') for the queued entities before queueing. Off by default — improve runs are typically additive."
+  )
+  .action(async (options, command) => {
+    const json = isJsonMode(command);
+
+    if (!options.all && !options.type && !options.id) {
+      await handleCliFailure(
+        new Error(
+          'Specify --all, --type <type>, or --id <uuid> to confirm which entities to queue'
+        ),
+        json
+      );
+      return;
+    }
+    if (options.id && !UUID_REGEX.test(options.id)) {
+      await handleCliFailure(
+        new Error(`--id must be a valid UUID (got "${options.id}")`),
+        json
+      );
+      return;
+    }
+
+    let limit: number | undefined;
+    if (options.limit !== undefined) {
+      const parsed = Number.parseInt(options.limit, 10);
+      if (!Number.isInteger(parsed) || parsed <= 0) {
+        await handleCliFailure(
+          new Error('--limit must be a positive integer'),
+          json
+        );
+        return;
+      }
+      limit = parsed;
+    }
+
+    const allowedProviders = ['openai', 'anthropic', 'ollama'] as const;
+    if (
+      options.provider !== undefined &&
+      !(allowedProviders as readonly string[]).includes(options.provider)
+    ) {
+      await handleCliFailure(
+        new Error(
+          `--provider must be one of ${allowedProviders.join(', ')} (got "${options.provider}")`
+        ),
+        json
+      );
+      return;
+    }
+
+    await runWithPool(json, async (pool) => {
+      const client = await pool.connect();
+      try {
+        await client.query('BEGIN');
+
+        const conditions = [
+          'content IS NOT NULL',
+          "status IS DISTINCT FROM 'archived'"
+        ];
+        if (!options.includeAutoCreated) {
+          conditions.push("NOT ('auto-created' = ANY(tags))");
+        }
+        const params: unknown[] = [];
+
+        if (options.id) {
+          params.push(options.id);
+          conditions.push(`id = $${params.length}::uuid`);
+        } else if (options.type) {
+          params.push(options.type);
+          conditions.push(`type = $${params.length}`);
+        }
+
+        const whereClause = conditions.join(' AND ');
+
+        // Same selection-subquery trick reextract uses, so DELETE
+        // (--clean-edges) and UPDATE see the same rows under --limit.
+        const selectionSubquery =
+          limit !== undefined
+            ? `SELECT id FROM entities WHERE ${whereClause} ORDER BY created_at ASC LIMIT ${limit}`
+            : `SELECT id FROM entities WHERE ${whereClause}`;
+
+        let deletedEdges = 0;
+        if (options.cleanEdges) {
+          const deleteResult = await client.query(
+            `DELETE FROM edges
+             WHERE source = 'llm-extraction'
+               AND source_id IN (${selectionSubquery})`,
+            params
+          );
+          deletedEdges = deleteResult.rowCount ?? 0;
+        }
+
+        // Append model/provider params after the existing selection params,
+        // so $-numbering stays consistent.
+        const updateParams = [...params];
+        updateParams.push(options.model ?? null);
+        const modelParam = `$${updateParams.length}`;
+        updateParams.push(options.provider ?? null);
+        const providerParam = `$${updateParams.length}`;
+
+        const updateResult = await client.query(
+          limit !== undefined
+            ? `UPDATE entities
+               SET extraction_status = 'pending',
+                   extraction_error = NULL,
+                   extraction_model_override = ${modelParam},
+                   extraction_provider_override = ${providerParam}
+               WHERE id IN (${selectionSubquery})`
+            : `UPDATE entities
+               SET extraction_status = 'pending',
+                   extraction_error = NULL,
+                   extraction_model_override = ${modelParam},
+                   extraction_provider_override = ${providerParam}
+               WHERE ${whereClause}`,
+          updateParams
+        );
+
+        await client.query('COMMIT');
+
+        const markedCount = updateResult.rowCount ?? 0;
+
+        await appendAuditEntry(pool, {
+          operation: 'improve-graph.queue',
+          details: {
+            markedCount,
+            deletedEdges,
+            model: options.model ?? null,
+            provider: options.provider ?? null,
+            id: options.id ?? null,
+            type: options.type ?? null,
+            all: Boolean(options.all),
+            limit: limit ?? null,
+            includeAutoCreated: Boolean(options.includeAutoCreated),
+            cleanEdges: Boolean(options.cleanEdges)
+          }
+        });
+
+        if (json) {
+          return {
+            markedCount,
+            deletedEdges,
+            model: options.model ?? null,
+            provider: options.provider ?? null
+          };
+        }
+
+        const overrideSuffix =
+          options.model || options.provider
+            ? ` with override [${options.provider ?? 'env'}/${options.model ?? 'env'}]`
+            : '';
+        const cleanSuffix = options.cleanEdges
+          ? ` (deleted ${deletedEdges} prior edges)`
+          : '';
+        return [
+          `Queued ${markedCount} entities for improvement${overrideSuffix}${cleanSuffix}`
+        ];
+      } catch (error) {
+        await client.query('ROLLBACK');
+        throw error;
+      } finally {
+        client.release();
+      }
     });
   });
 

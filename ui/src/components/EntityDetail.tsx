@@ -4,6 +4,7 @@ import type { Entity } from '../lib/types.ts';
 import type { ApiClient } from '../lib/api.ts';
 import { ENTITY_COLORS } from '../lib/nodeStyles.ts';
 import EntityEditor from './EntityEditor.tsx';
+import CopyUuid from './CopyUuid.tsx';
 
 type Props = {
   entity: Entity;
@@ -38,7 +39,7 @@ export default function EntityDetail({ entity, api, onUpdate }: Props) {
         {entity.status && (
           <span className="px-2 py-0.5 rounded-full text-xs bg-gray-800 text-gray-300">{entity.status}</span>
         )}
-        <span className="text-xs text-gray-500 font-mono">{entity.id.slice(0, 8)}</span>
+        <CopyUuid id={entity.id} />
       </div>
 
       <div className="text-xs text-gray-600 flex flex-col gap-0.5">

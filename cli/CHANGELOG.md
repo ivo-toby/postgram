@@ -1,3 +1,9 @@
+## [1.22.0](https://github.com/ivo-toby/postgram/compare/cli-v1.21.0...cli-v1.22.0) (2026-05-05)
+
+### Features
+
+* **ui:** add copy UUID button to sidebar and search results ([15a1521](https://github.com/ivo-toby/postgram/commit/15a1521d7bb5fcee22f23d36b307d8ba70114c3b))
+
 ## [1.21.0](https://github.com/ivo-toby/postgram/compare/cli-v1.20.0...cli-v1.21.0) (2026-05-05)
 
 ### Features

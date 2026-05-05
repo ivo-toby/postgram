@@ -1,3 +1,9 @@
+## [1.24.0](https://github.com/ivo-toby/postgram/compare/cli-v1.23.0...cli-v1.24.0) (2026-05-05)
+
+### Features
+
+* **admin:** add --no-edges-only flag, sql command, and fix Anthropic max_tokens ([d7b3db6](https://github.com/ivo-toby/postgram/commit/d7b3db6ec1651144298e3b160bfa6c1c3eb482ea))
+
 ## [1.23.0](https://github.com/ivo-toby/postgram/compare/cli-v1.22.0...cli-v1.23.0) (2026-05-05)
 
 ### Features

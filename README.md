@@ -576,11 +576,37 @@ Main commands:
   model in the same transaction)
 - `reextract --all` — reset `extraction_status = 'pending'` and clear any
   stored `extraction_error` so the worker retries extraction (e.g. after
-  switching to a better LLM). Accepts `--type <type>` and `--clean-edges`
-  (deletes existing `source='llm-extraction'` edges for the in-scope
-  entities before re-extraction, giving a clean-slate "redo" rather than
-  appending alongside old edges). User-created edges with a different
-  `source` are never touched.
+  switching to a better LLM). Key flags:
+  - `--type <type>` — scope to a specific entity type
+  - `--only-failed` — only re-queue entities whose extraction previously failed
+  - `--no-edges-only` — only re-queue entities that have **no** LLM-extracted
+    edges; useful for targeted maintenance without re-processing entities that
+    already linked correctly (combine with `--type document` to catch large
+    documents that silently produced no edges)
+  - `--clean-edges` — delete existing `source='llm-extraction'` edges for the
+    in-scope entities before re-queuing, giving a clean-slate redo rather than
+    appending alongside old edges
+  - `--limit <n>` — cap how many entities are queued (oldest-first)
+
+  User-created edges (`source != 'llm-extraction'`) are never touched.
+
+- `improve-graph` — queue entities for re-extraction with an optional per-run
+  model/provider override stored on the row. The worker uses the override
+  instead of the env-configured default, then clears it on success. Existing
+  edges are kept by default (no wipe) — overlapping edges have their confidence
+  overwritten by the new run. Key flags:
+  - `--all`, `--type <type>`, `--id <uuid>` — scope what to queue
+  - `--model <name>` — e.g. `claude-sonnet-4-6`; stored per-row
+  - `--provider <name>` — `openai | anthropic | ollama`; stored per-row
+  - `--no-edges-only` — only queue entities with no LLM-extracted edges
+  - `--clean-edges` — wipe existing LLM edges before queueing
+  - `--limit <n>` — cap the queue size
+
+  Typical maintenance run targeting gaps without paying for the full graph:
+
+  ```bash
+  pgm-admin improve-graph --type document --no-edges-only --provider ollama --model <model>
+  ```
 - `prune-edges --below <threshold>` — delete edges with `confidence` below
   the threshold. Scoped to `source='llm-extraction'` by default; pass
   `--source any` to include all, or `--source <name>` for a specific one.
@@ -595,6 +621,19 @@ Main commands:
   `--limit <n>` (default 100), `--force`, `--dry-run`. Requires
   `EXTRACTION_ENABLED=true` and the usual `EXTRACTION_PROVIDER` /
   `EXTRACTION_MODEL` env vars; costs ≈ one LLM call per edge.
+- `sql "<statement>"` — execute a raw SQL statement against the database.
+  Accepts a positional argument or reads from stdin for multi-line queries.
+  SELECT results are printed tab-separated (or as JSON with `--json`); DML
+  commands print the affected row count.
+
+  ```bash
+  pgm-admin sql "SELECT id, type, extraction_status FROM entities LIMIT 5"
+  pgm-admin sql --json "SELECT COUNT(*) FROM edges WHERE source = 'llm-extraction'"
+
+  # pipe multi-line SQL from a file
+  cat fix.sql | pgm-admin sql
+  ```
+
 - `stats` — entity counts, chunk count, DB size
 - `embeddings migrate` — switch embedding dimensions (see [`specs/002-local-embeddings/quickstart.md`](specs/002-local-embeddings/quickstart.md))
 

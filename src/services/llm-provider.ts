@@ -99,7 +99,7 @@ function createAnthropicProvider(apiKey: string, model: string): LlmProvider {
       },
       body: JSON.stringify({
         model,
-        max_tokens: 1024,
+        max_tokens: 8192,
         system: 'You must respond with only valid JSON. No markdown, no explanation, just the JSON array.',
         messages: [{ role: 'user', content: prompt }]
       })

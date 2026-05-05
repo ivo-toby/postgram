@@ -43,6 +43,7 @@ services:
       OLLAMA_API_KEY: ${OLLAMA_API_KEY:-}
       LLM_REQUEST_TIMEOUT_MS: ${LLM_REQUEST_TIMEOUT_MS:-}
       ENRICHMENT_POLL_INTERVAL_MS: ${ENRICHMENT_POLL_INTERVAL_MS:-1000}
+      EXTRACTION_DEBUG_LOG: ${EXTRACTION_DEBUG_LOG:-false}
     ports:
       # Defaults to loopback-only on the host (safest). To expose on the LAN
       # for reachability from other machines, set PORT_BIND_HOST=0.0.0.0 in

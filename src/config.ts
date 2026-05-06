@@ -127,6 +127,25 @@ const configSchema = z
       .enum(['true', 'false'])
       .default('false')
       .transform((v) => v === 'true'),
+    // When true, a second extraction pass runs after LLM extraction that
+    // finds existing entities with high embedding similarity to the source
+    // and links them with `related_to`. Catches thematically-related
+    // entities that the LLM pass misses because they are not explicitly
+    // named in the source content.
+    EXTRACTION_SEMANTIC_NEIGHBORS_ENABLED: z
+      .enum(['true', 'false'])
+      .default('false')
+      .transform((v) => v === 'true'),
+    EXTRACTION_SEMANTIC_NEIGHBORS_MAX: z.preprocess(
+      emptyToUndefined,
+      z.coerce.number().int().positive().default(10)
+    ),
+    // Higher than EXTRACTION_MATCH_MIN_SIMILARITY: we want genuine topical
+    // siblings, not just paraphrase matches for an extracted target name.
+    EXTRACTION_SEMANTIC_NEIGHBORS_MIN_SIMILARITY: z.preprocess(
+      emptyToUndefined,
+      z.coerce.number().min(0).max(1).default(0.80)
+    ),
     ANTHROPIC_API_KEY: optionalString,
     OLLAMA_API_KEY: optionalString,
     OLLAMA_BASE_URL: z.preprocess(

@@ -4,7 +4,7 @@ import { Pool } from 'pg';
 import { Command } from 'commander';
 
 import { createKey, revokeKey } from '../../auth/key-service.js';
-import type { Scope } from '../../auth/types.js';
+import type { AuthContext, Scope } from '../../auth/types.js';
 import type { EntityType, Visibility } from '../../types/entities.js';
 import { loadConfig } from '../../config.js';
 import { buildEmbeddingProviderConfig } from '../../index.js';
@@ -13,6 +13,12 @@ import {
   runMigrate,
   type MigrateReport
 } from '../../services/embeddings/admin.js';
+import { createEdge } from '../../services/edge-service.js';
+import {
+  createEmbeddingService
+} from '../../services/embedding-service.js';
+import { createEmbeddingProvider } from '../../services/embeddings/providers.js';
+import { findSemanticNeighbors } from '../../services/extraction-service.js';
 import { AppError, ErrorCode, toErrorResponse } from '../../util/errors.js';
 import {
   handleCliFailure,
@@ -1148,6 +1154,188 @@ program
       } finally {
         client.release();
       }
+    });
+  });
+
+program
+  .command('link-neighbors')
+  .description(
+    'Run the semantic neighbor pass directly on enriched entities — creates `related_to` edges by cosine similarity without calling any LLM. Useful for backfilling neighbor edges on a graph built before EXTRACTION_SEMANTIC_NEIGHBORS_ENABLED was set, or for adding them incrementally without re-running expensive LLM extraction.'
+  )
+  .option('--all', 'process all enriched entities')
+  .option('--type <type>', 'process entities of this type only')
+  .option('--id <uuid>', 'process a single entity by id')
+  .option('--limit <n>', 'cap the number of entities processed (oldest-first by created_at)')
+  .option(
+    '--min-similarity <f>',
+    'minimum cosine similarity (0–1) to create an edge (default: 0.80)',
+    '0.80'
+  )
+  .option(
+    '--max-neighbors <n>',
+    'maximum neighbor edges to create per entity (default: 10)',
+    '10'
+  )
+  .action(async (options, command) => {
+    const json = isJsonMode(command);
+
+    if (!options.all && !options.type && !options.id) {
+      await handleCliFailure(
+        new Error('Specify --all, --type <type>, or --id <uuid> to confirm scope'),
+        json
+      );
+      return;
+    }
+    if (options.id && !UUID_REGEX.test(options.id)) {
+      await handleCliFailure(
+        new Error(`--id must be a valid UUID (got "${options.id}")`),
+        json
+      );
+      return;
+    }
+
+    const minSimilarity = Number.parseFloat(options.minSimilarity);
+    if (!Number.isFinite(minSimilarity) || minSimilarity < 0 || minSimilarity > 1) {
+      await handleCliFailure(
+        new Error(`--min-similarity must be a number between 0 and 1 (got "${options.minSimilarity}")`),
+        json
+      );
+      return;
+    }
+
+    const maxNeighbors = Number.parseInt(options.maxNeighbors, 10);
+    if (!Number.isInteger(maxNeighbors) || maxNeighbors <= 0) {
+      await handleCliFailure(
+        new Error(`--max-neighbors must be a positive integer (got "${options.maxNeighbors}")`),
+        json
+      );
+      return;
+    }
+
+    let limit: number | undefined;
+    if (options.limit !== undefined) {
+      const parsed = Number.parseInt(options.limit, 10);
+      if (!Number.isInteger(parsed) || parsed <= 0) {
+        await handleCliFailure(new Error('--limit must be a positive integer'), json);
+        return;
+      }
+      limit = parsed;
+    }
+
+    await runWithPool(json, async (pool) => {
+      // Build embedding service from env config — same model the chunks were
+      // written with, so similarity comparisons are meaningful.
+      const config = loadConfig();
+      const providerConfig = buildEmbeddingProviderConfig(config);
+      const embeddingProvider = createEmbeddingProvider(providerConfig);
+      const embeddingService = createEmbeddingService({ provider: embeddingProvider });
+
+      let activeModelId: string;
+      try {
+        const activeModel = await embeddingService.getActiveModel(pool);
+        activeModelId = activeModel.id;
+      } catch {
+        throw new AppError(
+          ErrorCode.INTERNAL,
+          'No active embedding model — run `pgm-admin model set-active` first'
+        );
+      }
+
+      // Select enriched entities (must have chunks) that are not auto-created stubs.
+      const conditions = [
+        'e.status IS DISTINCT FROM \'archived\'',
+        "NOT ('auto-created' = ANY(e.tags))",
+        'EXISTS (SELECT 1 FROM chunks c WHERE c.entity_id = e.id AND c.model_id = $1)'
+      ];
+      const params: unknown[] = [activeModelId];
+
+      if (options.id) {
+        params.push(options.id);
+        conditions.push(`e.id = $${params.length}::uuid`);
+      } else if (options.type) {
+        params.push(options.type);
+        conditions.push(`e.type = $${params.length}`);
+      }
+
+      const whereClause = conditions.join(' AND ');
+      const orderClause = 'ORDER BY e.created_at ASC';
+      const limitClause = limit !== undefined ? `LIMIT ${limit}` : '';
+
+      const entityRows = await pool.query<{ id: string; visibility: string; owner: string | null }>(
+        `SELECT e.id, e.visibility, e.owner
+         FROM entities e
+         WHERE ${whereClause}
+         ${orderClause}
+         ${limitClause}`,
+        params
+      );
+
+      // System auth context — same as the enrichment worker uses.
+      const auth: AuthContext = {
+        apiKeyId: null,
+        keyName: 'system-link-neighbors',
+        scopes: ['read', 'write', 'delete'] as const,
+        allowedTypes: null,
+        allowedVisibility: ['personal', 'work', 'shared'] as const
+      };
+
+      let entitiesProcessed = 0;
+      let edgesLinked = 0;
+
+      for (const entity of entityRows.rows) {
+        // Collect IDs already linked from this entity so we don't add a
+        // weaker `related_to` alongside an existing stronger-typed edge.
+        const existingEdgeRows = await pool.query<{ target_id: string }>(
+          `SELECT target_id FROM edges WHERE source_id = $1`,
+          [entity.id]
+        );
+        const excludeIds = new Set([
+          entity.id,
+          ...existingEdgeRows.rows.map((r) => r.target_id)
+        ]);
+
+        const neighbors = await findSemanticNeighbors(pool, {
+          sourceId: entity.id,
+          modelId: activeModelId,
+          excludeIds,
+          maxNeighbors,
+          minSimilarity
+        });
+
+        for (const neighbor of neighbors) {
+          const result = await createEdge(pool, auth, {
+            sourceId: entity.id,
+            targetId: neighbor.entityId,
+            relation: 'related_to',
+            confidence: neighbor.similarity,
+            source: 'semantic-neighbor'
+          });
+          if (result.isOk()) edgesLinked += 1;
+        }
+
+        entitiesProcessed += 1;
+      }
+
+      await appendAuditEntry(pool, {
+        operation: 'link-neighbors.run',
+        details: {
+          entitiesProcessed,
+          edgesLinked,
+          minSimilarity,
+          maxNeighbors,
+          id: options.id ?? null,
+          type: options.type ?? null,
+          all: Boolean(options.all),
+          limit: limit ?? null
+        }
+      });
+
+      if (json) {
+        return { entitiesProcessed, edgesLinked };
+      }
+      return [
+        `Processed ${entitiesProcessed} entities, linked ${edgesLinked} neighbor edges`
+      ];
     });
   });
 

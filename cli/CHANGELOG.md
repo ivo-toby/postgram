@@ -1,3 +1,16 @@
+## [1.25.0](https://github.com/ivo-toby/postgram/compare/cli-v1.24.0...cli-v1.25.0) (2026-05-06)
+
+### Features
+
+* **extraction:** semantic neighbor linking pass ([c7d69a8](https://github.com/ivo-toby/postgram/commit/c7d69a8114706004ea5c77b26ad1f89aefe7cc69))
+
+### Bug Fixes
+
+* **extraction:** address P1/P2 review issues ([d9ad038](https://github.com/ivo-toby/postgram/commit/d9ad038f4a2f540e3869e8e865b03e2c8fdfc9d4))
+* **extraction:** lower semantic-neighbor default threshold to 0.65 ([db4cd93](https://github.com/ivo-toby/postgram/commit/db4cd93d9aff659cc2ba2011ec027c88256e477d))
+* **extraction:** lower semantic-neighbor default threshold to 0.70 and add --dry-run ([2aa11dc](https://github.com/ivo-toby/postgram/commit/2aa11dcd670220637e68edb3ee652e1effaf462a))
+* **ui:** guard against duplicate directed edges in graph view ([10477d3](https://github.com/ivo-toby/postgram/commit/10477d3f5dfae9176fdcf632f425d0c80c79ffd3))
+
 ## [1.24.0](https://github.com/ivo-toby/postgram/compare/cli-v1.23.0...cli-v1.24.0) (2026-05-05)
 
 ### Features

@@ -501,7 +501,7 @@ export async function findMatchingEntityByName(
 
 const DEFAULT_MATCH_MIN_SIMILARITY = 0.5;
 const DEFAULT_SEMANTIC_NEIGHBORS_MAX = 10;
-const DEFAULT_SEMANTIC_NEIGHBORS_MIN_SIMILARITY = 0.80;
+const DEFAULT_SEMANTIC_NEIGHBORS_MIN_SIMILARITY = 0.70;
 
 /**
  * Find existing entities that are topically similar to the source entity

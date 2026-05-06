@@ -279,7 +279,7 @@ See [`specs/002-local-embeddings/quickstart.md`](specs/002-local-embeddings/quic
 | `LLM_REQUEST_TIMEOUT_MS`                 | no                      | `120000`                        | Hard cap per LLM call in milliseconds. Bump this when running slow local models (e.g. `gpt-oss:120b-cloud`).      |
 | `EXTRACTION_SEMANTIC_NEIGHBORS_ENABLED`  | no                      | `false`                         | Enable semantic neighbor linking (see below). |
 | `EXTRACTION_SEMANTIC_NEIGHBORS_MAX`      | no                      | `10`                            | Maximum number of neighbor edges to create per entity. |
-| `EXTRACTION_SEMANTIC_NEIGHBORS_MIN_SIMILARITY` | no              | `0.80`                          | Minimum cosine similarity (0–1) for an entity to qualify as a neighbor. Raise to reduce noise; lower if you're finding too few neighbors. The right value depends on your embedding model's similarity distribution. |
+| `EXTRACTION_SEMANTIC_NEIGHBORS_MIN_SIMILARITY` | no              | `0.70`                          | Minimum cosine similarity (0–1) for an entity to qualify as a neighbor. Raise to reduce noise; lower if you're finding too few neighbors. The right value depends on your embedding model's similarity distribution. |
 
 **Semantic neighbor linking**: the LLM extraction pass only finds entities that
 are explicitly named in the source content. It misses entities that are
@@ -310,12 +310,18 @@ pgm-admin link-neighbors --type document
 # Single entity:
 pgm-admin link-neighbors --id <uuid>
 
+# Preview what would be linked and at what similarity — no edges created:
+pgm-admin link-neighbors --id <uuid> --dry-run
+pgm-admin link-neighbors --all --dry-run
+
 # Tune the similarity threshold or edge cap:
 pgm-admin link-neighbors --all --min-similarity 0.75 --max-neighbors 5
 
 # Process in bounded batches (oldest-first):
 pgm-admin link-neighbors --all --limit 500
 ```
+
+Use `--dry-run` to inspect actual cosine similarity scores before committing edges — especially useful when tuning `--min-similarity` for a new embedding model. The output shows each entity and its candidate neighbors with their raw similarity scores.
 
 If you also want to re-run LLM extraction at the same time (e.g. after enabling
 `EXTRACTION_SEMANTIC_NEIGHBORS_ENABLED=true`), use `reextract` instead — the

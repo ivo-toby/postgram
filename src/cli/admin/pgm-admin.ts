@@ -1168,14 +1168,15 @@ program
   .option('--limit <n>', 'cap the number of entities processed (oldest-first by created_at)')
   .option(
     '--min-similarity <f>',
-    'minimum cosine similarity (0–1) to create an edge (default: 0.80)',
-    '0.80'
+    'minimum cosine similarity (0–1) to create an edge (default: 0.70)',
+    '0.70'
   )
   .option(
     '--max-neighbors <n>',
     'maximum neighbor edges to create per entity (default: 10)',
     '10'
   )
+  .option('--dry-run', 'show candidates and similarity scores without creating any edges')
   .action(async (options, command) => {
     const json = isJsonMode(command);
 
@@ -1261,8 +1262,8 @@ program
       const orderClause = 'ORDER BY e.created_at ASC';
       const limitClause = limit !== undefined ? `LIMIT ${limit}` : '';
 
-      const entityRows = await pool.query<{ id: string; visibility: string; owner: string | null }>(
-        `SELECT e.id, e.visibility, e.owner
+      const entityRows = await pool.query<{ id: string; visibility: string; owner: string | null; name: string }>(
+        `SELECT e.id, e.visibility, e.owner, e.name
          FROM entities e
          WHERE ${whereClause}
          ${orderClause}
@@ -1281,6 +1282,12 @@ program
 
       let entitiesProcessed = 0;
       let edgesLinked = 0;
+      type DryRunEntry = {
+        sourceId: string;
+        sourceName: string;
+        wouldLink: Array<{ targetId: string; targetName: string; similarity: number }>;
+      };
+      const dryRunResults: DryRunEntry[] = [];
 
       for (const entity of entityRows.rows) {
         // Collect IDs already linked from this entity so we don't add a
@@ -1302,18 +1309,59 @@ program
           minSimilarity
         });
 
-        for (const neighbor of neighbors) {
-          const result = await createEdge(pool, auth, {
+        if (options.dryRun) {
+          const neighborIds = neighbors.map((n) => n.entityId);
+          const nameRows = neighborIds.length > 0
+            ? await pool.query<{ id: string; name: string }>(
+                `SELECT id, name FROM entities WHERE id = ANY($1::uuid[])`,
+                [neighborIds]
+              )
+            : { rows: [] };
+          const nameMap = new Map(nameRows.rows.map((r) => [r.id, r.name]));
+          dryRunResults.push({
             sourceId: entity.id,
-            targetId: neighbor.entityId,
-            relation: 'related_to',
-            confidence: neighbor.similarity,
-            source: 'semantic-neighbor'
+            sourceName: entity.name,
+            wouldLink: neighbors.map((n) => ({
+              targetId: n.entityId,
+              targetName: nameMap.get(n.entityId) ?? n.entityId,
+              similarity: n.similarity
+            }))
           });
-          if (result.isOk()) edgesLinked += 1;
+          edgesLinked += neighbors.length;
+        } else {
+          for (const neighbor of neighbors) {
+            const result = await createEdge(pool, auth, {
+              sourceId: entity.id,
+              targetId: neighbor.entityId,
+              relation: 'related_to',
+              confidence: neighbor.similarity,
+              source: 'semantic-neighbor'
+            });
+            if (result.isOk()) edgesLinked += 1;
+          }
         }
 
         entitiesProcessed += 1;
+      }
+
+      if (options.dryRun) {
+        if (json) {
+          return { dryRun: true, wouldProcess: dryRunResults };
+        }
+        const lines: string[] = [
+          `[dry-run] Would process ${entitiesProcessed} entities, would link ${edgesLinked} neighbor edges`
+        ];
+        for (const entry of dryRunResults) {
+          if (entry.wouldLink.length === 0) {
+            lines.push(`  ${entry.sourceName} (${entry.sourceId.slice(0, 8)}): no neighbors above threshold`);
+          } else {
+            lines.push(`  ${entry.sourceName} (${entry.sourceId.slice(0, 8)}):`);
+            for (const n of entry.wouldLink) {
+              lines.push(`    → ${n.targetName} (${n.targetId.slice(0, 8)}) — sim ${n.similarity.toFixed(3)}`);
+            }
+          }
+        }
+        return lines;
       }
 
       await appendAuditEntry(pool, {

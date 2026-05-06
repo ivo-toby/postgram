@@ -1168,8 +1168,8 @@ program
   .option('--limit <n>', 'cap the number of entities processed (oldest-first by created_at)')
   .option(
     '--min-similarity <f>',
-    'minimum cosine similarity (0–1) to create an edge (default: 0.70)',
-    '0.70'
+    'minimum cosine similarity (0–1) to create an edge (default: 0.65)',
+    '0.65'
   )
   .option(
     '--max-neighbors <n>',

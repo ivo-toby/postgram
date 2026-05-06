@@ -279,7 +279,7 @@ See [`specs/002-local-embeddings/quickstart.md`](specs/002-local-embeddings/quic
 | `LLM_REQUEST_TIMEOUT_MS`                 | no                      | `120000`                        | Hard cap per LLM call in milliseconds. Bump this when running slow local models (e.g. `gpt-oss:120b-cloud`).      |
 | `EXTRACTION_SEMANTIC_NEIGHBORS_ENABLED`  | no                      | `false`                         | Enable semantic neighbor linking (see below). |
 | `EXTRACTION_SEMANTIC_NEIGHBORS_MAX`      | no                      | `10`                            | Maximum number of neighbor edges to create per entity. |
-| `EXTRACTION_SEMANTIC_NEIGHBORS_MIN_SIMILARITY` | no              | `0.70`                          | Minimum cosine similarity (0–1) for an entity to qualify as a neighbor. Raise to reduce noise; lower if you're finding too few neighbors. The right value depends on your embedding model's similarity distribution. |
+| `EXTRACTION_SEMANTIC_NEIGHBORS_MIN_SIMILARITY` | no              | `0.65`                          | Minimum cosine similarity (0–1) for an entity to qualify as a neighbor. Raise to reduce noise; lower if you're finding too few neighbors. The right value depends on your embedding model's similarity distribution — use `pgm-admin link-neighbors --dry-run` to inspect actual scores before tuning. |
 
 **Semantic neighbor linking**: the LLM extraction pass only finds entities that
 are explicitly named in the source content. It misses entities that are

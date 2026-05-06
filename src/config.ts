@@ -144,7 +144,7 @@ const configSchema = z
     // siblings, not just paraphrase matches for an extracted target name.
     EXTRACTION_SEMANTIC_NEIGHBORS_MIN_SIMILARITY: z.preprocess(
       emptyToUndefined,
-      z.coerce.number().min(0).max(1).default(0.70)
+      z.coerce.number().min(0).max(1).default(0.65)
     ),
     ANTHROPIC_API_KEY: optionalString,
     OLLAMA_API_KEY: optionalString,

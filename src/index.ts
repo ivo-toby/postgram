@@ -285,7 +285,12 @@ export async function startServer(): Promise<{
     },
     extractionMatchMinSimilarity: config.EXTRACTION_MATCH_MIN_SIMILARITY,
     extractionMinContentChars: config.EXTRACTION_MIN_CONTENT_CHARS,
-    extractionDebugLog: config.EXTRACTION_DEBUG_LOG
+    extractionDebugLog: config.EXTRACTION_DEBUG_LOG,
+    semanticNeighbors: {
+      enabled: config.EXTRACTION_SEMANTIC_NEIGHBORS_ENABLED,
+      maxNeighbors: config.EXTRACTION_SEMANTIC_NEIGHBORS_MAX,
+      minSimilarity: config.EXTRACTION_SEMANTIC_NEIGHBORS_MIN_SIMILARITY
+    }
   });
   let workerActive = true;
   const workerLoop = async () => {

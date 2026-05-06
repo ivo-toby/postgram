@@ -65,6 +65,11 @@ type EnrichmentWorkerOptions = {
    * with LOG_LEVEL=debug (which is much noisier).
    */
   extractionDebugLog?: boolean;
+  semanticNeighbors?: {
+    enabled: boolean;
+    maxNeighbors?: number;
+    minSimilarity?: number;
+  };
 };
 
 async function rollbackQuietly(client: PoolClient): Promise<void> {
@@ -350,6 +355,9 @@ export function createEnrichmentWorker(options: EnrichmentWorkerOptions) {
                     debugLog: (event, payload) =>
                       logger.info({ event, ...payload }, event)
                   }
+                : {}),
+              ...(options.semanticNeighbors
+                ? { semanticNeighbors: options.semanticNeighbors }
                 : {})
             }
           );

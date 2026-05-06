@@ -1067,4 +1067,240 @@ describe('extraction-service', () => {
       expect(Number(count.rows[0]?.count)).toBe(1);
     }, 120_000);
   });
+
+  describe('semantic neighbor pass', () => {
+    it('links topically similar entities not named in the source content', async () => {
+      if (!database) throw new Error('test database not initialized');
+      const auth = makeAuthContext();
+      const embeddingService = createEmbeddingService();
+
+      // Three entities with overlapping tokens → high similarity under the
+      // deterministic embedder. None of them are named in the source content,
+      // so the LLM pass (returning []) would miss them entirely.
+      const wiki = (await storeEntity(database.pool, auth, {
+        type: 'document',
+        content: 'knowledge graph strategy ai native sdlc wiki',
+        metadata: { title: 'AI-Native SDLC Wiki' }
+      }))._unsafeUnwrap();
+      await seedChunksFor(database.pool, embeddingService, wiki);
+
+      const kickoff = (await storeEntity(database.pool, auth, {
+        type: 'interaction',
+        content: 'knowledge graph strategy ai native sdlc kickoff meeting',
+        metadata: { title: 'AI-Native SDLC Kickoff' }
+      }))._unsafeUnwrap();
+      await seedChunksFor(database.pool, embeddingService, kickoff);
+
+      const source = (await storeEntity(database.pool, auth, {
+        type: 'document',
+        content: 'knowledge graph strategy ai native sdlc guidance'
+      }))._unsafeUnwrap();
+      // Seed the source entity's chunks — enrichment always does this before
+      // extraction runs in production.
+      await seedChunksFor(database.pool, embeddingService, source);
+
+      const linked = await extractAndLinkRelationships(
+        database.pool,
+        auth,
+        {
+          id: source.id,
+          type: source.type,
+          content: source.content!,
+          visibility: source.visibility,
+          owner: source.owner
+        },
+        {
+          callLlm: () => Promise.resolve('{"relationships":[]}'),
+          embeddingService,
+          matchMinSimilarity: 0.5,
+          semanticNeighbors: { enabled: true, minSimilarity: 0.5 }
+        }
+      );
+
+      expect(linked).toBe(2);
+
+      const edges = (await listEdges(database.pool, auth, source.id))._unsafeUnwrap();
+      expect(edges).toHaveLength(2);
+      expect(edges.every((e) => e.relation === 'related_to')).toBe(true);
+      expect(edges.every((e) => e.source === 'semantic-neighbor')).toBe(true);
+      const targetIds = new Set(edges.map((e) => e.targetId));
+      expect(targetIds.has(wiki.id)).toBe(true);
+      expect(targetIds.has(kickoff.id)).toBe(true);
+    }, 120_000);
+
+    it('does not duplicate edges already created by the LLM pass', async () => {
+      if (!database) throw new Error('test database not initialized');
+      const auth = makeAuthContext();
+      const embeddingService = createEmbeddingService();
+
+      const target = (await storeEntity(database.pool, auth, {
+        type: 'document',
+        content: 'knowledge graph strategy ai native sdlc wiki',
+        metadata: { title: 'AI-Native SDLC Wiki' }
+      }))._unsafeUnwrap();
+      await seedChunksFor(database.pool, embeddingService, target);
+
+      const source = (await storeEntity(database.pool, auth, {
+        type: 'document',
+        content: 'knowledge graph strategy ai native sdlc guidance'
+      }))._unsafeUnwrap();
+      await seedChunksFor(database.pool, embeddingService, source);
+
+      // LLM pass explicitly links the target by name with a stronger relation.
+      const mockLlm = () => Promise.resolve(JSON.stringify([
+        { target_name: 'AI-Native SDLC Wiki', target_type: 'document', relation: 'references', confidence: 0.95 }
+      ]));
+
+      const linked = await extractAndLinkRelationships(
+        database.pool,
+        auth,
+        {
+          id: source.id,
+          type: source.type,
+          content: source.content!,
+          visibility: source.visibility,
+          owner: source.owner
+        },
+        {
+          callLlm: mockLlm,
+          embeddingService,
+          matchMinSimilarity: 0.5,
+          semanticNeighbors: { enabled: true, minSimilarity: 0.5 }
+        }
+      );
+
+      // Only 1 edge: the LLM `references` edge. The neighbor pass skips the
+      // target because it was already linked.
+      expect(linked).toBe(1);
+      const edges = (await listEdges(database.pool, auth, source.id))._unsafeUnwrap();
+      expect(edges).toHaveLength(1);
+      expect(edges[0]?.relation).toBe('references');
+    }, 120_000);
+
+    it('skips auto-created stubs as neighbors', async () => {
+      if (!database) throw new Error('test database not initialized');
+      const auth = makeAuthContext();
+      const embeddingService = createEmbeddingService();
+
+      // Insert a stub that looks like what auto-create produces.
+      await database.pool.query(
+        `INSERT INTO entities (id, type, content, visibility, enrichment_status, metadata, tags)
+         VALUES (gen_random_uuid(), 'memory', 'knowledge graph strategy ai native sdlc',
+                 'shared', 'pending', '{}', ARRAY['auto-created'])`
+      );
+
+      const source = (await storeEntity(database.pool, auth, {
+        type: 'document',
+        content: 'knowledge graph strategy ai native sdlc guidance'
+      }))._unsafeUnwrap();
+      await seedChunksFor(database.pool, embeddingService, source);
+
+      const linked = await extractAndLinkRelationships(
+        database.pool,
+        auth,
+        {
+          id: source.id,
+          type: source.type,
+          content: source.content!,
+          visibility: source.visibility,
+          owner: source.owner
+        },
+        {
+          callLlm: () => Promise.resolve('{"relationships":[]}'),
+          embeddingService,
+          matchMinSimilarity: 0.5,
+          semanticNeighbors: { enabled: true, minSimilarity: 0.5 }
+        }
+      );
+
+      expect(linked).toBe(0);
+    }, 120_000);
+
+    it('emits extraction.semantic_neighbor debug events', async () => {
+      if (!database) throw new Error('test database not initialized');
+      const auth = makeAuthContext();
+      const embeddingService = createEmbeddingService();
+
+      const neighbor = (await storeEntity(database.pool, auth, {
+        type: 'document',
+        content: 'knowledge graph strategy ai native sdlc wiki',
+        metadata: { title: 'Wiki' }
+      }))._unsafeUnwrap();
+      await seedChunksFor(database.pool, embeddingService, neighbor);
+
+      const source = (await storeEntity(database.pool, auth, {
+        type: 'document',
+        content: 'knowledge graph strategy ai native sdlc guidance'
+      }))._unsafeUnwrap();
+      await seedChunksFor(database.pool, embeddingService, source);
+
+      const events: Array<{ event: string; payload: Record<string, unknown> }> = [];
+
+      await extractAndLinkRelationships(
+        database.pool,
+        auth,
+        {
+          id: source.id,
+          type: source.type,
+          content: source.content!,
+          visibility: source.visibility,
+          owner: source.owner
+        },
+        {
+          callLlm: () => Promise.resolve('{"relationships":[]}'),
+          embeddingService,
+          matchMinSimilarity: 0.5,
+          semanticNeighbors: { enabled: true, minSimilarity: 0.5 },
+          debugLog: (event, payload) => events.push({ event, payload })
+        }
+      );
+
+      const neighborEvent = events.find((e) => e.event === 'extraction.semantic_neighbor');
+      expect(neighborEvent).toBeDefined();
+      expect(neighborEvent!.payload).toMatchObject({
+        entityId: source.id,
+        targetId: neighbor.id,
+        decision: 'linked'
+      });
+      expect(typeof neighborEvent!.payload.similarity).toBe('number');
+    }, 120_000);
+
+    it('does nothing when semanticNeighbors is disabled', async () => {
+      if (!database) throw new Error('test database not initialized');
+      const auth = makeAuthContext();
+      const embeddingService = createEmbeddingService();
+
+      const neighbor = (await storeEntity(database.pool, auth, {
+        type: 'document',
+        content: 'knowledge graph strategy ai native sdlc wiki'
+      }))._unsafeUnwrap();
+      await seedChunksFor(database.pool, embeddingService, neighbor);
+
+      const source = (await storeEntity(database.pool, auth, {
+        type: 'document',
+        content: 'knowledge graph strategy ai native sdlc guidance'
+      }))._unsafeUnwrap();
+      await seedChunksFor(database.pool, embeddingService, source);
+
+      const linked = await extractAndLinkRelationships(
+        database.pool,
+        auth,
+        {
+          id: source.id,
+          type: source.type,
+          content: source.content!,
+          visibility: source.visibility,
+          owner: source.owner
+        },
+        {
+          callLlm: () => Promise.resolve('{"relationships":[]}'),
+          embeddingService,
+          matchMinSimilarity: 0.5,
+          semanticNeighbors: { enabled: false }
+        }
+      );
+
+      expect(linked).toBe(0);
+    }, 120_000);
+  });
 });

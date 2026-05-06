@@ -277,6 +277,82 @@ See [`specs/002-local-embeddings/quickstart.md`](specs/002-local-embeddings/quic
 | `OLLAMA_BASE_URL`                        | no                      | `http://localhost:11434`        | Ollama server URL                                                                                                 |
 | `EXTRACTION_REASONING_EFFORT`            | no                      | unset                           | `minimal` \| `low` \| `medium` \| `high`. Forwarded as `reasoning_effort` to OpenAI and Ollama for reasoning models (o-series, gpt-5, gpt-oss). When set, overrides the implicit `minimal` that `EXTRACTION_DISABLE_THINKING=true` sends to OpenAI. |
 | `LLM_REQUEST_TIMEOUT_MS`                 | no                      | `120000`                        | Hard cap per LLM call in milliseconds. Bump this when running slow local models (e.g. `gpt-oss:120b-cloud`).      |
+| `EXTRACTION_SEMANTIC_NEIGHBORS_ENABLED`  | no                      | `false`                         | Enable semantic neighbor linking (see below). |
+| `EXTRACTION_SEMANTIC_NEIGHBORS_MAX`      | no                      | `10`                            | Maximum number of neighbor edges to create per entity. |
+| `EXTRACTION_SEMANTIC_NEIGHBORS_MIN_SIMILARITY` | no              | `0.65`                          | Minimum cosine similarity (0–1) for an entity to qualify as a neighbor. Raise to reduce noise; lower if you're finding too few neighbors. The right value depends on your embedding model's similarity distribution — use `pgm-admin link-neighbors --dry-run` to inspect actual scores before tuning. |
+
+**Semantic neighbor linking**: the LLM extraction pass only finds entities that
+are explicitly named in the source content. It misses entities that are
+thematically related but not cited by name — a weekly kickoff meeting about the
+same initiative, a wiki page covering the same strategy, a decision memo about
+the same project. When `EXTRACTION_SEMANTIC_NEIGHBORS_ENABLED=true`, a second
+pass runs after LLM extraction that queries the knowledge store for entities
+whose stored chunk embeddings are cosine-similar to the source entity's own
+embeddings, and links them with `related_to`. No extra LLM or embedding API
+calls are needed — the source entity's chunks are already stored by the
+enrichment step that runs before extraction. Edges created by this pass carry
+`source = 'semantic-neighbor'` so they are distinguishable from LLM-extracted
+edges. Entities already linked by the LLM pass are excluded to avoid a weaker
+`related_to` edge shadowing a stronger-typed edge for the same pair.
+
+**Backfilling and maintaining neighbor edges**: the `pgm-admin link-neighbors`
+command runs the semantic neighbor pass directly — no LLM calls, no extraction
+queue, just cosine similarity over stored chunks. Use it to backfill an
+existing graph or as a recurring maintenance job after new entities are added.
+
+```bash
+# Backfill all enriched entities (safe to re-run — edges are upserted).
+pgm-admin link-neighbors --all
+
+# Only documents:
+pgm-admin link-neighbors --type document
+
+# Single entity:
+pgm-admin link-neighbors --id <uuid>
+
+# Preview what would be linked and at what similarity — no edges created:
+pgm-admin link-neighbors --id <uuid> --dry-run
+pgm-admin link-neighbors --all --dry-run
+
+# Tune the similarity threshold or edge cap:
+pgm-admin link-neighbors --all --min-similarity 0.75 --max-neighbors 5
+
+# Process in bounded batches (oldest-first):
+pgm-admin link-neighbors --all --limit 500
+```
+
+Use `--dry-run` to inspect actual cosine similarity scores before committing edges — especially useful when tuning `--min-similarity` for a new embedding model. The output shows each entity and its candidate neighbors with their raw similarity scores.
+
+If you also want to re-run LLM extraction at the same time (e.g. after enabling
+`EXTRACTION_SEMANTIC_NEIGHBORS_ENABLED=true`), use `reextract` instead — the
+worker runs both the LLM pass and the neighbor pass together:
+
+```bash
+pgm-admin reextract --all
+```
+
+Note: `--clean-edges` on `reextract` only removes edges with
+`source='llm-extraction'` — it does not touch `semantic-neighbor` edges. For a
+full clean slate:
+
+```sql
+DELETE FROM edges WHERE source = 'semantic-neighbor';
+```
+
+**Scheduling as a recurring maintenance job**: because `link-neighbors` is
+cheap (no LLM calls) and idempotent (edges are upserted, not duplicated), it
+works well as a weekly cron job that keeps the neighbor graph fresh as new
+entities are added. Example cron entry running every Sunday at 02:00:
+
+```cron
+0 2 * * 0  DATABASE_URL=... pgm-admin link-neighbors --all
+```
+
+Or with Docker Compose:
+
+```bash
+docker compose exec server pgm-admin link-neighbors --all
+```
 
 **Auto-created entities**: when `EXTRACTION_AUTO_CREATE_ENTITIES=true`,
 entities that didn't exist before a document mentioned them are inserted

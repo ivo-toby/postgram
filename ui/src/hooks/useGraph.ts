@@ -48,7 +48,12 @@ export function useGraph() {
 
   function addEdges(edges: Edge[]) {
     for (const edge of edges) {
-      if (!graph.hasEdge(edge.id) && graph.hasNode(edge.source_id) && graph.hasNode(edge.target_id)) {
+      if (
+        !graph.hasEdge(edge.id) &&
+        graph.hasNode(edge.source_id) &&
+        graph.hasNode(edge.target_id) &&
+        !graph.hasDirectedEdge(edge.source_id, edge.target_id)
+      ) {
         graph.addEdgeWithKey(edge.id, edge.source_id, edge.target_id, {
           label: edge.relation,
           color: '#4B5563',

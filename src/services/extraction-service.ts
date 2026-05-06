@@ -229,6 +229,23 @@ type AutoCreateOptions = {
   minConfidenceByType?: Readonly<Record<string, number>> | undefined;
 };
 
+type SemanticNeighborsOptions = {
+  enabled: boolean;
+  /**
+   * Maximum number of neighbor edges to create per entity. Default 10.
+   * The neighbor query returns candidates sorted by similarity descending,
+   * so the top-N most similar entities are linked.
+   */
+  maxNeighbors?: number | undefined;
+  /**
+   * Minimum cosine similarity (0..1) for an entity to qualify as a neighbor.
+   * Default 0.80. Higher than `matchMinSimilarity` because we're looking for
+   * genuine topical siblings, not just paraphrase matches.
+   * Production operators should tune via EXTRACTION_SEMANTIC_NEIGHBORS_MIN_SIMILARITY.
+   */
+  minSimilarity?: number | undefined;
+};
+
 type ExtractionOptions = {
   callLlm?:
     | ((prompt: string, schema?: object) => Promise<string>)
@@ -259,10 +276,22 @@ type ExtractionOptions = {
    * out where extractions are being lost (LLM didn't emit them /
    * matcher discarded them / auto-create floor blocked them). Receives
    * structured events: `extraction.skipped_min_chars`,
-   * `extraction.llm_response`, `extraction.decision`. Payloads include
-   * the source entity id so events can be correlated to one entity.
+   * `extraction.llm_response`, `extraction.decision`,
+   * `extraction.semantic_neighbor`. Payloads include the source entity id
+   * so events can be correlated to one entity.
    */
   debugLog?: ExtractionDebugLogger | undefined;
+  /**
+   * When enabled, a second pass runs after LLM extraction that finds
+   * existing entities with high embedding similarity to the source and
+   * links them with `related_to`. This catches thematically-related
+   * entities that the LLM pass misses because they are not explicitly
+   * named in the source content.
+   *
+   * Uses the source entity's stored chunks (written by enrichment before
+   * extraction runs), so no extra embedding API calls are needed.
+   */
+  semanticNeighbors?: SemanticNeighborsOptions | undefined;
 };
 
 /**
@@ -272,7 +301,8 @@ type ExtractionOptions = {
 export type ExtractionDebugEvent =
   | 'extraction.skipped_min_chars'
   | 'extraction.llm_response'
-  | 'extraction.decision';
+  | 'extraction.decision'
+  | 'extraction.semantic_neighbor';
 
 export type ExtractionDecision =
   | 'matched_existing'
@@ -470,6 +500,77 @@ export async function findMatchingEntityByName(
 }
 
 const DEFAULT_MATCH_MIN_SIMILARITY = 0.5;
+const DEFAULT_SEMANTIC_NEIGHBORS_MAX = 10;
+const DEFAULT_SEMANTIC_NEIGHBORS_MIN_SIMILARITY = 0.65;
+
+/**
+ * Find existing entities that are topically similar to the source entity
+ * by comparing the source entity's stored chunk embeddings against all other
+ * chunk embeddings in the store.
+ *
+ * Reading vectors from the DB (rather than re-embedding) avoids extra API
+ * calls — enrichment always runs before extraction, so the source entity's
+ * chunks are guaranteed to exist by the time this is called.
+ *
+ * The pgvector text format `[v1,v2,...,vN]` returned by `embedding::text`
+ * can be passed directly as a `$N::vector` parameter in subsequent queries,
+ * so no JSON parsing or re-serialization is needed.
+ */
+export async function findSemanticNeighbors(
+  pool: Pool,
+  params: {
+    sourceId: string;
+    modelId: string;
+    excludeIds: Set<string>;
+    maxNeighbors: number;
+    minSimilarity: number;
+  }
+): Promise<Array<{ entityId: string; similarity: number }>> {
+  const chunkRows = await pool.query<{ embedding: string }>(
+    `SELECT embedding::text AS embedding
+     FROM chunks
+     WHERE entity_id = $1 AND model_id = $2`,
+    [params.sourceId, params.modelId]
+  );
+
+  if (chunkRows.rows.length === 0) return [];
+
+  // Buffer extra candidates per chunk to give the merge step enough to pick
+  // the true top-N after deduplication across multiple source chunks.
+  const searchLimit = params.maxNeighbors * 3;
+  type NeighborRow = { entity_id: string; similarity: string };
+  const similarityMap = new Map<string, number>();
+
+  for (const { embedding } of chunkRows.rows) {
+    const rows = await pool.query<NeighborRow>(
+      `
+        SELECT e.id AS entity_id,
+               (1 - (c.embedding <=> $1::vector))::float8 AS similarity
+        FROM chunks c
+        JOIN entities e ON e.id = c.entity_id
+        WHERE e.id != $2
+          AND c.model_id = $3
+          AND e.status IS DISTINCT FROM 'archived'
+          AND NOT ('auto-created' = ANY(e.tags))
+        ORDER BY c.embedding <=> $1::vector
+        LIMIT $4
+      `,
+      [embedding, params.sourceId, params.modelId, searchLimit]
+    );
+
+    for (const row of rows.rows) {
+      const sim = Number(row.similarity);
+      const prev = similarityMap.get(row.entity_id) ?? 0;
+      if (sim > prev) similarityMap.set(row.entity_id, sim);
+    }
+  }
+
+  return [...similarityMap.entries()]
+    .filter(([id, sim]) => !params.excludeIds.has(id) && sim >= params.minSimilarity)
+    .sort((a, b) => b[1] - a[1])
+    .slice(0, params.maxNeighbors)
+    .map(([entityId, similarity]) => ({ entityId, similarity }));
+}
 
 export async function extractAndLinkRelationships(
   pool: Pool,
@@ -528,6 +629,10 @@ export async function extractAndLinkRelationships(
 
   let linked = 0;
   const autoCreate = options.autoCreate;
+  // Track every entity ID linked in the LLM pass so the neighbor pass can
+  // exclude them — avoids creating a duplicate `related_to` alongside an
+  // already-created stronger-typed edge for the same pair.
+  const linkedEntityIds = new Set<string>();
 
   // Memoize the active-model lookup so at most one DB round-trip happens per
   // extraction pass, and only if a chunk-stage match is actually needed.
@@ -654,6 +759,7 @@ export async function extractAndLinkRelationships(
 
     if (result.isOk()) {
       linked += 1;
+      linkedEntityIds.add(matchedEntityId);
       debugLog?.('extraction.decision', {
         ...baseLog,
         decision: wasAutoCreated ? 'auto_created' : 'matched_existing',
@@ -671,6 +777,77 @@ export async function extractAndLinkRelationships(
 
   if (deferredCount > 0) {
     throw new SemanticMatchUnavailableError(linked);
+  }
+
+  // Semantic neighbor pass: find entities that are topically similar to the
+  // source by cosine distance over stored chunks, and link them with
+  // `related_to`. This catches thematically-related entities that the LLM
+  // pass missed because they are not explicitly named in the source content
+  // (e.g. a weekly kickoff meeting about the same initiative, a wiki page
+  // covering the same strategy).
+  if (options.semanticNeighbors?.enabled) {
+    const maxNeighbors =
+      options.semanticNeighbors.maxNeighbors ?? DEFAULT_SEMANTIC_NEIGHBORS_MAX;
+    const neighborMinSimilarity =
+      options.semanticNeighbors.minSimilarity ?? DEFAULT_SEMANTIC_NEIGHBORS_MIN_SIMILARITY;
+
+    let activeModel: ActiveEmbeddingModel | undefined;
+    try {
+      activeModel = await getActiveModel();
+    } catch {
+      // Embedding model unavailable — skip neighbor pass without failing extraction.
+    }
+
+    if (activeModel) {
+      // Also exclude targets from prior runs so re-extraction doesn't overwrite
+      // existing edges or create parallel edges for the same node pair.
+      const priorEdgeRows = await pool.query<{ target_id: string }>(
+        `SELECT target_id FROM edges WHERE source_id = $1`,
+        [source.id]
+      );
+      const neighborExcludeIds = new Set([
+        source.id,
+        ...linkedEntityIds,
+        ...priorEdgeRows.rows.map((r) => r.target_id)
+      ]);
+
+      const neighbors = await findSemanticNeighbors(pool, {
+        sourceId: source.id,
+        modelId: activeModel.id,
+        excludeIds: neighborExcludeIds,
+        maxNeighbors,
+        minSimilarity: neighborMinSimilarity
+      });
+
+      for (const neighbor of neighbors) {
+        const result = await createEdge(pool, auth, {
+          sourceId: source.id,
+          targetId: neighbor.entityId,
+          relation: 'related_to',
+          confidence: neighbor.similarity,
+          source: 'semantic-neighbor'
+        });
+
+        if (result.isOk()) {
+          linked += 1;
+          linkedEntityIds.add(neighbor.entityId);
+          debugLog?.('extraction.semantic_neighbor', {
+            entityId: source.id,
+            targetId: neighbor.entityId,
+            similarity: neighbor.similarity,
+            decision: 'linked'
+          });
+        } else {
+          debugLog?.('extraction.semantic_neighbor', {
+            entityId: source.id,
+            targetId: neighbor.entityId,
+            similarity: neighbor.similarity,
+            decision: 'edge_failed',
+            error: result.error.message
+          });
+        }
+      }
+    }
   }
 
   return linked;

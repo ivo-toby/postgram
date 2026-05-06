@@ -799,10 +799,22 @@ export async function extractAndLinkRelationships(
     }
 
     if (activeModel) {
+      // Also exclude targets from prior runs so re-extraction doesn't overwrite
+      // existing edges or create parallel edges for the same node pair.
+      const priorEdgeRows = await pool.query<{ target_id: string }>(
+        `SELECT target_id FROM edges WHERE source_id = $1`,
+        [source.id]
+      );
+      const neighborExcludeIds = new Set([
+        source.id,
+        ...linkedEntityIds,
+        ...priorEdgeRows.rows.map((r) => r.target_id)
+      ]);
+
       const neighbors = await findSemanticNeighbors(pool, {
         sourceId: source.id,
         modelId: activeModel.id,
-        excludeIds: new Set([source.id, ...linkedEntityIds]),
+        excludeIds: neighborExcludeIds,
         maxNeighbors,
         minSimilarity: neighborMinSimilarity
       });

@@ -14,10 +14,6 @@ import {
   type MigrateReport
 } from '../../services/embeddings/admin.js';
 import { createEdge } from '../../services/edge-service.js';
-import {
-  createEmbeddingService
-} from '../../services/embedding-service.js';
-import { createEmbeddingProvider } from '../../services/embeddings/providers.js';
 import { findSemanticNeighbors } from '../../services/extraction-service.js';
 import { AppError, ErrorCode, toErrorResponse } from '../../util/errors.js';
 import {
@@ -1224,23 +1220,19 @@ program
     }
 
     await runWithPool(json, async (pool) => {
-      // Build embedding service from env config — same model the chunks were
-      // written with, so similarity comparisons are meaningful.
-      const config = loadConfig();
-      const providerConfig = buildEmbeddingProviderConfig(config);
-      const embeddingProvider = createEmbeddingProvider(providerConfig);
-      const embeddingService = createEmbeddingService({ provider: embeddingProvider });
-
-      let activeModelId: string;
-      try {
-        const activeModel = await embeddingService.getActiveModel(pool);
-        activeModelId = activeModel.id;
-      } catch {
+      // Resolve the active model ID directly from the DB — no provider setup
+      // needed since link-neighbors only reads stored chunk vectors and never
+      // calls the embedding API.
+      const modelRow = await pool.query<{ id: string }>(
+        `SELECT id FROM embedding_models WHERE is_active = true LIMIT 1`
+      );
+      if (!modelRow.rows[0]) {
         throw new AppError(
           ErrorCode.INTERNAL,
           'No active embedding model — run `pgm-admin model set-active` first'
         );
       }
+      const activeModelId = modelRow.rows[0].id;
 
       // Select enriched entities (must have chunks) that are not auto-created stubs.
       const conditions = [

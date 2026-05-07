@@ -21,6 +21,9 @@ import {
 } from './services/embeddings/providers.js';
 import { assertEmbeddingDimensionAgreement } from './services/embeddings/admin.js';
 import { createEnrichmentWorker } from './services/enrichment-worker.js';
+import { FilesystemAttachmentStore } from './services/loaders/attachment-store.js';
+import { buildRegistry } from './services/loaders/build-registry.js';
+import { loadPostgramConfig } from './services/loaders/config-loader.js';
 import { registerMcpRoutes } from './transport/mcp.js';
 import { registerRestRoutes } from './transport/rest.js';
 import { createLogger } from './util/logger.js';
@@ -290,6 +293,34 @@ export async function startServer(): Promise<{
     );
   }
 
+  const postgramConfig = await loadPostgramConfig(
+    process.env['POSTGRAM_CONFIG_PATH'] ?? undefined,
+  );
+  const loaderRegistry =
+    postgramConfig.loaders.length > 0
+      ? await buildRegistry(postgramConfig, logger)
+      : undefined;
+  const attachmentStore = loaderRegistry
+    ? new FilesystemAttachmentStore(postgramConfig.attachmentsDir)
+    : undefined;
+  const uploadsDir = process.env['POSTGRAM_UPLOADS_DIR'] ?? '/var/postgram/uploads';
+
+  if (loaderRegistry) {
+    logger.info(
+      {
+        loaders: loaderRegistry.list().map((l) => ({
+          name: l.name,
+          kind: l.kind,
+          status: l.status,
+        })),
+        pluginsDir: postgramConfig.pluginsDir,
+        attachmentsDir: postgramConfig.attachmentsDir,
+        uploadsDir,
+      },
+      'document loader registry initialised',
+    );
+  }
+
   const worker = createEnrichmentWorker({
     pool,
     embeddingService,
@@ -310,7 +341,9 @@ export async function startServer(): Promise<{
       enabled: config.EXTRACTION_SEMANTIC_NEIGHBORS_ENABLED,
       maxNeighbors: config.EXTRACTION_SEMANTIC_NEIGHBORS_MAX,
       minSimilarity: config.EXTRACTION_SEMANTIC_NEIGHBORS_MIN_SIMILARITY
-    }
+    },
+    ...(loaderRegistry ? { loaderRegistry } : {}),
+    ...(attachmentStore ? { attachmentStore } : {})
   });
   let workerActive = true;
   const workerLoop = async () => {
@@ -330,7 +363,10 @@ export async function startServer(): Promise<{
   const app = createApp({
     pool,
     embeddingService,
-    getHealthStatus: () => createHealthStatus(pool)
+    getHealthStatus: () => createHealthStatus(pool),
+    ...(loaderRegistry
+      ? { loaderRegistry, documentIngest: { uploadsDir } }
+      : {})
   });
 
   const server = serve({

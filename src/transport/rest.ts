@@ -4,6 +4,10 @@ import type { Pool } from 'pg';
 
 import type { AuthContext } from '../auth/types.js';
 import type { EmbeddingService } from '../services/embedding-service.js';
+import {
+  ingestDocument,
+  type IngestDocumentInput,
+} from '../services/document-ingest-service.js';
 import { createEdge, deleteEdge, listEdges, expandGraph } from '../services/edge-service.js';
 import { getEntityEmbeddings } from '../services/embedding-query-service.js';
 import { listEntities, recallEntity, softDeleteEntity, storeEntity, updateEntity } from '../services/entity-service.js';
@@ -217,6 +221,16 @@ export function registerRestRoutes(
   pool: Pool,
   options: {
     embeddingService?: EmbeddingService | undefined;
+    /**
+     * Where bytes uploaded via /api/documents/ingest are stashed. Required
+     * when the loader registry is configured; if absent, the ingest endpoint
+     * responds 503.
+     */
+    documentIngest?:
+      | {
+          uploadsDir: string;
+        }
+      | undefined;
   } = {}
 ): void {
   app.post('/api/entities', async (c) => {
@@ -622,6 +636,88 @@ export function registerRestRoutes(
         created_at: edge.createdAt
       }))
     });
+  });
+
+  const ingestUrlSchema = z.object({
+    url: z.string().url(),
+    mime_type: z.string().min(1).optional(),
+    visibility: visibilitySchema.optional(),
+    owner: ownerSchema.optional(),
+    tags: z.array(z.string()).optional(),
+    metadata: z.record(z.unknown()).optional(),
+  });
+
+  app.post('/api/documents/ingest', async (c) => {
+    if (!options.documentIngest) {
+      throw new AppError(
+        ErrorCode.INTERNAL,
+        'document ingestion is not configured on this deployment',
+      );
+    }
+    const auth = c.get('auth');
+    const contentType = c.req.header('content-type') ?? '';
+
+    let input: IngestDocumentInput;
+
+    if (contentType.startsWith('multipart/form-data')) {
+      const form = await c.req.formData();
+      const file = form.get('file');
+      if (!(file instanceof File)) {
+        throw toValidationError('multipart/form-data must include a `file` part');
+      }
+      const meta = form.get('metadata');
+      const parsedMeta =
+        typeof meta === 'string' && meta.length > 0
+          ? (JSON.parse(meta) as Record<string, unknown>)
+          : {};
+      const bytes = new Uint8Array(await file.arrayBuffer());
+      input = {
+        kind: 'bytes',
+        bytes,
+        mimeType:
+          (typeof form.get('mime_type') === 'string'
+            ? (form.get('mime_type') as string)
+            : (file.type || 'application/octet-stream')),
+        ...(file.name ? { filename: file.name } : {}),
+        ...(typeof form.get('visibility') === 'string'
+          ? { visibility: form.get('visibility') as Visibility }
+          : {}),
+        ...(typeof form.get('owner') === 'string'
+          ? { owner: form.get('owner') as string }
+          : {}),
+        ...(parsedMeta && typeof parsedMeta === 'object'
+          ? { metadata: parsedMeta }
+          : {}),
+      };
+    } else {
+      const body = parseJsonBody(ingestUrlSchema, await c.req.json());
+      input = {
+        kind: 'url',
+        url: body.url,
+        ...(body.mime_type !== undefined ? { mimeType: body.mime_type } : {}),
+        ...(body.visibility !== undefined ? { visibility: body.visibility } : {}),
+        ...(body.owner !== undefined ? { owner: body.owner } : {}),
+        ...(body.tags !== undefined ? { tags: body.tags } : {}),
+        ...(body.metadata !== undefined ? { metadata: body.metadata } : {}),
+      };
+    }
+
+    const result = await ingestDocument(auth, input, {
+      pool,
+      uploadsDir: options.documentIngest.uploadsDir,
+    });
+    if (result.isErr()) {
+      throw result.error;
+    }
+    const status = result.value.status === 'created' ? 202 : 200;
+    return c.json(
+      {
+        id: result.value.id,
+        loading_status: result.value.loadingStatus,
+        status: result.value.status,
+      },
+      status,
+    );
   });
 
   app.get('/api/entities/:id/graph', async (c) => {

@@ -45,6 +45,15 @@ type AppOptions = {
   pool?: Pool;
   embeddingService?: EmbeddingService | undefined;
   getHealthStatus?: () => Promise<HealthStatus> | HealthStatus;
+  /**
+   * Enable POST /api/documents/ingest. When omitted, the route responds 500
+   * to make misconfiguration loud rather than silently dropping uploads.
+   */
+  documentIngest?:
+    | {
+        uploadsDir: string;
+      }
+    | undefined;
 };
 
 function getDefaultHealthStatus(): HealthStatus {
@@ -150,7 +159,10 @@ export function createApp(
   if (options.pool) {
     app.use('/api/*', createAuthMiddleware({ pool: options.pool }));
     registerRestRoutes(app, options.pool, {
-      embeddingService: options.embeddingService
+      embeddingService: options.embeddingService,
+      ...(options.documentIngest !== undefined
+        ? { documentIngest: options.documentIngest }
+        : {})
     });
     registerMcpRoutes(app, options.pool, {
       embeddingService: options.embeddingService

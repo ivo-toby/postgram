@@ -553,24 +553,53 @@ export function createEnrichmentWorker(options: EnrichmentWorkerOptions) {
       };
 
       const result = await entry.loader.load(input, ctx);
-      await persistLoaderResult(entity.id, entry.config.name, result, {
-        pool: options.pool,
-        attachmentStore: options.attachmentStore,
-      });
-
-      // Loading produced new content; queue the chunk/embed pipeline.
-      await options.pool.query(
-        `
-          UPDATE entities
-          SET enrichment_status = 'pending',
-              enrichment_attempts = 0,
-              enrichment_error = NULL
-          WHERE id = $1
-        `,
-        [entity.id],
+      const persisted = await persistLoaderResult(
+        entity.id,
+        entry.config.name,
+        result,
+        {
+          pool: options.pool,
+          attachmentStore: options.attachmentStore,
+        },
       );
+
+      // Only queue the chunk/embed pipeline if the loader produced text.
+      // hasPendingEnrichment() filters on `content IS NOT NULL`, so flipping
+      // a no-text entity to enrichment_status='pending' would strand it
+      // there forever (image-only attachments, video without transcript,
+      // etc.). For those, mark enrichment 'completed' immediately — the
+      // attachments are already persisted and there's nothing to embed.
+      if (persisted.contentText.length > 0) {
+        await options.pool.query(
+          `
+            UPDATE entities
+            SET enrichment_status = 'pending',
+                enrichment_attempts = 0,
+                enrichment_error = NULL
+            WHERE id = $1
+          `,
+          [entity.id],
+        );
+      } else {
+        await options.pool.query(
+          `
+            UPDATE entities
+            SET enrichment_status = 'completed',
+                enrichment_attempts = 0,
+                enrichment_error = NULL
+            WHERE id = $1
+          `,
+          [entity.id],
+        );
+      }
       logger.info(
-        { loader: entry.config.name, entityId: entity.id },
+        {
+          loader: entry.config.name,
+          entityId: entity.id,
+          attachments: persisted.attachmentCount,
+          textChars: persisted.contentText.length,
+          enrichmentQueued: persisted.contentText.length > 0,
+        },
         'loader applied',
       );
     } catch (err) {

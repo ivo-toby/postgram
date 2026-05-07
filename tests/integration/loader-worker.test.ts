@@ -221,6 +221,77 @@ describe('enrichment-worker loading stage', () => {
     await rm(tmp, { recursive: true, force: true });
   }, 120_000);
 
+  it('marks enrichment completed when loader produces no text', async () => {
+    if (!database) throw new Error('db missing');
+
+    const tmp = await mkdtemp(path.join(tmpdir(), 'pgm-uploads-'));
+    const fakeFile = path.join(tmp, 'pic.bin');
+    await writeFile(fakeFile, 'binary');
+
+    // Loader emits only a binary image attachment (no caption, no OCR), so
+    // persistLoaderResult leaves entities.content NULL. Without the P2 fix
+    // the worker would set enrichment_status='pending' and the row would
+    // never be picked up because hasPendingEnrichment requires content.
+    const imageOnlyLoader: DocumentLoader = {
+      name: 'image-only',
+      version: '1.0.0',
+      accepts: { mimeTypes: ['image/png'] },
+      async load(): Promise<LoaderResult> {
+        return {
+          documentType: 'image',
+          blocks: [{ kind: 'image', attachmentRef: 'sha-1' }],
+          attachments: [
+            {
+              ref: 'sha-1',
+              kind: 'image',
+              mimeType: 'image/png',
+              source: { kind: 'bytes', bytes: new Uint8Array([1, 2, 3]) },
+            },
+          ],
+        };
+      },
+    };
+
+    const insert = await database.pool.query<{ id: string }>(
+      `
+        INSERT INTO entities (
+          type, content, mime_type, source_uri, loading_status
+        )
+        VALUES ('document', NULL, 'image/png', $1, 'pending')
+        RETURNING id
+      `,
+      [`file://${fakeFile}`],
+    );
+    const entityId = insert.rows[0]!.id;
+
+    const worker = createEnrichmentWorker({
+      pool: database.pool,
+      embeddingService: createEmbeddingService({ mode: 'deterministic' }),
+      logger: pino({ level: 'silent' }),
+      loaderRegistry: makeRegistry(imageOnlyLoader),
+      attachmentStore: new FilesystemAttachmentStore(attachmentsDir),
+    });
+
+    await worker.runOnce();
+
+    const after = await database.pool.query(
+      `SELECT loading_status, enrichment_status, content FROM entities WHERE id = $1`,
+      [entityId],
+    );
+    expect(after.rows[0].loading_status).toBe('completed');
+    // The key assertion: enrichment is NOT left pending forever.
+    expect(after.rows[0].enrichment_status).toBe('completed');
+    expect(after.rows[0].content).toBeNull();
+
+    const att = await database.pool.query(
+      `SELECT count(*)::int as n FROM attachments WHERE entity_id = $1`,
+      [entityId],
+    );
+    expect(att.rows[0].n).toBe(1);
+
+    await rm(tmp, { recursive: true, force: true });
+  }, 120_000);
+
   it('two concurrent workers do not both dispatch the same pending row', async () => {
     if (!database) throw new Error('db missing');
 

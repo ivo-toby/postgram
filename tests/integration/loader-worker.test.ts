@@ -220,4 +220,67 @@ describe('enrichment-worker loading stage', () => {
 
     await rm(tmp, { recursive: true, force: true });
   }, 120_000);
+
+  it('two concurrent workers do not both dispatch the same pending row', async () => {
+    if (!database) throw new Error('db missing');
+
+    const tmp = await mkdtemp(path.join(tmpdir(), 'pgm-uploads-'));
+    const fakeFile = path.join(tmp, 'doc.bin');
+    await writeFile(fakeFile, 'placeholder');
+
+    const insert = await database.pool.query<{ id: string }>(
+      `
+        INSERT INTO entities (
+          type, content, mime_type, source_uri, loading_status
+        )
+        VALUES ('document', NULL, 'application/x-fake', $1, 'pending')
+        RETURNING id
+      `,
+      [`file://${fakeFile}`],
+    );
+    const entityId = insert.rows[0]!.id;
+
+    let calls = 0;
+    let release!: () => void;
+    const gate = new Promise<void>((resolve) => {
+      release = resolve;
+    });
+    const slowLoader: DocumentLoader = {
+      name: 'slow',
+      version: '1.0.0',
+      accepts: { mimeTypes: ['application/x-fake'] },
+      async load(): Promise<LoaderResult> {
+        calls += 1;
+        await gate;
+        return { documentType: 'fake', blocks: [{ kind: 'text', text: 'ok' }] };
+      },
+    };
+
+    const make = () =>
+      createEnrichmentWorker({
+        pool: database!.pool,
+        embeddingService: createEmbeddingService({ mode: 'deterministic' }),
+        logger: pino({ level: 'silent' }),
+        loaderRegistry: makeRegistry(slowLoader),
+        attachmentStore: new FilesystemAttachmentStore(attachmentsDir),
+      });
+
+    const a = make().runOnce();
+    const b = make().runOnce();
+    // Give both a chance to claim before releasing the loader gate.
+    await new Promise((r) => setTimeout(r, 100));
+    expect(calls).toBe(1);
+    release();
+    await Promise.all([a, b]);
+
+    expect(calls).toBe(1);
+
+    const after = await database.pool.query(
+      `SELECT loading_status FROM entities WHERE id = $1`,
+      [entityId],
+    );
+    expect(after.rows[0].loading_status).toBe('completed');
+
+    await rm(tmp, { recursive: true, force: true });
+  }, 120_000);
 });

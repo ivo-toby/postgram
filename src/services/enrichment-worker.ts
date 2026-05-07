@@ -453,25 +453,48 @@ export function createEnrichmentWorker(options: EnrichmentWorkerOptions) {
   async function processNextLoadingEntity(): Promise<boolean> {
     if (!options.loaderRegistry || !options.attachmentStore) return false;
 
-    const candidates = await options.pool.query<PendingLoadingRow>(
-      `
-        SELECT id, mime_type, source_uri
-        FROM entities
-        WHERE loading_status = 'pending'
-           OR (
-             loading_status = 'failed'
-             AND loading_attempts < 3
-             AND updated_at < now() - interval '5 minutes'
-           )
-        ORDER BY
-          CASE WHEN loading_status = 'pending' THEN 0 ELSE 1 END,
-          created_at ASC
-        LIMIT 1
-      `,
-    );
-
-    const entity = candidates.rows[0];
-    if (!entity) return false;
+    // Claim a candidate row inside a short transaction with FOR UPDATE SKIP
+    // LOCKED, then flip its status to 'running' before commit. Once the
+    // transaction commits the row is no longer 'pending'/'failed', so other
+    // workers' candidate queries skip it without ever holding a lock across
+    // the long-running loader call. Mirrors the enrichment stage pattern.
+    const claimClient = await options.pool.connect();
+    let entity: PendingLoadingRow | undefined;
+    try {
+      await claimClient.query('BEGIN');
+      const candidates = await claimClient.query<PendingLoadingRow>(
+        `
+          SELECT id, mime_type, source_uri
+          FROM entities
+          WHERE loading_status = 'pending'
+             OR (
+               loading_status = 'failed'
+               AND loading_attempts < 3
+               AND updated_at < now() - interval '5 minutes'
+             )
+          ORDER BY
+            CASE WHEN loading_status = 'pending' THEN 0 ELSE 1 END,
+            created_at ASC
+          FOR UPDATE SKIP LOCKED
+          LIMIT 1
+        `,
+      );
+      entity = candidates.rows[0];
+      if (!entity) {
+        await rollbackQuietly(claimClient);
+        return false;
+      }
+      await claimClient.query(
+        `UPDATE entities SET loading_status = 'running' WHERE id = $1`,
+        [entity.id],
+      );
+      await claimClient.query('COMMIT');
+    } catch (err) {
+      await rollbackQuietly(claimClient);
+      throw err;
+    } finally {
+      claimClient.release();
+    }
 
     const input = buildLoaderInput(entity);
     if (!input) {
@@ -507,10 +530,8 @@ export function createEnrichmentWorker(options: EnrichmentWorkerOptions) {
     }
 
     const { entry } = resolved;
-    await options.pool.query(
-      `UPDATE entities SET loading_status = 'running' WHERE id = $1`,
-      [entity.id],
-    );
+    // Status was already flipped to 'running' inside the claim transaction;
+    // no further pre-load update needed.
 
     try {
       const ctx = {

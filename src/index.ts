@@ -54,6 +54,8 @@ type AppOptions = {
         uploadsDir: string;
       }
     | undefined;
+  /** Loader registry for admin inspection/control. */
+  loaderRegistry?: import('./services/loaders/registry.js').LoaderRegistry;
 };
 
 function getDefaultHealthStatus(): HealthStatus {
@@ -162,6 +164,9 @@ export function createApp(
       embeddingService: options.embeddingService,
       ...(options.documentIngest !== undefined
         ? { documentIngest: options.documentIngest }
+        : {}),
+      ...(options.loaderRegistry !== undefined
+        ? { loaderRegistry: options.loaderRegistry }
         : {})
     });
     registerMcpRoutes(app, options.pool, {

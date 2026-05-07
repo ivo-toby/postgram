@@ -8,6 +8,7 @@ import {
   ingestDocument,
   type IngestDocumentInput,
 } from '../services/document-ingest-service.js';
+import type { LoaderRegistry } from '../services/loaders/registry.js';
 import { createEdge, deleteEdge, listEdges, expandGraph } from '../services/edge-service.js';
 import { getEntityEmbeddings } from '../services/embedding-query-service.js';
 import { listEntities, recallEntity, softDeleteEntity, storeEntity, updateEntity } from '../services/entity-service.js';
@@ -231,6 +232,12 @@ export function registerRestRoutes(
           uploadsDir: string;
         }
       | undefined;
+    /**
+     * The loader registry, surfaced via /api/admin/loaders for inspection
+     * and runtime enable/disable. When omitted, the admin endpoints respond
+     * 404 (the endpoints are simply not registered).
+     */
+    loaderRegistry?: LoaderRegistry | undefined;
   } = {}
 ): void {
   app.post('/api/entities', async (c) => {
@@ -719,6 +726,51 @@ export function registerRestRoutes(
       status,
     );
   });
+
+  if (options.loaderRegistry) {
+    const registry = options.loaderRegistry;
+
+    app.get('/api/admin/loaders', async (c) => {
+      const auth = c.get('auth');
+      if (!auth.scopes.includes('delete')) {
+        throw new AppError(
+          ErrorCode.FORBIDDEN,
+          'admin endpoints require delete scope',
+        );
+      }
+      return c.json({ loaders: registry.list() });
+    });
+
+    app.post('/api/admin/loaders/:name/enable', async (c) => {
+      const auth = c.get('auth');
+      if (!auth.scopes.includes('delete')) {
+        throw new AppError(
+          ErrorCode.FORBIDDEN,
+          'admin endpoints require delete scope',
+        );
+      }
+      const name = c.req.param('name');
+      if (!registry.setEnabled(name, true)) {
+        throw new AppError(ErrorCode.NOT_FOUND, `loader '${name}' not found`);
+      }
+      return c.json({ name, enabled: true });
+    });
+
+    app.post('/api/admin/loaders/:name/disable', async (c) => {
+      const auth = c.get('auth');
+      if (!auth.scopes.includes('delete')) {
+        throw new AppError(
+          ErrorCode.FORBIDDEN,
+          'admin endpoints require delete scope',
+        );
+      }
+      const name = c.req.param('name');
+      if (!registry.setEnabled(name, false)) {
+        throw new AppError(ErrorCode.NOT_FOUND, `loader '${name}' not found`);
+      }
+      return c.json({ name, enabled: false });
+    });
+  }
 
   app.get('/api/entities/:id/graph', async (c) => {
     const auth = c.get('auth');

@@ -51,11 +51,11 @@ type OllamaResponse = {
   choices?: Array<{ message?: { content?: string } }>;
 };
 
-// `reasoning_effort` is only accepted by OpenAI reasoning models (o-series,
-// gpt-5). Forwarding it to gpt-4o / gpt-4o-mini returns 400 "Unknown
-// parameter: 'reasoning_effort'" — the OpenAI API does not silently ignore
-// unknown parameters.
-function supportsReasoningEffort(model: string): boolean {
+// OpenAI reasoning models (o-series, gpt-5) accept `reasoning_effort` but
+// reject `temperature` values other than the default 1. Non-reasoning models
+// (gpt-4o, gpt-4o-mini) are the inverse. The API does not silently ignore
+// either mismatch — both surface as 400s.
+function isReasoningModel(model: string): boolean {
   return /^o\d/i.test(model) || /^gpt-5/i.test(model);
 }
 
@@ -66,16 +66,20 @@ function createOpenAiProvider(
   reasoningEffort: ReasoningEffort | undefined
 ): LlmProvider {
   return async (prompt: string) => {
+    const reasoning = isReasoningModel(model);
     const payload: Record<string, unknown> = {
       model,
-      messages: [{ role: 'user', content: prompt }],
-      temperature: 0
+      messages: [{ role: 'user', content: prompt }]
     };
+    // Reasoning models reject any temperature other than the default.
+    if (!reasoning) {
+      payload['temperature'] = 0;
+    }
     // Explicit EXTRACTION_REASONING_EFFORT wins; otherwise disableThinking
     // implies 'minimal'. Either way, only forward when the model actually
     // supports the field.
     const effort = reasoningEffort ?? (disableThinking ? 'minimal' : undefined);
-    if (effort && supportsReasoningEffort(model)) {
+    if (effort && reasoning) {
       payload['reasoning_effort'] = effort;
     }
 

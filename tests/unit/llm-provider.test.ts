@@ -339,6 +339,56 @@ describe('createLlmProvider', () => {
       });
     });
 
+    describe('temperature', () => {
+      const originalFetch = globalThis.fetch;
+      beforeEach(() => {
+        globalThis.fetch = vi.fn() as unknown as typeof fetch;
+      });
+      afterEach(() => {
+        globalThis.fetch = originalFetch;
+      });
+
+      it('sends temperature: 0 for non-reasoning models', async () => {
+        (globalThis.fetch as unknown as ReturnType<typeof vi.fn>).mockResolvedValue(
+          new Response(
+            JSON.stringify({ choices: [{ message: { content: '[]' } }] }),
+            { status: 200 }
+          )
+        );
+        const provider = createLlmProvider({
+          provider: 'openai',
+          openaiApiKey: 'sk-test',
+          model: 'gpt-4o-mini'
+        });
+        await provider('anything');
+
+        const call = (globalThis.fetch as unknown as ReturnType<typeof vi.fn>).mock.calls[0];
+        const init = call?.[1] as RequestInit;
+        const body = JSON.parse(init.body as string) as { temperature?: unknown };
+        expect(body.temperature).toBe(0);
+      });
+
+      it('omits temperature for reasoning models (only default 1 is supported)', async () => {
+        (globalThis.fetch as unknown as ReturnType<typeof vi.fn>).mockResolvedValue(
+          new Response(
+            JSON.stringify({ choices: [{ message: { content: '[]' } }] }),
+            { status: 200 }
+          )
+        );
+        const provider = createLlmProvider({
+          provider: 'openai',
+          openaiApiKey: 'sk-test',
+          model: 'o1-mini'
+        });
+        await provider('anything');
+
+        const call = (globalThis.fetch as unknown as ReturnType<typeof vi.fn>).mock.calls[0];
+        const init = call?.[1] as RequestInit;
+        const body = JSON.parse(init.body as string) as { temperature?: unknown };
+        expect(body.temperature).toBeUndefined();
+      });
+    });
+
     describe('error handling', () => {
       const originalFetch = globalThis.fetch;
       beforeEach(() => {

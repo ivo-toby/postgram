@@ -10,10 +10,10 @@
  */
 
 export type AcceptDescriptor = {
-  mimeTypes?: string[];
-  extensions?: string[];
+  mimeTypes?: string[] | undefined;
+  extensions?: string[] | undefined;
   /** RegExp source strings, matched against the full URL with `RegExp(.., 'i')`. */
-  urlPatterns?: string[];
+  urlPatterns?: string[] | undefined;
 };
 
 export type LoaderInput =

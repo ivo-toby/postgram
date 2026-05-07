@@ -236,7 +236,27 @@ describe('createLlmProvider', () => {
         globalThis.fetch = originalFetch;
       });
 
-      it("defaults to 'minimal' when disableThinking is on (back-compat)", async () => {
+      it("defaults to 'minimal' when disableThinking is on with a reasoning model (back-compat)", async () => {
+        (globalThis.fetch as unknown as ReturnType<typeof vi.fn>).mockResolvedValue(
+          new Response(
+            JSON.stringify({ choices: [{ message: { content: '[]' } }] }),
+            { status: 200 }
+          )
+        );
+        const provider = createLlmProvider({
+          provider: 'openai',
+          openaiApiKey: 'sk-test',
+          model: 'o1-mini'
+        });
+        await provider('anything');
+
+        const call = (globalThis.fetch as unknown as ReturnType<typeof vi.fn>).mock.calls[0];
+        const init = call?.[1] as RequestInit;
+        const body = JSON.parse(init.body as string) as { reasoning_effort?: unknown };
+        expect(body.reasoning_effort).toBe('minimal');
+      });
+
+      it('omits reasoning_effort for non-reasoning models (gpt-4o-mini default)', async () => {
         (globalThis.fetch as unknown as ReturnType<typeof vi.fn>).mockResolvedValue(
           new Response(
             JSON.stringify({ choices: [{ message: { content: '[]' } }] }),
@@ -252,10 +272,10 @@ describe('createLlmProvider', () => {
         const call = (globalThis.fetch as unknown as ReturnType<typeof vi.fn>).mock.calls[0];
         const init = call?.[1] as RequestInit;
         const body = JSON.parse(init.body as string) as { reasoning_effort?: unknown };
-        expect(body.reasoning_effort).toBe('minimal');
+        expect(body.reasoning_effort).toBeUndefined();
       });
 
-      it('explicit reasoningEffort overrides the disableThinking default', async () => {
+      it('omits reasoning_effort even when explicitly set, if the model does not support it', async () => {
         (globalThis.fetch as unknown as ReturnType<typeof vi.fn>).mockResolvedValue(
           new Response(
             JSON.stringify({ choices: [{ message: { content: '[]' } }] }),
@@ -265,6 +285,28 @@ describe('createLlmProvider', () => {
         const provider = createLlmProvider({
           provider: 'openai',
           openaiApiKey: 'sk-test',
+          model: 'gpt-4o-mini',
+          reasoningEffort: 'high'
+        });
+        await provider('anything');
+
+        const call = (globalThis.fetch as unknown as ReturnType<typeof vi.fn>).mock.calls[0];
+        const init = call?.[1] as RequestInit;
+        const body = JSON.parse(init.body as string) as { reasoning_effort?: unknown };
+        expect(body.reasoning_effort).toBeUndefined();
+      });
+
+      it('explicit reasoningEffort is forwarded for reasoning-capable models (gpt-5)', async () => {
+        (globalThis.fetch as unknown as ReturnType<typeof vi.fn>).mockResolvedValue(
+          new Response(
+            JSON.stringify({ choices: [{ message: { content: '[]' } }] }),
+            { status: 200 }
+          )
+        );
+        const provider = createLlmProvider({
+          provider: 'openai',
+          openaiApiKey: 'sk-test',
+          model: 'gpt-5-mini',
           reasoningEffort: 'high'
         });
         await provider('anything');
@@ -285,6 +327,7 @@ describe('createLlmProvider', () => {
         const provider = createLlmProvider({
           provider: 'openai',
           openaiApiKey: 'sk-test',
+          model: 'o1-mini',
           disableThinking: false
         });
         await provider('anything');
@@ -293,6 +336,37 @@ describe('createLlmProvider', () => {
         const init = call?.[1] as RequestInit;
         const body = JSON.parse(init.body as string) as { reasoning_effort?: unknown };
         expect(body.reasoning_effort).toBeUndefined();
+      });
+    });
+
+    describe('error handling', () => {
+      const originalFetch = globalThis.fetch;
+      beforeEach(() => {
+        globalThis.fetch = vi.fn() as unknown as typeof fetch;
+      });
+      afterEach(() => {
+        globalThis.fetch = originalFetch;
+      });
+
+      it('includes the OpenAI error body in the thrown error', async () => {
+        (globalThis.fetch as unknown as ReturnType<typeof vi.fn>).mockResolvedValue(
+          new Response(
+            JSON.stringify({
+              error: {
+                message: "Unknown parameter: 'reasoning_effort'.",
+                type: 'invalid_request_error'
+              }
+            }),
+            { status: 400 }
+          )
+        );
+        const provider = createLlmProvider({
+          provider: 'openai',
+          openaiApiKey: 'sk-test'
+        });
+        await expect(provider('anything')).rejects.toThrow(
+          /OpenAI API error: 400.*reasoning_effort/
+        );
       });
     });
   });

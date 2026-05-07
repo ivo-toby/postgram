@@ -165,7 +165,10 @@ export function createApp(
         : {})
     });
     registerMcpRoutes(app, options.pool, {
-      embeddingService: options.embeddingService
+      embeddingService: options.embeddingService,
+      ...(options.documentIngest !== undefined
+        ? { documentIngest: options.documentIngest }
+        : {})
     });
   }
 

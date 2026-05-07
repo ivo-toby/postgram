@@ -7,6 +7,10 @@ import type { Pool } from 'pg';
 import { validateKey } from '../auth/key-service.js';
 import type { AuthContext } from '../auth/types.js';
 import type { EmbeddingService } from '../services/embedding-service.js';
+import {
+  ingestDocument,
+  type IngestDocumentInput,
+} from '../services/document-ingest-service.js';
 import { createEdge, deleteEdge, expandGraph } from '../services/edge-service.js';
 import { recallEntity, softDeleteEntity, storeEntity, updateEntity } from '../services/entity-service.js';
 import { getQueueStatus } from '../services/queue-service.js';
@@ -127,6 +131,7 @@ function createSessionServer(
   auth: AuthContext,
   options: {
     embeddingService?: EmbeddingService | undefined;
+    documentIngest?: { uploadsDir: string } | undefined;
   } = {}
 ) {
   const server = new McpServer({
@@ -538,6 +543,68 @@ function createSessionServer(
       )
   );
 
+  if (options.documentIngest) {
+    const uploadsDir = options.documentIngest.uploadsDir;
+    server.registerTool(
+      'document_ingest',
+      {
+        description:
+          'Ingest a document via a registered loader. Provide either a `url` or base64-encoded `bytes_b64` plus `mime_type`. Returns the new entity id with loading_status=pending; the worker routes it through the matching loader (PDF, audio, etc.) before chunking and embedding.',
+        inputSchema: {
+          url: z.string().url().optional(),
+          mime_type: z.string().min(1).optional(),
+          bytes_b64: z.string().optional(),
+          filename: z.string().optional(),
+          visibility: visibilitySchema.optional(),
+          owner: ownerSchema.optional(),
+          tags: z.array(z.string()).optional(),
+          metadata: z.record(z.unknown()).optional(),
+        },
+      },
+      async (args) => {
+        let input: IngestDocumentInput;
+        if (args.url) {
+          input = {
+            kind: 'url',
+            url: args.url,
+            ...(args.mime_type ? { mimeType: args.mime_type } : {}),
+            ...(args.visibility ? { visibility: args.visibility } : {}),
+            ...(args.owner ? { owner: args.owner } : {}),
+            ...(args.tags ? { tags: args.tags } : {}),
+            ...(args.metadata ? { metadata: args.metadata } : {}),
+          };
+        } else if (args.bytes_b64 && args.mime_type) {
+          const bytes = Uint8Array.from(Buffer.from(args.bytes_b64, 'base64'));
+          input = {
+            kind: 'bytes',
+            bytes,
+            mimeType: args.mime_type,
+            ...(args.filename ? { filename: args.filename } : {}),
+            ...(args.visibility ? { visibility: args.visibility } : {}),
+            ...(args.owner ? { owner: args.owner } : {}),
+            ...(args.tags ? { tags: args.tags } : {}),
+            ...(args.metadata ? { metadata: args.metadata } : {}),
+          };
+        } else {
+          return toToolError(
+            new AppError(
+              ErrorCode.VALIDATION,
+              'document_ingest requires either `url` or both `bytes_b64` + `mime_type`',
+            ),
+          );
+        }
+        return toolFromService(
+          ingestDocument(auth, input, { pool, uploadsDir }),
+          (value) => ({
+            id: value.id,
+            loading_status: value.loadingStatus,
+            status: value.status,
+          }),
+        );
+      },
+    );
+  }
+
   return server;
 }
 
@@ -546,6 +613,7 @@ export function registerMcpRoutes(
   pool: Pool,
   options: {
     embeddingService?: EmbeddingService | undefined;
+    documentIngest?: { uploadsDir: string } | undefined;
   } = {}
 ): void {
   app.all('/mcp', async (c) => {

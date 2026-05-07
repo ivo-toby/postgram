@@ -51,6 +51,14 @@ type OllamaResponse = {
   choices?: Array<{ message?: { content?: string } }>;
 };
 
+// OpenAI reasoning models (o-series, gpt-5) accept `reasoning_effort` but
+// reject `temperature` values other than the default 1. Non-reasoning models
+// (gpt-4o, gpt-4o-mini) are the inverse. The API does not silently ignore
+// either mismatch — both surface as 400s.
+function isReasoningModel(model: string): boolean {
+  return /^o\d/i.test(model) || /^gpt-5/i.test(model);
+}
+
 function createOpenAiProvider(
   apiKey: string,
   model: string,
@@ -58,17 +66,22 @@ function createOpenAiProvider(
   reasoningEffort: ReasoningEffort | undefined
 ): LlmProvider {
   return async (prompt: string) => {
-    // `reasoning_effort` applies to o-series and gpt-5 reasoning models.
-    // Non-reasoning models (gpt-4o-mini etc.) ignore the field. Explicit
-    // EXTRACTION_REASONING_EFFORT wins; otherwise disableThinking implies
-    // 'minimal' for back-compat with existing deployments.
+    const reasoning = isReasoningModel(model);
     const payload: Record<string, unknown> = {
       model,
-      messages: [{ role: 'user', content: prompt }],
-      temperature: 0
+      messages: [{ role: 'user', content: prompt }]
     };
+    // Reasoning models reject any temperature other than the default.
+    if (!reasoning) {
+      payload['temperature'] = 0;
+    }
+    // Explicit EXTRACTION_REASONING_EFFORT wins; otherwise disableThinking
+    // implies 'minimal'. Either way, only forward when the model actually
+    // supports the field.
     const effort = reasoningEffort ?? (disableThinking ? 'minimal' : undefined);
-    if (effort) payload['reasoning_effort'] = effort;
+    if (effort && reasoning) {
+      payload['reasoning_effort'] = effort;
+    }
 
     const response = await fetchWithTimeout('https://api.openai.com/v1/chat/completions', {
       method: 'POST',
@@ -80,7 +93,11 @@ function createOpenAiProvider(
     });
 
     if (!response.ok) {
-      throw new Error(`OpenAI API error: ${response.status}`);
+      // Surface OpenAI's error body — bare status codes hid root causes
+      // like "Unknown parameter: 'reasoning_effort'" behind a generic 400.
+      const errorBody = await response.text().catch(() => '');
+      const detail = errorBody ? ` - ${errorBody}` : '';
+      throw new Error(`OpenAI API error: ${response.status}${detail}`);
     }
 
     const body = (await response.json()) as OpenAiResponse;

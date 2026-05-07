@@ -2,6 +2,7 @@ import type { Logger } from 'pino';
 import type { Pool, PoolClient } from 'pg';
 
 import type { AuthContext } from '../auth/types.js';
+import type { LoaderInput } from '../types/loader.js';
 import { createLogger } from '../util/logger.js';
 import { chunkText } from './chunking-service.js';
 import {
@@ -12,6 +13,9 @@ import {
   extractAndLinkRelationships,
   SemanticMatchUnavailableError
 } from './extraction-service.js';
+import type { AttachmentStore } from './loaders/attachment-store.js';
+import { persistLoaderResult } from './loaders/persist.js';
+import type { LoaderRegistry } from './loaders/registry.js';
 
 type PendingEntityRow = {
   id: string;
@@ -70,7 +74,38 @@ type EnrichmentWorkerOptions = {
     maxNeighbors?: number;
     minSimilarity?: number;
   };
+  /**
+   * Optional pluggable document loader stack. When configured, entities
+   * created with loading_status='pending' are routed through the matching
+   * loader before they enter the chunk/embed pipeline. Legacy entities
+   * (loading_status NULL) skip the loading stage entirely.
+   */
+  loaderRegistry?: LoaderRegistry;
+  attachmentStore?: AttachmentStore;
 };
+
+function buildLoaderInput(entity: {
+  mime_type: string | null;
+  source_uri: string | null;
+}): LoaderInput | undefined {
+  const uri = entity.source_uri;
+  if (!uri) return undefined;
+  if (uri.startsWith('file://')) {
+    if (!entity.mime_type) return undefined;
+    return {
+      kind: 'localPath',
+      path: uri.replace(/^file:\/\//, ''),
+      mimeType: entity.mime_type,
+      sourceUri: uri,
+    };
+  }
+  if (uri.startsWith('http://') || uri.startsWith('https://')) {
+    return entity.mime_type
+      ? { kind: 'url', url: uri, mimeType: entity.mime_type }
+      : { kind: 'url', url: uri };
+  }
+  return undefined;
+}
 
 async function rollbackQuietly(client: PoolClient): Promise<void> {
   try {
@@ -409,9 +444,142 @@ export function createEnrichmentWorker(options: EnrichmentWorkerOptions) {
     }
   }
 
+  type PendingLoadingRow = {
+    id: string;
+    mime_type: string | null;
+    source_uri: string | null;
+  };
+
+  async function processNextLoadingEntity(): Promise<boolean> {
+    if (!options.loaderRegistry || !options.attachmentStore) return false;
+
+    const candidates = await options.pool.query<PendingLoadingRow>(
+      `
+        SELECT id, mime_type, source_uri
+        FROM entities
+        WHERE loading_status = 'pending'
+           OR (
+             loading_status = 'failed'
+             AND loading_attempts < 3
+             AND updated_at < now() - interval '5 minutes'
+           )
+        ORDER BY
+          CASE WHEN loading_status = 'pending' THEN 0 ELSE 1 END,
+          created_at ASC
+        LIMIT 1
+      `,
+    );
+
+    const entity = candidates.rows[0];
+    if (!entity) return false;
+
+    const input = buildLoaderInput(entity);
+    if (!input) {
+      await options.pool.query(
+        `
+          UPDATE entities
+          SET loading_status = 'failed',
+              loading_attempts = loading_attempts + 1,
+              loading_error = $2
+          WHERE id = $1
+        `,
+        [
+          entity.id,
+          'cannot construct loader input — missing mime_type or source_uri',
+        ],
+      );
+      return true;
+    }
+
+    const resolved = options.loaderRegistry.resolve(input);
+    if (!resolved.ok) {
+      await options.pool.query(
+        `
+          UPDATE entities
+          SET loading_status = 'failed',
+              loading_attempts = loading_attempts + 1,
+              loading_error = $2
+          WHERE id = $1
+        `,
+        [entity.id, `no_loader: ${resolved.error.reason}`],
+      );
+      return true;
+    }
+
+    const { entry } = resolved;
+    await options.pool.query(
+      `UPDATE entities SET loading_status = 'running' WHERE id = $1`,
+      [entity.id],
+    );
+
+    try {
+      const ctx = {
+        tmpDir: '/tmp',
+        logger: {
+          trace: () => {},
+          debug: (p: unknown, m?: string) => logger.debug(p as object, m),
+          info: (p: unknown, m?: string) => logger.info(p as object, m),
+          warn: (p: unknown, m?: string) => logger.warn(p as object, m),
+          error: (p: unknown, m?: string) => logger.error(p as object, m),
+        },
+        fetch: globalThis.fetch.bind(globalThis),
+        options: entry.config.options,
+        signal: AbortSignal.timeout(
+          entry.config.kind === 'sidecar'
+            ? entry.config.timeoutMs
+            : 600_000,
+        ),
+      };
+
+      const result = await entry.loader.load(input, ctx);
+      await persistLoaderResult(entity.id, entry.config.name, result, {
+        pool: options.pool,
+        attachmentStore: options.attachmentStore,
+      });
+
+      // Loading produced new content; queue the chunk/embed pipeline.
+      await options.pool.query(
+        `
+          UPDATE entities
+          SET enrichment_status = 'pending',
+              enrichment_attempts = 0,
+              enrichment_error = NULL
+          WHERE id = $1
+        `,
+        [entity.id],
+      );
+      logger.info(
+        { loader: entry.config.name, entityId: entity.id },
+        'loader applied',
+      );
+    } catch (err) {
+      logger.warn(
+        { err, entityId: entity.id, loader: entry.config.name },
+        'loading failed',
+      );
+      await options.pool.query(
+        `
+          UPDATE entities
+          SET loading_status = 'failed',
+              loading_attempts = loading_attempts + 1,
+              loading_error = $2
+          WHERE id = $1
+        `,
+        [entity.id, truncateErrorMessage(err)],
+      );
+    }
+    return true;
+  }
+
   return {
     async runOnce(): Promise<number> {
       let processed = 0;
+
+      if (options.loaderRegistry && options.attachmentStore) {
+        while (await processNextLoadingEntity()) {
+          processed += 1;
+        }
+      }
 
       if (await hasPendingEnrichment()) {
         const activeModel = await embeddingService.getActiveModel(options.pool);

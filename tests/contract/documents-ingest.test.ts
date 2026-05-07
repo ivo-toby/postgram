@@ -134,6 +134,40 @@ describe('POST /api/documents/ingest', () => {
     expect(b.id).toBe(a.id);
   });
 
+  it('handles concurrent ingests of the same URL without 5xx', async () => {
+    const { app, apiKey } = await authenticatedApp();
+    const url = `https://example.com/race-${crypto.randomUUID()}`;
+    const post = () =>
+      app.request('/api/documents/ingest', {
+        method: 'POST',
+        headers: {
+          Authorization: `Bearer ${apiKey}`,
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({ url }),
+      });
+    const responses = await Promise.all(
+      Array.from({ length: 10 }, () => post()),
+    );
+    const bodies = await Promise.all(
+      responses.map(async (r) => ({
+        status: r.status,
+        body: (await r.json()) as { id: string; status: string },
+      })),
+    );
+    // Every response should be 2xx — none should leak a 5xx from a unique
+    // index violation.
+    for (const r of bodies) {
+      expect(r.status).toBeLessThan(300);
+    }
+    // All return the same entity id.
+    const ids = new Set(bodies.map((r) => r.body.id));
+    expect(ids.size).toBe(1);
+    // Exactly one is reported as 'created', all others 'exists'.
+    const createds = bodies.filter((r) => r.body.status === 'created');
+    expect(createds).toHaveLength(1);
+  });
+
   it('returns 401 without an api key', async () => {
     if (!database) throw new Error('db missing');
     const app = createApp({

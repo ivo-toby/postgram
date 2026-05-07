@@ -68,18 +68,13 @@ export function ingestDocument(
           ? input.url
           : await stashBytesAndBuildUri(input, options);
 
-      const existing = await options.pool.query<{ id: string }>(
-        `SELECT id FROM entities WHERE source_uri = $1 LIMIT 1`,
-        [sourceUri],
-      );
-      if (existing.rows[0]) {
-        return {
-          id: existing.rows[0].id,
-          loadingStatus: 'pending' as const,
-          status: 'exists' as const,
-        };
-      }
-
+      // Atomic idempotent upsert. The previous SELECT-then-INSERT was racy:
+      // two concurrent requests for the same URL could both miss the SELECT,
+      // and one INSERT would crash on idx_entities_source_uri. ON CONFLICT
+      // against the partial unique index (with its predicate) makes the
+      // happy path branchless; if it returns no row we look up the
+      // pre-existing entity. Only URL inputs realistically hit the conflict
+      // path; byte uploads use random UUIDs in source_uri.
       const insert = await options.pool.query<{ id: string }>(
         `
           INSERT INTO entities (
@@ -87,12 +82,11 @@ export function ingestDocument(
             metadata, loading_status, enrichment_status
           )
           VALUES ('document', NULL, $1, $2, $3, $4, $5, $6, 'pending', NULL)
+          ON CONFLICT (source_uri) WHERE source_uri IS NOT NULL DO NOTHING
           RETURNING id
         `,
         [
-          input.kind === 'url'
-            ? (input.mimeType ?? null)
-            : input.mimeType,
+          input.kind === 'url' ? (input.mimeType ?? null) : input.mimeType,
           sourceUri,
           visibility,
           input.owner ?? null,
@@ -100,14 +94,30 @@ export function ingestDocument(
           JSON.stringify(input.metadata ?? {}),
         ],
       );
-      const id = insert.rows[0]?.id;
-      if (!id) {
-        throw new AppError(ErrorCode.INTERNAL, 'failed to create document entity');
+      const insertedId = insert.rows[0]?.id;
+      if (insertedId) {
+        return {
+          id: insertedId,
+          loadingStatus: 'pending' as const,
+          status: 'created' as const,
+        };
+      }
+
+      // No row inserted → the unique index fired. Fetch the existing entity.
+      const existing = await options.pool.query<{ id: string }>(
+        `SELECT id FROM entities WHERE source_uri = $1 LIMIT 1`,
+        [sourceUri],
+      );
+      if (!existing.rows[0]) {
+        throw new AppError(
+          ErrorCode.INTERNAL,
+          'failed to create document entity (insert skipped, no prior row)',
+        );
       }
       return {
-        id,
+        id: existing.rows[0].id,
         loadingStatus: 'pending' as const,
-        status: 'created' as const,
+        status: 'exists' as const,
       };
     })(),
     (err) => {

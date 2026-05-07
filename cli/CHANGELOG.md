@@ -1,3 +1,10 @@
+## [1.25.1](https://github.com/ivo-toby/postgram/compare/cli-v1.25.0...cli-v1.25.1) (2026-05-07)
+
+### Bug Fixes
+
+* **extraction:** omit temperature for OpenAI reasoning models ([b5b17a3](https://github.com/ivo-toby/postgram/commit/b5b17a322b4dfd949da4637640200aede44c23eb))
+* **extraction:** only forward reasoning_effort to OpenAI reasoning models ([90f0a17](https://github.com/ivo-toby/postgram/commit/90f0a17960d563a4653a8d2bc4faa1ffa820625f))
+
 ## [1.25.0](https://github.com/ivo-toby/postgram/compare/cli-v1.24.0...cli-v1.25.0) (2026-05-06)
 
 ### Features

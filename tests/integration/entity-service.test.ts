@@ -29,6 +29,7 @@ function makeAuthContext(
   return {
     apiKeyId: '00000000-0000-0000-0000-000000000101',
     keyName: 'service-key',
+    clientId: 'service-key',
     scopes: ['read', 'write', 'delete'],
     allowedTypes: null,
     allowedVisibility: ['personal', 'work', 'shared'],

@@ -425,6 +425,7 @@ export function createEnrichmentWorker(options: EnrichmentWorkerOptions) {
         const extractionAuth: AuthContext = {
           apiKeyId: null,
           keyName: 'system-extraction',
+          clientId: null,
           scopes: ['read', 'write', 'delete'] as const,
           allowedTypes: null,
           allowedVisibility: ['personal', 'work', 'shared'] as const

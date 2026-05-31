@@ -35,6 +35,7 @@ const UUID_REGEX =
 type ApiKeyRow = {
   id: string;
   name: string;
+  client_id: string;
   key_hash: string;
   key_prefix: string;
   scopes: string[];
@@ -109,10 +110,10 @@ function formatKeyList(keys: ApiKeyRow[]): string[] {
   }
 
   return [
-    'id        name            active  scopes',
+    'id        name            client          active  scopes',
     ...keys.map(
       (key) =>
-        `${shortId(key.id)}  ${key.name.padEnd(14)}  ${String(key.is_active).padEnd(6)}  ${key.scopes.join(',')}`
+        `${shortId(key.id)}  ${key.name.padEnd(14)}  ${key.client_id.padEnd(14)}  ${String(key.is_active).padEnd(6)}  ${key.scopes.join(',')}`
     )
   ];
 }
@@ -196,6 +197,7 @@ keyCommand
   .command('create')
   .description('Create an API key')
   .requiredOption('--name <name>', 'key name')
+  .option('--client-id <clientId>', 'stable client identity for session-context memory scope')
   .option('--scopes <scopes>', 'comma-separated scopes', 'read')
   .option('--visibility <visibility>', 'comma-separated visibility values', 'shared')
   .option('--types <types>', 'comma-separated entity types')
@@ -205,6 +207,7 @@ keyCommand
     await runWithPool(json, async (pool, mode) => {
       const created = await createKey(pool, {
         name: options.name,
+        clientId: options.clientId,
         scopes: parseCommaList(options.scopes) as Scope[] | undefined,
         allowedTypes: parseCommaList(options.types) as EntityType[] | null | undefined,
         allowedVisibility: parseCommaList(options.visibility) as Visibility[] | undefined
@@ -218,7 +221,8 @@ keyCommand
         operation: 'key.create',
         entityId: created.value.record.id,
         details: {
-          name: options.name
+          name: options.name,
+          clientId: created.value.record.clientId
         }
       });
 
@@ -241,6 +245,7 @@ keyCommand
           keys: result.rows.map((row) => ({
             id: row.id,
             name: row.name,
+            clientId: row.client_id,
             isActive: row.is_active,
             scopes: row.scopes,
             allowedTypes: row.allowed_types,
@@ -1267,6 +1272,7 @@ program
       const auth: AuthContext = {
         apiKeyId: null,
         keyName: 'system-link-neighbors',
+        clientId: null,
         scopes: ['read', 'write', 'delete'] as const,
         allowedTypes: null,
         allowedVisibility: ['personal', 'work', 'shared'] as const

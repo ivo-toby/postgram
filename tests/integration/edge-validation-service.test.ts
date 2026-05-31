@@ -18,6 +18,7 @@ function makeAuthContext(): AuthContext {
   return {
     apiKeyId: '00000000-0000-0000-0000-000000000501',
     keyName: 'edge-validation-key',
+    clientId: 'edge-validation-key',
     scopes: ['read', 'write', 'delete'],
     allowedTypes: null,
     allowedVisibility: ['personal', 'work', 'shared']

@@ -36,6 +36,7 @@ function makeAuthContext(apiKeyId = '00000000-0000-0000-0000-000000000000'): Aut
   return {
     apiKeyId,
     keyName: 'admin-seed',
+    clientId: 'admin-seed',
     scopes: ['read', 'write', 'delete'],
     allowedTypes: null,
     allowedVisibility: ['personal', 'work', 'shared']
@@ -93,6 +94,8 @@ describe('pgm-admin CLI', () => {
         'create',
         '--name',
         'admin-alpha',
+        '--client-id',
+        'codex-desktop',
         '--scopes',
         'read,write',
         '--visibility',
@@ -105,9 +108,10 @@ describe('pgm-admin CLI', () => {
     );
     const createdBody = parseJson(createResult.stdout) as {
       plaintextKey: string;
-      record: { id: string; keyHash: string; isActive: boolean };
+      record: { id: string; clientId: string; keyHash: string; isActive: boolean };
     };
     expect(createdBody.plaintextKey).toMatch(/^pgm-admin-alpha-/);
+    expect(createdBody.record.clientId).toBe('codex-desktop');
     expect(createdBody.record.keyHash).not.toContain(createdBody.plaintextKey);
     expect(createdBody.record.isActive).toBe(true);
 
@@ -118,13 +122,14 @@ describe('pgm-admin CLI', () => {
       }
     );
     const listBody = parseJson(listResult.stdout) as {
-      keys: Array<{ id: string; name: string; isActive: boolean }>;
+      keys: Array<{ id: string; name: string; clientId: string; isActive: boolean }>;
     };
     expect(listBody.keys).toEqual(
       expect.arrayContaining([
         expect.objectContaining({
           id: createdBody.record.id,
           name: 'admin-alpha',
+          clientId: 'codex-desktop',
           isActive: true
         })
       ])

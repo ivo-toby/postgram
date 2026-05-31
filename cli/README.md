@@ -77,11 +77,20 @@ pgm store "Ivo prefers client-scoped session context in Postgram." \
 Store session context:
 
 ```bash
-pgm store "We are discussing Postgram memory lifecycle roles." \
-  --type memory \
+pgm memory session-context "We are discussing Postgram memory lifecycle roles." \
   --visibility personal \
-  --tags session-context \
-  --metadata '{"memory_role":"session_context","topic":"postgram-memory"}'
+  --topic postgram-memory \
+  --agent-id codex \
+  --tags session-context
+```
+
+Search session context:
+
+```bash
+pgm search "Postgram memory lifecycle roles" \
+  --type memory \
+  --memory-role session_context \
+  --visibility personal
 ```
 
 Use durable memory for stable facts, decisions, constraints, and preferences.

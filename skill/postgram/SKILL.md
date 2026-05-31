@@ -65,13 +65,14 @@ For richer content, use `--stdin` and pipe the text. Add `--tags tag1,tag2` for 
 Use session context for resumability, open questions, and active-thread state:
 
 ```bash
-pgm store --type memory --visibility personal \
+pgm memory session-context --visibility personal \
   --tags session-context,postgram \
-  --metadata '{"memory_role":"session_context","topic":"postgram-memory-lifecycle","agent_id":"codex"}' \
-  --content "We are discussing Postgram session_context memory. Current direction: embed for recall, skip graph extraction, groom into durable_memory later."
+  --topic postgram-memory-lifecycle \
+  --agent-id codex \
+  "We are discussing Postgram session_context memory. Current direction: embed for recall, skip graph extraction, groom into durable_memory later."
 ```
 
-If the server supports `client_id`, it will scope session context to the authenticated client. Do not manually promote session context by copying it verbatim into durable memory. Promotion should distill the stable claim.
+This command scopes session context to the authenticated client when the server knows its `client_id`. Do not manually promote session context by copying it verbatim into durable memory. Promotion should distill the stable claim.
 
 ### Store a task
 
@@ -89,7 +90,11 @@ pgm search "what the user asked about" --limit 5
 
 Hybrid BM25 + vector with recency weighting. Add `--type project` or `--visibility work` to narrow.
 
-For session continuity, search for recent `session_context` memories first when the user appears to be resuming an active topic. If metadata filtering is not available in the CLI yet, use concrete query terms plus tags such as `session-context` as a transition.
+For session continuity, search for recent `session_context` memories first when the user appears to be resuming an active topic.
+
+```bash
+pgm search "active topic keywords" --type memory --memory-role session_context --visibility personal --limit 5 --json
+```
 
 For durable knowledge, prefer durable memories and source documents. Treat old session-context hits as working notes, not authoritative facts.
 
@@ -189,10 +194,11 @@ Confirm to the user with the returned entity id (first 8 chars) and the tags.
 If `store_session_context` is available through MCP, use it. Otherwise:
 
 ```bash
-pgm store --type memory --visibility personal \
+pgm memory session-context --visibility personal \
   --tags session-context \
-  --metadata '{"memory_role":"session_context","topic":"active-thread","agent_id":"codex"}' \
-  --content "Session context: user wants this thread resumable. Capture open decisions and active questions, but promote only stable outcomes later."
+  --topic active-thread \
+  --agent-id codex \
+  "Session context: user wants this thread resumable. Capture open decisions and active questions, but promote only stable outcomes later."
 ```
 
 ### User: "what did I say about embeddings last week"

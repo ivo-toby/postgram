@@ -97,6 +97,9 @@ Postgram supports two roles for `memory` entities:
 
 Use session context for "where were we in this thread?" Use durable memory for "what should future agents remember as true?"
 
+CLI users can write session context with `pgm memory session-context` and search
+it with `pgm search --memory-role session_context`.
+
 ### 2. Async Enrichment
 
 Entities with content are persisted first and enriched later. Each entity

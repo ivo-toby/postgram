@@ -49,6 +49,7 @@ type StoreEntityInput = {
   tags?: string[] | undefined;
   source?: string | null | undefined;
   metadata?: Record<string, unknown> | undefined;
+  skipExtraction?: boolean | undefined;
 };
 
 type UpdateEntityInput = {
@@ -151,11 +152,12 @@ export function storeEntity(
             owner,
             status,
             enrichment_status,
+            extraction_status,
             tags,
             source,
             metadata
           )
-          VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9)
+          VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10)
           RETURNING *
         `,
         [
@@ -165,6 +167,7 @@ export function storeEntity(
           normalizeOwner(input.owner),
           input.status ?? null,
           hasContent(input.content) ? 'pending' : null,
+          input.skipExtraction ? 'skipped' : null,
           input.tags ?? [],
           input.source ?? null,
           input.metadata ?? {}

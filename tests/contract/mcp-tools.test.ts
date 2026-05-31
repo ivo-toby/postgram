@@ -263,6 +263,36 @@ describe('MCP tools', () => {
     }
   }, 120_000);
 
+  it('stores entities with skipped extraction via MCP', async () => {
+    const { client, close } = await createClient();
+
+    try {
+      const storeResult = (await client.callTool({
+        name: 'store',
+        arguments: {
+          type: 'interaction',
+          content: 'conversation import that should only be embedded',
+          visibility: 'personal',
+          skip_extraction: true
+        }
+      })) as ToolResultPayload;
+      const storePayload = extractStructuredPayload(storeResult) as {
+        entity: { id: string; enrichment_status: string };
+      };
+
+      expect(storePayload.entity.enrichment_status).toBe('pending');
+
+      const row = await database!.pool.query<{
+        extraction_status: string | null;
+      }>('SELECT extraction_status FROM entities WHERE id = $1', [
+        storePayload.entity.id
+      ]);
+      expect(row.rows[0]?.extraction_status).toBe('skipped');
+    } finally {
+      await close();
+    }
+  }, 120_000);
+
   it('supports owner-scoped store, recall, search, and graph expansion via MCP', async () => {
     const { client, close } = await createClient();
 

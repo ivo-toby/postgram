@@ -23,6 +23,7 @@ export type QueueStatus = {
     pending: number;
     completed: number;
     failed: number;
+    skipped: number;
   } | null;
   failures?: QueueFailure[];
 };
@@ -36,6 +37,7 @@ type QueueRow = {
   extraction_pending: string;
   extraction_completed: string;
   extraction_failed: string;
+  extraction_skipped: string;
   extraction_any: string;
 };
 
@@ -74,6 +76,7 @@ export async function getQueueStatus(
         COUNT(*) FILTER (WHERE extraction_status = 'pending')::text                                                                         AS extraction_pending,
         COUNT(*) FILTER (WHERE extraction_status = 'completed')::text                                                                       AS extraction_completed,
         COUNT(*) FILTER (WHERE extraction_status = 'failed')::text                                                                          AS extraction_failed,
+        COUNT(*) FILTER (WHERE extraction_status = 'skipped')::text                                                                         AS extraction_skipped,
         COUNT(*) FILTER (WHERE extraction_status IS NOT NULL)::text                                                                         AS extraction_any
       FROM entities
       WHERE content IS NOT NULL
@@ -102,7 +105,8 @@ export async function getQueueStatus(
       ? {
           pending: Number(row?.extraction_pending ?? 0),
           completed: Number(row?.extraction_completed ?? 0),
-          failed: Number(row?.extraction_failed ?? 0)
+          failed: Number(row?.extraction_failed ?? 0),
+          skipped: Number(row?.extraction_skipped ?? 0)
         }
       : null
   };

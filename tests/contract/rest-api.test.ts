@@ -129,6 +129,40 @@ describe('REST entity endpoints', () => {
     });
   }, 120_000);
 
+  it('stores entities with skipped extraction', async () => {
+    if (!database) {
+      throw new Error('test database not initialized');
+    }
+
+    const { app, apiKey } = await createAuthorizedApp();
+
+    const storeResponse = await app.request('/api/entities', {
+      method: 'POST',
+      headers: {
+        Authorization: `Bearer ${apiKey}`,
+        'Content-Type': 'application/json'
+      },
+      body: JSON.stringify({
+        type: 'interaction',
+        content: 'conversation import that should not be graph extracted',
+        visibility: 'shared',
+        skip_extraction: true
+      })
+    });
+    const storedBody = (await storeResponse.json()) as {
+      entity: { id: string; enrichment_status: string };
+    };
+
+    expect(storeResponse.status).toBe(201);
+    expect(storedBody.entity.enrichment_status).toBe('pending');
+
+    const row = await database.pool.query<{ extraction_status: string | null }>(
+      'SELECT extraction_status FROM entities WHERE id = $1',
+      [storedBody.entity.id]
+    );
+    expect(row.rows[0]?.extraction_status).toBe('skipped');
+  }, 120_000);
+
   it('supports owner-scoped create, list, search, and graph queries', async () => {
     if (!database) {
       throw new Error('test database not initialized');

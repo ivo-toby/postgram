@@ -625,7 +625,8 @@ program
         // --include-auto-created to override.
         const conditions = [
           'content IS NOT NULL',
-          "status IS DISTINCT FROM 'archived'"
+          "status IS DISTINCT FROM 'archived'",
+          "extraction_status IS DISTINCT FROM 'skipped'"
         ];
         if (!options.includeAutoCreated) {
           conditions.push("NOT ('auto-created' = ANY(tags))");
@@ -698,7 +699,12 @@ program
         // skipped totals add up. --limit is intentionally NOT applied to
         // the skipped query so operators see the full guardrail picture.
         let skipped:
-          | { noContent: number; archived: number; autoCreated: number }
+          | {
+              noContent: number;
+              archived: number;
+              autoCreated: number;
+              skippedExtraction: number;
+            }
           | undefined;
         if (options.showSkipped) {
           const userConditions: string[] = [];
@@ -731,6 +737,7 @@ program
             no_content: string;
             archived: string;
             auto_created: string;
+            skipped_extraction: string;
           }>(
             `SELECT
                count(*) FILTER (WHERE content IS NULL) AS no_content,
@@ -738,7 +745,13 @@ program
                  WHERE content IS NOT NULL
                    AND status = 'archived'
                ) AS archived,
-               ${autoCreatedFilter} AS auto_created
+               ${autoCreatedFilter} AS auto_created,
+               count(*) FILTER (
+                 WHERE content IS NOT NULL
+                   AND status IS DISTINCT FROM 'archived'
+                   AND NOT ('auto-created' = ANY(tags))
+                   AND extraction_status = 'skipped'
+               ) AS skipped_extraction
              FROM entities
              WHERE ${userWhere}`,
             userParams
@@ -747,7 +760,8 @@ program
           skipped = {
             noContent: Number(row?.no_content ?? '0'),
             archived: Number(row?.archived ?? '0'),
-            autoCreated: Number(row?.auto_created ?? '0')
+            autoCreated: Number(row?.auto_created ?? '0'),
+            skippedExtraction: Number(row?.skipped_extraction ?? '0')
           };
         }
 
@@ -783,9 +797,12 @@ program
         const lines = [`Marked ${markedCount} entities for re-extraction${suffix}`];
         if (skipped) {
           const total =
-            skipped.noContent + skipped.archived + skipped.autoCreated;
+            skipped.noContent +
+            skipped.archived +
+            skipped.autoCreated +
+            skipped.skippedExtraction;
           lines.push(
-            `Skipped ${total} (no_content=${skipped.noContent}, archived=${skipped.archived}, auto_created=${skipped.autoCreated})`
+            `Skipped ${total} (no_content=${skipped.noContent}, archived=${skipped.archived}, auto_created=${skipped.autoCreated}, skipped_extraction=${skipped.skippedExtraction})`
           );
         }
         return lines;
@@ -1050,7 +1067,8 @@ program
 
         const conditions = [
           'content IS NOT NULL',
-          "status IS DISTINCT FROM 'archived'"
+          "status IS DISTINCT FROM 'archived'",
+          "extraction_status IS DISTINCT FROM 'skipped'"
         ];
         if (!options.includeAutoCreated) {
           conditions.push("NOT ('auto-created' = ANY(tags))");

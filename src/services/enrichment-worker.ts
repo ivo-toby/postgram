@@ -18,6 +18,7 @@ type PendingEntityRow = {
   id: string;
   content: string;
   metadata: Record<string, unknown>;
+  extraction_status: string | null;
 };
 
 type PendingExtractionRow = PendingEntityRow & {
@@ -134,7 +135,7 @@ export function createEnrichmentWorker(options: EnrichmentWorkerOptions) {
 
       const pending = await client.query<PendingEntityRow>(
         `
-          SELECT id, content, metadata
+          SELECT id, content, metadata, extraction_status
           FROM entities
           WHERE content IS NOT NULL
             AND (
@@ -212,11 +213,15 @@ export function createEnrichmentWorker(options: EnrichmentWorkerOptions) {
                 -- relate to?" with no context, which free-associates new
                 -- stubs and loops. Skip them.
                 extraction_status = CASE
+                  WHEN extraction_status = 'skipped' THEN 'skipped'
                   WHEN $2::boolean = false THEN NULL
                   WHEN 'auto-created' = ANY(tags) THEN NULL
                   ELSE 'pending'
                 END,
-                extraction_error = NULL
+                extraction_error = CASE
+                  WHEN extraction_status = 'skipped' THEN extraction_error
+                  ELSE NULL
+                END
             WHERE id = $1
           `,
           [entity.id, shouldQueueExtraction]

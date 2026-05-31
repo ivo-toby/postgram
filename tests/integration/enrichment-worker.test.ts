@@ -283,6 +283,51 @@ describe('enrichment-worker', () => {
     expect(chunks.rows[0]?.count).toBeGreaterThan(0);
   }, 120_000);
 
+  it('preserves skipped extraction while embedding entities', async () => {
+    if (!database) {
+      throw new Error('test database not initialized');
+    }
+
+    const skipped = (await storeEntity(database.pool, makeAuthContext(), {
+      type: 'interaction',
+      content: 'imported transcript that should become searchable without graph extraction',
+      skipExtraction: true
+    } as never))._unsafeUnwrap();
+
+    const worker = createEnrichmentWorker({
+      pool: database.pool,
+      embeddingService: createEmbeddingService(),
+      extractionEnabled: true,
+      callLlm: () => Promise.resolve('[]')
+    });
+
+    const processed = await worker.runOnce();
+    expect(processed).toBe(1);
+
+    const rows = await database.pool.query<{
+      enrichment_status: string | null;
+      extraction_status: string | null;
+      chunks: string;
+    }>(
+      `
+        SELECT e.enrichment_status,
+               e.extraction_status,
+               COUNT(c.id)::text AS chunks
+        FROM entities e
+        LEFT JOIN chunks c ON c.entity_id = e.id
+        WHERE e.id = $1
+        GROUP BY e.id
+      `,
+      [skipped.id]
+    );
+
+    expect(rows.rows[0]).toMatchObject({
+      enrichment_status: 'completed',
+      extraction_status: 'skipped'
+    });
+    expect(Number(rows.rows[0]?.chunks ?? '0')).toBeGreaterThan(0);
+  }, 120_000);
+
   it('uses per-entity LLM override (model+provider) when columns are set, and clears them on success', async () => {
     if (!database) {
       throw new Error('test database not initialized');

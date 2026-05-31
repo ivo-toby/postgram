@@ -246,6 +246,44 @@ describe('pgm CLI', () => {
     ).toBe(true);
   }, 120_000);
 
+  it('stores entities with skipped extraction through REST', async () => {
+    if (!database) {
+      throw new Error('test database not initialized');
+    }
+
+    const createdKey = (await createKey(database.pool, {
+      name: `cli-skip-${crypto.randomUUID()}`,
+      scopes: ['read', 'write', 'delete'],
+      allowedVisibility: ['shared']
+    }))._unsafeUnwrap();
+
+    const storeResult = await runPgm(
+      [
+        'store',
+        'conversation import that should only be embedded',
+        '--type',
+        'interaction',
+        '--skip-extraction',
+        '--json'
+      ],
+      {
+        PGM_API_URL: baseUrl,
+        PGM_API_KEY: createdKey.plaintextKey
+      }
+    );
+
+    const storeBody = parseJson(storeResult.stdout) as {
+      entity: { id: string; enrichment_status: string };
+    };
+    expect(storeBody.entity.enrichment_status).toBe('pending');
+
+    const row = await database.pool.query<{ extraction_status: string | null }>(
+      'SELECT extraction_status FROM entities WHERE id = $1',
+      [storeBody.entity.id]
+    );
+    expect(row.rows[0]?.extraction_status).toBe('skipped');
+  }, 120_000);
+
   it('lists entities filtered by type', async () => {
     if (!database) {
       throw new Error('test database not initialized');

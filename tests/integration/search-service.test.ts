@@ -2,6 +2,7 @@ import { afterAll, beforeAll, beforeEach, describe, expect, it } from 'vitest';
 
 import { createEmbeddingService } from '../../src/services/embedding-service.js';
 import { createEnrichmentWorker } from '../../src/services/enrichment-worker.js';
+import { createEdge } from '../../src/services/edge-service.js';
 import { searchEntities } from '../../src/services/search-service.js';
 import { softDeleteEntity, storeEntity } from '../../src/services/entity-service.js';
 import type { AuthContext } from '../../src/auth/types.js';
@@ -250,6 +251,140 @@ describe('search-service', () => {
     const contents = result._unsafeUnwrap().results.map((entry) => entry.entity.content);
     expect(contents).toContain('Memory lifecycle roles discussion for Codex.');
     expect(contents).not.toContain('Memory lifecycle roles discussion for Talon.');
+  }, 120_000);
+
+  it('keeps other clients session context out of unfiltered memory search', async () => {
+    if (!database) {
+      throw new Error('test database not initialized');
+    }
+
+    const embeddingService = createEmbeddingService();
+    const auth = makeAuthContext();
+
+    await storeEntity(database.pool, auth, {
+      type: 'memory',
+      visibility: 'personal',
+      content: 'Durable memory lifecycle roles decision.',
+      metadata: { memory_role: 'durable_memory' }
+    });
+
+    await storeEntity(database.pool, { ...auth, clientId: 'codex' }, {
+      type: 'memory',
+      visibility: 'personal',
+      content: 'Codex session context about memory lifecycle roles.',
+      tags: ['session-context'],
+      metadata: {
+        memory_role: 'session_context',
+        session_scope: { kind: 'client', client_id: 'codex' }
+      }
+    });
+
+    await storeEntity(database.pool, { ...auth, clientId: 'talon' }, {
+      type: 'memory',
+      visibility: 'personal',
+      content: 'Talon session context about memory lifecycle roles.',
+      tags: ['session-context'],
+      metadata: {
+        memory_role: 'session_context',
+        session_scope: { kind: 'client', client_id: 'talon' }
+      }
+    });
+
+    await createEnrichmentWorker({
+      pool: database.pool,
+      embeddingService
+    }).runOnce();
+
+    const result = await searchEntities(
+      database.pool,
+      { ...auth, clientId: 'codex' },
+      {
+        query: 'memory lifecycle roles',
+        type: 'memory',
+        threshold: 0,
+        limit: 10
+      },
+      { embeddingService }
+    );
+
+    expect(result.isOk()).toBe(true);
+    const contents = result._unsafeUnwrap().results.map((entry) => entry.entity.content);
+    expect(contents).toContain('Durable memory lifecycle roles decision.');
+    expect(contents).toContain('Codex session context about memory lifecycle roles.');
+    expect(contents).not.toContain('Talon session context about memory lifecycle roles.');
+  }, 120_000);
+
+  it('keeps other clients session context out of graph-expanded search results', async () => {
+    if (!database) {
+      throw new Error('test database not initialized');
+    }
+
+    const embeddingService = createEmbeddingService();
+    const auth = makeAuthContext();
+
+    const durable = (await storeEntity(database.pool, auth, {
+      type: 'memory',
+      visibility: 'personal',
+      content: 'Durable graph expansion anchor for session scope.'
+    }))._unsafeUnwrap();
+
+    const ownContext = (await storeEntity(database.pool, { ...auth, clientId: 'codex' }, {
+      type: 'memory',
+      visibility: 'personal',
+      content: 'Codex private working context.',
+      metadata: {
+        memory_role: 'session_context',
+        session_scope: { kind: 'client', client_id: 'codex' }
+      }
+    }))._unsafeUnwrap();
+
+    const otherContext = (await storeEntity(database.pool, { ...auth, clientId: 'talon' }, {
+      type: 'memory',
+      visibility: 'personal',
+      content: 'Talon private working context.',
+      metadata: {
+        memory_role: 'session_context',
+        session_scope: { kind: 'client', client_id: 'talon' }
+      }
+    }))._unsafeUnwrap();
+
+    expect((await createEdge(database.pool, auth, {
+      sourceId: durable.id,
+      targetId: ownContext.id,
+      relation: 'related_to'
+    })).isOk()).toBe(true);
+    expect((await createEdge(database.pool, auth, {
+      sourceId: durable.id,
+      targetId: otherContext.id,
+      relation: 'related_to'
+    })).isOk()).toBe(true);
+
+    await createEnrichmentWorker({
+      pool: database.pool,
+      embeddingService
+    }).runOnce();
+
+    const result = await searchEntities(
+      database.pool,
+      { ...auth, clientId: 'codex' },
+      {
+        query: 'durable graph expansion anchor',
+        type: 'memory',
+        threshold: 0,
+        limit: 10,
+        expandGraph: true
+      },
+      { embeddingService }
+    );
+
+    expect(result.isOk()).toBe(true);
+    const durableResult = result
+      ._unsafeUnwrap()
+      .results.find((entry) => entry.entityId === durable.id);
+    expect(durableResult).toBeDefined();
+    const relatedIds = durableResult?.related?.map((entry) => entry.entity.id) ?? [];
+    expect(relatedIds).toContain(ownContext.id);
+    expect(relatedIds).not.toContain(otherContext.id);
   }, 120_000);
 
   it('excludes archived entities from search by default', async () => {

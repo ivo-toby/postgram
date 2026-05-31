@@ -191,7 +191,11 @@ export function previewSessionContextGrooming(
             AND metadata #>> '{session_scope,client_id}' = $1
             AND metadata->>'promoted_to' IS NULL
             AND (
-              (metadata->>'groom_after')::timestamptz <= $2
+              CASE
+                WHEN metadata->>'groom_after' ~ '^\\d{4}-\\d{2}-\\d{2}T\\d{2}:\\d{2}:\\d{2}'
+                THEN (metadata->>'groom_after')::timestamptz <= $2
+                ELSE false
+              END
               OR created_at <= $2::timestamptz - interval '7 days'
             )
           ORDER BY created_at ASC

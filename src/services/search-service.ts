@@ -203,7 +203,7 @@ async function runHybridSearch(
         )
         AND (
           $12::boolean = true
-          OR $11::text IS DISTINCT FROM 'session_context'
+          OR COALESCE(e.metadata->>'memory_role', 'durable_memory') <> 'session_context'
           OR e.metadata #>> '{session_scope,client_id}' = $13
         )
       ORDER BY c.embedding <=> $1::vector
@@ -347,12 +347,19 @@ export function searchEntities(
                AND status IS DISTINCT FROM 'archived'
                AND ($2::text[] IS NULL OR type = ANY($2))
                AND visibility = ANY($3)
-               AND ${ownerSqlCondition('owner', '$4')}`,
+               AND ${ownerSqlCondition('owner', '$4')}
+               AND (
+                 $5::boolean = true
+                 OR COALESCE(metadata->>'memory_role', 'durable_memory') <> 'session_context'
+                 OR metadata #>> '{session_scope,client_id}' = $6
+               )`,
             [
               Array.from(allNeighborIds),
               auth.allowedTypes,
               auth.allowedVisibility,
-              input.owner ?? null
+              input.owner ?? null,
+              input.includeOtherClientsSessionContext ?? false,
+              auth.clientId
             ]
           );
 

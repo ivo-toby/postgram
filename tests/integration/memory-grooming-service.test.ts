@@ -85,6 +85,43 @@ describe('memory-grooming-service', () => {
     expect(row.rows[0]?.status).toBeNull();
   });
 
+  it('ignores malformed groom_after values without aborting preview', async () => {
+    if (!database) {
+      throw new Error('test database not initialized');
+    }
+
+    await storeEntity(database.pool, makeAuthContext(), {
+      type: 'memory',
+      content: 'Session context with malformed groom_after.',
+      visibility: 'personal',
+      metadata: {
+        memory_role: 'session_context',
+        session_scope: { kind: 'client', client_id: 'codex' },
+        groom_after: 'not-a-date'
+      }
+    });
+
+    const valid = (await storeEntity(database.pool, makeAuthContext(), {
+      type: 'memory',
+      content: 'Session context with valid groom_after.',
+      visibility: 'personal',
+      metadata: {
+        memory_role: 'session_context',
+        session_scope: { kind: 'client', client_id: 'codex' },
+        groom_after: '2026-01-01T00:00:00.000Z'
+      }
+    }))._unsafeUnwrap();
+
+    const preview = await previewSessionContextGrooming(database.pool, {
+      clientId: 'codex',
+      now: new Date('2026-05-31T00:00:00.000Z'),
+      limit: 10
+    });
+
+    expect(preview.isOk()).toBe(true);
+    expect(preview._unsafeUnwrap().eligible.map((entry) => entry.id)).toEqual([valid.id]);
+  });
+
   it('requires confirmation before archiving outside dry-run', async () => {
     if (!database) {
       throw new Error('test database not initialized');

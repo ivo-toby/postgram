@@ -1,3 +1,19 @@
+## [1.27.0](https://github.com/ivo-toby/postgram/compare/cli-v1.26.0...cli-v1.27.0) (2026-05-31)
+
+### Features
+
+* **auth:** add stable client identity to API keys ([4961f08](https://github.com/ivo-toby/postgram/commit/4961f081a83a4964f0bd6d97c97e4cd5c4cc7e81))
+* **cli:** expose session context memory commands ([2f0b5ce](https://github.com/ivo-toby/postgram/commit/2f0b5ce6087cf30e02d9b1facd7d050a16e39974))
+* **enrichment:** skip graph extraction for session context ([ee9d023](https://github.com/ivo-toby/postgram/commit/ee9d02365e5c61217919ad3b3198d6342e976b10))
+* **mcp:** add scoped session context memory ([9bc8077](https://github.com/ivo-toby/postgram/commit/9bc8077d2c1f7db49356dc972510f4c0743f9a17))
+* **memory:** add session context grooming preview ([fa5dff9](https://github.com/ivo-toby/postgram/commit/fa5dff9496fe35b9d7e86ee922d56eafff0a1544))
+* **memory:** add session context role helpers ([4ead826](https://github.com/ivo-toby/postgram/commit/4ead8268d8233560264a27004c9e3c756af38c9f))
+* **memory:** promote session context through groomer ([7053551](https://github.com/ivo-toby/postgram/commit/705355143127087cf052a0ff3f31de803072b312))
+
+### Bug Fixes
+
+* **memory:** enforce session context grooming boundaries ([f027e0f](https://github.com/ivo-toby/postgram/commit/f027e0f3c64ddc925f08b86c8f6c5d41e4313036))
+
 ## [1.26.0](https://github.com/ivo-toby/postgram/compare/cli-v1.25.1...cli-v1.26.0) (2026-05-31)
 
 ### Features

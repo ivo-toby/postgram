@@ -1,3 +1,14 @@
+## [1.26.0](https://github.com/ivo-toby/postgram/compare/cli-v1.25.1...cli-v1.26.0) (2026-05-31)
+
+### Features
+
+* support openai-compatible extraction ([018f945](https://github.com/ivo-toby/postgram/commit/018f9459f2de10d1755d86da35c4fa1af420633b))
+
+### Bug Fixes
+
+* bootstrap clean embedding configuration ([2af9168](https://github.com/ivo-toby/postgram/commit/2af9168922db6bc6ae19b0af456eb31eaff131b6))
+* pass extraction base url through compose ([de10d0f](https://github.com/ivo-toby/postgram/commit/de10d0fed3c08edfba2c2f559cf6c23e8adcf88f))
+
 ## [1.25.1](https://github.com/ivo-toby/postgram/compare/cli-v1.25.0...cli-v1.25.1) (2026-05-07)
 
 ### Bug Fixes

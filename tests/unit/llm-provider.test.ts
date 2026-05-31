@@ -421,6 +421,54 @@ describe('createLlmProvider', () => {
     });
   });
 
+  describe('openai-compatible', () => {
+    const originalFetch = globalThis.fetch;
+    beforeEach(() => {
+      globalThis.fetch = vi.fn() as unknown as typeof fetch;
+    });
+    afterEach(() => {
+      globalThis.fetch = originalFetch;
+    });
+
+    it('requires a base URL', () => {
+      expect(() =>
+        createLlmProvider({
+          provider: 'openai-compatible',
+          model: 'local-model'
+        })
+      ).toThrow('EXTRACTION_BASE_URL is required for openai-compatible extraction provider');
+    });
+
+    it('posts chat completions to the configured OpenAI-compatible base URL', async () => {
+      (globalThis.fetch as unknown as ReturnType<typeof vi.fn>).mockResolvedValue(
+        new Response(
+          JSON.stringify({ choices: [{ message: { content: '[]' } }] }),
+          { status: 200 }
+        )
+      );
+
+      const provider = createLlmProvider({
+        provider: 'openai-compatible',
+        model: 'gemma-4-e4b-it-OptiQ-4bit',
+        extractionBaseUrl: 'http://host.docker.internal:8000/v1',
+        extractionApiKey: 'local-key'
+      });
+      const result = await provider('anything');
+
+      expect(result).toBe('[]');
+      const call = (globalThis.fetch as unknown as ReturnType<typeof vi.fn>).mock.calls[0];
+      expect(call?.[0]).toBe('http://host.docker.internal:8000/v1/chat/completions');
+      const init = call?.[1] as RequestInit;
+      expect((init.headers as Record<string, string>)['Authorization']).toBe('Bearer local-key');
+      const body = JSON.parse(init.body as string) as {
+        model?: string;
+        messages?: Array<{ role: string; content: string }>;
+      };
+      expect(body.model).toBe('gemma-4-e4b-it-OptiQ-4bit');
+      expect(body.messages).toEqual([{ role: 'user', content: 'anything' }]);
+    });
+  });
+
   describe('anthropic', () => {
     it('returns a function when API key is provided', () => {
       const provider = createLlmProvider({

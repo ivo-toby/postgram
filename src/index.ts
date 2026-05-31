@@ -252,7 +252,8 @@ export async function startServer(): Promise<{
     const allowedProviders: readonly ExtractionProvider[] = [
       'openai',
       'anthropic',
-      'ollama'
+      'ollama',
+      'openai-compatible'
     ];
     callLlmFactory = (providerOverride, modelOverride) => {
       const provider: ExtractionProvider = providerOverride
@@ -263,6 +264,8 @@ export async function startServer(): Promise<{
         provider,
         model: modelOverride ?? config.EXTRACTION_MODEL,
         openaiApiKey: config.OPENAI_API_KEY,
+        extractionBaseUrl: config.EXTRACTION_BASE_URL,
+        extractionApiKey: config.EXTRACTION_API_KEY,
         anthropicApiKey: config.ANTHROPIC_API_KEY,
         ollamaBaseUrl: config.OLLAMA_BASE_URL,
         ollamaApiKey: config.OLLAMA_API_KEY,

@@ -21,9 +21,11 @@ const configSchema = z
       .default('false')
       .transform((v) => v === 'true'),
     EXTRACTION_PROVIDER: z
-      .enum(['openai', 'anthropic', 'ollama'])
+      .enum(['openai', 'anthropic', 'ollama', 'openai-compatible'])
       .default('openai'),
     EXTRACTION_MODEL: optionalString,
+    EXTRACTION_BASE_URL: optionalString,
+    EXTRACTION_API_KEY: optionalString,
     EXTRACTION_DISABLE_THINKING: z
       .enum(['true', 'false'])
       .default('true')
@@ -165,6 +167,10 @@ const configSchema = z
     const needsOpenAiForEmbedding = cfg.EMBEDDING_PROVIDER === 'openai';
     const needsOpenAiForExtraction =
       cfg.EXTRACTION_ENABLED && cfg.EXTRACTION_PROVIDER === 'openai';
+    const needsBaseUrlForOpenAiCompatible =
+      cfg.EXTRACTION_ENABLED
+      && cfg.EXTRACTION_PROVIDER === 'openai-compatible'
+      && !cfg.EXTRACTION_BASE_URL;
 
     if ((needsOpenAiForEmbedding || needsOpenAiForExtraction) && !cfg.OPENAI_API_KEY) {
       const reasons: string[] = [];
@@ -178,6 +184,14 @@ const configSchema = z
         code: z.ZodIssueCode.custom,
         path: ['OPENAI_API_KEY'],
         message: `OPENAI_API_KEY is required because ${reasons.join(' and ')}`
+      });
+    }
+
+    if (needsBaseUrlForOpenAiCompatible) {
+      ctx.addIssue({
+        code: z.ZodIssueCode.custom,
+        path: ['EXTRACTION_BASE_URL'],
+        message: 'EXTRACTION_BASE_URL is required for EXTRACTION_PROVIDER=openai-compatible'
       });
     }
   });

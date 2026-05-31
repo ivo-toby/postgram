@@ -153,7 +153,7 @@ The same service layer is exposed through:
 - REST API
 - MCP SSE endpoint
 - `pgm` CLI
-- `pgm-admin` CLI
+- `pgm-admin` CLI (`./bin/pgmadmin`)
 - Browser extensions for [Chrome](./packages/browser-extension-chrome) and
   [Firefox](./packages/browser-extension-firefox) — one-click web clipper
   that captures the current page or text selection via the REST API.
@@ -253,33 +253,33 @@ Expected:
 
 ### Embeddings
 
-| Variable               | Required             | Default                         | Description                                                                                                               |
-| ---------------------- | -------------------- | ------------------------------- | ------------------------------------------------------------------------------------------------------------------------- |
-| `EMBEDDING_PROVIDER`   | no                   | `openai`                        | `openai` or `ollama`                                                                                                      |
-| `EMBEDDING_MODEL`      | no                   | per-provider                    | Defaults: `text-embedding-3-small` (openai, 1536 dims), `bge-m3` (ollama, 1024 dims)                                      |
-| `EMBEDDING_DIMENSIONS` | no                   | per-provider                    | Must match the active `embedding_models` row. Run `pgm-admin embeddings migrate --target-dimensions <N> --yes` to change. |
-| `EMBEDDING_BASE_URL`   | when provider=ollama | falls back to `OLLAMA_BASE_URL` | Embedding host. Independent from LLM-extraction host so embeddings and inference can target different machines.           |
-| `EMBEDDING_API_KEY`    | no                   |                                 | Optional bearer token for `EMBEDDING_BASE_URL`.                                                                           |
+| Variable               | Required             | Default                         | Description                                                                                                                     |
+| ---------------------- | -------------------- | ------------------------------- | ------------------------------------------------------------------------------------------------------------------------------- |
+| `EMBEDDING_PROVIDER`   | no                   | `openai`                        | `openai` or `ollama`                                                                                                            |
+| `EMBEDDING_MODEL`      | no                   | per-provider                    | Defaults: `text-embedding-3-small` (openai, 1536 dims), `bge-m3` (ollama, 1024 dims)                                            |
+| `EMBEDDING_DIMENSIONS` | no                   | per-provider                    | Must match the active `embedding_models` row. Run `./bin/pgm-admin embeddings migrate --target-dimensions <N> --yes` to change. |
+| `EMBEDDING_BASE_URL`   | when provider=ollama | falls back to `OLLAMA_BASE_URL` | Embedding host. Independent from LLM-extraction host so embeddings and inference can target different machines.                 |
+| `EMBEDDING_API_KEY`    | no                   |                                 | Optional bearer token for `EMBEDDING_BASE_URL`.                                                                                 |
 
 See [`specs/002-local-embeddings/quickstart.md`](specs/002-local-embeddings/quickstart.md) for a walkthrough of fresh-install-on-Ollama and migrating from OpenAI.
 
 ### LLM Extraction
 
-| Variable              | Required                | Default                  | Description                                                                                                       |
-| --------------------- | ----------------------- | ------------------------ | ----------------------------------------------------------------------------------------------------------------- |
-| `EXTRACTION_ENABLED`                     | no                      | `false`                         | Enable LLM relationship extraction                                                                                |
-| `EXTRACTION_PROVIDER`                    | no                      | `openai`                        | LLM provider: `openai`, `anthropic`, or `ollama`                                                                  |
-| `EXTRACTION_MODEL`                       | no                      | per-provider                    | Model name (defaults: `gpt-4o-mini` for OpenAI, `claude-haiku-4-5-20251001` for Anthropic, `llama3.2` for Ollama) |
-| `EXTRACTION_AUTO_CREATE_ENTITIES`        | no                      | `false`                         | When true, extraction creates stub entities for referenced targets that don't yet exist (e.g. a person named in a document gets a `person` entity automatically). Tagged `auto-created`; metadata records the originating document. |
-| `EXTRACTION_AUTO_CREATE_TYPES`           | no                      | `person,project,interaction`    | Comma-separated list of entity types eligible for auto-creation. `document`, `task`, `memory` are intentionally excluded from the default to keep those user-authored. |
-| `EXTRACTION_AUTO_CREATE_MIN_CONFIDENCE`  | no                      | `0.7`                           | Minimum per-extraction confidence (0–1) required to auto-create an entity. Raise to cut noise, lower for a denser graph. |
-| `ANTHROPIC_API_KEY`                      | when provider=anthropic |                                 | Anthropic API key                                                                                                 |
-| `OLLAMA_BASE_URL`                        | no                      | `http://localhost:11434`        | Ollama server URL                                                                                                 |
-| `EXTRACTION_REASONING_EFFORT`            | no                      | unset                           | `minimal` \| `low` \| `medium` \| `high`. Forwarded as `reasoning_effort` to OpenAI and Ollama for reasoning models (o-series, gpt-5, gpt-oss). When set, overrides the implicit `minimal` that `EXTRACTION_DISABLE_THINKING=true` sends to OpenAI. |
-| `LLM_REQUEST_TIMEOUT_MS`                 | no                      | `120000`                        | Hard cap per LLM call in milliseconds. Bump this when running slow local models (e.g. `gpt-oss:120b-cloud`).      |
-| `EXTRACTION_SEMANTIC_NEIGHBORS_ENABLED`  | no                      | `false`                         | Enable semantic neighbor linking (see below). |
-| `EXTRACTION_SEMANTIC_NEIGHBORS_MAX`      | no                      | `10`                            | Maximum number of neighbor edges to create per entity. |
-| `EXTRACTION_SEMANTIC_NEIGHBORS_MIN_SIMILARITY` | no              | `0.65`                          | Minimum cosine similarity (0–1) for an entity to qualify as a neighbor. Raise to reduce noise; lower if you're finding too few neighbors. The right value depends on your embedding model's similarity distribution — use `pgm-admin link-neighbors --dry-run` to inspect actual scores before tuning. |
+| Variable                                       | Required                | Default                      | Description                                                                                                                                                                                                                                                                                                  |
+| ---------------------------------------------- | ----------------------- | ---------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------ |
+| `EXTRACTION_ENABLED`                           | no                      | `false`                      | Enable LLM relationship extraction                                                                                                                                                                                                                                                                           |
+| `EXTRACTION_PROVIDER`                          | no                      | `openai`                     | LLM provider: `openai`, `anthropic`, or `ollama`                                                                                                                                                                                                                                                             |
+| `EXTRACTION_MODEL`                             | no                      | per-provider                 | Model name (defaults: `gpt-4o-mini` for OpenAI, `claude-haiku-4-5-20251001` for Anthropic, `llama3.2` for Ollama)                                                                                                                                                                                            |
+| `EXTRACTION_AUTO_CREATE_ENTITIES`              | no                      | `false`                      | When true, extraction creates stub entities for referenced targets that don't yet exist (e.g. a person named in a document gets a `person` entity automatically). Tagged `auto-created`; metadata records the originating document.                                                                          |
+| `EXTRACTION_AUTO_CREATE_TYPES`                 | no                      | `person,project,interaction` | Comma-separated list of entity types eligible for auto-creation. `document`, `task`, `memory` are intentionally excluded from the default to keep those user-authored.                                                                                                                                       |
+| `EXTRACTION_AUTO_CREATE_MIN_CONFIDENCE`        | no                      | `0.7`                        | Minimum per-extraction confidence (0–1) required to auto-create an entity. Raise to cut noise, lower for a denser graph.                                                                                                                                                                                     |
+| `ANTHROPIC_API_KEY`                            | when provider=anthropic |                              | Anthropic API key                                                                                                                                                                                                                                                                                            |
+| `OLLAMA_BASE_URL`                              | no                      | `http://localhost:11434`     | Ollama server URL                                                                                                                                                                                                                                                                                            |
+| `EXTRACTION_REASONING_EFFORT`                  | no                      | unset                        | `minimal` \| `low` \| `medium` \| `high`. Forwarded as `reasoning_effort` to OpenAI and Ollama for reasoning models (o-series, gpt-5, gpt-oss). When set, overrides the implicit `minimal` that `EXTRACTION_DISABLE_THINKING=true` sends to OpenAI.                                                          |
+| `LLM_REQUEST_TIMEOUT_MS`                       | no                      | `120000`                     | Hard cap per LLM call in milliseconds. Bump this when running slow local models (e.g. `gpt-oss:120b-cloud`).                                                                                                                                                                                                 |
+| `EXTRACTION_SEMANTIC_NEIGHBORS_ENABLED`        | no                      | `false`                      | Enable semantic neighbor linking (see below).                                                                                                                                                                                                                                                                |
+| `EXTRACTION_SEMANTIC_NEIGHBORS_MAX`            | no                      | `10`                         | Maximum number of neighbor edges to create per entity.                                                                                                                                                                                                                                                       |
+| `EXTRACTION_SEMANTIC_NEIGHBORS_MIN_SIMILARITY` | no                      | `0.65`                       | Minimum cosine similarity (0–1) for an entity to qualify as a neighbor. Raise to reduce noise; lower if you're finding too few neighbors. The right value depends on your embedding model's similarity distribution — use `./bin/pgm-admin link-neighbors --dry-run` to inspect actual scores before tuning. |
 
 **Semantic neighbor linking**: the LLM extraction pass only finds entities that
 are explicitly named in the source content. It misses entities that are
@@ -295,30 +295,30 @@ enrichment step that runs before extraction. Edges created by this pass carry
 edges. Entities already linked by the LLM pass are excluded to avoid a weaker
 `related_to` edge shadowing a stronger-typed edge for the same pair.
 
-**Backfilling and maintaining neighbor edges**: the `pgm-admin link-neighbors`
+**Backfilling and maintaining neighbor edges**: the `./bin/pgm-admin link-neighbors`
 command runs the semantic neighbor pass directly — no LLM calls, no extraction
 queue, just cosine similarity over stored chunks. Use it to backfill an
 existing graph or as a recurring maintenance job after new entities are added.
 
 ```bash
 # Backfill all enriched entities (safe to re-run — edges are upserted).
-pgm-admin link-neighbors --all
+./bin/pgm-admin link-neighbors --all
 
 # Only documents:
-pgm-admin link-neighbors --type document
+./bin/pgm-admin link-neighbors --type document
 
 # Single entity:
-pgm-admin link-neighbors --id <uuid>
+./bin/pgm-admin link-neighbors --id <uuid>
 
 # Preview what would be linked and at what similarity — no edges created:
-pgm-admin link-neighbors --id <uuid> --dry-run
-pgm-admin link-neighbors --all --dry-run
+./bin/pgm-admin link-neighbors --id <uuid> --dry-run
+./bin/pgm-admin link-neighbors --all --dry-run
 
 # Tune the similarity threshold or edge cap:
-pgm-admin link-neighbors --all --min-similarity 0.75 --max-neighbors 5
+./bin/pgm-admin link-neighbors --all --min-similarity 0.75 --max-neighbors 5
 
 # Process in bounded batches (oldest-first):
-pgm-admin link-neighbors --all --limit 500
+./bin/pgm-admin link-neighbors --all --limit 500
 ```
 
 Use `--dry-run` to inspect actual cosine similarity scores before committing edges — especially useful when tuning `--min-similarity` for a new embedding model. The output shows each entity and its candidate neighbors with their raw similarity scores.
@@ -328,7 +328,7 @@ If you also want to re-run LLM extraction at the same time (e.g. after enabling
 worker runs both the LLM pass and the neighbor pass together:
 
 ```bash
-pgm-admin reextract --all
+./bin/pgm-admin reextract --all
 ```
 
 Note: `--clean-edges` on `reextract` only removes edges with
@@ -437,7 +437,7 @@ The server exposes:
 Create an API key (using the `bin/pgm` wrapper; see [Admin CLI](#admin-cli-pgm-admin) below for details):
 
 ```bash
-./bin/pgm key create \
+./bin/pgm-admin key create \
   --name local \
   --scopes read,write,delete \
   --visibility personal,work,shared \
@@ -500,12 +500,23 @@ capped at ~50 files or ~4 MB, whichever comes first.
 
   ```json
   {
-    "embedding": {"pending": 0, "completed": 120, "failed": 0, "retry_eligible": 0, "oldest_pending_secs": null},
-    "extraction": {"pending": 2, "completed": 98, "failed": 3},
+    "embedding": {
+      "pending": 0,
+      "completed": 120,
+      "failed": 0,
+      "retry_eligible": 0,
+      "oldest_pending_secs": null
+    },
+    "extraction": { "pending": 2, "completed": 98, "failed": 3 },
     "failures": [
-      {"id": "…", "type": "document", "kind": "extraction",
-       "error": "llm context exceeded", "path": "notes/long.md",
-       "updatedAt": "2026-04-22T10:12:33Z"}
+      {
+        "id": "…",
+        "type": "document",
+        "kind": "extraction",
+        "error": "llm context exceeded",
+        "path": "notes/long.md",
+        "updatedAt": "2026-04-22T10:12:33Z"
+      }
     ]
   }
   ```
@@ -608,30 +619,30 @@ The easy way — use the `bin/pgm` wrapper shipped in the repo. It runs
 or when the startup dimension gate is refusing to boot):
 
 ```bash
-./bin/pgm <command> [args...]
+./bin/pgm-admin <command> [args...]
 ```
 
 Examples:
 
 ```bash
-./bin/pgm key create --name local --scopes read,write,delete --visibility personal,work,shared
-./bin/pgm stats
-./bin/pgm embeddings migrate --target-dimensions 1024 --dry-run
-./bin/pgm embeddings migrate --target-dimensions 1024 --yes
+./bin/pgm-admin key create --name local --scopes read,write,delete --visibility personal,work,shared
+./bin/pgm-admin stats
+./bin/pgm-admin embeddings migrate --target-dimensions 1024 --dry-run
+./bin/pgm-admin embeddings migrate --target-dimensions 1024 --yes
 ```
 
 Shell alias for daily use (add to `~/.bashrc` or `~/.zshrc` on your docker
 host):
 
 ```bash
-alias pgm='/var/lib/docker/configs/postgram/bin/pgm'
-# then just: pgm stats
+alias pgm-admin='/var/lib/docker/configs/postgram/bin/pgm-admin'
+# then just: pgm-admin stats
 ```
 
 Override with env if your service/container names differ:
 
 ```bash
-PGM_SERVICE=mcp-server PGM_CONTAINER=postgram-mcp-server-1 ./bin/pgm stats
+PGM_SERVICE=mcp-server PGM_CONTAINER=postgram-mcp-server-1 ./bin/pgm-admin stats
 ```
 
 Direct equivalent without the wrapper (for reference):
@@ -683,6 +694,7 @@ Main commands:
   ```bash
   pgm-admin improve-graph --type document --no-edges-only --provider ollama --model <model>
   ```
+
 - `prune-edges --below <threshold>` — delete edges with `confidence` below
   the threshold. Scoped to `source='llm-extraction'` by default; pass
   `--source any` to include all, or `--source <name>` for a specific one.

@@ -56,6 +56,18 @@ describe('queue-service', () => {
     expect(status.failures).toBeUndefined();
   }, 120_000);
 
+  it('reports zero extraction counts when extraction is enabled but no entities have been queued yet', async () => {
+    if (!database) {
+      throw new Error('test database not initialized');
+    }
+
+    const status = await getQueueStatus(database.pool, unrestrictedAuth(), {
+      extractionEnabled: true
+    });
+
+    expect(status.extraction).toEqual({ pending: 0, completed: 0, failed: 0 });
+  }, 120_000);
+
   it('includes failure messages and paths when requested', async () => {
     if (!database) {
       throw new Error('test database not initialized');

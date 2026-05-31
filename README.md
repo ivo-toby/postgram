@@ -7,6 +7,23 @@ single place to store memories, notes, people, projects, and tasks, then
 retrieve them over REST, MCP, and a CLI with semantic search and API-key-based
 access control.
 
+<table>
+  <tr>
+    <td width="50%">
+      <a href="https://www.youtube.com/watch?v=xr7u11gtYgM">
+        <img src="https://img.youtube.com/vi/xr7u11gtYgM/maxresdefault.jpg" alt="Watch the Postgram demo video" />
+      </a>
+      <br />
+      <sub>Watch the demo</sub>
+    </td>
+    <td width="50%">
+      <img src="assets/search.png" alt="Postgram search interface showing ranked knowledge results" />
+      <br />
+      <sub>Search across memories, documents, people, projects, and tasks</sub>
+    </td>
+  </tr>
+</table>
+
 ## What It Is
 
 Postgram is a personal-scale knowledge backend built for:
@@ -89,6 +106,10 @@ BM25-only mode. Results include:
 - matching chunk text
 - optional 1-hop graph neighbors (`expand_graph` parameter)
 
+<p align="center">
+  <img src="assets/search.png" alt="Hybrid search results in Postgram" />
+</p>
+
 ### 4. Knowledge Graph
 
 Entities can be connected by typed directional edges:
@@ -100,6 +121,10 @@ Entities can be connected by typed directional edges:
 - duplicate edge prevention via `UNIQUE(source_id, target_id, relation)`
 - edges are created manually via `link`/`unlink` or automatically by the
   LLM extraction pipeline
+
+<p align="center">
+  <img src="assets/graph.png" alt="Postgram knowledge graph view" />
+</p>
 
 ### 5. LLM Extraction
 
@@ -114,6 +139,10 @@ Supported providers:
 | OpenAI    | `gpt-4o-mini`               | `OPENAI_API_KEY`                                      |
 | Anthropic | `claude-haiku-4-5-20251001` | `ANTHROPIC_API_KEY`                                   |
 | Ollama    | `llama3.2`                  | `OLLAMA_BASE_URL` (default: `http://localhost:11434`) |
+
+<p align="center">
+  <img src="assets/embeddings.png" alt="Postgram embedding projection view" />
+</p>
 
 ### 6. Document Sync
 

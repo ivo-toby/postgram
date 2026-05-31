@@ -976,7 +976,7 @@ program
   )
   .option(
     '--provider <name>',
-    'extraction provider override: openai | anthropic | ollama. Stored on each queued row alongside --model. Cleared on success.'
+    'extraction provider override: openai | anthropic | ollama | openai-compatible. Stored on each queued row alongside --model. Cleared on success.'
   )
   .option(
     '--no-edges-only',
@@ -1019,7 +1019,7 @@ program
       limit = parsed;
     }
 
-    const allowedProviders = ['openai', 'anthropic', 'ollama'] as const;
+    const allowedProviders = ['openai', 'anthropic', 'ollama', 'openai-compatible'] as const;
     if (
       options.provider !== undefined &&
       !(allowedProviders as readonly string[]).includes(options.provider)

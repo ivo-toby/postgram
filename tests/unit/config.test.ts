@@ -62,6 +62,40 @@ describe('config', () => {
     expect(cfg.EXTRACTION_PROVIDER).toBe('ollama');
   });
 
+  it('allows OpenAI-compatible extraction with a custom base URL and no OPENAI_API_KEY', () => {
+    const cfg = loadConfig(
+      baseEnv({
+        EMBEDDING_PROVIDER: 'ollama',
+        EMBEDDING_DIMENSIONS: '1024',
+        EMBEDDING_BASE_URL: 'http://e.local',
+        EXTRACTION_ENABLED: 'true',
+        EXTRACTION_PROVIDER: 'openai-compatible',
+        EXTRACTION_MODEL: 'gemma-4-e4b-it-OptiQ-4bit',
+        EXTRACTION_BASE_URL: 'http://host.docker.internal:8000/v1',
+        EXTRACTION_API_KEY: 'local-key'
+      })
+    );
+
+    expect(cfg.EXTRACTION_PROVIDER).toBe('openai-compatible');
+    expect(cfg.EXTRACTION_BASE_URL).toBe('http://host.docker.internal:8000/v1');
+    expect(cfg.EXTRACTION_API_KEY).toBe('local-key');
+    expect(cfg.OPENAI_API_KEY).toBeUndefined();
+  });
+
+  it('rejects enabled OpenAI-compatible extraction without EXTRACTION_BASE_URL', () => {
+    expect(() =>
+      loadConfig(
+        baseEnv({
+          EMBEDDING_PROVIDER: 'ollama',
+          EMBEDDING_DIMENSIONS: '1024',
+          EMBEDDING_BASE_URL: 'http://e.local',
+          EXTRACTION_ENABLED: 'true',
+          EXTRACTION_PROVIDER: 'openai-compatible'
+        })
+      )
+    ).toThrowError(/EXTRACTION_BASE_URL is required/);
+  });
+
   it('accepts OpenAI defaults when OPENAI_API_KEY is present', () => {
     const cfg = loadConfig(baseEnv({ OPENAI_API_KEY: 'sk-test' }));
     expect(cfg.EMBEDDING_PROVIDER).toBe('openai');

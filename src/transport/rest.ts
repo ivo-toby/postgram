@@ -6,7 +6,14 @@ import type { AuthContext } from '../auth/types.js';
 import type { EmbeddingService } from '../services/embedding-service.js';
 import { createEdge, deleteEdge, listEdges, expandGraph } from '../services/edge-service.js';
 import { getEntityEmbeddings } from '../services/embedding-query-service.js';
-import { listEntities, recallEntity, softDeleteEntity, storeEntity, updateEntity } from '../services/entity-service.js';
+import {
+  listEntities,
+  recallEntity,
+  softDeleteEntity,
+  storeEntity,
+  storeSessionContextMemory,
+  updateEntity
+} from '../services/entity-service.js';
 import { getQueueStatus } from '../services/queue-service.js';
 import { searchEntities } from '../services/search-service.js';
 import {
@@ -31,6 +38,7 @@ const entityTypeSchema = z.enum([
 
 const visibilitySchema = z.enum(['personal', 'work', 'shared']);
 const ownerSchema = z.string().trim().min(1);
+const memoryRoleSchema = z.enum(['durable_memory', 'session_context']);
 
 const statusSchema = z.enum([
   'active',
@@ -54,6 +62,19 @@ const storeEntitySchema = z.object({
   metadata: z.record(z.unknown()).optional()
 });
 
+const storeSessionContextSchema = z.object({
+  content: z.string().min(1),
+  visibility: visibilitySchema.optional(),
+  owner: ownerSchema.optional(),
+  session_id: z.string().optional(),
+  agent_id: z.string().optional(),
+  topic: z.string().optional(),
+  tags: z.array(z.string()).optional(),
+  promotable: z.boolean().optional(),
+  groom_after: z.string().optional(),
+  expires_at: z.string().optional()
+});
+
 const updateEntitySchema = z.object({
   version: z.number().int().positive(),
   content: z.string().nullable().optional(),
@@ -74,7 +95,9 @@ const searchEntitiesSchema = z.object({
   threshold: z.number().min(0).max(1).optional(),
   recency_weight: z.number().min(0).optional(),
   expand_graph: z.boolean().optional(),
-  include_archived: z.boolean().optional()
+  include_archived: z.boolean().optional(),
+  memory_role: memoryRoleSchema.optional(),
+  include_other_clients_session_context: z.boolean().optional()
 });
 
 const taskCreateSchema = z.object({
@@ -232,6 +255,29 @@ export function registerRestRoutes(
     return c.json({ entity: toStoredEntity(result.value) }, 201);
   });
 
+  app.post('/api/memory/session-context', async (c) => {
+    const auth = c.get('auth');
+    const body = parseJsonBody(storeSessionContextSchema, await c.req.json());
+    const result = await storeSessionContextMemory(pool, auth, {
+      content: body.content,
+      visibility: body.visibility,
+      owner: body.owner,
+      sessionId: body.session_id,
+      agentId: body.agent_id,
+      topic: body.topic,
+      tags: body.tags,
+      promotable: body.promotable,
+      groomAfter: body.groom_after,
+      expiresAt: body.expires_at
+    });
+
+    if (result.isErr()) {
+      throw result.error;
+    }
+
+    return c.json({ entity: toStoredEntity(result.value) }, 201);
+  });
+
   app.post('/api/entities/embeddings', async (c) => {
     const auth = c.get('auth');
     const body = parseJsonBody(embeddingsRequestSchema, await c.req.json());
@@ -363,7 +409,9 @@ export function registerRestRoutes(
         threshold: body.threshold,
         recencyWeight: body.recency_weight,
         expandGraph: body.expand_graph,
-        includeArchived: body.include_archived
+        includeArchived: body.include_archived,
+        memoryRole: body.memory_role,
+        includeOtherClientsSessionContext: body.include_other_clients_session_context
       },
       {
         embeddingService: options.embeddingService

@@ -198,6 +198,60 @@ describe('search-service', () => {
     expect(results.every((entry) => entry.entity.visibility === 'work')).toBe(true);
   }, 120_000);
 
+  it('filters session-context search to the caller client', async () => {
+    if (!database) {
+      throw new Error('test database not initialized');
+    }
+
+    const embeddingService = createEmbeddingService();
+    const auth = makeAuthContext();
+
+    await storeEntity(database.pool, { ...auth, clientId: 'codex' }, {
+      type: 'memory',
+      visibility: 'personal',
+      content: 'Memory lifecycle roles discussion for Codex.',
+      tags: ['session-context'],
+      metadata: {
+        memory_role: 'session_context',
+        session_scope: { kind: 'client', client_id: 'codex' }
+      }
+    });
+
+    await storeEntity(database.pool, { ...auth, clientId: 'talon' }, {
+      type: 'memory',
+      visibility: 'personal',
+      content: 'Memory lifecycle roles discussion for Talon.',
+      tags: ['session-context'],
+      metadata: {
+        memory_role: 'session_context',
+        session_scope: { kind: 'client', client_id: 'talon' }
+      }
+    });
+
+    await createEnrichmentWorker({
+      pool: database.pool,
+      embeddingService
+    }).runOnce();
+
+    const result = await searchEntities(
+      database.pool,
+      { ...auth, clientId: 'codex' },
+      {
+        query: 'memory lifecycle roles discussion',
+        type: 'memory',
+        memoryRole: 'session_context',
+        threshold: 0,
+        limit: 10
+      },
+      { embeddingService }
+    );
+
+    expect(result.isOk()).toBe(true);
+    const contents = result._unsafeUnwrap().results.map((entry) => entry.entity.content);
+    expect(contents).toContain('Memory lifecycle roles discussion for Codex.');
+    expect(contents).not.toContain('Memory lifecycle roles discussion for Talon.');
+  }, 120_000);
+
   it('excludes archived entities from search by default', async () => {
     if (!database) {
       throw new Error('test database not initialized');

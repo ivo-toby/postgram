@@ -3,6 +3,7 @@ import { afterAll, beforeAll, beforeEach, describe, expect, it } from 'vitest';
 import {
   MigrateRefusal,
   assertEmbeddingDimensionAgreement,
+  ensureEmbeddingIdentityAgreement,
   runMigrate
 } from '../../src/services/embeddings/admin.js';
 import { storeEntity } from '../../src/services/entity-service.js';
@@ -316,6 +317,73 @@ describe('pgm-admin embeddings migrate', () => {
     expect(mismatch?.message).toContain('identity mismatch');
     expect(mismatch?.message).toContain('pgm-admin embeddings migrate');
   }, 60_000);
+
+  it('bootstraps a mismatched empty embedding store to the configured model', async () => {
+    if (!database) throw new Error('db not ready');
+
+    const mismatch = await ensureEmbeddingIdentityAgreement(database.pool, {
+      provider: 'ollama',
+      model: 'bge-m3',
+      dimensions: 1024
+    });
+
+    expect(mismatch).toBeNull();
+
+    const activeModel = await database.pool.query<{
+      provider: string;
+      name: string;
+      dimensions: number;
+    }>(
+      'SELECT provider, name, dimensions FROM embedding_models WHERE is_active = true'
+    );
+    expect(activeModel.rows[0]).toEqual({
+      provider: 'ollama',
+      name: 'bge-m3',
+      dimensions: 1024
+    });
+
+    const colTypmod = await database.pool.query<{ atttypmod: number }>(
+      `
+        SELECT a.atttypmod
+        FROM pg_attribute a
+        JOIN pg_class c ON a.attrelid = c.oid
+        WHERE c.relname = 'chunks' AND a.attname = 'embedding'
+      `
+    );
+    expect(colTypmod.rows[0]?.atttypmod).toBe(1024);
+
+    const audit = await database.pool.query<{ details: { target: { name: string } } }>(
+      `SELECT details FROM audit_log WHERE operation = 'embeddings.bootstrap' ORDER BY timestamp DESC LIMIT 1`
+    );
+    expect(audit.rows[0]?.details?.target?.name).toBe('bge-m3');
+  }, 180_000);
+
+  it('does not bootstrap a mismatched embedding store that already has chunks', async () => {
+    if (!database) throw new Error('db not ready');
+    await seedChunks(database, 1);
+
+    const mismatch = await ensureEmbeddingIdentityAgreement(database.pool, {
+      provider: 'ollama',
+      model: 'bge-m3',
+      dimensions: 1024
+    });
+
+    expect(mismatch).not.toBeNull();
+    expect(mismatch?.message).toContain('pgm-admin embeddings migrate');
+
+    const activeModel = await database.pool.query<{
+      provider: string;
+      name: string;
+      dimensions: number;
+    }>(
+      'SELECT provider, name, dimensions FROM embedding_models WHERE is_active = true'
+    );
+    expect(activeModel.rows[0]).toEqual({
+      provider: 'openai',
+      name: 'text-embedding-3-small',
+      dimensions: 1536
+    });
+  }, 120_000);
 
   it('writes an audit row inside the migration transaction', async () => {
     if (!database) throw new Error('db not ready');

@@ -19,7 +19,7 @@ import {
   type EmbeddingProvider,
   type EmbeddingProviderConfig
 } from './services/embeddings/providers.js';
-import { assertEmbeddingDimensionAgreement } from './services/embeddings/admin.js';
+import { ensureEmbeddingIdentityAgreement } from './services/embeddings/admin.js';
 import { createEnrichmentWorker } from './services/enrichment-worker.js';
 import { registerMcpRoutes } from './transport/mcp.js';
 import { registerRestRoutes } from './transport/rest.js';
@@ -215,7 +215,7 @@ export async function startServer(): Promise<{
     'embedding provider active'
   );
 
-  const mismatch = await assertEmbeddingDimensionAgreement(pool, {
+  const mismatch = await ensureEmbeddingIdentityAgreement(pool, {
     provider: embeddingProvider.name,
     model: embeddingProvider.model,
     dimensions: embeddingProvider.dimensions

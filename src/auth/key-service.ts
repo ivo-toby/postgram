@@ -185,22 +185,23 @@ export function validateKey(
           FROM api_keys
           WHERE key_prefix = $1
             AND is_active = true
-          LIMIT 1
+          ORDER BY created_at DESC
         `,
         [keyPrefix]
       );
 
-      const row = result.rows[0];
-      if (!row) {
+      if (result.rows.length === 0) {
         throw new AppError(ErrorCode.UNAUTHORIZED, 'Invalid API key');
       }
 
-      const valid = await argon2.verify(row.key_hash, plaintextKey);
-      if (!valid) {
-        throw new AppError(ErrorCode.UNAUTHORIZED, 'Invalid API key');
+      for (const row of result.rows) {
+        const valid = await argon2.verify(row.key_hash, plaintextKey);
+        if (valid) {
+          return toAuthContext(mapApiKeyRecord(row));
+        }
       }
 
-      return toAuthContext(mapApiKeyRecord(row));
+      throw new AppError(ErrorCode.UNAUTHORIZED, 'Invalid API key');
     })(),
     (error) => toAppError(error, 'Failed to validate API key')
   );

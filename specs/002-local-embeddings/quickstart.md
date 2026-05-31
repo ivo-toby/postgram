@@ -22,6 +22,8 @@ Two scenarios: fresh install on Ollama, and migrating an existing OpenAI deploym
     # OLLAMA_BASE_URL=https://inference.example.com
     ```
 
+   If Postgram runs in Docker and Ollama runs directly on the Docker host, set `EMBEDDING_BASE_URL=http://host.docker.internal:11434`. Do not use `localhost` for that setup: inside the container, `localhost` is the Postgram container itself.
+
 3. Start the server. `OPENAI_API_KEY` is not required in this configuration.
 4. Startup log shows: `embedding provider active provider=ollama model=bge-m3 dimensions=1024 host=https://embeddings.example.com`.
 5. Ingest entities and run searches through the usual REST/MCP endpoints. Enrichment uses the configured embedding host.

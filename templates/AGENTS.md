@@ -75,7 +75,7 @@ mcp__postgram__store_session_context {
   "content": "Session context: we are debugging X. Current hypothesis is Y; next step is Z.",
   "visibility": "personal",
   "topic": "project-name",
-  "agent_id": "claude",
+  "agent_id": "codex",
   "tags": ["project-name", "session-context"]
 }
 ```

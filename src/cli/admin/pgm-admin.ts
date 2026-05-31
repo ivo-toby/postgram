@@ -15,6 +15,10 @@ import {
 } from '../../services/embeddings/admin.js';
 import { createEdge } from '../../services/edge-service.js';
 import { findSemanticNeighbors } from '../../services/extraction-service.js';
+import {
+  groomSessionContext,
+  previewSessionContextGrooming
+} from '../../services/memory-grooming-service.js';
 import { AppError, ErrorCode, toErrorResponse } from '../../util/errors.js';
 import {
   handleCliFailure,
@@ -1543,6 +1547,76 @@ export function parseDuration(value: string): string {
   }
   return `${days} days`;
 }
+
+const memoryCommand = program
+  .command('memory')
+  .description('Memory maintenance commands');
+
+memoryCommand
+  .command('groom')
+  .description('Preview or archive eligible session-context memories')
+  .requiredOption('--client-id <clientId>', 'client id to groom')
+  .option('--limit <limit>', 'maximum candidates', '50')
+  .option('--dry-run', 'preview without mutating')
+  .option('--yes', 'confirm mutation')
+  .action(async (options, command) => {
+    const json = isJsonMode(command);
+    const limit = Number.parseInt(options.limit, 10);
+    if (!Number.isInteger(limit) || limit <= 0) {
+      await handleCliFailure(new Error('--limit must be a positive integer'), json);
+      return;
+    }
+
+    await runWithPool(json, async (pool) => {
+      if (options.dryRun) {
+        const preview = await previewSessionContextGrooming(pool, {
+          clientId: options.clientId,
+          now: new Date(),
+          limit
+        });
+        if (preview.isErr()) {
+          throw preview.error;
+        }
+
+        return json
+          ? {
+              dryRun: true,
+              archived: 0,
+              eligible: preview.value.eligible
+            }
+          : [
+              `Would archive ${preview.value.eligible.length} session-context memories for client ${options.clientId}`
+            ];
+      }
+
+      const result = await groomSessionContext(pool, {
+        clientId: options.clientId,
+        now: new Date(),
+        mode: 'archive',
+        dryRun: false,
+        confirm: Boolean(options.yes),
+        limit
+      });
+      if (result.isErr()) {
+        throw result.error;
+      }
+
+      await appendAuditEntry(pool, {
+        operation: 'memory.groom',
+        details: {
+          clientId: options.clientId,
+          archived: result.value.archived,
+          limit
+        }
+      });
+
+      return json
+        ? result.value
+        : [
+            `Archived ${result.value.archived} session-context memories for client ${options.clientId}`
+          ];
+    });
+  });
 
 program
   .command('purge')

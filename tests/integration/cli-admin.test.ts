@@ -1040,6 +1040,73 @@ describe('pgm-admin CLI', () => {
     expect(auditRows.rows[0]?.details.onlyFailed).toBe(true);
   }, 120_000);
 
+  it('memory groom archives eligible session context for one client', async () => {
+    if (!database) {
+      throw new Error('test database not initialized');
+    }
+
+    const databaseUrl = getDatabaseUrl(database);
+    const seededKey = (await createKey(database.pool, {
+      name: `memory-groom-${crypto.randomUUID()}`,
+      clientId: 'codex',
+      scopes: ['read', 'write', 'delete'],
+      allowedVisibility: ['personal']
+    }))._unsafeUnwrap();
+    const auth: AuthContext = {
+      ...makeAuthContext(seededKey.record.id),
+      clientId: 'codex',
+      allowedVisibility: ['personal']
+    };
+
+    const eligible = (await storeEntity(database.pool, auth, {
+      type: 'memory',
+      content: 'eligible session context',
+      visibility: 'personal',
+      metadata: {
+        memory_role: 'session_context',
+        session_scope: { kind: 'client', client_id: 'codex' },
+        groom_after: '2026-01-01T00:00:00.000Z'
+      }
+    }))._unsafeUnwrap();
+    const otherClient = (await storeEntity(database.pool, auth, {
+      type: 'memory',
+      content: 'other client context',
+      visibility: 'personal',
+      metadata: {
+        memory_role: 'session_context',
+        session_scope: { kind: 'client', client_id: 'talon' },
+        groom_after: '2026-01-01T00:00:00.000Z'
+      }
+    }))._unsafeUnwrap();
+
+    const dryRun = await runAdmin(
+      ['memory', 'groom', '--client-id', 'codex', '--dry-run', '--json'],
+      { DATABASE_URL: databaseUrl }
+    );
+    const dryRunBody = parseJson(dryRun.stdout) as {
+      dryRun: boolean;
+      archived: number;
+      eligible: Array<{ id: string }>;
+    };
+    expect(dryRunBody).toMatchObject({ dryRun: true, archived: 0 });
+    expect(dryRunBody.eligible.map((entry) => entry.id)).toEqual([eligible.id]);
+
+    const result = await runAdmin(
+      ['memory', 'groom', '--client-id', 'codex', '--yes', '--json'],
+      { DATABASE_URL: databaseUrl }
+    );
+    const body = parseJson(result.stdout) as { dryRun: boolean; archived: number };
+    expect(body).toEqual({ dryRun: false, archived: 1 });
+
+    const rows = await database.pool.query<{ id: string; status: string | null }>(
+      'SELECT id, status FROM entities WHERE id = ANY($1)',
+      [[eligible.id, otherClient.id]]
+    );
+    const byId = Object.fromEntries(rows.rows.map((row) => [row.id, row.status]));
+    expect(byId[eligible.id]).toBe('archived');
+    expect(byId[otherClient.id]).toBeNull();
+  }, 120_000);
+
   describe('purge command', () => {
     it('permanently deletes archived entities', async () => {
       if (!database) throw new Error('test database not initialized');

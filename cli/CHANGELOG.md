@@ -1,3 +1,9 @@
+## [1.28.0](https://github.com/ivo-toby/postgram/compare/cli-v1.27.0...cli-v1.28.0) (2026-05-31)
+
+### Features
+
+* add skip extraction flag ([fcd82e2](https://github.com/ivo-toby/postgram/commit/fcd82e287127490b51e8f0a488f206a0baa643a8))
+
 ## [1.27.0](https://github.com/ivo-toby/postgram/compare/cli-v1.26.0...cli-v1.27.0) (2026-05-31)
 
 ### Features

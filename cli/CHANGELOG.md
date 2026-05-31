@@ -1,3 +1,9 @@
+## [1.28.1](https://github.com/ivo-toby/postgram/compare/cli-v1.28.0...cli-v1.28.1) (2026-05-31)
+
+### Bug Fixes
+
+* **cli:** trigger trusted publishing release ([fc80699](https://github.com/ivo-toby/postgram/commit/fc806998ff95a5c3f1e1fb62fc13e50f546a4350))
+
 ## [1.28.0](https://github.com/ivo-toby/postgram/compare/cli-v1.27.0...cli-v1.28.0) (2026-05-31)
 
 ### Features

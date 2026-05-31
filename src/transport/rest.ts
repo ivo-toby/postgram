@@ -217,6 +217,7 @@ export function registerRestRoutes(
   pool: Pool,
   options: {
     embeddingService?: EmbeddingService | undefined;
+    extractionEnabled?: boolean | undefined;
   } = {}
 ): void {
   app.post('/api/entities', async (c) => {
@@ -481,7 +482,13 @@ export function registerRestRoutes(
       Math.min(100, Number.parseInt(failureLimitParam ?? '20', 10) || 20)
     );
 
-    const payload = await getQueueStatus(pool, auth, { includeFailures, failureLimit });
+    const payload = await getQueueStatus(pool, auth, {
+      includeFailures,
+      failureLimit,
+      ...(options.extractionEnabled !== undefined
+        ? { extractionEnabled: options.extractionEnabled }
+        : {})
+    });
     return c.json(payload);
   });
 

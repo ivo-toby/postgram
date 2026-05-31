@@ -44,6 +44,7 @@ type AppVariables = {
 type AppOptions = {
   pool?: Pool;
   embeddingService?: EmbeddingService | undefined;
+  extractionEnabled?: boolean | undefined;
   getHealthStatus?: () => Promise<HealthStatus> | HealthStatus;
 };
 
@@ -150,10 +151,16 @@ export function createApp(
   if (options.pool) {
     app.use('/api/*', createAuthMiddleware({ pool: options.pool }));
     registerRestRoutes(app, options.pool, {
-      embeddingService: options.embeddingService
+      embeddingService: options.embeddingService,
+      ...(options.extractionEnabled !== undefined
+        ? { extractionEnabled: options.extractionEnabled }
+        : {})
     });
     registerMcpRoutes(app, options.pool, {
-      embeddingService: options.embeddingService
+      embeddingService: options.embeddingService,
+      ...(options.extractionEnabled !== undefined
+        ? { extractionEnabled: options.extractionEnabled }
+        : {})
     });
   }
 
@@ -310,6 +317,7 @@ export async function startServer(): Promise<{
   const app = createApp({
     pool,
     embeddingService,
+    extractionEnabled: config.EXTRACTION_ENABLED,
     getHealthStatus: () => createHealthStatus(pool)
   });
 

@@ -127,6 +127,7 @@ function createSessionServer(
   auth: AuthContext,
   options: {
     embeddingService?: EmbeddingService | undefined;
+    extractionEnabled?: boolean | undefined;
   } = {}
 ) {
   const server = new McpServer({
@@ -491,7 +492,10 @@ function createSessionServer(
     async ({ include_failures, failure_limit }) => {
       const payload = await getQueueStatus(pool, auth, {
         includeFailures: Boolean(include_failures),
-        ...(failure_limit !== undefined ? { failureLimit: failure_limit } : {})
+        ...(failure_limit !== undefined ? { failureLimit: failure_limit } : {}),
+        ...(options.extractionEnabled !== undefined
+          ? { extractionEnabled: options.extractionEnabled }
+          : {})
       });
 
       return toToolSuccess(payload);
@@ -546,6 +550,7 @@ export function registerMcpRoutes(
   pool: Pool,
   options: {
     embeddingService?: EmbeddingService | undefined;
+    extractionEnabled?: boolean | undefined;
   } = {}
 ): void {
   app.all('/mcp', async (c) => {

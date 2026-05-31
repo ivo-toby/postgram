@@ -54,7 +54,11 @@ type FailureRow = {
 export async function getQueueStatus(
   pool: Pool,
   auth: AuthContext,
-  options: { includeFailures?: boolean; failureLimit?: number } = {}
+  options: {
+    includeFailures?: boolean;
+    failureLimit?: number;
+    extractionEnabled?: boolean;
+  } = {}
 ): Promise<QueueStatus> {
   const allowedTypes = auth.allowedTypes;
   const allowedVisibility = auth.allowedVisibility;
@@ -80,7 +84,8 @@ export async function getQueueStatus(
   );
 
   const row = countsResult.rows[0];
-  const extractionEnabled = row ? Number(row.extraction_any) > 0 : false;
+  const extractionEnabled =
+    options.extractionEnabled ?? (row ? Number(row.extraction_any) > 0 : false);
 
   const status: QueueStatus = {
     embedding: {

@@ -115,6 +115,7 @@ export function createPgmClient(options: RestClientOptions) {
       tags?: string[] | undefined;
       source?: string | undefined;
       metadata?: Record<string, unknown> | undefined;
+      skip_extraction?: boolean | undefined;
     }) {
       return request<StoredEntityResponse>(options, '/api/entities', {
         method: 'POST',

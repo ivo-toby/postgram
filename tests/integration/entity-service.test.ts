@@ -121,6 +121,36 @@ describe('entity-service', () => {
     expect(entity.tags).toContain('session-context');
   });
 
+  it('stores entities with skipped extraction while keeping enrichment pending', async () => {
+    if (!database) {
+      throw new Error('test database not initialized');
+    }
+
+    const stored = await storeEntity(database.pool, makeAuthContext(), {
+      type: 'interaction',
+      content: 'large imported transcript that should only be embedded',
+      visibility: 'personal',
+      skipExtraction: true
+    } as never);
+    expect(stored.isOk()).toBe(true);
+
+    const entity = stored._unsafeUnwrap();
+    expect(entity.enrichmentStatus).toBe('pending');
+
+    const row = await database.pool.query<{
+      enrichment_status: string | null;
+      extraction_status: string | null;
+    }>(
+      'SELECT enrichment_status, extraction_status FROM entities WHERE id = $1',
+      [entity.id]
+    );
+
+    expect(row.rows[0]).toMatchObject({
+      enrichment_status: 'pending',
+      extraction_status: 'skipped'
+    });
+  }, 120_000);
+
   it('returns a conflict with the current entity when the version is stale', async () => {
     if (!database) {
       throw new Error('test database not initialized');

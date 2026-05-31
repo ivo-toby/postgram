@@ -499,7 +499,8 @@ describe('pgm-admin CLI', () => {
       scopes: ['read', 'write', 'delete']
     }))._unsafeUnwrap();
 
-    // 1 normal entity (will be marked), 1 archived, 1 auto-created. The
+    // 1 normal entity (will be marked), 1 archived, 1 auto-created, 1 skipped.
+    // The
     // no-content bucket is harder to seed via storeEntity (it requires
     // content), so a direct insert with NULL content covers that case.
     const active = (await storeEntity(database.pool, makeAuthContext(seededKey.record.id), {
@@ -522,6 +523,10 @@ describe('pgm-admin CLI', () => {
       `INSERT INTO entities (type, content, visibility, enrichment_status, extraction_status)
        VALUES ('memory', NULL, 'shared', 'completed', 'completed')`
     );
+    await database.pool.query(
+      `INSERT INTO entities (type, content, visibility, enrichment_status, extraction_status)
+       VALUES ('memory', 'opted out of extraction', 'shared', 'completed', 'skipped')`
+    );
 
     const result = await runAdmin(
       ['reextract', '--type', 'memory', '--show-skipped', '--json'],
@@ -529,12 +534,18 @@ describe('pgm-admin CLI', () => {
     );
     const body = parseJson(result.stdout) as {
       markedCount: number;
-      skipped: { noContent: number; archived: number; autoCreated: number };
+      skipped: {
+        noContent: number;
+        archived: number;
+        autoCreated: number;
+        skippedExtraction: number;
+      };
     };
     expect(body.markedCount).toBeGreaterThanOrEqual(1);
     expect(body.skipped.archived).toBeGreaterThanOrEqual(1);
     expect(body.skipped.autoCreated).toBeGreaterThanOrEqual(1);
     expect(body.skipped.noContent).toBeGreaterThanOrEqual(1);
+    expect(body.skipped.skippedExtraction).toBeGreaterThanOrEqual(1);
 
     // Ensure the active entity was the one marked.
     const entityRow = await database.pool.query<{ extraction_status: string }>(
@@ -718,6 +729,45 @@ describe('pgm-admin CLI', () => {
     const byId = Object.fromEntries(rows.rows.map((r) => [r.id, r]));
     expect(byId[target.id]?.extraction_status).toBe('pending');
     expect(byId[other.id]?.extraction_status).toBe('completed');
+  }, 120_000);
+
+  it('reextract does not re-queue skipped extraction entities', async () => {
+    if (!database) {
+      throw new Error('test database not initialized');
+    }
+
+    const databaseUrl = getDatabaseUrl(database);
+
+    const seededKey = (await createKey(database.pool, {
+      name: `reextract-skipped-${crypto.randomUUID()}`,
+      scopes: ['read', 'write', 'delete']
+    }))._unsafeUnwrap();
+
+    const skipped = (await storeEntity(database.pool, makeAuthContext(seededKey.record.id), {
+      type: 'interaction',
+      content: 'this import is a permanent extraction opt-out',
+      skipExtraction: true
+    } as never))._unsafeUnwrap();
+
+    const allResult = await runAdmin(
+      ['reextract', '--all', '--json'],
+      { DATABASE_URL: databaseUrl }
+    );
+    const allBody = parseJson(allResult.stdout) as { markedCount: number };
+    expect(allBody.markedCount).toBe(0);
+
+    const idResult = await runAdmin(
+      ['reextract', '--id', skipped.id, '--json'],
+      { DATABASE_URL: databaseUrl }
+    );
+    const idBody = parseJson(idResult.stdout) as { markedCount: number };
+    expect(idBody.markedCount).toBe(0);
+
+    const row = await database.pool.query<{ extraction_status: string | null }>(
+      'SELECT extraction_status FROM entities WHERE id = $1',
+      [skipped.id]
+    );
+    expect(row.rows[0]?.extraction_status).toBe('skipped');
   }, 120_000);
 
   it('reextract --id rejects malformed UUIDs before touching the DB', async () => {
@@ -910,6 +960,51 @@ describe('pgm-admin CLI', () => {
       extraction_status: 'pending',
       extraction_model_override: null,
       extraction_provider_override: null
+    });
+  }, 120_000);
+
+  it('improve-graph does not queue skipped extraction entities', async () => {
+    if (!database) {
+      throw new Error('test database not initialized');
+    }
+
+    const databaseUrl = getDatabaseUrl(database);
+
+    const seededKey = (await createKey(database.pool, {
+      name: `improve-skipped-${crypto.randomUUID()}`,
+      scopes: ['read', 'write', 'delete']
+    }))._unsafeUnwrap();
+
+    const skipped = (await storeEntity(database.pool, makeAuthContext(seededKey.record.id), {
+      type: 'interaction',
+      content: 'this import should not be improved into graph extraction',
+      skipExtraction: true
+    } as never))._unsafeUnwrap();
+
+    const allResult = await runAdmin(
+      ['improve-graph', '--all', '--json'],
+      { DATABASE_URL: databaseUrl }
+    );
+    const allBody = parseJson(allResult.stdout) as { markedCount: number };
+    expect(allBody.markedCount).toBe(0);
+
+    const idResult = await runAdmin(
+      ['improve-graph', '--id', skipped.id, '--model', 'local-test', '--json'],
+      { DATABASE_URL: databaseUrl }
+    );
+    const idBody = parseJson(idResult.stdout) as { markedCount: number };
+    expect(idBody.markedCount).toBe(0);
+
+    const row = await database.pool.query<{
+      extraction_status: string | null;
+      extraction_model_override: string | null;
+    }>(
+      'SELECT extraction_status, extraction_model_override FROM entities WHERE id = $1',
+      [skipped.id]
+    );
+    expect(row.rows[0]).toMatchObject({
+      extraction_status: 'skipped',
+      extraction_model_override: null
     });
   }, 120_000);
 

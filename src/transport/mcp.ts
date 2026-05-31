@@ -154,7 +154,8 @@ function createSessionServer(
         status: statusSchema.optional(),
         tags: z.array(z.string()).optional(),
         source: z.string().optional(),
-        metadata: z.record(z.unknown()).optional()
+        metadata: z.record(z.unknown()).optional(),
+        skip_extraction: z.boolean().optional()
       }
     },
     (args) =>
@@ -167,7 +168,8 @@ function createSessionServer(
           status: args.status,
           tags: args.tags,
           source: args.source,
-          metadata: args.metadata
+          metadata: args.metadata,
+          skipExtraction: args.skip_extraction
         }),
         (entity) => ({ entity: toStoredEntity(entity) })
       )

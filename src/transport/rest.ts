@@ -59,7 +59,8 @@ const storeEntitySchema = z.object({
   status: statusSchema.optional(),
   tags: z.array(z.string()).optional(),
   source: z.string().optional(),
-  metadata: z.record(z.unknown()).optional()
+  metadata: z.record(z.unknown()).optional(),
+  skip_extraction: z.boolean().optional()
 });
 
 const storeSessionContextSchema = z.object({
@@ -246,7 +247,17 @@ export function registerRestRoutes(
   app.post('/api/entities', async (c) => {
     const auth = c.get('auth');
     const body = parseJsonBody(storeEntitySchema, await c.req.json());
-    const result = await storeEntity(pool, auth, body);
+    const result = await storeEntity(pool, auth, {
+      type: body.type,
+      content: body.content,
+      visibility: body.visibility,
+      owner: body.owner,
+      status: body.status,
+      tags: body.tags,
+      source: body.source,
+      metadata: body.metadata,
+      skipExtraction: body.skip_extraction
+    });
 
     if (result.isErr()) {
       throw result.error;

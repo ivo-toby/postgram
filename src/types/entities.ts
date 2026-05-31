@@ -19,6 +19,12 @@ export type EntityStatus =
   | 'someday';
 
 export type EnrichmentStatus = 'pending' | 'completed' | 'failed' | null;
+export type ExtractionStatus =
+  | 'pending'
+  | 'completed'
+  | 'failed'
+  | 'skipped'
+  | null;
 
 export type Entity = {
   id: string;

@@ -288,6 +288,7 @@ program
   .option('--tags <tags>', 'comma-separated tags')
   .option('--source <source>', 'entity source')
   .option('--metadata <json>', 'JSON metadata object')
+  .option('--skip-extraction', 'store without ever queueing graph extraction')
   .action(async (content, options, command) => {
     await runWithClient(command, async (client, json) => {
       const body = await client.storeEntity({
@@ -298,7 +299,8 @@ program
         status: options.status,
         tags: parseCommaList(options.tags),
         source: options.source,
-        metadata: parseJsonObject(options.metadata)
+        metadata: parseJsonObject(options.metadata),
+        skip_extraction: options.skipExtraction === true ? true : undefined
       });
 
       return json

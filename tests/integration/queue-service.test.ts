@@ -53,7 +53,12 @@ describe('queue-service', () => {
     );
 
     const status = await getQueueStatus(database.pool, unrestrictedAuth());
-    expect(status.extraction).toEqual({ pending: 0, completed: 1, failed: 1 });
+    expect(status.extraction).toEqual({
+      pending: 0,
+      completed: 1,
+      failed: 1,
+      skipped: 0
+    });
     expect(status.failures).toBeUndefined();
   }, 120_000);
 
@@ -66,7 +71,34 @@ describe('queue-service', () => {
       extractionEnabled: true
     });
 
-    expect(status.extraction).toEqual({ pending: 0, completed: 0, failed: 0 });
+    expect(status.extraction).toEqual({
+      pending: 0,
+      completed: 0,
+      failed: 0,
+      skipped: 0
+    });
+  }, 120_000);
+
+  it('counts skipped extraction rows separately', async () => {
+    if (!database) {
+      throw new Error('test database not initialized');
+    }
+
+    await database.pool.query(
+      `INSERT INTO entities (type, content, enrichment_status, extraction_status, metadata)
+       VALUES
+         ('interaction', 'skipped transcript', 'completed', 'skipped', '{}'::jsonb),
+         ('document', 'queued doc', 'completed', 'pending', '{}'::jsonb)`
+    );
+
+    const status = await getQueueStatus(database.pool, unrestrictedAuth());
+
+    expect(status.extraction).toEqual({
+      pending: 1,
+      completed: 0,
+      failed: 0,
+      skipped: 1
+    });
   }, 120_000);
 
   it('includes failure messages and paths when requested', async () => {
@@ -132,7 +164,12 @@ describe('queue-service', () => {
     });
 
     // Only the shared document failure is visible → 1 each in counts + failures.
-    expect(status.extraction).toEqual({ pending: 0, completed: 0, failed: 1 });
+    expect(status.extraction).toEqual({
+      pending: 0,
+      completed: 0,
+      failed: 1,
+      skipped: 0
+    });
     expect(status.failures).toHaveLength(1);
     expect(status.failures?.[0]).toMatchObject({
       type: 'document',

@@ -1002,14 +1002,13 @@ program
 
 Use the local admin CLI helper functions already present in the file for pool creation and output formatting instead of duplicating new infrastructure.
 
-- [ ] **Step 4: Keep distilled promotion out of v1**
+- [x] **Step 4: Add distilled promotion as a PR follow-up**
 
-Do not add LLM-based promotion in this task. Add a short comment in `memory-grooming-service.ts`:
-
-```ts
-// Distilled promotion intentionally starts as a later operation. Archival and
-// dry-run preview establish the Postgram-owned grooming boundary first.
-```
+The implementation now supports `pgm-admin memory groom --mode promote --yes`.
+Promotion uses the configured extraction LLM to assess each eligible
+session-context memory, stores only distilled durable content, archives the
+source context, and records provenance with `metadata.promoted_to` plus a
+`promoted_to` edge.
 
 - [ ] **Step 5: Run focused tests**
 
@@ -1216,4 +1215,6 @@ Spec coverage:
 
 Known deliberate deferral:
 
-- LLM-distilled promotion is not implemented in the first grooming task. The plan establishes Postgram-owned grooming with dry-run and archival first. Promotion should be added once there is real session-context data to evaluate.
+- Grouped consolidation and scheduled grooming are not implemented yet. The
+  first promotion path is operator-run and processes eligible memories
+  individually.

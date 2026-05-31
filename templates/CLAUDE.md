@@ -84,6 +84,10 @@ If `store_session_context` is unavailable, use the regular store tool with
 `type="memory"`, tag `session-context`, and metadata
 `{"memory_role":"session_context"}`.
 
+Do not manually copy session context into durable memory. Postgram grooming
+promotes eligible session context through an LLM-assisted distillation step and
+archives the source context with provenance.
+
 For session continuity, search session context first:
 
 ```

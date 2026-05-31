@@ -254,7 +254,15 @@ Postgram groomer. A simple first version can select:
 - not already archived
 - no `metadata.promoted_to`
 
-For each group of related memories, the groomer decides one of three outcomes:
+For each eligible memory, the operator-run groomer supports two initial modes:
+
+1. **Archive**: mark stale working context as archived once it no longer helps
+   resume active work.
+2. **Promote**: call the configured extraction LLM with a structured prompt,
+   asking whether the session-context memory contains durable information and,
+   if so, what distilled durable memory should be stored.
+
+The broader design can still grow into grouped decisions:
 
 1. **Promote**: create or update a `durable_memory` entity containing the stable
    decision, preference, constraint, root cause, or completed-work summary.
@@ -263,24 +271,27 @@ For each group of related memories, the groomer decides one of three outcomes:
 3. **Archive**: mark stale working context as archived once it no longer helps
    resume active work.
 
-Promotion is not a verbatim copy by default. The groomer should distill the
+Promotion is not a verbatim copy by default. The groomer prompt requires the LLM
+to distill the
 stable claim from the source session context and write that claim as durable
 memory. Raw working context is often provisional, overly specific, or scoped to
 one client; durable memory should contain only the reusable fact, decision,
 preference, constraint, root cause, or completed-work summary.
 
 When promotion happens, the source session-context memories should be updated
-with `metadata.promoted_to=<durable_memory_id>`. Creating a graph edge such as
-`derived_from` or `promoted_from` is optional for the first version. If source
-session context is scoped more narrowly than the promoted durable memory, avoid
-creating an edge that exposes private working context through graph expansion.
+with `metadata.promoted_to=<durable_memory_id>`, archived, and linked to the
+durable memory with a `promoted_to` edge. If source session context is scoped
+more narrowly than the promoted durable memory, the groomer must preserve
+visibility and avoid widening access accidentally.
 
 Recommended implementation shape:
 
-- `memory-grooming-service`: groups eligible session-context memories, prepares
-  promotion/archive/consolidation decisions, and applies updates.
+- `memory-grooming-service`: selects eligible session-context memories, builds
+  the LLM promotion prompt, parses structured promotion/archive decisions, and
+  applies updates transactionally.
 - `pgm-admin memory groom`: operator-run command with `--dry-run`, `--client-id`,
-  `--older-than`, and `--yes` flags.
+  `--mode archive|promote`, `--limit`, and `--yes` flags. `--mode promote`
+  reuses the extraction LLM configuration.
 - Optional later scheduler: periodically runs grooming for configured clients.
 
 The first implementation should favor an admin/operator workflow over an
@@ -472,8 +483,8 @@ Manual sanity checks:
    constrained slugs derived from API key creation?
 7. Should `agent_id` be entirely caller-supplied metadata, or should Postgram
    provide a first-class field later if it becomes useful?
-8. Should the groomer use the configured extraction LLM provider, a separate
-   grooming model, or a non-LLM rule-based first pass?
+8. Resolved for the first implementation: promotion grooming uses the
+   configured extraction LLM provider.
 9. Should `store_session_context` also exist as a REST shortcut, or is MCP plus
    ordinary `POST /api/entities` enough for the first version?
 

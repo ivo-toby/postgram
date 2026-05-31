@@ -100,6 +100,14 @@ Use session context for "where were we in this thread?" Use durable memory for "
 CLI users can write session context with `pgm memory session-context` and search
 it with `pgm search --memory-role session_context`.
 
+Operators can groom stale session context with `pgm-admin memory groom`.
+`--dry-run` previews eligible memories without calling the LLM. `--mode archive`
+archives eligible working context directly. `--mode promote --yes` uses the
+configured extraction LLM to decide whether each session-context memory should
+be promoted; promoted memories are distilled into new `durable_memory` entities,
+the source context is archived, and provenance is recorded with
+`metadata.promoted_to` plus a `promoted_to` edge.
+
 ### 2. Async Enrichment
 
 Entities with content are persisted first and enriched later. Each entity

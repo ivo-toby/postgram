@@ -168,7 +168,7 @@ extraction: pending=8   completed=1230  failed=2
 - **Don't duplicate** — search first when the user's phrasing suggests something may already exist. Postgram stores everything; a cluttered knowledge base is worse than a sparse one.
 - **When storing from a long exchange**, store a *summary* memory with the key facts, not the full transcript. The transcript belongs in the conversation log; the memory is the distilled signal.
 - **Separate continuity from knowledge** — use `session_context` for active-thread state and `durable_memory` for stable facts. Do not make session context durable by copying it verbatim.
-- **Let Postgram groom** — promotion from session context to durable memory should be handled by Postgram's groomer or an explicit operator workflow, because promotion changes the authority and sharing level of the memory.
+- **Let Postgram groom** — promotion from session context to durable memory should be handled by Postgram's groomer or an explicit operator workflow, because promotion changes the authority and sharing level of the memory. The groomer uses the configured extraction LLM to assess whether eligible session context deserves promotion and stores only the distilled durable memory, not a verbatim copy.
 
 ## Failure modes to recognize
 
@@ -247,4 +247,4 @@ pgm store --type memory --visibility personal \
 - Don't use Postgram as a replacement for a file system — it stores *text entities*, not code or artifacts.
 - Don't store secrets (API keys, tokens, credentials) — audit log records every write.
 - Don't use it for volatile state (counters, session tokens, caches).
-- Don't treat session-context memory as durable truth. It is working context until groomed or promoted.
+- Don't treat session-context memory as durable truth. It is working context until groomed or promoted by Postgram's LLM-assisted groomer.

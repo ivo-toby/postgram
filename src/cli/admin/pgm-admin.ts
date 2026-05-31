@@ -17,7 +17,8 @@ import { createEdge } from '../../services/edge-service.js';
 import { findSemanticNeighbors } from '../../services/extraction-service.js';
 import {
   groomSessionContext,
-  previewSessionContextGrooming
+  previewSessionContextGrooming,
+  type CallLlm
 } from '../../services/memory-grooming-service.js';
 import { AppError, ErrorCode, toErrorResponse } from '../../util/errors.js';
 import {
@@ -1548,14 +1549,36 @@ export function parseDuration(value: string): string {
   return `${days} days`;
 }
 
+async function createExtractionCallLlm(purpose: string): Promise<CallLlm> {
+  const config = loadConfig();
+  if (!config.EXTRACTION_ENABLED) {
+    throw new Error(
+      `EXTRACTION_ENABLED is not set — ${purpose} requires the extraction LLM. Set EXTRACTION_ENABLED=true and the provider credentials.`
+    );
+  }
+
+  const { createLlmProvider } = await import('../../services/llm-provider.js');
+  return createLlmProvider({
+    provider: config.EXTRACTION_PROVIDER,
+    model: config.EXTRACTION_MODEL,
+    openaiApiKey: config.OPENAI_API_KEY,
+    anthropicApiKey: config.ANTHROPIC_API_KEY,
+    ollamaBaseUrl: config.OLLAMA_BASE_URL,
+    ollamaApiKey: config.OLLAMA_API_KEY,
+    disableThinking: config.EXTRACTION_DISABLE_THINKING,
+    reasoningEffort: config.EXTRACTION_REASONING_EFFORT
+  });
+}
+
 const memoryCommand = program
   .command('memory')
   .description('Memory maintenance commands');
 
 memoryCommand
   .command('groom')
-  .description('Preview or archive eligible session-context memories')
+  .description('Preview, archive, or promote eligible session-context memories')
   .requiredOption('--client-id <clientId>', 'client id to groom')
+  .option('--mode <mode>', 'archive or promote', 'archive')
   .option('--limit <limit>', 'maximum candidates', '50')
   .option('--dry-run', 'preview without mutating')
   .option('--yes', 'confirm mutation')
@@ -1565,6 +1588,21 @@ memoryCommand
     if (!Number.isInteger(limit) || limit <= 0) {
       await handleCliFailure(new Error('--limit must be a positive integer'), json);
       return;
+    }
+
+    if (options.mode !== 'archive' && options.mode !== 'promote') {
+      await handleCliFailure(new Error('--mode must be archive or promote'), json);
+      return;
+    }
+
+    let callLlm: CallLlm | undefined;
+    if (options.mode === 'promote' && !options.dryRun) {
+      try {
+        callLlm = await createExtractionCallLlm('session-context promotion grooming');
+      } catch (error) {
+        await handleCliFailure(error, json);
+        return;
+      }
     }
 
     await runWithPool(json, async (pool) => {
@@ -1582,20 +1620,24 @@ memoryCommand
           ? {
               dryRun: true,
               archived: 0,
+              promoted: 0,
+              skipped: 0,
+              mode: options.mode,
               eligible: preview.value.eligible
             }
           : [
-              `Would archive ${preview.value.eligible.length} session-context memories for client ${options.clientId}`
+              `Would ${options.mode === 'promote' ? 'assess' : 'archive'} ${preview.value.eligible.length} session-context memories for client ${options.clientId}`
             ];
       }
 
       const result = await groomSessionContext(pool, {
         clientId: options.clientId,
         now: new Date(),
-        mode: 'archive',
+        mode: options.mode,
         dryRun: false,
         confirm: Boolean(options.yes),
-        limit
+        limit,
+        callLlm
       });
       if (result.isErr()) {
         throw result.error;
@@ -1606,14 +1648,19 @@ memoryCommand
         details: {
           clientId: options.clientId,
           archived: result.value.archived,
+          promoted: result.value.promoted,
+          skipped: result.value.skipped,
+          mode: options.mode,
           limit
         }
       });
 
       return json
-        ? result.value
+        ? { ...result.value, mode: options.mode }
         : [
-            `Archived ${result.value.archived} session-context memories for client ${options.clientId}`
+            options.mode === 'promote'
+              ? `Archived ${result.value.archived} session-context memories for client ${options.clientId} (${result.value.promoted} promoted, ${result.value.skipped} skipped)`
+              : `Archived ${result.value.archived} session-context memories for client ${options.clientId}`
           ];
     });
   });

@@ -1086,17 +1086,40 @@ describe('pgm-admin CLI', () => {
     const dryRunBody = parseJson(dryRun.stdout) as {
       dryRun: boolean;
       archived: number;
+      promoted: number;
+      skipped: number;
+      mode: string;
       eligible: Array<{ id: string }>;
     };
-    expect(dryRunBody).toMatchObject({ dryRun: true, archived: 0 });
+    expect(dryRunBody).toMatchObject({
+      dryRun: true,
+      archived: 0,
+      promoted: 0,
+      skipped: 0,
+      mode: 'archive'
+    });
     expect(dryRunBody.eligible.map((entry) => entry.id)).toEqual([eligible.id]);
 
     const result = await runAdmin(
       ['memory', 'groom', '--client-id', 'codex', '--yes', '--json'],
       { DATABASE_URL: databaseUrl }
     );
-    const body = parseJson(result.stdout) as { dryRun: boolean; archived: number };
-    expect(body).toEqual({ dryRun: false, archived: 1 });
+    const body = parseJson(result.stdout) as {
+      dryRun: boolean;
+      archived: number;
+      promoted: number;
+      skipped: number;
+      mode: string;
+      promotions: Array<{ sourceId: string; durableId: string }>;
+    };
+    expect(body).toEqual({
+      dryRun: false,
+      archived: 1,
+      promoted: 0,
+      skipped: 0,
+      mode: 'archive',
+      promotions: []
+    });
 
     const rows = await database.pool.query<{ id: string; status: string | null }>(
       'SELECT id, status FROM entities WHERE id = ANY($1)',

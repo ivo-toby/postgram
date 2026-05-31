@@ -11,6 +11,7 @@ import {
   recallEntity,
   softDeleteEntity,
   storeEntity,
+  storeSessionContextMemory,
   updateEntity
 } from '../../src/services/entity-service.js';
 import { searchEntities } from '../../src/services/search-service.js';
@@ -94,6 +95,31 @@ describe('entity-service', () => {
     expect(recalled.isOk()).toBe(true);
     expect(recalled._unsafeUnwrap()).toEqual(entity);
   }, 120_000);
+
+  it('stores session context with client-scoped metadata', async () => {
+    if (!database) {
+      throw new Error('test database not initialized');
+    }
+
+    const auth = makeAuthContext({ clientId: 'codex-desktop' });
+    const result = await storeSessionContextMemory(database.pool, auth, {
+      content: 'We are discussing memory lifecycle roles.',
+      visibility: 'personal',
+      topic: 'postgram-memory',
+      agentId: 'codex'
+    });
+
+    expect(result.isOk()).toBe(true);
+    const entity = result._unsafeUnwrap();
+    expect(entity.type).toBe('memory');
+    expect(entity.metadata).toMatchObject({
+      memory_role: 'session_context',
+      session_scope: { kind: 'client', client_id: 'codex-desktop' },
+      topic: 'postgram-memory',
+      agent_id: 'codex'
+    });
+    expect(entity.tags).toContain('session-context');
+  });
 
   it('returns a conflict with the current entity when the version is stale', async () => {
     if (!database) {

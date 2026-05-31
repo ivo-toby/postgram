@@ -18,6 +18,10 @@ import {
   normalizeOwner,
   ownerSqlCondition
 } from './owner-filter.js';
+import {
+  buildSessionContextMetadata,
+  type SessionContextInput
+} from './memory-role-service.js';
 
 type EntityRow = {
   id: string;
@@ -186,6 +190,31 @@ export function storeEntity(
     })(),
     (error) => toAppError(error, 'Failed to store entity')
   );
+}
+
+export function storeSessionContextMemory(
+  pool: Pool,
+  auth: AuthContext,
+  input: SessionContextInput
+): ServiceResult<Entity> {
+  return storeEntity(pool, auth, {
+    type: 'memory',
+    content: input.content,
+    visibility: input.visibility,
+    owner: input.owner,
+    tags: ['session-context', ...(input.tags ?? [])],
+    metadata: buildSessionContextMetadata({
+      auth,
+      input: {
+        sessionId: input.sessionId,
+        agentId: input.agentId,
+        topic: input.topic,
+        promotable: input.promotable,
+        groomAfter: input.groomAfter,
+        expiresAt: input.expiresAt
+      }
+    })
+  });
 }
 
 export function recallEntity(

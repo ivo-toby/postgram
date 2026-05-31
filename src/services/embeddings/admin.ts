@@ -105,6 +105,104 @@ export async function assertEmbeddingDimensionAgreement(
   };
 }
 
+/**
+ * Enforce embedding identity on startup, but treat an empty embedding store as
+ * bootstrap-safe. The initial schema seeds OpenAI as the active model and
+ * vector(1536) as the chunk column type; a fresh Ollama install should not
+ * require an explicit destructive migration when there are no chunks to lose.
+ */
+export async function ensureEmbeddingIdentityAgreement(
+  pool: Pool,
+  configured: ConfiguredEmbeddingIdentity
+): Promise<DimensionMismatch | null> {
+  const mismatch = await assertEmbeddingDimensionAgreement(pool, configured);
+  if (!mismatch) {
+    return null;
+  }
+
+  const chunks = await pool.query<{ count: string }>(
+    'SELECT COUNT(*)::text AS count FROM chunks'
+  );
+  const chunkCount = Number(chunks.rows[0]?.count ?? '0');
+  if (chunkCount > 0) {
+    return mismatch;
+  }
+
+  const client = await pool.connect();
+  try {
+    await client.query('BEGIN');
+
+    await client.query('DROP INDEX IF EXISTS idx_chunks_embedding');
+    await client.query(
+      `ALTER TABLE chunks ALTER COLUMN embedding TYPE vector(${configured.dimensions})`
+    );
+    await client.query(
+      'UPDATE embedding_models SET is_active = false WHERE is_active = true'
+    );
+
+    const insertResult = await client.query<{ id: string }>(
+      `
+        INSERT INTO embedding_models (
+          name,
+          provider,
+          dimensions,
+          chunk_size,
+          chunk_overlap,
+          is_active,
+          metadata
+        )
+        VALUES ($1, $2, $3, 300, 100, true, $4)
+        RETURNING id
+      `,
+      [
+        configured.model,
+        configured.provider,
+        configured.dimensions,
+        { source: 'startup.embedding-bootstrap' }
+      ]
+    );
+
+    await client.query(
+      `
+        CREATE INDEX idx_chunks_embedding
+          ON chunks USING hnsw (embedding vector_cosine_ops)
+          WITH (m = 16, ef_construction = 200)
+      `
+    );
+
+    await writeAuditRow(client, 'embeddings.bootstrap', {
+      previous: {
+        model_id: mismatch.details.activeModel?.id ?? null,
+        provider: mismatch.details.activeModel?.provider ?? null,
+        name: mismatch.details.activeModel?.name ?? null,
+        dimensions: mismatch.details.activeModel?.dimensions ?? null
+      },
+      target: {
+        provider: configured.provider,
+        name: configured.model,
+        dimensions: configured.dimensions
+      },
+      new_model_id: insertResult.rows[0]?.id ?? null,
+      effects: {
+        chunks_discarded: 0,
+        entities_marked_pending: 0
+      }
+    });
+
+    await client.query('COMMIT');
+    return null;
+  } catch (error) {
+    await rollbackQuietly(client);
+    throw new AppError(
+      ErrorCode.INTERNAL,
+      error instanceof Error ? error.message : 'Embedding bootstrap failed',
+      { phase: 'embeddings.bootstrap' }
+    );
+  } finally {
+    client.release();
+  }
+}
+
 function describeConfigured(c: ConfiguredEmbeddingIdentity): string {
   return `(provider=${c.provider} name=${c.model} dimensions=${c.dimensions})`;
 }

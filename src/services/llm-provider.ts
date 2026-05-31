@@ -63,8 +63,11 @@ function createOpenAiProvider(
   apiKey: string,
   model: string,
   disableThinking: boolean,
-  reasoningEffort: ReasoningEffort | undefined
+  reasoningEffort: ReasoningEffort | undefined,
+  baseUrl = 'https://api.openai.com/v1',
+  errorLabel = 'OpenAI'
 ): LlmProvider {
+  const endpoint = `${baseUrl.replace(/\/+$/, '')}/chat/completions`;
   return async (prompt: string) => {
     const reasoning = isReasoningModel(model);
     const payload: Record<string, unknown> = {
@@ -83,11 +86,11 @@ function createOpenAiProvider(
       payload['reasoning_effort'] = effort;
     }
 
-    const response = await fetchWithTimeout('https://api.openai.com/v1/chat/completions', {
+    const response = await fetchWithTimeout(endpoint, {
       method: 'POST',
       headers: {
         'Content-Type': 'application/json',
-        Authorization: `Bearer ${apiKey}`
+        ...(apiKey ? { Authorization: `Bearer ${apiKey}` } : {})
       },
       body: JSON.stringify(payload)
     });
@@ -97,7 +100,7 @@ function createOpenAiProvider(
       // like "Unknown parameter: 'reasoning_effort'" behind a generic 400.
       const errorBody = await response.text().catch(() => '');
       const detail = errorBody ? ` - ${errorBody}` : '';
-      throw new Error(`OpenAI API error: ${response.status}${detail}`);
+      throw new Error(`${errorLabel} API error: ${response.status}${detail}`);
     }
 
     const body = (await response.json()) as OpenAiResponse;
@@ -195,20 +198,27 @@ function createOllamaProvider(
   };
 }
 
-export type ExtractionProvider = 'openai' | 'anthropic' | 'ollama';
+export type ExtractionProvider =
+  | 'openai'
+  | 'anthropic'
+  | 'ollama'
+  | 'openai-compatible';
 
 export type ReasoningEffort = 'minimal' | 'low' | 'medium' | 'high';
 
 const DEFAULT_MODELS: Record<ExtractionProvider, string> = {
   openai: 'gpt-4o-mini',
   anthropic: 'claude-haiku-4-5-20251001',
-  ollama: 'llama3.2'
+  ollama: 'llama3.2',
+  'openai-compatible': 'gpt-4o-mini'
 };
 
 type ProviderConfig = {
   provider: ExtractionProvider;
   model?: string | undefined;
   openaiApiKey?: string | undefined;
+  extractionBaseUrl?: string | undefined;
+  extractionApiKey?: string | undefined;
   anthropicApiKey?: string | undefined;
   ollamaBaseUrl?: string | undefined;
   ollamaApiKey?: string | undefined;
@@ -241,6 +251,19 @@ export function createLlmProvider(config: ProviderConfig): LlmProvider {
         model,
         disableThinking,
         config.reasoningEffort
+      );
+    }
+    case 'openai-compatible': {
+      if (!config.extractionBaseUrl) {
+        throw new Error('EXTRACTION_BASE_URL is required for openai-compatible extraction provider');
+      }
+      return createOpenAiProvider(
+        config.extractionApiKey ?? '',
+        model,
+        disableThinking,
+        config.reasoningEffort,
+        config.extractionBaseUrl,
+        'OpenAI-compatible'
       );
     }
     case 'anthropic': {

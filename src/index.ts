@@ -19,7 +19,7 @@ import {
   type EmbeddingProvider,
   type EmbeddingProviderConfig
 } from './services/embeddings/providers.js';
-import { assertEmbeddingDimensionAgreement } from './services/embeddings/admin.js';
+import { ensureEmbeddingIdentityAgreement } from './services/embeddings/admin.js';
 import { createEnrichmentWorker } from './services/enrichment-worker.js';
 import { registerMcpRoutes } from './transport/mcp.js';
 import { registerRestRoutes } from './transport/rest.js';
@@ -215,7 +215,7 @@ export async function startServer(): Promise<{
     'embedding provider active'
   );
 
-  const mismatch = await assertEmbeddingDimensionAgreement(pool, {
+  const mismatch = await ensureEmbeddingIdentityAgreement(pool, {
     provider: embeddingProvider.name,
     model: embeddingProvider.model,
     dimensions: embeddingProvider.dimensions
@@ -252,7 +252,8 @@ export async function startServer(): Promise<{
     const allowedProviders: readonly ExtractionProvider[] = [
       'openai',
       'anthropic',
-      'ollama'
+      'ollama',
+      'openai-compatible'
     ];
     callLlmFactory = (providerOverride, modelOverride) => {
       const provider: ExtractionProvider = providerOverride
@@ -263,6 +264,8 @@ export async function startServer(): Promise<{
         provider,
         model: modelOverride ?? config.EXTRACTION_MODEL,
         openaiApiKey: config.OPENAI_API_KEY,
+        extractionBaseUrl: config.EXTRACTION_BASE_URL,
+        extractionApiKey: config.EXTRACTION_API_KEY,
         anthropicApiKey: config.ANTHROPIC_API_KEY,
         ollamaBaseUrl: config.OLLAMA_BASE_URL,
         ollamaApiKey: config.OLLAMA_API_KEY,

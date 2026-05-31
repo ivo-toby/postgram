@@ -63,6 +63,32 @@ pgm queue
 pgm store "hello" --json
 ```
 
+## Memory Roles
+
+Store durable memory:
+
+```bash
+pgm store "Ivo prefers client-scoped session context in Postgram." \
+  --type memory \
+  --visibility personal \
+  --metadata '{"memory_role":"durable_memory"}'
+```
+
+Store session context:
+
+```bash
+pgm store "We are discussing Postgram memory lifecycle roles." \
+  --type memory \
+  --visibility personal \
+  --tags session-context \
+  --metadata '{"memory_role":"session_context","topic":"postgram-memory"}'
+```
+
+Use durable memory for stable facts, decisions, constraints, and preferences.
+Use session context for recent-thread continuity. Session context is embedded
+for semantic recall, scoped to the calling client when the server knows its
+`client_id`, and skipped by graph extraction.
+
 ## Claude Code skill
 
 A portable Claude Code skill for using `pgm` from your agent lives in

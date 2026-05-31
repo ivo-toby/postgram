@@ -46,7 +46,7 @@ Postgram supports two roles for `memory` entities:
 - `durable_memory`: long-lived facts, decisions, preferences, constraints, root causes, and completed-work summaries.
 - `session_context`: short-lived working context used to resume an active or recent conversation.
 
-Use durable memory for information future agents should treat as stable. Use session context for "where we are in this thread" continuity. Session context is embedded for semantic recall, but should not participate in graph extraction.
+Use durable memory for information future agents should treat as stable. Use session context for "where we are in this thread" continuity. Session context is embedded for semantic recall, but does not participate in graph extraction.
 
 When using MCP and a `store_session_context` tool is available, prefer it for session context. It sets the correct metadata and client scope automatically.
 

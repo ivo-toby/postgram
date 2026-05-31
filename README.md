@@ -88,6 +88,15 @@ Store structured knowledge objects with:
 - `status`
 - arbitrary JSON metadata
 
+### Memory Roles
+
+Postgram supports two roles for `memory` entities:
+
+- `durable_memory`: long-term memory future agents should trust, such as decisions, preferences, constraints, root causes, and completed-work summaries.
+- `session_context`: working context for resuming recent conversations. Session context is scoped to the calling client, embedded for semantic recall, and skipped by graph extraction.
+
+Use session context for "where were we in this thread?" Use durable memory for "what should future agents remember as true?"
+
 ### 2. Async Enrichment
 
 Entities with content are persisted first and enriched later. Each entity

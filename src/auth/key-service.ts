@@ -11,6 +11,7 @@ import type { ApiKeyRecord, AuthContext, Scope } from './types.js';
 
 type CreateKeyInput = {
   name: string;
+  clientId?: string | undefined;
   scopes?: Scope[] | undefined;
   allowedTypes?: EntityType[] | null | undefined;
   allowedVisibility?: Visibility[] | undefined;
@@ -24,6 +25,7 @@ type CreateKeyResult = {
 type ApiKeyRow = {
   id: string;
   name: string;
+  client_id: string;
   key_hash: string;
   key_prefix: string;
   scopes: Scope[];
@@ -58,6 +60,7 @@ function mapApiKeyRecord(row: ApiKeyRow): ApiKeyRecord {
   return {
     id: row.id,
     name: row.name,
+    clientId: row.client_id,
     keyHash: row.key_hash,
     keyPrefix: row.key_prefix,
     scopes: row.scopes,
@@ -73,6 +76,7 @@ function toAuthContext(record: ApiKeyRecord): AuthContext {
   return {
     apiKeyId: record.id,
     keyName: record.name,
+    clientId: record.clientId,
     scopes: record.scopes,
     allowedTypes: record.allowedTypes,
     allowedVisibility: record.allowedVisibility
@@ -139,17 +143,19 @@ export function createKey(
         `
           INSERT INTO api_keys (
             name,
+            client_id,
             key_hash,
             key_prefix,
             scopes,
             allowed_types,
             allowed_visibility
           )
-          VALUES ($1, $2, $3, $4, $5, $6)
+          VALUES ($1, $2, $3, $4, $5, $6, $7)
           RETURNING *
         `,
         [
           input.name,
+          input.clientId ?? input.name,
           keyHash,
           keyPrefix,
           input.scopes ?? ['read'],

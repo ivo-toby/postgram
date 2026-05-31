@@ -144,6 +144,108 @@ describe('pgm CLI', () => {
     expect(searchBody.results[0]?.chunk_content).toContain('pgvector');
   }, 120_000);
 
+  it('stores and searches session-context memory through first-class CLI commands', async () => {
+    if (!database) {
+      throw new Error('test database not initialized');
+    }
+
+    const createdKey = (await createKey(database.pool, {
+      name: `session-cli-${crypto.randomUUID()}`,
+      clientId: 'codex-cli',
+      scopes: ['read', 'write', 'delete'],
+      allowedVisibility: ['personal']
+    }))._unsafeUnwrap();
+
+    const env = {
+      PGM_API_URL: baseUrl,
+      PGM_API_KEY: createdKey.plaintextKey
+    };
+
+    await runPgm(
+      [
+        'store',
+        'Memory lifecycle roles durable note.',
+        '--type',
+        'memory',
+        '--visibility',
+        'personal',
+        '--metadata',
+        '{"memory_role":"durable_memory"}',
+        '--json'
+      ],
+      env
+    );
+
+    const sessionResult = await runPgm(
+      [
+        'memory',
+        'session-context',
+        'Memory lifecycle roles session context for CLI agents.',
+        '--visibility',
+        'personal',
+        '--topic',
+        'postgram-memory',
+        '--agent-id',
+        'codex',
+        '--tags',
+        'cli,session-context',
+        '--json'
+      ],
+      env
+    );
+    const sessionBody = parseJson(sessionResult.stdout) as {
+      entity: {
+        id: string;
+        type: string;
+        tags: string[];
+        metadata: Record<string, unknown>;
+      };
+    };
+    expect(sessionBody.entity.type).toBe('memory');
+    expect(sessionBody.entity.tags).toEqual(
+      expect.arrayContaining(['session-context', 'cli'])
+    );
+    expect(sessionBody.entity.metadata).toMatchObject({
+      memory_role: 'session_context',
+      session_scope: { kind: 'client', client_id: 'codex-cli' },
+      topic: 'postgram-memory',
+      agent_id: 'codex'
+    });
+
+    const worker = createEnrichmentWorker({
+      pool: database.pool,
+      embeddingService
+    });
+    await worker.runOnce();
+    await worker.runOnce();
+
+    const searchResult = await runPgm(
+      [
+        'search',
+        'memory lifecycle roles',
+        '--memory-role',
+        'session_context',
+        '--visibility',
+        'personal',
+        '--threshold',
+        '0',
+        '--json'
+      ],
+      env
+    );
+    const searchBody = parseJson(searchResult.stdout) as {
+      results: Array<{ entity: { id: string; metadata: Record<string, unknown> } }>;
+    };
+    expect(searchBody.results.map((entry) => entry.entity.id)).toContain(
+      sessionBody.entity.id
+    );
+    expect(
+      searchBody.results.every(
+        (entry) => entry.entity.metadata.memory_role === 'session_context'
+      )
+    ).toBe(true);
+  }, 120_000);
+
   it('lists entities filtered by type', async () => {
     if (!database) {
       throw new Error('test database not initialized');

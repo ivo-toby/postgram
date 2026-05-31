@@ -31,6 +31,7 @@ describe('key-service', () => {
 
     const result = await createKey(database.pool, {
       name: 'agent-alpha',
+      clientId: 'codex-desktop',
       scopes: ['read', 'write'],
       allowedTypes: ['memory'],
       allowedVisibility: ['shared']
@@ -48,9 +49,34 @@ describe('key-service', () => {
     expect(validated._unsafeUnwrap()).toMatchObject({
       apiKeyId: created.record.id,
       keyName: 'agent-alpha',
+      clientId: 'codex-desktop',
       scopes: ['read', 'write'],
       allowedTypes: ['memory'],
       allowedVisibility: ['shared']
+    });
+  }, 120_000);
+
+  it('defaults client id to key name when omitted', async () => {
+    if (!database) {
+      throw new Error('test database not initialized');
+    }
+
+    const result = await createKey(database.pool, {
+      name: 'agent-default-client',
+      scopes: ['read'],
+      allowedVisibility: ['shared']
+    });
+
+    expect(result.isOk()).toBe(true);
+    const created = result._unsafeUnwrap();
+    expect(created.record.clientId).toBe('agent-default-client');
+
+    const validated = await validateKey(database.pool, created.plaintextKey);
+    expect(validated.isOk()).toBe(true);
+    expect(validated._unsafeUnwrap()).toMatchObject({
+      apiKeyId: created.record.id,
+      keyName: 'agent-default-client',
+      clientId: 'agent-default-client'
     });
   }, 120_000);
 

@@ -328,8 +328,20 @@ program
   .option('--recency-weight <recencyWeight>', 'recency weight', '0.1')
   .option('--expand-graph', 'include graph-connected entities in results')
   .option('--include-archived', 'include archived entities in results')
+  .option('--memory-role <role>', 'memory role filter: durable_memory or session_context')
+  .option('--include-other-clients-session-context', 'include session context from other clients')
   .action(async (query, options, command) => {
     await runWithClient(command, async (client, json) => {
+      if (
+        options.memoryRole !== undefined &&
+        !['durable_memory', 'session_context'].includes(options.memoryRole)
+      ) {
+        throw new AppError(
+          ErrorCode.VALIDATION,
+          '--memory-role must be durable_memory or session_context'
+        );
+      }
+
       const body = await client.searchEntities({
         query,
         type: options.type,
@@ -340,10 +352,60 @@ program
         threshold: Number(options.threshold),
         recency_weight: Number(options.recencyWeight),
         expand_graph: options.expandGraph === true ? true : undefined,
-        include_archived: options.includeArchived === true ? true : undefined
+        include_archived: options.includeArchived === true ? true : undefined,
+        memory_role: options.memoryRole,
+        include_other_clients_session_context:
+          options.includeOtherClientsSessionContext === true ? true : undefined
       });
 
       return json ? body : formatSearchResults(body.results);
+    });
+  });
+
+const memoryCommand = program
+  .command('memory')
+  .description('Memory-specific commands');
+
+memoryCommand
+  .command('session-context')
+  .alias('session')
+  .description('Store client-scoped session-context memory')
+  .argument('[content]', 'session context content')
+  .option('--visibility <visibility>', 'entity visibility', 'shared')
+  .option('--owner <owner>', 'entity owner or namespace')
+  .option('--session-id <sessionId>', 'external session or thread id')
+  .option('--agent-id <agentId>', 'agent or persona id')
+  .option('--topic <topic>', 'topic label')
+  .option('--tags <tags>', 'comma-separated tags')
+  .option('--promotable', 'mark this session context as promotable')
+  .option('--groom-after <groomAfter>', 'ISO timestamp after which grooming may archive/promote it')
+  .option('--expires-at <expiresAt>', 'ISO timestamp after which the context is stale')
+  .action(async (content, options, command) => {
+    await runWithClient(command, async (client, json) => {
+      const body = await client.storeSessionContext({
+        content: await resolveStoreContent(content),
+        visibility: options.visibility,
+        owner: options.owner,
+        session_id: options.sessionId,
+        agent_id: options.agentId,
+        topic: options.topic,
+        tags: parseCommaList(options.tags),
+        promotable: options.promotable === true ? true : undefined,
+        groom_after: options.groomAfter,
+        expires_at: options.expiresAt
+      });
+
+      return json
+        ? body
+        : formatStoredEntity({
+            id: body.entity.id,
+            type: body.entity.type,
+            content: body.entity.content,
+            status: body.entity.status,
+            visibility: body.entity.visibility,
+            owner: body.entity.owner,
+            tags: body.entity.tags
+          });
     });
   });
 

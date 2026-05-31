@@ -15,6 +15,11 @@ import {
 } from '../../services/embeddings/admin.js';
 import { createEdge } from '../../services/edge-service.js';
 import { findSemanticNeighbors } from '../../services/extraction-service.js';
+import {
+  groomSessionContext,
+  previewSessionContextGrooming,
+  type CallLlm
+} from '../../services/memory-grooming-service.js';
 import { AppError, ErrorCode, toErrorResponse } from '../../util/errors.js';
 import {
   handleCliFailure,
@@ -35,6 +40,7 @@ const UUID_REGEX =
 type ApiKeyRow = {
   id: string;
   name: string;
+  client_id: string;
   key_hash: string;
   key_prefix: string;
   scopes: string[];
@@ -109,10 +115,10 @@ function formatKeyList(keys: ApiKeyRow[]): string[] {
   }
 
   return [
-    'id        name            active  scopes',
+    'id        name            client          active  scopes',
     ...keys.map(
       (key) =>
-        `${shortId(key.id)}  ${key.name.padEnd(14)}  ${String(key.is_active).padEnd(6)}  ${key.scopes.join(',')}`
+        `${shortId(key.id)}  ${key.name.padEnd(14)}  ${key.client_id.padEnd(14)}  ${String(key.is_active).padEnd(6)}  ${key.scopes.join(',')}`
     )
   ];
 }
@@ -196,6 +202,7 @@ keyCommand
   .command('create')
   .description('Create an API key')
   .requiredOption('--name <name>', 'key name')
+  .option('--client-id <clientId>', 'stable client identity for session-context memory scope')
   .option('--scopes <scopes>', 'comma-separated scopes', 'read')
   .option('--visibility <visibility>', 'comma-separated visibility values', 'shared')
   .option('--types <types>', 'comma-separated entity types')
@@ -205,6 +212,7 @@ keyCommand
     await runWithPool(json, async (pool, mode) => {
       const created = await createKey(pool, {
         name: options.name,
+        clientId: options.clientId,
         scopes: parseCommaList(options.scopes) as Scope[] | undefined,
         allowedTypes: parseCommaList(options.types) as EntityType[] | null | undefined,
         allowedVisibility: parseCommaList(options.visibility) as Visibility[] | undefined
@@ -218,7 +226,8 @@ keyCommand
         operation: 'key.create',
         entityId: created.value.record.id,
         details: {
-          name: options.name
+          name: options.name,
+          clientId: created.value.record.clientId
         }
       });
 
@@ -241,6 +250,7 @@ keyCommand
           keys: result.rows.map((row) => ({
             id: row.id,
             name: row.name,
+            clientId: row.client_id,
             isActive: row.is_active,
             scopes: row.scopes,
             allowedTypes: row.allowed_types,
@@ -1267,6 +1277,7 @@ program
       const auth: AuthContext = {
         apiKeyId: null,
         keyName: 'system-link-neighbors',
+        clientId: null,
         scopes: ['read', 'write', 'delete'] as const,
         allowedTypes: null,
         allowedVisibility: ['personal', 'work', 'shared'] as const
@@ -1537,6 +1548,122 @@ export function parseDuration(value: string): string {
   }
   return `${days} days`;
 }
+
+async function createExtractionCallLlm(purpose: string): Promise<CallLlm> {
+  const config = loadConfig();
+  if (!config.EXTRACTION_ENABLED) {
+    throw new Error(
+      `EXTRACTION_ENABLED is not set — ${purpose} requires the extraction LLM. Set EXTRACTION_ENABLED=true and the provider credentials.`
+    );
+  }
+
+  const { createLlmProvider } = await import('../../services/llm-provider.js');
+  return createLlmProvider({
+    provider: config.EXTRACTION_PROVIDER,
+    model: config.EXTRACTION_MODEL,
+    openaiApiKey: config.OPENAI_API_KEY,
+    anthropicApiKey: config.ANTHROPIC_API_KEY,
+    ollamaBaseUrl: config.OLLAMA_BASE_URL,
+    ollamaApiKey: config.OLLAMA_API_KEY,
+    disableThinking: config.EXTRACTION_DISABLE_THINKING,
+    reasoningEffort: config.EXTRACTION_REASONING_EFFORT
+  });
+}
+
+const memoryCommand = program
+  .command('memory')
+  .description('Memory maintenance commands');
+
+memoryCommand
+  .command('groom')
+  .description('Preview, archive, or promote eligible session-context memories')
+  .requiredOption('--client-id <clientId>', 'client id to groom')
+  .option('--mode <mode>', 'archive or promote', 'archive')
+  .option('--limit <limit>', 'maximum candidates', '50')
+  .option('--dry-run', 'preview without mutating')
+  .option('--yes', 'confirm mutation')
+  .action(async (options, command) => {
+    const json = isJsonMode(command);
+    const limit = Number.parseInt(options.limit, 10);
+    if (!Number.isInteger(limit) || limit <= 0) {
+      await handleCliFailure(new Error('--limit must be a positive integer'), json);
+      return;
+    }
+
+    if (options.mode !== 'archive' && options.mode !== 'promote') {
+      await handleCliFailure(new Error('--mode must be archive or promote'), json);
+      return;
+    }
+
+    let callLlm: CallLlm | undefined;
+    if (options.mode === 'promote' && !options.dryRun) {
+      try {
+        callLlm = await createExtractionCallLlm('session-context promotion grooming');
+      } catch (error) {
+        await handleCliFailure(error, json);
+        return;
+      }
+    }
+
+    await runWithPool(json, async (pool) => {
+      if (options.dryRun) {
+        const preview = await previewSessionContextGrooming(pool, {
+          clientId: options.clientId,
+          now: new Date(),
+          limit
+        });
+        if (preview.isErr()) {
+          throw preview.error;
+        }
+
+        return json
+          ? {
+              dryRun: true,
+              archived: 0,
+              promoted: 0,
+              skipped: 0,
+              mode: options.mode,
+              eligible: preview.value.eligible
+            }
+          : [
+              `Would ${options.mode === 'promote' ? 'assess' : 'archive'} ${preview.value.eligible.length} session-context memories for client ${options.clientId}`
+            ];
+      }
+
+      const result = await groomSessionContext(pool, {
+        clientId: options.clientId,
+        now: new Date(),
+        mode: options.mode,
+        dryRun: false,
+        confirm: Boolean(options.yes),
+        limit,
+        callLlm
+      });
+      if (result.isErr()) {
+        throw result.error;
+      }
+
+      await appendAuditEntry(pool, {
+        operation: 'memory.groom',
+        details: {
+          clientId: options.clientId,
+          archived: result.value.archived,
+          promoted: result.value.promoted,
+          skipped: result.value.skipped,
+          mode: options.mode,
+          limit
+        }
+      });
+
+      return json
+        ? { ...result.value, mode: options.mode }
+        : [
+            options.mode === 'promote'
+              ? `Archived ${result.value.archived} session-context memories for client ${options.clientId} (${result.value.promoted} promoted, ${result.value.skipped} skipped)`
+              : `Archived ${result.value.archived} session-context memories for client ${options.clientId}`
+          ];
+    });
+  });
 
 program
   .command('purge')

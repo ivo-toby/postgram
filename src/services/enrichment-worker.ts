@@ -12,10 +12,12 @@ import {
   extractAndLinkRelationships,
   SemanticMatchUnavailableError
 } from './extraction-service.js';
+import { getMemoryRole } from './memory-role-service.js';
 
 type PendingEntityRow = {
   id: string;
   content: string;
+  metadata: Record<string, unknown>;
 };
 
 type PendingExtractionRow = PendingEntityRow & {
@@ -132,7 +134,7 @@ export function createEnrichmentWorker(options: EnrichmentWorkerOptions) {
 
       const pending = await client.query<PendingEntityRow>(
         `
-          SELECT id, content
+          SELECT id, content, metadata
           FROM entities
           WHERE content IS NOT NULL
             AND (
@@ -194,33 +196,43 @@ export function createEnrichmentWorker(options: EnrichmentWorkerOptions) {
         );
       }
 
-      await client.query(
-        options.extractionEnabled
-          ? `
-              UPDATE entities
-              SET enrichment_status = 'completed',
-                  enrichment_attempts = 0,
-                  enrichment_error = NULL,
-                  -- Auto-created stubs only have a name as content. Running
-                  -- extraction on them prompts the LLM with "what does Alice
-                  -- relate to?" with no context, which free-associates new
-                  -- stubs and loops. Skip them.
-                  extraction_status = CASE
-                    WHEN 'auto-created' = ANY(tags) THEN NULL
-                    ELSE 'pending'
-                  END,
-                  extraction_error = NULL
-              WHERE id = $1
-            `
-          : `
-              UPDATE entities
-              SET enrichment_status = 'completed',
-                  enrichment_attempts = 0,
-                  enrichment_error = NULL
-              WHERE id = $1
-            `,
-        [entity.id]
-      );
+      const shouldQueueExtraction =
+        Boolean(options.extractionEnabled) &&
+        getMemoryRole(entity.metadata) !== 'session_context';
+
+      if (options.extractionEnabled) {
+        await client.query(
+          `
+            UPDATE entities
+            SET enrichment_status = 'completed',
+                enrichment_attempts = 0,
+                enrichment_error = NULL,
+                -- Auto-created stubs only have a name as content. Running
+                -- extraction on them prompts the LLM with "what does Alice
+                -- relate to?" with no context, which free-associates new
+                -- stubs and loops. Skip them.
+                extraction_status = CASE
+                  WHEN $2::boolean = false THEN NULL
+                  WHEN 'auto-created' = ANY(tags) THEN NULL
+                  ELSE 'pending'
+                END,
+                extraction_error = NULL
+            WHERE id = $1
+          `,
+          [entity.id, shouldQueueExtraction]
+        );
+      } else {
+        await client.query(
+          `
+            UPDATE entities
+            SET enrichment_status = 'completed',
+                enrichment_attempts = 0,
+                enrichment_error = NULL
+            WHERE id = $1
+          `,
+          [entity.id]
+        );
+      }
 
       await client.query('COMMIT');
       return true;
@@ -425,6 +437,7 @@ export function createEnrichmentWorker(options: EnrichmentWorkerOptions) {
         const extractionAuth: AuthContext = {
           apiKeyId: null,
           keyName: 'system-extraction',
+          clientId: null,
           scopes: ['read', 'write', 'delete'] as const,
           allowedTypes: null,
           allowedVisibility: ['personal', 'work', 'shared'] as const

@@ -100,6 +100,7 @@ export async function seedApiKey(
   input: {
     id: string;
     name: string;
+    clientId?: string;
     scopes?: Scope[];
     allowedTypes?: EntityType[] | null;
     allowedVisibility?: Visibility[];
@@ -110,6 +111,7 @@ export async function seedApiKey(
       INSERT INTO api_keys (
         id,
         name,
+        client_id,
         key_hash,
         key_prefix,
         scopes,
@@ -117,11 +119,12 @@ export async function seedApiKey(
         allowed_visibility,
         is_active
       )
-      VALUES ($1, $2, $3, $4, $5, $6, $7, true)
+      VALUES ($1, $2, $3, $4, $5, $6, $7, $8, true)
     `,
     [
       input.id,
       input.name,
+      input.clientId ?? input.name,
       'test-hash',
       input.name.slice(0, 8),
       input.scopes ?? ['read', 'write', 'delete'],

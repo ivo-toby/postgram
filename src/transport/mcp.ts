@@ -8,7 +8,13 @@ import { validateKey } from '../auth/key-service.js';
 import type { AuthContext } from '../auth/types.js';
 import type { EmbeddingService } from '../services/embedding-service.js';
 import { createEdge, deleteEdge, expandGraph } from '../services/edge-service.js';
-import { recallEntity, softDeleteEntity, storeEntity, updateEntity } from '../services/entity-service.js';
+import {
+  recallEntity,
+  softDeleteEntity,
+  storeEntity,
+  storeSessionContextMemory,
+  updateEntity
+} from '../services/entity-service.js';
 import { getQueueStatus } from '../services/queue-service.js';
 import { searchEntities } from '../services/search-service.js';
 import { syncManifest, getSyncStatus } from '../services/sync-service.js';
@@ -32,6 +38,7 @@ const entityTypeSchema = z.enum([
 
 const visibilitySchema = z.enum(['personal', 'work', 'shared']);
 const ownerSchema = z.string().trim().min(1);
+const memoryRoleSchema = z.enum(['durable_memory', 'session_context']);
 
 const statusSchema = z.enum([
   'active',
@@ -167,6 +174,41 @@ function createSessionServer(
   );
 
   server.registerTool(
+    'store_session_context',
+    {
+      description: 'Store short-lived working context for resuming recent conversations. Creates a memory with metadata.memory_role=session_context, scopes it to the authenticated client_id, embeds it for recall, and skips graph extraction.',
+      inputSchema: {
+        content: z.string().min(1),
+        visibility: visibilitySchema.optional(),
+        owner: ownerSchema.optional(),
+        session_id: z.string().optional(),
+        agent_id: z.string().optional(),
+        topic: z.string().optional(),
+        tags: z.array(z.string()).optional(),
+        promotable: z.boolean().optional(),
+        groom_after: z.string().optional(),
+        expires_at: z.string().optional()
+      }
+    },
+    (args) =>
+      toolFromService(
+        storeSessionContextMemory(pool, auth, {
+          content: args.content,
+          visibility: args.visibility,
+          owner: args.owner,
+          sessionId: args.session_id,
+          agentId: args.agent_id,
+          topic: args.topic,
+          tags: args.tags,
+          promotable: args.promotable,
+          groomAfter: args.groom_after,
+          expiresAt: args.expires_at
+        }),
+        (entity) => ({ entity: toStoredEntity(entity) })
+      )
+  );
+
+  server.registerTool(
     'recall',
     {
       description: 'Recall an entity by ID',
@@ -197,7 +239,9 @@ function createSessionServer(
         threshold: z.number().min(0).max(1).optional(),
         recency_weight: z.number().min(0).optional(),
         expand_graph: z.boolean().optional(),
-        include_archived: z.boolean().optional()
+        include_archived: z.boolean().optional(),
+        memory_role: memoryRoleSchema.optional(),
+        include_other_clients_session_context: z.boolean().optional()
       }
     },
     (args) =>
@@ -215,7 +259,9 @@ function createSessionServer(
             threshold: args.threshold,
             recencyWeight: args.recency_weight,
             expandGraph: args.expand_graph,
-            includeArchived: args.include_archived
+            includeArchived: args.include_archived,
+            memoryRole: args.memory_role,
+            includeOtherClientsSessionContext: args.include_other_clients_session_context
           },
           {
             embeddingService: options.embeddingService

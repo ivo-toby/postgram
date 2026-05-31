@@ -16,6 +16,7 @@ function makeAuthContext(): AuthContext {
   return {
     apiKeyId: '00000000-0000-0000-0000-000000000103',
     keyName: 'worker-key',
+    clientId: 'worker-key',
     scopes: ['read', 'write', 'delete'],
     allowedTypes: null,
     allowedVisibility: ['personal', 'work', 'shared']
@@ -237,6 +238,49 @@ describe('enrichment-worker', () => {
     // so it transitions pending → completed in the same pass).
     expect(byId[normal.id]?.enrichment_status).toBe('completed');
     expect(byId[normal.id]?.extraction_status).toBe('completed');
+  }, 120_000);
+
+  it('embeds session-context memory but does not queue graph extraction', async () => {
+    if (!database) {
+      throw new Error('test database not initialized');
+    }
+
+    const stored = (await storeEntity(database.pool, makeAuthContext(), {
+      type: 'memory',
+      content: 'Session context about Postgram memory lifecycle roles.',
+      visibility: 'personal',
+      metadata: {
+        memory_role: 'session_context',
+        session_scope: { kind: 'client', client_id: 'codex' }
+      }
+    }))._unsafeUnwrap();
+
+    const worker = createEnrichmentWorker({
+      pool: database.pool,
+      embeddingService: createEmbeddingService(),
+      extractionEnabled: true,
+      callLlm: async () => '[]'
+    });
+
+    await worker.runOnce();
+
+    const entity = await database.pool.query<{
+      enrichment_status: string;
+      extraction_status: string | null;
+    }>(
+      'SELECT enrichment_status, extraction_status FROM entities WHERE id = $1',
+      [stored.id]
+    );
+    const chunks = await database.pool.query<{ count: number }>(
+      'SELECT count(*)::int AS count FROM chunks WHERE entity_id = $1',
+      [stored.id]
+    );
+
+    expect(entity.rows[0]).toEqual({
+      enrichment_status: 'completed',
+      extraction_status: null
+    });
+    expect(chunks.rows[0]?.count).toBeGreaterThan(0);
   }, 120_000);
 
   it('uses per-entity LLM override (model+provider) when columns are set, and clears them on success', async () => {

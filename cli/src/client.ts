@@ -121,6 +121,23 @@ export function createPgmClient(options: RestClientOptions) {
         body: input
       });
     },
+    storeSessionContext(input: {
+      content: string;
+      visibility?: string | undefined;
+      owner?: string | undefined;
+      session_id?: string | undefined;
+      agent_id?: string | undefined;
+      topic?: string | undefined;
+      tags?: string[] | undefined;
+      promotable?: boolean | undefined;
+      groom_after?: string | undefined;
+      expires_at?: string | undefined;
+    }) {
+      return request<StoredEntityResponse>(options, '/api/memory/session-context', {
+        method: 'POST',
+        body: input
+      });
+    },
     recallEntity(id: string, input: { owner?: string | undefined } = {}) {
       const params = new URLSearchParams();
       if (input.owner) {
@@ -144,6 +161,8 @@ export function createPgmClient(options: RestClientOptions) {
       recency_weight?: number | undefined;
       expand_graph?: boolean | undefined;
       include_archived?: boolean | undefined;
+      memory_role?: 'durable_memory' | 'session_context' | undefined;
+      include_other_clients_session_context?: boolean | undefined;
     }) {
       return request<SearchResponse>(options, '/api/search', {
         method: 'POST',

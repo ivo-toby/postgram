@@ -42,18 +42,49 @@ Retrieve a specific entity by ID.
 
 ---
 
+### store_session_context
+
+Stores short-lived working context for resuming recent conversations.
+
+Session-context memories:
+
+- are stored as `type=memory`
+- have `metadata.memory_role=session_context`
+- are scoped to the authenticated API key's `client_id`
+- are embedded for semantic recall
+- do not run graph extraction
+
+| Parameter   | Type     | Required | Default    |
+|-------------|----------|----------|------------|
+| content     | string   | yes      | —          |
+| visibility  | enum     | no       | `shared`   |
+| owner       | string   | no       | —          |
+| session_id  | string   | no       | —          |
+| agent_id    | string   | no       | —          |
+| topic       | string   | no       | —          |
+| tags        | string[] | no       | —          |
+| promotable  | boolean  | no       | —          |
+| groom_after | string   | no       | —          |
+| expires_at  | string   | no       | —          |
+
+**Returns**: `{ "entity": StoredEntity }`
+
+---
+
 ### search
 
 Semantic search across stored knowledge.
 
-| Parameter      | Type     | Required | Default |
-|----------------|----------|----------|---------|
-| query          | string   | yes      | —       |
-| type           | enum     | no       | —       |
-| tags           | string[] | no       | —       |
-| limit          | number   | no       | 10      |
-| threshold      | number   | no       | 0.35    |
-| recency_weight | number   | no       | 0.1     |
+| Parameter                             | Type     | Required | Default |
+|---------------------------------------|----------|----------|---------|
+| query                                 | string   | yes      | —       |
+| type                                  | enum     | no       | —       |
+| tags                                  | string[] | no       | —       |
+| memory_role                           | enum     | no       | —       |
+| include_other_clients_session_context | boolean  | no       | false   |
+| limit                                 | number   | no       | 10      |
+| threshold                             | number   | no       | 0.35    |
+| recency_weight                        | number   | no       | 0.1     |
 
 **Returns**: `{ "results": SearchResult[] }`
 

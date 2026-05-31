@@ -12,6 +12,7 @@ function unrestrictedAuth(): AuthContext {
   return {
     apiKeyId: '00000000-0000-0000-0000-000000000601',
     keyName: 'queue-unrestricted',
+    clientId: 'queue-unrestricted',
     scopes: ['read', 'write', 'delete'],
     allowedTypes: null,
     allowedVisibility: ['personal', 'work', 'shared']
@@ -120,6 +121,7 @@ describe('queue-service', () => {
     const restricted: AuthContext = {
       apiKeyId: '00000000-0000-0000-0000-000000000602',
       keyName: 'queue-restricted',
+      clientId: 'queue-restricted',
       scopes: ['read'],
       allowedTypes: ['document'],        // memory excluded
       allowedVisibility: ['shared']      // personal excluded

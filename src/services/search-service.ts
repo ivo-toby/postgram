@@ -18,6 +18,7 @@ import {
   type EmbeddingService,
   vectorToSql
 } from './embedding-service.js';
+import type { MemoryRole } from './memory-role-service.js';
 
 type EntityRow = {
   id: string;
@@ -59,6 +60,8 @@ type SearchInput = {
   tags?: string[] | undefined;
   visibility?: Visibility | undefined;
   owner?: string | undefined;
+  memoryRole?: MemoryRole | undefined;
+  includeOtherClientsSessionContext?: boolean | undefined;
   limit?: number | undefined;
   threshold?: number | undefined;
   recencyWeight?: number | undefined;
@@ -194,6 +197,15 @@ async function runHybridSearch(
         AND e.visibility = ANY($5)
         AND ($6::text IS NULL OR e.visibility = $6)
         AND ${ownerSqlCondition('e.owner', '$7')}
+        AND (
+          $11::text IS NULL
+          OR COALESCE(e.metadata->>'memory_role', 'durable_memory') = $11
+        )
+        AND (
+          $12::boolean = true
+          OR COALESCE(e.metadata->>'memory_role', 'durable_memory') <> 'session_context'
+          OR e.metadata #>> '{session_scope,client_id}' = $13
+        )
       ORDER BY c.embedding <=> $1::vector
       LIMIT $9
     `,
@@ -207,7 +219,10 @@ async function runHybridSearch(
       input.owner ?? null,
       ctx.queryText,
       candidateLimit,
-      input.includeArchived ?? false
+      input.includeArchived ?? false,
+      input.memoryRole ?? null,
+      input.includeOtherClientsSessionContext ?? false,
+      auth.clientId
     ]
   );
 
@@ -332,12 +347,19 @@ export function searchEntities(
                AND status IS DISTINCT FROM 'archived'
                AND ($2::text[] IS NULL OR type = ANY($2))
                AND visibility = ANY($3)
-               AND ${ownerSqlCondition('owner', '$4')}`,
+               AND ${ownerSqlCondition('owner', '$4')}
+               AND (
+                 $5::boolean = true
+                 OR COALESCE(metadata->>'memory_role', 'durable_memory') <> 'session_context'
+                 OR metadata #>> '{session_scope,client_id}' = $6
+               )`,
             [
               Array.from(allNeighborIds),
               auth.allowedTypes,
               auth.allowedVisibility,
-              input.owner ?? null
+              input.owner ?? null,
+              input.includeOtherClientsSessionContext ?? false,
+              auth.clientId
             ]
           );
 

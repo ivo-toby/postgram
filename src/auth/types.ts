@@ -5,6 +5,7 @@ export type Scope = 'read' | 'write' | 'delete' | 'sync';
 export type ApiKeyRecord = {
   id: string;
   name: string;
+  clientId: string;
   keyHash: string;
   keyPrefix: string;
   scopes: Scope[];
@@ -18,6 +19,7 @@ export type ApiKeyRecord = {
 export type AuthContext = {
   apiKeyId: string | null;
   keyName: string;
+  clientId: string | null;
   scopes: Scope[];
   allowedTypes: EntityType[] | null;
   allowedVisibility: Visibility[];

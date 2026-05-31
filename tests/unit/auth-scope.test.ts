@@ -14,6 +14,7 @@ function makeAuthContext(
   return {
     apiKeyId: 'key-1',
     keyName: 'test-key',
+    clientId: 'test-key',
     scopes: ['read', 'write'],
     allowedTypes: null,
     allowedVisibility: ['shared', 'work'],

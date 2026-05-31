@@ -15,10 +15,11 @@ Invoke this skill proactively when the user:
 - Says "what did I / we say about …" / "find / look up …" — search.
 - Says "mark done", "I finished …", "complete …" — update a task entity's status.
 - Mentions prior context that should be recalled before acting ("like we discussed earlier", "the thing from yesterday").
-- Wraps a work session ("end of day", "let's checkpoint") — store a memory summarizing the session.
+- Wraps a work session ("end of day", "let's checkpoint") — store a durable memory summarizing the session.
+- Needs continuity for an active or recent thread — store session context, not durable memory.
 - Relates two things explicitly ("X depends on Y", "A is part of B") — create an edge.
 
-Do **not** invoke this skill for one-off scratchpad content that doesn't need to persist across sessions. Postgram is a durable knowledge store, not a notepad.
+Do **not** invoke this skill for one-off scratchpad content that does not need either session continuity or durable recall. Postgram is not a general notepad.
 
 ## Preflight
 
@@ -38,13 +39,40 @@ If any of those fail, tell the user how to fix it and stop — don't retry blind
 Entity types: `memory`, `person`, `project`, `task`, `interaction`, `document`.
 Visibility: `personal`, `work`, `shared`.
 
-### Store a memory
+### Memory roles
+
+Postgram supports two roles for `memory` entities:
+
+- `durable_memory`: long-lived facts, decisions, preferences, constraints, root causes, and completed-work summaries.
+- `session_context`: short-lived working context used to resume an active or recent conversation.
+
+Use durable memory for information future agents should treat as stable. Use session context for "where we are in this thread" continuity. Session context is embedded for semantic recall, but does not participate in graph extraction.
+
+When using MCP and a `store_session_context` tool is available, prefer it for session context. It sets the correct metadata and client scope automatically.
+
+### Store durable memory
 
 ```bash
-pgm store --type memory --visibility personal --content "…"
+pgm store --type memory --visibility personal \
+  --metadata '{"memory_role":"durable_memory"}' \
+  --content "…"
 ```
 
-For richer content, use `--stdin` and pipe the text. Add `--tags tag1,tag2` for filtering later.
+For richer content, use `--stdin` and pipe the text. Add `--tags tag1,tag2` for filtering later. If `memory_role` is omitted, Postgram treats the memory as durable for backwards compatibility.
+
+### Store session context
+
+Use session context for resumability, open questions, and active-thread state:
+
+```bash
+pgm memory session-context --visibility personal \
+  --tags session-context,postgram \
+  --topic postgram-memory-lifecycle \
+  --agent-id codex \
+  "We are discussing Postgram session_context memory. Current direction: embed for recall, skip graph extraction, groom into durable_memory later."
+```
+
+This command scopes session context to the authenticated client when the server knows its `client_id`. Do not manually promote session context by copying it verbatim into durable memory. Promotion should distill the stable claim.
 
 ### Store a task
 
@@ -61,6 +89,14 @@ pgm search "what the user asked about" --limit 5
 ```
 
 Hybrid BM25 + vector with recency weighting. Add `--type project` or `--visibility work` to narrow.
+
+For session continuity, search for recent `session_context` memories first when the user appears to be resuming an active topic.
+
+```bash
+pgm search "active topic keywords" --type memory --memory-role session_context --visibility personal --limit 5 --json
+```
+
+For durable knowledge, prefer durable memories and source documents. Treat old session-context hits as working notes, not authoritative facts.
 
 ### Search with graph expansion
 
@@ -131,6 +167,8 @@ extraction: pending=8   completed=1230  failed=2
 - **Set visibility deliberately**: `personal` for the user, `work` for shared with colleagues, `shared` for public knowledge. When unsure, ask once and remember the preference.
 - **Don't duplicate** — search first when the user's phrasing suggests something may already exist. Postgram stores everything; a cluttered knowledge base is worse than a sparse one.
 - **When storing from a long exchange**, store a *summary* memory with the key facts, not the full transcript. The transcript belongs in the conversation log; the memory is the distilled signal.
+- **Separate continuity from knowledge** — use `session_context` for active-thread state and `durable_memory` for stable facts. Do not make session context durable by copying it verbatim.
+- **Let Postgram groom** — promotion from session context to durable memory should be handled by Postgram's groomer or an explicit operator workflow, because promotion changes the authority and sharing level of the memory. The groomer uses the configured extraction LLM to assess whether eligible session context deserves promotion and stores only the distilled durable memory, not a verbatim copy.
 
 ## Failure modes to recognize
 
@@ -150,6 +188,18 @@ pgm store --type memory --visibility personal \
 ```
 
 Confirm to the user with the returned entity id (first 8 chars) and the tags.
+
+### User: "let's keep this thread resumable"
+
+If `store_session_context` is available through MCP, use it. Otherwise:
+
+```bash
+pgm memory session-context --visibility personal \
+  --tags session-context \
+  --topic active-thread \
+  --agent-id codex \
+  "Session context: user wants this thread resumable. Capture open decisions and active questions, but promote only stable outcomes later."
+```
 
 ### User: "what did I say about embeddings last week"
 
@@ -197,3 +247,4 @@ pgm store --type memory --visibility personal \
 - Don't use Postgram as a replacement for a file system — it stores *text entities*, not code or artifacts.
 - Don't store secrets (API keys, tokens, credentials) — audit log records every write.
 - Don't use it for volatile state (counters, session tokens, caches).
+- Don't treat session-context memory as durable truth. It is working context until groomed or promoted by Postgram's LLM-assisted groomer.

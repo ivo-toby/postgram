@@ -106,6 +106,7 @@ describe('MCP tools', () => {
     await client.connect(transport as unknown as Transport);
 
     return {
+      clientId: createdKey.record.clientId,
       client,
       close: async () => {
         await client.close();
@@ -178,6 +179,7 @@ describe('MCP tools', () => {
         'recall',
         'search',
         'store',
+        'store_session_context',
         'sync_push',
         'sync_status',
         'task_complete',
@@ -467,6 +469,42 @@ describe('MCP tools', () => {
         context: '@dev',
         priority: 'high',
         owner: 'ivo'
+      });
+    } finally {
+      await close();
+    }
+  }, 120_000);
+
+  it('stores client-scoped session context via MCP', async () => {
+    const { client, clientId, close } = await createClient();
+
+    try {
+      const stored = extractStructuredPayload(
+        (await client.callTool({
+          name: 'store_session_context',
+          arguments: {
+            content: 'MCP session context about memory lifecycle roles',
+            visibility: 'personal',
+            topic: 'postgram-memory',
+            agent_id: 'codex',
+            tags: ['mcp']
+          }
+        })) as ToolResultPayload
+      ) as {
+        entity: {
+          type: string;
+          tags: string[];
+          metadata: Record<string, unknown>;
+        };
+      };
+
+      expect(stored.entity.type).toBe('memory');
+      expect(stored.entity.tags).toContain('session-context');
+      expect(stored.entity.metadata).toMatchObject({
+        memory_role: 'session_context',
+        session_scope: { kind: 'client', client_id: clientId },
+        topic: 'postgram-memory',
+        agent_id: 'codex'
       });
     } finally {
       await close();

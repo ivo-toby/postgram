@@ -36,6 +36,7 @@ function makeAuthContext(apiKeyId = '00000000-0000-0000-0000-000000000000'): Aut
   return {
     apiKeyId,
     keyName: 'admin-seed',
+    clientId: 'admin-seed',
     scopes: ['read', 'write', 'delete'],
     allowedTypes: null,
     allowedVisibility: ['personal', 'work', 'shared']
@@ -93,6 +94,8 @@ describe('pgm-admin CLI', () => {
         'create',
         '--name',
         'admin-alpha',
+        '--client-id',
+        'codex-desktop',
         '--scopes',
         'read,write',
         '--visibility',
@@ -105,9 +108,10 @@ describe('pgm-admin CLI', () => {
     );
     const createdBody = parseJson(createResult.stdout) as {
       plaintextKey: string;
-      record: { id: string; keyHash: string; isActive: boolean };
+      record: { id: string; clientId: string; keyHash: string; isActive: boolean };
     };
     expect(createdBody.plaintextKey).toMatch(/^pgm-admin-alpha-/);
+    expect(createdBody.record.clientId).toBe('codex-desktop');
     expect(createdBody.record.keyHash).not.toContain(createdBody.plaintextKey);
     expect(createdBody.record.isActive).toBe(true);
 
@@ -118,13 +122,14 @@ describe('pgm-admin CLI', () => {
       }
     );
     const listBody = parseJson(listResult.stdout) as {
-      keys: Array<{ id: string; name: string; isActive: boolean }>;
+      keys: Array<{ id: string; name: string; clientId: string; isActive: boolean }>;
     };
     expect(listBody.keys).toEqual(
       expect.arrayContaining([
         expect.objectContaining({
           id: createdBody.record.id,
           name: 'admin-alpha',
+          clientId: 'codex-desktop',
           isActive: true
         })
       ])
@@ -1033,6 +1038,96 @@ describe('pgm-admin CLI', () => {
       "SELECT details FROM audit_log WHERE operation = 'reembed.start' ORDER BY timestamp DESC LIMIT 1"
     );
     expect(auditRows.rows[0]?.details.onlyFailed).toBe(true);
+  }, 120_000);
+
+  it('memory groom archives eligible session context for one client', async () => {
+    if (!database) {
+      throw new Error('test database not initialized');
+    }
+
+    const databaseUrl = getDatabaseUrl(database);
+    const seededKey = (await createKey(database.pool, {
+      name: `memory-groom-${crypto.randomUUID()}`,
+      clientId: 'codex',
+      scopes: ['read', 'write', 'delete'],
+      allowedVisibility: ['personal']
+    }))._unsafeUnwrap();
+    const auth: AuthContext = {
+      ...makeAuthContext(seededKey.record.id),
+      clientId: 'codex',
+      allowedVisibility: ['personal']
+    };
+
+    const eligible = (await storeEntity(database.pool, auth, {
+      type: 'memory',
+      content: 'eligible session context',
+      visibility: 'personal',
+      metadata: {
+        memory_role: 'session_context',
+        session_scope: { kind: 'client', client_id: 'codex' },
+        groom_after: '2026-01-01T00:00:00.000Z'
+      }
+    }))._unsafeUnwrap();
+    const otherClient = (await storeEntity(database.pool, auth, {
+      type: 'memory',
+      content: 'other client context',
+      visibility: 'personal',
+      metadata: {
+        memory_role: 'session_context',
+        session_scope: { kind: 'client', client_id: 'talon' },
+        groom_after: '2026-01-01T00:00:00.000Z'
+      }
+    }))._unsafeUnwrap();
+
+    const dryRun = await runAdmin(
+      ['memory', 'groom', '--client-id', 'codex', '--dry-run', '--json'],
+      { DATABASE_URL: databaseUrl }
+    );
+    const dryRunBody = parseJson(dryRun.stdout) as {
+      dryRun: boolean;
+      archived: number;
+      promoted: number;
+      skipped: number;
+      mode: string;
+      eligible: Array<{ id: string }>;
+    };
+    expect(dryRunBody).toMatchObject({
+      dryRun: true,
+      archived: 0,
+      promoted: 0,
+      skipped: 0,
+      mode: 'archive'
+    });
+    expect(dryRunBody.eligible.map((entry) => entry.id)).toEqual([eligible.id]);
+
+    const result = await runAdmin(
+      ['memory', 'groom', '--client-id', 'codex', '--yes', '--json'],
+      { DATABASE_URL: databaseUrl }
+    );
+    const body = parseJson(result.stdout) as {
+      dryRun: boolean;
+      archived: number;
+      promoted: number;
+      skipped: number;
+      mode: string;
+      promotions: Array<{ sourceId: string; durableId: string }>;
+    };
+    expect(body).toEqual({
+      dryRun: false,
+      archived: 1,
+      promoted: 0,
+      skipped: 0,
+      mode: 'archive',
+      promotions: []
+    });
+
+    const rows = await database.pool.query<{ id: string; status: string | null }>(
+      'SELECT id, status FROM entities WHERE id = ANY($1)',
+      [[eligible.id, otherClient.id]]
+    );
+    const byId = Object.fromEntries(rows.rows.map((row) => [row.id, row.status]));
+    expect(byId[eligible.id]).toBe('archived');
+    expect(byId[otherClient.id]).toBeNull();
   }, 120_000);
 
   describe('purge command', () => {

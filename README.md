@@ -108,6 +108,18 @@ be promoted; promoted memories are distilled into new `durable_memory` entities,
 the source context is archived, and provenance is recorded with
 `metadata.promoted_to` plus a `promoted_to` edge.
 
+For scheduled maintenance, run grooming from the host that has access to the
+Postgram container. This cron example assesses eligible session context every
+three days at 03:17 and appends JSON output to a log:
+
+```cron
+17 3 */3 * * cd /path/to/postgram && ./bin/pgm-admin --json memory groom --client-id <client-id> --mode promote --yes --limit 50 >> /var/log/postgram-memory-groom.log 2>&1
+```
+
+Use `--mode archive --yes` instead if you want to archive eligible working
+context without LLM-assisted promotion. Run the same command with `--dry-run`
+first to verify the eligible set.
+
 ### 2. Async Enrichment
 
 Entities with content are persisted first and enriched later. Each entity

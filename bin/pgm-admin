@@ -1,7 +1,8 @@
 #!/usr/bin/env bash
 # Shorthand for running pgm-admin inside the Postgram container.
 #
-# If the container is already running, this does `docker exec -it`.
+# If the container is already running, this does `docker exec -it` for an
+# interactive terminal and `docker exec -i` for piped/non-interactive use.
 # If it isn't (e.g. the startup dimension gate is refusing to boot), this
 # falls back to `docker compose run --rm` so admin commands like
 # `embeddings migrate` still work.
@@ -29,7 +30,10 @@ script_dir="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 cd "$(dirname "$script_dir")"
 
 if docker ps --format '{{.Names}}' | grep -qx "$CONTAINER"; then
-  exec docker exec -it "$CONTAINER" pgm-admin "$@"
+  if [[ -t 0 && -t 1 ]]; then
+    exec docker exec -it "$CONTAINER" pgm-admin "$@"
+  fi
+  exec docker exec -i "$CONTAINER" pgm-admin "$@"
 else
   exec docker compose run --rm "$SERVICE" pgm-admin "$@"
 fi

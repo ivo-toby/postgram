@@ -1,0 +1,7 @@
+#!/usr/bin/env zsh
+set -euo pipefail
+
+repo_dir="$(cd "$(dirname "$0")/.." && pwd)"
+cd "$repo_dir"
+
+exec env -u PGM_API_URL -u PGM_API_KEY npm --workspace cli exec -- pgm "$@"

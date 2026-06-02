@@ -50,6 +50,8 @@ Use durable memory for information future agents should treat as stable. Use ses
 
 When using MCP and a `store_session_context` tool is available, prefer it for session context. It sets the correct metadata and client scope automatically.
 
+Do not manually choose or set `client_id`. Postgram derives session scope from the authenticated API key. Use one API key/client id per client identity (for example `codex-local`, `claude-desktop`, or `talon`) so sessions from the same client can resume each other. Use `agent_id` only as optional metadata, not as an auth boundary.
+
 ### Store durable memory
 
 ```bash

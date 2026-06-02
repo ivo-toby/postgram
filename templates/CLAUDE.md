@@ -53,6 +53,8 @@ Use durable memory for stable facts future agents should trust. Use session
 context for active-thread continuity ("where were we?"), resumability, open
 questions, and current working state. Session context is embedded for semantic
 recall, scoped to the authenticated client, and skipped by graph extraction.
+Do not manually set `client_id`; Postgram derives session scope from the
+authenticated API key. Use `agent_id` only as optional metadata.
 Do not promote session context by copying it verbatim into durable memory;
 promotion should distill the stable claim.
 
@@ -94,9 +96,13 @@ For session continuity, search session context first:
 mcp__postgram__search {
   "query": "active topic keywords",
   "type": "memory",
+  "memory_role": "session_context",
   "limit": 5
 }
 ```
+
+If the connected MCP server does not expose `memory_role`, fall back to a
+regular `type="memory"` search and inspect returned metadata.
 
 ### When to link
 

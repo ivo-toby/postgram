@@ -1,0 +1,13 @@
+#!/usr/bin/env zsh
+set -euo pipefail
+
+repo_dir="$(cd "$(dirname "$0")/.." && pwd)"
+cd "$repo_dir"
+
+if command -v direnv >/dev/null 2>&1; then
+  exec env -u PGM_API_URL -u PGM_API_KEY direnv exec . codex "$@"
+fi
+
+unset PGM_API_URL PGM_API_KEY
+source ./.envrc
+exec codex "$@"

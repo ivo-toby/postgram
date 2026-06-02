@@ -1,3 +1,9 @@
+## [1.29.0](https://github.com/ivo-toby/postgram/compare/cli-v1.28.1...cli-v1.29.0) (2026-06-02)
+
+### Features
+
+* **bin:** add codex-local-postgram and pgm-local scripts for environment management ([fce0343](https://github.com/ivo-toby/postgram/commit/fce03437f3a1e4aac25103fc79f112d017e3ee77))
+
 ## [1.28.1](https://github.com/ivo-toby/postgram/compare/cli-v1.28.0...cli-v1.28.1) (2026-05-31)
 
 ### Bug Fixes

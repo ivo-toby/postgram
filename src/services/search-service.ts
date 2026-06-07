@@ -61,7 +61,6 @@ type SearchInput = {
   visibility?: Visibility | undefined;
   owner?: string | undefined;
   memoryRole?: MemoryRole | undefined;
-  includeOtherClientsSessionContext?: boolean | undefined;
   limit?: number | undefined;
   threshold?: number | undefined;
   recencyWeight?: number | undefined;
@@ -104,6 +103,25 @@ function mapEntity(row: EntityRow): Entity {
     createdAt: row.created_at.toISOString(),
     updatedAt: row.updated_at.toISOString()
   };
+}
+
+export function scopedMemoryVisibilitySql(
+  metadataColumn: string,
+  clientIdPlaceholder: string
+): string {
+  return `(
+    (
+      COALESCE(${metadataColumn}->>'memory_role', 'durable_memory') = 'session_context'
+      AND ${metadataColumn} #>> '{session_scope,client_id}' = ${clientIdPlaceholder}
+    )
+    OR (
+      COALESCE(${metadataColumn}->>'memory_role', 'durable_memory') <> 'session_context'
+      AND (
+        ${metadataColumn} #>> '{session_scope,client_id}' IS NULL
+        OR ${metadataColumn} #>> '{session_scope,client_id}' = ${clientIdPlaceholder}
+      )
+    )
+  )`;
 }
 
 export function applyRecencyBoost({
@@ -201,11 +219,7 @@ async function runHybridSearch(
           $11::text IS NULL
           OR COALESCE(e.metadata->>'memory_role', 'durable_memory') = $11
         )
-        AND (
-          $12::boolean = true
-          OR COALESCE(e.metadata->>'memory_role', 'durable_memory') <> 'session_context'
-          OR e.metadata #>> '{session_scope,client_id}' = $13
-        )
+        AND ${scopedMemoryVisibilitySql('e.metadata', '$12')}
       ORDER BY c.embedding <=> $1::vector
       LIMIT $9
     `,
@@ -221,7 +235,6 @@ async function runHybridSearch(
       candidateLimit,
       input.includeArchived ?? false,
       input.memoryRole ?? null,
-      input.includeOtherClientsSessionContext ?? false,
       auth.clientId
     ]
   );
@@ -348,17 +361,12 @@ export function searchEntities(
                AND ($2::text[] IS NULL OR type = ANY($2))
                AND visibility = ANY($3)
                AND ${ownerSqlCondition('owner', '$4')}
-               AND (
-                 $5::boolean = true
-                 OR COALESCE(metadata->>'memory_role', 'durable_memory') <> 'session_context'
-                 OR metadata #>> '{session_scope,client_id}' = $6
-               )`,
+               AND ${scopedMemoryVisibilitySql('metadata', '$5')}`,
             [
               Array.from(allNeighborIds),
               auth.allowedTypes,
               auth.allowedVisibility,
               input.owner ?? null,
-              input.includeOtherClientsSessionContext ?? false,
               auth.clientId
             ]
           );

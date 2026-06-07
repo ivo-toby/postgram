@@ -97,8 +97,7 @@ const searchEntitiesSchema = z.object({
   recency_weight: z.number().min(0).optional(),
   expand_graph: z.boolean().optional(),
   include_archived: z.boolean().optional(),
-  memory_role: memoryRoleSchema.optional(),
-  include_other_clients_session_context: z.boolean().optional()
+  memory_role: memoryRoleSchema.optional()
 });
 
 const taskCreateSchema = z.object({
@@ -421,8 +420,7 @@ export function registerRestRoutes(
         recencyWeight: body.recency_weight,
         expandGraph: body.expand_graph,
         includeArchived: body.include_archived,
-        memoryRole: body.memory_role,
-        includeOtherClientsSessionContext: body.include_other_clients_session_context
+        memoryRole: body.memory_role
       },
       {
         embeddingService: options.embeddingService

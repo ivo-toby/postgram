@@ -480,10 +480,10 @@ describe('MCP tools', () => {
           }
         })) as ToolResultPayload
       ) as {
-        results: Array<{ entity: { content: string | null } }>;
+        results: Array<{ content: string | null }>;
       };
 
-      const contents = searchResult.results.map((entry) => entry.entity.content);
+      const contents = searchResult.results.map((entry) => entry.content);
       expect(contents).toContain('Viewer scoped durable memory for MCP bypass regression.');
       expect(contents).not.toContain('Other scoped durable memory for MCP bypass regression.');
     } finally {

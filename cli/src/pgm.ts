@@ -406,17 +406,21 @@ const program = new Command();
 
 program
   .name('pgm')
-  .description('Postgram human CLI')
+  .description('Postgram CLI for humans and agents')
   .version(readCliVersion())
-  .option('--json', 'emit JSON output');
+  .option('--json', 'emit compact JSON for agents where supported');
 
 program
   .command('store')
   .alias('add')
-  .description('Store an entity')
+  .description('Store durable memory/entity; use memory session-context for resumability')
   .argument('[content]', 'entity content')
   .option('--type <type>', 'entity type', 'memory')
-  .option('--visibility <visibility>', 'entity visibility', 'shared')
+  .option(
+    '--visibility <visibility>',
+    'entity visibility (prefer personal for agent memory)',
+    'shared'
+  )
   .option('--owner <owner>', 'entity owner or namespace')
   .option('--status <status>', 'entity status')
   .option('--tags <tags>', 'comma-separated tags')
@@ -456,7 +460,7 @@ program
 
 program
   .command('search')
-  .description('Search stored entities')
+  .description('Search stored entities (compact JSON with --json; TOON with --toon)')
   .argument('query', 'search query')
   .option('--type <type>', 'entity type')
   .option('--tags <tags>', 'comma-separated tags')
@@ -469,7 +473,7 @@ program
   .option('--include-archived', 'include archived entities in results')
   .option(
     '--memory-role <role>',
-    'memory role filter: durable_memory or session_context'
+    'memory role filter: session_context for continuity; durable_memory for stable facts'
   )
   .option(
     '--full-response',
@@ -528,7 +532,7 @@ program
 
 const memoryCommand = program
   .command('memory')
-  .description('Memory-specific commands');
+  .description('Memory commands for agent session context');
 
 memoryCommand
   .command('groom')
@@ -592,12 +596,16 @@ memoryCommand
 memoryCommand
   .command('session-context')
   .alias('session')
-  .description('Store client-scoped session-context memory')
+  .description('Store client-scoped session context for agent resumability')
   .argument('[content]', 'session context content')
-  .option('--visibility <visibility>', 'entity visibility', 'shared')
+  .option(
+    '--visibility <visibility>',
+    'entity visibility (prefer personal for agent session context)',
+    'shared'
+  )
   .option('--owner <owner>', 'entity owner or namespace')
   .option('--session-id <sessionId>', 'external session or thread id')
-  .option('--agent-id <agentId>', 'agent or persona id')
+  .option('--agent-id <agentId>', 'agent/persona metadata only; not an auth boundary')
   .option('--topic <topic>', 'topic label')
   .option('--tags <tags>', 'comma-separated tags')
   .option('--promotable', 'mark this session context as promotable')

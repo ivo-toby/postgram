@@ -1,6 +1,7 @@
 # @ivotoby/postgram-cli
 
-Command-line client for [Postgram](https://github.com/ivo-toby/postgram/).
+Command-line client for [Postgram](https://github.com/ivo-toby/postgram/) built
+for both humans and agents.
 
 ## Install
 
@@ -24,10 +25,10 @@ echo '{"api_url":"http://localhost:3100","api_key":"your-api-key"}' > ~/.pgmrc
 ## Usage
 
 ```bash
-# Store an entity
+# Store durable memory
 pgm store "decided to use pgvector" --type memory --tags "decisions,architecture"
 
-# Search
+# Search with human output
 pgm search "pgvector decisions" --limit 5
 
 # Agent-friendly output formats
@@ -69,7 +70,7 @@ pgm sync ./notes --repo my-notes
 # Check enrichment/extraction queue status
 pgm queue
 
-# JSON output (all commands)
+# Compact JSON output where supported
 pgm store "hello" --json
 ```
 

@@ -15,6 +15,7 @@ import {
 } from '../../services/embeddings/admin.js';
 import { createEdge } from '../../services/edge-service.js';
 import { findSemanticNeighbors } from '../../services/extraction-service.js';
+import type { validateEdgeBatch as validateEdgeBatchFn } from '../../services/edge-validation-service.js';
 import {
   groomSessionContext,
   previewSessionContextGrooming,
@@ -22,6 +23,7 @@ import {
   type GroomingScope
 } from '../../services/memory-grooming-service.js';
 import { AppError, ErrorCode, toErrorResponse } from '../../util/errors.js';
+import type { createLogger as createLoggerFn } from '../../util/logger.js';
 import {
   handleCliFailure,
   isJsonMode,
@@ -168,6 +170,27 @@ function formatStats(stats: {
   ];
 }
 
+function formatSqlValue(value: unknown): string {
+  if (value === null || value === undefined) {
+    return '';
+  }
+
+  if (value instanceof Date) {
+    return value.toISOString();
+  }
+
+  if (
+    typeof value === 'string' ||
+    typeof value === 'number' ||
+    typeof value === 'boolean' ||
+    typeof value === 'bigint'
+  ) {
+    return String(value);
+  }
+
+  return JSON.stringify(value);
+}
+
 
 async function runWithPool<T>(
   json: boolean,
@@ -194,7 +217,7 @@ const program = new Command();
 
 program
   .name('pgm-admin')
-  .description('Postgram admin CLI')
+  .description('Postgram admin CLI for operators and agents')
   .option('--json', 'emit JSON output');
 
 const keyCommand = program.command('key').description('Manage API keys');
@@ -203,7 +226,7 @@ keyCommand
   .command('create')
   .description('Create an API key')
   .requiredOption('--name <name>', 'key name')
-  .option('--client-id <clientId>', 'stable client identity for session-context memory scope')
+  .option('--client-id <clientId>', 'one stable client identity per agent/client for session-context scope')
   .option('--scopes <scopes>', 'comma-separated scopes', 'read')
   .option('--visibility <visibility>', 'comma-separated visibility values', 'shared')
   .option('--types <types>', 'comma-separated entity types')
@@ -923,8 +946,8 @@ program
     // failure (missing env, invalid provider creds) would otherwise throw
     // outside the CLI's structured-error path and break --json output.
     let callLlm: (prompt: string, schema?: object) => Promise<string>;
-    let logger: ReturnType<typeof import('../../util/logger.js').createLogger>;
-    let validateEdgeBatch: typeof import('../../services/edge-validation-service.js').validateEdgeBatch;
+    let logger: ReturnType<typeof createLoggerFn>;
+    let validateEdgeBatch: typeof validateEdgeBatchFn;
     try {
       const config = loadConfig();
       if (!config.EXTRACTION_ENABLED) {
@@ -991,7 +1014,7 @@ program
 program
   .command('improve-graph')
   .description(
-    "Queue entities for re-extraction by the worker, optionally with a per-run model/provider override stored on the row. The worker reads `extraction_model_override` / `extraction_provider_override` and uses them instead of the env-configured default for that entity, then clears the columns on success. Existing edges are kept (no wipe) — overlapping edges' confidence is overwritten by the new run, so a less-confident model can lower individual confidences."
+    'Queue entities for graph re-extraction with optional model/provider override'
   )
   .option('--all', 'queue every entity with content (combine with --limit to bound cost)')
   .option('--type <type>', 'queue entities of this type only')
@@ -1185,7 +1208,7 @@ program
 program
   .command('link-neighbors')
   .description(
-    'Run the semantic neighbor pass directly on enriched entities — creates `related_to` edges by cosine similarity without calling any LLM. Useful for backfilling neighbor edges on a graph built before EXTRACTION_SEMANTIC_NEIGHBORS_ENABLED was set, or for adding them incrementally without re-running expensive LLM extraction.'
+    'Create semantic neighbor edges without calling the extraction LLM'
   )
   .option('--all', 'process all enriched entities')
   .option('--type <type>', 'process entities of this type only')
@@ -1633,7 +1656,9 @@ memoryCommand
       return;
     }
 
-    const hasClientId = typeof options.clientId === 'string' && options.clientId.trim().length > 0;
+    const clientIdOption: unknown = options.clientId;
+    const clientId = typeof clientIdOption === 'string' ? clientIdOption.trim() : '';
+    const hasClientId = clientId.length > 0;
     const hasAllClients = Boolean(options.allClients);
     if ((hasClientId && hasAllClients) || (!hasClientId && !hasAllClients)) {
       await handleCliFailure(
@@ -1659,7 +1684,7 @@ memoryCommand
 
     const scope: GroomingScope = hasAllClients
       ? { kind: 'all_clients' }
-      : { kind: 'client', clientId: options.clientId as string };
+      : { kind: 'client', clientId };
     const scopeLabel = formatGroomScope(scope);
 
     let callLlm: CallLlm | undefined;
@@ -1846,7 +1871,8 @@ program
   .argument('[sql]', 'SQL statement to execute')
   .action(async (sqlArg, _options, command) => {
     const json = isJsonMode(command);
-    const sql = sqlArg ?? await readStdinText();
+    const sqlArgText = typeof sqlArg === 'string' ? sqlArg : undefined;
+    const sql = sqlArgText ?? await readStdinText();
     if (!sql.trim()) {
       await handleCliFailure(
         new Error('No SQL provided — pass as argument or pipe via stdin'),
@@ -1866,7 +1892,7 @@ program
         const cols = Object.keys(result.rows[0]);
         const header = cols.join('\t');
         const rows = (result.rows as Record<string, unknown>[]).map((row) =>
-          cols.map((c) => String(row[c] ?? '')).join('\t')
+          cols.map((c) => formatSqlValue(row[c])).join('\t')
         );
         return [header, ...rows];
       }

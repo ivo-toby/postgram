@@ -37,6 +37,10 @@ function extractStructuredPayload(
   return JSON.parse(text) as Record<string, unknown>;
 }
 
+function extractToolText(result: ToolResultPayload): string {
+  return result.content?.find((item) => item.type === 'text')?.text ?? '';
+}
+
 describe('MCP tools', () => {
   let database: TestDatabase | undefined;
   let server: ReturnType<typeof serve> | undefined;
@@ -185,24 +189,180 @@ describe('MCP tools', () => {
 
     try {
       const tools = await client.listTools();
-      expect(tools.tools.map((tool) => tool.name).sort()).toEqual([
-        'delete',
-        'expand',
-        'link',
-        'queue',
-        'recall',
-        'search',
-        'store',
-        'store_session_context',
-        'sync_push',
-        'sync_status',
-        'task_complete',
-        'task_create',
-        'task_list',
-        'task_update',
-        'unlink',
-        'update'
-      ]);
+      expect(tools.tools.map((tool) => tool.name).sort()).toEqual(
+        [
+          'delete',
+          'expand',
+          'groom_session_context',
+          'link',
+          'queue',
+          'recall',
+          'search',
+          'store',
+          'store_session_context',
+          'sync_push',
+          'sync_status',
+          'task_complete',
+          'task_create',
+          'task_list',
+          'task_update',
+          'unlink',
+          'update'
+        ].sort()
+      );
+    } finally {
+      await close();
+    }
+  }, 120_000);
+
+  it('dry-runs and archives only the authenticated client session context', async () => {
+    const first = await createClient();
+    const second = await createClient();
+
+    try {
+      const firstStored = extractStructuredPayload(
+        (await first.client.callTool({
+          name: 'store_session_context',
+          arguments: {
+            content: 'First client session context should be groomed.',
+            topic: 'mcp-grooming',
+            session_id: 'session-first',
+            tags: ['alpha', 'beta'],
+            groom_after: '2026-01-01T00:00:00.000Z'
+          }
+        })) as ToolResultPayload
+      ) as {
+        entity: { id: string; metadata: Record<string, unknown> };
+      };
+
+      const secondStored = extractStructuredPayload(
+        (await second.client.callTool({
+          name: 'store_session_context',
+          arguments: {
+            content: 'Second client session context should stay untouched.',
+            topic: 'mcp-grooming',
+            session_id: 'session-second',
+            tags: ['alpha', 'beta'],
+            groom_after: '2026-01-01T00:00:00.000Z'
+          }
+        })) as ToolResultPayload
+      ) as {
+        entity: { id: string; metadata: Record<string, unknown> };
+      };
+
+      const dryRunResult = extractStructuredPayload(
+        (await first.client.callTool({
+          name: 'groom_session_context',
+          arguments: {
+            mode: 'dry_run',
+            older_than: '7d',
+            limit: 10,
+            topic: 'mcp-grooming',
+            session_id: 'session-first',
+            tags: ['alpha', 'beta']
+          }
+        })) as ToolResultPayload
+      ) as {
+        dryRun: boolean;
+        mode: string;
+        eligibleCount: number;
+        eligible: Array<{
+          id: string;
+          metadata: Record<string, unknown>;
+        }>;
+      };
+
+      expect(dryRunResult).toMatchObject({
+        dryRun: true,
+        mode: 'dry_run',
+        eligibleCount: 1
+      });
+      expect(dryRunResult.eligible).toHaveLength(1);
+      expect(dryRunResult.eligible[0]?.id).toBe(firstStored.entity.id);
+      expect(dryRunResult.eligible[0]?.metadata).toMatchObject({
+        session_scope: { kind: 'client', client_id: first.clientId },
+        topic: 'mcp-grooming',
+        session_id: 'session-first'
+      });
+
+      const archiveResult = extractStructuredPayload(
+        (await first.client.callTool({
+          name: 'groom_session_context',
+          arguments: {
+            mode: 'archive',
+            older_than: '7d',
+            limit: 10,
+            topic: 'mcp-grooming',
+            session_id: 'session-first',
+            tags: ['alpha', 'beta']
+          }
+        })) as ToolResultPayload
+      ) as {
+        dryRun: boolean;
+        mode: string;
+        archived: number;
+        archivedIds: string[];
+      };
+
+      expect(archiveResult).toMatchObject({
+        dryRun: false,
+        mode: 'archive',
+        archived: 1,
+        archivedIds: [firstStored.entity.id]
+      });
+
+      const archivedRow = await database!.pool.query<{ status: string | null }>(
+        'SELECT status FROM entities WHERE id = $1',
+        [firstStored.entity.id]
+      );
+      expect(archivedRow.rows[0]?.status).toBe('archived');
+
+      const otherRow = await database!.pool.query<{ status: string | null }>(
+        'SELECT status FROM entities WHERE id = $1',
+        [secondStored.entity.id]
+      );
+      expect(otherRow.rows[0]?.status).toBeNull();
+    } finally {
+      await first.close();
+      await second.close();
+    }
+  }, 120_000);
+
+  it('rejects invalid grooming duration and promote-like mode arguments', async () => {
+    const { client, close } = await createClient();
+
+    try {
+      const durationResult = (await client.callTool({
+        name: 'groom_session_context',
+        arguments: {
+          mode: 'dry_run',
+          older_than: 'bogus-duration'
+        }
+      })) as ToolResultPayload;
+      expect(durationResult.isError).toBe(true);
+      expect(extractStructuredPayload(durationResult)).toMatchObject({
+        error: {
+          code: 'VALIDATION'
+        }
+      });
+
+      const promoteResult = (await client.callTool({
+        name: 'groom_session_context',
+        arguments: {
+          mode: 'promote',
+          older_than: '7d'
+        }
+      })) as ToolResultPayload;
+      expect(promoteResult.isError).toBe(true);
+      if (promoteResult.structuredContent) {
+        expect(promoteResult.structuredContent).toMatchObject({
+          error: {
+            code: 'VALIDATION'
+          }
+        });
+      } else {
+        expect(extractToolText(promoteResult)).toContain('MCP error');
+      }
     } finally {
       await close();
     }
@@ -475,8 +635,7 @@ describe('MCP tools', () => {
             query: 'scoped durable memory MCP bypass regression',
             type: 'memory',
             threshold: 0,
-            limit: 10,
-            include_other_clients_session_context: true
+            limit: 10
           }
         })) as ToolResultPayload
       ) as {

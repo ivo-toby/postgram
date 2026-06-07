@@ -19,6 +19,10 @@ import {
   storeSessionContextMemory,
   updateEntity
 } from '../services/entity-service.js';
+import {
+  groomSessionContext as groomSessionContextService,
+  previewSessionContextGrooming
+} from '../services/memory-grooming-service.js';
 import { getQueueStatus } from '../services/queue-service.js';
 import { searchEntities } from '../services/search-service.js';
 import { syncManifest, getSyncStatus } from '../services/sync-service.js';
@@ -64,6 +68,7 @@ const entityTypeSchema = z.enum([
 const visibilitySchema = z.enum(['personal', 'work', 'shared']);
 const ownerSchema = z.string().trim().min(1);
 const memoryRoleSchema = z.enum(['durable_memory', 'session_context']);
+const groomSessionContextModeSchema = z.enum(['dry_run', 'archive']);
 
 const statusSchema = z.enum([
   'active',
@@ -144,6 +149,53 @@ function toToolError(error: AppError) {
     ],
     structuredContent: payload,
     isError: true
+  };
+}
+
+function parseGroomingDuration(value: string): number {
+  const match = /^(\d+)([mhd])$/.exec(value.trim());
+  if (!match) {
+    throw new AppError(
+      ErrorCode.VALIDATION,
+      `Invalid duration '${value}'. Use formats like '30m', '24h', or '7d'.`
+    );
+  }
+
+  const amount = Number(match[1]);
+  const unit = match[2];
+  const multiplier =
+    unit === 'm' ? 60_000 : unit === 'h' ? 3_600_000 : 86_400_000;
+  return amount * multiplier;
+}
+
+function getAuthenticatedClientScope(auth: AuthContext) {
+  if (!auth.clientId) {
+    throw new AppError(
+      ErrorCode.UNAUTHORIZED,
+      'Authenticated client id required'
+    );
+  }
+
+  return { kind: 'client' as const, clientId: auth.clientId };
+}
+
+function toGroomingCandidatePayload(candidate: {
+  id: string;
+  content: string | null;
+  visibility: string;
+  owner: string | null;
+  tags: string[];
+  metadata: Record<string, unknown>;
+  createdAt: string;
+}) {
+  return {
+    id: candidate.id,
+    content: candidate.content,
+    visibility: candidate.visibility,
+    owner: candidate.owner,
+    tags: candidate.tags,
+    metadata: candidate.metadata,
+    createdAt: candidate.createdAt
   };
 }
 
@@ -278,6 +330,84 @@ function createSessionServer(
   );
 
   server.registerTool(
+    'groom_session_context',
+    {
+      description:
+        'Preview or archive stale session-context memories for the authenticated client. Dry-run returns candidate summaries; archive mutates only matching rows for this client.',
+      inputSchema: {
+        mode: groomSessionContextModeSchema.optional(),
+        older_than: z.string().optional(),
+        limit: z.number().int().positive().optional(),
+        topic: z.string().optional(),
+        session_id: z.string().optional(),
+        tags: z.array(z.string()).optional()
+      }
+    },
+    async (args) => {
+      try {
+        const scope = getAuthenticatedClientScope(auth);
+        const mode = args.mode ?? 'dry_run';
+        const olderThanText = args.older_than ?? '7d';
+        const olderThanMs = parseGroomingDuration(olderThanText);
+        const limit = args.limit ?? 50;
+        const sharedInput = {
+          scope,
+          now: new Date(),
+          olderThanMs,
+          limit,
+          topic: args.topic,
+          sessionId: args.session_id,
+          tags: args.tags
+        };
+
+        const preview = await previewSessionContextGrooming(pool, sharedInput);
+        if (preview.isErr()) {
+          return toToolError(preview.error);
+        }
+
+        if (mode === 'dry_run') {
+          return toToolSuccess({
+            dryRun: true,
+            mode,
+            olderThan: olderThanText,
+            olderThanMs,
+            limit,
+            scope,
+            eligibleCount: preview.value.eligible.length,
+            eligible: preview.value.eligible.map(toGroomingCandidatePayload)
+          });
+        }
+
+        const result = await groomSessionContextService(pool, {
+          ...sharedInput,
+          mode: 'archive',
+          dryRun: false,
+          confirm: true
+        });
+        if (result.isErr()) {
+          return toToolError(result.error);
+        }
+
+        return toToolSuccess({
+          dryRun: false,
+          mode,
+          olderThan: olderThanText,
+          olderThanMs,
+          limit,
+          scope,
+          archived: result.value.archived,
+          archivedCount: result.value.archived,
+          archivedIds: preview.value.eligible.map((candidate) => candidate.id)
+        });
+      } catch (error) {
+        return error instanceof AppError
+          ? toToolError(error)
+          : toToolError(normalizeError(error));
+      }
+    }
+  );
+
+  server.registerTool(
     'recall',
     {
       description: 'Recall an entity by ID',
@@ -334,7 +464,7 @@ function createSessionServer(
             recencyWeight: args.recency_weight,
             expandGraph: args.expand_graph,
             includeArchived: args.include_archived,
-            memoryRole: args.memory_role
+            memoryRole: args.memory_role,
           },
           {
             embeddingService: options.embeddingService

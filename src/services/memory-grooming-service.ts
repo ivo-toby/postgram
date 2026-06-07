@@ -52,6 +52,7 @@ type GroomingMode = 'archive' | 'promote';
 type GroomingInput = {
   scope?: GroomingScope | undefined;
   clientId?: string | undefined;
+  allowedVisibility?: Visibility[] | undefined;
   now: Date;
   limit: number;
   olderThanMs?: number | undefined;
@@ -224,10 +225,12 @@ function getCandidateClientId(candidate: GroomingCandidate): string | undefined 
 function buildCandidateQuery({
   scope,
   filters,
+  allowedVisibility,
   now
 }: {
   scope: GroomingScope;
   filters: GroomingFilters;
+  allowedVisibility?: Visibility[] | undefined;
   now: Date;
 }): { text: string; values: unknown[] } {
   const conditions = [
@@ -242,6 +245,11 @@ function buildCandidateQuery({
   if (scope.kind === 'client') {
     conditions.push(`metadata #>> '{session_scope,client_id}' = $${paramIndex++}`);
     values.push(scope.clientId);
+  }
+
+  if (allowedVisibility?.length) {
+    conditions.push(`visibility = ANY($${paramIndex++}::text[])`);
+    values.push(allowedVisibility);
   }
 
   const ageCutoff = new Date(now.getTime() - filters.olderThanMs);
@@ -343,7 +351,14 @@ export function previewSessionContextGrooming(
         tags: string[];
         metadata: Record<string, unknown>;
         created_at: Date;
-      }>(buildCandidateQuery({ scope, filters, now: input.now }));
+      }>(
+        buildCandidateQuery({
+          scope,
+          filters,
+          allowedVisibility: input.allowedVisibility,
+          now: input.now
+        })
+      );
 
       return {
         eligible: result.rows.map((row) => ({
@@ -366,6 +381,7 @@ export function groomSessionContext(
   input: {
     scope?: GroomingScope | undefined;
     clientId?: string | undefined;
+    allowedVisibility?: Visibility[] | undefined;
     now: Date;
     mode: GroomingMode;
     dryRun: boolean;
@@ -397,6 +413,7 @@ export function groomSessionContext(
       const preview = await previewSessionContextGrooming(pool, {
         ...input,
         scope,
+        allowedVisibility: input.allowedVisibility,
         limit: filters.limit,
         olderThanMs: filters.olderThanMs,
         topic: filters.topic,

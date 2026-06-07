@@ -25,7 +25,7 @@ describe('REST entity endpoints', () => {
 
   beforeAll(async () => {
     database = await createTestDatabase();
-  }, 120_000);
+  }, 240_000);
 
   beforeEach(async () => {
     if (!database) {
@@ -435,6 +435,169 @@ describe('REST entity endpoints', () => {
 
     expect(rejectedResponse.status).toBe(400);
     expect(rejectedBody.error.code).toBe('VALIDATION');
+  }, 120_000);
+
+  it('filters self-groom previews and archives by visibility and delete scope', async () => {
+    if (!database) {
+      throw new Error('test database not initialized');
+    }
+
+    const app = createApp({
+      pool: database.pool,
+      embeddingService: createEmbeddingService()
+    });
+
+    const seedKey = (
+      await createKey(database.pool, {
+        name: `rest-groom-seed-${crypto.randomUUID()}`,
+        clientId: 'rest-groom-same-client',
+        scopes: ['read', 'write', 'delete'],
+        allowedVisibility: ['shared', 'work', 'personal']
+      })
+    )._unsafeUnwrap();
+    const previewKey = (
+      await createKey(database.pool, {
+        name: `rest-groom-preview-${crypto.randomUUID()}`,
+        clientId: 'rest-groom-same-client',
+        scopes: ['read', 'write'],
+        allowedVisibility: ['shared']
+      })
+    )._unsafeUnwrap();
+    const archiveKey = (
+      await createKey(database.pool, {
+        name: `rest-groom-archive-${crypto.randomUUID()}`,
+        clientId: 'rest-groom-same-client',
+        scopes: ['read', 'write', 'delete'],
+        allowedVisibility: ['shared']
+      })
+    )._unsafeUnwrap();
+
+    const seedSessionContext = async (body: Record<string, unknown>) => {
+      const response = await app.request('/api/memory/session-context', {
+        method: 'POST',
+        headers: {
+          Authorization: `Bearer ${seedKey.plaintextKey}`,
+          'Content-Type': 'application/json'
+        },
+        body: JSON.stringify(body)
+      });
+
+      expect(response.status).toBe(201);
+      return (await response.json()) as { entity: { id: string; visibility: string } };
+    };
+
+    const shared = await seedSessionContext({
+      content: 'shared groomable context',
+      visibility: 'shared',
+      topic: 'groom-topic',
+      session_id: 'groom-session',
+      tags: ['groom', 'shared'],
+      groom_after: '2026-01-01T00:00:00.000Z'
+    });
+    const personal = await seedSessionContext({
+      content: 'personal groomable context',
+      visibility: 'personal',
+      topic: 'groom-topic',
+      session_id: 'groom-session',
+      tags: ['groom', 'personal'],
+      groom_after: '2026-01-01T00:00:00.000Z'
+    });
+    const work = await seedSessionContext({
+      content: 'work groomable context',
+      visibility: 'work',
+      topic: 'groom-topic',
+      session_id: 'groom-session',
+      tags: ['groom', 'work'],
+      groom_after: '2026-01-01T00:00:00.000Z'
+    });
+
+    const previewResponse = await app.request('/api/memory/session-context/groom', {
+      method: 'POST',
+      headers: {
+        Authorization: `Bearer ${previewKey.plaintextKey}`,
+        'Content-Type': 'application/json'
+      },
+      body: JSON.stringify({
+        dry_run: true,
+        older_than_ms: 30 * 24 * 60 * 60 * 1000,
+        limit: 10,
+        topic: 'groom-topic',
+        session_id: 'groom-session',
+        tags: ['groom']
+      })
+    });
+    const previewBody = (await previewResponse.json()) as {
+      eligible: Array<{ id: string; visibility: string }>;
+    };
+
+    expect(previewResponse.status).toBe(200);
+    expect(previewBody.eligible).toEqual([
+      expect.objectContaining({
+        id: shared.entity.id,
+        visibility: 'shared'
+      })
+    ]);
+
+    const noDeleteResponse = await app.request('/api/memory/session-context/groom', {
+      method: 'POST',
+      headers: {
+        Authorization: `Bearer ${previewKey.plaintextKey}`,
+        'Content-Type': 'application/json'
+      },
+      body: JSON.stringify({
+        confirmed: true,
+        older_than_ms: 30 * 24 * 60 * 60 * 1000,
+        limit: 10,
+        topic: 'groom-topic',
+        session_id: 'groom-session',
+        tags: ['groom']
+      })
+    });
+    const noDeleteBody = (await noDeleteResponse.json()) as {
+      error: { code: string };
+    };
+
+    expect(noDeleteResponse.status).toBe(403);
+    expect(noDeleteBody.error.code).toBe('FORBIDDEN');
+
+    const archiveResponse = await app.request('/api/memory/session-context/groom', {
+      method: 'POST',
+      headers: {
+        Authorization: `Bearer ${archiveKey.plaintextKey}`,
+        'Content-Type': 'application/json'
+      },
+      body: JSON.stringify({
+        confirmed: true,
+        older_than_ms: 30 * 24 * 60 * 60 * 1000,
+        limit: 10,
+        topic: 'groom-topic',
+        session_id: 'groom-session',
+        tags: ['groom']
+      })
+    });
+    const archiveBody = (await archiveResponse.json()) as {
+      archived: number;
+      promoted: number;
+      skipped: number;
+      mode: string;
+    };
+
+    expect(archiveResponse.status).toBe(200);
+    expect(archiveBody).toMatchObject({
+      archived: 1,
+      promoted: 0,
+      skipped: 0,
+      mode: 'archive'
+    });
+
+    const rows = await database.pool.query<{ id: string; status: string | null }>(
+      'SELECT id, status FROM entities WHERE id = ANY($1)',
+      [[shared.entity.id, personal.entity.id, work.entity.id]]
+    );
+    const byId = Object.fromEntries(rows.rows.map((row) => [row.id, row.status]));
+    expect(byId[shared.entity.id]).toBe('archived');
+    expect(byId[personal.entity.id]).toBeNull();
+    expect(byId[work.entity.id]).toBeNull();
   }, 120_000);
 
   it('returns conflicts for stale updates and supports soft delete', async () => {

@@ -141,25 +141,31 @@ function validateToonOptions(
 }
 
 function parseDurationMs(value: string): number {
-  const match = /^(\d+)([dw])$/i.exec(value.trim());
+  const match = /^(\d+)([mhd])$/i.exec(value.trim());
   if (!match) {
     throw new AppError(
       ErrorCode.VALIDATION,
-      `Invalid duration '${value}'. Use format like '30d' or '4w'.`
+      `Invalid duration '${value}'. Use format like '15m', '2h', or '7d'.`
     );
   }
 
   const amount = Number(match[1]);
   const unit = match[2].toLowerCase();
-  const days = unit === 'd' ? amount : amount * 7;
-  if (days > 3650) {
+  const milliseconds =
+    unit === 'm'
+      ? amount * 60 * 1000
+      : unit === 'h'
+        ? amount * 60 * 60 * 1000
+        : amount * 24 * 60 * 60 * 1000;
+
+  if (milliseconds > 3650 * 24 * 60 * 60 * 1000) {
     throw new AppError(
       ErrorCode.VALIDATION,
       `Duration '${value}' exceeds the maximum allowed (3650 days / ~10 years).`
     );
   }
 
-  return days * 24 * 60 * 60 * 1000;
+  return milliseconds;
 }
 
 function formatGroomCandidates(
@@ -515,7 +521,7 @@ memoryCommand
   .option('--dry-run', 'preview without mutating')
   .option(
     '--older-than <duration>',
-    'only include memories older than this (e.g. 7d, 30d, 4w)',
+    'only include memories older than this (e.g. 15m, 2h, 7d)',
     '7d'
   )
   .option('--limit <limit>', 'maximum candidates', '50')

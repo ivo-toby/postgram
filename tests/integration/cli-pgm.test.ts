@@ -86,7 +86,7 @@ describe('pgm CLI', () => {
         baseUrl = `http://${info.address}:${info.port}`;
       }
     );
-  }, 120_000);
+  }, 240_000);
 
   beforeEach(async () => {
     if (!database) {
@@ -391,6 +391,48 @@ describe('pgm CLI', () => {
       mode: 'archive'
     });
     expect(body.eligible.map((entry) => entry.id)).toEqual([ownBody.entity.id]);
+
+    for (const olderThan of ['15m', '2h', '3d']) {
+      const durationResult = await runPgm(
+        [
+          'memory',
+          'groom',
+          '--dry-run',
+          '--older-than',
+          olderThan,
+          '--limit',
+          '5',
+          '--topic',
+          'project-alpha',
+          '--session-id',
+          'thread-1',
+          '--tag',
+          'alpha',
+          '--tag',
+          'shared',
+          '--json'
+        ],
+        env
+      );
+
+      const durationBody = parseJson(durationResult.stdout) as {
+        dryRun: boolean;
+        archived: number;
+        promoted: number;
+        skipped: number;
+        mode: string;
+        eligible: Array<{ id: string }>;
+      };
+
+      expect(durationBody).toMatchObject({
+        dryRun: true,
+        archived: 0,
+        promoted: 0,
+        skipped: 0,
+        mode: 'archive'
+      });
+      expect(durationBody.eligible.map((entry) => entry.id)).toEqual([ownBody.entity.id]);
+    }
 
     const rows = await database.pool.query<{ id: string; status: string | null }>(
       'SELECT id, status FROM entities WHERE id = ANY($1)',

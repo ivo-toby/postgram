@@ -3,6 +3,7 @@ import { z } from 'zod';
 import type { Pool } from 'pg';
 
 import type { AuthContext } from '../auth/types.js';
+import { checkTypeAccess, requireScope } from '../auth/key-service.js';
 import type { EmbeddingService } from '../services/embedding-service.js';
 import { createEdge, deleteEdge, listEdges, expandGraph } from '../services/edge-service.js';
 import { getEntityEmbeddings } from '../services/embedding-query-service.js';
@@ -313,10 +314,14 @@ export function registerRestRoutes(
       );
     }
 
+    requireScope(auth, 'read');
+    checkTypeAccess(auth, 'memory');
+
     const body = parseJsonBody(selfGroomSessionContextSchema, await c.req.json());
     const now = new Date();
     const input = {
       clientId: auth.clientId,
+      allowedVisibility: auth.allowedVisibility,
       now,
       limit: body.limit ?? 50,
       olderThanMs: body.older_than_ms,
@@ -340,6 +345,8 @@ export function registerRestRoutes(
         eligible: preview.value.eligible
       });
     }
+
+    requireScope(auth, 'delete');
 
     const result = await groomSessionContext(pool, {
       ...input,

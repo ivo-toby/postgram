@@ -31,6 +31,13 @@ export type GroomingPreview = {
   eligible: GroomingCandidate[];
 };
 
+export type SessionContextGroomingFilters = {
+  olderThanMs?: number | undefined;
+  topic?: string | undefined;
+  sessionId?: string | undefined;
+  tags?: string[] | undefined;
+};
+
 export type CallLlm = (prompt: string, schema?: object) => Promise<string>;
 
 type PromotionDecision = {

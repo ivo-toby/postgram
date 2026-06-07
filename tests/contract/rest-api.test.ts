@@ -295,6 +295,148 @@ describe('REST entity endpoints', () => {
     expect(graphBody.edges).toHaveLength(1);
   }, 120_000);
 
+  it('self-grooms session-context memories through auth-derived scope only', async () => {
+    if (!database) {
+      throw new Error('test database not initialized');
+    }
+
+    const app = createApp({
+      pool: database.pool,
+      embeddingService: createEmbeddingService()
+    });
+
+    const ownKey = (
+      await createKey(database.pool, {
+        name: `rest-groom-own-${crypto.randomUUID()}`,
+        clientId: 'rest-groom-own',
+        scopes: ['read', 'write', 'delete'],
+        allowedVisibility: ['personal']
+      })
+    )._unsafeUnwrap();
+    const otherKey = (
+      await createKey(database.pool, {
+        name: `rest-groom-other-${crypto.randomUUID()}`,
+        clientId: 'rest-groom-other',
+        scopes: ['read', 'write', 'delete'],
+        allowedVisibility: ['personal']
+      })
+    )._unsafeUnwrap();
+
+    const storeOwn = await app.request('/api/memory/session-context', {
+      method: 'POST',
+      headers: {
+        Authorization: `Bearer ${ownKey.plaintextKey}`,
+        'Content-Type': 'application/json'
+      },
+      body: JSON.stringify({
+        content: 'self-groom own context',
+        visibility: 'personal',
+        topic: 'groom-topic',
+        session_id: 'groom-session',
+        tags: ['groom', 'alpha'],
+        groom_after: '2026-01-01T00:00:00.000Z'
+      })
+    });
+    expect(storeOwn.status).toBe(201);
+    const ownBody = (await storeOwn.json()) as { entity: { id: string } };
+
+    const storeOther = await app.request('/api/memory/session-context', {
+      method: 'POST',
+      headers: {
+        Authorization: `Bearer ${otherKey.plaintextKey}`,
+        'Content-Type': 'application/json'
+      },
+      body: JSON.stringify({
+        content: 'self-groom other context',
+        visibility: 'personal',
+        topic: 'groom-topic',
+        session_id: 'groom-session',
+        tags: ['groom', 'beta'],
+        groom_after: '2026-01-01T00:00:00.000Z'
+      })
+    });
+    expect(storeOther.status).toBe(201);
+    const otherBody = (await storeOther.json()) as { entity: { id: string } };
+
+    const dryRunResponse = await app.request('/api/memory/session-context/groom', {
+      method: 'POST',
+      headers: {
+        Authorization: `Bearer ${ownKey.plaintextKey}`,
+        'Content-Type': 'application/json'
+      },
+      body: JSON.stringify({
+        dry_run: true,
+        older_than_ms: 30 * 24 * 60 * 60 * 1000,
+        limit: 5,
+        topic: 'groom-topic',
+        session_id: 'groom-session',
+        tags: ['groom', 'alpha']
+      })
+    });
+    const dryRunBody = (await dryRunResponse.json()) as {
+      dryRun: boolean;
+      eligible: Array<{ id: string }>;
+    };
+
+    expect(dryRunResponse.status).toBe(200);
+    expect(dryRunBody.dryRun).toBe(true);
+    expect(dryRunBody.eligible.map((entry) => entry.id)).toEqual([ownBody.entity.id]);
+
+    const archiveResponse = await app.request('/api/memory/session-context/groom', {
+      method: 'POST',
+      headers: {
+        Authorization: `Bearer ${ownKey.plaintextKey}`,
+        'Content-Type': 'application/json'
+      },
+      body: JSON.stringify({
+        confirmed: true,
+        older_than_ms: 30 * 24 * 60 * 60 * 1000,
+        limit: 5,
+        topic: 'groom-topic',
+        session_id: 'groom-session',
+        tags: ['groom', 'alpha']
+      })
+    });
+    const archiveBody = (await archiveResponse.json()) as {
+      dryRun: boolean;
+      archived: number;
+      mode: string;
+    };
+
+    expect(archiveResponse.status).toBe(200);
+    expect(archiveBody).toMatchObject({
+      dryRun: false,
+      archived: 1,
+      mode: 'archive'
+    });
+
+    const rows = await database.pool.query<{ id: string; status: string | null }>(
+      'SELECT id, status FROM entities WHERE id = ANY($1)',
+      [[ownBody.entity.id, otherBody.entity.id]]
+    );
+    const byId = Object.fromEntries(rows.rows.map((row) => [row.id, row.status]));
+    expect(byId[ownBody.entity.id]).toBe('archived');
+    expect(byId[otherBody.entity.id]).toBeNull();
+
+    const rejectedResponse = await app.request('/api/memory/session-context/groom', {
+      method: 'POST',
+      headers: {
+        Authorization: `Bearer ${ownKey.plaintextKey}`,
+        'Content-Type': 'application/json'
+      },
+      body: JSON.stringify({
+        dry_run: true,
+        mode: 'promote'
+      })
+    });
+    const rejectedBody = (await rejectedResponse.json()) as {
+      error: { code: string };
+    };
+
+    expect(rejectedResponse.status).toBe(400);
+    expect(rejectedBody.error.code).toBe('VALIDATION');
+  }, 120_000);
+
   it('returns conflicts for stale updates and supports soft delete', async () => {
     const { app, apiKey } = await createAuthorizedApp();
 

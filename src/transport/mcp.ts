@@ -4,7 +4,7 @@ import { McpServer } from '@modelcontextprotocol/sdk/server/mcp.js';
 import { WebStandardStreamableHTTPServerTransport } from '@modelcontextprotocol/sdk/server/webStandardStreamableHttp.js';
 import type { Pool } from 'pg';
 
-import { validateKey } from '../auth/key-service.js';
+import { requireScope, validateKey } from '../auth/key-service.js';
 import type { AuthContext } from '../auth/types.js';
 import type { EmbeddingService } from '../services/embedding-service.js';
 import {
@@ -20,7 +20,6 @@ import {
   updateEntity
 } from '../services/entity-service.js';
 import {
-  groomSessionContext as groomSessionContextService,
   previewSessionContextGrooming
 } from '../services/memory-grooming-service.js';
 import { getQueueStatus } from '../services/queue-service.js';
@@ -33,7 +32,7 @@ import {
   updateTask
 } from '../services/task-service.js';
 import type { ServiceResult } from '../types/common.js';
-import type { Entity } from '../types/entities.js';
+import type { Entity, Visibility } from '../types/entities.js';
 import {
   AppError,
   ErrorCode,
@@ -182,7 +181,7 @@ function getAuthenticatedClientScope(auth: AuthContext) {
 function toGroomingCandidatePayload(candidate: {
   id: string;
   content: string | null;
-  visibility: string;
+  visibility: Visibility;
   owner: string | null;
   tags: string[];
   metadata: Record<string, unknown>;
@@ -199,12 +198,27 @@ function toGroomingCandidatePayload(candidate: {
   };
 }
 
+function filterGroomingCandidatesByVisibility(
+  auth: AuthContext,
+  candidates: Array<{
+    id: string;
+    content: string | null;
+    visibility: Visibility;
+    owner: string | null;
+    tags: string[];
+    metadata: Record<string, unknown>;
+    createdAt: string;
+  }>
+) {
+  return candidates.filter((candidate) =>
+    auth.allowedVisibility.includes(candidate.visibility)
+  );
+}
+
 async function toolFromService<T, P extends ToolPayload>(
   result: ServiceResult<T>,
   map: (value: T) => P,
-  renderSuccess: (
-    payload: P
-  ) => ReturnType<typeof toToolSuccess> = toToolSuccess
+  renderSuccess: (payload: P) => ReturnType<typeof toToolSuccess> = toToolSuccess
 ) {
   return result.match(
     (value) => renderSuccess(map(value)),
@@ -360,10 +374,17 @@ function createSessionServer(
           tags: args.tags
         };
 
+        requireScope(auth, 'read');
+
         const preview = await previewSessionContextGrooming(pool, sharedInput);
         if (preview.isErr()) {
           return toToolError(preview.error);
         }
+
+        const eligible = filterGroomingCandidatesByVisibility(
+          auth,
+          preview.value.eligible.map(toGroomingCandidatePayload)
+        );
 
         if (mode === 'dry_run') {
           return toToolSuccess({
@@ -373,20 +394,49 @@ function createSessionServer(
             olderThanMs,
             limit,
             scope,
-            eligibleCount: preview.value.eligible.length,
-            eligible: preview.value.eligible.map(toGroomingCandidatePayload)
+            eligibleCount: eligible.length,
+            eligible
           });
         }
 
-        const result = await groomSessionContextService(pool, {
-          ...sharedInput,
-          mode: 'archive',
-          dryRun: false,
-          confirm: true
-        });
-        if (result.isErr()) {
-          return toToolError(result.error);
+        requireScope(auth, 'delete');
+
+        if (eligible.length === 0) {
+          return toToolSuccess({
+            dryRun: false,
+            mode,
+            olderThan: olderThanText,
+            olderThanMs,
+            limit,
+            scope,
+            archived: 0,
+            archivedCount: 0,
+            archivedIds: []
+          });
         }
+
+        const archivedIds = eligible.map((candidate) => candidate.id);
+        const archiveResult = await pool.query<{ id: string }>(
+          `
+            UPDATE entities
+            SET status = 'archived',
+                metadata = metadata || $2::jsonb
+            WHERE id = ANY($1::uuid[])
+              AND visibility = ANY($3::text[])
+            RETURNING id
+          `,
+          [
+            archivedIds,
+            JSON.stringify({
+              groomed_at: sharedInput.now.toISOString(),
+              groomed_mode: 'archive'
+            }),
+            auth.allowedVisibility
+          ]
+        );
+
+        const archivedIdsResult = archiveResult.rows.map((row) => row.id);
+        const archived = archiveResult.rowCount ?? archivedIdsResult.length;
 
         return toToolSuccess({
           dryRun: false,
@@ -395,9 +445,9 @@ function createSessionServer(
           olderThanMs,
           limit,
           scope,
-          archived: result.value.archived,
-          archivedCount: result.value.archived,
-          archivedIds: preview.value.eligible.map((candidate) => candidate.id)
+          archived,
+          archivedCount: archived,
+          archivedIds: archivedIdsResult
         });
       } catch (error) {
         return error instanceof AppError

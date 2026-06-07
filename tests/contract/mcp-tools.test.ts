@@ -86,16 +86,27 @@ describe('MCP tools', () => {
     }
   });
 
-  async function createClient() {
+  async function createClient(options: {
+    name?: string;
+    clientId?: string;
+    scopes?: Array<'read' | 'write' | 'delete' | 'sync'>;
+    allowedVisibility?: Array<'shared' | 'work' | 'personal'>;
+  } = {}) {
     if (!database) {
       throw new Error('test database not initialized');
     }
 
+    const name = options.name ?? `mcp-${crypto.randomUUID()}`;
     const createdKey = (
       await createKey(database.pool, {
-        name: `mcp-${crypto.randomUUID()}`,
-        scopes: ['read', 'write', 'delete'],
-        allowedVisibility: ['shared', 'work', 'personal']
+        name,
+        clientId: options.clientId ?? name,
+        scopes: options.scopes ?? ['read', 'write', 'delete'],
+        allowedVisibility: options.allowedVisibility ?? [
+          'shared',
+          'work',
+          'personal'
+        ]
       })
     )._unsafeUnwrap();
 
@@ -325,6 +336,125 @@ describe('MCP tools', () => {
     } finally {
       await first.close();
       await second.close();
+    }
+  }, 120_000);
+
+  it('filters groom_session_context by allowed visibility and mutation scope for same-client keys', async () => {
+    const clientId = `mcp-groom-${crypto.randomUUID()}`;
+    const privileged = await createClient({
+      name: `mcp-groom-admin-${crypto.randomUUID()}`,
+      clientId,
+      scopes: ['read', 'write', 'delete'],
+      allowedVisibility: ['shared', 'work', 'personal']
+    });
+    const restricted = await createClient({
+      name: `mcp-groom-readonly-${crypto.randomUUID()}`,
+      clientId,
+      scopes: ['read'],
+      allowedVisibility: ['shared']
+    });
+
+    try {
+      const sharedStored = extractStructuredPayload(
+        (await privileged.client.callTool({
+          name: 'store_session_context',
+          arguments: {
+            content: 'Shared session context should be visible to shared-only keys.',
+            topic: 'mcp-visibility-grooming',
+            tags: ['alpha'],
+            visibility: 'shared',
+            groom_after: '2026-01-01T00:00:00.000Z'
+          }
+        })) as ToolResultPayload
+      ) as { entity: { id: string } };
+
+      const personalStored = extractStructuredPayload(
+        (await privileged.client.callTool({
+          name: 'store_session_context',
+          arguments: {
+            content: 'Personal session context should stay hidden from shared-only keys.',
+            topic: 'mcp-visibility-grooming',
+            tags: ['alpha'],
+            visibility: 'personal',
+            groom_after: '2026-01-01T00:00:00.000Z'
+          }
+        })) as ToolResultPayload
+      ) as { entity: { id: string } };
+
+      const workStored = extractStructuredPayload(
+        (await privileged.client.callTool({
+          name: 'store_session_context',
+          arguments: {
+            content: 'Work session context should also stay hidden from shared-only keys.',
+            topic: 'mcp-visibility-grooming',
+            tags: ['alpha'],
+            visibility: 'work',
+            groom_after: '2026-01-01T00:00:00.000Z'
+          }
+        })) as ToolResultPayload
+      ) as { entity: { id: string } };
+
+      const dryRunResult = extractStructuredPayload(
+        (await restricted.client.callTool({
+          name: 'groom_session_context',
+          arguments: {
+            mode: 'dry_run',
+            older_than: '7d',
+            limit: 10,
+            topic: 'mcp-visibility-grooming',
+            tags: ['alpha']
+          }
+        })) as ToolResultPayload
+      ) as {
+        dryRun: boolean;
+        mode: string;
+        eligibleCount: number;
+        eligible: Array<{
+          id: string;
+          visibility: string;
+        }>;
+      };
+
+      expect(dryRunResult).toMatchObject({
+        dryRun: true,
+        mode: 'dry_run',
+        eligibleCount: 1
+      });
+      expect(dryRunResult.eligible).toEqual([
+        expect.objectContaining({
+          id: sharedStored.entity.id,
+          visibility: 'shared'
+        })
+      ]);
+
+      const archiveResult = (await restricted.client.callTool({
+        name: 'groom_session_context',
+        arguments: {
+          mode: 'archive',
+          older_than: '7d',
+          limit: 10,
+          topic: 'mcp-visibility-grooming',
+          tags: ['alpha']
+        }
+      })) as ToolResultPayload;
+
+      expect(archiveResult.isError).toBe(true);
+      expect(extractStructuredPayload(archiveResult)).toMatchObject({
+        error: {
+          code: 'FORBIDDEN'
+        }
+      });
+
+      const archivedRows = await database!.pool.query<{
+        id: string;
+        status: string | null;
+      }>('SELECT id, status FROM entities WHERE id = ANY($1::uuid[]) ORDER BY id', [
+        [sharedStored.entity.id, personalStored.entity.id, workStored.entity.id]
+      ]);
+      expect(archivedRows.rows.every((row) => row.status === null)).toBe(true);
+    } finally {
+      await privileged.close();
+      await restricted.close();
     }
   }, 120_000);
 

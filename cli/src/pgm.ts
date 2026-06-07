@@ -149,8 +149,13 @@ function parseDurationMs(value: string): number {
     );
   }
 
-  const amount = Number(match[1]);
-  const unit = match[2].toLowerCase();
+  const [, amountText, unitText] = match as RegExpExecArray & [
+    string,
+    string,
+    string
+  ];
+  const amount = Number(amountText);
+  const unit = unitText.toLowerCase();
   const milliseconds =
     unit === 'm'
       ? amount * 60 * 1000

@@ -106,6 +106,27 @@ function mapEntity(row: EntityRow): Entity {
   };
 }
 
+function scopedMemoryVisibilitySql(
+  metadataColumn: string,
+  includeOtherClientsPlaceholder: string,
+  clientIdPlaceholder: string
+): string {
+  return `(
+    ${includeOtherClientsPlaceholder}::boolean = true
+    OR (
+      COALESCE(${metadataColumn}->>'memory_role', 'durable_memory') = 'session_context'
+      AND ${metadataColumn} #>> '{session_scope,client_id}' = ${clientIdPlaceholder}
+    )
+    OR (
+      COALESCE(${metadataColumn}->>'memory_role', 'durable_memory') <> 'session_context'
+      AND (
+        ${metadataColumn} #>> '{session_scope,client_id}' IS NULL
+        OR ${metadataColumn} #>> '{session_scope,client_id}' = ${clientIdPlaceholder}
+      )
+    )
+  )`;
+}
+
 export function applyRecencyBoost({
   similarity,
   ageDays,
@@ -201,11 +222,7 @@ async function runHybridSearch(
           $11::text IS NULL
           OR COALESCE(e.metadata->>'memory_role', 'durable_memory') = $11
         )
-        AND (
-          $12::boolean = true
-          OR COALESCE(e.metadata->>'memory_role', 'durable_memory') <> 'session_context'
-          OR e.metadata #>> '{session_scope,client_id}' = $13
-        )
+        AND ${scopedMemoryVisibilitySql('e.metadata', '$12', '$13')}
       ORDER BY c.embedding <=> $1::vector
       LIMIT $9
     `,
@@ -348,11 +365,7 @@ export function searchEntities(
                AND ($2::text[] IS NULL OR type = ANY($2))
                AND visibility = ANY($3)
                AND ${ownerSqlCondition('owner', '$4')}
-               AND (
-                 $5::boolean = true
-                 OR COALESCE(metadata->>'memory_role', 'durable_memory') <> 'session_context'
-                 OR metadata #>> '{session_scope,client_id}' = $6
-               )`,
+               AND ${scopedMemoryVisibilitySql('metadata', '$5', '$6')}`,
             [
               Array.from(allNeighborIds),
               auth.allowedTypes,

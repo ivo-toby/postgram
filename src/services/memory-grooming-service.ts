@@ -76,7 +76,8 @@ export const SESSION_CONTEXT_PROMOTION_SCHEMA = {
   properties: {
     promote: {
       type: 'boolean',
-      description: 'Whether this session context contains durable information worth preserving.'
+      description:
+        'Whether this session context contains durable information worth preserving.'
     },
     content: {
       type: 'string',
@@ -85,7 +86,8 @@ export const SESSION_CONTEXT_PROMOTION_SCHEMA = {
     },
     reason: {
       type: 'string',
-      description: 'Brief explanation for promoting or skipping the session context.'
+      description:
+        'Brief explanation for promoting or skipping the session context.'
     },
     tags: {
       type: 'array',
@@ -116,9 +118,15 @@ function stripMarkdownFences(response: string): string {
 }
 
 function parsePromotionDecision(response: string): PromotionDecision {
-  const parsed = JSON.parse(stripMarkdownFences(response)) as Record<string, unknown>;
+  const parsed = JSON.parse(stripMarkdownFences(response)) as Record<
+    string,
+    unknown
+  >;
   if (typeof parsed.promote !== 'boolean') {
-    throw new AppError(ErrorCode.VALIDATION, 'Promotion decision must include promote boolean');
+    throw new AppError(
+      ErrorCode.VALIDATION,
+      'Promotion decision must include promote boolean'
+    );
   }
 
   const reason =
@@ -127,7 +135,10 @@ function parsePromotionDecision(response: string): PromotionDecision {
       : undefined;
 
   if (!reason) {
-    throw new AppError(ErrorCode.VALIDATION, 'Promotion decision must include a reason');
+    throw new AppError(
+      ErrorCode.VALIDATION,
+      'Promotion decision must include a reason'
+    );
   }
 
   const content =
@@ -144,7 +155,10 @@ function parsePromotionDecision(response: string): PromotionDecision {
 
   const tags = Array.isArray(parsed.tags)
     ? parsed.tags
-        .filter((tag): tag is string => typeof tag === 'string' && tag.trim().length > 0)
+        .filter(
+          (tag): tag is string =>
+            typeof tag === 'string' && tag.trim().length > 0
+        )
         .map((tag) => tag.trim())
     : undefined;
 
@@ -156,30 +170,58 @@ function parsePromotionDecision(response: string): PromotionDecision {
   };
 }
 
-function normalizeTags(sourceTags: string[], decisionTags: string[] | undefined): string[] {
+function promotionParseErrorDecision(error: unknown): PromotionDecision {
+  const message =
+    error instanceof Error && error.message.trim().length > 0
+      ? error.message.trim()
+      : 'Malformed promotion response';
+
+  return {
+    promote: false,
+    reason: `Invalid promotion decision: ${message}`
+  };
+}
+
+function normalizeTags(
+  sourceTags: string[],
+  decisionTags: string[] | undefined
+): string[] {
   const durableTags = [
     'memory',
-    ...sourceTags.filter((tag) => tag !== 'session-context' && tag !== 'session_context'),
+    ...sourceTags.filter(
+      (tag) => tag !== 'session-context' && tag !== 'session_context'
+    ),
     ...(decisionTags ?? [])
   ];
 
-  return Array.from(new Set(durableTags.map((tag) => tag.trim()).filter(Boolean)));
+  return Array.from(
+    new Set(durableTags.map((tag) => tag.trim()).filter(Boolean))
+  );
 }
 
 function normalizeFilters(input: GroomingInput): GroomingFilters {
   if (!Number.isInteger(input.limit) || input.limit <= 0) {
-    throw new AppError(ErrorCode.VALIDATION, 'limit must be a positive integer');
+    throw new AppError(
+      ErrorCode.VALIDATION,
+      'limit must be a positive integer'
+    );
   }
 
   const olderThanMs = input.olderThanMs ?? 7 * 24 * 60 * 60 * 1000;
   if (!Number.isFinite(olderThanMs) || olderThanMs < 0) {
-    throw new AppError(ErrorCode.VALIDATION, 'olderThanMs must be a non-negative number');
+    throw new AppError(
+      ErrorCode.VALIDATION,
+      'olderThanMs must be a non-negative number'
+    );
   }
 
   return {
     olderThanMs,
     limit: input.limit,
-    topic: typeof input.topic === 'string' && input.topic.trim().length > 0 ? input.topic.trim() : undefined,
+    topic:
+      typeof input.topic === 'string' && input.topic.trim().length > 0
+        ? input.topic.trim()
+        : undefined,
     sessionId:
       typeof input.sessionId === 'string' && input.sessionId.trim().length > 0
         ? input.sessionId.trim()
@@ -196,7 +238,11 @@ function normalizeFilters(input: GroomingInput): GroomingFilters {
 
 function normalizeScope(input: GroomingInput): GroomingScope {
   if (input.scope) {
-    if (input.scope.kind === 'client' && typeof input.scope.clientId === 'string' && input.scope.clientId.trim().length > 0) {
+    if (
+      input.scope.kind === 'client' &&
+      typeof input.scope.clientId === 'string' &&
+      input.scope.clientId.trim().length > 0
+    ) {
       return { kind: 'client', clientId: input.scope.clientId.trim() };
     }
 
@@ -204,22 +250,32 @@ function normalizeScope(input: GroomingInput): GroomingScope {
       return { kind: 'all_clients' };
     }
 
-    throw new AppError(ErrorCode.VALIDATION, 'client scope requires a clientId');
+    throw new AppError(
+      ErrorCode.VALIDATION,
+      'client scope requires a clientId'
+    );
   }
 
   if (typeof input.clientId === 'string' && input.clientId.trim().length > 0) {
     return { kind: 'client', clientId: input.clientId.trim() };
   }
 
-  throw new AppError(ErrorCode.VALIDATION, 'grooming scope requires a clientId or all_clients scope');
+  throw new AppError(
+    ErrorCode.VALIDATION,
+    'grooming scope requires a clientId or all_clients scope'
+  );
 }
 
-function getCandidateClientId(candidate: GroomingCandidate): string | undefined {
+function getCandidateClientId(
+  candidate: GroomingCandidate
+): string | undefined {
   const sessionScope = candidate.metadata.session_scope as
     | { kind?: unknown; client_id?: unknown }
     | undefined;
   const clientId = sessionScope?.client_id;
-  return typeof clientId === 'string' && clientId.trim().length > 0 ? clientId.trim() : undefined;
+  return typeof clientId === 'string' && clientId.trim().length > 0
+    ? clientId.trim()
+    : undefined;
 }
 
 function buildCandidateQuery({
@@ -243,11 +299,17 @@ function buildCandidateQuery({
   let paramIndex = 1;
 
   if (scope.kind === 'client') {
-    conditions.push(`metadata #>> '{session_scope,client_id}' = $${paramIndex++}`);
+    conditions.push(
+      `metadata #>> '{session_scope,client_id}' = $${paramIndex++}`
+    );
     values.push(scope.clientId);
   } else {
-    conditions.push(`jsonb_typeof(metadata #> '{session_scope,client_id}') = 'string'`);
-    conditions.push(`NULLIF(BTRIM(metadata #>> '{session_scope,client_id}'), '') IS NOT NULL`);
+    conditions.push(
+      `jsonb_typeof(metadata #> '{session_scope,client_id}') = 'string'`
+    );
+    conditions.push(
+      `NULLIF(BTRIM(metadata #>> '{session_scope,client_id}'), '') IS NOT NULL`
+    );
   }
 
   if (allowedVisibility !== undefined) {
@@ -304,7 +366,9 @@ function buildCandidateQuery({
   };
 }
 
-export function buildSessionContextPromotionPrompt(candidate: GroomingCandidate): string {
+export function buildSessionContextPromotionPrompt(
+  candidate: GroomingCandidate
+): string {
   return [
     'You are Postgram memory grooming. Assess whether a session_context memory should be promoted to durable_memory.',
     '',
@@ -401,7 +465,10 @@ export function groomSessionContext(
       const filters = normalizeFilters(input);
 
       if (!input.dryRun && !input.confirm) {
-        throw new AppError(ErrorCode.VALIDATION, '--yes is required outside dry-run');
+        throw new AppError(
+          ErrorCode.VALIDATION,
+          '--yes is required outside dry-run'
+        );
       }
 
       if (input.mode === 'promote' && !input.dryRun && !input.callLlm) {
@@ -484,15 +551,21 @@ export function groomSessionContext(
       }> = [];
       for (const [, clientCandidates] of groupedCandidates) {
         for (const candidate of clientCandidates) {
+          const response = await input.callLlm!(
+            buildSessionContextPromotionPrompt(candidate),
+            SESSION_CONTEXT_PROMOTION_SCHEMA
+          );
+          let decision: PromotionDecision;
+          try {
+            decision = parsePromotionDecision(response);
+          } catch (error) {
+            decision = promotionParseErrorDecision(error);
+          }
+
           decisions.push({
             candidate,
             clientId: getCandidateClientId(candidate)!,
-            decision: parsePromotionDecision(
-              await input.callLlm!(
-                buildSessionContextPromotionPrompt(candidate),
-                SESSION_CONTEXT_PROMOTION_SCHEMA
-              )
-            )
+            decision
           });
         }
       }
@@ -505,7 +578,11 @@ export function groomSessionContext(
         let skipped = 0;
         const promotions: Array<{ sourceId: string; durableId: string }> = [];
 
-        for (const { candidate, decision, clientId: sourceClientId } of decisions) {
+        for (const {
+          candidate,
+          decision,
+          clientId: sourceClientId
+        } of decisions) {
           if (!decision.promote) {
             skipped += 1;
             await client.query(
@@ -565,7 +642,10 @@ export function groomSessionContext(
 
           const durableId = insertResult.rows[0]?.id;
           if (!durableId) {
-            throw new AppError(ErrorCode.INTERNAL, 'Failed to create promoted memory');
+            throw new AppError(
+              ErrorCode.INTERNAL,
+              'Failed to create promoted memory'
+            );
           }
 
           await client.query(
@@ -626,7 +706,6 @@ export function groomSessionContext(
       } finally {
         client.release();
       }
-
     })(),
     (error) => toAppError(error, 'Failed to groom session context')
   );

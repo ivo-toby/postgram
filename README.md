@@ -102,14 +102,43 @@ it with `pgm search --memory-role session_context`.
 
 Operators can groom stale session context with `pgm-admin memory groom`.
 Use `--client-id <client-id>` for one client or `--all-clients` to batch over
-every session-context scope. `--older-than <duration>` defaults to `7d` and
-accepts values like `30m`, `4h`, `7d`, or `0d`. `--dry-run` previews eligible
-memories without calling the LLM. `--mode archive` archives eligible working
-context directly. `--mode promote --yes` uses the configured extraction LLM to
-decide whether each session-context memory should be promoted; promoted
-memories are distilled into new `durable_memory` entities, the source context
-is archived, and provenance is recorded with `metadata.promoted_to` plus a
-`promoted_to` edge.
+every session-context scope. `--all-clients` keeps each client scope separate;
+it is operational batching, not cross-client consolidation.
+`--older-than <duration>` defaults to `7d` and accepts values like `30m`,
+`4h`, `7d`, or `0d`. `--dry-run` previews eligible memories without calling
+the LLM.
+`--mode archive --yes` archives eligible working context directly.
+`--mode promote --yes` uses the configured extraction LLM to decide whether
+each session-context memory should be promoted; promoted memories are distilled
+into new `durable_memory` entities, the source context is archived, and
+provenance is recorded with `metadata.promoted_to` plus a `promoted_to` edge.
+
+Authenticated users and agents can self-groom only their own client-scoped
+session context:
+
+```bash
+pgm memory groom --dry-run --older-than 7d --limit 50
+pgm memory groom --older-than 14d --topic postgram --tag session-context --yes
+```
+
+The normal CLI derives scope from `PGM_API_KEY`; it does not accept
+`--client-id`, `--all-clients`, or promotion mode. Archive requires `--yes`.
+Optional filters are `--topic`, `--session-id`, and repeatable `--tag`.
+
+MCP clients can use the `groom_session_context` tool with the same self scope:
+
+```json
+{
+  "mode": "dry_run",
+  "older_than": "7d",
+  "limit": 50,
+  "topic": "postgram",
+  "session_id": "optional-session-id",
+  "tags": ["session-context"]
+}
+```
+
+MCP `mode` is `dry_run` or `archive`; promotion remains admin-only.
 
 For scheduled maintenance, run grooming from the host that has access to the
 Postgram container. This cron example assesses eligible session context every

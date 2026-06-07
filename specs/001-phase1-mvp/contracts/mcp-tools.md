@@ -18,7 +18,7 @@ and embedding happen asynchronously after the response. The returned entity
 includes `enrichment_status` ("pending" if content is non-empty, null otherwise).
 
 | Parameter  | Type     | Required | Default  |
-|------------|----------|----------|----------|
+| ---------- | -------- | -------- | -------- |
 | content    | string   | no       | —        |
 | type       | enum     | yes      | —        |
 | visibility | enum     | no       | `shared` |
@@ -35,7 +35,7 @@ includes `enrichment_status` ("pending" if content is non-empty, null otherwise)
 Retrieve a specific entity by ID.
 
 | Parameter | Type   | Required |
-|-----------|--------|----------|
+| --------- | ------ | -------- |
 | id        | string | yes      |
 
 **Returns**: `{ "entity": StoredEntity }`
@@ -54,18 +54,18 @@ Session-context memories:
 - are embedded for semantic recall
 - do not run graph extraction
 
-| Parameter   | Type     | Required | Default    |
-|-------------|----------|----------|------------|
-| content     | string   | yes      | —          |
-| visibility  | enum     | no       | `shared`   |
-| owner       | string   | no       | —          |
-| session_id  | string   | no       | —          |
-| agent_id    | string   | no       | —          |
-| topic       | string   | no       | —          |
-| tags        | string[] | no       | —          |
-| promotable  | boolean  | no       | —          |
-| groom_after | string   | no       | —          |
-| expires_at  | string   | no       | —          |
+| Parameter   | Type     | Required | Default  |
+| ----------- | -------- | -------- | -------- |
+| content     | string   | yes      | —        |
+| visibility  | enum     | no       | `shared` |
+| owner       | string   | no       | —        |
+| session_id  | string   | no       | —        |
+| agent_id    | string   | no       | —        |
+| topic       | string   | no       | —        |
+| tags        | string[] | no       | —        |
+| promotable  | boolean  | no       | —        |
+| groom_after | string   | no       | —        |
+| expires_at  | string   | no       | —        |
 
 **Returns**: `{ "entity": StoredEntity }`
 
@@ -75,18 +75,83 @@ Session-context memories:
 
 Semantic search across stored knowledge.
 
-| Parameter                             | Type     | Required | Default |
-|---------------------------------------|----------|----------|---------|
-| query                                 | string   | yes      | —       |
-| type                                  | enum     | no       | —       |
-| tags                                  | string[] | no       | —       |
-| memory_role                           | enum     | no       | —       |
-| include_other_clients_session_context | boolean  | no       | false   |
-| limit                                 | number   | no       | 10      |
-| threshold                             | number   | no       | 0.35    |
-| recency_weight                        | number   | no       | 0.1     |
+| Parameter      | Type     | Required | Default |
+| -------------- | -------- | -------- | ------- |
+| query          | string   | yes      | —       |
+| type           | enum     | no       | —       |
+| tags           | string[] | no       | —       |
+| memory_role    | enum     | no       | —       |
+| limit          | number   | no       | 10      |
+| threshold      | number   | no       | 0.35    |
+| recency_weight | number   | no       | 0.1     |
 
 **Returns**: `{ "results": SearchResult[] }`
+
+---
+
+### groom_session_context
+
+Preview or archive stale `session_context` memories for the authenticated
+client scope.
+
+This tool never accepts a caller-provided client id. Scope is derived from the
+API key's `client_id`, and candidates are filtered by the key's memory type and
+visibility permissions. Promotion is intentionally not available through MCP;
+LLM-assisted promotion remains an admin grooming operation.
+
+| Parameter  | Type     | Required | Default   |
+| ---------- | -------- | -------- | --------- |
+| mode       | enum     | no       | `dry_run` |
+| older_than | string   | no       | `7d`      |
+| limit      | number   | no       | 50        |
+| topic      | string   | no       | —         |
+| session_id | string   | no       | —         |
+| tags       | string[] | no       | —         |
+
+`mode` values are `dry_run` and `archive`. `older_than` accepts `m`, `h`, and
+`d` units, for example `30m`, `24h`, or `7d`. The optional `tags` filter
+requires all supplied tags to be present.
+
+Dry-run returns counts plus eligible candidate summaries:
+
+```json
+{
+  "dryRun": true,
+  "mode": "dry_run",
+  "olderThan": "7d",
+  "olderThanMs": 604800000,
+  "limit": 50,
+  "scope": { "kind": "client", "clientId": "coding-agents" },
+  "eligibleCount": 1,
+  "eligible": [
+    {
+      "id": "uuid",
+      "content": "Session context: ...",
+      "visibility": "personal",
+      "owner": null,
+      "tags": ["session-context"],
+      "metadata": {},
+      "createdAt": "2026-06-07T00:00:00.000Z"
+    }
+  ]
+}
+```
+
+Archive mode is an explicit mutation and returns archived ids:
+
+```json
+{
+  "dryRun": false,
+  "mode": "archive",
+  "olderThan": "7d",
+  "olderThanMs": 604800000,
+  "limit": 50,
+  "scope": { "kind": "client", "clientId": "coding-agents" },
+  "archived": 1,
+  "archivedCount": 1,
+  "archivedIds": ["uuid"]
+}
+```
 
 ---
 
@@ -97,7 +162,7 @@ If content changes, enrichment is re-dispatched asynchronously and
 `enrichment_status` resets to `"pending"`.
 
 | Parameter  | Type     | Required |
-|------------|----------|----------|
+| ---------- | -------- | -------- |
 | id         | string   | yes      |
 | content    | string   | no       |
 | status     | string   | no       |
@@ -115,7 +180,7 @@ If content changes, enrichment is re-dispatched asynchronously and
 Soft-delete an entity (sets status to archived).
 
 | Parameter | Type   | Required |
-|-----------|--------|----------|
+| --------- | ------ | -------- |
 | id        | string | yes      |
 
 **Returns**: `{ "id": "uuid", "deleted": true }`
@@ -127,7 +192,7 @@ Soft-delete an entity (sets status to archived).
 Create a new task (shortcut for store with type=task).
 
 | Parameter | Type     | Required | Default |
-|-----------|----------|----------|---------|
+| --------- | -------- | -------- | ------- |
 | content   | string   | yes      | —       |
 | context   | string   | no       | —       |
 | status    | string   | no       | `inbox` |
@@ -143,7 +208,7 @@ Create a new task (shortcut for store with type=task).
 List tasks with optional filters.
 
 | Parameter | Type   | Required | Default |
-|-----------|--------|----------|---------|
+| --------- | ------ | -------- | ------- |
 | status    | string | no       | —       |
 | context   | string | no       | —       |
 | limit     | number | no       | 50      |
@@ -158,7 +223,7 @@ List tasks with optional filters.
 Update a task's fields.
 
 | Parameter | Type     | Required |
-|-----------|----------|----------|
+| --------- | -------- | -------- |
 | id        | string   | yes      |
 | content   | string   | no       |
 | status    | string   | no       |
@@ -176,7 +241,7 @@ Update a task's fields.
 Mark a task as done.
 
 | Parameter | Type   | Required |
-|-----------|--------|----------|
+| --------- | ------ | -------- |
 | id        | string | yes      |
 | version   | number | yes      |
 
@@ -186,10 +251,10 @@ Mark a task as done.
 
 ## Enum Values
 
-| Enum       | Values |
-|------------|--------|
+| Enum       | Values                                                           |
+| ---------- | ---------------------------------------------------------------- |
 | type       | `memory`, `person`, `project`, `task`, `interaction`, `document` |
-| visibility | `personal`, `work`, `shared` |
+| visibility | `personal`, `work`, `shared`                                     |
 
 ## Error Behavior
 

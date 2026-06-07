@@ -1,3 +1,9 @@
+## [1.30.1](https://github.com/ivo-toby/postgram/compare/cli-v1.30.0...cli-v1.30.1) (2026-06-07)
+
+### Bug Fixes
+
+* **cli:** satisfy duration parser build typing ([#59](https://github.com/ivo-toby/postgram/issues/59)) ([eaa674a](https://github.com/ivo-toby/postgram/commit/eaa674a18a7c450bb96505def862b659b9e2e047))
+
 ## [1.30.0](https://github.com/ivo-toby/postgram/compare/cli-v1.29.0...cli-v1.30.0) (2026-06-07)
 
 ### Features

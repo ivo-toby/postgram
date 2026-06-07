@@ -4,7 +4,11 @@ import { McpServer } from '@modelcontextprotocol/sdk/server/mcp.js';
 import { WebStandardStreamableHTTPServerTransport } from '@modelcontextprotocol/sdk/server/webStandardStreamableHttp.js';
 import type { Pool } from 'pg';
 
-import { requireScope, validateKey } from '../auth/key-service.js';
+import {
+  checkTypeAccess,
+  requireScope,
+  validateKey
+} from '../auth/key-service.js';
 import type { AuthContext } from '../auth/types.js';
 import type { EmbeddingService } from '../services/embedding-service.js';
 import {
@@ -375,6 +379,7 @@ function createSessionServer(
         };
 
         requireScope(auth, 'read');
+        checkTypeAccess(auth, 'memory');
 
         const preview = await previewSessionContextGrooming(pool, sharedInput);
         if (preview.isErr()) {

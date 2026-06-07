@@ -91,6 +91,9 @@ describe('MCP tools', () => {
     clientId?: string;
     scopes?: Array<'read' | 'write' | 'delete' | 'sync'>;
     allowedVisibility?: Array<'shared' | 'work' | 'personal'>;
+    allowedTypes?: Array<
+      'memory' | 'person' | 'project' | 'task' | 'interaction' | 'document'
+    > | null;
   } = {}) {
     if (!database) {
       throw new Error('test database not initialized');
@@ -102,6 +105,7 @@ describe('MCP tools', () => {
         name,
         clientId: options.clientId ?? name,
         scopes: options.scopes ?? ['read', 'write', 'delete'],
+        allowedTypes: options.allowedTypes ?? null,
         allowedVisibility: options.allowedVisibility ?? [
           'shared',
           'work',
@@ -452,6 +456,83 @@ describe('MCP tools', () => {
         [sharedStored.entity.id, personalStored.entity.id, workStored.entity.id]
       ]);
       expect(archivedRows.rows.every((row) => row.status === null)).toBe(true);
+    } finally {
+      await privileged.close();
+      await restricted.close();
+    }
+  }, 120_000);
+
+  it('requires memory entity type access for groom_session_context', async () => {
+    const clientId = `mcp-groom-${crypto.randomUUID()}`;
+    const privileged = await createClient({
+      name: `mcp-groom-admin-${crypto.randomUUID()}`,
+      clientId,
+      scopes: ['read', 'write', 'delete'],
+      allowedVisibility: ['shared', 'work', 'personal']
+    });
+    const restricted = await createClient({
+      name: `mcp-groom-no-memory-${crypto.randomUUID()}`,
+      clientId,
+      scopes: ['read', 'delete'],
+      allowedTypes: ['task'],
+      allowedVisibility: ['shared', 'work', 'personal']
+    });
+
+    try {
+      const stored = extractStructuredPayload(
+        (await privileged.client.callTool({
+          name: 'store_session_context',
+          arguments: {
+            content: 'Memory-type-restricted key should not be able to groom this.',
+            topic: 'mcp-type-grooming',
+            tags: ['alpha'],
+            visibility: 'shared',
+            groom_after: '2026-01-01T00:00:00.000Z'
+          }
+        })) as ToolResultPayload
+      ) as { entity: { id: string } };
+
+      const dryRunResult = (await restricted.client.callTool({
+        name: 'groom_session_context',
+        arguments: {
+          mode: 'dry_run',
+          older_than: '7d',
+          limit: 10,
+          topic: 'mcp-type-grooming',
+          tags: ['alpha']
+        }
+      })) as ToolResultPayload;
+
+      expect(dryRunResult.isError).toBe(true);
+      expect(extractStructuredPayload(dryRunResult)).toMatchObject({
+        error: {
+          code: 'FORBIDDEN'
+        }
+      });
+
+      const archiveResult = (await restricted.client.callTool({
+        name: 'groom_session_context',
+        arguments: {
+          mode: 'archive',
+          older_than: '7d',
+          limit: 10,
+          topic: 'mcp-type-grooming',
+          tags: ['alpha']
+        }
+      })) as ToolResultPayload;
+
+      expect(archiveResult.isError).toBe(true);
+      expect(extractStructuredPayload(archiveResult)).toMatchObject({
+        error: {
+          code: 'FORBIDDEN'
+        }
+      });
+
+      const row = await database!.pool.query<{ status: string | null }>(
+        'SELECT status FROM entities WHERE id = $1',
+        [stored.entity.id]
+      );
+      expect(row.rows[0]?.status).toBeNull();
     } finally {
       await privileged.close();
       await restricted.close();

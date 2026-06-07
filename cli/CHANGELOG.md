@@ -1,3 +1,9 @@
+## [1.31.0](https://github.com/ivo-toby/postgram/compare/cli-v1.30.1...cli-v1.31.0) (2026-06-07)
+
+### Features
+
+* **cli:** add version flag ([#64](https://github.com/ivo-toby/postgram/issues/64)) ([6117de6](https://github.com/ivo-toby/postgram/commit/6117de6e36eb18c2399982111eb500eef360597b))
+
 ## [1.30.1](https://github.com/ivo-toby/postgram/compare/cli-v1.30.0...cli-v1.30.1) (2026-06-07)
 
 ### Bug Fixes

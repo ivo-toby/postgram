@@ -1,7 +1,7 @@
 #!/usr/bin/env node
 
 import { spawn, spawnSync } from 'node:child_process';
-import { createWriteStream } from 'node:fs';
+import { createWriteStream, readFileSync } from 'node:fs';
 import { mkdir, readFile as fsReadFile, stat } from 'node:fs/promises';
 import path from 'node:path';
 
@@ -32,6 +32,15 @@ import {
   graphResponseToToon,
   searchResponseToToon
 } from './search-output.js';
+
+function readCliVersion(): string {
+  const rawPackageJson = readFileSync(
+    new URL('../package.json', import.meta.url),
+    'utf8'
+  );
+  const packageJson = JSON.parse(rawPackageJson) as { version: string };
+  return packageJson.version;
+}
 
 function formatStoredEntity(entity: {
   id: string;
@@ -398,6 +407,7 @@ const program = new Command();
 program
   .name('pgm')
   .description('Postgram human CLI')
+  .version(readCliVersion())
   .option('--json', 'emit JSON output');
 
 program

@@ -112,11 +112,12 @@ is archived, and provenance is recorded with `metadata.promoted_to` plus a
 `promoted_to` edge.
 
 For scheduled maintenance, run grooming from the host that has access to the
-Postgram container. This cron example assesses eligible session context every
-three days at 03:17 and appends JSON output to a log:
+Postgram container. This cron example assesses eligible session context for all
+client scopes every three days at 03:17 and appends JSON output to a log. Cron
+does not provide a TTY, so use `docker compose exec -T`:
 
 ```cron
-17 3 */3 * * cd /path/to/postgram && ./bin/pgm-admin --json memory groom --client-id <client-id> --older-than 7d --mode promote --yes --limit 50 >> /var/log/postgram-memory-groom.log 2>&1
+17 3 */3 * * cd /path/to/postgram && docker compose exec -T mcp-server pgm-admin --json memory groom --all-clients --older-than 7d --mode promote --yes --limit 50 >> /var/log/postgram-memory-groom.log 2>&1
 ```
 
 Use `--mode archive --yes` instead if you want to archive eligible working
@@ -712,6 +713,13 @@ or when the startup dimension gate is refusing to boot):
 
 ```bash
 ./bin/pgm-admin <command> [args...]
+```
+
+For cron or other non-interactive automation, call Docker with `-T` so it does
+not try to allocate a TTY:
+
+```bash
+docker compose exec -T mcp-server pgm-admin <command>
 ```
 
 Examples:

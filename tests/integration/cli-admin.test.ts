@@ -2,10 +2,18 @@ import { afterAll, beforeAll, beforeEach, describe, expect, it } from 'vitest';
 import { execFile } from 'node:child_process';
 import { promisify } from 'node:util';
 import path from 'node:path';
+import type { Pool } from 'pg';
 
 import { createKey } from '../../src/auth/key-service.js';
 import type { AuthContext } from '../../src/auth/types.js';
+import { chunkText } from '../../src/services/chunking-service.js';
+import {
+  createEmbeddingService,
+  vectorToSql,
+  type EmbeddingService
+} from '../../src/services/embedding-service.js';
 import { storeEntity } from '../../src/services/entity-service.js';
+import type { Entity } from '../../src/types/entities.js';
 import {
   createTestDatabase,
   resetTestDatabase,
@@ -96,6 +104,41 @@ async function seedGroomCandidate(
   }))._unsafeUnwrap();
 
   return { id: stored.id };
+}
+
+async function seedChunksFor(
+  pool: Pool,
+  embeddingService: EmbeddingService,
+  entity: Pick<Entity, 'id' | 'content'>
+): Promise<void> {
+  const drafts = chunkText(entity.content ?? '');
+  if (drafts.length === 0) return;
+
+  const modelResult = await pool.query<{ id: string }>(
+    'SELECT id FROM embedding_models WHERE is_active = true LIMIT 1'
+  );
+  const modelId = modelResult.rows[0]?.id;
+  if (!modelId) throw new Error('no active embedding model in test db');
+
+  const embeddings = await embeddingService.embedBatch(drafts.map((draft) => draft.content));
+  for (const draft of drafts) {
+    const embedding = embeddings[draft.chunkIndex];
+    if (!embedding) throw new Error('missing embedding for chunk');
+    await pool.query(
+      `
+        INSERT INTO chunks (entity_id, chunk_index, content, embedding, model_id, token_count)
+        VALUES ($1, $2, $3, $4::vector, $5, $6)
+      `,
+      [
+        entity.id,
+        draft.chunkIndex,
+        draft.content,
+        vectorToSql(embedding),
+        modelId,
+        draft.tokenCount
+      ]
+    );
+  }
 }
 
 describe('pgm-admin CLI', () => {
@@ -1590,5 +1633,65 @@ describe('pgm-admin CLI', () => {
       { relation: 'part_of', source: 'llm-extraction' },
       { relation: 'related_to', source: 'manual' }
     ]);
+  }, 120_000);
+
+  it('link-neighbors dry-run uses entity titles without requiring a name column', async () => {
+    if (!database) {
+      throw new Error('test database not initialized');
+    }
+
+    const databaseUrl = getDatabaseUrl(database);
+    const seededKey = (await createKey(database.pool, {
+      name: `link-neighbors-${crypto.randomUUID()}`,
+      scopes: ['read', 'write', 'delete']
+    }))._unsafeUnwrap();
+    const auth = makeAuthContext(seededKey.record.id);
+    const embeddingService = createEmbeddingService();
+
+    const source = (await storeEntity(database.pool, auth, {
+      type: 'document',
+      content: 'knowledge graph maintenance semantic neighbor dry run',
+      metadata: { title: 'Graph Maintenance Source' }
+    }))._unsafeUnwrap();
+    const target = (await storeEntity(database.pool, auth, {
+      type: 'document',
+      content: 'knowledge graph maintenance semantic neighbor candidate',
+      metadata: { title: 'Graph Maintenance Target' }
+    }))._unsafeUnwrap();
+
+    await seedChunksFor(database.pool, embeddingService, source);
+    await seedChunksFor(database.pool, embeddingService, target);
+
+    const dryRun = await runAdmin(
+      [
+        'link-neighbors',
+        '--all',
+        '--dry-run',
+        '--json',
+        '--min-similarity',
+        '0.1',
+        '--max-neighbors',
+        '1'
+      ],
+      { DATABASE_URL: databaseUrl }
+    );
+
+    const body = parseJson(dryRun.stdout) as {
+      dryRun: true;
+      wouldProcess: Array<{
+        sourceId: string;
+        sourceName: string;
+        wouldLink: Array<{ targetId: string; targetName: string }>;
+      }>;
+    };
+
+    expect(body.dryRun).toBe(true);
+    const sourceEntry = body.wouldProcess.find((entry) => entry.sourceId === source.id);
+    expect(sourceEntry?.sourceName).toBe('Graph Maintenance Source');
+    expect(
+      sourceEntry?.wouldLink.some(
+        (entry) => entry.targetId === target.id && entry.targetName === 'Graph Maintenance Target'
+      )
+    ).toBe(true);
   }, 120_000);
 });

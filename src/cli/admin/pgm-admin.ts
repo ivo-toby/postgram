@@ -1283,8 +1283,9 @@ program
       const orderClause = 'ORDER BY e.created_at ASC';
       const limitClause = limit !== undefined ? `LIMIT ${limit}` : '';
 
-      const entityRows = await pool.query<{ id: string; visibility: string; owner: string | null; name: string }>(
-        `SELECT e.id, e.visibility, e.owner, e.name
+      const entityRows = await pool.query<{ id: string; visibility: string; owner: string | null; label: string }>(
+        `SELECT e.id, e.visibility, e.owner,
+                COALESCE(NULLIF(e.metadata->>'title', ''), NULLIF(e.content, ''), e.id::text) AS label
          FROM entities e
          WHERE ${whereClause}
          ${orderClause}
@@ -1334,15 +1335,18 @@ program
         if (options.dryRun) {
           const neighborIds = neighbors.map((n) => n.entityId);
           const nameRows = neighborIds.length > 0
-            ? await pool.query<{ id: string; name: string }>(
-                `SELECT id, name FROM entities WHERE id = ANY($1::uuid[])`,
+            ? await pool.query<{ id: string; label: string }>(
+                `SELECT id,
+                        COALESCE(NULLIF(metadata->>'title', ''), NULLIF(content, ''), id::text) AS label
+                 FROM entities
+                 WHERE id = ANY($1::uuid[])`,
                 [neighborIds]
               )
             : { rows: [] };
-          const nameMap = new Map(nameRows.rows.map((r) => [r.id, r.name]));
+          const nameMap = new Map(nameRows.rows.map((r) => [r.id, r.label]));
           dryRunResults.push({
             sourceId: entity.id,
-            sourceName: entity.name,
+            sourceName: entity.label,
             wouldLink: neighbors.map((n) => ({
               targetId: n.entityId,
               targetName: nameMap.get(n.entityId) ?? n.entityId,

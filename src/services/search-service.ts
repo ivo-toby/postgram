@@ -61,7 +61,6 @@ type SearchInput = {
   visibility?: Visibility | undefined;
   owner?: string | undefined;
   memoryRole?: MemoryRole | undefined;
-  includeOtherClientsSessionContext?: boolean | undefined;
   limit?: number | undefined;
   threshold?: number | undefined;
   recencyWeight?: number | undefined;
@@ -106,14 +105,12 @@ function mapEntity(row: EntityRow): Entity {
   };
 }
 
-function scopedMemoryVisibilitySql(
+export function scopedMemoryVisibilitySql(
   metadataColumn: string,
-  includeOtherClientsPlaceholder: string,
   clientIdPlaceholder: string
 ): string {
   return `(
-    ${includeOtherClientsPlaceholder}::boolean = true
-    OR (
+    (
       COALESCE(${metadataColumn}->>'memory_role', 'durable_memory') = 'session_context'
       AND ${metadataColumn} #>> '{session_scope,client_id}' = ${clientIdPlaceholder}
     )
@@ -222,7 +219,7 @@ async function runHybridSearch(
           $11::text IS NULL
           OR COALESCE(e.metadata->>'memory_role', 'durable_memory') = $11
         )
-        AND ${scopedMemoryVisibilitySql('e.metadata', '$12', '$13')}
+        AND ${scopedMemoryVisibilitySql('e.metadata', '$12')}
       ORDER BY c.embedding <=> $1::vector
       LIMIT $9
     `,
@@ -238,7 +235,6 @@ async function runHybridSearch(
       candidateLimit,
       input.includeArchived ?? false,
       input.memoryRole ?? null,
-      input.includeOtherClientsSessionContext ?? false,
       auth.clientId
     ]
   );
@@ -365,13 +361,12 @@ export function searchEntities(
                AND ($2::text[] IS NULL OR type = ANY($2))
                AND visibility = ANY($3)
                AND ${ownerSqlCondition('owner', '$4')}
-               AND ${scopedMemoryVisibilitySql('metadata', '$5', '$6')}`,
+               AND ${scopedMemoryVisibilitySql('metadata', '$5')}`,
             [
               Array.from(allNeighborIds),
               auth.allowedTypes,
               auth.allowedVisibility,
               input.owner ?? null,
-              input.includeOtherClientsSessionContext ?? false,
               auth.clientId
             ]
           );

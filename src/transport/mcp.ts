@@ -242,8 +242,7 @@ function createSessionServer(
         recency_weight: z.number().min(0).optional(),
         expand_graph: z.boolean().optional(),
         include_archived: z.boolean().optional(),
-        memory_role: memoryRoleSchema.optional(),
-        include_other_clients_session_context: z.boolean().optional()
+        memory_role: memoryRoleSchema.optional()
       }
     },
     (args) =>
@@ -262,8 +261,7 @@ function createSessionServer(
             recencyWeight: args.recency_weight,
             expandGraph: args.expand_graph,
             includeArchived: args.include_archived,
-            memoryRole: args.memory_role,
-            includeOtherClientsSessionContext: args.include_other_clients_session_context
+            memoryRole: args.memory_role
           },
           {
             embeddingService: options.embeddingService

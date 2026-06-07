@@ -8,9 +8,11 @@ import {
 } from 'vitest';
 
 import { createApp } from '../../src/index.js';
+import type { AuthContext } from '../../src/auth/types.js';
 import { createKey } from '../../src/auth/key-service.js';
 import { createEmbeddingService } from '../../src/services/embedding-service.js';
 import { createEnrichmentWorker } from '../../src/services/enrichment-worker.js';
+import { storeEntity } from '../../src/services/entity-service.js';
 import { AppError, ErrorCode } from '../../src/util/errors.js';
 import {
   createTestDatabase,
@@ -57,7 +59,8 @@ describe('REST entity endpoints', () => {
         pool: database.pool,
         embeddingService: options.embeddingService
       }),
-      apiKey: created.plaintextKey
+      apiKey: created.plaintextKey,
+      clientId: created.record.clientId
     };
   }
 
@@ -444,6 +447,80 @@ describe('REST entity endpoints', () => {
         details: {}
       }
     });
+  }, 120_000);
+
+  it('does not allow scoped-memory bypass via REST search payloads', async () => {
+    if (!database) {
+      throw new Error('test database not initialized');
+    }
+
+    const embeddingService = createEmbeddingService();
+    const { app, apiKey, clientId } = await createAuthorizedApp({
+      embeddingService
+    });
+
+    const viewerAuth: AuthContext = {
+      apiKeyId: '00000000-0000-0000-0000-000000000902',
+      keyName: 'rest-viewer-seed',
+      clientId,
+      scopes: ['read', 'write', 'delete'],
+      allowedTypes: null,
+      allowedVisibility: ['personal', 'work', 'shared']
+    };
+    const otherAuth = {
+      ...viewerAuth,
+      apiKeyId: '00000000-0000-0000-0000-000000000903',
+      clientId: `${clientId}-other`,
+      keyName: 'rest-other-seed'
+    };
+
+    await storeEntity(database.pool, viewerAuth, {
+      type: 'memory',
+      visibility: 'shared',
+      content: 'Viewer scoped durable memory for REST bypass regression.',
+      metadata: {
+        memory_role: 'durable_memory',
+        session_scope: { kind: 'client', client_id: clientId }
+      }
+    });
+
+    await storeEntity(database.pool, otherAuth, {
+      type: 'memory',
+      visibility: 'shared',
+      content: 'Other scoped durable memory for REST bypass regression.',
+      metadata: {
+        memory_role: 'durable_memory',
+        session_scope: { kind: 'client', client_id: otherAuth.clientId }
+      }
+    });
+
+    await createEnrichmentWorker({
+      pool: database.pool,
+      embeddingService
+    }).runOnce();
+
+    const searchResponse = await app.request('/api/search', {
+      method: 'POST',
+      headers: {
+        Authorization: `Bearer ${apiKey}`,
+        'Content-Type': 'application/json'
+      },
+      body: JSON.stringify({
+        query: 'scoped durable memory REST bypass regression',
+        type: 'memory',
+        threshold: 0,
+        limit: 10,
+        include_other_clients_session_context: true
+      })
+    });
+    const searchBody = (await searchResponse.json()) as {
+      results: Array<{ entity: { content: string | null } }>;
+    };
+
+    expect(searchResponse.status).toBe(200);
+    const contents = searchBody.results.map((entry) => entry.entity.content);
+    expect(contents).toContain('Viewer scoped durable memory for REST bypass regression.');
+    expect(contents).not.toContain('Other scoped durable memory for REST bypass regression.');
   }, 120_000);
 
   it('returns EMBEDDING_FAILED when query embedding fails', async () => {

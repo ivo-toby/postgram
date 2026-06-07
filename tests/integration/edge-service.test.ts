@@ -130,9 +130,63 @@ describe('edge-service', () => {
     expect(depth2.isOk()).toBe(true);
     const result2 = depth2._unsafeUnwrap();
     expect(result2.edges).toHaveLength(2);
-    expect(result2.entities.map((e) => e.id).sort()).toEqual(
-      [alice.id, project.id, task.id].sort()
-    );
+      expect(result2.entities.map((e) => e.id).sort()).toEqual(
+        [alice.id, project.id, task.id].sort()
+      );
+  }, 120_000);
+
+  it('does not leak other clients scoped entities during graph expansion', async () => {
+    if (!database) throw new Error('test database not initialized');
+    const auth = makeAuthContext();
+
+    const anchor = (await storeEntity(database.pool, auth, {
+      type: 'memory',
+      content: 'Graph expansion anchor for scoped retrieval',
+      visibility: 'personal'
+    }))._unsafeUnwrap();
+
+    const ownScoped = (await storeEntity(database.pool, { ...auth, clientId: 'codex' }, {
+      type: 'memory',
+      content: 'Codex scoped durable graph neighbor',
+      visibility: 'personal',
+      metadata: {
+        memory_role: 'durable_memory',
+        session_scope: { kind: 'client', client_id: 'codex' }
+      }
+    }))._unsafeUnwrap();
+
+    const otherScoped = (await storeEntity(database.pool, { ...auth, clientId: 'talon' }, {
+      type: 'memory',
+      content: 'Talon scoped durable graph neighbor',
+      visibility: 'personal',
+      metadata: {
+        memory_role: 'durable_memory',
+        session_scope: { kind: 'client', client_id: 'talon' }
+      }
+    }))._unsafeUnwrap();
+
+    await createEdge(database.pool, auth, {
+      sourceId: anchor.id,
+      targetId: ownScoped.id,
+      relation: 'related_to'
+    });
+    await createEdge(database.pool, auth, {
+      sourceId: anchor.id,
+      targetId: otherScoped.id,
+      relation: 'related_to'
+    });
+
+    const expanded = await expandGraph(database.pool, { ...auth, clientId: 'codex' }, anchor.id, {
+      depth: 1
+    });
+
+    expect(expanded.isOk()).toBe(true);
+    const graph = expanded._unsafeUnwrap();
+    expect(graph.entities.map((entity) => entity.id)).toContain(anchor.id);
+    expect(graph.entities.map((entity) => entity.id)).toContain(ownScoped.id);
+    expect(graph.entities.map((entity) => entity.id)).not.toContain(otherScoped.id);
+    expect(graph.edges.map((edge) => edge.targetId)).toContain(ownScoped.id);
+    expect(graph.edges.map((edge) => edge.targetId)).not.toContain(otherScoped.id);
   }, 120_000);
 
   it('rejects self-edges and out-of-range confidence values', async () => {

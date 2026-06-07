@@ -4,10 +4,12 @@ import { Client } from '@modelcontextprotocol/sdk/client/index.js';
 import { StreamableHTTPClientTransport } from '@modelcontextprotocol/sdk/client/streamableHttp.js';
 import type { Transport } from '@modelcontextprotocol/sdk/shared/transport.js';
 
+import type { AuthContext } from '../../src/auth/types.js';
 import { createKey } from '../../src/auth/key-service.js';
 import { createApp } from '../../src/index.js';
 import { createEmbeddingService } from '../../src/services/embedding-service.js';
 import { createEnrichmentWorker } from '../../src/services/enrichment-worker.js';
+import { storeEntity } from '../../src/services/entity-service.js';
 import {
   createTestDatabase,
   resetTestDatabase,
@@ -418,6 +420,72 @@ describe('MCP tools', () => {
         [shared.entity.id, productManager.entity.id].sort()
       );
       expect(expandResult.edges).toHaveLength(1);
+    } finally {
+      await close();
+    }
+  }, 120_000);
+
+  it('does not allow scoped-memory bypass via MCP search arguments', async () => {
+    const { client, clientId, close } = await createClient();
+
+    try {
+      const seedAuth: AuthContext = {
+        apiKeyId: '00000000-0000-0000-0000-000000000904',
+        keyName: 'mcp-bypass-seed',
+        clientId,
+        scopes: ['read', 'write', 'delete'],
+        allowedTypes: null,
+        allowedVisibility: ['personal', 'work', 'shared']
+      };
+
+      await storeEntity(database!.pool, seedAuth, {
+        type: 'memory',
+        visibility: 'personal',
+        content: 'Viewer scoped durable memory for MCP bypass regression.',
+        metadata: {
+          memory_role: 'durable_memory',
+          session_scope: { kind: 'client', client_id: clientId }
+        }
+      });
+
+      await storeEntity(database!.pool, {
+        ...seedAuth,
+        apiKeyId: '00000000-0000-0000-0000-000000000905',
+        clientId: `${clientId}-other`,
+        keyName: 'mcp-bypass-other'
+      }, {
+        type: 'memory',
+        visibility: 'personal',
+        content: 'Other scoped durable memory for MCP bypass regression.',
+        metadata: {
+          memory_role: 'durable_memory',
+          session_scope: { kind: 'client', client_id: `${clientId}-other` }
+        }
+      });
+
+      await createEnrichmentWorker({
+        pool: database!.pool,
+        embeddingService
+      }).runOnce();
+
+      const searchResult = extractStructuredPayload(
+        (await client.callTool({
+          name: 'search',
+          arguments: {
+            query: 'scoped durable memory MCP bypass regression',
+            type: 'memory',
+            threshold: 0,
+            limit: 10,
+            include_other_clients_session_context: true
+          }
+        })) as ToolResultPayload
+      ) as {
+        results: Array<{ entity: { content: string | null } }>;
+      };
+
+      const contents = searchResult.results.map((entry) => entry.entity.content);
+      expect(contents).toContain('Viewer scoped durable memory for MCP bypass regression.');
+      expect(contents).not.toContain('Other scoped durable memory for MCP bypass regression.');
     } finally {
       await close();
     }

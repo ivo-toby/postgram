@@ -314,7 +314,6 @@ function createSessionServer(
         expand_graph: z.boolean().optional(),
         include_archived: z.boolean().optional(),
         memory_role: memoryRoleSchema.optional(),
-        include_other_clients_session_context: z.boolean().optional(),
         full_response: fullResponseSchema,
         toon: toonSchema
       }
@@ -335,9 +334,7 @@ function createSessionServer(
             recencyWeight: args.recency_weight,
             expandGraph: args.expand_graph,
             includeArchived: args.include_archived,
-            memoryRole: args.memory_role,
-            includeOtherClientsSessionContext:
-              args.include_other_clients_session_context
+            memoryRole: args.memory_role
           },
           {
             embeddingService: options.embeddingService

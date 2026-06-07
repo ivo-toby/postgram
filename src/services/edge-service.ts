@@ -19,6 +19,7 @@ import {
   matchesOwnerFilter,
   ownerSqlCondition
 } from './owner-filter.js';
+import { scopedMemoryVisibilitySql } from './search-service.js';
 
 export type Edge = {
   id: string;
@@ -370,6 +371,8 @@ export function expandGraph(
               AND tgt.visibility = ANY($5)
               AND ${ownerSqlCondition('src.owner', '$6')}
               AND ${ownerSqlCondition('tgt.owner', '$6')}
+              AND ${scopedMemoryVisibilitySql('src.metadata', '$7')}
+              AND ${scopedMemoryVisibilitySql('tgt.metadata', '$7')}
           )
           SELECT DISTINCT id FROM reachable
         `,
@@ -379,7 +382,8 @@ export function expandGraph(
           relationFilter,
           auth.allowedTypes,
           auth.allowedVisibility,
-          options.owner ?? null
+          options.owner ?? null,
+          auth.clientId
         ]
       );
 

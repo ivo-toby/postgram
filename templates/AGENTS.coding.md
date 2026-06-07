@@ -14,8 +14,10 @@ it or the coding task cannot proceed without that context.
 
 ### Session Start
 
-At the start of a coding session, search recent session context for the current
-repo, project, branch, issue, or task before asking the user to restate context.
+At the start of a coding session, always search recent session context for the
+current repo, project, branch, issue, or task before asking the user to restate
+context. Use concrete repo, branch, issue, task, or feature keywords when they
+are available.
 
 ```
 mcp__postgram__search {
@@ -33,29 +35,51 @@ only when you need metadata, timestamps, version, or raw similarity; use
 `"toon": true` on list-like tools (`search`, `task_list`, `expand`) when you
 want the smallest readable output.
 
-If the task references a past decision, root cause, environment constraint, or
-architecture tradeoff, also search durable memory:
+Durable-memory search is conditional, but use strong triggers. Search durable
+memory before choosing an approach or asking the user for historical context
+when the task involves any of:
+
+- an explicit past decision, root cause, environment constraint, or architecture
+  tradeoff
+- continuing or resuming an existing branch, issue, PR, migration, or debugging
+  thread
+- debugging a non-trivial failure, flaky behavior, or production-like issue
+- touching architecture, data models, auth, API contracts, persistence, CI,
+  deployment, or tooling where prior constraints are likely to matter
+- planning a broad refactor, migration, integration, or cross-module change
+- storing durable memory, to avoid duplicating an existing memory
+
+Do not run durable-memory search for routine one-file edits, formatting-only
+changes, simple command requests, or code facts that repo inspection already
+answers.
 
 ```
 mcp__postgram__search {
-  "query": "project-or-repo decision constraint root cause",
+  "query": "<project-or-repo> <area-or-issue> decision constraint root-cause completed-work",
   "type": "memory",
   "memory_role": "durable_memory",
   "limit": 5
 }
 ```
 
+Search once with the best concrete keywords. If a result points to a named
+decision, root cause, or branch, one targeted follow-up search is fine.
+
 Search silently. Use what you find, and only ask the user for context if memory
 and the repo do not answer the question.
 
 ### Session-Context Memory
 
-Store session context when the current coding thread should be resumable later:
+Store session context when the current coding thread should be resumable later
+or would otherwise lose useful active state:
 
 - there is an active implementation or debugging hypothesis
 - you have partial results and a clear next step
 - verification is blocked or still running
 - the user asks to continue later, checkpoint, or resume
+
+Do not use session context as a completion log. For completed, verified outcomes,
+use durable memory only if they pass the durable-memory gate below.
 
 ```
 mcp__postgram__store_session_context {
@@ -86,13 +110,18 @@ mcp__postgram__store {
 
 ### Durable Memory
 
-Store durable memory only for stable development facts future coding agents
-should trust:
+At the end of meaningful coding work, treat durable memory as a completion
+check, not an automatic write. Store durable memory only for stable development
+facts future coding agents should trust:
 
 - a decision is made with a reason and tradeoff
 - a bug's root cause is identified
 - an environment or tooling constraint is discovered
 - a meaningful piece of work is completed, including verification outcome
+
+Do not store durable memory for trivial edits, unverified hypotheses, obvious
+facts already present in code, or intermediate progress that belongs in session
+context.
 
 Before storing durable memory, search for an existing related memory and update
 it if appropriate instead of creating duplicates.
@@ -124,6 +153,8 @@ Use specific tags such as `decision`, `constraint`, `bug`, `root-cause`, or
 ### Principles
 
 - Keep Postgram calls relevant to the coding task.
+- Use targeted durable-memory searches when the triggers match; avoid broad
+  all-memory or graph exploration during coding unless the user asks.
 - Prefer repo inspection over broad memory exploration for code facts.
 - Store concise, third-person or project-scoped facts, not transcripts.
 - Do not store code; the code lives in the repo.

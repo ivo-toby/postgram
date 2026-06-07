@@ -37,6 +37,10 @@ function extractStructuredPayload(
   return JSON.parse(text) as Record<string, unknown>;
 }
 
+function extractToolText(result: ToolResultPayload): string {
+  return result.content?.find((item) => item.type === 'text')?.text ?? '';
+}
+
 describe('MCP tools', () => {
   let database: TestDatabase | undefined;
   let server: ReturnType<typeof serve> | undefined;
@@ -82,16 +86,31 @@ describe('MCP tools', () => {
     }
   });
 
-  async function createClient() {
+  async function createClient(options: {
+    name?: string;
+    clientId?: string;
+    scopes?: Array<'read' | 'write' | 'delete' | 'sync'>;
+    allowedVisibility?: Array<'shared' | 'work' | 'personal'>;
+    allowedTypes?: Array<
+      'memory' | 'person' | 'project' | 'task' | 'interaction' | 'document'
+    > | null;
+  } = {}) {
     if (!database) {
       throw new Error('test database not initialized');
     }
 
+    const name = options.name ?? `mcp-${crypto.randomUUID()}`;
     const createdKey = (
       await createKey(database.pool, {
-        name: `mcp-${crypto.randomUUID()}`,
-        scopes: ['read', 'write', 'delete'],
-        allowedVisibility: ['shared', 'work', 'personal']
+        name,
+        clientId: options.clientId ?? name,
+        scopes: options.scopes ?? ['read', 'write', 'delete'],
+        allowedTypes: options.allowedTypes ?? null,
+        allowedVisibility: options.allowedVisibility ?? [
+          'shared',
+          'work',
+          'personal'
+        ]
       })
     )._unsafeUnwrap();
 
@@ -185,24 +204,376 @@ describe('MCP tools', () => {
 
     try {
       const tools = await client.listTools();
-      expect(tools.tools.map((tool) => tool.name).sort()).toEqual([
-        'delete',
-        'expand',
-        'link',
-        'queue',
-        'recall',
-        'search',
-        'store',
-        'store_session_context',
-        'sync_push',
-        'sync_status',
-        'task_complete',
-        'task_create',
-        'task_list',
-        'task_update',
-        'unlink',
-        'update'
+      expect(tools.tools.map((tool) => tool.name).sort()).toEqual(
+        [
+          'delete',
+          'expand',
+          'groom_session_context',
+          'link',
+          'queue',
+          'recall',
+          'search',
+          'store',
+          'store_session_context',
+          'sync_push',
+          'sync_status',
+          'task_complete',
+          'task_create',
+          'task_list',
+          'task_update',
+          'unlink',
+          'update'
+        ].sort()
+      );
+    } finally {
+      await close();
+    }
+  }, 120_000);
+
+  it('dry-runs and archives only the authenticated client session context', async () => {
+    const first = await createClient();
+    const second = await createClient();
+
+    try {
+      const firstStored = extractStructuredPayload(
+        (await first.client.callTool({
+          name: 'store_session_context',
+          arguments: {
+            content: 'First client session context should be groomed.',
+            topic: 'mcp-grooming',
+            session_id: 'session-first',
+            tags: ['alpha', 'beta'],
+            groom_after: '2026-01-01T00:00:00.000Z'
+          }
+        })) as ToolResultPayload
+      ) as {
+        entity: { id: string; metadata: Record<string, unknown> };
+      };
+
+      const secondStored = extractStructuredPayload(
+        (await second.client.callTool({
+          name: 'store_session_context',
+          arguments: {
+            content: 'Second client session context should stay untouched.',
+            topic: 'mcp-grooming',
+            session_id: 'session-second',
+            tags: ['alpha', 'beta'],
+            groom_after: '2026-01-01T00:00:00.000Z'
+          }
+        })) as ToolResultPayload
+      ) as {
+        entity: { id: string; metadata: Record<string, unknown> };
+      };
+
+      const dryRunResult = extractStructuredPayload(
+        (await first.client.callTool({
+          name: 'groom_session_context',
+          arguments: {
+            mode: 'dry_run',
+            older_than: '7d',
+            limit: 10,
+            topic: 'mcp-grooming',
+            session_id: 'session-first',
+            tags: ['alpha', 'beta']
+          }
+        })) as ToolResultPayload
+      ) as {
+        dryRun: boolean;
+        mode: string;
+        eligibleCount: number;
+        eligible: Array<{
+          id: string;
+          metadata: Record<string, unknown>;
+        }>;
+      };
+
+      expect(dryRunResult).toMatchObject({
+        dryRun: true,
+        mode: 'dry_run',
+        eligibleCount: 1
+      });
+      expect(dryRunResult.eligible).toHaveLength(1);
+      expect(dryRunResult.eligible[0]?.id).toBe(firstStored.entity.id);
+      expect(dryRunResult.eligible[0]?.metadata).toMatchObject({
+        session_scope: { kind: 'client', client_id: first.clientId },
+        topic: 'mcp-grooming',
+        session_id: 'session-first'
+      });
+
+      const archiveResult = extractStructuredPayload(
+        (await first.client.callTool({
+          name: 'groom_session_context',
+          arguments: {
+            mode: 'archive',
+            older_than: '7d',
+            limit: 10,
+            topic: 'mcp-grooming',
+            session_id: 'session-first',
+            tags: ['alpha', 'beta']
+          }
+        })) as ToolResultPayload
+      ) as {
+        dryRun: boolean;
+        mode: string;
+        archived: number;
+        archivedIds: string[];
+      };
+
+      expect(archiveResult).toMatchObject({
+        dryRun: false,
+        mode: 'archive',
+        archived: 1,
+        archivedIds: [firstStored.entity.id]
+      });
+
+      const archivedRow = await database!.pool.query<{ status: string | null }>(
+        'SELECT status FROM entities WHERE id = $1',
+        [firstStored.entity.id]
+      );
+      expect(archivedRow.rows[0]?.status).toBe('archived');
+
+      const otherRow = await database!.pool.query<{ status: string | null }>(
+        'SELECT status FROM entities WHERE id = $1',
+        [secondStored.entity.id]
+      );
+      expect(otherRow.rows[0]?.status).toBeNull();
+    } finally {
+      await first.close();
+      await second.close();
+    }
+  }, 120_000);
+
+  it('filters groom_session_context by allowed visibility and mutation scope for same-client keys', async () => {
+    const clientId = `mcp-groom-${crypto.randomUUID()}`;
+    const privileged = await createClient({
+      name: `mcp-groom-admin-${crypto.randomUUID()}`,
+      clientId,
+      scopes: ['read', 'write', 'delete'],
+      allowedVisibility: ['shared', 'work', 'personal']
+    });
+    const restricted = await createClient({
+      name: `mcp-groom-readonly-${crypto.randomUUID()}`,
+      clientId,
+      scopes: ['read'],
+      allowedVisibility: ['shared']
+    });
+
+    try {
+      const sharedStored = extractStructuredPayload(
+        (await privileged.client.callTool({
+          name: 'store_session_context',
+          arguments: {
+            content: 'Shared session context should be visible to shared-only keys.',
+            topic: 'mcp-visibility-grooming',
+            tags: ['alpha'],
+            visibility: 'shared',
+            groom_after: '2026-01-01T00:00:00.000Z'
+          }
+        })) as ToolResultPayload
+      ) as { entity: { id: string } };
+
+      const personalStored = extractStructuredPayload(
+        (await privileged.client.callTool({
+          name: 'store_session_context',
+          arguments: {
+            content: 'Personal session context should stay hidden from shared-only keys.',
+            topic: 'mcp-visibility-grooming',
+            tags: ['alpha'],
+            visibility: 'personal',
+            groom_after: '2026-01-01T00:00:00.000Z'
+          }
+        })) as ToolResultPayload
+      ) as { entity: { id: string } };
+
+      const workStored = extractStructuredPayload(
+        (await privileged.client.callTool({
+          name: 'store_session_context',
+          arguments: {
+            content: 'Work session context should also stay hidden from shared-only keys.',
+            topic: 'mcp-visibility-grooming',
+            tags: ['alpha'],
+            visibility: 'work',
+            groom_after: '2026-01-01T00:00:00.000Z'
+          }
+        })) as ToolResultPayload
+      ) as { entity: { id: string } };
+
+      const dryRunResult = extractStructuredPayload(
+        (await restricted.client.callTool({
+          name: 'groom_session_context',
+          arguments: {
+            mode: 'dry_run',
+            older_than: '7d',
+            limit: 10,
+            topic: 'mcp-visibility-grooming',
+            tags: ['alpha']
+          }
+        })) as ToolResultPayload
+      ) as {
+        dryRun: boolean;
+        mode: string;
+        eligibleCount: number;
+        eligible: Array<{
+          id: string;
+          visibility: string;
+        }>;
+      };
+
+      expect(dryRunResult).toMatchObject({
+        dryRun: true,
+        mode: 'dry_run',
+        eligibleCount: 1
+      });
+      expect(dryRunResult.eligible).toEqual([
+        expect.objectContaining({
+          id: sharedStored.entity.id,
+          visibility: 'shared'
+        })
       ]);
+
+      const archiveResult = (await restricted.client.callTool({
+        name: 'groom_session_context',
+        arguments: {
+          mode: 'archive',
+          older_than: '7d',
+          limit: 10,
+          topic: 'mcp-visibility-grooming',
+          tags: ['alpha']
+        }
+      })) as ToolResultPayload;
+
+      expect(archiveResult.isError).toBe(true);
+      expect(extractStructuredPayload(archiveResult)).toMatchObject({
+        error: {
+          code: 'FORBIDDEN'
+        }
+      });
+
+      const archivedRows = await database!.pool.query<{
+        id: string;
+        status: string | null;
+      }>('SELECT id, status FROM entities WHERE id = ANY($1::uuid[]) ORDER BY id', [
+        [sharedStored.entity.id, personalStored.entity.id, workStored.entity.id]
+      ]);
+      expect(archivedRows.rows.every((row) => row.status === null)).toBe(true);
+    } finally {
+      await privileged.close();
+      await restricted.close();
+    }
+  }, 120_000);
+
+  it('requires memory entity type access for groom_session_context', async () => {
+    const clientId = `mcp-groom-${crypto.randomUUID()}`;
+    const privileged = await createClient({
+      name: `mcp-groom-admin-${crypto.randomUUID()}`,
+      clientId,
+      scopes: ['read', 'write', 'delete'],
+      allowedVisibility: ['shared', 'work', 'personal']
+    });
+    const restricted = await createClient({
+      name: `mcp-groom-no-memory-${crypto.randomUUID()}`,
+      clientId,
+      scopes: ['read', 'delete'],
+      allowedTypes: ['task'],
+      allowedVisibility: ['shared', 'work', 'personal']
+    });
+
+    try {
+      const stored = extractStructuredPayload(
+        (await privileged.client.callTool({
+          name: 'store_session_context',
+          arguments: {
+            content: 'Memory-type-restricted key should not be able to groom this.',
+            topic: 'mcp-type-grooming',
+            tags: ['alpha'],
+            visibility: 'shared',
+            groom_after: '2026-01-01T00:00:00.000Z'
+          }
+        })) as ToolResultPayload
+      ) as { entity: { id: string } };
+
+      const dryRunResult = (await restricted.client.callTool({
+        name: 'groom_session_context',
+        arguments: {
+          mode: 'dry_run',
+          older_than: '7d',
+          limit: 10,
+          topic: 'mcp-type-grooming',
+          tags: ['alpha']
+        }
+      })) as ToolResultPayload;
+
+      expect(dryRunResult.isError).toBe(true);
+      expect(extractStructuredPayload(dryRunResult)).toMatchObject({
+        error: {
+          code: 'FORBIDDEN'
+        }
+      });
+
+      const archiveResult = (await restricted.client.callTool({
+        name: 'groom_session_context',
+        arguments: {
+          mode: 'archive',
+          older_than: '7d',
+          limit: 10,
+          topic: 'mcp-type-grooming',
+          tags: ['alpha']
+        }
+      })) as ToolResultPayload;
+
+      expect(archiveResult.isError).toBe(true);
+      expect(extractStructuredPayload(archiveResult)).toMatchObject({
+        error: {
+          code: 'FORBIDDEN'
+        }
+      });
+
+      const row = await database!.pool.query<{ status: string | null }>(
+        'SELECT status FROM entities WHERE id = $1',
+        [stored.entity.id]
+      );
+      expect(row.rows[0]?.status).toBeNull();
+    } finally {
+      await privileged.close();
+      await restricted.close();
+    }
+  }, 120_000);
+
+  it('rejects invalid grooming duration and promote-like mode arguments', async () => {
+    const { client, close } = await createClient();
+
+    try {
+      const durationResult = (await client.callTool({
+        name: 'groom_session_context',
+        arguments: {
+          mode: 'dry_run',
+          older_than: 'bogus-duration'
+        }
+      })) as ToolResultPayload;
+      expect(durationResult.isError).toBe(true);
+      expect(extractStructuredPayload(durationResult)).toMatchObject({
+        error: {
+          code: 'VALIDATION'
+        }
+      });
+
+      const promoteResult = (await client.callTool({
+        name: 'groom_session_context',
+        arguments: {
+          mode: 'promote',
+          older_than: '7d'
+        }
+      })) as ToolResultPayload;
+      expect(promoteResult.isError).toBe(true);
+      if (promoteResult.structuredContent) {
+        expect(promoteResult.structuredContent).toMatchObject({
+          error: {
+            code: 'VALIDATION'
+          }
+        });
+      } else {
+        expect(extractToolText(promoteResult)).toContain('MCP error');
+      }
     } finally {
       await close();
     }
@@ -475,8 +846,7 @@ describe('MCP tools', () => {
             query: 'scoped durable memory MCP bypass regression',
             type: 'memory',
             threshold: 0,
-            limit: 10,
-            include_other_clients_session_context: true
+            limit: 10
           }
         })) as ToolResultPayload
       ) as {

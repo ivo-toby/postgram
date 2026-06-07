@@ -25,6 +25,14 @@ function makeAuthContext(): AuthContext {
   };
 }
 
+async function backdateEntity(
+  pool: TestDatabase['pool'],
+  id: string,
+  createdAt: string
+): Promise<void> {
+  await pool.query('UPDATE entities SET created_at = $2 WHERE id = $1', [id, createdAt]);
+}
+
 describe('memory-grooming-service', () => {
   let database: TestDatabase | undefined;
 
@@ -122,6 +130,170 @@ describe('memory-grooming-service', () => {
     expect(preview._unsafeUnwrap().eligible.map((entry) => entry.id)).toEqual([valid.id]);
   });
 
+  it('ignores ISO-shaped invalid groom_after values without aborting preview', async () => {
+    if (!database) {
+      throw new Error('test database not initialized');
+    }
+
+    await storeEntity(database.pool, makeAuthContext(), {
+      type: 'memory',
+      content: 'Session context with ISO-shaped invalid groom_after.',
+      visibility: 'personal',
+      metadata: {
+        memory_role: 'session_context',
+        session_scope: { kind: 'client', client_id: 'codex' },
+        groom_after: '2026-99-99T00:00:00.000Z'
+      }
+    });
+
+    const valid = (await storeEntity(database.pool, makeAuthContext(), {
+      type: 'memory',
+      content: 'Session context with valid groom_after alongside invalid ISO.',
+      visibility: 'personal',
+      metadata: {
+        memory_role: 'session_context',
+        session_scope: { kind: 'client', client_id: 'codex' },
+        groom_after: '2026-01-01T00:00:00.000Z'
+      }
+    }))._unsafeUnwrap();
+
+    const preview = await previewSessionContextGrooming(database.pool, {
+      clientId: 'codex',
+      now: new Date('2026-05-31T00:00:00.000Z'),
+      limit: 10
+    });
+
+    expect(preview.isOk()).toBe(true);
+    expect(preview._unsafeUnwrap().eligible.map((entry) => entry.id)).toEqual([valid.id]);
+  });
+
+  it('supports all-client preview with age and metadata filters without crossing client boundaries', async () => {
+    if (!database) {
+      throw new Error('test database not initialized');
+    }
+
+    const commonMetadata = {
+      memory_role: 'session_context',
+      groom_after: '2025-12-01T00:00:00.000Z',
+      topic: 'grooming-foundation',
+      session_id: 'session-a'
+    };
+
+    const codexOld = (await storeEntity(database.pool, { ...makeAuthContext(), clientId: 'codex' }, {
+      type: 'memory',
+      content: 'Codex session context that should be eligible.',
+      visibility: 'personal',
+      tags: ['alpha', 'shared'],
+      metadata: {
+        ...commonMetadata,
+        session_scope: { kind: 'client', client_id: 'codex' }
+      }
+    }))._unsafeUnwrap();
+    await backdateEntity(database.pool, codexOld.id, '2026-05-31T22:00:00.000Z');
+
+    const talonOld = (await storeEntity(database.pool, { ...makeAuthContext(), clientId: 'talon' }, {
+      type: 'memory',
+      content: 'Talon session context that should also be eligible.',
+      visibility: 'personal',
+      tags: ['alpha', 'shared'],
+      metadata: {
+        ...commonMetadata,
+        session_scope: { kind: 'client', client_id: 'talon' }
+      }
+    }))._unsafeUnwrap();
+    await backdateEntity(database.pool, talonOld.id, '2026-05-31T21:30:00.000Z');
+
+    const wrongTopic = (await storeEntity(database.pool, { ...makeAuthContext(), clientId: 'codex' }, {
+      type: 'memory',
+      content: 'Codex session context with the wrong topic.',
+      visibility: 'personal',
+      tags: ['alpha', 'shared'],
+      metadata: {
+        memory_role: 'session_context',
+        session_scope: { kind: 'client', client_id: 'codex' },
+        topic: 'other-topic',
+        session_id: 'session-a'
+      }
+    }))._unsafeUnwrap();
+    await backdateEntity(database.pool, wrongTopic.id, '2026-05-31T20:30:00.000Z');
+
+    const tooYoung = (await storeEntity(database.pool, { ...makeAuthContext(), clientId: 'codex' }, {
+      type: 'memory',
+      content: 'Codex session context that is too recent.',
+      visibility: 'personal',
+      tags: ['alpha', 'shared'],
+      metadata: {
+        memory_role: 'session_context',
+        session_scope: { kind: 'client', client_id: 'codex' },
+        topic: 'grooming-foundation',
+        session_id: 'session-a'
+      }
+    }))._unsafeUnwrap();
+    await backdateEntity(database.pool, tooYoung.id, '2026-06-07T13:40:00.000Z');
+
+    const preview = await previewSessionContextGrooming(
+      database.pool,
+      {
+        scope: { kind: 'all_clients' },
+        now: new Date('2026-06-07T14:00:00.000Z'),
+        olderThanMs: 60 * 60 * 1000,
+        limit: 10,
+        topic: 'grooming-foundation',
+        sessionId: 'session-a',
+        tags: ['alpha']
+      } as never
+    );
+
+    expect(preview.isOk()).toBe(true);
+    expect(preview._unsafeUnwrap().eligible.map((entry) => entry.id).sort()).toEqual(
+      [codexOld.id, talonOld.id].sort()
+    );
+    expect(
+      preview
+        ._unsafeUnwrap()
+        .eligible.every(
+          (entry) =>
+            (entry.metadata.session_scope as { client_id?: string } | undefined)?.client_id ===
+            (entry.id === codexOld.id ? 'codex' : 'talon')
+        )
+    ).toBe(true);
+  });
+
+  it('includes current matching memory when olderThanMs is zero', async () => {
+    if (!database) {
+      throw new Error('test database not initialized');
+    }
+
+    const stored = (await storeEntity(database.pool, makeAuthContext(), {
+      type: 'memory',
+      content: 'Session context that is eligible immediately.',
+      visibility: 'personal',
+      tags: ['alpha'],
+      metadata: {
+        memory_role: 'session_context',
+        session_scope: { kind: 'client', client_id: 'codex' },
+        topic: 'immediate-grooming',
+        session_id: 'session-zero'
+      }
+    }))._unsafeUnwrap();
+
+    const preview = await previewSessionContextGrooming(
+      database.pool,
+      {
+        scope: { kind: 'client', clientId: 'codex' },
+        now: new Date('2026-06-07T14:00:00.000Z'),
+        olderThanMs: 0,
+        limit: 10,
+        topic: 'immediate-grooming',
+        sessionId: 'session-zero',
+        tags: ['alpha']
+      } as never
+    );
+
+    expect(preview.isOk()).toBe(true);
+    expect(preview._unsafeUnwrap().eligible.map((entry) => entry.id)).toEqual([stored.id]);
+  });
+
   it('requires confirmation before archiving outside dry-run', async () => {
     if (!database) {
       throw new Error('test database not initialized');
@@ -179,6 +351,111 @@ describe('memory-grooming-service', () => {
       [stored.id]
     );
     expect(row.rows[0]?.status).toBe('archived');
+  });
+
+  it('promotes all-client session context with per-client promotion metadata', async () => {
+    if (!database) {
+      throw new Error('test database not initialized');
+    }
+
+    const codexStored = (await storeEntity(database.pool, { ...makeAuthContext(), clientId: 'codex' }, {
+      type: 'memory',
+      content: 'Codex session context ready for promotion.',
+      visibility: 'personal',
+      tags: ['session-context', 'alpha'],
+      metadata: {
+        memory_role: 'session_context',
+        session_scope: { kind: 'client', client_id: 'codex' },
+        topic: 'promotion-foundation',
+        session_id: 'promo-codex'
+      }
+    }))._unsafeUnwrap();
+    await backdateEntity(database.pool, codexStored.id, '2026-05-31T20:00:00.000Z');
+
+    const talonStored = (await storeEntity(database.pool, { ...makeAuthContext(), clientId: 'talon' }, {
+      type: 'memory',
+      content: 'Talon session context ready for promotion.',
+      visibility: 'personal',
+      tags: ['session-context', 'beta'],
+      metadata: {
+        memory_role: 'session_context',
+        session_scope: { kind: 'client', client_id: 'talon' },
+        topic: 'promotion-foundation',
+        session_id: 'promo-talon'
+      }
+    }))._unsafeUnwrap();
+    await backdateEntity(database.pool, talonStored.id, '2026-05-31T19:30:00.000Z');
+
+    const result = await groomSessionContext(
+      database.pool,
+      {
+        scope: { kind: 'all_clients' },
+        now: new Date('2026-06-07T14:00:00.000Z'),
+        mode: 'promote',
+        dryRun: false,
+        confirm: true,
+        limit: 10,
+        olderThanMs: 60 * 60 * 1000,
+        topic: 'promotion-foundation',
+        tags: ['session-context'],
+        callLlm: async () =>
+          JSON.stringify({
+            promote: true,
+            content: 'Promoted durable memory for all-client grooming.',
+            reason: 'Stable design decision worth retaining.',
+            tags: ['promotion-foundation']
+          })
+      } as never
+    );
+
+    expect(result.isOk()).toBe(true);
+    expect(result._unsafeUnwrap()).toMatchObject({
+      archived: 2,
+      promoted: 2,
+      skipped: 0,
+      dryRun: false
+    });
+
+    const sourceRows = await database.pool.query<{
+      id: string;
+      status: string | null;
+      metadata: Record<string, unknown>;
+    }>(
+      'SELECT id, status, metadata FROM entities WHERE id = ANY($1::uuid[]) ORDER BY id',
+      [[codexStored.id, talonStored.id]]
+    );
+
+    expect(sourceRows.rows.every((row) => row.status === 'archived')).toBe(true);
+    expect(sourceRows.rows.every((row) => typeof row.metadata.promoted_to === 'string')).toBe(true);
+
+    const durableIds = sourceRows.rows.map((row) => row.metadata.promoted_to as string);
+    const durableRows = await database.pool.query<{
+      id: string;
+      content: string | null;
+      visibility: string;
+      source: string | null;
+      metadata: Record<string, unknown>;
+    }>('SELECT id, content, visibility, source, metadata FROM entities WHERE id = ANY($1::uuid[])', [
+      durableIds
+    ]);
+
+    expect(durableRows.rows).toHaveLength(2);
+    expect(
+      durableRows.rows.map((row) => row.metadata).every((metadata) => {
+        const scope = metadata.session_scope as { kind?: string; client_id?: string } | undefined;
+        return (
+          metadata.memory_role === 'durable_memory' &&
+          metadata.promotion_source_role === 'session_context' &&
+          (metadata.promotion_client_id === 'codex' || metadata.promotion_client_id === 'talon') &&
+          scope?.kind === 'client' &&
+          (scope.client_id === 'codex' || scope.client_id === 'talon')
+        );
+      })
+    ).toBe(true);
+
+    expect(durableRows.rows.some((row) => row.metadata.promotion_client_id === 'codex')).toBe(true);
+    expect(durableRows.rows.some((row) => row.metadata.promotion_client_id === 'talon')).toBe(true);
+    expect(durableRows.rows.every((row) => row.source === 'memory-grooming')).toBe(true);
   });
 
   it('promotes session context through an LLM-distilled durable memory', async () => {

@@ -15,6 +15,18 @@ export type GroomingCandidate = {
   createdAt: string;
 };
 
+export type GroomingScope =
+  | { kind: 'client'; clientId: string }
+  | { kind: 'all_clients' };
+
+export type GroomingFilters = {
+  olderThanMs: number;
+  limit: number;
+  topic?: string | undefined;
+  sessionId?: string | undefined;
+  tags?: string[] | undefined;
+};
+
 export type GroomingPreview = {
   eligible: GroomingCandidate[];
 };
@@ -29,6 +41,17 @@ type PromotionDecision = {
 };
 
 type GroomingMode = 'archive' | 'promote';
+
+type GroomingInput = {
+  scope?: GroomingScope | undefined;
+  clientId?: string | undefined;
+  now: Date;
+  limit: number;
+  olderThanMs?: number | undefined;
+  topic?: string | undefined;
+  sessionId?: string | undefined;
+  tags?: string[] | undefined;
+};
 
 export type GroomingResult = {
   archived: number;
@@ -135,6 +158,136 @@ function normalizeTags(sourceTags: string[], decisionTags: string[] | undefined)
   return Array.from(new Set(durableTags.map((tag) => tag.trim()).filter(Boolean)));
 }
 
+function normalizeFilters(input: GroomingInput): GroomingFilters {
+  if (!Number.isInteger(input.limit) || input.limit <= 0) {
+    throw new AppError(ErrorCode.VALIDATION, 'limit must be a positive integer');
+  }
+
+  const olderThanMs = input.olderThanMs ?? 7 * 24 * 60 * 60 * 1000;
+  if (!Number.isFinite(olderThanMs) || olderThanMs < 0) {
+    throw new AppError(ErrorCode.VALIDATION, 'olderThanMs must be a non-negative number');
+  }
+
+  return {
+    olderThanMs,
+    limit: input.limit,
+    topic: typeof input.topic === 'string' && input.topic.trim().length > 0 ? input.topic.trim() : undefined,
+    sessionId:
+      typeof input.sessionId === 'string' && input.sessionId.trim().length > 0
+        ? input.sessionId.trim()
+        : undefined,
+    tags: input.tags?.length
+      ? Array.from(
+          new Set(
+            input.tags.map((tag) => tag.trim()).filter((tag) => tag.length > 0)
+          )
+        )
+      : undefined
+  };
+}
+
+function normalizeScope(input: GroomingInput): GroomingScope {
+  if (input.scope) {
+    if (input.scope.kind === 'client' && typeof input.scope.clientId === 'string' && input.scope.clientId.trim().length > 0) {
+      return { kind: 'client', clientId: input.scope.clientId.trim() };
+    }
+
+    if (input.scope.kind === 'all_clients') {
+      return { kind: 'all_clients' };
+    }
+
+    throw new AppError(ErrorCode.VALIDATION, 'client scope requires a clientId');
+  }
+
+  if (typeof input.clientId === 'string' && input.clientId.trim().length > 0) {
+    return { kind: 'client', clientId: input.clientId.trim() };
+  }
+
+  throw new AppError(ErrorCode.VALIDATION, 'grooming scope requires a clientId or all_clients scope');
+}
+
+function getCandidateClientId(candidate: GroomingCandidate): string | undefined {
+  const sessionScope = candidate.metadata.session_scope as
+    | { kind?: unknown; client_id?: unknown }
+    | undefined;
+  const clientId = sessionScope?.client_id;
+  return typeof clientId === 'string' && clientId.trim().length > 0 ? clientId.trim() : undefined;
+}
+
+function buildCandidateQuery({
+  scope,
+  filters,
+  now
+}: {
+  scope: GroomingScope;
+  filters: GroomingFilters;
+  now: Date;
+}): { text: string; values: unknown[] } {
+  const conditions = [
+    "type = 'memory'",
+    "status IS DISTINCT FROM 'archived'",
+    "metadata->>'memory_role' = 'session_context'",
+    "metadata->>'promoted_to' IS NULL"
+  ];
+  const values: unknown[] = [];
+  let paramIndex = 1;
+
+  if (scope.kind === 'client') {
+    conditions.push(`metadata #>> '{session_scope,client_id}' = $${paramIndex++}`);
+    values.push(scope.clientId);
+  }
+
+  const ageCutoff = new Date(now.getTime() - filters.olderThanMs);
+  conditions.push(
+    `(
+      CASE
+        WHEN COALESCE(
+          pg_input_is_valid(metadata->>'groom_after', 'timestamptz'),
+          false
+        )
+        THEN (metadata->>'groom_after')::timestamptz <= $${paramIndex}
+        ELSE false
+      END
+      OR created_at <= $${paramIndex + 1}::timestamptz
+    )`
+  );
+  values.push(now.toISOString(), ageCutoff.toISOString());
+  paramIndex += 2;
+
+  if (filters.topic) {
+    conditions.push(`metadata->>'topic' = $${paramIndex++}`);
+    values.push(filters.topic);
+  }
+
+  if (filters.sessionId) {
+    conditions.push(`metadata->>'session_id' = $${paramIndex++}`);
+    values.push(filters.sessionId);
+  }
+
+  if (filters.tags?.length) {
+    conditions.push(`tags @> $${paramIndex++}::text[]`);
+    values.push(filters.tags);
+  }
+
+  conditions.push(`metadata #>> '{session_scope,client_id}' IS NOT NULL`);
+
+  values.push(filters.limit);
+
+  return {
+    text: `
+      SELECT id, content, visibility, owner, tags, metadata, created_at
+      FROM entities
+      WHERE ${conditions.join('\n        AND ')}
+      ORDER BY
+        COALESCE(metadata #>> '{session_scope,client_id}', ''),
+        created_at ASC,
+        id ASC
+      LIMIT $${paramIndex}
+    `,
+    values
+  };
+}
+
 export function buildSessionContextPromotionPrompt(candidate: GroomingCandidate): string {
   return [
     'You are Postgram memory grooming. Assess whether a session_context memory should be promoted to durable_memory.',
@@ -169,10 +322,12 @@ export function buildSessionContextPromotionPrompt(candidate: GroomingCandidate)
 
 export function previewSessionContextGrooming(
   pool: Pool,
-  input: { clientId: string; now: Date; limit: number }
+  input: GroomingInput
 ): ServiceResult<GroomingPreview> {
   return ResultAsync.fromPromise(
     (async () => {
+      const scope = normalizeScope(input);
+      const filters = normalizeFilters(input);
       const result = await pool.query<{
         id: string;
         content: string | null;
@@ -181,28 +336,7 @@ export function previewSessionContextGrooming(
         tags: string[];
         metadata: Record<string, unknown>;
         created_at: Date;
-      }>(
-        `
-          SELECT id, content, visibility, owner, tags, metadata, created_at
-          FROM entities
-          WHERE type = 'memory'
-            AND status IS DISTINCT FROM 'archived'
-            AND metadata->>'memory_role' = 'session_context'
-            AND metadata #>> '{session_scope,client_id}' = $1
-            AND metadata->>'promoted_to' IS NULL
-            AND (
-              CASE
-                WHEN metadata->>'groom_after' ~ '^\\d{4}-\\d{2}-\\d{2}T\\d{2}:\\d{2}:\\d{2}'
-                THEN (metadata->>'groom_after')::timestamptz <= $2
-                ELSE false
-              END
-              OR created_at <= $2::timestamptz - interval '7 days'
-            )
-          ORDER BY created_at ASC
-          LIMIT $3
-        `,
-        [input.clientId, input.now.toISOString(), input.limit]
-      );
+      }>(buildCandidateQuery({ scope, filters, now: input.now }));
 
       return {
         eligible: result.rows.map((row) => ({
@@ -223,17 +357,25 @@ export function previewSessionContextGrooming(
 export function groomSessionContext(
   pool: Pool,
   input: {
-    clientId: string;
+    scope?: GroomingScope | undefined;
+    clientId?: string | undefined;
     now: Date;
     mode: GroomingMode;
     dryRun: boolean;
     confirm: boolean;
     limit: number;
+    olderThanMs?: number | undefined;
+    topic?: string | undefined;
+    sessionId?: string | undefined;
+    tags?: string[] | undefined;
     callLlm?: CallLlm | undefined;
   }
 ): ServiceResult<GroomingResult> {
   return ResultAsync.fromPromise(
     (async () => {
+      const scope = normalizeScope(input);
+      const filters = normalizeFilters(input);
+
       if (!input.dryRun && !input.confirm) {
         throw new AppError(ErrorCode.VALIDATION, '--yes is required outside dry-run');
       }
@@ -245,7 +387,15 @@ export function groomSessionContext(
         );
       }
 
-      const preview = await previewSessionContextGrooming(pool, input);
+      const preview = await previewSessionContextGrooming(pool, {
+        ...input,
+        scope,
+        limit: filters.limit,
+        olderThanMs: filters.olderThanMs,
+        topic: filters.topic,
+        sessionId: filters.sessionId,
+        tags: filters.tags
+      });
       if (preview.isErr()) {
         throw preview.error;
       }
@@ -287,17 +437,39 @@ export function groomSessionContext(
         };
       }
 
-      const decisions: Array<{ candidate: GroomingCandidate; decision: PromotionDecision }> = [];
+      const groupedCandidates = new Map<string, GroomingCandidate[]>();
       for (const candidate of preview.value.eligible) {
-        decisions.push({
-          candidate,
-          decision: parsePromotionDecision(
-            await input.callLlm!(
-              buildSessionContextPromotionPrompt(candidate),
-              SESSION_CONTEXT_PROMOTION_SCHEMA
+        const candidateClientId = getCandidateClientId(candidate);
+        if (!candidateClientId) {
+          throw new AppError(
+            ErrorCode.INTERNAL,
+            'Session-context candidate is missing a source client scope'
+          );
+        }
+
+        const current = groupedCandidates.get(candidateClientId) ?? [];
+        current.push(candidate);
+        groupedCandidates.set(candidateClientId, current);
+      }
+
+      const decisions: Array<{
+        candidate: GroomingCandidate;
+        decision: PromotionDecision;
+        clientId: string;
+      }> = [];
+      for (const [, clientCandidates] of groupedCandidates) {
+        for (const candidate of clientCandidates) {
+          decisions.push({
+            candidate,
+            clientId: getCandidateClientId(candidate)!,
+            decision: parsePromotionDecision(
+              await input.callLlm!(
+                buildSessionContextPromotionPrompt(candidate),
+                SESSION_CONTEXT_PROMOTION_SCHEMA
+              )
             )
-          )
-        });
+          });
+        }
       }
 
       const client = await pool.connect();
@@ -308,7 +480,7 @@ export function groomSessionContext(
         let skipped = 0;
         const promotions: Array<{ sourceId: string; durableId: string }> = [];
 
-        for (const { candidate, decision } of decisions) {
+        for (const { candidate, decision, clientId: sourceClientId } of decisions) {
           if (!decision.promote) {
             skipped += 1;
             await client.query(
@@ -353,10 +525,14 @@ export function groomSessionContext(
               normalizeTags(candidate.tags, decision.tags),
               JSON.stringify({
                 memory_role: 'durable_memory',
+                session_scope: candidate.metadata.session_scope ?? {
+                  kind: 'client',
+                  client_id: sourceClientId
+                },
                 promoted_from: candidate.id,
                 promotion_source_role: 'session_context',
                 promotion_reason: decision.reason,
-                promotion_client_id: input.clientId,
+                promotion_client_id: sourceClientId,
                 promoted_at: input.now.toISOString()
               })
             ]

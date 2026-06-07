@@ -101,19 +101,22 @@ CLI users can write session context with `pgm memory session-context` and search
 it with `pgm search --memory-role session_context`.
 
 Operators can groom stale session context with `pgm-admin memory groom`.
-`--dry-run` previews eligible memories without calling the LLM. `--mode archive`
-archives eligible working context directly. `--mode promote --yes` uses the
-configured extraction LLM to decide whether each session-context memory should
-be promoted; promoted memories are distilled into new `durable_memory` entities,
-the source context is archived, and provenance is recorded with
-`metadata.promoted_to` plus a `promoted_to` edge.
+Use `--client-id <client-id>` for one client or `--all-clients` to batch over
+every session-context scope. `--older-than <duration>` defaults to `7d` and
+accepts values like `30m`, `4h`, `7d`, or `0d`. `--dry-run` previews eligible
+memories without calling the LLM. `--mode archive` archives eligible working
+context directly. `--mode promote --yes` uses the configured extraction LLM to
+decide whether each session-context memory should be promoted; promoted
+memories are distilled into new `durable_memory` entities, the source context
+is archived, and provenance is recorded with `metadata.promoted_to` plus a
+`promoted_to` edge.
 
 For scheduled maintenance, run grooming from the host that has access to the
 Postgram container. This cron example assesses eligible session context every
 three days at 03:17 and appends JSON output to a log:
 
 ```cron
-17 3 */3 * * cd /path/to/postgram && ./bin/pgm-admin --json memory groom --client-id <client-id> --mode promote --yes --limit 50 >> /var/log/postgram-memory-groom.log 2>&1
+17 3 */3 * * cd /path/to/postgram && ./bin/pgm-admin --json memory groom --client-id <client-id> --older-than 7d --mode promote --yes --limit 50 >> /var/log/postgram-memory-groom.log 2>&1
 ```
 
 Use `--mode archive --yes` instead if you want to archive eligible working

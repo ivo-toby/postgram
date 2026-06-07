@@ -130,6 +130,76 @@ describe('memory-grooming-service', () => {
     expect(preview._unsafeUnwrap().eligible.map((entry) => entry.id)).toEqual([valid.id]);
   });
 
+  it('promotes all-client session context without aborting on malformed client scope rows', async () => {
+    if (!database) {
+      throw new Error('test database not initialized');
+    }
+
+    const valid = (await storeEntity(database.pool, { ...makeAuthContext(), clientId: 'codex' }, {
+      type: 'memory',
+      content: 'Codex session context that should be promoted.',
+      visibility: 'personal',
+      metadata: {
+        memory_role: 'session_context',
+        session_scope: { kind: 'client', client_id: 'codex' },
+        groom_after: '2025-12-01T00:00:00.000Z'
+      }
+    }))._unsafeUnwrap();
+
+    const malformed = (await storeEntity(database.pool, { ...makeAuthContext(), clientId: 'orion' }, {
+      type: 'memory',
+      content: 'Malformed session context missing a client scope.',
+      visibility: 'personal',
+      metadata: {
+        memory_role: 'session_context',
+        groom_after: '2025-12-01T00:00:00.000Z'
+      }
+    }))._unsafeUnwrap();
+
+    let callCount = 0;
+    const result = await groomSessionContext(database.pool, {
+      scope: { kind: 'all_clients' },
+      now: new Date('2026-06-07T14:00:00.000Z'),
+      mode: 'promote',
+      dryRun: false,
+      confirm: true,
+      limit: 10,
+      callLlm: async () => {
+        callCount += 1;
+        return JSON.stringify({
+          promote: true,
+          content: 'Codex uses a stable client-scoped session context.',
+          reason: 'Stable client-scoped note worth preserving.',
+          tags: ['decision']
+        });
+      }
+    });
+
+    expect(result.isOk()).toBe(true);
+    expect(result._unsafeUnwrap()).toMatchObject({
+      archived: 1,
+      promoted: 1,
+      skipped: 0,
+      dryRun: false
+    });
+    expect(callCount).toBe(1);
+
+    const rows = await database.pool.query<{
+      id: string;
+      status: string | null;
+      metadata: Record<string, unknown>;
+    }>('SELECT id, status, metadata FROM entities WHERE id = ANY($1)', [[valid.id, malformed.id]]);
+    const byId = Object.fromEntries(rows.rows.map((row) => [row.id, row]));
+    expect(byId[valid.id]?.status).toBe('archived');
+    expect(byId[valid.id]?.metadata).toMatchObject({
+      promoted_to: expect.any(String)
+    });
+    expect(byId[malformed.id]?.status).toBeNull();
+    expect(byId[malformed.id]?.metadata).not.toMatchObject({
+      promoted_to: expect.any(String)
+    });
+  });
+
   it('ignores ISO-shaped invalid groom_after values without aborting preview', async () => {
     if (!database) {
       throw new Error('test database not initialized');

@@ -32,6 +32,26 @@ export type SearchResponse = {
   }>;
 };
 
+export type GroomingCandidateResponse = {
+  id: string;
+  content: string | null;
+  visibility: string;
+  owner: string | null;
+  tags: string[];
+  metadata: Record<string, unknown>;
+  createdAt: string;
+};
+
+export type SessionContextGroomResponse = {
+  dryRun: boolean;
+  archived: number;
+  promoted: number;
+  skipped: number;
+  mode: 'archive';
+  eligible?: GroomingCandidateResponse[];
+  promotions?: Array<{ sourceId: string; durableId: string }>;
+};
+
 type ApiErrorBody = {
   error?: {
     code?: string;
@@ -139,6 +159,24 @@ export function createPgmClient(options: RestClientOptions) {
         body: input
       });
     },
+    groomSessionContext(input: {
+      dry_run: boolean;
+      confirmed?: boolean | undefined;
+      older_than_ms?: number | undefined;
+      limit?: number | undefined;
+      topic?: string | undefined;
+      session_id?: string | undefined;
+      tags?: string[] | undefined;
+    }) {
+      return request<SessionContextGroomResponse>(
+        options,
+        '/api/memory/session-context/groom',
+        {
+          method: 'POST',
+          body: input
+        }
+      );
+    },
     recallEntity(id: string, input: { owner?: string | undefined } = {}) {
       const params = new URLSearchParams();
       if (input.owner) {
@@ -163,7 +201,6 @@ export function createPgmClient(options: RestClientOptions) {
       expand_graph?: boolean | undefined;
       include_archived?: boolean | undefined;
       memory_role?: 'durable_memory' | 'session_context' | undefined;
-      include_other_clients_session_context?: boolean | undefined;
     }) {
       return request<SearchResponse>(options, '/api/search', {
         method: 'POST',

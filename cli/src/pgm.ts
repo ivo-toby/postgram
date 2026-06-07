@@ -140,6 +140,69 @@ function validateToonOptions(
   }
 }
 
+function parseDurationMs(value: string): number {
+  const match = /^(\d+)([mhd])$/i.exec(value.trim());
+  if (!match) {
+    throw new AppError(
+      ErrorCode.VALIDATION,
+      `Invalid duration '${value}'. Use format like '15m', '2h', or '7d'.`
+    );
+  }
+
+  const amount = Number(match[1]);
+  const unit = match[2].toLowerCase();
+  const milliseconds =
+    unit === 'm'
+      ? amount * 60 * 1000
+      : unit === 'h'
+        ? amount * 60 * 60 * 1000
+        : amount * 24 * 60 * 60 * 1000;
+
+  if (milliseconds > 3650 * 24 * 60 * 60 * 1000) {
+    throw new AppError(
+      ErrorCode.VALIDATION,
+      `Duration '${value}' exceeds the maximum allowed (3650 days / ~10 years).`
+    );
+  }
+
+  return milliseconds;
+}
+
+function formatGroomCandidates(
+  candidates: Array<{
+    id: string;
+    content: string | null;
+    tags: string[];
+    metadata: Record<string, unknown>;
+    createdAt: string;
+  }>
+) {
+  if (candidates.length === 0) {
+    return ['No eligible session-context memories'];
+  }
+
+  const lines = [`Would archive ${candidates.length} session-context memories`];
+  for (const candidate of candidates) {
+    const metadata = candidate.metadata as {
+      topic?: string;
+      session_id?: string;
+    };
+    lines.push(
+      [
+        `  ${shortId(candidate.id)} ${candidate.createdAt.slice(0, 10)}`,
+        candidate.tags.length ? `tags=${candidate.tags.join(',')}` : 'tags=-',
+        metadata.topic ? `topic=${metadata.topic}` : undefined,
+        metadata.session_id ? `session=${metadata.session_id}` : undefined,
+        candidate.content ? `content=${candidate.content}` : 'content=-'
+      ]
+        .filter(Boolean)
+        .join(' | ')
+    );
+  }
+
+  return lines;
+}
+
 async function resolveStoreContent(
   content: string | undefined
 ): Promise<string> {
@@ -394,10 +457,6 @@ program
     'memory role filter: durable_memory or session_context'
   )
   .option(
-    '--include-other-clients-session-context',
-    'include session context from other clients'
-  )
-  .option(
     '--full-response',
     'emit the full API response instead of compact default output when used with --json'
   )
@@ -435,9 +494,7 @@ program
         recency_weight: Number(options.recencyWeight),
         expand_graph: options.expandGraph === true ? true : undefined,
         include_archived: options.includeArchived === true ? true : undefined,
-        memory_role: options.memoryRole,
-        include_other_clients_session_context:
-          options.includeOtherClientsSessionContext === true ? true : undefined
+        memory_role: options.memoryRole
       });
 
       if (options.toon === true) {
@@ -457,6 +514,65 @@ program
 const memoryCommand = program
   .command('memory')
   .description('Memory-specific commands');
+
+memoryCommand
+  .command('groom')
+  .description('Preview or archive stale session-context memories for the authenticated client')
+  .option('--dry-run', 'preview without mutating')
+  .option(
+    '--older-than <duration>',
+    'only include memories older than this (e.g. 15m, 2h, 7d)',
+    '7d'
+  )
+  .option('--limit <limit>', 'maximum candidates', '50')
+  .option('--topic <topic>', 'filter by topic')
+  .option('--session-id <sessionId>', 'filter by session id')
+  .option(
+    '--tag <tag>',
+    'filter by tag (repeatable)',
+    (value: string, previous: string[] = []) => {
+      previous.push(value);
+      return previous;
+    },
+    []
+  )
+  .option('--yes', 'confirm archive mutation')
+  .action(async (options, command) => {
+    await runWithClient(command, async (client, json) => {
+      const limit = Number.parseInt(options.limit, 10);
+      if (!Number.isInteger(limit) || limit <= 0) {
+        throw new AppError(ErrorCode.VALIDATION, '--limit must be a positive integer');
+      }
+
+      if (options.dryRun !== true && options.yes !== true) {
+        throw new AppError(ErrorCode.VALIDATION, '--yes is required outside dry-run');
+      }
+
+      const body = await client.groomSessionContext({
+        dry_run: options.dryRun === true,
+        confirmed: options.dryRun === true ? undefined : true,
+        older_than_ms: parseDurationMs(options.olderThan),
+        limit,
+        topic: options.topic,
+        session_id: options.sessionId,
+        tags: options.tag
+      });
+
+      if (json) {
+        return body;
+      }
+
+      if (body.dryRun) {
+        return formatGroomCandidates(body.eligible ?? []);
+      }
+
+      return [
+        `Archived ${body.archived} session-context memories`,
+        `  promoted: ${body.promoted}`,
+        `  skipped: ${body.skipped}`
+      ];
+    });
+  });
 
 memoryCommand
   .command('session-context')

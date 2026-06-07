@@ -3,6 +3,7 @@ import { z } from 'zod';
 import type { Pool } from 'pg';
 
 import type { AuthContext } from '../auth/types.js';
+import { checkTypeAccess, requireScope } from '../auth/key-service.js';
 import type { EmbeddingService } from '../services/embedding-service.js';
 import { createEdge, deleteEdge, listEdges, expandGraph } from '../services/edge-service.js';
 import { getEntityEmbeddings } from '../services/embedding-query-service.js';
@@ -14,6 +15,10 @@ import {
   storeSessionContextMemory,
   updateEntity
 } from '../services/entity-service.js';
+import {
+  groomSessionContext,
+  previewSessionContextGrooming
+} from '../services/memory-grooming-service.js';
 import { getQueueStatus } from '../services/queue-service.js';
 import { searchEntities } from '../services/search-service.js';
 import {
@@ -75,6 +80,18 @@ const storeSessionContextSchema = z.object({
   groom_after: z.string().optional(),
   expires_at: z.string().optional()
 });
+
+const selfGroomSessionContextSchema = z
+  .object({
+    dry_run: z.boolean().optional(),
+    confirmed: z.boolean().optional(),
+    older_than_ms: z.number().int().nonnegative().optional(),
+    limit: z.number().int().positive().max(50).optional(),
+    topic: z.string().optional(),
+    session_id: z.string().optional(),
+    tags: z.array(z.string()).optional()
+  })
+  .strict();
 
 const updateEntitySchema = z.object({
   version: z.number().int().positive(),
@@ -286,6 +303,66 @@ export function registerRestRoutes(
     }
 
     return c.json({ entity: toStoredEntity(result.value) }, 201);
+  });
+
+  app.post('/api/memory/session-context/groom', async (c) => {
+    const auth = c.get('auth');
+    if (!auth.clientId) {
+      throw new AppError(
+        ErrorCode.FORBIDDEN,
+        'Authenticated client id is required for session-context grooming'
+      );
+    }
+
+    requireScope(auth, 'read');
+    checkTypeAccess(auth, 'memory');
+
+    const body = parseJsonBody(selfGroomSessionContextSchema, await c.req.json());
+    const now = new Date();
+    const input = {
+      clientId: auth.clientId,
+      allowedVisibility: auth.allowedVisibility,
+      now,
+      limit: body.limit ?? 50,
+      olderThanMs: body.older_than_ms,
+      topic: body.topic,
+      sessionId: body.session_id,
+      tags: body.tags
+    };
+
+    if (body.dry_run === true) {
+      const preview = await previewSessionContextGrooming(pool, input);
+      if (preview.isErr()) {
+        throw preview.error;
+      }
+
+      return c.json({
+        dryRun: true,
+        archived: 0,
+        promoted: 0,
+        skipped: 0,
+        mode: 'archive',
+        eligible: preview.value.eligible
+      });
+    }
+
+    requireScope(auth, 'delete');
+
+    const result = await groomSessionContext(pool, {
+      ...input,
+      mode: 'archive',
+      dryRun: false,
+      confirm: body.confirmed === true
+    });
+
+    if (result.isErr()) {
+      throw result.error;
+    }
+
+    return c.json({
+      ...result.value,
+      mode: 'archive'
+    });
   });
 
   app.post('/api/entities/embeddings', async (c) => {

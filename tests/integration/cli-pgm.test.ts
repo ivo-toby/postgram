@@ -1,6 +1,6 @@
 import { afterAll, beforeAll, beforeEach, describe, expect, it } from 'vitest';
 import { serve } from '@hono/node-server';
-import { execFile } from 'node:child_process';
+import { execFile, spawn } from 'node:child_process';
 import { promisify } from 'node:util';
 import path from 'node:path';
 
@@ -34,6 +34,36 @@ async function runPgm(args: string[], env: NodeJS.ProcessEnv) {
   });
 }
 
+async function runPgmCapture(args: string[], env: NodeJS.ProcessEnv) {
+  return new Promise<{ code: number | null; stdout: string; stderr: string }>(
+    (resolve, reject) => {
+      const child = spawn(TSX_BIN, [PGM_ENTRYPOINT, ...args], {
+        env: {
+          ...process.env,
+          ...env
+        },
+        cwd: process.cwd()
+      });
+
+      let stdout = '';
+      let stderr = '';
+
+      child.stdout.setEncoding('utf8');
+      child.stderr.setEncoding('utf8');
+      child.stdout.on('data', (chunk: string) => {
+        stdout += chunk;
+      });
+      child.stderr.on('data', (chunk: string) => {
+        stderr += chunk;
+      });
+      child.once('error', reject);
+      child.once('close', (code) => {
+        resolve({ code, stdout, stderr });
+      });
+    }
+  );
+}
+
 describe('pgm CLI', () => {
   let database: TestDatabase | undefined;
   let server: ReturnType<typeof serve> | undefined;
@@ -56,7 +86,7 @@ describe('pgm CLI', () => {
         baseUrl = `http://${info.address}:${info.port}`;
       }
     );
-  }, 120_000);
+  }, 240_000);
 
   beforeEach(async () => {
     if (!database) {
@@ -248,6 +278,357 @@ describe('pgm CLI', () => {
     expect(
       searchBody.results.every((entry) => entry.metadata === undefined)
     ).toBe(true);
+  }, 120_000);
+
+  it('self-grooms stale session-context memories in dry-run mode with filters', async () => {
+    if (!database) {
+      throw new Error('test database not initialized');
+    }
+
+    const ownKey = (
+      await createKey(database.pool, {
+        name: `self-groom-own-${crypto.randomUUID()}`,
+        clientId: 'codex-cli',
+        scopes: ['read', 'write', 'delete'],
+        allowedVisibility: ['personal']
+      })
+    )._unsafeUnwrap();
+    const otherKey = (
+      await createKey(database.pool, {
+        name: `self-groom-other-${crypto.randomUUID()}`,
+        clientId: 'talon-cli',
+        scopes: ['read', 'write', 'delete'],
+        allowedVisibility: ['personal']
+      })
+    )._unsafeUnwrap();
+
+    const env = {
+      PGM_API_URL: baseUrl,
+      PGM_API_KEY: ownKey.plaintextKey
+    };
+
+    const ownSeed = await runPgm(
+      [
+        'memory',
+        'session-context',
+        'Own stale context.',
+        '--visibility',
+        'personal',
+        '--topic',
+        'project-alpha',
+        '--session-id',
+        'thread-1',
+        '--tags',
+        'alpha,shared',
+        '--groom-after',
+        '2026-01-01T00:00:00.000Z',
+        '--json'
+      ],
+      env
+    );
+    const ownBody = parseJson(ownSeed.stdout) as { entity: { id: string } };
+
+    const otherEnv = {
+      PGM_API_URL: baseUrl,
+      PGM_API_KEY: otherKey.plaintextKey
+    };
+    const otherSeed = await runPgm(
+      [
+        'memory',
+        'session-context',
+        'Other stale context.',
+        '--visibility',
+        'personal',
+        '--topic',
+        'project-beta',
+        '--session-id',
+        'thread-2',
+        '--tags',
+        'beta,shared',
+        '--groom-after',
+        '2026-01-01T00:00:00.000Z',
+        '--json'
+      ],
+      otherEnv
+    );
+    const otherBody = parseJson(otherSeed.stdout) as { entity: { id: string } };
+
+    const result = await runPgm(
+      [
+        'memory',
+        'groom',
+        '--dry-run',
+        '--older-than',
+        '30d',
+        '--limit',
+        '5',
+        '--topic',
+        'project-alpha',
+        '--session-id',
+        'thread-1',
+        '--tag',
+        'alpha',
+        '--tag',
+        'shared',
+        '--json'
+      ],
+      env
+    );
+    const body = parseJson(result.stdout) as {
+      dryRun: boolean;
+      archived: number;
+      promoted: number;
+      skipped: number;
+      mode: string;
+      eligible: Array<{ id: string }>;
+    };
+
+    expect(body).toMatchObject({
+      dryRun: true,
+      archived: 0,
+      promoted: 0,
+      skipped: 0,
+      mode: 'archive'
+    });
+    expect(body.eligible.map((entry) => entry.id)).toEqual([ownBody.entity.id]);
+
+    for (const olderThan of ['15m', '2h', '3d']) {
+      const durationResult = await runPgm(
+        [
+          'memory',
+          'groom',
+          '--dry-run',
+          '--older-than',
+          olderThan,
+          '--limit',
+          '5',
+          '--topic',
+          'project-alpha',
+          '--session-id',
+          'thread-1',
+          '--tag',
+          'alpha',
+          '--tag',
+          'shared',
+          '--json'
+        ],
+        env
+      );
+
+      const durationBody = parseJson(durationResult.stdout) as {
+        dryRun: boolean;
+        archived: number;
+        promoted: number;
+        skipped: number;
+        mode: string;
+        eligible: Array<{ id: string }>;
+      };
+
+      expect(durationBody).toMatchObject({
+        dryRun: true,
+        archived: 0,
+        promoted: 0,
+        skipped: 0,
+        mode: 'archive'
+      });
+      expect(durationBody.eligible.map((entry) => entry.id)).toEqual([ownBody.entity.id]);
+    }
+
+    const rows = await database.pool.query<{ id: string; status: string | null }>(
+      'SELECT id, status FROM entities WHERE id = ANY($1)',
+      [[ownBody.entity.id, otherBody.entity.id]]
+    );
+    const byId = Object.fromEntries(rows.rows.map((row) => [row.id, row.status]));
+    expect(byId[ownBody.entity.id]).toBeNull();
+    expect(byId[otherBody.entity.id]).toBeNull();
+  }, 120_000);
+
+  it('archives only the authenticated client session context after --yes confirmation', async () => {
+    if (!database) {
+      throw new Error('test database not initialized');
+    }
+
+    const ownKey = (
+      await createKey(database.pool, {
+        name: `self-groom-archive-own-${crypto.randomUUID()}`,
+        clientId: 'codex-cli',
+        scopes: ['read', 'write', 'delete'],
+        allowedVisibility: ['personal']
+      })
+    )._unsafeUnwrap();
+    const otherKey = (
+      await createKey(database.pool, {
+        name: `self-groom-archive-other-${crypto.randomUUID()}`,
+        clientId: 'talon-cli',
+        scopes: ['read', 'write', 'delete'],
+        allowedVisibility: ['personal']
+      })
+    )._unsafeUnwrap();
+
+    const env = {
+      PGM_API_URL: baseUrl,
+      PGM_API_KEY: ownKey.plaintextKey
+    };
+    const otherEnv = {
+      PGM_API_URL: baseUrl,
+      PGM_API_KEY: otherKey.plaintextKey
+    };
+
+    const ownSeed = await runPgm(
+      [
+        'memory',
+        'session-context',
+        'Own archivable context.',
+        '--visibility',
+        'personal',
+        '--topic',
+        'project-archive',
+        '--session-id',
+        'thread-archive-1',
+        '--tags',
+        'archive,alpha',
+        '--groom-after',
+        '2026-01-01T00:00:00.000Z',
+        '--json'
+      ],
+      env
+    );
+    const ownBody = parseJson(ownSeed.stdout) as { entity: { id: string } };
+
+    const otherSeed = await runPgm(
+      [
+        'memory',
+        'session-context',
+        'Other archivable context.',
+        '--visibility',
+        'personal',
+        '--topic',
+        'project-archive',
+        '--session-id',
+        'thread-archive-2',
+        '--tags',
+        'archive,beta',
+        '--groom-after',
+        '2026-01-01T00:00:00.000Z',
+        '--json'
+      ],
+      otherEnv
+    );
+    const otherBody = parseJson(otherSeed.stdout) as { entity: { id: string } };
+
+    const result = await runPgm(
+      ['memory', 'groom', '--yes', '--json'],
+      env
+    );
+    const body = parseJson(result.stdout) as {
+      dryRun: boolean;
+      archived: number;
+      promoted: number;
+      skipped: number;
+      mode: string;
+      promotions: Array<unknown>;
+    };
+
+    expect(body).toEqual({
+      dryRun: false,
+      archived: 1,
+      promoted: 0,
+      skipped: 0,
+      mode: 'archive',
+      promotions: []
+    });
+
+    const rows = await database.pool.query<{ id: string; status: string | null }>(
+      'SELECT id, status FROM entities WHERE id = ANY($1)',
+      [[ownBody.entity.id, otherBody.entity.id]]
+    );
+    const byId = Object.fromEntries(rows.rows.map((row) => [row.id, row.status]));
+    expect(byId[ownBody.entity.id]).toBe('archived');
+    expect(byId[otherBody.entity.id]).toBeNull();
+  }, 120_000);
+
+  it('requires --yes before archive mutations', async () => {
+    if (!database) {
+      throw new Error('test database not initialized');
+    }
+
+    const createdKey = (
+      await createKey(database.pool, {
+        name: `self-groom-confirm-${crypto.randomUUID()}`,
+        clientId: 'codex-cli',
+        scopes: ['read', 'write', 'delete'],
+        allowedVisibility: ['personal']
+      })
+    )._unsafeUnwrap();
+
+    const result = await runPgmCapture(
+      ['memory', 'groom', '--json'],
+      {
+        PGM_API_URL: baseUrl,
+        PGM_API_KEY: createdKey.plaintextKey
+      }
+    );
+
+    expect(result.code).toBe(1);
+    expect(result.stderr || result.stdout).toMatch(
+      /--yes is required outside dry-run/
+    );
+  }, 120_000);
+
+  it('rejects cross-client groom flags on the normal CLI surface', async () => {
+    if (!database) {
+      throw new Error('test database not initialized');
+    }
+
+    const createdKey = (
+      await createKey(database.pool, {
+        name: `self-groom-invalid-${crypto.randomUUID()}`,
+        clientId: 'codex-cli',
+        scopes: ['read', 'write', 'delete'],
+        allowedVisibility: ['personal']
+      })
+    )._unsafeUnwrap();
+
+    const result = await runPgmCapture(
+      ['memory', 'groom', '--client-id', 'talon-cli', '--json'],
+      {
+        PGM_API_URL: baseUrl,
+        PGM_API_KEY: createdKey.plaintextKey
+      }
+    );
+
+    expect(result.code).toBe(1);
+    expect(result.stderr || result.stdout).toMatch(
+      /unknown option '--client-id'/
+    );
+  }, 120_000);
+
+  it('rejects groom admin flags on the normal CLI', async () => {
+    if (!database) {
+      throw new Error('test database not initialized');
+    }
+
+    const createdKey = (
+      await createKey(database.pool, {
+        name: `self-groom-promote-${crypto.randomUUID()}`,
+        clientId: 'codex-cli',
+        scopes: ['read', 'write', 'delete'],
+        allowedVisibility: ['personal']
+      })
+    )._unsafeUnwrap();
+
+    const result = await runPgmCapture(
+      ['memory', 'groom', '--mode', 'promote', '--json'],
+      {
+        PGM_API_URL: baseUrl,
+        PGM_API_KEY: createdKey.plaintextKey
+      }
+    );
+
+    expect(result.code).toBe(1);
+    expect(result.stderr || result.stdout).toMatch(
+      /unknown option '--mode'/
+    );
   }, 120_000);
 
   it('stores entities with skipped extraction through REST', async () => {

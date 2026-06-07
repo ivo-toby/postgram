@@ -1,3 +1,9 @@
+## [1.30.0](https://github.com/ivo-toby/postgram/compare/cli-v1.29.0...cli-v1.30.0) (2026-06-07)
+
+### Features
+
+* optimize MCP and CLI output formats for agent consumption (dense output and toonformat output) ([df0f644](https://github.com/ivo-toby/postgram/commit/df0f644e50c86135159ea16f49633183c46528a5))
+
 ## [1.29.0](https://github.com/ivo-toby/postgram/compare/cli-v1.28.1...cli-v1.29.0) (2026-06-02)
 
 ### Features

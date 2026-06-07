@@ -7,7 +7,11 @@ import type { Pool } from 'pg';
 import { validateKey } from '../auth/key-service.js';
 import type { AuthContext } from '../auth/types.js';
 import type { EmbeddingService } from '../services/embedding-service.js';
-import { createEdge, deleteEdge, expandGraph } from '../services/edge-service.js';
+import {
+  createEdge,
+  deleteEdge,
+  expandGraph
+} from '../services/edge-service.js';
 import {
   recallEntity,
   softDeleteEntity,
@@ -18,10 +22,31 @@ import {
 import { getQueueStatus } from '../services/queue-service.js';
 import { searchEntities } from '../services/search-service.js';
 import { syncManifest, getSyncStatus } from '../services/sync-service.js';
-import { completeTask, createTask, listTasks, updateTask } from '../services/task-service.js';
+import {
+  completeTask,
+  createTask,
+  listTasks,
+  updateTask
+} from '../services/task-service.js';
 import type { ServiceResult } from '../types/common.js';
 import type { Entity } from '../types/entities.js';
-import { AppError, ErrorCode, normalizeError, toErrorResponse, toHttpStatus } from '../util/errors.js';
+import {
+  AppError,
+  ErrorCode,
+  normalizeError,
+  toErrorResponse,
+  toHttpStatus
+} from '../util/errors.js';
+import {
+  compactEdgeResponse,
+  compactEntityListResponse,
+  compactGraphResponse,
+  compactSearchResponse,
+  compactStoredEntityResponse,
+  entityListResponseToToon,
+  graphResponseToToon,
+  searchResponseToToon
+} from '../util/search-output.js';
 
 type McpApp = Hono<{ Variables: { auth: AuthContext } }>;
 
@@ -50,6 +75,20 @@ const statusSchema = z.enum([
   'scheduled',
   'someday'
 ]);
+
+const fullResponseSchema = z
+  .boolean()
+  .optional()
+  .describe(
+    'If true, return the full legacy JSON response. Defaults to compact output for lower agent token use.'
+  );
+
+const toonSchema = z
+  .boolean()
+  .optional()
+  .describe(
+    'If true, return compact TOON text output instead of JSON to reduce agent token use. TOON is applied only in the MCP layer; the API response remains JSON.'
+  );
 
 function toStoredEntity(entity: Entity) {
   return {
@@ -81,6 +120,18 @@ function toToolSuccess(payload: ToolPayload) {
   };
 }
 
+function toToolText(payload: string, structuredContent: ToolPayload) {
+  return {
+    content: [
+      {
+        type: 'text' as const,
+        text: payload
+      }
+    ],
+    structuredContent
+  };
+}
+
 function toToolError(error: AppError) {
   const payload = toErrorResponse(error);
 
@@ -96,12 +147,15 @@ function toToolError(error: AppError) {
   };
 }
 
-async function toolFromService<T>(
+async function toolFromService<T, P extends ToolPayload>(
   result: ServiceResult<T>,
-  map: (value: T) => ToolPayload
+  map: (value: T) => P,
+  renderSuccess: (
+    payload: P
+  ) => ReturnType<typeof toToolSuccess> = toToolSuccess
 ) {
   return result.match(
-    (value) => toToolSuccess(map(value)),
+    (value) => renderSuccess(map(value)),
     (error) => toToolError(error)
   );
 }
@@ -114,7 +168,10 @@ function getBearerToken(header: string | undefined): string | null {
   return header.slice(7);
 }
 
-async function authenticateSession(pool: Pool, token: string | null): Promise<AuthContext> {
+async function authenticateSession(
+  pool: Pool,
+  token: string | null
+): Promise<AuthContext> {
   if (!token) {
     throw new AppError(ErrorCode.UNAUTHORIZED, 'Missing Bearer token');
   }
@@ -127,7 +184,6 @@ async function authenticateSession(pool: Pool, token: string | null): Promise<Au
     }
   );
 }
-
 
 function createSessionServer(
   pool: Pool,
@@ -155,7 +211,8 @@ function createSessionServer(
         tags: z.array(z.string()).optional(),
         source: z.string().optional(),
         metadata: z.record(z.unknown()).optional(),
-        skip_extraction: z.boolean().optional()
+        skip_extraction: z.boolean().optional(),
+        full_response: fullResponseSchema
       }
     },
     (args) =>
@@ -171,14 +228,19 @@ function createSessionServer(
           metadata: args.metadata,
           skipExtraction: args.skip_extraction
         }),
-        (entity) => ({ entity: toStoredEntity(entity) })
+        (entity) => ({ entity: toStoredEntity(entity) }),
+        (payload) =>
+          args.full_response
+            ? toToolSuccess(payload)
+            : toToolSuccess(compactStoredEntityResponse(payload))
       )
   );
 
   server.registerTool(
     'store_session_context',
     {
-      description: 'Store short-lived working context for resuming recent conversations. Creates a memory with metadata.memory_role=session_context, scopes it to the authenticated client_id, embeds it for recall, and skips graph extraction.',
+      description:
+        'Store short-lived working context for resuming recent conversations. Creates a memory with metadata.memory_role=session_context, scopes it to the authenticated client_id, embeds it for recall, and skips graph extraction.',
       inputSchema: {
         content: z.string().min(1),
         visibility: visibilitySchema.optional(),
@@ -189,7 +251,8 @@ function createSessionServer(
         tags: z.array(z.string()).optional(),
         promotable: z.boolean().optional(),
         groom_after: z.string().optional(),
-        expires_at: z.string().optional()
+        expires_at: z.string().optional(),
+        full_response: fullResponseSchema
       }
     },
     (args) =>
@@ -206,7 +269,11 @@ function createSessionServer(
           groomAfter: args.groom_after,
           expiresAt: args.expires_at
         }),
-        (entity) => ({ entity: toStoredEntity(entity) })
+        (entity) => ({ entity: toStoredEntity(entity) }),
+        (payload) =>
+          args.full_response
+            ? toToolSuccess(payload)
+            : toToolSuccess(compactStoredEntityResponse(payload))
       )
   );
 
@@ -220,17 +287,21 @@ function createSessionServer(
       }
     },
     (args) =>
-      toolFromService(recallEntity(pool, auth, args.id, {
-        ...(args.owner !== undefined ? { owner: args.owner } : {})
-      }), (entity) => ({
-        entity: toStoredEntity(entity)
-      }))
+      toolFromService(
+        recallEntity(pool, auth, args.id, {
+          ...(args.owner !== undefined ? { owner: args.owner } : {})
+        }),
+        (entity) => ({
+          entity: toStoredEntity(entity)
+        })
+      )
   );
 
   server.registerTool(
     'search',
     {
-      description: 'Search stored knowledge using hybrid BM25 + vector similarity with recency weighting. Set expand_graph=true to also return graph-connected entities (requires extraction to have run on the matching documents — use the queue tool to check status). Use expand_graph when exploring relationships, tracing decisions, or understanding what else is connected to a topic.',
+      description:
+        'Search stored knowledge using hybrid BM25 + vector similarity with recency weighting. Set expand_graph=true to also return graph-connected entities (requires extraction to have run on the matching documents — use the queue tool to check status). Use expand_graph when exploring relationships, tracing decisions, or understanding what else is connected to a topic.',
       inputSchema: {
         query: z.string().min(1),
         type: entityTypeSchema.optional(),
@@ -242,7 +313,9 @@ function createSessionServer(
         recency_weight: z.number().min(0).optional(),
         expand_graph: z.boolean().optional(),
         include_archived: z.boolean().optional(),
-        memory_role: memoryRoleSchema.optional()
+        memory_role: memoryRoleSchema.optional(),
+        full_response: fullResponseSchema,
+        toon: toonSchema
       }
     },
     (args) =>
@@ -275,7 +348,20 @@ function createSessionServer(
             score: entry.score,
             ...(entry.related ? { related: entry.related } : {})
           }))
-        })
+        }),
+        (payload) => {
+          if (args.full_response) {
+            return toToolSuccess(payload);
+          }
+
+          const compact = compactSearchResponse(payload);
+          if (args.toon) {
+            const toon = searchResponseToToon(compact);
+            return toToolText(toon, { toon });
+          }
+
+          return toToolSuccess(compact);
+        }
       )
   );
 
@@ -291,7 +377,8 @@ function createSessionServer(
         status: statusSchema.nullable().optional(),
         tags: z.array(z.string()).optional(),
         source: z.string().nullable().optional(),
-        metadata: z.record(z.unknown()).optional()
+        metadata: z.record(z.unknown()).optional(),
+        full_response: fullResponseSchema
       }
     },
     (args) =>
@@ -306,7 +393,11 @@ function createSessionServer(
           source: args.source,
           metadata: args.metadata
         }),
-        (entity) => ({ entity: toStoredEntity(entity) })
+        (entity) => ({ entity: toStoredEntity(entity) }),
+        (payload) =>
+          args.full_response
+            ? toToolSuccess(payload)
+            : toToolSuccess(compactStoredEntityResponse(payload))
       )
   );
 
@@ -318,7 +409,8 @@ function createSessionServer(
         id: z.string()
       }
     },
-    (args) => toolFromService(softDeleteEntity(pool, auth, args.id), (value) => value)
+    (args) =>
+      toolFromService(softDeleteEntity(pool, auth, args.id), (value) => value)
   );
 
   server.registerTool(
@@ -332,7 +424,8 @@ function createSessionServer(
         due_date: z.string().optional(),
         tags: z.array(z.string()).optional(),
         visibility: visibilitySchema.optional(),
-        metadata: z.record(z.unknown()).optional()
+        metadata: z.record(z.unknown()).optional(),
+        full_response: fullResponseSchema
       }
     },
     (args) =>
@@ -346,7 +439,11 @@ function createSessionServer(
           visibility: args.visibility,
           metadata: args.metadata
         }),
-        (entity) => ({ entity: toStoredEntity(entity) })
+        (entity) => ({ entity: toStoredEntity(entity) }),
+        (payload) =>
+          args.full_response
+            ? toToolSuccess(payload)
+            : toToolSuccess(compactStoredEntityResponse(payload))
       )
   );
 
@@ -359,7 +456,9 @@ function createSessionServer(
         context: z.string().optional(),
         limit: z.number().int().positive().optional(),
         offset: z.number().int().nonnegative().optional(),
-        include_archived: z.boolean().optional()
+        include_archived: z.boolean().optional(),
+        full_response: fullResponseSchema,
+        toon: toonSchema
       }
     },
     (args) =>
@@ -376,7 +475,20 @@ function createSessionServer(
           total: value.total,
           limit: value.limit,
           offset: value.offset
-        })
+        }),
+        (payload) => {
+          if (args.full_response) {
+            return toToolSuccess(payload);
+          }
+
+          const compact = compactEntityListResponse(payload);
+          if (args.toon) {
+            const toon = entityListResponseToToon(compact);
+            return toToolText(toon, { toon });
+          }
+
+          return toToolSuccess(compact);
+        }
       )
   );
 
@@ -393,7 +505,8 @@ function createSessionServer(
         due_date: z.string().optional(),
         tags: z.array(z.string()).optional(),
         visibility: visibilitySchema.optional(),
-        metadata: z.record(z.unknown()).optional()
+        metadata: z.record(z.unknown()).optional(),
+        full_response: fullResponseSchema
       }
     },
     (args) =>
@@ -409,7 +522,11 @@ function createSessionServer(
           visibility: args.visibility,
           metadata: args.metadata
         }),
-        (entity) => ({ entity: toStoredEntity(entity) })
+        (entity) => ({ entity: toStoredEntity(entity) }),
+        (payload) =>
+          args.full_response
+            ? toToolSuccess(payload)
+            : toToolSuccess(compactStoredEntityResponse(payload))
       )
   );
 
@@ -419,7 +536,8 @@ function createSessionServer(
       description: 'Complete a task',
       inputSchema: {
         id: z.string(),
-        version: z.number().int().positive()
+        version: z.number().int().positive(),
+        full_response: fullResponseSchema
       }
     },
     (args) =>
@@ -428,7 +546,11 @@ function createSessionServer(
           id: args.id,
           version: args.version
         }),
-        (entity) => ({ entity: toStoredEntity(entity) })
+        (entity) => ({ entity: toStoredEntity(entity) }),
+        (payload) =>
+          args.full_response
+            ? toToolSuccess(payload)
+            : toToolSuccess(compactStoredEntityResponse(payload))
       )
   );
 
@@ -441,7 +563,8 @@ function createSessionServer(
         target_id: z.string().min(1),
         relation: z.string().min(1),
         confidence: z.number().min(0).max(1).optional(),
-        metadata: z.record(z.unknown()).optional()
+        metadata: z.record(z.unknown()).optional(),
+        full_response: fullResponseSchema
       }
     },
     (args) =>
@@ -450,7 +573,9 @@ function createSessionServer(
           sourceId: args.source_id,
           targetId: args.target_id,
           relation: args.relation,
-          ...(args.confidence !== undefined ? { confidence: args.confidence } : {}),
+          ...(args.confidence !== undefined
+            ? { confidence: args.confidence }
+            : {}),
           ...(args.metadata !== undefined ? { metadata: args.metadata } : {})
         }),
         (edge) => ({
@@ -464,7 +589,11 @@ function createSessionServer(
             metadata: edge.metadata,
             created_at: edge.createdAt
           }
-        })
+        }),
+        (payload) =>
+          args.full_response
+            ? toToolSuccess(payload)
+            : toToolSuccess(compactEdgeResponse(payload))
       )
   );
 
@@ -476,26 +605,30 @@ function createSessionServer(
         id: z.string().min(1)
       }
     },
-    (args) =>
-      toolFromService(deleteEdge(pool, auth, args.id), (value) => value)
+    (args) => toolFromService(deleteEdge(pool, auth, args.id), (value) => value)
   );
 
   server.registerTool(
     'expand',
     {
-      description: 'Get the graph neighborhood of an entity — connected entities up to N hops',
+      description:
+        'Get the graph neighborhood of an entity — connected entities up to N hops',
       inputSchema: {
         entity_id: z.string().min(1),
         depth: z.number().int().min(1).max(3).optional(),
         relation_types: z.array(z.string()).optional(),
-        owner: ownerSchema.optional()
+        owner: ownerSchema.optional(),
+        full_response: fullResponseSchema,
+        toon: toonSchema
       }
     },
     (args) =>
       toolFromService(
         expandGraph(pool, auth, args.entity_id, {
           ...(args.depth !== undefined ? { depth: args.depth } : {}),
-          ...(args.relation_types !== undefined ? { relationTypes: args.relation_types } : {}),
+          ...(args.relation_types !== undefined
+            ? { relationTypes: args.relation_types }
+            : {}),
           ...(args.owner !== undefined ? { owner: args.owner } : {})
         }),
         (value) => ({
@@ -510,7 +643,20 @@ function createSessionServer(
             metadata: edge.metadata,
             created_at: edge.createdAt
           }))
-        })
+        }),
+        (payload) => {
+          if (args.full_response) {
+            return toToolSuccess(payload);
+          }
+
+          const compact = compactGraphResponse(payload);
+          if (args.toon) {
+            const toon = graphResponseToToon(compact);
+            return toToolText(toon, { toon });
+          }
+
+          return toToolSuccess(compact);
+        }
       )
   );
 
@@ -532,7 +678,9 @@ function createSessionServer(
           .min(1)
           .max(100)
           .optional()
-          .describe('Maximum number of failures to return (default 20, max 100)')
+          .describe(
+            'Maximum number of failures to return (default 20, max 100)'
+          )
       }
     },
     async ({ include_failures, failure_limit }) => {
@@ -551,7 +699,8 @@ function createSessionServer(
   server.registerTool(
     'sync_push',
     {
-      description: 'Sync a document repository. Sends a manifest of files with content and SHA-256 hashes.',
+      description:
+        'Sync a document repository. Sends a manifest of files with content and SHA-256 hashes.',
       inputSchema: {
         repo: z.string().min(1),
         files: z.array(
@@ -582,10 +731,10 @@ function createSessionServer(
       }
     },
     (args) =>
-      toolFromService(
-        getSyncStatus(pool, auth, args.repo),
-        (files) => ({ repo: args.repo, files })
-      )
+      toolFromService(getSyncStatus(pool, auth, args.repo), (files) => ({
+        repo: args.repo,
+        files
+      }))
   );
 
   return server;

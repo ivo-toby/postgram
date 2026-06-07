@@ -4,15 +4,15 @@ import { createLlmProvider } from '../../src/services/llm-provider.js';
 describe('createLlmProvider', () => {
   describe('ollama', () => {
     it('throws if openai provider is selected without an API key', () => {
-      expect(() =>
-        createLlmProvider({ provider: 'openai' })
-      ).toThrow('OPENAI_API_KEY is required for openai extraction provider');
+      expect(() => createLlmProvider({ provider: 'openai' })).toThrow(
+        'OPENAI_API_KEY is required for openai extraction provider'
+      );
     });
 
     it('throws if anthropic provider is selected without an API key', () => {
-      expect(() =>
-        createLlmProvider({ provider: 'anthropic' })
-      ).toThrow('ANTHROPIC_API_KEY is required for anthropic extraction provider');
+      expect(() => createLlmProvider({ provider: 'anthropic' })).toThrow(
+        'ANTHROPIC_API_KEY is required for anthropic extraction provider'
+      );
     });
 
     it('returns a function for ollama without an API key', () => {
@@ -55,9 +55,13 @@ describe('createLlmProvider', () => {
       });
 
       it('parses native Ollama response shape { message: { content } }', async () => {
-        (globalThis.fetch as unknown as ReturnType<typeof vi.fn>).mockResolvedValue(
+        (
+          globalThis.fetch as unknown as ReturnType<typeof vi.fn>
+        ).mockResolvedValue(
           new Response(
-            JSON.stringify({ message: { content: '[{"from":"A","to":"B","relation":"knows"}]' } }),
+            JSON.stringify({
+              message: { content: '[{"from":"A","to":"B","relation":"knows"}]' }
+            }),
             { status: 200 }
           )
         );
@@ -70,8 +74,12 @@ describe('createLlmProvider', () => {
       });
 
       it('sends all three reasoning-off hints by default (think:false + /no_think + enable_thinking:false)', async () => {
-        (globalThis.fetch as unknown as ReturnType<typeof vi.fn>).mockResolvedValue(
-          new Response(JSON.stringify({ message: { content: '[]' } }), { status: 200 })
+        (
+          globalThis.fetch as unknown as ReturnType<typeof vi.fn>
+        ).mockResolvedValue(
+          new Response(JSON.stringify({ message: { content: '[]' } }), {
+            status: 200
+          })
         );
         const provider = createLlmProvider({
           provider: 'ollama',
@@ -79,21 +87,29 @@ describe('createLlmProvider', () => {
         });
         await provider('anything');
 
-        const call = (globalThis.fetch as unknown as ReturnType<typeof vi.fn>).mock.calls[0];
+        const call = (globalThis.fetch as unknown as ReturnType<typeof vi.fn>)
+          .mock.calls[0];
         const init = call?.[1] as RequestInit;
         const body = JSON.parse(init.body as string) as {
           think?: boolean;
           messages: Array<{ role: string; content: string }>;
           chat_template_kwargs?: { enable_thinking?: boolean };
         };
-        expect(body.messages[0]).toEqual({ role: 'system', content: '/no_think' });
+        expect(body.messages[0]).toEqual({
+          role: 'system',
+          content: '/no_think'
+        });
         expect(body.chat_template_kwargs?.enable_thinking).toBe(false);
         expect(body.think).toBe(false);
       });
 
       it('omits reasoning-off hints when disableThinking is false', async () => {
-        (globalThis.fetch as unknown as ReturnType<typeof vi.fn>).mockResolvedValue(
-          new Response(JSON.stringify({ message: { content: '[]' } }), { status: 200 })
+        (
+          globalThis.fetch as unknown as ReturnType<typeof vi.fn>
+        ).mockResolvedValue(
+          new Response(JSON.stringify({ message: { content: '[]' } }), {
+            status: 200
+          })
         );
         const provider = createLlmProvider({
           provider: 'ollama',
@@ -102,7 +118,8 @@ describe('createLlmProvider', () => {
         });
         await provider('anything');
 
-        const call = (globalThis.fetch as unknown as ReturnType<typeof vi.fn>).mock.calls[0];
+        const call = (globalThis.fetch as unknown as ReturnType<typeof vi.fn>)
+          .mock.calls[0];
         const init = call?.[1] as RequestInit;
         const body = JSON.parse(init.body as string) as {
           think?: boolean;
@@ -115,11 +132,18 @@ describe('createLlmProvider', () => {
       });
 
       it('parses OpenAI-shape response from llama.cpp Ollama emulation { choices: [{ message: { content } }] }', async () => {
-        (globalThis.fetch as unknown as ReturnType<typeof vi.fn>).mockResolvedValue(
+        (
+          globalThis.fetch as unknown as ReturnType<typeof vi.fn>
+        ).mockResolvedValue(
           new Response(
             JSON.stringify({
               choices: [
-                { message: { role: 'assistant', content: '[{"from":"X","to":"Y","relation":"owns"}]' } }
+                {
+                  message: {
+                    role: 'assistant',
+                    content: '[{"from":"X","to":"Y","relation":"owns"}]'
+                  }
+                }
               ],
               object: 'chat.completion'
             }),
@@ -135,7 +159,9 @@ describe('createLlmProvider', () => {
       });
 
       it('falls back to [] when neither shape is present', async () => {
-        (globalThis.fetch as unknown as ReturnType<typeof vi.fn>).mockResolvedValue(
+        (
+          globalThis.fetch as unknown as ReturnType<typeof vi.fn>
+        ).mockResolvedValue(
           new Response(JSON.stringify({ weird: 'payload' }), { status: 200 })
         );
         const provider = createLlmProvider({
@@ -147,8 +173,12 @@ describe('createLlmProvider', () => {
       });
 
       it('sends format: "json" when no schema is passed (legacy fallback)', async () => {
-        (globalThis.fetch as unknown as ReturnType<typeof vi.fn>).mockResolvedValue(
-          new Response(JSON.stringify({ message: { content: '[]' } }), { status: 200 })
+        (
+          globalThis.fetch as unknown as ReturnType<typeof vi.fn>
+        ).mockResolvedValue(
+          new Response(JSON.stringify({ message: { content: '[]' } }), {
+            status: 200
+          })
         );
         const provider = createLlmProvider({
           provider: 'ollama',
@@ -156,15 +186,20 @@ describe('createLlmProvider', () => {
         });
         await provider('anything');
 
-        const call = (globalThis.fetch as unknown as ReturnType<typeof vi.fn>).mock.calls[0];
+        const call = (globalThis.fetch as unknown as ReturnType<typeof vi.fn>)
+          .mock.calls[0];
         const init = call?.[1] as RequestInit;
         const body = JSON.parse(init.body as string) as { format?: unknown };
         expect(body.format).toBe('json');
       });
 
       it('omits reasoning_effort when not configured', async () => {
-        (globalThis.fetch as unknown as ReturnType<typeof vi.fn>).mockResolvedValue(
-          new Response(JSON.stringify({ message: { content: '[]' } }), { status: 200 })
+        (
+          globalThis.fetch as unknown as ReturnType<typeof vi.fn>
+        ).mockResolvedValue(
+          new Response(JSON.stringify({ message: { content: '[]' } }), {
+            status: 200
+          })
         );
         const provider = createLlmProvider({
           provider: 'ollama',
@@ -172,15 +207,22 @@ describe('createLlmProvider', () => {
         });
         await provider('anything');
 
-        const call = (globalThis.fetch as unknown as ReturnType<typeof vi.fn>).mock.calls[0];
+        const call = (globalThis.fetch as unknown as ReturnType<typeof vi.fn>)
+          .mock.calls[0];
         const init = call?.[1] as RequestInit;
-        const body = JSON.parse(init.body as string) as { reasoning_effort?: unknown };
+        const body = JSON.parse(init.body as string) as {
+          reasoning_effort?: unknown;
+        };
         expect(body.reasoning_effort).toBeUndefined();
       });
 
       it('forwards reasoning_effort top-level when configured', async () => {
-        (globalThis.fetch as unknown as ReturnType<typeof vi.fn>).mockResolvedValue(
-          new Response(JSON.stringify({ message: { content: '[]' } }), { status: 200 })
+        (
+          globalThis.fetch as unknown as ReturnType<typeof vi.fn>
+        ).mockResolvedValue(
+          new Response(JSON.stringify({ message: { content: '[]' } }), {
+            status: 200
+          })
         );
         const provider = createLlmProvider({
           provider: 'ollama',
@@ -189,15 +231,22 @@ describe('createLlmProvider', () => {
         });
         await provider('anything');
 
-        const call = (globalThis.fetch as unknown as ReturnType<typeof vi.fn>).mock.calls[0];
+        const call = (globalThis.fetch as unknown as ReturnType<typeof vi.fn>)
+          .mock.calls[0];
         const init = call?.[1] as RequestInit;
-        const body = JSON.parse(init.body as string) as { reasoning_effort?: unknown };
+        const body = JSON.parse(init.body as string) as {
+          reasoning_effort?: unknown;
+        };
         expect(body.reasoning_effort).toBe('low');
       });
 
       it('forwards a JSON schema as the Ollama format when provided', async () => {
-        (globalThis.fetch as unknown as ReturnType<typeof vi.fn>).mockResolvedValue(
-          new Response(JSON.stringify({ message: { content: '[]' } }), { status: 200 })
+        (
+          globalThis.fetch as unknown as ReturnType<typeof vi.fn>
+        ).mockResolvedValue(
+          new Response(JSON.stringify({ message: { content: '[]' } }), {
+            status: 200
+          })
         );
         const provider = createLlmProvider({
           provider: 'ollama',
@@ -210,7 +259,8 @@ describe('createLlmProvider', () => {
         };
         await provider('anything', schema);
 
-        const call = (globalThis.fetch as unknown as ReturnType<typeof vi.fn>).mock.calls[0];
+        const call = (globalThis.fetch as unknown as ReturnType<typeof vi.fn>)
+          .mock.calls[0];
         const init = call?.[1] as RequestInit;
         const body = JSON.parse(init.body as string) as { format?: unknown };
         expect(body.format).toEqual(schema);
@@ -237,7 +287,9 @@ describe('createLlmProvider', () => {
       });
 
       it("defaults to 'minimal' when disableThinking is on with a reasoning model (back-compat)", async () => {
-        (globalThis.fetch as unknown as ReturnType<typeof vi.fn>).mockResolvedValue(
+        (
+          globalThis.fetch as unknown as ReturnType<typeof vi.fn>
+        ).mockResolvedValue(
           new Response(
             JSON.stringify({ choices: [{ message: { content: '[]' } }] }),
             { status: 200 }
@@ -250,14 +302,19 @@ describe('createLlmProvider', () => {
         });
         await provider('anything');
 
-        const call = (globalThis.fetch as unknown as ReturnType<typeof vi.fn>).mock.calls[0];
+        const call = (globalThis.fetch as unknown as ReturnType<typeof vi.fn>)
+          .mock.calls[0];
         const init = call?.[1] as RequestInit;
-        const body = JSON.parse(init.body as string) as { reasoning_effort?: unknown };
+        const body = JSON.parse(init.body as string) as {
+          reasoning_effort?: unknown;
+        };
         expect(body.reasoning_effort).toBe('minimal');
       });
 
       it('omits reasoning_effort for non-reasoning models (gpt-4o-mini default)', async () => {
-        (globalThis.fetch as unknown as ReturnType<typeof vi.fn>).mockResolvedValue(
+        (
+          globalThis.fetch as unknown as ReturnType<typeof vi.fn>
+        ).mockResolvedValue(
           new Response(
             JSON.stringify({ choices: [{ message: { content: '[]' } }] }),
             { status: 200 }
@@ -269,14 +326,19 @@ describe('createLlmProvider', () => {
         });
         await provider('anything');
 
-        const call = (globalThis.fetch as unknown as ReturnType<typeof vi.fn>).mock.calls[0];
+        const call = (globalThis.fetch as unknown as ReturnType<typeof vi.fn>)
+          .mock.calls[0];
         const init = call?.[1] as RequestInit;
-        const body = JSON.parse(init.body as string) as { reasoning_effort?: unknown };
+        const body = JSON.parse(init.body as string) as {
+          reasoning_effort?: unknown;
+        };
         expect(body.reasoning_effort).toBeUndefined();
       });
 
       it('omits reasoning_effort even when explicitly set, if the model does not support it', async () => {
-        (globalThis.fetch as unknown as ReturnType<typeof vi.fn>).mockResolvedValue(
+        (
+          globalThis.fetch as unknown as ReturnType<typeof vi.fn>
+        ).mockResolvedValue(
           new Response(
             JSON.stringify({ choices: [{ message: { content: '[]' } }] }),
             { status: 200 }
@@ -290,14 +352,19 @@ describe('createLlmProvider', () => {
         });
         await provider('anything');
 
-        const call = (globalThis.fetch as unknown as ReturnType<typeof vi.fn>).mock.calls[0];
+        const call = (globalThis.fetch as unknown as ReturnType<typeof vi.fn>)
+          .mock.calls[0];
         const init = call?.[1] as RequestInit;
-        const body = JSON.parse(init.body as string) as { reasoning_effort?: unknown };
+        const body = JSON.parse(init.body as string) as {
+          reasoning_effort?: unknown;
+        };
         expect(body.reasoning_effort).toBeUndefined();
       });
 
       it('explicit reasoningEffort is forwarded for reasoning-capable models (gpt-5)', async () => {
-        (globalThis.fetch as unknown as ReturnType<typeof vi.fn>).mockResolvedValue(
+        (
+          globalThis.fetch as unknown as ReturnType<typeof vi.fn>
+        ).mockResolvedValue(
           new Response(
             JSON.stringify({ choices: [{ message: { content: '[]' } }] }),
             { status: 200 }
@@ -311,14 +378,19 @@ describe('createLlmProvider', () => {
         });
         await provider('anything');
 
-        const call = (globalThis.fetch as unknown as ReturnType<typeof vi.fn>).mock.calls[0];
+        const call = (globalThis.fetch as unknown as ReturnType<typeof vi.fn>)
+          .mock.calls[0];
         const init = call?.[1] as RequestInit;
-        const body = JSON.parse(init.body as string) as { reasoning_effort?: unknown };
+        const body = JSON.parse(init.body as string) as {
+          reasoning_effort?: unknown;
+        };
         expect(body.reasoning_effort).toBe('high');
       });
 
       it('omits reasoning_effort when disableThinking=false and no explicit effort', async () => {
-        (globalThis.fetch as unknown as ReturnType<typeof vi.fn>).mockResolvedValue(
+        (
+          globalThis.fetch as unknown as ReturnType<typeof vi.fn>
+        ).mockResolvedValue(
           new Response(
             JSON.stringify({ choices: [{ message: { content: '[]' } }] }),
             { status: 200 }
@@ -332,9 +404,12 @@ describe('createLlmProvider', () => {
         });
         await provider('anything');
 
-        const call = (globalThis.fetch as unknown as ReturnType<typeof vi.fn>).mock.calls[0];
+        const call = (globalThis.fetch as unknown as ReturnType<typeof vi.fn>)
+          .mock.calls[0];
         const init = call?.[1] as RequestInit;
-        const body = JSON.parse(init.body as string) as { reasoning_effort?: unknown };
+        const body = JSON.parse(init.body as string) as {
+          reasoning_effort?: unknown;
+        };
         expect(body.reasoning_effort).toBeUndefined();
       });
     });
@@ -349,7 +424,9 @@ describe('createLlmProvider', () => {
       });
 
       it('sends temperature: 0 for non-reasoning models', async () => {
-        (globalThis.fetch as unknown as ReturnType<typeof vi.fn>).mockResolvedValue(
+        (
+          globalThis.fetch as unknown as ReturnType<typeof vi.fn>
+        ).mockResolvedValue(
           new Response(
             JSON.stringify({ choices: [{ message: { content: '[]' } }] }),
             { status: 200 }
@@ -362,14 +439,19 @@ describe('createLlmProvider', () => {
         });
         await provider('anything');
 
-        const call = (globalThis.fetch as unknown as ReturnType<typeof vi.fn>).mock.calls[0];
+        const call = (globalThis.fetch as unknown as ReturnType<typeof vi.fn>)
+          .mock.calls[0];
         const init = call?.[1] as RequestInit;
-        const body = JSON.parse(init.body as string) as { temperature?: unknown };
+        const body = JSON.parse(init.body as string) as {
+          temperature?: unknown;
+        };
         expect(body.temperature).toBe(0);
       });
 
       it('omits temperature for reasoning models (only default 1 is supported)', async () => {
-        (globalThis.fetch as unknown as ReturnType<typeof vi.fn>).mockResolvedValue(
+        (
+          globalThis.fetch as unknown as ReturnType<typeof vi.fn>
+        ).mockResolvedValue(
           new Response(
             JSON.stringify({ choices: [{ message: { content: '[]' } }] }),
             { status: 200 }
@@ -382,9 +464,12 @@ describe('createLlmProvider', () => {
         });
         await provider('anything');
 
-        const call = (globalThis.fetch as unknown as ReturnType<typeof vi.fn>).mock.calls[0];
+        const call = (globalThis.fetch as unknown as ReturnType<typeof vi.fn>)
+          .mock.calls[0];
         const init = call?.[1] as RequestInit;
-        const body = JSON.parse(init.body as string) as { temperature?: unknown };
+        const body = JSON.parse(init.body as string) as {
+          temperature?: unknown;
+        };
         expect(body.temperature).toBeUndefined();
       });
     });
@@ -399,7 +484,9 @@ describe('createLlmProvider', () => {
       });
 
       it('includes the OpenAI error body in the thrown error', async () => {
-        (globalThis.fetch as unknown as ReturnType<typeof vi.fn>).mockResolvedValue(
+        (
+          globalThis.fetch as unknown as ReturnType<typeof vi.fn>
+        ).mockResolvedValue(
           new Response(
             JSON.stringify({
               error: {
@@ -419,6 +506,55 @@ describe('createLlmProvider', () => {
         );
       });
     });
+
+    describe('structured output schema', () => {
+      const originalFetch = globalThis.fetch;
+      beforeEach(() => {
+        globalThis.fetch = vi.fn() as unknown as typeof fetch;
+      });
+      afterEach(() => {
+        globalThis.fetch = originalFetch;
+      });
+
+      it('forwards a JSON schema as OpenAI json_schema response_format', async () => {
+        (
+          globalThis.fetch as unknown as ReturnType<typeof vi.fn>
+        ).mockResolvedValue(
+          new Response(
+            JSON.stringify({
+              choices: [{ message: { content: '{"promote":false}' } }]
+            }),
+            { status: 200 }
+          )
+        );
+        const provider = createLlmProvider({
+          provider: 'openai',
+          openaiApiKey: 'sk-test',
+          model: 'gpt-4o-mini'
+        });
+        const schema = {
+          type: 'object',
+          required: ['promote'],
+          properties: { promote: { type: 'boolean' } }
+        };
+        await provider('decide promotion', schema);
+
+        const call = (globalThis.fetch as unknown as ReturnType<typeof vi.fn>)
+          .mock.calls[0];
+        const init = call?.[1] as RequestInit;
+        const body = JSON.parse(init.body as string) as {
+          response_format?: unknown;
+        };
+        expect(body.response_format).toEqual({
+          type: 'json_schema',
+          json_schema: {
+            name: 'postgram_structured_response',
+            strict: true,
+            schema
+          }
+        });
+      });
+    });
   });
 
   describe('openai-compatible', () => {
@@ -436,11 +572,15 @@ describe('createLlmProvider', () => {
           provider: 'openai-compatible',
           model: 'local-model'
         })
-      ).toThrow('EXTRACTION_BASE_URL is required for openai-compatible extraction provider');
+      ).toThrow(
+        'EXTRACTION_BASE_URL is required for openai-compatible extraction provider'
+      );
     });
 
     it('posts chat completions to the configured OpenAI-compatible base URL', async () => {
-      (globalThis.fetch as unknown as ReturnType<typeof vi.fn>).mockResolvedValue(
+      (
+        globalThis.fetch as unknown as ReturnType<typeof vi.fn>
+      ).mockResolvedValue(
         new Response(
           JSON.stringify({ choices: [{ message: { content: '[]' } }] }),
           { status: 200 }
@@ -456,16 +596,59 @@ describe('createLlmProvider', () => {
       const result = await provider('anything');
 
       expect(result).toBe('[]');
-      const call = (globalThis.fetch as unknown as ReturnType<typeof vi.fn>).mock.calls[0];
-      expect(call?.[0]).toBe('http://host.docker.internal:8000/v1/chat/completions');
+      const call = (globalThis.fetch as unknown as ReturnType<typeof vi.fn>)
+        .mock.calls[0];
+      expect(call?.[0]).toBe(
+        'http://host.docker.internal:8000/v1/chat/completions'
+      );
       const init = call?.[1] as RequestInit;
-      expect((init.headers as Record<string, string>)['Authorization']).toBe('Bearer local-key');
+      expect((init.headers as Record<string, string>)['Authorization']).toBe(
+        'Bearer local-key'
+      );
       const body = JSON.parse(init.body as string) as {
         model?: string;
         messages?: Array<{ role: string; content: string }>;
       };
       expect(body.model).toBe('gemma-4-e4b-it-OptiQ-4bit');
       expect(body.messages).toEqual([{ role: 'user', content: 'anything' }]);
+    });
+
+    it('adds schema instructions for OpenAI-compatible providers without response_format', async () => {
+      (
+        globalThis.fetch as unknown as ReturnType<typeof vi.fn>
+      ).mockResolvedValue(
+        new Response(
+          JSON.stringify({
+            choices: [{ message: { content: '{"promote":false}' } }]
+          }),
+          { status: 200 }
+        )
+      );
+
+      const provider = createLlmProvider({
+        provider: 'openai-compatible',
+        model: 'local-model',
+        extractionBaseUrl: 'http://host.docker.internal:8000/v1'
+      });
+      const schema = {
+        type: 'object',
+        required: ['promote'],
+        properties: { promote: { type: 'boolean' } }
+      };
+      await provider('decide promotion', schema);
+
+      const call = (globalThis.fetch as unknown as ReturnType<typeof vi.fn>)
+        .mock.calls[0];
+      const init = call?.[1] as RequestInit;
+      const body = JSON.parse(init.body as string) as {
+        response_format?: unknown;
+        messages?: Array<{ role: string; content: string }>;
+      };
+      expect(body.response_format).toBeUndefined();
+      expect(body.messages?.[0]?.content).toContain(
+        'Return only valid JSON matching this JSON Schema'
+      );
+      expect(body.messages?.[0]?.content).toContain('"promote"');
     });
   });
 
@@ -476,6 +659,48 @@ describe('createLlmProvider', () => {
         anthropicApiKey: 'sk-ant-test'
       });
       expect(typeof provider).toBe('function');
+    });
+
+    it('uses schema-neutral JSON instructions instead of forcing arrays', async () => {
+      const originalFetch = globalThis.fetch;
+      globalThis.fetch = vi
+        .fn()
+        .mockResolvedValue(
+          new Response(
+            JSON.stringify({
+              content: [{ type: 'text', text: '{"promote":false}' }]
+            }),
+            { status: 200 }
+          )
+        ) as unknown as typeof fetch;
+      try {
+        const provider = createLlmProvider({
+          provider: 'anthropic',
+          anthropicApiKey: 'sk-ant-test'
+        });
+        const schema = {
+          type: 'object',
+          required: ['promote'],
+          properties: { promote: { type: 'boolean' } }
+        };
+        await provider('decide promotion', schema);
+
+        const call = (globalThis.fetch as unknown as ReturnType<typeof vi.fn>)
+          .mock.calls[0];
+        const init = call?.[1] as RequestInit;
+        const body = JSON.parse(init.body as string) as {
+          system?: string;
+          messages?: Array<{ role: string; content: string }>;
+        };
+        expect(body.system).toContain('only valid JSON');
+        expect(body.system).not.toContain('JSON array');
+        expect(body.messages?.[0]?.content).toContain(
+          'Return only valid JSON matching this JSON Schema'
+        );
+        expect(body.messages?.[0]?.content).toContain('"promote"');
+      } finally {
+        globalThis.fetch = originalFetch;
+      }
     });
   });
 });

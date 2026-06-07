@@ -1,10 +1,26 @@
 /**
  * Optional JSON schema forwarded to providers that support structured
- * outputs (today: Ollama's `format` field). Callers that want to constrain
- * the model's response shape at decode time pass the schema here; providers
- * that don't support it may ignore it.
+ * outputs. Callers that want to constrain the model's response shape pass the
+ * schema here; providers that cannot enforce it natively receive it as an
+ * explicit prompt instruction.
  */
 type LlmProvider = (prompt: string, schema?: object) => Promise<string>;
+
+function withSchemaInstruction(
+  prompt: string,
+  schema: object | undefined
+): string {
+  if (!schema) {
+    return prompt;
+  }
+
+  return [
+    prompt,
+    '',
+    'Return only valid JSON matching this JSON Schema. Do not include markdown, prose, or any keys outside the schema.',
+    JSON.stringify(schema)
+  ].join('\n');
+}
 
 // Hard ceiling on any single LLM call. Prevents a hung server from blocking
 // the enrichment worker indefinitely. Overridable via env for operators who
@@ -65,15 +81,29 @@ function createOpenAiProvider(
   disableThinking: boolean,
   reasoningEffort: ReasoningEffort | undefined,
   baseUrl = 'https://api.openai.com/v1',
-  errorLabel = 'OpenAI'
+  errorLabel = 'OpenAI',
+  nativeStructuredOutputs = true
 ): LlmProvider {
   const endpoint = `${baseUrl.replace(/\/+$/, '')}/chat/completions`;
-  return async (prompt: string) => {
+  return async (prompt: string, schema?: object) => {
     const reasoning = isReasoningModel(model);
+    const content = nativeStructuredOutputs
+      ? prompt
+      : withSchemaInstruction(prompt, schema);
     const payload: Record<string, unknown> = {
       model,
-      messages: [{ role: 'user', content: prompt }]
+      messages: [{ role: 'user', content }]
     };
+    if (schema && nativeStructuredOutputs) {
+      payload['response_format'] = {
+        type: 'json_schema',
+        json_schema: {
+          name: 'postgram_structured_response',
+          strict: true,
+          schema
+        }
+      };
+    }
     // Reasoning models reject any temperature other than the default.
     if (!reasoning) {
       payload['temperature'] = 0;
@@ -109,21 +139,27 @@ function createOpenAiProvider(
 }
 
 function createAnthropicProvider(apiKey: string, model: string): LlmProvider {
-  return async (prompt: string) => {
-    const response = await fetchWithTimeout('https://api.anthropic.com/v1/messages', {
-      method: 'POST',
-      headers: {
-        'Content-Type': 'application/json',
-        'x-api-key': apiKey,
-        'anthropic-version': '2023-06-01'
-      },
-      body: JSON.stringify({
-        model,
-        max_tokens: 8192,
-        system: 'You must respond with only valid JSON. No markdown, no explanation, just the JSON array.',
-        messages: [{ role: 'user', content: prompt }]
-      })
-    });
+  return async (prompt: string, schema?: object) => {
+    const response = await fetchWithTimeout(
+      'https://api.anthropic.com/v1/messages',
+      {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          'x-api-key': apiKey,
+          'anthropic-version': '2023-06-01'
+        },
+        body: JSON.stringify({
+          model,
+          max_tokens: 8192,
+          system:
+            'You must respond with only valid JSON. No markdown, no explanation.',
+          messages: [
+            { role: 'user', content: withSchemaInstruction(prompt, schema) }
+          ]
+        })
+      }
+    );
 
     if (!response.ok) {
       throw new Error(`Anthropic API error: ${response.status}`);
@@ -142,7 +178,9 @@ function createOllamaProvider(
   reasoningEffort: ReasoningEffort | undefined,
   apiKey?: string
 ): LlmProvider {
-  const headers: Record<string, string> = { 'Content-Type': 'application/json' };
+  const headers: Record<string, string> = {
+    'Content-Type': 'application/json'
+  };
   if (apiKey) {
     headers['Authorization'] = `Bearer ${apiKey}`;
   }
@@ -158,7 +196,8 @@ function createOllamaProvider(
     // If a particular model reacts badly, set EXTRACTION_DISABLE_THINKING=false
     // to drop all three.
     const messages: Array<{ role: string; content: string }> = [];
-    if (disableThinking) messages.push({ role: 'system', content: '/no_think' });
+    if (disableThinking)
+      messages.push({ role: 'system', content: '/no_think' });
     messages.push({ role: 'user', content: prompt });
 
     // When the caller supplies a JSON schema, forward it as Ollama's
@@ -192,9 +231,7 @@ function createOllamaProvider(
     }
 
     const body = (await response.json()) as OllamaResponse;
-    return body.message?.content
-      ?? body.choices?.[0]?.message?.content
-      ?? '[]';
+    return body.message?.content ?? body.choices?.[0]?.message?.content ?? '[]';
   };
 }
 
@@ -244,7 +281,9 @@ export function createLlmProvider(config: ProviderConfig): LlmProvider {
   switch (config.provider) {
     case 'openai': {
       if (!config.openaiApiKey) {
-        throw new Error('OPENAI_API_KEY is required for openai extraction provider');
+        throw new Error(
+          'OPENAI_API_KEY is required for openai extraction provider'
+        );
       }
       return createOpenAiProvider(
         config.openaiApiKey,
@@ -255,7 +294,9 @@ export function createLlmProvider(config: ProviderConfig): LlmProvider {
     }
     case 'openai-compatible': {
       if (!config.extractionBaseUrl) {
-        throw new Error('EXTRACTION_BASE_URL is required for openai-compatible extraction provider');
+        throw new Error(
+          'EXTRACTION_BASE_URL is required for openai-compatible extraction provider'
+        );
       }
       return createOpenAiProvider(
         config.extractionApiKey ?? '',
@@ -263,12 +304,15 @@ export function createLlmProvider(config: ProviderConfig): LlmProvider {
         disableThinking,
         config.reasoningEffort,
         config.extractionBaseUrl,
-        'OpenAI-compatible'
+        'OpenAI-compatible',
+        false
       );
     }
     case 'anthropic': {
       if (!config.anthropicApiKey) {
-        throw new Error('ANTHROPIC_API_KEY is required for anthropic extraction provider');
+        throw new Error(
+          'ANTHROPIC_API_KEY is required for anthropic extraction provider'
+        );
       }
       return createAnthropicProvider(config.anthropicApiKey, model);
     }

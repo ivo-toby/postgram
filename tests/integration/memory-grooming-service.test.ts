@@ -130,6 +130,43 @@ describe('memory-grooming-service', () => {
     expect(preview._unsafeUnwrap().eligible.map((entry) => entry.id)).toEqual([valid.id]);
   });
 
+  it('ignores ISO-shaped invalid groom_after values without aborting preview', async () => {
+    if (!database) {
+      throw new Error('test database not initialized');
+    }
+
+    await storeEntity(database.pool, makeAuthContext(), {
+      type: 'memory',
+      content: 'Session context with ISO-shaped invalid groom_after.',
+      visibility: 'personal',
+      metadata: {
+        memory_role: 'session_context',
+        session_scope: { kind: 'client', client_id: 'codex' },
+        groom_after: '2026-99-99T00:00:00.000Z'
+      }
+    });
+
+    const valid = (await storeEntity(database.pool, makeAuthContext(), {
+      type: 'memory',
+      content: 'Session context with valid groom_after alongside invalid ISO.',
+      visibility: 'personal',
+      metadata: {
+        memory_role: 'session_context',
+        session_scope: { kind: 'client', client_id: 'codex' },
+        groom_after: '2026-01-01T00:00:00.000Z'
+      }
+    }))._unsafeUnwrap();
+
+    const preview = await previewSessionContextGrooming(database.pool, {
+      clientId: 'codex',
+      now: new Date('2026-05-31T00:00:00.000Z'),
+      limit: 10
+    });
+
+    expect(preview.isOk()).toBe(true);
+    expect(preview._unsafeUnwrap().eligible.map((entry) => entry.id)).toEqual([valid.id]);
+  });
+
   it('supports all-client preview with age and metadata filters without crossing client boundaries', async () => {
     if (!database) {
       throw new Error('test database not initialized');

@@ -241,7 +241,10 @@ function buildCandidateQuery({
   conditions.push(
     `(
       CASE
-        WHEN metadata->>'groom_after' ~ '^\\d{4}-\\d{2}-\\d{2}T\\d{2}:\\d{2}:\\d{2}'
+        WHEN COALESCE(
+          pg_input_is_valid(metadata->>'groom_after', 'timestamptz'),
+          false
+        )
         THEN (metadata->>'groom_after')::timestamptz <= $${paramIndex}
         ELSE false
       END

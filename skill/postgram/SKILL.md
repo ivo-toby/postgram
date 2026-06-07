@@ -214,6 +214,41 @@ extraction: pending=8   completed=1230  failed=2
 - `retry_eligible` — failed embedding jobs that will be retried automatically
 - `extraction: null / disabled` — extraction is off; enable with `EXTRACTION_ENABLED=true`
 
+### Groom stale session context
+
+Use this only for stale working context that belongs to the authenticated
+client. Self-grooming can preview or archive; promotion to durable memory is an
+admin/operator workflow.
+
+CLI dry-run:
+
+```bash
+pgm memory groom --dry-run --older-than 7d --limit 50
+```
+
+CLI archive, with optional filters:
+
+```bash
+pgm memory groom --older-than 14d --topic postgram --tag session-context --yes
+```
+
+MCP self-grooming uses `groom_session_context`:
+
+```json
+{
+  "mode": "dry_run",
+  "older_than": "7d",
+  "limit": 50,
+  "topic": "postgram",
+  "tags": ["session-context"]
+}
+```
+
+Do not pass or invent a client id for self-grooming. Postgram derives scope
+from the API key. Use `pgm-admin memory groom --client-id <id>` or
+`--all-clients` only as an operator, and use admin `--mode promote --yes` for
+LLM-assisted promotion.
+
 ## Principles
 
 - **Prefer JSON output** (`--json`) when parsing results into further actions. Human table output is for direct display.

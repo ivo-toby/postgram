@@ -92,11 +92,61 @@ pgm search "what the user asked about" --limit 5
 
 Hybrid BM25 + vector with recency weighting. Add `--type project` or `--visibility work` to narrow.
 
+For agentic use, prefer compact structured search output:
+
+```bash
+pgm search "what the user asked about" --limit 5 --json
+```
+
+`pgm search --json` is compact by default: it returns id, type, score, content,
+matched chunk, tags, and compact related entries, while omitting token-heavy
+metadata, timestamps, nested `entity` objects, and raw similarity. Use
+`--full-response` only when you need the full API-shaped payload:
+
+```bash
+pgm search "what the user asked about" --limit 5 --json --full-response
+```
+
+Use TOON when you want the smallest readable CLI search output:
+
+```bash
+pgm search "what the user asked about" --limit 5 --toon
+```
+
+Compacting and TOON are CLI-layer formats. The Postgram REST API always remains
+JSON.
+
+The same compact-output rules apply to other token-heavy CLI surfaces:
+
+- write acknowledgements (`store`, `memory session-context`, `update`, task
+  writes, `link`) return compact ids/status/version by default with `--json`
+- `list`, `task list`, and `expand` return compact rows/graphs by default with
+  `--json`
+- pass `--full-response` when you need metadata, timestamps, source, version
+  details, or other full API fields
+- pass `--toon` on list-like commands (`search`, `list`, `task list`,
+  `expand`) for the smallest readable output
+
+Examples:
+
+```bash
+pgm list --type memory --json
+pgm list --type memory --json --full-response
+pgm list --type memory --toon
+pgm task list --status next --toon
+pgm expand <entity-id> --json
+pgm expand <entity-id> --toon
+```
+
 For session continuity, search for recent `session_context` memories first when the user appears to be resuming an active topic.
 
 ```bash
 pgm search "active topic keywords" --type memory --memory-role session_context --visibility personal --limit 5 --json
 ```
+
+Keep the compact default for normal continuity searches. Add `--full-response`
+only when you need to inspect metadata, timestamps, version, source, or raw
+similarity.
 
 For durable knowledge, prefer durable memories and source documents. Treat old session-context hits as working notes, not authoritative facts.
 
@@ -109,6 +159,7 @@ pgm search "what the user asked about" --limit 5 --expand-graph --json
 Use `--expand-graph` whenever relationships matter — tracing a decision, understanding who worked on something, exploring what's connected to a topic. Each result gains a `related` array of graph-connected entities with their `relation` and `direction`.
 
 **When to use expand_graph:**
+
 - "Who was involved in X?" — edges like `involves`, `assigned_to`, `mentioned_in` surface people and meetings
 - "What led to this decision?" — follow `caused_by`, `depends_on`, `part_of` edges
 - "What else is connected to Y?" — open-ended graph neighbourhood traversal
@@ -152,6 +203,7 @@ pgm queue
 ```
 
 Output:
+
 ```
 embedding:  pending=12  completed=3421  failed=0  retry_eligible=0  oldest_pending=4s
 extraction: pending=8   completed=1230  failed=2
@@ -165,10 +217,14 @@ extraction: pending=8   completed=1230  failed=2
 ## Principles
 
 - **Prefer JSON output** (`--json`) when parsing results into further actions. Human table output is for direct display.
+- **Keep output compact by default** — `pgm ... --json` on token-heavy commands
+  is designed for agent token efficiency. Reach for `--full-response` only when
+  the omitted fields are required, or `--toon` when a small readable listing is
+  enough.
 - **Be specific in content** — Postgram's semantic search works better on concrete sentences than headline-style fragments.
 - **Set visibility deliberately**: `personal` for the user, `work` for shared with colleagues, `shared` for public knowledge. When unsure, ask once and remember the preference.
 - **Don't duplicate** — search first when the user's phrasing suggests something may already exist. Postgram stores everything; a cluttered knowledge base is worse than a sparse one.
-- **When storing from a long exchange**, store a *summary* memory with the key facts, not the full transcript. The transcript belongs in the conversation log; the memory is the distilled signal.
+- **When storing from a long exchange**, store a _summary_ memory with the key facts, not the full transcript. The transcript belongs in the conversation log; the memory is the distilled signal.
 - **Separate continuity from knowledge** — use `session_context` for active-thread state and `durable_memory` for stable facts. Do not make session context durable by copying it verbatim.
 - **Let Postgram groom** — promotion from session context to durable memory should be handled by Postgram's groomer or an explicit operator workflow, because promotion changes the authority and sharing level of the memory. The groomer uses the configured extraction LLM to assess whether eligible session context deserves promotion and stores only the distilled durable memory, not a verbatim copy.
 
@@ -246,7 +302,7 @@ pgm store --type memory --visibility personal \
 
 ## Non-goals
 
-- Don't use Postgram as a replacement for a file system — it stores *text entities*, not code or artifacts.
+- Don't use Postgram as a replacement for a file system — it stores _text entities_, not code or artifacts.
 - Don't store secrets (API keys, tokens, credentials) — audit log records every write.
 - Don't use it for volatile state (counters, session tokens, caches).
 - Don't treat session-context memory as durable truth. It is working context until groomed or promoted by Postgram's LLM-assisted groomer.

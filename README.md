@@ -530,6 +530,9 @@ export PGM_API_KEY='<plaintext-key>'
 
 - `POST /api/search` — hybrid BM25+vector search (supports `expand_graph`)
 
+REST routes always return full JSON responses. Compact and TOON output are
+transport-layer conveniences for MCP and the CLI only.
+
 ### Tasks
 
 - `POST /api/tasks` — create task
@@ -603,7 +606,20 @@ Exposed tools:
 - `sync_push`, `sync_status`
 - `link`, `unlink`, `expand`
 
-The MCP tool behavior is intentionally aligned with the REST surface.
+The MCP tool behavior is intentionally aligned with the REST surface, but
+token-heavy outputs default to compact agent-friendly responses:
+
+- write acknowledgements (`store`, `store_session_context`, `update`, task
+  writes, `link`) return compact ids/status/version instead of echoing full
+  metadata and timestamps
+- `search`, `task_list`, and `expand` return compact rows/graph payloads by
+  default
+- pass `full_response: true` to get the full REST-shaped payload
+- pass `toon: true` on list-like tools (`search`, `task_list`, `expand`) to
+  receive compact TOON text from the MCP layer
+
+The underlying API remains JSON; compacting and TOON happen only in MCP/CLI
+handlers.
 
 ## Human CLI (`pgm`)
 
@@ -639,6 +655,14 @@ pgm store "decided to use pgvector" --type memory --tags decisions
 pgm search "database decisions"
 pgm search "database decisions" --type memory          # filter by entity type
 pgm search "who worked on embeddings" --expand-graph   # include graph neighbours
+pgm search "database decisions" --json                 # compact JSON for agents
+pgm search "database decisions" --json --full-response # full API-shaped JSON
+pgm search "database decisions" --toon                 # compact TOON output
+pgm list --json                                        # compact JSON rows
+pgm list --json --full-response                        # full API-shaped rows
+pgm list --toon                                        # compact TOON rows
+pgm expand <id> --json                                 # compact graph JSON
+pgm expand <id> --toon                                 # compact TOON graph
 pgm recall <id>
 pgm list --type memory
 pgm update <id> --content "updated text" --version 1

@@ -30,6 +30,16 @@ pgm store "decided to use pgvector" --type memory --tags "decisions,architecture
 # Search
 pgm search "pgvector decisions" --limit 5
 
+# Agent-friendly output formats
+pgm search "pgvector decisions" --json                 # compact JSON by default
+pgm search "pgvector decisions" --json --full-response # full API-shaped JSON
+pgm search "pgvector decisions" --toon                 # compact TOON output
+pgm list --json                                        # compact JSON rows
+pgm list --json --full-response                        # full API-shaped rows
+pgm list --toon                                        # compact TOON rows
+pgm expand <entity-id> --json                          # compact graph JSON
+pgm expand <entity-id> --toon                          # compact TOON graph
+
 # Recall by ID
 pgm recall <entity-id>
 
@@ -62,6 +72,14 @@ pgm queue
 # JSON output (all commands)
 pgm store "hello" --json
 ```
+
+Agent-facing `--json` output is compact by default for search, list, task list,
+graph expansion, write acknowledgements, and link acknowledgements. It omits
+token-heavy fields such as timestamps, metadata, nested `entity` objects, and
+raw similarity unless you pass `--full-response`. Use `--toon` on list-like
+commands (`search`, `list`, `task list`, `expand`) when an agent needs the
+smallest readable output. TOON and compacting are CLI-layer formats; the
+Postgram API remains JSON.
 
 ## Memory Roles
 

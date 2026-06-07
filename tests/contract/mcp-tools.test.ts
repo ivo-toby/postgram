@@ -20,7 +20,9 @@ type ToolResultPayload = {
   isError?: boolean;
 };
 
-function extractStructuredPayload(result: ToolResultPayload): Record<string, unknown> {
+function extractStructuredPayload(
+  result: ToolResultPayload
+): Record<string, unknown> {
   if (result.structuredContent) {
     return result.structuredContent;
   }
@@ -83,19 +85,24 @@ describe('MCP tools', () => {
       throw new Error('test database not initialized');
     }
 
-    const createdKey = (await createKey(database.pool, {
-      name: `mcp-${crypto.randomUUID()}`,
-      scopes: ['read', 'write', 'delete'],
-      allowedVisibility: ['shared', 'work', 'personal']
-    }))._unsafeUnwrap();
+    const createdKey = (
+      await createKey(database.pool, {
+        name: `mcp-${crypto.randomUUID()}`,
+        scopes: ['read', 'write', 'delete'],
+        allowedVisibility: ['shared', 'work', 'personal']
+      })
+    )._unsafeUnwrap();
 
-    const transport = new StreamableHTTPClientTransport(new URL('/mcp', baseUrl), {
-      requestInit: {
-        headers: {
-          Authorization: `Bearer ${createdKey.plaintextKey}`
+    const transport = new StreamableHTTPClientTransport(
+      new URL('/mcp', baseUrl),
+      {
+        requestInit: {
+          headers: {
+            Authorization: `Bearer ${createdKey.plaintextKey}`
+          }
         }
       }
-    });
+    );
     const client = new Client(
       { name: 'postgram-test-client', version: '0.1.0' },
       { capabilities: {} }
@@ -134,19 +141,24 @@ describe('MCP tools', () => {
       }
     );
 
-    const createdKey = (await createKey(database.pool, {
-      name: `mcp-error-${crypto.randomUUID()}`,
-      scopes: ['read', 'write', 'delete'],
-      allowedVisibility: ['shared', 'work', 'personal']
-    }))._unsafeUnwrap();
+    const createdKey = (
+      await createKey(database.pool, {
+        name: `mcp-error-${crypto.randomUUID()}`,
+        scopes: ['read', 'write', 'delete'],
+        allowedVisibility: ['shared', 'work', 'personal']
+      })
+    )._unsafeUnwrap();
 
-    const transport = new StreamableHTTPClientTransport(new URL('/mcp', localBaseUrl), {
-      requestInit: {
-        headers: {
-          Authorization: `Bearer ${createdKey.plaintextKey}`
+    const transport = new StreamableHTTPClientTransport(
+      new URL('/mcp', localBaseUrl),
+      {
+        requestInit: {
+          headers: {
+            Authorization: `Bearer ${createdKey.plaintextKey}`
+          }
         }
       }
-    });
+    );
 
     const client = new Client(
       { name: 'postgram-test-client', version: '0.1.0' },
@@ -236,7 +248,8 @@ describe('MCP tools', () => {
         arguments: {
           id: storePayload.entity.id,
           version: storePayload.entity.version,
-          content: 'updated pgvector decision'
+          content: 'updated pgvector decision',
+          full_response: true
         }
       })) as ToolResultPayload;
       const updatePayload = extractStructuredPayload(updateResult) as {
@@ -382,9 +395,9 @@ describe('MCP tools', () => {
           }
         })) as ToolResultPayload
       ) as {
-        results: Array<{ entity: { id: string } }>;
+        results: Array<{ id: string }>;
       };
-      expect(searchResult.results.map((entry) => entry.entity.id).sort()).toEqual(
+      expect(searchResult.results.map((entry) => entry.id).sort()).toEqual(
         [shared.entity.id, productManager.entity.id].sort()
       );
 
@@ -454,11 +467,28 @@ describe('MCP tools', () => {
           }
         })) as ToolResultPayload
       ) as {
-        results: Array<{ entity: { visibility: string } }>;
+        results: Array<{
+          id: string;
+          type: string;
+          content: string | null;
+          chunk: string;
+          score: number;
+        }>;
       };
 
       expect(searched.results.length).toBeGreaterThan(0);
-      expect(searched.results.every((entry) => entry.entity.visibility === 'work')).toBe(true);
+      const firstSearchResult = searched.results[0];
+      if (!firstSearchResult) {
+        throw new Error('expected at least one search result');
+      }
+      expect(typeof firstSearchResult.id).toBe('string');
+      expect(firstSearchResult.type).toBe('memory');
+      expect(firstSearchResult.content).toContain('postgres notes');
+      expect(firstSearchResult.chunk).toContain('postgres notes');
+      expect(typeof firstSearchResult.score).toBe('number');
+      expect(firstSearchResult).not.toHaveProperty('entity');
+      expect(firstSearchResult).not.toHaveProperty('metadata');
+      expect(firstSearchResult).not.toHaveProperty('created_at');
 
       const createdTask = extractStructuredPayload(
         (await client.callTool({
@@ -468,11 +498,16 @@ describe('MCP tools', () => {
             context: '@dev',
             metadata: {
               priority: 'high'
-            }
+            },
+            full_response: true
           }
         })) as ToolResultPayload
       ) as {
-        entity: { id: string; version: number; metadata: Record<string, string> };
+        entity: {
+          id: string;
+          version: number;
+          metadata: Record<string, string>;
+        };
       };
 
       expect(createdTask.entity.metadata).toMatchObject({
@@ -488,7 +523,8 @@ describe('MCP tools', () => {
             version: createdTask.entity.version,
             metadata: {
               owner: 'ivo'
-            }
+            },
+            full_response: true
           }
         })) as ToolResultPayload
       ) as {
@@ -500,6 +536,69 @@ describe('MCP tools', () => {
         priority: 'high',
         owner: 'ivo'
       });
+    } finally {
+      await close();
+    }
+  }, 120_000);
+
+  it('supports full-response and TOON search output via MCP arguments', async () => {
+    const { client, close } = await createClient();
+
+    try {
+      const stored = extractStructuredPayload(
+        (await client.callTool({
+          name: 'store',
+          arguments: {
+            type: 'memory',
+            content: 'token compact search response shape',
+            tags: ['tokens']
+          }
+        })) as ToolResultPayload
+      ) as {
+        entity: { id: string };
+      };
+
+      await createEnrichmentWorker({
+        pool: database!.pool,
+        embeddingService
+      }).runOnce();
+
+      const full = extractStructuredPayload(
+        (await client.callTool({
+          name: 'search',
+          arguments: {
+            query: 'compact search',
+            threshold: 0,
+            full_response: true
+          }
+        })) as ToolResultPayload
+      ) as {
+        results: Array<{
+          entity: { id: string; metadata: Record<string, unknown> };
+          chunk_content: string;
+          similarity: number;
+        }>;
+      };
+      expect(full.results[0]?.entity.id).toBe(stored.entity.id);
+      expect(full.results[0]?.chunk_content).toContain('compact search');
+      expect(full.results[0]?.similarity).toEqual(expect.any(Number));
+
+      const toonResult = (await client.callTool({
+        name: 'search',
+        arguments: {
+          query: 'compact search',
+          threshold: 0,
+          toon: true
+        }
+      })) as ToolResultPayload;
+      const toonText =
+        toonResult.content?.find((item) => item.type === 'text')?.text ?? '';
+      expect(toonResult.structuredContent).toEqual({ toon: toonText });
+      expect(toonText).toContain(
+        'results[1]{id,type,score,content,chunk,tags,related}:'
+      );
+      expect(toonText).toContain(stored.entity.id);
+      expect(toonText).not.toContain('created_at');
     } finally {
       await close();
     }
@@ -517,7 +616,8 @@ describe('MCP tools', () => {
             visibility: 'personal',
             topic: 'postgram-memory',
             agent_id: 'codex',
-            tags: ['mcp']
+            tags: ['mcp'],
+            full_response: true
           }
         })) as ToolResultPayload
       ) as {
@@ -596,7 +696,8 @@ describe('MCP tools', () => {
           name: 'task_complete',
           arguments: {
             id: created.entity.id,
-            version: updated.entity.version
+            version: updated.entity.version,
+            full_response: true
           }
         })) as ToolResultPayload
       ) as {
@@ -621,7 +722,11 @@ describe('MCP tools', () => {
         arguments: {
           repo: 'mcp-repo',
           files: [
-            { path: 'test.md', sha: 'mcp-sha-1', content: '# MCP Test\n\nContent.' }
+            {
+              path: 'test.md',
+              sha: 'mcp-sha-1',
+              content: '# MCP Test\n\nContent.'
+            }
           ]
         }
       })) as ToolResultPayload;
@@ -665,13 +770,17 @@ describe('MCP tools', () => {
         name: 'store',
         arguments: { type: 'person', content: 'Bob' }
       })) as ToolResultPayload;
-      const person = (extractStructuredPayload(personResult) as { entity: { id: string } }).entity;
+      const person = (
+        extractStructuredPayload(personResult) as { entity: { id: string } }
+      ).entity;
 
       const projectResult = (await client.callTool({
         name: 'store',
         arguments: { type: 'project', content: 'Beta' }
       })) as ToolResultPayload;
-      const project = (extractStructuredPayload(projectResult) as { entity: { id: string } }).entity;
+      const project = (
+        extractStructuredPayload(projectResult) as { entity: { id: string } }
+      ).entity;
 
       // Link them
       const linkResult = (await client.callTool({
@@ -683,7 +792,11 @@ describe('MCP tools', () => {
         }
       })) as ToolResultPayload;
       expect(linkResult.isError).toBeUndefined();
-      const edge = (extractStructuredPayload(linkResult) as { edge: { id: string; relation: string } }).edge;
+      const edge = (
+        extractStructuredPayload(linkResult) as {
+          edge: { id: string; relation: string };
+        }
+      ).edge;
       expect(edge.relation).toBe('involves');
 
       // Expand graph

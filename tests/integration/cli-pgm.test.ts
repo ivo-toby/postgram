@@ -475,7 +475,7 @@ describe('pgm CLI', () => {
     const otherBody = parseJson(otherSeed.stdout) as { entity: { id: string } };
 
     const result = await runPgm(
-      ['memory', 'groom', '--mode', 'archive', '--yes', '--json'],
+      ['memory', 'groom', '--yes', '--json'],
       env
     );
     const body = parseJson(result.stdout) as {
@@ -520,7 +520,7 @@ describe('pgm CLI', () => {
     )._unsafeUnwrap();
 
     const result = await runPgmCapture(
-      ['memory', 'groom', '--mode', 'archive', '--json'],
+      ['memory', 'groom', '--json'],
       {
         PGM_API_URL: baseUrl,
         PGM_API_KEY: createdKey.plaintextKey
@@ -561,7 +561,7 @@ describe('pgm CLI', () => {
     );
   }, 120_000);
 
-  it('rejects promote mode on the normal CLI with admin-only guidance', async () => {
+  it('rejects groom admin flags on the normal CLI', async () => {
     if (!database) {
       throw new Error('test database not initialized');
     }
@@ -585,7 +585,7 @@ describe('pgm CLI', () => {
 
     expect(result.code).toBe(1);
     expect(result.stderr || result.stdout).toMatch(
-      /admin-only.*#47/i
+      /unknown option '--mode'/
     );
   }, 120_000);
 

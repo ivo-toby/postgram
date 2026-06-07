@@ -201,7 +201,6 @@ export function createPgmClient(options: RestClientOptions) {
       expand_graph?: boolean | undefined;
       include_archived?: boolean | undefined;
       memory_role?: 'durable_memory' | 'session_context' | undefined;
-      include_other_clients_session_context?: boolean | undefined;
     }) {
       return request<SearchResponse>(options, '/api/search', {
         method: 'POST',

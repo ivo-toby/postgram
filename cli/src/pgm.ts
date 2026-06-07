@@ -451,10 +451,6 @@ program
     'memory role filter: durable_memory or session_context'
   )
   .option(
-    '--include-other-clients-session-context',
-    'include session context from other clients'
-  )
-  .option(
     '--full-response',
     'emit the full API response instead of compact default output when used with --json'
   )
@@ -492,9 +488,7 @@ program
         recency_weight: Number(options.recencyWeight),
         expand_graph: options.expandGraph === true ? true : undefined,
         include_archived: options.includeArchived === true ? true : undefined,
-        memory_role: options.memoryRole,
-        include_other_clients_session_context:
-          options.includeOtherClientsSessionContext === true ? true : undefined
+        memory_role: options.memoryRole
       });
 
       if (options.toon === true) {
@@ -519,7 +513,6 @@ memoryCommand
   .command('groom')
   .description('Preview or archive stale session-context memories for the authenticated client')
   .option('--dry-run', 'preview without mutating')
-  .option('--mode <mode>', 'archive only; promote is admin-only', 'archive')
   .option(
     '--older-than <duration>',
     'only include memories older than this (e.g. 7d, 30d, 4w)',
@@ -543,17 +536,6 @@ memoryCommand
       const limit = Number.parseInt(options.limit, 10);
       if (!Number.isInteger(limit) || limit <= 0) {
         throw new AppError(ErrorCode.VALIDATION, '--limit must be a positive integer');
-      }
-
-      if (options.mode !== 'archive' && options.mode !== 'promote') {
-        throw new AppError(ErrorCode.VALIDATION, '--mode must be archive');
-      }
-
-      if (options.mode === 'promote') {
-        throw new AppError(
-          ErrorCode.VALIDATION,
-          'Promotion mode is admin-only and tracked in #47'
-        );
       }
 
       if (options.dryRun !== true && options.yes !== true) {

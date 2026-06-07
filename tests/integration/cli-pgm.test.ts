@@ -83,11 +83,13 @@ describe('pgm CLI', () => {
       throw new Error('test database not initialized');
     }
 
-    const createdKey = (await createKey(database.pool, {
-      name: `cli-${crypto.randomUUID()}`,
-      scopes: ['read', 'write', 'delete'],
-      allowedVisibility: ['shared']
-    }))._unsafeUnwrap();
+    const createdKey = (
+      await createKey(database.pool, {
+        name: `cli-${crypto.randomUUID()}`,
+        scopes: ['read', 'write', 'delete'],
+        allowedVisibility: ['shared']
+      })
+    )._unsafeUnwrap();
 
     const storeResult = await runPgm(
       [
@@ -138,10 +140,11 @@ describe('pgm CLI', () => {
       }
     );
     const searchBody = parseJson(searchResult.stdout) as {
-      results: Array<{ entity: { id: string }; chunk_content: string }>;
+      results: Array<{ id: string; chunk: string }>;
     };
-    expect(searchBody.results[0]?.entity.id).toBe(storeBody.entity.id);
-    expect(searchBody.results[0]?.chunk_content).toContain('pgvector');
+    expect(searchBody.results[0]?.id).toBe(storeBody.entity.id);
+    expect(searchBody.results[0]?.chunk).toContain('pgvector');
+    expect(searchBody.results[0]).not.toHaveProperty('entity');
   }, 120_000);
 
   it('stores and searches session-context memory through first-class CLI commands', async () => {
@@ -149,12 +152,14 @@ describe('pgm CLI', () => {
       throw new Error('test database not initialized');
     }
 
-    const createdKey = (await createKey(database.pool, {
-      name: `session-cli-${crypto.randomUUID()}`,
-      clientId: 'codex-cli',
-      scopes: ['read', 'write', 'delete'],
-      allowedVisibility: ['personal']
-    }))._unsafeUnwrap();
+    const createdKey = (
+      await createKey(database.pool, {
+        name: `session-cli-${crypto.randomUUID()}`,
+        clientId: 'codex-cli',
+        scopes: ['read', 'write', 'delete'],
+        allowedVisibility: ['personal']
+      })
+    )._unsafeUnwrap();
 
     const env = {
       PGM_API_URL: baseUrl,
@@ -189,7 +194,8 @@ describe('pgm CLI', () => {
         'codex',
         '--tags',
         'cli,session-context',
-        '--json'
+        '--json',
+        '--full-response'
       ],
       env
     );
@@ -234,15 +240,13 @@ describe('pgm CLI', () => {
       env
     );
     const searchBody = parseJson(searchResult.stdout) as {
-      results: Array<{ entity: { id: string; metadata: Record<string, unknown> } }>;
+      results: Array<{ id: string; metadata?: Record<string, unknown> }>;
     };
-    expect(searchBody.results.map((entry) => entry.entity.id)).toContain(
+    expect(searchBody.results.map((entry) => entry.id)).toContain(
       sessionBody.entity.id
     );
     expect(
-      searchBody.results.every(
-        (entry) => entry.entity.metadata.memory_role === 'session_context'
-      )
+      searchBody.results.every((entry) => entry.metadata === undefined)
     ).toBe(true);
   }, 120_000);
 
@@ -251,11 +255,13 @@ describe('pgm CLI', () => {
       throw new Error('test database not initialized');
     }
 
-    const createdKey = (await createKey(database.pool, {
-      name: `cli-skip-${crypto.randomUUID()}`,
-      scopes: ['read', 'write', 'delete'],
-      allowedVisibility: ['shared']
-    }))._unsafeUnwrap();
+    const createdKey = (
+      await createKey(database.pool, {
+        name: `cli-skip-${crypto.randomUUID()}`,
+        scopes: ['read', 'write', 'delete'],
+        allowedVisibility: ['shared']
+      })
+    )._unsafeUnwrap();
 
     const storeResult = await runPgm(
       [
@@ -289,25 +295,21 @@ describe('pgm CLI', () => {
       throw new Error('test database not initialized');
     }
 
-    const createdKey = (await createKey(database.pool, {
-      name: `list-${crypto.randomUUID()}`,
-      scopes: ['read', 'write'],
-      allowedVisibility: ['shared']
-    }))._unsafeUnwrap();
+    const createdKey = (
+      await createKey(database.pool, {
+        name: `list-${crypto.randomUUID()}`,
+        scopes: ['read', 'write'],
+        allowedVisibility: ['shared']
+      })
+    )._unsafeUnwrap();
 
     const env = {
       PGM_API_URL: baseUrl,
       PGM_API_KEY: createdKey.plaintextKey
     };
 
-    await runPgm(
-      ['store', 'first memory', '--type', 'memory', '--json'],
-      env
-    );
-    await runPgm(
-      ['store', 'a project', '--type', 'project', '--json'],
-      env
-    );
+    await runPgm(['store', 'first memory', '--type', 'memory', '--json'], env);
+    await runPgm(['store', 'a project', '--type', 'project', '--json'], env);
 
     const listAll = await runPgm(['list', '--json'], env);
     const allBody = parseJson(listAll.stdout) as {
@@ -333,11 +335,13 @@ describe('pgm CLI', () => {
       throw new Error('test database not initialized');
     }
 
-    const createdKey = (await createKey(database.pool, {
-      name: `owner-cli-${crypto.randomUUID()}`,
-      scopes: ['read', 'write', 'delete'],
-      allowedVisibility: ['shared']
-    }))._unsafeUnwrap();
+    const createdKey = (
+      await createKey(database.pool, {
+        name: `owner-cli-${crypto.randomUUID()}`,
+        scopes: ['read', 'write', 'delete'],
+        allowedVisibility: ['shared']
+      })
+    )._unsafeUnwrap();
 
     const env = {
       PGM_API_URL: baseUrl,
@@ -348,9 +352,11 @@ describe('pgm CLI', () => {
       ['store', 'shared planning notes', '--type', 'memory', '--json'],
       env
     );
-    const shared = (parseJson(sharedStore.stdout) as {
-      entity: { id: string };
-    }).entity;
+    const shared = (
+      parseJson(sharedStore.stdout) as {
+        entity: { id: string };
+      }
+    ).entity;
 
     const pmStore = await runPgm(
       [
@@ -364,9 +370,11 @@ describe('pgm CLI', () => {
       ],
       env
     );
-    const productManager = (parseJson(pmStore.stdout) as {
-      entity: { id: string; owner: string | null };
-    }).entity;
+    const productManager = (
+      parseJson(pmStore.stdout) as {
+        entity: { id: string; owner: string | null };
+      }
+    ).entity;
     expect(productManager.owner).toBe('product-manager');
 
     const devStore = await runPgm(
@@ -381,16 +389,32 @@ describe('pgm CLI', () => {
       ],
       env
     );
-    const developer = (parseJson(devStore.stdout) as {
-      entity: { id: string };
-    }).entity;
+    const developer = (
+      parseJson(devStore.stdout) as {
+        entity: { id: string };
+      }
+    ).entity;
 
     await runPgm(
-      ['link', productManager.id, shared.id, '--relation', 'references', '--json'],
+      [
+        'link',
+        productManager.id,
+        shared.id,
+        '--relation',
+        'references',
+        '--json'
+      ],
       env
     );
     await runPgm(
-      ['link', productManager.id, developer.id, '--relation', 'references', '--json'],
+      [
+        'link',
+        productManager.id,
+        developer.id,
+        '--relation',
+        'references',
+        '--json'
+      ],
       env
     );
 
@@ -423,9 +447,9 @@ describe('pgm CLI', () => {
       env
     );
     const searchBody = parseJson(searchResult.stdout) as {
-      results: Array<{ entity: { id: string } }>;
+      results: Array<{ id: string }>;
     };
-    expect(searchBody.results.map((entry) => entry.entity.id).sort()).toEqual(
+    expect(searchBody.results.map((entry) => entry.id).sort()).toEqual(
       [shared.id, productManager.id].sort()
     );
 
@@ -443,16 +467,118 @@ describe('pgm CLI', () => {
     expect(expandBody.edges).toHaveLength(1);
   }, 120_000);
 
+  it('supports full-response, TOON, and discoverable help for search output', async () => {
+    if (!database) {
+      throw new Error('test database not initialized');
+    }
+
+    const createdKey = (
+      await createKey(database.pool, {
+        name: `search-format-${crypto.randomUUID()}`,
+        scopes: ['read', 'write'],
+        allowedVisibility: ['shared']
+      })
+    )._unsafeUnwrap();
+
+    const env = {
+      PGM_API_URL: baseUrl,
+      PGM_API_KEY: createdKey.plaintextKey
+    };
+
+    const storeResult = await runPgm(
+      [
+        'store',
+        'token compact search response shape',
+        '--type',
+        'memory',
+        '--json'
+      ],
+      env
+    );
+    const stored = (parseJson(storeResult.stdout) as { entity: { id: string } })
+      .entity;
+
+    await createEnrichmentWorker({
+      pool: database.pool,
+      embeddingService
+    }).runOnce();
+
+    const compactResult = await runPgm(
+      ['search', 'compact search', '--threshold', '0', '--json'],
+      env
+    );
+    const compact = parseJson(compactResult.stdout) as {
+      results: Array<{
+        id: string;
+        type: string;
+        content: string | null;
+        chunk: string;
+        score: number;
+      }>;
+    };
+    const firstCompactResult = compact.results[0];
+    if (!firstCompactResult) {
+      throw new Error('expected compact search result');
+    }
+    expect(firstCompactResult).toMatchObject({
+      id: stored.id,
+      type: 'memory',
+      content: 'token compact search response shape',
+      chunk: 'token compact search response shape'
+    });
+    expect(typeof firstCompactResult.score).toBe('number');
+
+    const fullResult = await runPgm(
+      [
+        'search',
+        'compact search',
+        '--threshold',
+        '0',
+        '--json',
+        '--full-response'
+      ],
+      env
+    );
+    const full = parseJson(fullResult.stdout) as {
+      results: Array<{
+        entity: { id: string; metadata: Record<string, unknown> };
+        chunk_content: string;
+        similarity: number;
+      }>;
+    };
+    expect(full.results[0]?.entity.id).toBe(stored.id);
+    expect(full.results[0]?.chunk_content).toContain('compact search');
+    expect(full.results[0]?.similarity).toEqual(expect.any(Number));
+
+    const toonResult = await runPgm(
+      ['search', 'compact search', '--threshold', '0', '--toon'],
+      env
+    );
+    expect(toonResult.stdout).toContain(
+      'results[1]{id,type,score,content,chunk,tags,related}:'
+    );
+    expect(toonResult.stdout).toContain(stored.id);
+    expect(toonResult.stdout).not.toContain('created_at');
+
+    const helpResult = await runPgm(['search', '--help'], env);
+    expect(helpResult.stdout).toContain('--full-response');
+    expect(helpResult.stdout).toContain('emit the full API response');
+    expect(helpResult.stdout).toContain('--toon');
+    expect(helpResult.stdout).toContain('emit compact TOON output');
+  }, 120_000);
+
   it('adds, lists, updates, and completes tasks through REST', async () => {
     if (!database) {
       throw new Error('test database not initialized');
     }
 
-    const createdKey = (await createKey(database.pool, {
-      name: `task-cli-${crypto.randomUUID()}`,
-      scopes: ['read', 'write'],
-      allowedVisibility: ['shared']
-    }))._unsafeUnwrap();
+    const createdKey = (
+      await createKey(database.pool, {
+        name: `task-cli-${crypto.randomUUID()}`,
+        scopes: ['read', 'write'],
+        allowedVisibility: ['shared']
+      })
+    )._unsafeUnwrap();
 
     const addResult = await runPgm(
       [
@@ -465,7 +591,8 @@ describe('pgm CLI', () => {
         'next',
         '--due',
         '2026-03-25',
-        '--json'
+        '--json',
+        '--full-response'
       ],
       {
         PGM_API_URL: baseUrl,
@@ -473,7 +600,12 @@ describe('pgm CLI', () => {
       }
     );
     const addBody = parseJson(addResult.stdout) as {
-      entity: { id: string; version: number; status: string; metadata: Record<string, string> };
+      entity: {
+        id: string;
+        version: number;
+        status: string;
+        metadata: Record<string, string>;
+      };
     };
     expect(addBody.entity).toMatchObject({
       status: 'next',
@@ -508,7 +640,8 @@ describe('pgm CLI', () => {
         'waiting',
         '--context',
         '@later',
-        '--json'
+        '--json',
+        '--full-response'
       ],
       {
         PGM_API_URL: baseUrl,
@@ -516,7 +649,11 @@ describe('pgm CLI', () => {
       }
     );
     const updateBody = parseJson(updateResult.stdout) as {
-      entity: { version: number; status: string; metadata: Record<string, string> };
+      entity: {
+        version: number;
+        status: string;
+        metadata: Record<string, string>;
+      };
     };
     expect(updateBody.entity).toMatchObject({
       status: 'waiting',
@@ -532,7 +669,8 @@ describe('pgm CLI', () => {
         addBody.entity.id,
         '--version',
         String(updateBody.entity.version),
-        '--json'
+        '--json',
+        '--full-response'
       ],
       {
         PGM_API_URL: baseUrl,
@@ -553,36 +691,45 @@ describe('pgm CLI', () => {
       throw new Error('test database not initialized');
     }
 
-    const createdKey = (await createKey(database.pool, {
-      name: `graph-${crypto.randomUUID()}`,
-      scopes: ['read', 'write', 'delete'],
-      allowedVisibility: ['shared']
-    }))._unsafeUnwrap();
+    const createdKey = (
+      await createKey(database.pool, {
+        name: `graph-${crypto.randomUUID()}`,
+        scopes: ['read', 'write', 'delete'],
+        allowedVisibility: ['shared']
+      })
+    )._unsafeUnwrap();
 
     const env = {
       PGM_API_URL: baseUrl,
       PGM_API_KEY: createdKey.plaintextKey
     };
 
-    const storeA = await runPgm(['store', 'Alice', '--type', 'person', '--json'], env);
-    const entityA = (parseJson(storeA.stdout) as { entity: { id: string } }).entity;
+    const storeA = await runPgm(
+      ['store', 'Alice', '--type', 'person', '--json'],
+      env
+    );
+    const entityA = (parseJson(storeA.stdout) as { entity: { id: string } })
+      .entity;
 
-    const storeB = await runPgm(['store', 'Project X', '--type', 'project', '--json'], env);
-    const entityB = (parseJson(storeB.stdout) as { entity: { id: string } }).entity;
+    const storeB = await runPgm(
+      ['store', 'Project X', '--type', 'project', '--json'],
+      env
+    );
+    const entityB = (parseJson(storeB.stdout) as { entity: { id: string } })
+      .entity;
 
     // Link
     const linkResult = await runPgm(
       ['link', entityA.id, entityB.id, '--relation', 'involves', '--json'],
       env
     );
-    const linkBody = parseJson(linkResult.stdout) as { edge: { id: string; relation: string } };
+    const linkBody = parseJson(linkResult.stdout) as {
+      edge: { id: string; relation: string };
+    };
     expect(linkBody.edge.relation).toBe('involves');
 
     // Expand
-    const expandResult = await runPgm(
-      ['expand', entityA.id, '--json'],
-      env
-    );
+    const expandResult = await runPgm(['expand', entityA.id, '--json'], env);
     const expandBody = parseJson(expandResult.stdout) as {
       entities: Array<{ id: string }>;
       edges: Array<{ id: string }>;
@@ -608,25 +755,32 @@ describe('pgm CLI', () => {
     const os = await import('node:os');
     const nodePath = await import('node:path');
 
-    const createdKey = (await createKey(database.pool, {
-      name: `sync-${crypto.randomUUID()}`,
-      scopes: ['read', 'write', 'delete'],
-      allowedVisibility: ['shared']
-    }))._unsafeUnwrap();
+    const createdKey = (
+      await createKey(database.pool, {
+        name: `sync-${crypto.randomUUID()}`,
+        scopes: ['read', 'write', 'delete'],
+        allowedVisibility: ['shared']
+      })
+    )._unsafeUnwrap();
 
     const env = {
       PGM_API_URL: baseUrl,
       PGM_API_KEY: createdKey.plaintextKey
     };
 
-    const tempDir = await fsp.mkdtemp(nodePath.join(os.tmpdir(), 'pgm-sync-test-'));
-    await fsp.writeFile(nodePath.join(tempDir, 'alpha.md'), '# Alpha\n\nAlpha content.');
-    await fsp.writeFile(nodePath.join(tempDir, 'beta.md'), 'Beta content without heading.');
-
-    const syncResult = await runPgm(
-      ['sync', tempDir, '--json'],
-      env
+    const tempDir = await fsp.mkdtemp(
+      nodePath.join(os.tmpdir(), 'pgm-sync-test-')
     );
+    await fsp.writeFile(
+      nodePath.join(tempDir, 'alpha.md'),
+      '# Alpha\n\nAlpha content.'
+    );
+    await fsp.writeFile(
+      nodePath.join(tempDir, 'beta.md'),
+      'Beta content without heading.'
+    );
+
+    const syncResult = await runPgm(['sync', tempDir, '--json'], env);
     const syncBody = parseJson(syncResult.stdout) as {
       created: number;
       updated: number;
@@ -636,10 +790,7 @@ describe('pgm CLI', () => {
     expect(syncBody.created).toBe(2);
     expect(syncBody.unchanged).toBe(0);
 
-    const resyncResult = await runPgm(
-      ['sync', tempDir, '--json'],
-      env
-    );
+    const resyncResult = await runPgm(['sync', tempDir, '--json'], env);
     const resyncBody = parseJson(resyncResult.stdout) as {
       unchanged: number;
     };

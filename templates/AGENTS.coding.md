@@ -26,6 +26,13 @@ mcp__postgram__search {
 }
 ```
 
+MCP output is compact by default for token-heavy tools such as search, task
+lists, graph expansion, write acknowledgements, and link acknowledgements. Keep
+that default for normal session-start searches. Add `"full_response": true`
+only when you need metadata, timestamps, version, or raw similarity; use
+`"toon": true` on list-like tools (`search`, `task_list`, `expand`) when you
+want the smallest readable output.
+
 If the task references a past decision, root cause, environment constraint, or
 architecture tradeoff, also search durable memory:
 

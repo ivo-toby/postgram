@@ -20,6 +20,13 @@ mcp__postgram__search { "query": "homelab setup", "type": "memory", "limit": 5 }
 All entity types are searchable: `memory`, `person`, `project`, `task`,
 `interaction`, `document`. Use `"type"` to narrow results to what you stored.
 
+MCP outputs are compact by default for agent token efficiency on token-heavy
+tools: search, task lists, graph expansion, write acknowledgements, and link
+acknowledgements. Use `"full_response": true` only when you need metadata,
+timestamps, raw similarity, version history context, or the legacy nested entity
+shape. Use `"toon": true` on list-like tools (`search`, `task_list`, `expand`)
+for the smallest readable MCP output.
+
 ### When to use expand_graph
 
 Add `"expand_graph": true` when relationships matter — not just finding a
@@ -27,6 +34,7 @@ document, but understanding what is connected to it. Each result gains a
 `related` array of graph-connected entities with `relation` and `direction`.
 
 Use it when the user asks:
+
 - Who was involved in X / who owns Y
 - What led to a decision, what depends on something
 - What else is connected to a topic (open-ended exploration)
@@ -41,8 +49,8 @@ running. Flat search always works regardless of extraction status.
 
 ### When to store (do this without being asked)
 
-- A non-obvious architectural decision is made — the *why* is what matters, not
-  just the *what*.
+- A non-obvious architectural decision is made — the _why_ is what matters, not
+  just the _what_.
 - A bug's root cause is identified — future sessions waste time re-diagnosing
   the same issues.
 - A constraint or environment quirk is discovered.
@@ -100,6 +108,10 @@ mcp__postgram__search {
   "limit": 5
 }
 ```
+
+Keep the compact default for normal continuity searches. Add
+`"full_response": true` only when you need to inspect metadata such as
+`memory_role`, source, timestamps, or version.
 
 If the connected MCP server does not expose `memory_role`, fall back to a
 regular `type="memory"` search and inspect returned metadata.

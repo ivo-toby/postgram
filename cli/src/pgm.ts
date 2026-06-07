@@ -22,6 +22,16 @@ import {
 } from './shared.js';
 import { AppError, ErrorCode } from './errors.js';
 import { buildSyncManifest } from './sync-walk.js';
+import {
+  compactEdgeResponse,
+  compactEntityListResponse,
+  compactGraphResponse,
+  compactSearchResponse,
+  compactStoredEntityResponse,
+  entityListResponseToToon,
+  graphResponseToToon,
+  searchResponseToToon
+} from './search-output.js';
 
 function formatStoredEntity(entity: {
   id: string;
@@ -41,12 +51,23 @@ function formatStoredEntity(entity: {
   ];
 }
 
-function formatSearchResults(results: Array<{
-  entity: { id: string; type: string; content: string | null };
-  score: number;
-  chunk_content: string;
-  related?: Array<{ entity: { id: string; type: string; content: string | null; metadata: Record<string, unknown> }; relation: string; direction: string }>;
-}>) {
+function formatSearchResults(
+  results: Array<{
+    entity: { id: string; type: string; content: string | null };
+    score: number;
+    chunk_content: string;
+    related?: Array<{
+      entity: {
+        id: string;
+        type: string;
+        content: string | null;
+        metadata: Record<string, unknown>;
+      };
+      relation: string;
+      direction: string;
+    }>;
+  }>
+) {
   if (results.length === 0) {
     return ['No results'];
   }
@@ -57,14 +78,19 @@ function formatSearchResults(results: Array<{
       `${result.entity.type} ${shortId(result.entity.id)} score=${result.score.toFixed(3)}`
     );
     lines.push(`  ${result.chunk_content}`);
-    if (result.entity.content && result.entity.content !== result.chunk_content) {
+    if (
+      result.entity.content &&
+      result.entity.content !== result.chunk_content
+    ) {
       lines.push(`  entity: ${result.entity.content}`);
     }
     if (result.related && result.related.length > 0) {
       lines.push(`  related (${result.related.length}):`);
       for (const rel of result.related) {
         const arrow = rel.direction === 'outgoing' ? '->' : '<-';
-        lines.push(`    ${arrow} [${rel.relation}] ${rel.entity.type} ${shortId(rel.entity.id)}`);
+        lines.push(
+          `    ${arrow} [${rel.relation}] ${rel.entity.type} ${shortId(rel.entity.id)}`
+        );
       }
     }
   }
@@ -72,7 +98,14 @@ function formatSearchResults(results: Array<{
   return lines;
 }
 
-function formatTaskList(items: Array<{ id: string; content: string | null; status: string | null; metadata: Record<string, unknown> }>) {
+function formatTaskList(
+  items: Array<{
+    id: string;
+    content: string | null;
+    status: string | null;
+    metadata: Record<string, unknown>;
+  }>
+) {
   if (items.length === 0) {
     return ['No tasks'];
   }
@@ -92,7 +125,24 @@ function formatTaskList(items: Array<{ id: string; content: string | null; statu
   });
 }
 
-async function resolveStoreContent(content: string | undefined): Promise<string> {
+function validateToonOptions(
+  options: {
+    toon?: boolean;
+    fullResponse?: boolean;
+  },
+  json: boolean
+): void {
+  if (options.toon === true && (json || options.fullResponse === true)) {
+    throw new AppError(
+      ErrorCode.VALIDATION,
+      '--toon cannot be combined with --json or --full-response'
+    );
+  }
+}
+
+async function resolveStoreContent(
+  content: string | undefined
+): Promise<string> {
   if (content !== undefined) {
     return content;
   }
@@ -107,7 +157,10 @@ async function resolveStoreContent(content: string | undefined): Promise<string>
 
 async function runWithClient<T>(
   command: Command,
-  handler: (client: ReturnType<typeof createPgmClient>, json: boolean) => Promise<T>
+  handler: (
+    client: ReturnType<typeof createPgmClient>,
+    json: boolean
+  ) => Promise<T>
 ): Promise<void> {
   const json = isJsonMode(command);
 
@@ -130,7 +183,10 @@ async function runWithClient<T>(
   }
 }
 
-async function runBackup(output: string | undefined, encrypt: boolean): Promise<void> {
+async function runBackup(
+  output: string | undefined,
+  encrypt: boolean
+): Promise<void> {
   if (!output) {
     throw new AppError(ErrorCode.VALIDATION, '--output is required for backup');
   }
@@ -289,6 +345,7 @@ program
   .option('--source <source>', 'entity source')
   .option('--metadata <json>', 'JSON metadata object')
   .option('--skip-extraction', 'store without ever queueing graph extraction')
+  .option('--full-response', 'emit the full API response when used with --json')
   .action(async (content, options, command) => {
     await runWithClient(command, async (client, json) => {
       const body = await client.storeEntity({
@@ -304,7 +361,9 @@ program
       });
 
       return json
-        ? body
+        ? options.fullResponse === true
+          ? body
+          : compactStoredEntityResponse(body)
         : formatStoredEntity({
             id: body.entity.id,
             type: body.entity.type,
@@ -330,10 +389,31 @@ program
   .option('--recency-weight <recencyWeight>', 'recency weight', '0.1')
   .option('--expand-graph', 'include graph-connected entities in results')
   .option('--include-archived', 'include archived entities in results')
-  .option('--memory-role <role>', 'memory role filter: durable_memory or session_context')
-  .option('--include-other-clients-session-context', 'include session context from other clients')
+  .option(
+    '--memory-role <role>',
+    'memory role filter: durable_memory or session_context'
+  )
+  .option(
+    '--include-other-clients-session-context',
+    'include session context from other clients'
+  )
+  .option(
+    '--full-response',
+    'emit the full API response instead of compact default output when used with --json'
+  )
+  .option(
+    '--toon',
+    'emit compact TOON output for lower agent token use; formatting is applied in the CLI, not the API'
+  )
   .action(async (query, options, command) => {
     await runWithClient(command, async (client, json) => {
+      if (options.toon === true && (json || options.fullResponse === true)) {
+        throw new AppError(
+          ErrorCode.VALIDATION,
+          '--toon cannot be combined with --json or --full-response'
+        );
+      }
+
       if (
         options.memoryRole !== undefined &&
         !['durable_memory', 'session_context'].includes(options.memoryRole)
@@ -360,7 +440,17 @@ program
           options.includeOtherClientsSessionContext === true ? true : undefined
       });
 
-      return json ? body : formatSearchResults(body.results);
+      if (options.toon === true) {
+        return searchResponseToToon(compactSearchResponse(body));
+      }
+
+      if (json) {
+        return options.fullResponse === true
+          ? body
+          : compactSearchResponse(body);
+      }
+
+      return formatSearchResults(body.results);
     });
   });
 
@@ -380,8 +470,15 @@ memoryCommand
   .option('--topic <topic>', 'topic label')
   .option('--tags <tags>', 'comma-separated tags')
   .option('--promotable', 'mark this session context as promotable')
-  .option('--groom-after <groomAfter>', 'ISO timestamp after which grooming may archive/promote it')
-  .option('--expires-at <expiresAt>', 'ISO timestamp after which the context is stale')
+  .option(
+    '--groom-after <groomAfter>',
+    'ISO timestamp after which grooming may archive/promote it'
+  )
+  .option(
+    '--expires-at <expiresAt>',
+    'ISO timestamp after which the context is stale'
+  )
+  .option('--full-response', 'emit the full API response when used with --json')
   .action(async (content, options, command) => {
     await runWithClient(command, async (client, json) => {
       const body = await client.storeSessionContext({
@@ -398,7 +495,9 @@ memoryCommand
       });
 
       return json
-        ? body
+        ? options.fullResponse === true
+          ? body
+          : compactStoredEntityResponse(body)
         : formatStoredEntity({
             id: body.entity.id,
             type: body.entity.type,
@@ -436,8 +535,18 @@ program
   .option('--limit <limit>', 'result limit', '50')
   .option('--offset <offset>', 'result offset', '0')
   .option('--include-archived', 'include archived entities')
+  .option(
+    '--full-response',
+    'emit the full API response instead of compact default output when used with --json'
+  )
+  .option(
+    '--toon',
+    'emit compact TOON output for lower agent token use; formatting is applied in the CLI, not the API'
+  )
   .action(async (options, command) => {
     await runWithClient(command, async (client, json) => {
+      validateToonOptions(options, json);
+
       const body = await client.listEntities({
         type: options.type,
         status: options.status,
@@ -449,8 +558,14 @@ program
         include_archived: options.includeArchived === true ? true : undefined
       });
 
+      if (options.toon === true) {
+        return entityListResponseToToon(compactEntityListResponse(body));
+      }
+
       if (json) {
-        return body;
+        return options.fullResponse === true
+          ? body
+          : compactEntityListResponse(body);
       }
 
       if (body.items.length === 0) {
@@ -490,6 +605,7 @@ program
   .option('--metadata <json>', 'JSON metadata object')
   .option('--version <version>', 'expected version')
   .option('--force', 'retry using the latest version on conflict')
+  .option('--full-response', 'emit the full API response when used with --json')
   .action(async (id, options, command) => {
     await runWithClient(command, async (client, json) => {
       const payload = {
@@ -517,7 +633,11 @@ program
         throw new Error('--version is required unless --force is set');
       }
 
-      return json ? body : formatStoredEntity(body.entity);
+      return json
+        ? options.fullResponse === true
+          ? body
+          : compactStoredEntityResponse(body)
+        : formatStoredEntity(body.entity);
     });
   });
 
@@ -544,6 +664,7 @@ taskCommand
   .option('--tags <tags>', 'comma-separated tags')
   .option('--visibility <visibility>', 'task visibility', 'shared')
   .option('--metadata <json>', 'JSON metadata object')
+  .option('--full-response', 'emit the full API response when used with --json')
   .action(async (content, options, command) => {
     await runWithClient(command, async (client, json) => {
       const taskContent = await resolveStoreContent(content);
@@ -558,7 +679,9 @@ taskCommand
       });
 
       return json
-        ? body
+        ? options.fullResponse === true
+          ? body
+          : compactStoredEntityResponse(body)
         : formatStoredEntity({
             id: body.entity.id,
             type: body.entity.type,
@@ -579,8 +702,18 @@ taskCommand
   .option('--limit <limit>', 'result limit', '50')
   .option('--offset <offset>', 'result offset', '0')
   .option('--include-archived', 'include archived tasks')
+  .option(
+    '--full-response',
+    'emit the full API response instead of compact default output when used with --json'
+  )
+  .option(
+    '--toon',
+    'emit compact TOON output for lower agent token use; formatting is applied in the CLI, not the API'
+  )
   .action(async (options, command) => {
     await runWithClient(command, async (client, json) => {
+      validateToonOptions(options, json);
+
       const body = await client.listTasks({
         status: options.status,
         context: options.context,
@@ -589,7 +722,15 @@ taskCommand
         include_archived: options.includeArchived === true ? true : undefined
       });
 
-      return json ? body : formatTaskList(body.items);
+      if (options.toon === true) {
+        return entityListResponseToToon(compactEntityListResponse(body));
+      }
+
+      return json
+        ? options.fullResponse === true
+          ? body
+          : compactEntityListResponse(body)
+        : formatTaskList(body.items);
     });
   });
 
@@ -605,6 +746,7 @@ taskCommand
   .option('--visibility <visibility>', 'updated task visibility')
   .option('--metadata <json>', 'JSON metadata object')
   .option('--version <version>', 'expected version', '')
+  .option('--full-response', 'emit the full API response when used with --json')
   .action(async (id, options, command) => {
     await runWithClient(command, async (client, json) => {
       if (!options.version) {
@@ -623,7 +765,9 @@ taskCommand
       });
 
       return json
-        ? body
+        ? options.fullResponse === true
+          ? body
+          : compactStoredEntityResponse(body)
         : formatStoredEntity({
             id: body.entity.id,
             type: body.entity.type,
@@ -641,6 +785,7 @@ taskCommand
   .description('Mark a task complete')
   .argument('id', 'task ID')
   .option('--version <version>', 'expected version')
+  .option('--full-response', 'emit the full API response when used with --json')
   .action(async (id, options, command) => {
     await runWithClient(command, async (client, json) => {
       if (options.version === undefined) {
@@ -649,7 +794,9 @@ taskCommand
 
       const body = await client.completeTask(id, Number(options.version));
       return json
-        ? body
+        ? options.fullResponse === true
+          ? body
+          : compactStoredEntityResponse(body)
         : formatStoredEntity({
             id: body.entity.id,
             type: body.entity.type,
@@ -672,14 +819,19 @@ program
       if (json) return body;
 
       const e = body.embedding;
-      const age = e.oldest_pending_secs !== null ? ` oldest_pending=${e.oldest_pending_secs}s` : '';
+      const age =
+        e.oldest_pending_secs !== null
+          ? ` oldest_pending=${e.oldest_pending_secs}s`
+          : '';
       const lines = [
         `embedding:  pending=${e.pending}  completed=${e.completed}  failed=${e.failed}  retry_eligible=${e.retry_eligible}${age}`
       ];
 
       if (body.extraction) {
         const x = body.extraction;
-        lines.push(`extraction: pending=${x.pending}  completed=${x.completed}  failed=${x.failed}`);
+        lines.push(
+          `extraction: pending=${x.pending}  completed=${x.completed}  failed=${x.failed}`
+        );
       } else {
         lines.push('extraction: disabled');
       }
@@ -727,12 +879,20 @@ program
       const config = await resolvePgmConfig();
       const client = createPgmClient(config);
 
-      const manifestForServer = manifest.map(({ path: p, sha }) => ({ path: p, sha }));
-      const diff = await client.diffSync({ repo: repoName, files: manifestForServer });
+      const manifestForServer = manifest.map(({ path: p, sha }) => ({
+        path: p,
+        sha
+      }));
+      const diff = await client.diffSync({
+        repo: repoName,
+        files: manifestForServer
+      });
 
       if (options.dryRun) {
         const newCount = diff.toUpload.filter((f) => f.reason === 'new').length;
-        const changedCount = diff.toUpload.filter((f) => f.reason === 'changed').length;
+        const changedCount = diff.toUpload.filter(
+          (f) => f.reason === 'changed'
+        ).length;
         const result = {
           created: newCount,
           updated: changedCount,
@@ -781,7 +941,10 @@ program
         }
         const content = await fsReadFile(entry.fullPath, 'utf8');
         const size = Buffer.byteLength(content, 'utf8');
-        if (batch.length > 0 && (batch.length >= BATCH_FILES || batchBytes + size > BATCH_BYTES)) {
+        if (
+          batch.length > 0 &&
+          (batch.length >= BATCH_FILES || batchBytes + size > BATCH_BYTES)
+        ) {
           await flushBatch();
         }
         batch.push({ path: toUpload.path, sha: toUpload.sha, content });
@@ -820,6 +983,7 @@ program
   .argument('<target-id>', 'target entity ID')
   .requiredOption('--relation <relation>', 'relationship type')
   .option('--confidence <n>', 'confidence score 0-1', '1.0')
+  .option('--full-response', 'emit the full API response when used with --json')
   .action(async (sourceId, targetId, options, command) => {
     await runWithClient(command, async (client, json) => {
       const body = await client.createEdge({
@@ -829,8 +993,12 @@ program
         confidence: Number(options.confidence)
       });
 
-      if (json) return body;
-      return [`Linked ${shortId(sourceId)} → ${shortId(targetId)} (${options.relation})`];
+      if (json) {
+        return options.fullResponse === true ? body : compactEdgeResponse(body);
+      }
+      return [
+        `Linked ${shortId(sourceId)} → ${shortId(targetId)} (${options.relation})`
+      ];
     });
   });
 
@@ -852,8 +1020,18 @@ program
   .option('--depth <n>', 'traversal depth (1-3)', '1')
   .option('--relation <types>', 'comma-separated relation types')
   .option('--owner <owner>', 'owner filter')
+  .option(
+    '--full-response',
+    'emit the full API response instead of compact default output when used with --json'
+  )
+  .option(
+    '--toon',
+    'emit compact TOON output for lower agent token use; formatting is applied in the CLI, not the API'
+  )
   .action(async (entityId, options, command) => {
     await runWithClient(command, async (client, json) => {
+      validateToonOptions(options, json);
+
       const relationTypes = parseCommaList(options.relation);
       const body = await client.expandGraph(entityId, {
         depth: Number(options.depth),
@@ -861,13 +1039,25 @@ program
         ...(options.owner !== undefined ? { owner: options.owner } : {})
       });
 
-      if (json) return body;
+      if (options.toon === true) {
+        return graphResponseToToon(compactGraphResponse(body));
+      }
+
+      if (json) {
+        return options.fullResponse === true
+          ? body
+          : compactGraphResponse(body);
+      }
 
       const lines: string[] = [];
       lines.push(`Graph for ${shortId(entityId)}:`);
-      lines.push(`  ${body.entities.length} entities, ${body.edges.length} edges`);
+      lines.push(
+        `  ${body.entities.length} entities, ${body.edges.length} edges`
+      );
       for (const edge of body.edges) {
-        lines.push(`  ${shortId(edge.source_id)} → ${shortId(edge.target_id)} (${edge.relation})`);
+        lines.push(
+          `  ${shortId(edge.source_id)} → ${shortId(edge.target_id)} (${edge.relation})`
+        );
       }
       return lines;
     });

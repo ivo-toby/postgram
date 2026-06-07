@@ -148,10 +148,11 @@ describe('memory-grooming-service', () => {
 
     const malformed = (await storeEntity(database.pool, { ...makeAuthContext(), clientId: 'orion' }, {
       type: 'memory',
-      content: 'Malformed session context missing a client scope.',
+      content: 'Malformed session context with a numeric client id.',
       visibility: 'personal',
       metadata: {
         memory_role: 'session_context',
+        session_scope: { kind: 'client', client_id: 123 },
         groom_after: '2025-12-01T00:00:00.000Z'
       }
     }))._unsafeUnwrap();

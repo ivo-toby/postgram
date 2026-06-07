@@ -48,7 +48,7 @@ Postgram provides:
 - scoped API-key authentication and visibility restrictions
 - a REST API for application and automation access
 - an MCP SSE endpoint for agent-native tool access
-- a human CLI (`pgm`)
+- a CLI (`pgm`) for humans and agents
 - a container-local admin CLI (`pgm-admin`)
 - Talon SQLite migration tooling
 - encrypted backup support
@@ -260,7 +260,7 @@ The same service layer is exposed through:
 ```text
 src/
   auth/            API key validation and auth middleware
-  cli/             Human CLI and admin CLI
+  cli/             CLI for humans/agents and admin CLI
   db/              Pool and migrations
   migrate-talon/   Talon import path
   services/        Business logic (entities, search, edges, sync, extraction)
@@ -654,7 +654,7 @@ token-heavy outputs default to compact agent-friendly responses:
 The underlying API remains JSON; compacting and TOON happen only in MCP/CLI
 handlers.
 
-## Human CLI (`pgm`)
+## CLI (`pgm`)
 
 ### Install from npm
 

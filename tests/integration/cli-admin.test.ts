@@ -20,6 +20,15 @@ function parseJson(stdout: string): unknown {
   return JSON.parse(stdout.trim());
 }
 
+function getCliErrorOutput(error: unknown): string {
+  if (!error || typeof error !== 'object') {
+    return '';
+  }
+
+  const err = error as { stdout?: string; stderr?: string };
+  return `${err.stdout ?? ''}\n${err.stderr ?? ''}`;
+}
+
 async function runAdmin(args: string[], env: NodeJS.ProcessEnv) {
   return execFileAsync(TSX_BIN, [PGM_ADMIN_ENTRYPOINT, ...args], {
     env: {
@@ -58,6 +67,35 @@ function getDatabaseUrl(database: TestDatabase): string {
 
   const password = options.password ?? '';
   return `postgresql://${encodeURIComponent(options.user)}:${encodeURIComponent(password)}@${options.host}:${options.port}/${options.database}`;
+}
+
+async function seedGroomCandidate(
+  database: TestDatabase,
+  input: {
+    keyId: string;
+    clientId: string;
+    content: string;
+    groomAfter: string;
+  }
+): Promise<{ id: string }> {
+  const auth: AuthContext = {
+    ...makeAuthContext(input.keyId),
+    clientId: input.clientId,
+    allowedVisibility: ['personal']
+  };
+
+  const stored = (await storeEntity(database.pool, auth, {
+    type: 'memory',
+    content: input.content,
+    visibility: 'personal',
+    metadata: {
+      memory_role: 'session_context',
+      session_scope: { kind: 'client', client_id: input.clientId },
+      groom_after: input.groomAfter
+    }
+  }))._unsafeUnwrap();
+
+  return { id: stored.id };
 }
 
 describe('pgm-admin CLI', () => {
@@ -1205,14 +1243,20 @@ describe('pgm-admin CLI', () => {
       promoted: number;
       skipped: number;
       mode: string;
+      scope: { kind: string; clientId?: string };
+      olderThan: string;
+      limit: number;
       promotions: Array<{ sourceId: string; durableId: string }>;
     };
-    expect(body).toEqual({
+    expect(body).toMatchObject({
       dryRun: false,
       archived: 1,
       promoted: 0,
       skipped: 0,
       mode: 'archive',
+      olderThan: '7d',
+      limit: 50,
+      scope: { kind: 'client', clientId: 'codex' },
       promotions: []
     });
 
@@ -1223,6 +1267,114 @@ describe('pgm-admin CLI', () => {
     const byId = Object.fromEntries(rows.rows.map((row) => [row.id, row.status]));
     expect(byId[eligible.id]).toBe('archived');
     expect(byId[otherClient.id]).toBeNull();
+  }, 120_000);
+
+  it('memory groom requires exactly one scope flag', async () => {
+    if (!database) {
+      throw new Error('test database not initialized');
+    }
+
+    const databaseUrl = getDatabaseUrl(database);
+
+    const neitherError = await runAdmin(['memory', 'groom', '--dry-run', '--json'], {
+      DATABASE_URL: databaseUrl
+    }).catch((error) => error);
+    expect(getCliErrorOutput(neitherError)).toContain(
+      'Specify exactly one of --client-id <id> or --all-clients'
+    );
+
+    const bothError = await runAdmin(
+      ['memory', 'groom', '--client-id', 'codex', '--all-clients', '--dry-run', '--json'],
+      {
+        DATABASE_URL: databaseUrl
+      }
+    ).catch((error) => error);
+    expect(getCliErrorOutput(bothError)).toContain(
+      'Specify exactly one of --client-id <id> or --all-clients'
+    );
+  }, 120_000);
+
+  it('memory groom dry-run can assess all clients with an explicit age window', async () => {
+    if (!database) {
+      throw new Error('test database not initialized');
+    }
+
+    const databaseUrl = getDatabaseUrl(database);
+    const codexKey = (await createKey(database.pool, {
+      name: `memory-groom-codex-${crypto.randomUUID()}`,
+      clientId: 'codex',
+      scopes: ['read', 'write', 'delete'],
+      allowedVisibility: ['personal']
+    }))._unsafeUnwrap();
+    const talonKey = (await createKey(database.pool, {
+      name: `memory-groom-talon-${crypto.randomUUID()}`,
+      clientId: 'talon',
+      scopes: ['read', 'write', 'delete'],
+      allowedVisibility: ['personal']
+    }))._unsafeUnwrap();
+
+    const codexCandidate = await seedGroomCandidate(database, {
+      keyId: codexKey.record.id,
+      clientId: 'codex',
+      content: 'codex session context eligible for all-client grooming',
+      groomAfter: '2026-01-01T00:00:00.000Z'
+    });
+    const talonCandidate = await seedGroomCandidate(database, {
+      keyId: talonKey.record.id,
+      clientId: 'talon',
+      content: 'talon session context eligible for all-client grooming',
+      groomAfter: '2026-01-01T00:00:00.000Z'
+    });
+
+    const dryRun = await runAdmin(
+      ['memory', 'groom', '--all-clients', '--older-than', '0d', '--dry-run', '--json'],
+      { DATABASE_URL: databaseUrl }
+    );
+    const body = parseJson(dryRun.stdout) as {
+      dryRun: boolean;
+      scope: { kind: string };
+      olderThan: string;
+      eligible: Array<{ id: string; metadata: Record<string, unknown> }>;
+    };
+
+    expect(body).toMatchObject({
+      dryRun: true,
+      scope: { kind: 'all_clients' },
+      olderThan: '0d'
+    });
+    expect(body.eligible.map((entry) => entry.id)).toEqual(
+      expect.arrayContaining([codexCandidate.id, talonCandidate.id])
+    );
+    expect(
+      new Set(
+        body.eligible.map((entry) => {
+          const sessionScope = entry.metadata.session_scope as { client_id?: string } | undefined;
+          return sessionScope?.client_id;
+        })
+      )
+    ).toEqual(new Set(['codex', 'talon']));
+  }, 120_000);
+
+  it('memory groom rejects invalid older-than durations with guidance', async () => {
+    if (!database) {
+      throw new Error('test database not initialized');
+    }
+
+    const databaseUrl = getDatabaseUrl(database);
+
+    const negativeError = await runAdmin(
+      ['memory', 'groom', '--client-id', 'codex', '--older-than', '-1d', '--dry-run', '--json'],
+      { DATABASE_URL: databaseUrl }
+    ).catch((error) => error);
+    expect(getCliErrorOutput(negativeError)).toContain("Invalid duration '-1d'");
+    expect(getCliErrorOutput(negativeError)).toContain("Use format like '30m', '4h', or '7d'");
+
+    const weekError = await runAdmin(
+      ['memory', 'groom', '--client-id', 'codex', '--older-than', '1w', '--dry-run', '--json'],
+      { DATABASE_URL: databaseUrl }
+    ).catch((error) => error);
+    expect(getCliErrorOutput(weekError)).toContain("Invalid duration '1w'");
+    expect(getCliErrorOutput(weekError)).toContain("Use format like '30m', '4h', or '7d'");
   }, 120_000);
 
   describe('purge command', () => {

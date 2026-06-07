@@ -18,7 +18,8 @@ import { findSemanticNeighbors } from '../../services/extraction-service.js';
 import {
   groomSessionContext,
   previewSessionContextGrooming,
-  type CallLlm
+  type CallLlm,
+  type GroomingScope
 } from '../../services/memory-grooming-service.js';
 import { AppError, ErrorCode, toErrorResponse } from '../../util/errors.js';
 import {
@@ -1567,6 +1568,24 @@ export function parseDuration(value: string): string {
   return `${days} days`;
 }
 
+function parseGroomOlderThan(value: string): number {
+  const match = /^(\d+)([mhd])$/.exec(value.trim());
+  if (!match) {
+    throw new Error(`Invalid duration '${value}'. Use format like '30m', '4h', or '7d'.`);
+  }
+
+  const amount = Number.parseInt(match[1]!, 10);
+  const unit = match[2]!;
+  const multiplier =
+    unit === 'm' ? 60_000 : unit === 'h' ? 3_600_000 : 86_400_000;
+
+  return amount * multiplier;
+}
+
+function formatGroomScope(scope: GroomingScope): string {
+  return scope.kind === 'all_clients' ? 'all clients' : `client ${scope.clientId}`;
+}
+
 async function createExtractionCallLlm(purpose: string): Promise<CallLlm> {
   const config = loadConfig();
   if (!config.EXTRACTION_ENABLED) {
@@ -1595,7 +1614,9 @@ const memoryCommand = program
 memoryCommand
   .command('groom')
   .description('Preview, archive, or promote eligible session-context memories')
-  .requiredOption('--client-id <clientId>', 'client id to groom')
+  .option('--client-id <clientId>', 'client id to groom')
+  .option('--all-clients', 'groom all client scopes')
+  .option('--older-than <duration>', 'only groom memories older than this (e.g. 30m, 4h, 7d, 0d)', '7d')
   .option('--mode <mode>', 'archive or promote', 'archive')
   .option('--limit <limit>', 'maximum candidates', '50')
   .option('--dry-run', 'preview without mutating')
@@ -1608,10 +1629,34 @@ memoryCommand
       return;
     }
 
+    const hasClientId = typeof options.clientId === 'string' && options.clientId.trim().length > 0;
+    const hasAllClients = Boolean(options.allClients);
+    if ((hasClientId && hasAllClients) || (!hasClientId && !hasAllClients)) {
+      await handleCliFailure(
+        new Error('Specify exactly one of --client-id <id> or --all-clients'),
+        json
+      );
+      return;
+    }
+
     if (options.mode !== 'archive' && options.mode !== 'promote') {
       await handleCliFailure(new Error('--mode must be archive or promote'), json);
       return;
     }
+
+    const olderThan = options.olderThan ?? '7d';
+    let olderThanMs: number;
+    try {
+      olderThanMs = parseGroomOlderThan(olderThan);
+    } catch (error) {
+      await handleCliFailure(error, json);
+      return;
+    }
+
+    const scope: GroomingScope = hasAllClients
+      ? { kind: 'all_clients' }
+      : { kind: 'client', clientId: options.clientId as string };
+    const scopeLabel = formatGroomScope(scope);
 
     let callLlm: CallLlm | undefined;
     if (options.mode === 'promote' && !options.dryRun) {
@@ -1626,17 +1671,32 @@ memoryCommand
     await runWithPool(json, async (pool) => {
       if (options.dryRun) {
         const preview = await previewSessionContextGrooming(pool, {
-          clientId: options.clientId,
+          scope,
           now: new Date(),
-          limit
+          limit,
+          olderThanMs
         });
         if (preview.isErr()) {
           throw preview.error;
         }
 
+        await appendAuditEntry(pool, {
+          operation: 'memory.groom.dry_run',
+          details: {
+            scope,
+            mode: options.mode,
+            olderThan,
+            limit,
+            eligible: preview.value.eligible.length
+          }
+        });
+
         return json
           ? {
               dryRun: true,
+              scope,
+              olderThan,
+              limit,
               archived: 0,
               promoted: 0,
               skipped: 0,
@@ -1644,17 +1704,18 @@ memoryCommand
               eligible: preview.value.eligible
             }
           : [
-              `Would ${options.mode === 'promote' ? 'assess' : 'archive'} ${preview.value.eligible.length} session-context memories for client ${options.clientId}`
+              `Would ${options.mode === 'promote' ? 'assess' : 'archive'} ${preview.value.eligible.length} session-context memories for ${scopeLabel} older than ${olderThan}`
             ];
       }
 
       const result = await groomSessionContext(pool, {
-        clientId: options.clientId,
+        scope,
         now: new Date(),
         mode: options.mode,
         dryRun: false,
         confirm: Boolean(options.yes),
         limit,
+        olderThanMs,
         callLlm
       });
       if (result.isErr()) {
@@ -1664,21 +1725,28 @@ memoryCommand
       await appendAuditEntry(pool, {
         operation: 'memory.groom',
         details: {
-          clientId: options.clientId,
+          scope,
           archived: result.value.archived,
           promoted: result.value.promoted,
           skipped: result.value.skipped,
           mode: options.mode,
+          olderThan,
           limit
         }
       });
 
       return json
-        ? { ...result.value, mode: options.mode }
+        ? {
+            ...result.value,
+            scope,
+            olderThan,
+            limit,
+            mode: options.mode
+          }
         : [
             options.mode === 'promote'
-              ? `Archived ${result.value.archived} session-context memories for client ${options.clientId} (${result.value.promoted} promoted, ${result.value.skipped} skipped)`
-              : `Archived ${result.value.archived} session-context memories for client ${options.clientId}`
+              ? `Archived ${result.value.archived} session-context memories for ${scopeLabel} older than ${olderThan} (${result.value.promoted} promoted, ${result.value.skipped} skipped)`
+              : `Archived ${result.value.archived} session-context memories for ${scopeLabel} older than ${olderThan}`
           ];
     });
   });

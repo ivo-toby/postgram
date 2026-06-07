@@ -235,6 +235,9 @@ function buildCandidateQuery({
   if (scope.kind === 'client') {
     conditions.push(`metadata #>> '{session_scope,client_id}' = $${paramIndex++}`);
     values.push(scope.clientId);
+  } else {
+    conditions.push(`jsonb_typeof(metadata #> '{session_scope,client_id}') = 'string'`);
+    conditions.push(`NULLIF(BTRIM(metadata #>> '{session_scope,client_id}'), '') IS NOT NULL`);
   }
 
   const ageCutoff = new Date(now.getTime() - filters.olderThanMs);
@@ -268,8 +271,6 @@ function buildCandidateQuery({
     conditions.push(`tags @> $${paramIndex++}::text[]`);
     values.push(filters.tags);
   }
-
-  conditions.push(`metadata #>> '{session_scope,client_id}' IS NOT NULL`);
 
   values.push(filters.limit);
 

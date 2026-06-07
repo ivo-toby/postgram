@@ -471,6 +471,14 @@ describe('REST entity endpoints', () => {
         allowedVisibility: ['shared']
       })
     )._unsafeUnwrap();
+    const emptyVisibilityKey = (
+      await createKey(database.pool, {
+        name: `rest-groom-empty-${crypto.randomUUID()}`,
+        clientId: 'rest-groom-same-client',
+        scopes: ['read', 'write', 'delete'],
+        allowedVisibility: []
+      })
+    )._unsafeUnwrap();
 
     const seedSessionContext = async (body: Record<string, unknown>) => {
       const response = await app.request('/api/memory/session-context', {
@@ -538,6 +546,28 @@ describe('REST entity endpoints', () => {
       })
     ]);
 
+    const emptyPreviewResponse = await app.request('/api/memory/session-context/groom', {
+      method: 'POST',
+      headers: {
+        Authorization: `Bearer ${emptyVisibilityKey.plaintextKey}`,
+        'Content-Type': 'application/json'
+      },
+      body: JSON.stringify({
+        dry_run: true,
+        older_than_ms: 30 * 24 * 60 * 60 * 1000,
+        limit: 10,
+        topic: 'groom-topic',
+        session_id: 'groom-session',
+        tags: ['groom']
+      })
+    });
+    const emptyPreviewBody = (await emptyPreviewResponse.json()) as {
+      eligible: Array<{ id: string; visibility: string }>;
+    };
+
+    expect(emptyPreviewResponse.status).toBe(200);
+    expect(emptyPreviewBody.eligible).toEqual([]);
+
     const noDeleteResponse = await app.request('/api/memory/session-context/groom', {
       method: 'POST',
       headers: {
@@ -585,6 +615,36 @@ describe('REST entity endpoints', () => {
     expect(archiveResponse.status).toBe(200);
     expect(archiveBody).toMatchObject({
       archived: 1,
+      promoted: 0,
+      skipped: 0,
+      mode: 'archive'
+    });
+
+    const emptyArchiveResponse = await app.request('/api/memory/session-context/groom', {
+      method: 'POST',
+      headers: {
+        Authorization: `Bearer ${emptyVisibilityKey.plaintextKey}`,
+        'Content-Type': 'application/json'
+      },
+      body: JSON.stringify({
+        confirmed: true,
+        older_than_ms: 30 * 24 * 60 * 60 * 1000,
+        limit: 10,
+        topic: 'groom-topic',
+        session_id: 'groom-session',
+        tags: ['groom']
+      })
+    });
+    const emptyArchiveBody = (await emptyArchiveResponse.json()) as {
+      archived: number;
+      promoted: number;
+      skipped: number;
+      mode: string;
+    };
+
+    expect(emptyArchiveResponse.status).toBe(200);
+    expect(emptyArchiveBody).toMatchObject({
+      archived: 0,
       promoted: 0,
       skipped: 0,
       mode: 'archive'

@@ -247,7 +247,7 @@ function buildCandidateQuery({
     values.push(scope.clientId);
   }
 
-  if (allowedVisibility?.length) {
+  if (allowedVisibility !== undefined) {
     conditions.push(`visibility = ANY($${paramIndex++}::text[])`);
     values.push(allowedVisibility);
   }

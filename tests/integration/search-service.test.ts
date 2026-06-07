@@ -314,6 +314,73 @@ describe('search-service', () => {
     expect(contents).not.toContain('Talon session context about memory lifecycle roles.');
   }, 120_000);
 
+  it('filters scoped durable memories to the authenticated client while keeping unscoped durable memories global', async () => {
+    if (!database) {
+      throw new Error('test database not initialized');
+    }
+
+    const embeddingService = createEmbeddingService();
+    const auth = makeAuthContext();
+
+    await storeEntity(database.pool, { ...auth, clientId: 'codex' }, {
+      type: 'memory',
+      visibility: 'personal',
+      content: 'Scoped durable memory for Codex only.',
+      metadata: {
+        memory_role: 'durable_memory',
+        session_scope: { kind: 'client', client_id: 'codex' }
+      }
+    });
+
+    await storeEntity(database.pool, { ...auth, clientId: 'talon' }, {
+      type: 'memory',
+      visibility: 'personal',
+      content: 'Global durable memory for everyone.',
+      metadata: {
+        memory_role: 'durable_memory'
+      }
+    });
+
+    await createEnrichmentWorker({
+      pool: database.pool,
+      embeddingService
+    }).runOnce();
+
+    const codexSearch = await searchEntities(
+      database.pool,
+      { ...auth, clientId: 'codex' },
+      {
+        query: 'durable memory',
+        type: 'memory',
+        threshold: 0,
+        limit: 10
+      },
+      { embeddingService }
+    );
+
+    expect(codexSearch.isOk()).toBe(true);
+    const codexContents = codexSearch._unsafeUnwrap().results.map((entry) => entry.entity.content);
+    expect(codexContents).toContain('Scoped durable memory for Codex only.');
+    expect(codexContents).toContain('Global durable memory for everyone.');
+
+    const talonSearch = await searchEntities(
+      database.pool,
+      { ...auth, clientId: 'talon' },
+      {
+        query: 'durable memory',
+        type: 'memory',
+        threshold: 0,
+        limit: 10
+      },
+      { embeddingService }
+    );
+
+    expect(talonSearch.isOk()).toBe(true);
+    const talonContents = talonSearch._unsafeUnwrap().results.map((entry) => entry.entity.content);
+    expect(talonContents).toContain('Global durable memory for everyone.');
+    expect(talonContents).not.toContain('Scoped durable memory for Codex only.');
+  }, 120_000);
+
   it('keeps other clients session context out of graph-expanded search results', async () => {
     if (!database) {
       throw new Error('test database not initialized');
@@ -385,6 +452,79 @@ describe('search-service', () => {
     const relatedIds = durableResult?.related?.map((entry) => entry.entity.id) ?? [];
     expect(relatedIds).toContain(ownContext.id);
     expect(relatedIds).not.toContain(otherContext.id);
+  }, 120_000);
+
+  it('keeps scoped durable memories out of graph-expanded search results for other clients', async () => {
+    if (!database) {
+      throw new Error('test database not initialized');
+    }
+
+    const embeddingService = createEmbeddingService();
+    const auth = makeAuthContext();
+
+    const durable = (await storeEntity(database.pool, auth, {
+      type: 'memory',
+      visibility: 'personal',
+      content: 'Durable graph expansion anchor for durable scope.'
+    }))._unsafeUnwrap();
+
+    const scopedDurable = (await storeEntity(database.pool, { ...auth, clientId: 'codex' }, {
+      type: 'memory',
+      visibility: 'personal',
+      content: 'Codex scoped durable graph neighbor.',
+      metadata: {
+        memory_role: 'durable_memory',
+        session_scope: { kind: 'client', client_id: 'codex' }
+      }
+    }))._unsafeUnwrap();
+
+    const otherScopedDurable = (await storeEntity(database.pool, { ...auth, clientId: 'talon' }, {
+      type: 'memory',
+      visibility: 'personal',
+      content: 'Talon scoped durable graph neighbor.',
+      metadata: {
+        memory_role: 'durable_memory',
+        session_scope: { kind: 'client', client_id: 'talon' }
+      }
+    }))._unsafeUnwrap();
+
+    expect((await createEdge(database.pool, auth, {
+      sourceId: durable.id,
+      targetId: scopedDurable.id,
+      relation: 'related_to'
+    })).isOk()).toBe(true);
+    expect((await createEdge(database.pool, auth, {
+      sourceId: durable.id,
+      targetId: otherScopedDurable.id,
+      relation: 'related_to'
+    })).isOk()).toBe(true);
+
+    await createEnrichmentWorker({
+      pool: database.pool,
+      embeddingService
+    }).runOnce();
+
+    const result = await searchEntities(
+      database.pool,
+      { ...auth, clientId: 'codex' },
+      {
+        query: 'durable graph expansion anchor',
+        type: 'memory',
+        threshold: 0,
+        limit: 10,
+        expandGraph: true
+      },
+      { embeddingService }
+    );
+
+    expect(result.isOk()).toBe(true);
+    const durableResult = result
+      ._unsafeUnwrap()
+      .results.find((entry) => entry.entityId === durable.id);
+    expect(durableResult).toBeDefined();
+    const relatedIds = durableResult?.related?.map((entry) => entry.entity.id) ?? [];
+    expect(relatedIds).toContain(scopedDurable.id);
+    expect(relatedIds).not.toContain(otherScopedDurable.id);
   }, 120_000);
 
   it('excludes archived entities from search by default', async () => {

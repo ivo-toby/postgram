@@ -158,7 +158,7 @@ function taskEntity(overrides: Partial<import('./types.ts').Entity> = {}): impor
 Run:
 
 ```bash
-rtk npm --prefix ui test -- ui/src/lib/api.test.ts
+rtk npm --prefix ui test -- src/lib/api.test.ts
 ```
 
 Expected: FAIL because `client.listTasks`, `client.updateTask`, and `client.completeTask` do not exist.
@@ -233,7 +233,7 @@ Add these methods inside the returned object from `createApiClient`, after `dele
 Run:
 
 ```bash
-rtk npm --prefix ui test -- ui/src/lib/api.test.ts
+rtk npm --prefix ui test -- src/lib/api.test.ts
 ```
 
 Expected: PASS.
@@ -352,7 +352,7 @@ describe('taskModel', () => {
 Run:
 
 ```bash
-rtk npm --prefix ui test -- ui/src/components/tasks/taskModel.test.ts
+rtk npm --prefix ui test -- src/components/tasks/taskModel.test.ts
 ```
 
 Expected: FAIL because `taskModel.ts` does not exist.
@@ -470,7 +470,7 @@ export function moveTaskLocally(
 Run:
 
 ```bash
-rtk npm --prefix ui test -- ui/src/components/tasks/taskModel.test.ts
+rtk npm --prefix ui test -- src/components/tasks/taskModel.test.ts
 ```
 
 Expected: PASS.
@@ -576,7 +576,7 @@ describe('TasksPage', () => {
 Run:
 
 ```bash
-rtk npm --prefix ui test -- ui/src/components/TasksPage.test.tsx
+rtk npm --prefix ui test -- src/components/TasksPage.test.tsx
 ```
 
 Expected: FAIL because `TasksPage.tsx` and task components do not exist.
@@ -863,7 +863,7 @@ import { BOARD_STATUSES, emptyTaskLanes, type BoardStatus, type TaskLanes } from
 Run:
 
 ```bash
-rtk npm --prefix ui test -- ui/src/components/TasksPage.test.tsx
+rtk npm --prefix ui test -- src/components/TasksPage.test.tsx
 ```
 
 Expected: PASS.
@@ -960,7 +960,7 @@ Add tests:
 Run:
 
 ```bash
-rtk npm --prefix ui test -- ui/src/components/TasksPage.test.tsx
+rtk npm --prefix ui test -- src/components/TasksPage.test.tsx
 ```
 
 Expected: FAIL because status changes and schedule dialog are not implemented.
@@ -1119,7 +1119,7 @@ Render the dialog before the closing root `</div>`:
 Run:
 
 ```bash
-rtk npm --prefix ui test -- ui/src/components/TasksPage.test.tsx
+rtk npm --prefix ui test -- src/components/TasksPage.test.tsx
 ```
 
 Expected: PASS.
@@ -1191,7 +1191,7 @@ Add to `ui/src/components/TasksPage.test.tsx`:
 Run:
 
 ```bash
-rtk npm --prefix ui test -- ui/src/components/TasksPage.test.tsx
+rtk npm --prefix ui test -- src/components/TasksPage.test.tsx
 ```
 
 Expected: FAIL because edit drawer is not implemented.
@@ -1426,7 +1426,7 @@ Render before `ScheduleDialog`:
 Run:
 
 ```bash
-rtk npm --prefix ui test -- ui/src/components/TasksPage.test.tsx
+rtk npm --prefix ui test -- src/components/TasksPage.test.tsx
 ```
 
 Expected: PASS.
@@ -1503,7 +1503,7 @@ Add to `ui/src/components/TasksPage.test.tsx`:
 Run:
 
 ```bash
-rtk npm --prefix ui test -- ui/src/components/TasksPage.test.tsx
+rtk npm --prefix ui test -- src/components/TasksPage.test.tsx
 ```
 
 Expected: FAIL because bulk action bar is not implemented.
@@ -1657,7 +1657,7 @@ Change `ScheduleDialog` state handling so it supports either single task or bulk
 Run:
 
 ```bash
-rtk npm --prefix ui test -- ui/src/components/TasksPage.test.tsx
+rtk npm --prefix ui test -- src/components/TasksPage.test.tsx
 ```
 
 Expected: PASS.
@@ -1729,7 +1729,7 @@ describe('TopBar', () => {
 Run:
 
 ```bash
-rtk npm --prefix ui test -- ui/src/components/TasksPage.test.tsx
+rtk npm --prefix ui test -- src/components/TasksPage.test.tsx
 ```
 
 Expected: FAIL because mobile lane tabs do not exist.
@@ -1825,8 +1825,8 @@ Add before the graph layout branch:
 Run:
 
 ```bash
-rtk npm --prefix ui test -- ui/src/components/TasksPage.test.tsx
-rtk npm --prefix ui test -- ui/src/components/TopBar.test.tsx
+rtk npm --prefix ui test -- src/components/TasksPage.test.tsx
+rtk npm --prefix ui test -- src/components/TopBar.test.tsx
 rtk npm --prefix ui run typecheck
 ```
 
@@ -1893,7 +1893,7 @@ Use the Browser plugin against the Vite URL. Check:
 For each defect, make the smallest targeted edit in the relevant component, then rerun:
 
 ```bash
-rtk npm --prefix ui test -- ui/src/components/TasksPage.test.tsx
+rtk npm --prefix ui test -- src/components/TasksPage.test.tsx
 rtk npm --prefix ui run build
 ```
 

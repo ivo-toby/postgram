@@ -7,6 +7,7 @@ import TaskEditDrawer from './tasks/TaskEditDrawer.tsx';
 import TaskLane from './tasks/TaskLane.tsx';
 import {
   BOARD_STATUSES,
+  STATUS_LABELS,
   emptyTaskLanes,
   isBoardStatus,
   moveTaskLocally,
@@ -43,6 +44,7 @@ export default function TasksPage({ api }: Props) {
   const [editError, setEditError] = useState<string | null>(null);
   const [bulkFailureCount, setBulkFailureCount] = useState(0);
   const [pendingBulkSchedule, setPendingBulkSchedule] = useState(false);
+  const [activeMobileStatus, setActiveMobileStatus] = useState<BoardStatus>('inbox');
 
   const selectedTasks = useMemo(() => {
     const allTasks = BOARD_STATUSES.flatMap(status => lanes[status]);
@@ -226,23 +228,47 @@ export default function TasksPage({ api }: Props) {
         }}
       />
 
+      <div
+        role="tablist"
+        aria-label="Task lanes"
+        className="flex gap-1 overflow-x-auto border-b border-gray-800 px-3 py-2 md:hidden"
+      >
+        {BOARD_STATUSES.map(status => (
+          <button
+            key={status}
+            type="button"
+            role="tab"
+            aria-selected={activeMobileStatus === status}
+            onClick={() => setActiveMobileStatus(status)}
+            className={`shrink-0 rounded-md px-3 py-1.5 text-sm transition-colors ${
+              activeMobileStatus === status
+                ? 'bg-blue-600 text-white'
+                : 'bg-gray-900 text-gray-300 hover:bg-gray-800 hover:text-white'
+            }`}
+          >
+            {STATUS_LABELS[status]}
+          </button>
+        ))}
+      </div>
+
       <div className="grid min-h-0 flex-1 grid-cols-1 gap-3 overflow-y-auto p-3 md:grid-cols-5">
         {BOARD_STATUSES.map(status => (
-          <TaskLane
-            key={status}
-            status={status}
-            tasks={lanes[status]}
-            loading={laneState[status].loading}
-            error={laneState[status].error}
-            taskErrors={taskErrors}
-            selectedIds={selectedIds}
-            selectMode={selectMode}
-            onRetry={loadLane}
-            onToggleSelectMode={toggleSelectMode}
-            onToggleSelected={toggleSelected}
-            onEdit={handleEdit}
-            onStatusChange={handleStatusChange}
-          />
+          <div key={status} className={activeMobileStatus === status ? 'block min-h-[50vh]' : 'hidden md:block'}>
+            <TaskLane
+              status={status}
+              tasks={lanes[status]}
+              loading={laneState[status].loading}
+              error={laneState[status].error}
+              taskErrors={taskErrors}
+              selectedIds={selectedIds}
+              selectMode={selectMode}
+              onRetry={loadLane}
+              onToggleSelectMode={toggleSelectMode}
+              onToggleSelected={toggleSelected}
+              onEdit={handleEdit}
+              onStatusChange={handleStatusChange}
+            />
+          </div>
         ))}
       </div>
       <TaskEditDrawer

@@ -58,7 +58,7 @@ describe('TasksPage', () => {
 
   it('shows a lane retry state when a lane fails to load', async () => {
     const api = apiWithTasks({});
-    vi.mocked(api.listTasks).mockImplementation(async ({ status }: { status?: TaskStatus }) => {
+    vi.mocked(api.listTasks).mockImplementation(async ({ status } = {}) => {
       if (status === 'waiting') throw new Error('Waiting failed');
       return { items: [], total: 0, limit: 50, offset: 0 };
     });
@@ -234,5 +234,22 @@ describe('TasksPage', () => {
       status: 'scheduled',
       metadata: { scheduled_for: '2026-06-20' },
     }));
+  });
+
+  it('switches the active mobile lane with status tabs', async () => {
+    const user = userEvent.setup();
+    const api = apiWithTasks({
+      inbox: [task('task-1', 'inbox', 'Inbox task')],
+      waiting: [task('task-2', 'waiting', 'Waiting task')],
+    });
+
+    render(<TasksPage api={api} />);
+
+    expect(await screen.findByText('Inbox task')).toBeInTheDocument();
+    const waitingTab = screen.getByRole('tab', { name: /waiting/i });
+    await user.click(waitingTab);
+
+    expect(waitingTab).toHaveAttribute('aria-selected', 'true');
+    expect(screen.getByText('Waiting task')).toBeInTheDocument();
   });
 });

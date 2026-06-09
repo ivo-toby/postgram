@@ -12,6 +12,7 @@ import EntityDetail from './components/EntityDetail.tsx';
 import EdgeList from './components/EdgeList.tsx';
 import EntityActions from './components/EntityActions.tsx';
 import SearchPage from './components/SearchPage.tsx';
+import TasksPage from './components/TasksPage.tsx';
 import TopBar, { type Page } from './components/TopBar.tsx';
 
 const ProjectorPage = lazy(() => import('./components/ProjectorPage.tsx'));
@@ -31,7 +32,7 @@ export default function App() {
   const [apiKey, setApiKey] = useState<string | null>(() => localStorage.getItem(STORAGE_KEY));
   const [currentPage, setCurrentPage] = useState<Page>(() => {
     const saved = localStorage.getItem(PAGE_STORAGE_KEY);
-    if (saved === 'graph' || saved === 'projector') return saved;
+    if (saved === 'graph' || saved === 'projector' || saved === 'tasks') return saved;
     return 'search';
   });
   const [graphLoaded, setGraphLoaded] = useState(false);
@@ -180,6 +181,17 @@ export default function App() {
           >
             <ProjectorPage api={api} onOpenInGraph={handleOpenInGraph} />
           </Suspense>
+        </div>
+      </div>
+    );
+  }
+
+  if (currentPage === 'tasks') {
+    return (
+      <div className="flex flex-col h-full bg-gray-950">
+        <TopBar onLogout={handleLogout} currentPage={currentPage} onNavigate={handleNavigate} />
+        <div className="flex-1 min-h-0">
+          <TasksPage api={api} />
         </div>
       </div>
     );

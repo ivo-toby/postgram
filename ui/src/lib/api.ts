@@ -1,4 +1,4 @@
-import type { Entity, Edge, SearchResult, QueueStatus, GraphData, ListResponse, EntityEmbedding } from './types.ts';
+import type { Entity, Edge, SearchResult, QueueStatus, GraphData, ListResponse, EntityEmbedding, TaskStatus } from './types.ts';
 
 type ApiClientOptions = {
   apiKey: string;
@@ -104,6 +104,42 @@ export function createApiClient(options: ApiClientOptions) {
 
     deleteEntity(id: string) {
       return r<{ id: string; deleted: true }>(`/api/entities/${id}`, { method: 'DELETE' });
+    },
+
+    listTasks(params: {
+      status?: TaskStatus;
+      context?: string;
+      limit?: number;
+      offset?: number;
+      include_archived?: boolean;
+    } = {}) {
+      const qs = new URLSearchParams();
+      if (params.status) qs.set('status', params.status);
+      if (params.context) qs.set('context', params.context);
+      qs.set('limit', String(params.limit ?? 50));
+      qs.set('offset', String(params.offset ?? 0));
+      if (params.include_archived) qs.set('include_archived', 'true');
+      return r<ListResponse<Entity>>(`/api/tasks?${qs}`);
+    },
+
+    updateTask(id: string, input: {
+      version: number;
+      content?: string;
+      status?: TaskStatus | null;
+      context?: string;
+      due_date?: string;
+      tags?: string[];
+      visibility?: string;
+      metadata?: Record<string, unknown>;
+    }) {
+      return r<{ entity: Entity }>(`/api/tasks/${id}`, { method: 'PATCH', body: input });
+    },
+
+    completeTask(id: string, version: number) {
+      return r<{ entity: Entity }>(`/api/tasks/${id}/complete`, {
+        method: 'POST',
+        body: { version },
+      });
     },
 
     searchEntities(input: {

@@ -75,3 +75,14 @@ export type EntityEmbedding = {
   id: string;
   embedding: number[];
 };
+
+export type TaskStatus = 'inbox' | 'next' | 'waiting' | 'scheduled' | 'someday' | 'done' | 'archived';
+
+export type TaskMetadata = {
+  context?: string;
+  due_date?: string;
+  scheduled_for?: string;
+  priority?: string | number;
+  completed_at?: string;
+  [key: string]: unknown;
+};

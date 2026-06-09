@@ -5,5 +5,6 @@ cli/dist/
 .env
 coverage/
 *.tsbuildinfo
+.worktrees/
 .amo-upload-uuid
 .DS_Store

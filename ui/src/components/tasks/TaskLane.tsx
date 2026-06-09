@@ -8,6 +8,7 @@ type Props = {
   tasks: Entity[];
   loading: boolean;
   error: string | null;
+  taskErrors: Record<string, string>;
   selectedIds: Set<string>;
   selectMode: boolean;
   onRetry: (status: BoardStatus) => void;
@@ -22,6 +23,7 @@ export default function TaskLane({
   tasks,
   loading,
   error,
+  taskErrors,
   selectedIds,
   selectMode,
   onRetry,
@@ -61,6 +63,7 @@ export default function TaskLane({
           <TaskCard
             key={task.id}
             task={task}
+            error={taskErrors[task.id] || null}
             selected={selectedIds.has(task.id)}
             selectMode={selectMode}
             onToggleSelected={onToggleSelected}

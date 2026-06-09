@@ -1,8 +1,17 @@
 import { useCallback, useEffect, useMemo, useState } from 'react';
 import type { ApiClient } from '../lib/api.ts';
 import type { Entity, TaskStatus } from '../lib/types.ts';
+import ScheduleDialog from './tasks/ScheduleDialog.tsx';
 import TaskLane from './tasks/TaskLane.tsx';
-import { BOARD_STATUSES, emptyTaskLanes, type BoardStatus, type TaskLanes } from './tasks/taskModel.ts';
+import {
+  BOARD_STATUSES,
+  emptyTaskLanes,
+  isBoardStatus,
+  moveTaskLocally,
+  taskTitle,
+  type BoardStatus,
+  type TaskLanes,
+} from './tasks/taskModel.ts';
 
 type Props = {
   api: ApiClient;
@@ -25,6 +34,8 @@ export default function TasksPage({ api }: Props) {
   const [laneState, setLaneState] = useState<LaneState>(() => initialLaneState());
   const [selectedIds, setSelectedIds] = useState<Set<string>>(new Set());
   const [selectMode, setSelectMode] = useState(false);
+  const [pendingSchedule, setPendingSchedule] = useState<{ task: Entity } | null>(null);
+  const [taskErrors, setTaskErrors] = useState<Record<string, string>>({});
 
   const selectedTasks = useMemo(() => {
     const allTasks = BOARD_STATUSES.flatMap(status => lanes[status]);
@@ -64,13 +75,55 @@ export default function TasksPage({ api }: Props) {
     });
   }, []);
 
+  const applyUpdatedTask = useCallback((task: Entity, updated: Entity, targetStatus: TaskStatus) => {
+    const fromStatus = isBoardStatus(task.status) ? task.status : null;
+    setLanes(prev => moveTaskLocally(prev, updated, fromStatus, targetStatus));
+    setSelectedIds(prev => {
+      const next = new Set(prev);
+      next.delete(task.id);
+      return next;
+    });
+  }, []);
+
+  const updateTaskStatus = useCallback(async (task: Entity, status: TaskStatus, scheduledFor?: string) => {
+    setTaskErrors(prev => ({ ...prev, [task.id]: '' }));
+    try {
+      if (status === 'done') {
+        const result = await api.completeTask(task.id, task.version);
+        applyUpdatedTask(task, result.entity, status);
+        return;
+      }
+
+      const metadata = {
+        ...task.metadata,
+        ...(scheduledFor ? { scheduled_for: scheduledFor } : {}),
+      };
+      const result = await api.updateTask(task.id, {
+        version: task.version,
+        status,
+        metadata,
+      });
+      applyUpdatedTask(task, result.entity, status);
+    } catch (error) {
+      setTaskErrors(prev => ({
+        ...prev,
+        [task.id]: error instanceof Error ? error.message : 'Task update failed',
+      }));
+      if (isBoardStatus(task.status)) void loadLane(task.status);
+    }
+  }, [api, applyUpdatedTask, loadLane]);
+
   const handleEdit = useCallback((_task: Entity) => {
     return undefined;
   }, []);
 
-  const handleStatusChange = useCallback(async (_task: Entity, _status: TaskStatus) => {
-    return undefined;
-  }, []);
+  const handleStatusChange = useCallback(async (task: Entity, status: TaskStatus) => {
+    if (status === 'scheduled') {
+      setPendingSchedule({ task });
+      return;
+    }
+    await updateTaskStatus(task, status);
+  }, [updateTaskStatus]);
 
   return (
     <div className="flex h-full min-h-0 flex-col bg-gray-950 text-gray-100">
@@ -87,6 +140,7 @@ export default function TasksPage({ api }: Props) {
             tasks={lanes[status]}
             loading={laneState[status].loading}
             error={laneState[status].error}
+            taskErrors={taskErrors}
             selectedIds={selectedIds}
             selectMode={selectMode}
             onRetry={loadLane}
@@ -97,6 +151,16 @@ export default function TasksPage({ api }: Props) {
           />
         ))}
       </div>
+      <ScheduleDialog
+        open={Boolean(pendingSchedule)}
+        title={pendingSchedule ? `Schedule ${taskTitle(pendingSchedule.task)}` : 'Schedule task'}
+        onCancel={() => setPendingSchedule(null)}
+        onConfirm={date => {
+          const task = pendingSchedule?.task;
+          setPendingSchedule(null);
+          if (task) void updateTaskStatus(task, 'scheduled', date);
+        }}
+      />
     </div>
   );
 }

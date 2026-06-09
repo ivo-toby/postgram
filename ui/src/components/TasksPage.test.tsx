@@ -1,5 +1,6 @@
 import { describe, expect, it, vi } from 'vitest';
 import { render, screen, waitFor } from '@testing-library/react';
+import userEvent from '@testing-library/user-event';
 import type { ApiClient } from '../lib/api.ts';
 import type { Entity, TaskStatus } from '../lib/types.ts';
 import TasksPage from './TasksPage.tsx';
@@ -66,5 +67,62 @@ describe('TasksPage', () => {
 
     await waitFor(() => expect(screen.getByText('Waiting failed')).toBeInTheDocument());
     expect(screen.getByRole('button', { name: /retry waiting/i })).toBeInTheDocument();
+  });
+
+  it('moves an inbox task to next with one visible button', async () => {
+    const user = userEvent.setup();
+    const api = apiWithTasks({ inbox: [task('task-1', 'inbox', 'Clarify inbox item')] });
+    vi.mocked(api.updateTask).mockResolvedValueOnce({
+      entity: { ...task('task-1', 'next', 'Clarify inbox item'), version: 2 },
+    });
+
+    render(<TasksPage api={api} />);
+
+    await screen.findByText('Clarify inbox item');
+    await user.click(screen.getByRole('button', { name: 'Next' }));
+
+    expect(api.updateTask).toHaveBeenCalledWith('task-1', expect.objectContaining({ version: 1, status: 'next' }));
+    expect(await screen.findByRole('heading', { level: 2, name: /next/i })).toBeInTheDocument();
+  });
+
+  it('completes a task through the complete endpoint', async () => {
+    const user = userEvent.setup();
+    const api = apiWithTasks({ next: [task('task-1', 'next', 'Finish work')] });
+    vi.mocked(api.completeTask).mockResolvedValueOnce({
+      entity: { ...task('task-1', 'done', 'Finish work'), version: 2 },
+    });
+
+    render(<TasksPage api={api} />);
+
+    await screen.findByText('Finish work');
+    await user.click(screen.getByRole('button', { name: 'Done' }));
+
+    expect(api.completeTask).toHaveBeenCalledWith('task-1', 1);
+    await waitFor(() => expect(screen.queryByText('Finish work')).not.toBeInTheDocument());
+  });
+
+  it('schedules a task with a date-only picker', async () => {
+    const user = userEvent.setup();
+    const api = apiWithTasks({ inbox: [task('task-1', 'inbox', 'Schedule me')] });
+    vi.mocked(api.updateTask).mockResolvedValueOnce({
+      entity: {
+        ...task('task-1', 'scheduled', 'Schedule me'),
+        version: 2,
+        metadata: { scheduled_for: '2026-06-12' },
+      },
+    });
+
+    render(<TasksPage api={api} />);
+
+    await screen.findByText('Schedule me');
+    await user.click(screen.getByRole('button', { name: 'Schedule' }));
+    await user.type(screen.getByLabelText(/schedule date/i), '2026-06-12');
+    await user.click(screen.getByRole('button', { name: /apply schedule/i }));
+
+    expect(api.updateTask).toHaveBeenCalledWith('task-1', expect.objectContaining({
+      version: 1,
+      status: 'scheduled',
+      metadata: { scheduled_for: '2026-06-12' },
+    }));
   });
 });

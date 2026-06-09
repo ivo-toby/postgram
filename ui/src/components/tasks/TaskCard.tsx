@@ -3,6 +3,7 @@ import { getAvailableStatusActions, getTaskMetadata, taskTitle } from './taskMod
 
 type Props = {
   task: Entity;
+  error: string | null;
   selected: boolean;
   selectMode: boolean;
   onToggleSelected: (taskId: string) => void;
@@ -10,7 +11,7 @@ type Props = {
   onStatusChange: (task: Entity, status: TaskStatus) => void;
 };
 
-export default function TaskCard({ task, selected, selectMode, onToggleSelected, onEdit, onStatusChange }: Props) {
+export default function TaskCard({ task, error, selected, selectMode, onToggleSelected, onEdit, onStatusChange }: Props) {
   const metadata = getTaskMetadata(task);
   const actions = getAvailableStatusActions(task).slice(0, 5);
 
@@ -68,6 +69,12 @@ export default function TaskCard({ task, selected, selectMode, onToggleSelected,
             Edit
           </button>
         </div>
+      )}
+
+      {error && (
+        <p className="mt-2 rounded-md border border-red-500/30 bg-red-500/10 px-2 py-1 text-xs text-red-300">
+          {error}
+        </p>
       )}
     </article>
   );

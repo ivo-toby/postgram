@@ -125,4 +125,42 @@ describe('TasksPage', () => {
       metadata: { scheduled_for: '2026-06-12' },
     }));
   });
+
+  it('edits task fields with a focused drawer and segmented status control', async () => {
+    const user = userEvent.setup();
+    const api = apiWithTasks({
+      inbox: [task('task-1', 'inbox', 'Original task')],
+    });
+    vi.mocked(api.updateTask).mockResolvedValueOnce({
+      entity: {
+        ...task('task-1', 'waiting', 'Updated task'),
+        version: 2,
+        metadata: { context: '@desk', due_date: '2026-06-15', priority: 'high' },
+        tags: ['focus'],
+      },
+    });
+
+    render(<TasksPage api={api} />);
+
+    await screen.findByText('Original task');
+    await user.click(screen.getByRole('button', { name: 'Edit' }));
+    await user.clear(screen.getByLabelText(/task content/i));
+    await user.type(screen.getByLabelText(/task content/i), 'Updated task');
+    await user.click(screen.getByRole('button', { name: 'Set status Waiting' }));
+    await user.type(screen.getByLabelText(/^context$/i), '@desk');
+    await user.type(screen.getByLabelText(/due date/i), '2026-06-15');
+    await user.type(screen.getByLabelText(/priority/i), 'high');
+    await user.type(screen.getByLabelText(/tags/i), 'focus');
+    await user.click(screen.getByRole('button', { name: /save task/i }));
+
+    expect(api.updateTask).toHaveBeenCalledWith('task-1', expect.objectContaining({
+      version: 1,
+      content: 'Updated task',
+      status: 'waiting',
+      context: '@desk',
+      due_date: '2026-06-15',
+      tags: ['focus'],
+      metadata: expect.objectContaining({ priority: 'high' }),
+    }));
+  });
 });

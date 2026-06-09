@@ -2,6 +2,7 @@ import { useCallback, useEffect, useMemo, useState } from 'react';
 import type { ApiClient } from '../lib/api.ts';
 import type { Entity, TaskStatus } from '../lib/types.ts';
 import ScheduleDialog from './tasks/ScheduleDialog.tsx';
+import TaskEditDrawer from './tasks/TaskEditDrawer.tsx';
 import TaskLane from './tasks/TaskLane.tsx';
 import {
   BOARD_STATUSES,
@@ -36,6 +37,9 @@ export default function TasksPage({ api }: Props) {
   const [selectMode, setSelectMode] = useState(false);
   const [pendingSchedule, setPendingSchedule] = useState<{ task: Entity } | null>(null);
   const [taskErrors, setTaskErrors] = useState<Record<string, string>>({});
+  const [editingTask, setEditingTask] = useState<Entity | null>(null);
+  const [editSaving, setEditSaving] = useState(false);
+  const [editError, setEditError] = useState<string | null>(null);
 
   const selectedTasks = useMemo(() => {
     const allTasks = BOARD_STATUSES.flatMap(status => lanes[status]);
@@ -113,8 +117,9 @@ export default function TasksPage({ api }: Props) {
     }
   }, [api, applyUpdatedTask, loadLane]);
 
-  const handleEdit = useCallback((_task: Entity) => {
-    return undefined;
+  const handleEdit = useCallback((task: Entity) => {
+    setEditingTask(task);
+    setEditError(null);
   }, []);
 
   const handleStatusChange = useCallback(async (task: Entity, status: TaskStatus) => {
@@ -124,6 +129,45 @@ export default function TasksPage({ api }: Props) {
     }
     await updateTaskStatus(task, status);
   }, [updateTaskStatus]);
+
+  const handleSaveEdit = useCallback(async (input: {
+    content: string;
+    status: TaskStatus;
+    context: string;
+    dueDate: string;
+    scheduledFor: string;
+    priority: string;
+    tags: string[];
+    visibility: string;
+  }) => {
+    if (!editingTask) return;
+    setEditSaving(true);
+    setEditError(null);
+    try {
+      const metadata = {
+        ...editingTask.metadata,
+        ...(input.scheduledFor ? { scheduled_for: input.scheduledFor } : {}),
+        ...(input.priority ? { priority: input.priority } : {}),
+      };
+      const result = await api.updateTask(editingTask.id, {
+        version: editingTask.version,
+        content: input.content,
+        status: input.status,
+        context: input.context,
+        due_date: input.dueDate,
+        tags: input.tags,
+        visibility: input.visibility,
+        metadata,
+      });
+      applyUpdatedTask(editingTask, result.entity, input.status);
+      setEditingTask(null);
+    } catch (error) {
+      setEditError(error instanceof Error ? error.message : 'Failed to save task');
+      if (isBoardStatus(editingTask.status)) void loadLane(editingTask.status);
+    } finally {
+      setEditSaving(false);
+    }
+  }, [api, applyUpdatedTask, editingTask, loadLane]);
 
   return (
     <div className="flex h-full min-h-0 flex-col bg-gray-950 text-gray-100">
@@ -151,6 +195,13 @@ export default function TasksPage({ api }: Props) {
           />
         ))}
       </div>
+      <TaskEditDrawer
+        task={editingTask}
+        saving={editSaving}
+        error={editError}
+        onCancel={() => setEditingTask(null)}
+        onSave={handleSaveEdit}
+      />
       <ScheduleDialog
         open={Boolean(pendingSchedule)}
         title={pendingSchedule ? `Schedule ${taskTitle(pendingSchedule.task)}` : 'Schedule task'}

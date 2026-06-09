@@ -1,3 +1,15 @@
+## [1.32.0](https://github.com/ivo-toby/postgram/compare/cli-v1.31.0...cli-v1.32.0) (2026-06-09)
+
+### Features
+
+* **ui:** add bulk task transitions ([46a84f9](https://github.com/ivo-toby/postgram/commit/46a84f9904de7fc768a6108a985676cffa539a64))
+* **ui:** add direct task status actions ([383be74](https://github.com/ivo-toby/postgram/commit/383be74d12207d9397a5c8851660c7665dd2d5d5))
+* **ui:** add focused task editing drawer ([ba3f380](https://github.com/ivo-toby/postgram/commit/ba3f380ac59fb3525adbfbe55dba337e35d579b0))
+* **ui:** add GTD task model helpers ([1407c6f](https://github.com/ivo-toby/postgram/commit/1407c6f97a7da8ca6bcd4cd829ce549bf09405f7))
+* **ui:** add responsive tasks navigation ([314c362](https://github.com/ivo-toby/postgram/commit/314c3626ce746b684219ac0cc0c52113a9f8ab84))
+* **ui:** add task API helpers ([d947f36](https://github.com/ivo-toby/postgram/commit/d947f36ca50f6cf092302d6b94fcb3599ab07f12))
+* **ui:** render GTD task board ([c5e57c9](https://github.com/ivo-toby/postgram/commit/c5e57c92238714e2124ef14c61ba923004d9d74e))
+
 ## [1.31.0](https://github.com/ivo-toby/postgram/compare/cli-v1.30.1...cli-v1.31.0) (2026-06-07)
 
 ### Features

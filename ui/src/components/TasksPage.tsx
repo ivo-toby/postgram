@@ -1,6 +1,7 @@
 import { useCallback, useEffect, useMemo, useState } from 'react';
 import type { ApiClient } from '../lib/api.ts';
 import type { Entity, TaskStatus } from '../lib/types.ts';
+import BulkActionBar from './tasks/BulkActionBar.tsx';
 import ScheduleDialog from './tasks/ScheduleDialog.tsx';
 import TaskEditDrawer from './tasks/TaskEditDrawer.tsx';
 import TaskLane from './tasks/TaskLane.tsx';
@@ -40,6 +41,8 @@ export default function TasksPage({ api }: Props) {
   const [editingTask, setEditingTask] = useState<Entity | null>(null);
   const [editSaving, setEditSaving] = useState(false);
   const [editError, setEditError] = useState<string | null>(null);
+  const [bulkFailureCount, setBulkFailureCount] = useState(0);
+  const [pendingBulkSchedule, setPendingBulkSchedule] = useState(false);
 
   const selectedTasks = useMemo(() => {
     const allTasks = BOARD_STATUSES.flatMap(status => lanes[status]);
@@ -169,12 +172,59 @@ export default function TasksPage({ api }: Props) {
     }
   }, [api, applyUpdatedTask, editingTask, loadLane]);
 
+  const applyBulkStatus = useCallback(async (status: TaskStatus, scheduledFor?: string) => {
+    setBulkFailureCount(0);
+    let failures = 0;
+    const failedIds = new Set<string>();
+
+    for (const task of selectedTasks) {
+      try {
+        if (status === 'done') {
+          const result = await api.completeTask(task.id, task.version);
+          applyUpdatedTask(task, result.entity, status);
+        } else {
+          const result = await api.updateTask(task.id, {
+            version: task.version,
+            status,
+            metadata: {
+              ...task.metadata,
+              ...(scheduledFor ? { scheduled_for: scheduledFor } : {}),
+            },
+          });
+          applyUpdatedTask(task, result.entity, status);
+        }
+      } catch {
+        failures += 1;
+        failedIds.add(task.id);
+        if (isBoardStatus(task.status)) void loadLane(task.status);
+      }
+    }
+
+    setSelectedIds(failedIds);
+    setBulkFailureCount(failures);
+  }, [api, applyUpdatedTask, loadLane, selectedTasks]);
+
   return (
     <div className="flex h-full min-h-0 flex-col bg-gray-950 text-gray-100">
       <div className="flex items-center gap-3 border-b border-gray-800 px-4 py-3">
         <h1 className="text-base font-semibold text-white">Tasks</h1>
         <span className="text-xs text-gray-500">{selectedTasks.length} selected</span>
       </div>
+      <BulkActionBar
+        count={selectedIds.size}
+        failureCount={bulkFailureCount}
+        onClear={() => {
+          setSelectedIds(new Set());
+          setBulkFailureCount(0);
+        }}
+        onMove={status => {
+          if (status === 'scheduled') {
+            setPendingBulkSchedule(true);
+            return;
+          }
+          void applyBulkStatus(status);
+        }}
+      />
 
       <div className="grid min-h-0 flex-1 grid-cols-1 gap-3 overflow-y-auto p-3 md:grid-cols-5">
         {BOARD_STATUSES.map(status => (
@@ -203,13 +253,21 @@ export default function TasksPage({ api }: Props) {
         onSave={handleSaveEdit}
       />
       <ScheduleDialog
-        open={Boolean(pendingSchedule)}
-        title={pendingSchedule ? `Schedule ${taskTitle(pendingSchedule.task)}` : 'Schedule task'}
-        onCancel={() => setPendingSchedule(null)}
+        open={Boolean(pendingSchedule) || pendingBulkSchedule}
+        title={pendingBulkSchedule ? 'Schedule selected tasks' : pendingSchedule ? `Schedule ${taskTitle(pendingSchedule.task)}` : 'Schedule task'}
+        onCancel={() => {
+          setPendingSchedule(null);
+          setPendingBulkSchedule(false);
+        }}
         onConfirm={date => {
           const task = pendingSchedule?.task;
           setPendingSchedule(null);
-          if (task) void updateTaskStatus(task, 'scheduled', date);
+          setPendingBulkSchedule(false);
+          if (task) {
+            void updateTaskStatus(task, 'scheduled', date);
+            return;
+          }
+          void applyBulkStatus('scheduled', date);
         }}
       />
     </div>

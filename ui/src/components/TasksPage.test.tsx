@@ -163,4 +163,76 @@ describe('TasksPage', () => {
       metadata: expect.objectContaining({ priority: 'high' }),
     }));
   });
+
+  it('bulk moves selected tasks to another status', async () => {
+    const user = userEvent.setup();
+    const api = apiWithTasks({
+      inbox: [task('task-1', 'inbox', 'One'), task('task-2', 'inbox', 'Two')],
+    });
+    vi.mocked(api.updateTask)
+      .mockResolvedValueOnce({ entity: { ...task('task-1', 'next', 'One'), version: 2 } })
+      .mockResolvedValueOnce({ entity: { ...task('task-2', 'next', 'Two'), version: 2 } });
+
+    render(<TasksPage api={api} />);
+
+    await screen.findByText('One');
+    await user.click(screen.getAllByRole('button', { name: 'Select' })[0]!);
+    await user.click(screen.getByLabelText('Select One'));
+    await user.click(screen.getByLabelText('Select Two'));
+    await user.click(screen.getByRole('button', { name: /bulk next/i }));
+
+    expect(api.updateTask).toHaveBeenCalledTimes(2);
+    expect(api.updateTask).toHaveBeenNthCalledWith(1, 'task-1', expect.objectContaining({ status: 'next' }));
+    expect(api.updateTask).toHaveBeenNthCalledWith(2, 'task-2', expect.objectContaining({ status: 'next' }));
+  });
+
+  it('keeps failed bulk updates selected and reports a failure count', async () => {
+    const user = userEvent.setup();
+    const api = apiWithTasks({
+      inbox: [task('task-1', 'inbox', 'One'), task('task-2', 'inbox', 'Two')],
+    });
+    vi.mocked(api.updateTask)
+      .mockResolvedValueOnce({ entity: { ...task('task-1', 'next', 'One'), version: 2 } })
+      .mockRejectedValueOnce(new Error('Conflict'));
+
+    render(<TasksPage api={api} />);
+
+    await screen.findByText('One');
+    await user.click(screen.getAllByRole('button', { name: 'Select' })[0]!);
+    await user.click(screen.getByLabelText('Select One'));
+    await user.click(screen.getByLabelText('Select Two'));
+    await user.click(screen.getByRole('button', { name: /bulk next/i }));
+
+    expect(await screen.findByText('1 task failed to update')).toBeInTheDocument();
+    expect(screen.getByLabelText('Select Two')).toBeChecked();
+  });
+
+  it('bulk schedules selected tasks with one date', async () => {
+    const user = userEvent.setup();
+    const api = apiWithTasks({
+      inbox: [task('task-1', 'inbox', 'One'), task('task-2', 'inbox', 'Two')],
+    });
+    vi.mocked(api.updateTask)
+      .mockResolvedValueOnce({ entity: { ...task('task-1', 'scheduled', 'One'), version: 2, metadata: { scheduled_for: '2026-06-20' } } })
+      .mockResolvedValueOnce({ entity: { ...task('task-2', 'scheduled', 'Two'), version: 2, metadata: { scheduled_for: '2026-06-20' } } });
+
+    render(<TasksPage api={api} />);
+
+    await screen.findByText('One');
+    await user.click(screen.getAllByRole('button', { name: 'Select' })[0]!);
+    await user.click(screen.getByLabelText('Select One'));
+    await user.click(screen.getByLabelText('Select Two'));
+    await user.click(screen.getByRole('button', { name: /bulk schedule/i }));
+    await user.type(screen.getByLabelText(/schedule date/i), '2026-06-20');
+    await user.click(screen.getByRole('button', { name: /apply schedule/i }));
+
+    expect(api.updateTask).toHaveBeenNthCalledWith(1, 'task-1', expect.objectContaining({
+      status: 'scheduled',
+      metadata: { scheduled_for: '2026-06-20' },
+    }));
+    expect(api.updateTask).toHaveBeenNthCalledWith(2, 'task-2', expect.objectContaining({
+      status: 'scheduled',
+      metadata: { scheduled_for: '2026-06-20' },
+    }));
+  });
 });

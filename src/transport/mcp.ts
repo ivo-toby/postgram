@@ -73,6 +73,47 @@ const ownerSchema = z.string().trim().min(1);
 const memoryRoleSchema = z.enum(['durable_memory', 'session_context']);
 const groomSessionContextModeSchema = z.enum(['dry_run', 'archive']);
 
+const numericSchema = (schema: z.ZodNumber = z.number()) =>
+  z.preprocess((value) => {
+    if (typeof value !== 'string') {
+      return value;
+    }
+
+    const trimmed = value.trim();
+    if (trimmed === '') {
+      return value;
+    }
+
+    const parsed = Number(trimmed);
+    return Number.isFinite(parsed) ? parsed : value;
+  }, schema);
+
+const boolishSchema = () =>
+  z.preprocess((value) => {
+    if (value === 'true') {
+      return true;
+    }
+
+    if (value === 'false') {
+      return false;
+    }
+
+    return value;
+  }, z.boolean());
+
+const stringArraySchema = () =>
+  z.preprocess((value) => {
+    if (typeof value !== 'string') {
+      return value;
+    }
+
+    try {
+      return JSON.parse(value) as unknown;
+    } catch {
+      return value;
+    }
+  }, z.array(z.string()));
+
 const statusSchema = z.enum([
   'active',
   'done',
@@ -84,15 +125,13 @@ const statusSchema = z.enum([
   'someday'
 ]);
 
-const fullResponseSchema = z
-  .boolean()
+const fullResponseSchema = boolishSchema()
   .optional()
   .describe(
     'If true, return the full legacy JSON response. Defaults to compact output for lower agent token use.'
   );
 
-const toonSchema = z
-  .boolean()
+const toonSchema = boolishSchema()
   .optional()
   .describe(
     'If true, return compact TOON text output instead of JSON to reduce agent token use. TOON is applied only in the MCP layer; the API response remains JSON.'
@@ -278,10 +317,10 @@ function createSessionServer(
         visibility: visibilitySchema.optional(),
         owner: ownerSchema.optional(),
         status: statusSchema.optional(),
-        tags: z.array(z.string()).optional(),
+        tags: stringArraySchema().optional(),
         source: z.string().optional(),
         metadata: z.record(z.unknown()).optional(),
-        skip_extraction: z.boolean().optional(),
+        skip_extraction: boolishSchema().optional(),
         full_response: fullResponseSchema
       }
     },
@@ -318,8 +357,8 @@ function createSessionServer(
         session_id: z.string().optional(),
         agent_id: z.string().optional(),
         topic: z.string().optional(),
-        tags: z.array(z.string()).optional(),
-        promotable: z.boolean().optional(),
+        tags: stringArraySchema().optional(),
+        promotable: boolishSchema().optional(),
         groom_after: z.string().optional(),
         expires_at: z.string().optional(),
         full_response: fullResponseSchema
@@ -355,10 +394,10 @@ function createSessionServer(
       inputSchema: {
         mode: groomSessionContextModeSchema.optional(),
         older_than: z.string().optional(),
-        limit: z.number().int().positive().optional(),
+        limit: numericSchema(z.number().int().positive()).optional(),
         topic: z.string().optional(),
         session_id: z.string().optional(),
-        tags: z.array(z.string()).optional()
+        tags: stringArraySchema().optional()
       }
     },
     async (args) => {
@@ -490,14 +529,14 @@ function createSessionServer(
       inputSchema: {
         query: z.string().min(1),
         type: entityTypeSchema.optional(),
-        tags: z.array(z.string()).optional(),
+        tags: stringArraySchema().optional(),
         visibility: visibilitySchema.optional(),
         owner: ownerSchema.optional(),
-        limit: z.number().int().positive().optional(),
-        threshold: z.number().min(0).max(1).optional(),
-        recency_weight: z.number().min(0).optional(),
-        expand_graph: z.boolean().optional(),
-        include_archived: z.boolean().optional(),
+        limit: numericSchema(z.number().int().positive()).optional(),
+        threshold: numericSchema(z.number().min(0).max(1)).optional(),
+        recency_weight: numericSchema(z.number().min(0)).optional(),
+        expand_graph: boolishSchema().optional(),
+        include_archived: boolishSchema().optional(),
         memory_role: memoryRoleSchema.optional(),
         full_response: fullResponseSchema,
         toon: toonSchema
@@ -556,11 +595,11 @@ function createSessionServer(
       description: 'Update an entity',
       inputSchema: {
         id: z.string(),
-        version: z.number().int().positive(),
+        version: numericSchema(z.number().int().positive()),
         content: z.string().nullable().optional(),
         visibility: visibilitySchema.optional(),
         status: statusSchema.nullable().optional(),
-        tags: z.array(z.string()).optional(),
+        tags: stringArraySchema().optional(),
         source: z.string().nullable().optional(),
         metadata: z.record(z.unknown()).optional(),
         full_response: fullResponseSchema
@@ -607,7 +646,7 @@ function createSessionServer(
         context: z.string().optional(),
         status: statusSchema.optional(),
         due_date: z.string().optional(),
-        tags: z.array(z.string()).optional(),
+        tags: stringArraySchema().optional(),
         visibility: visibilitySchema.optional(),
         metadata: z.record(z.unknown()).optional(),
         full_response: fullResponseSchema
@@ -639,9 +678,9 @@ function createSessionServer(
       inputSchema: {
         status: statusSchema.optional(),
         context: z.string().optional(),
-        limit: z.number().int().positive().optional(),
-        offset: z.number().int().nonnegative().optional(),
-        include_archived: z.boolean().optional(),
+        limit: numericSchema(z.number().int().positive()).optional(),
+        offset: numericSchema(z.number().int().nonnegative()).optional(),
+        include_archived: boolishSchema().optional(),
         full_response: fullResponseSchema,
         toon: toonSchema
       }
@@ -683,12 +722,12 @@ function createSessionServer(
       description: 'Update a task',
       inputSchema: {
         id: z.string(),
-        version: z.number().int().positive(),
+        version: numericSchema(z.number().int().positive()),
         content: z.string().optional(),
         context: z.string().optional(),
         status: statusSchema.nullable().optional(),
         due_date: z.string().optional(),
-        tags: z.array(z.string()).optional(),
+        tags: stringArraySchema().optional(),
         visibility: visibilitySchema.optional(),
         metadata: z.record(z.unknown()).optional(),
         full_response: fullResponseSchema
@@ -721,7 +760,7 @@ function createSessionServer(
       description: 'Complete a task',
       inputSchema: {
         id: z.string(),
-        version: z.number().int().positive(),
+        version: numericSchema(z.number().int().positive()),
         full_response: fullResponseSchema
       }
     },
@@ -747,7 +786,7 @@ function createSessionServer(
         source_id: z.string().min(1),
         target_id: z.string().min(1),
         relation: z.string().min(1),
-        confidence: z.number().min(0).max(1).optional(),
+        confidence: numericSchema(z.number().min(0).max(1)).optional(),
         metadata: z.record(z.unknown()).optional(),
         full_response: fullResponseSchema
       }
@@ -800,8 +839,8 @@ function createSessionServer(
         'Get the graph neighborhood of an entity — connected entities up to N hops',
       inputSchema: {
         entity_id: z.string().min(1),
-        depth: z.number().int().min(1).max(3).optional(),
-        relation_types: z.array(z.string()).optional(),
+        depth: numericSchema(z.number().int().min(1).max(3)).optional(),
+        relation_types: stringArraySchema().optional(),
         owner: ownerSchema.optional(),
         full_response: fullResponseSchema,
         toon: toonSchema
@@ -851,17 +890,12 @@ function createSessionServer(
       description:
         'Get the enrichment and extraction queue status — useful for checking whether stored entities have been embedded and knowledge graph edges extracted. Set include_failures=true to see the most recent failure messages.',
       inputSchema: {
-        include_failures: z
-          .boolean()
+        include_failures: boolishSchema()
           .optional()
           .describe(
             'If true, return the most recent failed entities with their error messages'
           ),
-        failure_limit: z
-          .number()
-          .int()
-          .min(1)
-          .max(100)
+        failure_limit: numericSchema(z.number().int().min(1).max(100))
           .optional()
           .describe(
             'Maximum number of failures to return (default 20, max 100)'

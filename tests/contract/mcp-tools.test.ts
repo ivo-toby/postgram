@@ -1042,6 +1042,175 @@ describe('MCP tools', () => {
     }
   }, 120_000);
 
+  it('coerces stringified scalar and string-array MCP arguments', async () => {
+    const { client, close } = await createClient();
+
+    try {
+      const stored = extractStructuredPayload(
+        (await client.callTool({
+          name: 'store',
+          arguments: {
+            type: 'memory',
+            content: 'string coerced mcp arguments should work',
+            tags: '["coerced","mcp"]',
+            skip_extraction: 'true',
+            full_response: 'true'
+          }
+        })) as ToolResultPayload
+      ) as {
+        entity: {
+          id: string;
+          tags: string[];
+        };
+      };
+
+      expect(stored.entity.tags).toEqual(['coerced', 'mcp']);
+
+      await createEnrichmentWorker({
+        pool: database!.pool,
+        embeddingService
+      }).runOnce();
+
+      const search = extractStructuredPayload(
+        (await client.callTool({
+          name: 'search',
+          arguments: {
+            query: 'string coerced arguments',
+            tags: '["coerced"]',
+            limit: '3',
+            threshold: '0',
+            recency_weight: '0',
+            expand_graph: 'false',
+            include_archived: 'false',
+            full_response: 'false',
+            toon: 'false'
+          }
+        })) as ToolResultPayload
+      ) as { results: Array<{ id: string; tags: string[] }> };
+
+      expect(search.results.map((entry) => entry.id)).toContain(
+        stored.entity.id
+      );
+
+      const task = extractStructuredPayload(
+        (await client.callTool({
+          name: 'task_create',
+          arguments: {
+            content: 'string coercion task',
+            tags: '["task-coerced"]',
+            full_response: 'true'
+          }
+        })) as ToolResultPayload
+      ) as { entity: { id: string; version: number } };
+
+      const tasks = extractStructuredPayload(
+        (await client.callTool({
+          name: 'task_list',
+          arguments: {
+            limit: '5',
+            offset: '0',
+            include_archived: 'false',
+            full_response: 'false',
+            toon: 'false'
+          }
+        })) as ToolResultPayload
+      ) as { items: Array<{ id: string }> };
+      expect(tasks.items.map((item) => item.id)).toContain(task.entity.id);
+
+      const updatedTask = extractStructuredPayload(
+        (await client.callTool({
+          name: 'task_update',
+          arguments: {
+            id: task.entity.id,
+            version: String(task.entity.version),
+            tags: '["updated-coerced"]',
+            full_response: 'true'
+          }
+        })) as ToolResultPayload
+      ) as { entity: { tags: string[] } };
+      expect(updatedTask.entity.tags).toEqual(['updated-coerced']);
+
+      const link = extractStructuredPayload(
+        (await client.callTool({
+          name: 'link',
+          arguments: {
+            source_id: stored.entity.id,
+            target_id: task.entity.id,
+            relation: 'mentions',
+            confidence: '0.75',
+            full_response: 'true'
+          }
+        })) as ToolResultPayload
+      ) as { edge: { id: string; confidence: number } };
+      expect(link.edge.confidence).toBe(0.75);
+
+      const expanded = extractStructuredPayload(
+        (await client.callTool({
+          name: 'expand',
+          arguments: {
+            entity_id: stored.entity.id,
+            depth: '1',
+            relation_types: '["mentions"]',
+            full_response: 'false',
+            toon: 'false'
+          }
+        })) as ToolResultPayload
+      ) as { edges: Array<{ id: string }> };
+      expect(expanded.edges.map((edge) => edge.id)).toContain(link.edge.id);
+
+      const queue = extractStructuredPayload(
+        (await client.callTool({
+          name: 'queue',
+          arguments: {
+            include_failures: 'true',
+            failure_limit: '1'
+          }
+        })) as ToolResultPayload
+      );
+      expect(queue).toHaveProperty('embedding');
+      expect(queue).toHaveProperty('extraction');
+    } finally {
+      await close();
+    }
+  }, 120_000);
+
+  it('rejects malformed stringified MCP arguments', async () => {
+    const { client, close } = await createClient();
+
+    try {
+      const badLimit = (await client.callTool({
+        name: 'search',
+        arguments: {
+          query: 'bad coercion',
+          limit: 'three'
+        }
+      })) as ToolResultPayload;
+      expect(badLimit.isError).toBe(true);
+
+      const badBool = (await client.callTool({
+        name: 'store',
+        arguments: {
+          type: 'memory',
+          content: 'bad bool',
+          skip_extraction: 'yes'
+        }
+      })) as ToolResultPayload;
+      expect(badBool.isError).toBe(true);
+
+      const badTags = (await client.callTool({
+        name: 'store',
+        arguments: {
+          type: 'memory',
+          content: 'bad tags',
+          tags: '["ok", 3]'
+        }
+      })) as ToolResultPayload;
+      expect(badTags.isError).toBe(true);
+    } finally {
+      await close();
+    }
+  }, 120_000);
+
   it('stores client-scoped session context via MCP', async () => {
     const { client, clientId, close } = await createClient();
 

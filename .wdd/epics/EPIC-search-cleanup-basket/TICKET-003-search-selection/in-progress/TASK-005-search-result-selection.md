@@ -16,10 +16,11 @@ assigned_model_class: implementationComplex
 review_model_class: review
 branch: codex/task/TASK-005-search-result-selection
 worker_worktree: /Users/ivo.toby/.codex/worktrees/dabec7ed-521f-42fd-b18e-0c0d542e7ccc/postgram-TASK-005-search-result-selection
-worktree_status: pending_creation
+worktree_status: verified
 pr: null
-current_gate: worktree_pending
-branch_freshness: unknown
+worker_thread_id: 019ec61b-5ecc-7293-be12-93dfe9846204
+current_gate: worker_dispatched
+branch_freshness: current_at_dispatch
 verification:
   - npm --prefix ui run test -- --run src/components/SearchPage.test.tsx
   - npm --prefix ui run typecheck
@@ -115,7 +116,9 @@ codex/task/TASK-005-search-result-selection
 
 /Users/ivo.toby/.codex/worktrees/dabec7ed-521f-42fd-b18e-0c0d542e7ccc/postgram-TASK-005-search-result-selection
 
-Status: pending creation by controller before worker dispatch.
+Status: verified by controller.
+
+Worker: Erdos (`019ec61b-5ecc-7293-be12-93dfe9846204`).
 
 ## PR / Patch Reference
 

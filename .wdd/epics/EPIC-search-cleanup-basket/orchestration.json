@@ -296,17 +296,18 @@
           ],
           "assignedModel": "implementationComplex",
           "reviewModel": "review",
-          "workerThreadId": null,
+          "workerThreadId": "019ec61b-5e6f-7e60-8cd9-79177615cae7",
           "reviewThreadId": null,
           "branch": "codex/task/TASK-002-rest-bulk-archive-endpoint",
           "workerWorktree": "/Users/ivo.toby/.codex/worktrees/dabec7ed-521f-42fd-b18e-0c0d542e7ccc/postgram-TASK-002-rest-bulk-archive-endpoint",
-          "worktreeStatus": "pending_creation",
+          "worktreeStatus": "verified",
           "pr": null,
           "latestCommit": null,
-          "branchFreshness": "current_at_activation",
+          "branchFreshness": "current_at_dispatch",
           "blockingFeedback": [],
           "verification": null,
-          "currentGate": "worktree_pending"
+          "currentGate": "worker_dispatched",
+          "workerNickname": "Curie"
         },
         {
           "id": "TASK-005-search-result-selection",
@@ -322,17 +323,18 @@
           ],
           "assignedModel": "implementationComplex",
           "reviewModel": "review",
-          "workerThreadId": null,
+          "workerThreadId": "019ec61b-5ecc-7293-be12-93dfe9846204",
           "reviewThreadId": null,
           "branch": "codex/task/TASK-005-search-result-selection",
           "workerWorktree": "/Users/ivo.toby/.codex/worktrees/dabec7ed-521f-42fd-b18e-0c0d542e7ccc/postgram-TASK-005-search-result-selection",
-          "worktreeStatus": "pending_creation",
+          "worktreeStatus": "verified",
           "pr": null,
           "latestCommit": null,
-          "branchFreshness": "current_at_activation",
+          "branchFreshness": "current_at_dispatch",
           "blockingFeedback": [],
           "verification": null,
-          "currentGate": "worktree_pending"
+          "currentGate": "worker_dispatched",
+          "workerNickname": "Erdos"
         }
       ],
       "activatedAt": "2026-06-14T14:24:41+02:00"
@@ -499,15 +501,15 @@
       "TASK-001-bulk-archive-service": "verified",
       "TASK-003-ui-bulk-archive-api-client": "verified",
       "TASK-004-cleanup-basket-state": "verified",
-      "TASK-002-rest-bulk-archive-endpoint": "pending_creation",
-      "TASK-005-search-result-selection": "pending_creation"
+      "TASK-002-rest-bulk-archive-endpoint": "verified",
+      "TASK-005-search-result-selection": "verified"
     },
     "workerDispatch": {
       "TASK-001-bulk-archive-service": "merged",
       "TASK-003-ui-bulk-archive-api-client": "merged",
       "TASK-004-cleanup-basket-state": "merged",
-      "TASK-002-rest-bulk-archive-endpoint": "not_dispatched",
-      "TASK-005-search-result-selection": "not_dispatched"
+      "TASK-002-rest-bulk-archive-endpoint": "worker_dispatched",
+      "TASK-005-search-result-selection": "worker_dispatched"
     },
     "waveCompletion": {
       "WAVE-001": "done",

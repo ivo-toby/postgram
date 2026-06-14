@@ -17,10 +17,11 @@ assigned_model_class: implementationComplex
 review_model_class: review
 branch: codex/task/TASK-002-rest-bulk-archive-endpoint
 worker_worktree: /Users/ivo.toby/.codex/worktrees/dabec7ed-521f-42fd-b18e-0c0d542e7ccc/postgram-TASK-002-rest-bulk-archive-endpoint
-worktree_status: pending_creation
+worktree_status: verified
 pr: null
-current_gate: worktree_pending
-branch_freshness: unknown
+worker_thread_id: 019ec61b-5e6f-7e60-8cd9-79177615cae7
+current_gate: worker_dispatched
+branch_freshness: current_at_dispatch
 verification:
   - npm test -- tests/contract/rest-api.test.ts
 ---
@@ -111,7 +112,9 @@ codex/task/TASK-002-rest-bulk-archive-endpoint
 
 /Users/ivo.toby/.codex/worktrees/dabec7ed-521f-42fd-b18e-0c0d542e7ccc/postgram-TASK-002-rest-bulk-archive-endpoint
 
-Status: pending creation by controller before worker dispatch.
+Status: verified by controller.
+
+Worker: Curie (`019ec61b-5e6f-7e60-8cd9-79177615cae7`).
 
 ## PR / Patch Reference
 

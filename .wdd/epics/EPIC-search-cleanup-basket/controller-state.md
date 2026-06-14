@@ -66,8 +66,8 @@ Poll WAVE-002 workers directly: TASK-002-rest-bulk-archive-endpoint and TASK-005
 
 | Task | Ticket | Branch | Worktree | Worker | Gate | Verification |
 |------|--------|--------|----------|--------|------|--------------|
-| TASK-002-rest-bulk-archive-endpoint | TICKET-001-backend-bulk-archive | codex/task/TASK-002-rest-bulk-archive-endpoint | `/Users/ivo.toby/.codex/worktrees/dabec7ed-521f-42fd-b18e-0c0d542e7ccc/postgram-TASK-002-rest-bulk-archive-endpoint` | pending dispatch | worktree_pending | pending |
-| TASK-005-search-result-selection | TICKET-003-search-selection | codex/task/TASK-005-search-result-selection | `/Users/ivo.toby/.codex/worktrees/dabec7ed-521f-42fd-b18e-0c0d542e7ccc/postgram-TASK-005-search-result-selection` | pending dispatch | worktree_pending | pending |
+| TASK-002-rest-bulk-archive-endpoint | TICKET-001-backend-bulk-archive | codex/task/TASK-002-rest-bulk-archive-endpoint | `/Users/ivo.toby/.codex/worktrees/dabec7ed-521f-42fd-b18e-0c0d542e7ccc/postgram-TASK-002-rest-bulk-archive-endpoint` | Curie (`019ec61b-5e6f-7e60-8cd9-79177615cae7`) | worker_dispatched | pending |
+| TASK-005-search-result-selection | TICKET-003-search-selection | codex/task/TASK-005-search-result-selection | `/Users/ivo.toby/.codex/worktrees/dabec7ed-521f-42fd-b18e-0c0d542e7ccc/postgram-TASK-005-search-result-selection` | Erdos (`019ec61b-5ecc-7293-be12-93dfe9846204`) | worker_dispatched | pending |
 
 ## Verification Status
 
@@ -108,6 +108,8 @@ Poll WAVE-002 workers directly: TASK-002-rest-bulk-archive-endpoint and TASK-005
   `full / parallel / risk_based / adaptive` and activated.
 - 2026-06-14: Heartbeat automation was attempted again; no dedicated
   automation/heartbeat tool was exposed, so WAVE-002 uses manual direct polling.
+- 2026-06-14: WAVE-002 worktrees were created and workers Curie and Erdos were
+  assigned for parallel dispatch.
 
 ## Next Action
 

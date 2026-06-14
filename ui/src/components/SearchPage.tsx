@@ -8,12 +8,14 @@ import LinkModal from './LinkModal.tsx';
 import CreateEntityModal from './CreateEntityModal.tsx';
 import { useResizable } from '../hooks/useResizable.ts';
 import CopyUuid from './CopyUuid.tsx';
+import { useCleanupBasket } from '../hooks/useCleanupBasket.ts';
 
 const ALL_ENTITY_TYPES = ['document', 'memory', 'person', 'project', 'task', 'interaction'];
 const ALL_STATUSES = ['active', 'done', 'inbox', 'next', 'waiting', 'scheduled', 'someday'];
 const ALL_VISIBILITIES = ['personal', 'work', 'shared'];
 const PAGE_SIZE = 20;
 const SEMANTIC_MAX = 50;
+const API_KEY_STORAGE_KEY = 'pgm_api_key';
 
 type Props = {
   api: ApiClient;
@@ -79,6 +81,10 @@ export default function SearchPage({ api, onOpenInGraph }: Props) {
   const [hasMore, setHasMore] = useState(false);
   const [nextOffset, setNextOffset] = useState(0);
   const [selectedId, setSelectedId] = useState<string | null>(null);
+  const [selectedResultIds, setSelectedResultIds] = useState<Set<string>>(new Set());
+  const [lastSelectionAnchorId, setLastSelectionAnchorId] = useState<string | null>(null);
+  const [apiKey] = useState(() => getActiveApiKey());
+  const { addMany: addManyToCleanupBasket, count: cleanupBasketCount } = useCleanupBasket({ apiKey });
   const [fetchedItem, setFetchedItem] = useState<ResultItem | null>(null);
   const [detailLoading, setDetailLoading] = useState(false);
   const [createOpen, setCreateOpen] = useState(false);
@@ -156,6 +162,8 @@ export default function SearchPage({ api, onOpenInGraph }: Props) {
     try {
       const page = await fetchPage(f, 0);
       setResults(page.items);
+      setSelectedResultIds(new Set());
+      setLastSelectionAnchorId(null);
       setTotalCount(page.total);
       setNextOffset(PAGE_SIZE);
       setHasMore(page.hasMore);
@@ -163,6 +171,8 @@ export default function SearchPage({ api, onOpenInGraph }: Props) {
     } catch (e) {
       setError(e instanceof Error ? e.message : 'Search failed');
       setResults([]);
+      setSelectedResultIds(new Set());
+      setLastSelectionAnchorId(null);
       setTotalCount(null);
       setHasMore(false);
     } finally {
@@ -208,6 +218,13 @@ export default function SearchPage({ api, onOpenInGraph }: Props) {
 
   const removeEntity = useCallback((id: string) => {
     setResults(prev => prev.filter(r => r.entity.id !== id));
+    setSelectedResultIds(prev => {
+      if (!prev.has(id)) return prev;
+      const next = new Set(prev);
+      next.delete(id);
+      return next;
+    });
+    setLastSelectionAnchorId(prev => (prev === id ? null : prev));
     setFetchedItem(prev => (prev && prev.entity.id === id ? null : prev));
     setSelectedId(prev => (prev === id ? null : prev));
   }, []);
@@ -269,6 +286,52 @@ export default function SearchPage({ api, onOpenInGraph }: Props) {
     if (fetchedItem && fetchedItem.entity.id === selectedId) return fetchedItem;
     return null;
   }, [results, selectedId, fetchedItem]);
+
+  const visibleResultIds = useMemo(() => results.map(item => item.entity.id), [results]);
+  const selectedResultItems = useMemo(
+    () => results.filter(item => selectedResultIds.has(item.entity.id)),
+    [results, selectedResultIds]
+  );
+
+  const toggleResultSelection = useCallback((id: string, checked: boolean, shiftKey: boolean) => {
+    setSelectedResultIds(prev => {
+      const next = new Set(prev);
+      const currentIndex = visibleResultIds.indexOf(id);
+      const anchorIndex = lastSelectionAnchorId ? visibleResultIds.indexOf(lastSelectionAnchorId) : -1;
+
+      if (shiftKey && currentIndex >= 0 && anchorIndex >= 0) {
+        const [start, end] = currentIndex < anchorIndex
+          ? [currentIndex, anchorIndex]
+          : [anchorIndex, currentIndex];
+        for (const rangeId of visibleResultIds.slice(start, end + 1)) {
+          if (checked) next.add(rangeId); else next.delete(rangeId);
+        }
+      } else if (checked) {
+        next.add(id);
+      } else {
+        next.delete(id);
+      }
+
+      return next;
+    });
+    setLastSelectionAnchorId(id);
+  }, [lastSelectionAnchorId, visibleResultIds]);
+
+  const selectAllLoadedResults = useCallback(() => {
+    setSelectedResultIds(new Set(visibleResultIds));
+    setLastSelectionAnchorId(visibleResultIds[visibleResultIds.length - 1] ?? null);
+  }, [visibleResultIds]);
+
+  const clearResultSelection = useCallback(() => {
+    setSelectedResultIds(new Set());
+    setLastSelectionAnchorId(null);
+  }, []);
+
+  const addSelectedToBasket = useCallback(() => {
+    if (selectedResultItems.length === 0) return;
+    addManyToCleanupBasket(selectedResultItems.map(item => item.entity));
+    clearResultSelection();
+  }, [addManyToCleanupBasket, clearResultSelection, selectedResultItems]);
 
   const activeFilterCount =
     filters.types.size +
@@ -519,13 +582,23 @@ export default function SearchPage({ api, onOpenInGraph }: Props) {
                   : 'Start typing to search your graph, or open filters to browse.'}
               </div>
             )}
+            <SearchSelectionBar
+              loadedCount={results.length}
+              selectedCount={selectedResultIds.size}
+              basketCount={cleanupBasketCount}
+              onSelectAllLoaded={selectAllLoadedResults}
+              onAddSelected={addSelectedToBasket}
+              onClearSelection={clearResultSelection}
+            />
             <ul className="flex flex-col gap-2">
               {results.map(item => (
                 <ResultCard
                   key={item.entity.id}
                   item={item}
                   active={item.entity.id === selectedId}
+                  selectedForCleanup={selectedResultIds.has(item.entity.id)}
                   onSelect={() => setSelectedId(item.entity.id)}
+                  onSelectionChange={(checked, shiftKey) => toggleResultSelection(item.entity.id, checked, shiftKey)}
                   onOpenInGraph={() => onOpenInGraph(item.entity.id)}
                   onSelectRelated={id => setSelectedId(id)}
                 />
@@ -610,58 +683,151 @@ function Section({ title, children }: { title: string; children: React.ReactNode
   );
 }
 
+type SearchSelectionBarProps = {
+  loadedCount: number;
+  selectedCount: number;
+  basketCount: number;
+  onSelectAllLoaded: () => void;
+  onAddSelected: () => void;
+  onClearSelection: () => void;
+};
+
+function SearchSelectionBar({
+  loadedCount,
+  selectedCount,
+  basketCount,
+  onSelectAllLoaded,
+  onAddSelected,
+  onClearSelection,
+}: SearchSelectionBarProps) {
+  if (loadedCount === 0 && basketCount === 0) return null;
+
+  return (
+    <div className="mb-3 flex flex-wrap items-center gap-2 rounded-lg border border-gray-800 bg-gray-900 px-3 py-2 text-xs">
+      {loadedCount > 0 && (
+        <button
+          type="button"
+          onClick={onSelectAllLoaded}
+          className="rounded-md bg-gray-800 px-2 py-1 text-gray-200 hover:bg-gray-700"
+        >
+          Select all loaded results
+        </button>
+      )}
+      {selectedCount > 0 && (
+        <>
+          <span className="text-sm text-white">{selectedCount} selected</span>
+          <button
+            type="button"
+            onClick={onAddSelected}
+            className="rounded-md bg-emerald-600 px-2 py-1 text-white hover:bg-emerald-500"
+          >
+            Add selected to basket
+          </button>
+          <button
+            type="button"
+            onClick={onClearSelection}
+            className="ml-auto rounded-md px-2 py-1 text-gray-400 hover:text-white"
+          >
+            Clear selection
+          </button>
+        </>
+      )}
+      {basketCount > 0 && (
+        <span className={selectedCount > 0 ? 'text-gray-400' : 'ml-auto text-gray-400'}>
+          {basketCount} in cleanup basket
+        </span>
+      )}
+    </div>
+  );
+}
+
 type ResultCardProps = {
   item: ResultItem;
   active: boolean;
+  selectedForCleanup: boolean;
   onSelect: () => void;
+  onSelectionChange: (checked: boolean, shiftKey: boolean) => void;
   onOpenInGraph: () => void;
   onSelectRelated: (id: string) => void;
 };
 
-function ResultCard({ item, active, onSelect, onOpenInGraph, onSelectRelated }: ResultCardProps) {
+function ResultCard({
+  item,
+  active,
+  selectedForCleanup,
+  onSelect,
+  onSelectionChange,
+  onOpenInGraph,
+  onSelectRelated,
+}: ResultCardProps) {
   const { entity, chunk, score, related } = item;
   const color = ENTITY_COLORS[entity.type] ?? ENTITY_COLORS['default']!;
   const preview = chunk ?? entity.content ?? '';
+  const label = truncateLabel(entity.content, entity.id);
 
   return (
     <li
       className={`rounded-lg border transition-colors ${
-        active ? 'border-blue-500 bg-blue-500/5' : 'border-gray-800 bg-gray-900 hover:border-gray-700'
+        active
+          ? 'border-blue-500 bg-blue-500/5'
+          : selectedForCleanup
+            ? 'border-emerald-500/70 bg-emerald-500/5'
+            : 'border-gray-800 bg-gray-900 hover:border-gray-700'
       }`}
     >
-      <button onClick={onSelect} className="w-full text-left p-3 sm:p-4 flex flex-col gap-2">
-        <div className="flex items-center gap-2 flex-wrap text-xs">
-          <span
-            className="px-2 py-0.5 rounded-full font-medium"
-            style={{ backgroundColor: color + '22', color }}
-          >
-            {entity.type}
-          </span>
-          {entity.status && (
-            <span className="px-2 py-0.5 rounded-full bg-gray-800 text-gray-300">{entity.status}</span>
-          )}
-          <span className="text-gray-500">{new Date(entity.updated_at).toLocaleDateString()}</span>
-          {typeof score === 'number' && (
-            <span className="ml-auto text-gray-400 tabular-nums">{Math.round(score * 100)}%</span>
-          )}
+      <div className="flex items-start">
+        <div className="pl-3 pt-3 sm:pl-4 sm:pt-4">
+          <input
+            type="checkbox"
+            checked={selectedForCleanup}
+            onChange={e => {
+              const nativeEvent = e.nativeEvent;
+              const shiftKey = 'shiftKey' in nativeEvent && Boolean((nativeEvent as MouseEvent).shiftKey);
+              onSelectionChange(e.currentTarget.checked, shiftKey);
+            }}
+            aria-label={`Select ${label}`}
+            className="h-4 w-4 rounded border-gray-600 bg-gray-950 text-emerald-500 accent-emerald-500"
+          />
         </div>
-
-        {preview && (
-          <div className="prose prose-sm prose-invert max-w-none text-sm text-gray-200 line-clamp-3 break-words">
-            <ReactMarkdown>{preview}</ReactMarkdown>
+        <button
+          type="button"
+          onClick={onSelect}
+          aria-label={`Open ${label} detail`}
+          className="min-w-0 flex-1 text-left p-3 sm:p-4 flex flex-col gap-2"
+        >
+          <div className="flex items-center gap-2 flex-wrap text-xs">
+            <span
+              className="px-2 py-0.5 rounded-full font-medium"
+              style={{ backgroundColor: color + '22', color }}
+            >
+              {entity.type}
+            </span>
+            {entity.status && (
+              <span className="px-2 py-0.5 rounded-full bg-gray-800 text-gray-300">{entity.status}</span>
+            )}
+            <span className="text-gray-500">{new Date(entity.updated_at).toLocaleDateString()}</span>
+            {typeof score === 'number' && (
+              <span className="ml-auto text-gray-400 tabular-nums">{Math.round(score * 100)}%</span>
+            )}
           </div>
-        )}
 
-        {entity.tags.length > 0 && (
-          <div className="flex flex-wrap gap-1">
-            {entity.tags.slice(0, 8).map(t => (
-              <span key={t} className="px-1.5 py-0.5 rounded text-[10px] bg-gray-800 text-gray-400">
-                {t}
-              </span>
-            ))}
-          </div>
-        )}
-      </button>
+          {preview && (
+            <div className="prose prose-sm prose-invert max-w-none text-sm text-gray-200 line-clamp-3 break-words">
+              <ReactMarkdown>{preview}</ReactMarkdown>
+            </div>
+          )}
+
+          {entity.tags.length > 0 && (
+            <div className="flex flex-wrap gap-1">
+              {entity.tags.slice(0, 8).map(t => (
+                <span key={t} className="px-1.5 py-0.5 rounded text-[10px] bg-gray-800 text-gray-400">
+                  {t}
+                </span>
+              ))}
+            </div>
+          )}
+        </button>
+      </div>
 
       {(related && related.length > 0) && (
         <div className="px-3 sm:px-4 pb-3 flex flex-wrap gap-1.5 items-center">
@@ -1032,6 +1198,15 @@ function truncateLabel(content: string | null | undefined, id: string): string {
   if (!text) return id.slice(0, 8);
   const firstLine = text.split('\n')[0]!.trim();
   return firstLine.length > 40 ? firstLine.slice(0, 40) + '…' : firstLine;
+}
+
+function getActiveApiKey(): string | null {
+  if (typeof window === 'undefined') return null;
+  try {
+    return window.localStorage.getItem(API_KEY_STORAGE_KEY);
+  } catch {
+    return null;
+  }
 }
 
 function useIsDesktop(): boolean {

@@ -6,7 +6,7 @@ ticket: TICKET-003-search-selection
 wave: WAVE-002
 slug: search-result-selection
 title: Search Result Selection
-status: in_progress
+status: review
 depends_on:
   - TASK-004-cleanup-basket-state
 conflict_domains:
@@ -19,7 +19,7 @@ worker_worktree: /Users/ivo.toby/.codex/worktrees/dabec7ed-521f-42fd-b18e-0c0d54
 worktree_status: verified
 pr: null
 worker_thread_id: 019ec61b-5ecc-7293-be12-93dfe9846204
-current_gate: worker_dispatched
+current_gate: worker_ready_for_review
 branch_freshness: current_at_dispatch
 verification:
   - npm --prefix ui run test -- --run src/components/SearchPage.test.tsx
@@ -30,7 +30,7 @@ verification:
 
 ## Status
 
-in_progress
+review
 
 ## Parent Ticket
 
@@ -159,10 +159,10 @@ readable.
 
 ## Task-Level Definition of Done
 
-- [ ] Objective is complete.
-- [ ] Verification evidence is recorded.
-- [ ] No unresolved P1/P2 review findings remain.
-- [ ] Shared-context updates, if any, are proposed for controller reconciliation.
+- [x] Objective is complete.
+- [x] Verification evidence is recorded.
+- [x] No unresolved P1/P2 review findings remain.
+- [x] Shared-context updates, if any, are proposed for controller reconciliation.
 
 ## Validation Steps
 
@@ -171,7 +171,26 @@ readable.
 
 ## Verification Evidence
 
-- Not run yet.
+- Setup: initial `npm --prefix ui run test -- --run
+  src/components/SearchPage.test.tsx` could not start because UI dependencies
+  were not installed in this task worktree (`vitest: command not found`);
+  `npm --prefix ui ci` completed successfully from the existing lockfile.
+- RED harness fix: first test run after dependency install failed before
+  behavior assertions because this Node/jsdom environment did not provide
+  `window.localStorage`; the SearchPage test now installs localStorage like
+  existing hook tests.
+- RED: `npm --prefix ui run test -- --run
+  src/components/SearchPage.test.tsx` then failed as expected with 5 behavior
+  failures for missing result checkboxes, card-body detail target, select-all
+  loaded, and add-to-basket controls.
+- GREEN: `npm --prefix ui run test -- --run
+  src/components/SearchPage.test.tsx` passed: 1 test file, 5 tests.
+- GREEN: `npm --prefix ui run typecheck` passed with `tsc --noEmit`.
+- Final validation: `npm --prefix ui run test -- --run
+  src/components/SearchPage.test.tsx` passed: 1 test file, 5 tests.
+- Final validation: `npm --prefix ui run typecheck` passed with
+  `tsc --noEmit`.
+- Final validation: `git diff --check` passed.
 
 ## Review Feedback
 
@@ -189,4 +208,16 @@ readable.
 
 ## Completion Notes
 
-- None yet.
+- Added SearchPage result checkbox selection with separate card-body detail
+  navigation.
+- Added visible-order shift-click range selection and select-all-loaded for the
+  currently loaded visible result list.
+- Wired selected result snapshots into the existing `useCleanupBasket` hook via
+  the active API key stored under `pgm_api_key`.
+- Added a compact selected-count action bar with select-all-loaded,
+  add-selected-to-basket, clear-selection, and basket-count feedback.
+- Added focused SearchPage component tests covering required selection flows.
+- Shared-context update needed: none. Anchor behavior matches planning:
+  shift-click uses the prior visible selection anchor and applies the clicked
+  checkbox's checked state across the visible range.
+- Final gate: ready for controller review.

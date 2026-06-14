@@ -61,6 +61,12 @@ Follow existing Hono `app.request(...)` patterns.
 
 Likely file: `ui/src/lib/api.test.ts`.
 
+Run focused UI API tests from the repository root with:
+
+```bash
+npm --prefix ui run test -- --run src/lib/api.test.ts
+```
+
 Cover:
 
 - `bulkArchiveEntities(['id-1', 'id-2'])` POSTs to
@@ -77,6 +83,14 @@ Likely new or existing files:
 - `ui/src/components/CleanupBasketDrawer.test.tsx`
 - `ui/src/hooks/useCleanupBasket.test.ts`
 - pure helper tests if selection logic is extracted.
+
+Run focused UI helper/component checks from the repository root with
+`npm --prefix ui`, for example:
+
+```bash
+npm --prefix ui run test -- --run src/hooks/useCleanupBasket.test.ts
+npm --prefix ui run typecheck
+```
 
 Cover:
 

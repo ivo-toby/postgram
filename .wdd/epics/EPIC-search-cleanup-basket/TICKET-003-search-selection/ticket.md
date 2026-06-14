@@ -76,7 +76,7 @@ basket.
 ## Validation Expectations
 
 - Focused SearchPage/component tests for selection behavior.
-- `npm --workspace ui run typecheck`
+- `npm --prefix ui run typecheck`
 
 ## Review Focus
 

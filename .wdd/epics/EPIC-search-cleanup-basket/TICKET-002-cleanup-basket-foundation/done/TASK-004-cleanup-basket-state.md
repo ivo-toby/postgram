@@ -6,7 +6,7 @@ ticket: TICKET-002-cleanup-basket-foundation
 wave: WAVE-001
 slug: cleanup-basket-state
 title: Cleanup Basket State
-status: review
+status: done
 depends_on: []
 conflict_domains:
   - ui/src/hooks/useCleanupBasket.ts
@@ -17,20 +17,20 @@ review_model_class: review
 branch: codex/task/TASK-004-cleanup-basket-state
 worker_worktree: /Users/ivo.toby/.codex/worktrees/dabec7ed-521f-42fd-b18e-0c0d542e7ccc/postgram-TASK-004-cleanup-basket-state
 worktree_status: verified
-pr: null
+pr: local-merge:a593403
 worker_thread_id: 019ec5db-dcf3-7cd2-90b5-44ce10a46b67
-current_gate: no_pr
-branch_freshness: current_at_dispatch
+current_gate: merged
+branch_freshness: current_at_merge
 verification:
-  - npm --workspace ui run test -- --run ui/src/hooks/useCleanupBasket.test.ts
-  - npm --workspace ui run typecheck
+  - npm --prefix ui run test -- --run src/hooks/useCleanupBasket.test.ts
+  - npm --prefix ui run typecheck
 ---
 
 # TASK-004-cleanup-basket-state: Cleanup Basket State
 
 ## Status
 
-review
+done
 
 ## Parent Ticket
 
@@ -155,8 +155,8 @@ React hook code small.
 
 ## Validation Steps
 
-- `npm --workspace ui run test -- --run ui/src/hooks/useCleanupBasket.test.ts`
-- `npm --workspace ui run typecheck`
+- `npm --prefix ui run test -- --run src/hooks/useCleanupBasket.test.ts`
+- `npm --prefix ui run typecheck`
 
 ## Verification Evidence
 
@@ -168,11 +168,17 @@ React hook code small.
   passed: 1 test file, 8 tests.
 - GREEN: `npm --prefix ui run typecheck` passed.
 - Controller-specified validation caveat:
-  `npm --workspace ui run test -- --run ui/src/hooks/useCleanupBasket.test.ts`
-  and `npm --workspace ui run typecheck` both failed before execution with
+  `npm --prefix ui run test -- --run src/hooks/useCleanupBasket.test.ts`
+  and `npm --prefix ui run typecheck` both failed before execution with
   `No workspaces found: --workspace=ui`; the root `package.json` does not
   declare `ui` as an npm workspace. Equivalent `npm --prefix ui ...` commands
   above were used for validation.
+- Controller review: no P1/P2 findings.
+- Controller verification after merge: `npm --prefix ui run test -- --run
+  src/lib/api.test.ts src/hooks/useCleanupBasket.test.ts` passed on
+  `codex/epic/search-cleanup-basket` at `a593403`: 2 test files, 16 tests.
+- Controller verification after merge: `npm --prefix ui run typecheck` passed.
+- Merge: task branch merged into epic branch in local merge commit `a593403`.
 
 ## Review Feedback
 
@@ -201,3 +207,4 @@ React hook code small.
   marking, and successful/failed archive result application.
 - Shared-context update needed: none required. Controller may optionally record
   the exact storage-key format in task findings for downstream UI workers.
+- Final gate: merged into `codex/epic/search-cleanup-basket`.

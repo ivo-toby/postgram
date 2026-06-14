@@ -15,8 +15,9 @@ reconciliation. This file starts empty by design.
 
 ## Summary
 
-No worker task findings yet. Add concise confirmed facts here when a task
-discovers behavior that later tasks, reviewers, or validators need.
+WAVE-001 completed the backend bulk archive service, UI API helper, and cleanup
+basket state hook. Add further concise confirmed facts here when later tasks
+discover behavior that downstream workers, reviewers, or validators need.
 
 ## Details
 
@@ -28,6 +29,14 @@ Initial epic-start findings:
 - Current backend single delete archives by setting `status = 'archived'`.
 - WDD planning created four ticket containers, seven task files, and four
   waves.
+- WAVE-001 service implementation reused the single-delete archive semantics:
+  delete scope, type/visibility access, `status = 'archived'`, and `delete`
+  audit entries.
+- UI validation in this repository uses `npm --prefix ui ...`; root
+  `package.json` does not declare `ui` as an npm workspace.
+- Cleanup basket storage key format is
+  `pgm_cleanup_basket:v1:<api-key-fingerprint>` and does not include the raw
+  API key.
 
 Controller reconciliation rules:
 
@@ -52,3 +61,19 @@ Controller reconciliation rules:
   bloating the shared-context index.
 - Affected files or areas: all future epic work.
 - Follow-up implications: Reconcile this file after each wave.
+
+### WAVE-001 Completion
+
+- Source task: WAVE-001 reconciliation input
+- Source PR/branch: `codex/epic/search-cleanup-basket` merge commit `a593403`
+- Status: confirmed
+- Summary: Backend service, UI API helper, and cleanup basket state are merged
+  into the epic branch with focused verification passing.
+- Why it matters: WAVE-002 can build the REST route against the service and
+  Search selection against the basket state/API helper.
+- Affected files or areas: `src/services/entity-service.ts`,
+  `tests/integration/entity-service.test.ts`, `ui/src/lib/api.ts`,
+  `ui/src/lib/api.test.ts`, `ui/src/hooks/useCleanupBasket.ts`, and
+  `ui/src/hooks/useCleanupBasket.test.ts`.
+- Follow-up implications: Use `npm --prefix ui` commands for UI task
+  validation; do not use `npm --workspace ui` unless root workspaces change.

@@ -58,7 +58,7 @@
     {
       "id": "TICKET-002-cleanup-basket-foundation",
       "path": "TICKET-002-cleanup-basket-foundation/ticket.md",
-      "status": "in_progress",
+      "status": "done",
       "taskIds": [
         "TASK-003-ui-bulk-archive-api-client",
         "TASK-004-cleanup-basket-state"
@@ -94,7 +94,7 @@
   "waves": [
     {
       "id": "WAVE-001",
-      "status": "in_progress",
+      "status": "ready_for_reconcile",
       "strategy": {
         "profile": "standard",
         "executionMode": "parallel",
@@ -134,8 +134,8 @@
         {
           "id": "TASK-001-bulk-archive-service",
           "ticket": "TICKET-001-backend-bulk-archive",
-          "path": "TICKET-001-backend-bulk-archive/in-progress/TASK-001-bulk-archive-service.md",
-          "status": "in_progress",
+          "path": "TICKET-001-backend-bulk-archive/done/TASK-001-bulk-archive-service.md",
+          "status": "done",
           "dependsOn": [],
           "conflictDomains": [
             "src/services/entity-service.ts",
@@ -146,22 +146,33 @@
           "assignedModel": "implementationComplex",
           "reviewModel": "review",
           "workerThreadId": "019ec5db-dc36-7c70-8e8d-a34629d5c1da",
-          "reviewThreadId": null,
+          "reviewThreadId": "019ec5eb-3863-7422-8c2e-6111a0749619",
           "branch": "codex/task/TASK-001-bulk-archive-service",
           "workerWorktree": "/Users/ivo.toby/.codex/worktrees/dabec7ed-521f-42fd-b18e-0c0d542e7ccc/postgram-TASK-001-bulk-archive-service",
           "worktreeStatus": "verified",
-          "pr": null,
-          "latestCommit": null,
-          "branchFreshness": "current_at_dispatch",
+          "pr": "local-merge:a593403",
+          "latestCommit": "a94e478",
+          "branchFreshness": "current_at_merge",
           "blockingFeedback": [],
-          "verification": null,
-          "currentGate": "no_pr"
+          "verification": {
+            "result": "passed",
+            "commands": [
+              "npm test -- tests/integration/entity-service.test.ts",
+              "npm run typecheck",
+              "git diff --check"
+            ],
+            "controllerCommands": [
+              "npm test -- tests/integration/entity-service.test.ts"
+            ],
+            "evidence": "Worker and controller verification passed; backend reviewer returned REVIEW_PASS."
+          },
+          "currentGate": "merged"
         },
         {
           "id": "TASK-003-ui-bulk-archive-api-client",
           "ticket": "TICKET-002-cleanup-basket-foundation",
-          "path": "TICKET-002-cleanup-basket-foundation/in-progress/TASK-003-ui-bulk-archive-api-client.md",
-          "status": "in_progress",
+          "path": "TICKET-002-cleanup-basket-foundation/done/TASK-003-ui-bulk-archive-api-client.md",
+          "status": "done",
           "dependsOn": [],
           "conflictDomains": [
             "ui/src/lib/api.ts",
@@ -175,18 +186,29 @@
           "branch": "codex/task/TASK-003-ui-bulk-archive-api-client",
           "workerWorktree": "/Users/ivo.toby/.codex/worktrees/dabec7ed-521f-42fd-b18e-0c0d542e7ccc/postgram-TASK-003-ui-bulk-archive-api-client",
           "worktreeStatus": "verified",
-          "pr": null,
-          "latestCommit": null,
-          "branchFreshness": "current_at_dispatch",
+          "pr": "local-merge:a593403",
+          "latestCommit": "83c9e8a",
+          "branchFreshness": "current_at_merge",
           "blockingFeedback": [],
-          "verification": null,
-          "currentGate": "no_pr"
+          "verification": {
+            "result": "passed_with_command_reconciliation",
+            "commands": [
+              "npm --prefix ui run test -- --run src/lib/api.test.ts",
+              "npm --prefix ui run typecheck"
+            ],
+            "controllerCommands": [
+              "npm --prefix ui run test -- --run src/lib/api.test.ts src/hooks/useCleanupBasket.test.ts",
+              "npm --prefix ui run typecheck"
+            ],
+            "evidence": "Focused and merged-branch UI tests/typecheck passed; npm --workspace ui is not valid for this repo."
+          },
+          "currentGate": "merged"
         },
         {
           "id": "TASK-004-cleanup-basket-state",
           "ticket": "TICKET-002-cleanup-basket-foundation",
-          "path": "TICKET-002-cleanup-basket-foundation/in-progress/TASK-004-cleanup-basket-state.md",
-          "status": "in_progress",
+          "path": "TICKET-002-cleanup-basket-foundation/done/TASK-004-cleanup-basket-state.md",
+          "status": "done",
           "dependsOn": [],
           "conflictDomains": [
             "ui/src/hooks/useCleanupBasket.ts",
@@ -200,12 +222,23 @@
           "branch": "codex/task/TASK-004-cleanup-basket-state",
           "workerWorktree": "/Users/ivo.toby/.codex/worktrees/dabec7ed-521f-42fd-b18e-0c0d542e7ccc/postgram-TASK-004-cleanup-basket-state",
           "worktreeStatus": "verified",
-          "pr": null,
-          "latestCommit": null,
-          "branchFreshness": "current_at_dispatch",
+          "pr": "local-merge:a593403",
+          "latestCommit": "519617f",
+          "branchFreshness": "current_at_merge",
           "blockingFeedback": [],
-          "verification": null,
-          "currentGate": "no_pr"
+          "verification": {
+            "result": "passed_with_command_reconciliation",
+            "commands": [
+              "npm --prefix ui run test -- --run src/hooks/useCleanupBasket.test.ts",
+              "npm --prefix ui run typecheck"
+            ],
+            "controllerCommands": [
+              "npm --prefix ui run test -- --run src/lib/api.test.ts src/hooks/useCleanupBasket.test.ts",
+              "npm --prefix ui run typecheck"
+            ],
+            "evidence": "Focused and merged-branch UI tests/typecheck passed; npm --workspace ui is not valid for this repo."
+          },
+          "currentGate": "merged"
         }
       ]
     },
@@ -422,11 +455,11 @@
   "monitoring": {
     "mode": "manual",
     "cadence": "adaptive_20_minutes_until_pr_or_patch",
-    "status": "active_manual_fallback",
-    "lastCheckedAt": "2026-06-14T13:19:47+02:00",
-    "nextCheckDueAt": "2026-06-14T13:39:47+02:00",
-    "schedulerRef": "manual-fallback:2026-06-14T13:39:47+02:00",
-    "fallbackPrompt": "Run subagent-pr-orchestration for EPIC-search-cleanup-basket WAVE-001. Read .wdd/epics/EPIC-search-cleanup-basket/orchestration.json and controller-state.md, inspect worker 019ec5db-dc36-7c70-8e8d-a34629d5c1da for TASK-001, worker 019ec5db-dc95-7521-9ad5-873cb2398c2c for TASK-003, and worker 019ec5db-dcf3-7cd2-90b5-44ce10a46b67 for TASK-004. Update gates, PR or patch references, verification evidence, branch freshness, and review state. Stop when all active tasks are merged, blocked, cancelled, or ready for wdd-reconcile-wave."
+    "status": "stopped_ready_for_reconcile",
+    "lastCheckedAt": "2026-06-14T13:43:30+02:00",
+    "nextCheckDueAt": null,
+    "schedulerRef": "manual-fallback-stopped:ready_for_reconcile",
+    "fallbackPrompt": "Run wdd-reconcile-wave for EPIC-search-cleanup-basket WAVE-001. Read orchestration.json, controller-state.md, wave-plan.md, done task files, and shared-context task findings. Confirm WAVE-001 merged evidence and decide whether WAVE-002 is ready for activation confirmation."
   },
   "currentGates": {
     "epicBranch": {
@@ -449,9 +482,12 @@
       "TASK-004-cleanup-basket-state": "verified"
     },
     "workerDispatch": {
-      "TASK-001-bulk-archive-service": "dispatched",
-      "TASK-003-ui-bulk-archive-api-client": "dispatched",
-      "TASK-004-cleanup-basket-state": "dispatched"
+      "TASK-001-bulk-archive-service": "merged",
+      "TASK-003-ui-bulk-archive-api-client": "merged",
+      "TASK-004-cleanup-basket-state": "merged"
+    },
+    "waveCompletion": {
+      "WAVE-001": "ready_for_reconcile"
     }
   }
 }

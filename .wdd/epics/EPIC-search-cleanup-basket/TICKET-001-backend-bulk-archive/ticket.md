@@ -58,7 +58,7 @@ basket UI.
 
 | Task | Status | Wave | Summary |
 |------|--------|------|---------|
-| TASK-001-bulk-archive-service | in_progress | WAVE-001 | Add service-layer bulk archive with tests |
+| TASK-001-bulk-archive-service | done | WAVE-001 | Add service-layer bulk archive with tests |
 | TASK-002-rest-bulk-archive-endpoint | todo | WAVE-002 | Add REST route, validation, and contract tests |
 
 ## Dependencies

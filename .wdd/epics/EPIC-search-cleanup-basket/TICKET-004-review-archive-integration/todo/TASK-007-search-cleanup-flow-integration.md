@@ -25,8 +25,8 @@ pr: null
 current_gate: not_started
 branch_freshness: unknown
 verification:
-  - npm --workspace ui run test -- --run ui/src/components/SearchPage.test.tsx
-  - npm --workspace ui run typecheck
+  - npm --prefix ui run test -- --run src/components/SearchPage.test.tsx
+  - npm --prefix ui run typecheck
   - npm test -- tests/contract/rest-api.test.ts
 ---
 
@@ -166,8 +166,8 @@ has grown beyond a small inline role.
 
 ## Validation Steps
 
-- `npm --workspace ui run test -- --run ui/src/components/SearchPage.test.tsx`
-- `npm --workspace ui run typecheck`
+- `npm --prefix ui run test -- --run src/components/SearchPage.test.tsx`
+- `npm --prefix ui run typecheck`
 - `npm test -- tests/contract/rest-api.test.ts`
 - Manual/browser validation from
   `../../shared-context/resources/validation-strategy.md`

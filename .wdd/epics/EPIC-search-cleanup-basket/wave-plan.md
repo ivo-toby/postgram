@@ -13,10 +13,10 @@ updated_at: 2026-06-14
 
 | Task | Ticket | Depends On | Conflict Domains | Status |
 |------|--------|------------|------------------|--------|
-| TASK-001-bulk-archive-service | TICKET-001-backend-bulk-archive | None | entity-service, entity integration tests, auth/delete, audit | in_progress |
+| TASK-001-bulk-archive-service | TICKET-001-backend-bulk-archive | None | entity-service, entity integration tests, auth/delete, audit | done |
 | TASK-002-rest-bulk-archive-endpoint | TICKET-001-backend-bulk-archive | TASK-001-bulk-archive-service | REST transport, REST contract tests, entity service export | todo |
-| TASK-003-ui-bulk-archive-api-client | TICKET-002-cleanup-basket-foundation | None | UI API client, UI API tests | in_progress |
-| TASK-004-cleanup-basket-state | TICKET-002-cleanup-basket-foundation | None | cleanup basket hook/types/tests, localStorage behavior | in_progress |
+| TASK-003-ui-bulk-archive-api-client | TICKET-002-cleanup-basket-foundation | None | UI API client, UI API tests | done |
+| TASK-004-cleanup-basket-state | TICKET-002-cleanup-basket-foundation | None | cleanup basket hook/types/tests, localStorage behavior | done |
 | TASK-005-search-result-selection | TICKET-003-search-selection | TASK-004-cleanup-basket-state | SearchPage, SearchPage tests, result card UI | todo |
 | TASK-006-cleanup-basket-review-drawer | TICKET-004-review-archive-integration | TASK-002-rest-bulk-archive-endpoint, TASK-003-ui-bulk-archive-api-client, TASK-004-cleanup-basket-state | drawer component/tests, basket archive-result behavior | todo |
 | TASK-007-search-cleanup-flow-integration | TICKET-004-review-archive-integration | TASK-002-rest-bulk-archive-endpoint, TASK-005-search-result-selection, TASK-006-cleanup-basket-review-drawer | SearchPage, final integrated flow, manual validation | todo |
@@ -49,7 +49,7 @@ updated_at: 2026-06-14
 
 ### WAVE-001
 
-Status: in_progress
+Status: ready_for_reconcile
 
 Tasks:
 
@@ -91,8 +91,8 @@ Activation rule:
 
 Stop condition:
 
-- All WAVE-001 tasks are done, blocked, cancelled, or explicitly closed.
-- Wave reconciliation is complete before WAVE-002 starts.
+- All WAVE-001 tasks are done.
+- Wave reconciliation is required before WAVE-002 starts.
 
 ### WAVE-002
 

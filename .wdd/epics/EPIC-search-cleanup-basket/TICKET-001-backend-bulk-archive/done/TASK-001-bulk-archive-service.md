@@ -6,7 +6,7 @@ ticket: TICKET-001-backend-bulk-archive
 wave: WAVE-001
 slug: bulk-archive-service
 title: Bulk Archive Service
-status: review
+status: done
 depends_on: []
 conflict_domains:
   - src/services/entity-service.ts
@@ -18,10 +18,10 @@ review_model_class: review
 branch: codex/task/TASK-001-bulk-archive-service
 worker_worktree: /Users/ivo.toby/.codex/worktrees/dabec7ed-521f-42fd-b18e-0c0d542e7ccc/postgram-TASK-001-bulk-archive-service
 worktree_status: verified
-pr: null
+pr: local-merge:a593403
 worker_thread_id: 019ec5db-dc36-7c70-8e8d-a34629d5c1da
-current_gate: needs_review
-branch_freshness: current_at_dispatch
+current_gate: merged
+branch_freshness: current_at_merge
 verification:
   - npm test -- tests/integration/entity-service.test.ts
 ---
@@ -30,7 +30,7 @@ verification:
 
 ## Status
 
-review
+done
 
 ## Parent Ticket
 
@@ -172,6 +172,12 @@ Extract small shared helpers only if they reduce duplication with
   1 test file, 13 tests.
 - Additional: `npm run typecheck` passed.
 - Additional: `git diff --check` passed.
+- Review: Halley (`019ec5eb-3863-7422-8c2e-6111a0749619`) returned
+  `REVIEW_PASS` with no P1/P2/P3 findings.
+- Controller verification after merge: `npm test --
+  tests/integration/entity-service.test.ts` passed on
+  `codex/epic/search-cleanup-basket` at `a593403`: 1 test file, 13 tests.
+- Merge: task branch merged into epic branch in local merge commit `a593403`.
 
 ## Review Feedback
 
@@ -199,3 +205,4 @@ Extract small shared helpers only if they reduce duplication with
 - Added integration coverage for successful archive, duplicate IDs, missing
   IDs, type and visibility failures, audit entries, and missing delete scope.
 - Shared-context update needed: none.
+- Final gate: merged into `codex/epic/search-cleanup-basket`.

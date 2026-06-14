@@ -4,7 +4,7 @@ kind: ticket
 epic: EPIC-search-cleanup-basket
 slug: cleanup-basket-foundation
 title: Cleanup Basket Foundation
-status: in_progress
+status: done
 task_count: 2
 depends_on: []
 conflict_domains:
@@ -57,8 +57,8 @@ basket persistence without coupling them directly to SearchPage layout.
 
 | Task | Status | Wave | Summary |
 |------|--------|------|---------|
-| TASK-003-ui-bulk-archive-api-client | in_progress | WAVE-001 | Add UI API client method and tests |
-| TASK-004-cleanup-basket-state | in_progress | WAVE-001 | Add persistent basket state/hook and tests |
+| TASK-003-ui-bulk-archive-api-client | done | WAVE-001 | Add UI API client method and tests |
+| TASK-004-cleanup-basket-state | done | WAVE-001 | Add persistent basket state/hook and tests |
 
 ## Dependencies
 
@@ -75,9 +75,9 @@ basket persistence without coupling them directly to SearchPage layout.
 
 ## Validation Expectations
 
-- `npm --workspace ui run test -- --run ui/src/lib/api.test.ts`
+- `npm --prefix ui run test -- --run src/lib/api.test.ts`
 - Focused UI hook/reducer test command for the basket state file.
-- `npm --workspace ui run typecheck`
+- `npm --prefix ui run typecheck`
 
 ## Review Focus
 

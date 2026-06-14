@@ -202,9 +202,9 @@ Use RED/GREEN TDD per task. Focused validation should include:
 
 - `npm test -- tests/integration/entity-service.test.ts`
 - `npm test -- tests/contract/rest-api.test.ts`
-- `npm --workspace ui run test -- --run` or focused UI Vitest files as
+- `npm --prefix ui run test -- --run` or focused UI Vitest files as
   appropriate.
-- `npm --workspace ui run typecheck`
+- `npm --prefix ui run typecheck`
 - Broader `npm run typecheck`, `npm test`, `npm run lint`, and `npm run build`
   when integrating backend and frontend work into the epic branch.
 - Manual browser validation of search, selection, basket persistence, review,

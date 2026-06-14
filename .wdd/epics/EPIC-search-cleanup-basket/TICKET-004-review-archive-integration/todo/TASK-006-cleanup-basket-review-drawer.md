@@ -24,8 +24,8 @@ pr: null
 current_gate: not_started
 branch_freshness: unknown
 verification:
-  - npm --workspace ui run test -- --run ui/src/components/CleanupBasketDrawer.test.tsx
-  - npm --workspace ui run typecheck
+  - npm --prefix ui run test -- --run src/components/CleanupBasketDrawer.test.tsx
+  - npm --prefix ui run typecheck
 ---
 
 # TASK-006-cleanup-basket-review-drawer: Cleanup Basket Review Drawer
@@ -159,8 +159,8 @@ next task.
 
 ## Validation Steps
 
-- `npm --workspace ui run test -- --run ui/src/components/CleanupBasketDrawer.test.tsx`
-- `npm --workspace ui run typecheck`
+- `npm --prefix ui run test -- --run src/components/CleanupBasketDrawer.test.tsx`
+- `npm --prefix ui run typecheck`
 
 ## Verification Evidence
 

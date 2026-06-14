@@ -21,8 +21,8 @@ pr: null
 current_gate: not_started
 branch_freshness: unknown
 verification:
-  - npm --workspace ui run test -- --run ui/src/components/SearchPage.test.tsx
-  - npm --workspace ui run typecheck
+  - npm --prefix ui run test -- --run src/components/SearchPage.test.tsx
+  - npm --prefix ui run typecheck
 ---
 
 # TASK-005-search-result-selection: Search Result Selection
@@ -156,8 +156,8 @@ readable.
 
 ## Validation Steps
 
-- `npm --workspace ui run test -- --run ui/src/components/SearchPage.test.tsx`
-- `npm --workspace ui run typecheck`
+- `npm --prefix ui run test -- --run src/components/SearchPage.test.tsx`
+- `npm --prefix ui run typecheck`
 
 ## Verification Evidence
 

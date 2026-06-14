@@ -6,7 +6,7 @@ ticket: TICKET-002-cleanup-basket-foundation
 wave: WAVE-001
 slug: ui-bulk-archive-api-client
 title: UI Bulk Archive API Client
-status: review
+status: done
 depends_on: []
 conflict_domains:
   - ui/src/lib/api.ts
@@ -17,19 +17,20 @@ review_model_class: review
 branch: codex/task/TASK-003-ui-bulk-archive-api-client
 worker_worktree: /Users/ivo.toby/.codex/worktrees/dabec7ed-521f-42fd-b18e-0c0d542e7ccc/postgram-TASK-003-ui-bulk-archive-api-client
 worktree_status: verified
-pr: null
+pr: local-merge:a593403
 worker_thread_id: 019ec5db-dc95-7521-9ad5-873cb2398c2c
-current_gate: needs_review
-branch_freshness: current_at_dispatch
+current_gate: merged
+branch_freshness: current_at_merge
 verification:
-  - npm --workspace ui run test -- --run ui/src/lib/api.test.ts
+  - npm --prefix ui run test -- --run src/lib/api.test.ts
+  - npm --prefix ui run typecheck
 ---
 
 # TASK-003-ui-bulk-archive-api-client: UI Bulk Archive API Client
 
 ## Status
 
-review
+done
 
 ## Parent Ticket
 
@@ -147,7 +148,7 @@ duplication.
 
 ## Validation Steps
 
-- `npm --workspace ui run test -- --run ui/src/lib/api.test.ts`
+- `npm --prefix ui run test -- --run src/lib/api.test.ts`
 - Focused UI package command used in this checkout:
   `npm --prefix ui run test -- --run src/lib/api.test.ts`
 
@@ -161,9 +162,15 @@ duplication.
   implementation: 1 test file passed, 8 tests passed.
 - Typecheck: `npm --prefix ui run typecheck` passed with `tsc --noEmit`.
 - Expected WDD command concern:
-  `npm --workspace ui run test -- --run ui/src/lib/api.test.ts` exits before
+  `npm --prefix ui run test -- --run src/lib/api.test.ts` exits before
   running tests with `npm error No workspaces found: --workspace=ui` because
   root `package.json` workspaces do not include `ui`.
+- Controller review: no P1/P2 findings.
+- Controller verification after merge: `npm --prefix ui run test -- --run
+  src/lib/api.test.ts src/hooks/useCleanupBasket.test.ts` passed on
+  `codex/epic/search-cleanup-basket` at `a593403`: 2 test files, 16 tests.
+- Controller verification after merge: `npm --prefix ui run typecheck` passed.
+- Merge: task branch merged into epic branch in local merge commit `a593403`.
 
 ## Review Feedback
 
@@ -190,3 +197,4 @@ duplication.
 - Shared-context update needed: none for the API contract. Controller may want
   to reconcile the task validation command because `ui` is not an npm
   workspace in this checkout.
+- Final gate: merged into `codex/epic/search-cleanup-basket`.

@@ -35,14 +35,14 @@ npm test -- tests/contract/rest-api.test.ts
 UI API/client:
 
 ```bash
-npm --workspace ui run test -- --run ui/src/lib/api.test.ts
+npm --prefix ui run test -- --run src/lib/api.test.ts
 ```
 
 Search UI/basket components:
 
 ```bash
-npm --workspace ui run test -- --run <focused-ui-test-file>
-npm --workspace ui run typecheck
+npm --prefix ui run test -- --run <focused-ui-test-file>
+npm --prefix ui run typecheck
 ```
 
 ## Broad Validation Before Epic Completion

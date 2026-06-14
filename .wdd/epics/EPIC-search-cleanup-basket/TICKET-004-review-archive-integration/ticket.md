@@ -85,7 +85,7 @@ Complete the user-facing cleanup workflow and validate it end to end.
 ## Validation Expectations
 
 - Focused drawer/SearchPage component tests.
-- `npm --workspace ui run typecheck`
+- `npm --prefix ui run typecheck`
 - Focused backend/REST/UI tests from dependencies if integration changes their
   contracts.
 - Manual/browser pass from validation strategy.

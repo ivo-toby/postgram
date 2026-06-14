@@ -6,7 +6,7 @@ ticket: TICKET-004-review-archive-integration
 wave: WAVE-004
 slug: search-cleanup-flow-integration
 title: Search Cleanup Flow Integration
-status: todo
+status: in_progress
 depends_on:
   - TASK-002-rest-bulk-archive-endpoint
   - TASK-005-search-result-selection
@@ -19,11 +19,11 @@ conflict_domains:
 assigned_model_class: implementationComplex
 review_model_class: review
 branch: codex/task/TASK-007-search-cleanup-flow-integration
-worker_worktree: null
-worktree_status: unassigned
+worker_worktree: /Users/ivo.toby/.codex/worktrees/dabec7ed-521f-42fd-b18e-0c0d542e7ccc/postgram-TASK-007-search-cleanup-flow-integration
+worktree_status: pending_creation
 pr: null
-current_gate: not_started
-branch_freshness: unknown
+current_gate: worktree_pending
+branch_freshness: current_at_activation
 verification:
   - npm --prefix ui run test -- --run src/components/SearchPage.test.tsx
   - npm --prefix ui run typecheck
@@ -34,7 +34,7 @@ verification:
 
 ## Status
 
-todo
+in_progress
 
 ## Parent Ticket
 
@@ -133,9 +133,9 @@ codex/task/TASK-007-search-cleanup-flow-integration
 
 ## Worker Worktree
 
-None assigned yet. The controller must create or verify an isolated worktree for
-this task before dispatching a repository-writing worker, then provide that path
-to the worker.
+/Users/ivo.toby/.codex/worktrees/dabec7ed-521f-42fd-b18e-0c0d542e7ccc/postgram-TASK-007-search-cleanup-flow-integration
+
+Status: pending creation by controller before worker dispatch.
 
 ## PR / Patch Reference
 

@@ -2,8 +2,8 @@
 id: EPIC-search-cleanup-basket-CONTROLLER
 kind: controller_state
 epic: EPIC-search-cleanup-basket
-active_wave: null
-status: wave_003_reconciled
+active_wave: WAVE-004
+status: wave_004_active
 updated_at: 2026-06-14
 ---
 
@@ -19,11 +19,11 @@ checkout.
 
 ## Current Outcome
 
-WAVE-003 is done and reconciled.
+WAVE-004 is active.
 
-Next phase: `wdd-start-wave` for WAVE-004. WAVE-004 contains
-`TASK-007-search-cleanup-flow-integration` and does not require user
-confirmation.
+Current phase: create or verify the WAVE-004 task worktree, dispatch the final
+Search cleanup flow worker, then monitor manually because the heartbeat tool is
+not callable in this thread.
 
 ## Wave Summary
 
@@ -32,26 +32,26 @@ confirmation.
 | WAVE-001 | TASK-001-bulk-archive-service, TASK-003-ui-bulk-archive-api-client, TASK-004-cleanup-basket-state | standard / parallel / risk_based / adaptive | done |
 | WAVE-002 | TASK-002-rest-bulk-archive-endpoint, TASK-005-search-result-selection | full / parallel / risk_based / adaptive | done |
 | WAVE-003 | TASK-006-cleanup-basket-review-drawer | standard / bundled / risk_based / adaptive | done |
-| WAVE-004 | TASK-007-search-cleanup-flow-integration | standard / bundled / risk_based / adaptive | ready |
+| WAVE-004 | TASK-007-search-cleanup-flow-integration | standard / bundled / risk_based / adaptive | active |
 
 ## Monitoring
 
 Mode: manual
 
-Cadence: stopped
+Cadence: adaptive 20 minutes until PR or patch
 
-Status: stopped_reconciled
+Status: manual_fallback_active
 
-Last check: 2026-06-14T15:10:00+02:00
+Last check: 2026-06-14T15:10:44+02:00
 
-Next check due: None
+Next check due: 2026-06-14T15:31:00+02:00
 
-Scheduler reference: none:wave_reconciled
+Scheduler reference: none:automation_update_unavailable
 
 Fallback prompt:
 
 ```text
-Run wdd-start-wave for EPIC-search-cleanup-basket WAVE-004. WAVE-004 contains TASK-007-search-cleanup-flow-integration and has no user confirmation requirement.
+Poll WAVE-004 worker directly: TASK-007-search-cleanup-flow-integration. If complete, review, verify including browser/manual validation, merge to epic branch, then reconcile WAVE-004 before epic validation.
 ```
 
 ## WAVE-001 Task Gates
@@ -74,6 +74,12 @@ Run wdd-start-wave for EPIC-search-cleanup-basket WAVE-004. WAVE-004 contains TA
 | Task | Ticket | Branch | Worktree | Worker | Gate | Verification |
 |------|--------|--------|----------|--------|------|--------------|
 | TASK-006-cleanup-basket-review-drawer | TICKET-004-review-archive-integration | codex/task/TASK-006-cleanup-basket-review-drawer | `/Users/ivo.toby/.codex/worktrees/dabec7ed-521f-42fd-b18e-0c0d542e7ccc/postgram-TASK-006-cleanup-basket-review-drawer` | Arendt (`019ec631-30c7-7d21-82d4-1ac079ab603b`) | merged in `04e4c52` | Peirce `REVIEW_PASS`; drawer/basket/API tests passed |
+
+## WAVE-004 Task Gates
+
+| Task | Ticket | Branch | Worktree | Worker | Gate | Verification |
+|------|--------|--------|----------|--------|------|--------------|
+| TASK-007-search-cleanup-flow-integration | TICKET-004-review-archive-integration | codex/task/TASK-007-search-cleanup-flow-integration | `/Users/ivo.toby/.codex/worktrees/dabec7ed-521f-42fd-b18e-0c0d542e7ccc/postgram-TASK-007-search-cleanup-flow-integration` | pending dispatch | worktree_pending | pending |
 
 ## Verification Status
 
@@ -149,7 +155,10 @@ Run wdd-start-wave for EPIC-search-cleanup-basket WAVE-004. WAVE-004 contains TA
 - 2026-06-14: TASK-006 merged into the epic branch in `04e4c52` after
   `REVIEW_PASS`.
 - 2026-06-14: WAVE-003 reconciled and marked done.
+- 2026-06-14: WAVE-004 activated for
+  `TASK-007-search-cleanup-flow-integration`.
 
 ## Next Action
 
-- Run `wdd-start-wave` for WAVE-004.
+- Create or verify the WAVE-004 task worktree, dispatch the worker, then poll
+  manually at the recorded cadence.

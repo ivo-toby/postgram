@@ -482,7 +482,7 @@
     },
     {
       "id": "WAVE-004",
-      "status": "planned",
+      "status": "in_progress",
       "strategy": {
         "profile": "standard",
         "executionMode": "bundled",
@@ -511,8 +511,8 @@
         {
           "id": "TASK-007-search-cleanup-flow-integration",
           "ticket": "TICKET-004-review-archive-integration",
-          "path": "TICKET-004-review-archive-integration/todo/TASK-007-search-cleanup-flow-integration.md",
-          "status": "todo",
+          "path": "TICKET-004-review-archive-integration/in-progress/TASK-007-search-cleanup-flow-integration.md",
+          "status": "in_progress",
           "dependsOn": [
             "TASK-002-rest-bulk-archive-endpoint",
             "TASK-005-search-result-selection",
@@ -529,16 +529,17 @@
           "workerThreadId": null,
           "reviewThreadId": null,
           "branch": "codex/task/TASK-007-search-cleanup-flow-integration",
-          "workerWorktree": null,
-          "worktreeStatus": "unassigned",
+          "workerWorktree": "/Users/ivo.toby/.codex/worktrees/dabec7ed-521f-42fd-b18e-0c0d542e7ccc/postgram-TASK-007-search-cleanup-flow-integration",
+          "worktreeStatus": "pending_creation",
           "pr": null,
           "latestCommit": null,
-          "branchFreshness": "unknown",
+          "branchFreshness": "current_at_activation",
           "blockingFeedback": [],
           "verification": null,
-          "currentGate": "not_started"
+          "currentGate": "worktree_pending"
         }
-      ]
+      ],
+      "activatedAt": "2026-06-14T15:10:44+02:00"
     }
   ],
   "sharedContext": {
@@ -556,12 +557,12 @@
   },
   "monitoring": {
     "mode": "manual",
-    "cadence": "stopped",
-    "status": "stopped_reconciled",
-    "lastCheckedAt": "2026-06-14T15:10:00+02:00",
-    "nextCheckDueAt": null,
-    "schedulerRef": "none:wave_reconciled",
-    "fallbackPrompt": "Run wdd-start-wave for EPIC-search-cleanup-basket WAVE-004. WAVE-004 contains TASK-007-search-cleanup-flow-integration and has no user confirmation requirement."
+    "cadence": "adaptive_20_minutes_until_pr_or_patch",
+    "status": "manual_fallback_active",
+    "lastCheckedAt": "2026-06-14T15:10:44+02:00",
+    "nextCheckDueAt": "2026-06-14T15:31:00+02:00",
+    "schedulerRef": "none:automation_update_unavailable",
+    "fallbackPrompt": "Poll WAVE-004 worker directly: TASK-007-search-cleanup-flow-integration. If complete, review, verify including browser/manual validation, merge to epic branch, then reconcile WAVE-004 before epic validation."
   },
   "currentGates": {
     "epicBranch": {
@@ -584,7 +585,8 @@
       "TASK-004-cleanup-basket-state": "verified",
       "TASK-002-rest-bulk-archive-endpoint": "verified",
       "TASK-005-search-result-selection": "verified",
-      "TASK-006-cleanup-basket-review-drawer": "verified"
+      "TASK-006-cleanup-basket-review-drawer": "verified",
+      "TASK-007-search-cleanup-flow-integration": "pending_creation"
     },
     "workerDispatch": {
       "TASK-001-bulk-archive-service": "merged",
@@ -592,16 +594,18 @@
       "TASK-004-cleanup-basket-state": "merged",
       "TASK-002-rest-bulk-archive-endpoint": "merged",
       "TASK-005-search-result-selection": "merged",
-      "TASK-006-cleanup-basket-review-drawer": "merged"
+      "TASK-006-cleanup-basket-review-drawer": "merged",
+      "TASK-007-search-cleanup-flow-integration": "not_dispatched"
     },
     "waveCompletion": {
       "WAVE-001": "done",
       "WAVE-002": "done",
-      "WAVE-003": "done"
+      "WAVE-003": "done",
+      "WAVE-004": "in_progress"
     },
     "nextWave": {
       "id": "WAVE-004",
-      "status": "ready",
+      "status": "active",
       "strategyConfirmation": "not_required"
     }
   }

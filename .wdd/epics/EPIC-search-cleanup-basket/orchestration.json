@@ -1,0 +1,675 @@
+{
+  "schemaVersion": 1,
+  "epic": {
+    "id": "EPIC-search-cleanup-basket",
+    "name": "Search Cleanup Basket",
+    "targetBranch": "main",
+    "baseBranch": "codex/epic/search-cleanup-basket",
+    "slug": "search-cleanup-basket",
+    "status": "final_pr_created"
+  },
+  "configuration": {
+    "storageMode": "local-markdown",
+    "profile": "standard",
+    "reviewMode": "risk_based",
+    "monitoringMode": "adaptive",
+    "models": {
+      "planning": "configured-model-key",
+      "implementationSimple": "configured-model-key",
+      "implementationComplex": "configured-model-key",
+      "review": "configured-model-key",
+      "feedbackFix": "configured-model-key",
+      "epicValidation": "configured-model-key",
+      "prDescription": "configured-model-key"
+    },
+    "reviewPolicy": {
+      "p1BlocksMerge": true,
+      "p2BlocksMerge": true,
+      "p3CreatesFollowUp": true
+    },
+    "branching": {
+      "epicBranchConvention": "codex/epic/[epic-slug]",
+      "taskBranchConvention": "codex/task/[task-id]-[task-slug]",
+      "taskPrTarget": "epic branch",
+      "finalPrTarget": "target branch",
+      "epicBranchRequiredBeforeWorkerDispatch": true,
+      "activationArtifactsSyncedBeforeTaskWorktrees": true,
+      "isolatedWorktreePerRepositoryTask": true,
+      "workersMaySwitchControllerCheckout": false
+    }
+  },
+  "controllerRules": {
+    "epicBranchCreatedOrVerifiedBeforeWorkerDispatch": true,
+    "activationArtifactsSyncedBeforeTaskWorktrees": true,
+    "isolatedWorktreePerRepositoryWritingTask": true,
+    "workersMustNotSwitchControllerCheckout": true,
+    "workersMustNotMergeOwnPr": true
+  },
+  "tickets": [
+    {
+      "id": "TICKET-001-backend-bulk-archive",
+      "path": "TICKET-001-backend-bulk-archive/ticket.md",
+      "status": "done",
+      "taskIds": [
+        "TASK-001-bulk-archive-service",
+        "TASK-002-rest-bulk-archive-endpoint"
+      ]
+    },
+    {
+      "id": "TICKET-002-cleanup-basket-foundation",
+      "path": "TICKET-002-cleanup-basket-foundation/ticket.md",
+      "status": "done",
+      "taskIds": [
+        "TASK-003-ui-bulk-archive-api-client",
+        "TASK-004-cleanup-basket-state"
+      ]
+    },
+    {
+      "id": "TICKET-003-search-selection",
+      "path": "TICKET-003-search-selection/ticket.md",
+      "status": "done",
+      "taskIds": [
+        "TASK-005-search-result-selection"
+      ]
+    },
+    {
+      "id": "TICKET-004-review-archive-integration",
+      "path": "TICKET-004-review-archive-integration/ticket.md",
+      "status": "done",
+      "taskIds": [
+        "TASK-006-cleanup-basket-review-drawer",
+        "TASK-007-search-cleanup-flow-integration"
+      ]
+    }
+  ],
+  "taskOrder": [
+    "TASK-001-bulk-archive-service",
+    "TASK-003-ui-bulk-archive-api-client",
+    "TASK-004-cleanup-basket-state",
+    "TASK-002-rest-bulk-archive-endpoint",
+    "TASK-005-search-result-selection",
+    "TASK-006-cleanup-basket-review-drawer",
+    "TASK-007-search-cleanup-flow-integration"
+  ],
+  "waves": [
+    {
+      "id": "WAVE-001",
+      "status": "done",
+      "strategy": {
+        "profile": "standard",
+        "executionMode": "parallel",
+        "reviewMode": "risk_based",
+        "monitoringMode": "adaptive",
+        "recommendedBy": "wdd-plan-epic",
+        "confirmedBy": "user override on 2026-06-14: override WAVE-001 standard parallel",
+        "requiresUserConfirmation": true,
+        "confidence": "medium",
+        "rationale": [
+          "Foundation tasks have no task dependencies.",
+          "Backend service work touches delete-scope behavior and audit semantics.",
+          "Frontend API and basket state tasks are mostly independent from backend service files."
+        ],
+        "bundleGroups": [],
+        "overrideHistory": [
+          {
+            "at": "2026-06-14T13:15:27+02:00",
+            "by": "user",
+            "from": {
+              "profile": "full",
+              "executionMode": "parallel",
+              "reviewMode": "risk_based",
+              "monitoringMode": "adaptive"
+            },
+            "to": {
+              "profile": "standard",
+              "executionMode": "parallel",
+              "reviewMode": "risk_based",
+              "monitoringMode": "adaptive"
+            },
+            "reason": "User requested lower ceremony than full while retaining parallel execution."
+          }
+        ]
+      },
+      "tasks": [
+        {
+          "id": "TASK-001-bulk-archive-service",
+          "ticket": "TICKET-001-backend-bulk-archive",
+          "path": "TICKET-001-backend-bulk-archive/done/TASK-001-bulk-archive-service.md",
+          "status": "done",
+          "dependsOn": [],
+          "conflictDomains": [
+            "src/services/entity-service.ts",
+            "tests/integration/entity-service.test.ts",
+            "src/auth/**",
+            "src/util/audit.ts"
+          ],
+          "assignedModel": "implementationComplex",
+          "reviewModel": "review",
+          "workerThreadId": "019ec5db-dc36-7c70-8e8d-a34629d5c1da",
+          "reviewThreadId": "019ec5eb-3863-7422-8c2e-6111a0749619",
+          "branch": "codex/task/TASK-001-bulk-archive-service",
+          "workerWorktree": "/Users/ivo.toby/.codex/worktrees/dabec7ed-521f-42fd-b18e-0c0d542e7ccc/postgram-TASK-001-bulk-archive-service",
+          "worktreeStatus": "verified",
+          "pr": "local-merge:a593403",
+          "latestCommit": "a94e478",
+          "branchFreshness": "current_at_merge",
+          "blockingFeedback": [],
+          "verification": {
+            "result": "passed",
+            "commands": [
+              "npm test -- tests/integration/entity-service.test.ts",
+              "npm run typecheck",
+              "git diff --check"
+            ],
+            "controllerCommands": [
+              "npm test -- tests/integration/entity-service.test.ts"
+            ],
+            "evidence": "Worker and controller verification passed; backend reviewer returned REVIEW_PASS."
+          },
+          "currentGate": "merged"
+        },
+        {
+          "id": "TASK-003-ui-bulk-archive-api-client",
+          "ticket": "TICKET-002-cleanup-basket-foundation",
+          "path": "TICKET-002-cleanup-basket-foundation/done/TASK-003-ui-bulk-archive-api-client.md",
+          "status": "done",
+          "dependsOn": [],
+          "conflictDomains": [
+            "ui/src/lib/api.ts",
+            "ui/src/lib/api.test.ts",
+            "ui/src/lib/types.ts"
+          ],
+          "assignedModel": "implementationSimple",
+          "reviewModel": "review",
+          "workerThreadId": "019ec5db-dc95-7521-9ad5-873cb2398c2c",
+          "reviewThreadId": null,
+          "branch": "codex/task/TASK-003-ui-bulk-archive-api-client",
+          "workerWorktree": "/Users/ivo.toby/.codex/worktrees/dabec7ed-521f-42fd-b18e-0c0d542e7ccc/postgram-TASK-003-ui-bulk-archive-api-client",
+          "worktreeStatus": "verified",
+          "pr": "local-merge:a593403",
+          "latestCommit": "83c9e8a",
+          "branchFreshness": "current_at_merge",
+          "blockingFeedback": [],
+          "verification": {
+            "result": "passed_with_command_reconciliation",
+            "commands": [
+              "npm --prefix ui run test -- --run src/lib/api.test.ts",
+              "npm --prefix ui run typecheck"
+            ],
+            "controllerCommands": [
+              "npm --prefix ui run test -- --run src/lib/api.test.ts src/hooks/useCleanupBasket.test.ts",
+              "npm --prefix ui run typecheck"
+            ],
+            "evidence": "Focused and merged-branch UI tests/typecheck passed; npm --workspace ui is not valid for this repo."
+          },
+          "currentGate": "merged"
+        },
+        {
+          "id": "TASK-004-cleanup-basket-state",
+          "ticket": "TICKET-002-cleanup-basket-foundation",
+          "path": "TICKET-002-cleanup-basket-foundation/done/TASK-004-cleanup-basket-state.md",
+          "status": "done",
+          "dependsOn": [],
+          "conflictDomains": [
+            "ui/src/hooks/useCleanupBasket.ts",
+            "ui/src/hooks/useCleanupBasket.test.ts",
+            "ui/src/lib/types.ts"
+          ],
+          "assignedModel": "implementationSimple",
+          "reviewModel": "review",
+          "workerThreadId": "019ec5db-dcf3-7cd2-90b5-44ce10a46b67",
+          "reviewThreadId": null,
+          "branch": "codex/task/TASK-004-cleanup-basket-state",
+          "workerWorktree": "/Users/ivo.toby/.codex/worktrees/dabec7ed-521f-42fd-b18e-0c0d542e7ccc/postgram-TASK-004-cleanup-basket-state",
+          "worktreeStatus": "verified",
+          "pr": "local-merge:a593403",
+          "latestCommit": "519617f",
+          "branchFreshness": "current_at_merge",
+          "blockingFeedback": [],
+          "verification": {
+            "result": "passed_with_command_reconciliation",
+            "commands": [
+              "npm --prefix ui run test -- --run src/hooks/useCleanupBasket.test.ts",
+              "npm --prefix ui run typecheck"
+            ],
+            "controllerCommands": [
+              "npm --prefix ui run test -- --run src/lib/api.test.ts src/hooks/useCleanupBasket.test.ts",
+              "npm --prefix ui run typecheck"
+            ],
+            "evidence": "Focused and merged-branch UI tests/typecheck passed; npm --workspace ui is not valid for this repo."
+          },
+          "currentGate": "merged"
+        }
+      ],
+      "reconciledAt": "2026-06-14T13:46:00+02:00",
+      "reconciliation": {
+        "result": "done",
+        "mergeCommit": "a593403",
+        "closeoutCommit": "69bb6ff",
+        "verification": [
+          "npm test -- tests/integration/entity-service.test.ts",
+          "npm --prefix ui run test -- --run src/lib/api.test.ts src/hooks/useCleanupBasket.test.ts",
+          "npm --prefix ui run typecheck",
+          "npm run typecheck",
+          "git diff --check"
+        ],
+        "review": "TASK-001 separate review REVIEW_PASS; TASK-003/TASK-004 controller review with no P1/P2 findings",
+        "drift": [
+          "UI validation commands use npm --prefix ui rather than npm --workspace ui.",
+          "Cleanup basket storage key format is pgm_cleanup_basket:v1:<api-key-fingerprint>."
+        ]
+      }
+    },
+    {
+      "id": "WAVE-002",
+      "status": "done",
+      "strategy": {
+        "profile": "full",
+        "executionMode": "parallel",
+        "reviewMode": "risk_based",
+        "monitoringMode": "adaptive",
+        "recommendedBy": "wdd-plan-epic",
+        "confirmedBy": "user on 2026-06-14: ok, full parallel for wave 2",
+        "requiresUserConfirmation": true,
+        "confidence": "medium",
+        "rationale": [
+          "REST endpoint and Search selection have disjoint backend/frontend conflict domains.",
+          "Both tasks depend on WAVE-001 outputs.",
+          "Full profile is warranted for public REST/delete contract and SearchPage conflict risk."
+        ],
+        "bundleGroups": [],
+        "overrideHistory": []
+      },
+      "tasks": [
+        {
+          "id": "TASK-002-rest-bulk-archive-endpoint",
+          "ticket": "TICKET-001-backend-bulk-archive",
+          "path": "TICKET-001-backend-bulk-archive/done/TASK-002-rest-bulk-archive-endpoint.md",
+          "status": "done",
+          "dependsOn": [
+            "TASK-001-bulk-archive-service"
+          ],
+          "conflictDomains": [
+            "src/transport/rest.ts",
+            "tests/contract/rest-api.test.ts",
+            "src/services/entity-service.ts"
+          ],
+          "assignedModel": "implementationComplex",
+          "reviewModel": "review",
+          "workerThreadId": "019ec61b-5e6f-7e60-8cd9-79177615cae7",
+          "reviewThreadId": "019ec624-e246-78a3-b8eb-c6c1073da2fe",
+          "branch": "codex/task/TASK-002-rest-bulk-archive-endpoint",
+          "workerWorktree": "/Users/ivo.toby/.codex/worktrees/dabec7ed-521f-42fd-b18e-0c0d542e7ccc/postgram-TASK-002-rest-bulk-archive-endpoint",
+          "worktreeStatus": "verified",
+          "pr": "local-merge:47e4423",
+          "latestCommit": "fd36f86",
+          "branchFreshness": "current_at_merge",
+          "blockingFeedback": [],
+          "verification": {
+            "result": "passed",
+            "commands": [
+              "npm test -- tests/contract/rest-api.test.ts",
+              "npm run typecheck",
+              "git diff --check"
+            ],
+            "controllerCommands": [
+              "npm test -- tests/contract/rest-api.test.ts",
+              "npm run typecheck",
+              "git diff --check HEAD~2..HEAD"
+            ],
+            "evidence": "Worker verification and controller merged-branch verification passed; reviewer Banach returned REVIEW_PASS with no P1/P2/P3 findings."
+          },
+          "currentGate": "merged",
+          "workerNickname": "Curie"
+        },
+        {
+          "id": "TASK-005-search-result-selection",
+          "ticket": "TICKET-003-search-selection",
+          "path": "TICKET-003-search-selection/done/TASK-005-search-result-selection.md",
+          "status": "done",
+          "dependsOn": [
+            "TASK-004-cleanup-basket-state"
+          ],
+          "conflictDomains": [
+            "ui/src/components/SearchPage.tsx",
+            "ui/src/components/SearchPage.test.tsx"
+          ],
+          "assignedModel": "implementationComplex",
+          "reviewModel": "review",
+          "workerThreadId": "019ec61b-5ecc-7293-be12-93dfe9846204",
+          "reviewThreadId": "019ec627-2295-7f23-8dd0-eb5e5dcdb3ad",
+          "branch": "codex/task/TASK-005-search-result-selection",
+          "workerWorktree": "/Users/ivo.toby/.codex/worktrees/dabec7ed-521f-42fd-b18e-0c0d542e7ccc/postgram-TASK-005-search-result-selection",
+          "worktreeStatus": "verified",
+          "pr": "local-merge:0f1c3f1",
+          "latestCommit": "c4b5ef0",
+          "branchFreshness": "current_at_merge",
+          "blockingFeedback": [],
+          "verification": {
+            "result": "passed",
+            "commands": [
+              "npm --prefix ui run test -- --run src/components/SearchPage.test.tsx",
+              "npm --prefix ui run typecheck",
+              "git diff --check"
+            ],
+            "controllerCommands": [
+              "npm --prefix ui run test -- --run src/components/SearchPage.test.tsx",
+              "npm --prefix ui run typecheck",
+              "npm run typecheck",
+              "git diff --check HEAD~2..HEAD"
+            ],
+            "evidence": "Worker verification and controller merged-branch verification passed; reviewer Anscombe returned REVIEW_PASS with no P1/P2/P3 findings."
+          },
+          "currentGate": "merged",
+          "workerNickname": "Erdos"
+        }
+      ],
+      "activatedAt": "2026-06-14T14:24:41+02:00",
+      "reconciledAt": "2026-06-14T14:50:00+02:00",
+      "reconciliation": {
+        "result": "done",
+        "mergeCommits": [
+          "47e4423",
+          "0f1c3f1"
+        ],
+        "closeoutCommit": null,
+        "verification": [
+          "npm test -- tests/contract/rest-api.test.ts",
+          "npm --prefix ui run test -- --run src/components/SearchPage.test.tsx",
+          "npm --prefix ui run typecheck",
+          "npm run typecheck",
+          "git diff --check HEAD~2..HEAD"
+        ],
+        "review": "TASK-002 and TASK-005 received full-profile reviewer REVIEW_PASS results with no P1/P2/P3 findings.",
+        "drift": [
+          "SearchPage selection uses current visible result order for shift-click ranges.",
+          "SearchPage add-selected stores snapshots via useCleanupBasket using pgm_api_key context.",
+          "Heartbeat automation was unavailable; WAVE-002 used manual direct polling."
+        ]
+      }
+    },
+    {
+      "id": "WAVE-003",
+      "status": "done",
+      "strategy": {
+        "profile": "standard",
+        "executionMode": "bundled",
+        "reviewMode": "risk_based",
+        "monitoringMode": "adaptive",
+        "recommendedBy": "wdd-plan-epic",
+        "confirmedBy": null,
+        "requiresUserConfirmation": false,
+        "confidence": "high",
+        "rationale": [
+          "Single coherent review drawer task.",
+          "Drawer depends on backend route, UI API client, and basket state.",
+          "Bundled execution avoids fragmented drawer contracts."
+        ],
+        "bundleGroups": [
+          {
+            "id": "drawer",
+            "tasks": [
+              "TASK-006-cleanup-basket-review-drawer"
+            ],
+            "rationale": "Single-task UI component bundle."
+          }
+        ],
+        "overrideHistory": []
+      },
+      "tasks": [
+        {
+          "id": "TASK-006-cleanup-basket-review-drawer",
+          "ticket": "TICKET-004-review-archive-integration",
+          "path": "TICKET-004-review-archive-integration/done/TASK-006-cleanup-basket-review-drawer.md",
+          "status": "done",
+          "dependsOn": [
+            "TASK-002-rest-bulk-archive-endpoint",
+            "TASK-003-ui-bulk-archive-api-client",
+            "TASK-004-cleanup-basket-state"
+          ],
+          "conflictDomains": [
+            "ui/src/components/CleanupBasketDrawer.tsx",
+            "ui/src/components/CleanupBasketDrawer.test.tsx",
+            "ui/src/hooks/useCleanupBasket.ts"
+          ],
+          "assignedModel": "implementationComplex",
+          "reviewModel": "review",
+          "workerThreadId": "019ec631-30c7-7d21-82d4-1ac079ab603b",
+          "reviewThreadId": "019ec63c-5963-7e43-97fc-02a931bbd7db",
+          "branch": "codex/task/TASK-006-cleanup-basket-review-drawer",
+          "workerWorktree": "/Users/ivo.toby/.codex/worktrees/dabec7ed-521f-42fd-b18e-0c0d542e7ccc/postgram-TASK-006-cleanup-basket-review-drawer",
+          "worktreeStatus": "verified",
+          "pr": "local-merge:04e4c52",
+          "latestCommit": "fdcc6eb",
+          "branchFreshness": "current_at_merge",
+          "blockingFeedback": [],
+          "verification": {
+            "result": "passed",
+            "commands": [
+              "npm --prefix ui run test -- --run src/components/CleanupBasketDrawer.test.tsx",
+              "npm --prefix ui run typecheck",
+              "git diff --check"
+            ],
+            "controllerCommands": [
+              "npm --prefix ui run test -- --run src/components/CleanupBasketDrawer.test.tsx src/hooks/useCleanupBasket.test.ts src/lib/api.test.ts",
+              "npm --prefix ui run typecheck",
+              "git diff --check HEAD~1..HEAD"
+            ],
+            "evidence": "Worker verification and controller merged-branch verification passed; reviewer Peirce returned REVIEW_PASS with no P1/P2/P3 findings."
+          },
+          "currentGate": "merged",
+          "workerNickname": "Arendt"
+        }
+      ],
+      "activatedAt": "2026-06-14T14:51:00+02:00",
+      "reconciledAt": "2026-06-14T15:10:00+02:00",
+      "reconciliation": {
+        "result": "done",
+        "mergeCommit": "04e4c52",
+        "closeoutCommit": null,
+        "verification": [
+          "npm --prefix ui run test -- --run src/components/CleanupBasketDrawer.test.tsx src/hooks/useCleanupBasket.test.ts src/lib/api.test.ts",
+          "npm --prefix ui run typecheck",
+          "git diff --check HEAD~1..HEAD"
+        ],
+        "review": "TASK-006 received reviewer REVIEW_PASS with no P1/P2/P3 findings.",
+        "drift": [
+          "CleanupBasketDrawer is standalone and not wired into SearchPage yet.",
+          "TASK-007 should pass api, basket items, remove, clear, applyArchiveResult, and onClose into the drawer.",
+          "Visible SearchPage result cleanup after archive remains TASK-007 scope."
+        ]
+      }
+    },
+    {
+      "id": "WAVE-004",
+      "status": "done",
+      "strategy": {
+        "profile": "standard",
+        "executionMode": "bundled",
+        "reviewMode": "risk_based",
+        "monitoringMode": "adaptive",
+        "recommendedBy": "wdd-plan-epic",
+        "confirmedBy": null,
+        "requiresUserConfirmation": false,
+        "confidence": "high",
+        "rationale": [
+          "Final integration waits for all foundations and drawer behavior.",
+          "Single worker should own SearchPage final wiring and manual validation evidence."
+        ],
+        "bundleGroups": [
+          {
+            "id": "final-integration",
+            "tasks": [
+              "TASK-007-search-cleanup-flow-integration"
+            ],
+            "rationale": "Single-task final integration bundle."
+          }
+        ],
+        "overrideHistory": []
+      },
+      "tasks": [
+        {
+          "id": "TASK-007-search-cleanup-flow-integration",
+          "ticket": "TICKET-004-review-archive-integration",
+          "path": "TICKET-004-review-archive-integration/done/TASK-007-search-cleanup-flow-integration.md",
+          "status": "done",
+          "dependsOn": [
+            "TASK-002-rest-bulk-archive-endpoint",
+            "TASK-005-search-result-selection",
+            "TASK-006-cleanup-basket-review-drawer"
+          ],
+          "conflictDomains": [
+            "ui/src/components/SearchPage.tsx",
+            "ui/src/components/SearchPage.test.tsx",
+            "ui/src/components/CleanupBasketDrawer.tsx",
+            "tests/contract/rest-api.test.ts"
+          ],
+          "assignedModel": "implementationComplex",
+          "reviewModel": "review",
+          "workerThreadId": "019ec642-e86e-7ed0-94bf-35d5d119d59e",
+          "reviewThreadId": "019ec64d-4d91-76d1-a5a1-99e287c2cafd",
+          "branch": "codex/task/TASK-007-search-cleanup-flow-integration",
+          "workerWorktree": "/Users/ivo.toby/.codex/worktrees/dabec7ed-521f-42fd-b18e-0c0d542e7ccc/postgram-TASK-007-search-cleanup-flow-integration",
+          "worktreeStatus": "verified",
+          "pr": "local-merge:b9cdcd0",
+          "latestCommit": "f5970d2",
+          "branchFreshness": "current_at_merge",
+          "blockingFeedback": [],
+          "verification": {
+            "result": "passed_with_manual_limitation",
+            "commands": [
+              "npm --prefix ui run test -- --run src/components/SearchPage.test.tsx",
+              "npm --prefix ui run test -- --run src/components/CleanupBasketDrawer.test.tsx src/hooks/useCleanupBasket.test.ts src/lib/api.test.ts",
+              "npm --prefix ui run typecheck",
+              "npm test -- tests/contract/rest-api.test.ts",
+              "git diff --check"
+            ],
+            "controllerCommands": [
+              "npm --prefix ui run test -- --run src/components/SearchPage.test.tsx",
+              "npm --prefix ui run test -- --run src/components/CleanupBasketDrawer.test.tsx src/hooks/useCleanupBasket.test.ts src/lib/api.test.ts",
+              "npm --prefix ui run typecheck",
+              "npm test -- tests/contract/rest-api.test.ts",
+              "npm run typecheck",
+              "git diff --check HEAD~1..HEAD",
+              "browser smoke at http://127.0.0.1:5173/"
+            ],
+            "evidence": "Worker and controller verification passed; reviewer Gauss returned REVIEW_PASS with no P1/P2/P3 findings. Controller browser smoke verified Search cleanup basket button and empty drawer; full data-backed archive validation remains blocked without local backend/API key/seed data."
+          },
+          "currentGate": "merged",
+          "workerNickname": "Feynman"
+        }
+      ],
+      "activatedAt": "2026-06-14T15:10:44+02:00",
+      "reconciledAt": "2026-06-14T15:32:00+02:00",
+      "reconciliation": {
+        "result": "done",
+        "mergeCommit": "b9cdcd0",
+        "closeoutCommit": null,
+        "verification": [
+          "npm --prefix ui run test -- --run src/components/SearchPage.test.tsx",
+          "npm --prefix ui run test -- --run src/components/CleanupBasketDrawer.test.tsx src/hooks/useCleanupBasket.test.ts src/lib/api.test.ts",
+          "npm --prefix ui run typecheck",
+          "npm test -- tests/contract/rest-api.test.ts",
+          "npm run typecheck",
+          "git diff --check HEAD~1..HEAD",
+          "browser smoke at http://127.0.0.1:5173/"
+        ],
+        "review": "TASK-007 received reviewer REVIEW_PASS with no P1/P2/P3 findings.",
+        "drift": [
+          "Full data-backed browser archive validation remains blocked without a local backend, delete-scoped API key, and disposable seed entities.",
+          "Controller browser smoke verified the merged UI renders the Search cleanup basket button and empty drawer without console errors.",
+          "All planned implementation waves are complete."
+        ]
+      }
+    }
+  ],
+  "sharedContext": {
+    "index": "shared-context/index.md",
+    "resources": [
+      "shared-context/resources/architecture.md",
+      "shared-context/resources/api-contract.md",
+      "shared-context/resources/discovered-conventions.md",
+      "shared-context/resources/testing-strategy.md",
+      "shared-context/resources/validation-strategy.md",
+      "shared-context/resources/task-findings.md"
+    ],
+    "pendingReconciliation": [],
+    "lastReconciledWave": "WAVE-004"
+  },
+  "monitoring": {
+    "mode": "manual",
+    "cadence": "stopped",
+    "status": "stopped_reconciled",
+    "lastCheckedAt": "2026-06-14T15:32:00+02:00",
+    "nextCheckDueAt": null,
+    "schedulerRef": "none:wave_reconciled",
+    "fallbackPrompt": "Run wdd-epic-validation for EPIC-search-cleanup-basket. All planned waves are complete; final data-backed browser archive validation remains pending until a local backend, delete-scoped API key, and disposable seed entities are available."
+  },
+  "currentGates": {
+    "epicBranch": {
+      "status": "verified",
+      "requiredBeforeWorkerDispatch": true
+    },
+    "activationArtifactsSynced": {
+      "status": "synced_to_epic_branch",
+      "requiredBeforeTaskWorktrees": true
+    },
+    "waveStrategyConfirmation": {
+      "WAVE-001": "confirmed_override_standard_parallel",
+      "WAVE-002": "confirmed_full_parallel",
+      "WAVE-003": "not_required",
+      "WAVE-004": "not_required"
+    },
+    "workerWorktrees": {
+      "TASK-001-bulk-archive-service": "verified",
+      "TASK-003-ui-bulk-archive-api-client": "verified",
+      "TASK-004-cleanup-basket-state": "verified",
+      "TASK-002-rest-bulk-archive-endpoint": "verified",
+      "TASK-005-search-result-selection": "verified",
+      "TASK-006-cleanup-basket-review-drawer": "verified",
+      "TASK-007-search-cleanup-flow-integration": "verified"
+    },
+    "workerDispatch": {
+      "TASK-001-bulk-archive-service": "merged",
+      "TASK-003-ui-bulk-archive-api-client": "merged",
+      "TASK-004-cleanup-basket-state": "merged",
+      "TASK-002-rest-bulk-archive-endpoint": "merged",
+      "TASK-005-search-result-selection": "merged",
+      "TASK-006-cleanup-basket-review-drawer": "merged",
+      "TASK-007-search-cleanup-flow-integration": "merged"
+    },
+    "waveCompletion": {
+      "WAVE-001": "done",
+      "WAVE-002": "done",
+      "WAVE-003": "done",
+      "WAVE-004": "done"
+    },
+    "nextWave": {
+      "id": null,
+      "status": "all_waves_complete",
+      "nextPhase": "human_review",
+      "finalPr": "https://github.com/ivo-toby/postgram/pull/71"
+    }
+  },
+  "epicValidation": {
+    "status": "passed",
+    "path": "epic-validation.md",
+    "validatedAt": "2026-06-14T15:40:00+02:00",
+    "targetBranchFreshness": "origin/main_merged_at_f436e95",
+    "blockers": [],
+    "knownLimitations": [
+      "Full data-backed browser archive validation requires a local backend, delete-scoped API key, and disposable seed entities."
+    ],
+    "nextPhase": "wdd-final-pr"
+  },
+  "finalPr": {
+    "status": "created",
+    "path": "final-pr.md",
+    "targetBranch": "main",
+    "sourceBranch": "codex/epic/search-cleanup-basket",
+    "url": "https://github.com/ivo-toby/postgram/pull/71",
+    "number": 71,
+    "draft": true,
+    "createdAt": "2026-06-14T13:41:02Z"
+  }
+}

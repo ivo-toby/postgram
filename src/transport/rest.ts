@@ -8,6 +8,7 @@ import type { EmbeddingService } from '../services/embedding-service.js';
 import { createEdge, deleteEdge, listEdges, expandGraph } from '../services/edge-service.js';
 import { getEntityEmbeddings } from '../services/embedding-query-service.js';
 import {
+  bulkArchiveEntities,
   listEntities,
   recallEntity,
   softDeleteEntity,
@@ -151,6 +152,7 @@ const createEdgeSchema = z.object({
 });
 
 const MAX_EMBEDDING_IDS = 500;
+const MAX_BULK_ARCHIVE_IDS = 500;
 const UUID_REGEX = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
 
 const embeddingsRequestSchema = z.object({
@@ -159,6 +161,16 @@ const embeddingsRequestSchema = z.object({
     .min(1, 'ids must contain at least one entity ID')
     .max(MAX_EMBEDDING_IDS, `ids must contain at most ${MAX_EMBEDDING_IDS} entries`),
   owner: ownerSchema.optional()
+});
+
+const bulkArchiveEntitiesSchema = z.object({
+  ids: z
+    .array(z.string().regex(UUID_REGEX, 'Invalid entity ID'))
+    .min(1, 'ids must contain at least one entity ID')
+    .max(
+      MAX_BULK_ARCHIVE_IDS,
+      `ids must contain at most ${MAX_BULK_ARCHIVE_IDS} entries`
+    )
 });
 
 const syncManifestSchema = z.object({
@@ -384,6 +396,20 @@ export function registerRestRoutes(
         embedding: entry.embedding
       }))
     });
+  });
+
+  app.post('/api/entities/bulk/archive', async (c) => {
+    const auth = c.get('auth');
+    const body = parseJsonBody(bulkArchiveEntitiesSchema, await c.req.json());
+    const result = await bulkArchiveEntities(pool, auth, {
+      ids: body.ids
+    });
+
+    if (result.isErr()) {
+      throw result.error;
+    }
+
+    return c.json(result.value);
   });
 
   app.get('/api/entities/:id', async (c) => {

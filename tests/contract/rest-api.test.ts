@@ -735,6 +735,234 @@ describe('REST entity endpoints', () => {
     });
   }, 120_000);
 
+  it('rejects bulk archive requests with invalid body shapes', async () => {
+    const { app, apiKey } = await createAuthorizedApp();
+
+    const postJson = (payload: unknown) =>
+      app.request('/api/entities/bulk/archive', {
+        method: 'POST',
+        headers: {
+          Authorization: `Bearer ${apiKey}`,
+          'Content-Type': 'application/json'
+        },
+        body: JSON.stringify(payload)
+      });
+
+    const missingIds = await postJson({});
+    const missingIdsBody = (await missingIds.json()) as {
+      error: { code: string };
+    };
+
+    expect(missingIds.status).toBe(400);
+    expect(missingIdsBody.error.code).toBe(ErrorCode.VALIDATION);
+
+    const emptyIds = await postJson({ ids: [] });
+    const emptyIdsBody = (await emptyIds.json()) as {
+      error: { code: string };
+    };
+
+    expect(emptyIds.status).toBe(400);
+    expect(emptyIdsBody.error.code).toBe(ErrorCode.VALIDATION);
+  }, 120_000);
+
+  it('rejects bulk archive requests with non-UUID ids', async () => {
+    const { app, apiKey } = await createAuthorizedApp();
+
+    const response = await app.request('/api/entities/bulk/archive', {
+      method: 'POST',
+      headers: {
+        Authorization: `Bearer ${apiKey}`,
+        'Content-Type': 'application/json'
+      },
+      body: JSON.stringify({
+        ids: ['not-a-uuid']
+      })
+    });
+    const body = (await response.json()) as {
+      error: { code: string };
+    };
+
+    expect(response.status).toBe(400);
+    expect(body.error.code).toBe(ErrorCode.VALIDATION);
+  }, 120_000);
+
+  it('rejects bulk archive requests with more than 500 ids', async () => {
+    const { app, apiKey } = await createAuthorizedApp();
+
+    const response = await app.request('/api/entities/bulk/archive', {
+      method: 'POST',
+      headers: {
+        Authorization: `Bearer ${apiKey}`,
+        'Content-Type': 'application/json'
+      },
+      body: JSON.stringify({
+        ids: Array.from({ length: 501 }, () => crypto.randomUUID())
+      })
+    });
+    const body = (await response.json()) as {
+      error: { code: string };
+    };
+
+    expect(response.status).toBe(400);
+    expect(body.error.code).toBe(ErrorCode.VALIDATION);
+  }, 120_000);
+
+  it('requires auth and delete scope for bulk archive', async () => {
+    if (!database) {
+      throw new Error('test database not initialized');
+    }
+
+    const app = createApp({ pool: database.pool });
+    const writerKey = (await createKey(database.pool, {
+      name: `rest-bulk-writer-${crypto.randomUUID()}`,
+      scopes: ['read', 'write', 'delete'],
+      allowedVisibility: ['shared']
+    }))._unsafeUnwrap();
+    const noDeleteKey = (await createKey(database.pool, {
+      name: `rest-bulk-no-delete-${crypto.randomUUID()}`,
+      scopes: ['read', 'write'],
+      allowedVisibility: ['shared']
+    }))._unsafeUnwrap();
+
+    const storeResponse = await app.request('/api/entities', {
+      method: 'POST',
+      headers: {
+        Authorization: `Bearer ${writerKey.plaintextKey}`,
+        'Content-Type': 'application/json'
+      },
+      body: JSON.stringify({
+        type: 'memory',
+        content: 'bulk archive auth check',
+        visibility: 'shared'
+      })
+    });
+    const storeBody = (await storeResponse.json()) as {
+      entity: { id: string };
+    };
+
+    expect(storeResponse.status).toBe(201);
+
+    const unauthenticated = await app.request('/api/entities/bulk/archive', {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json'
+      },
+      body: JSON.stringify({
+        ids: [storeBody.entity.id]
+      })
+    });
+    const unauthenticatedBody = (await unauthenticated.json()) as {
+      error: { code: string };
+    };
+
+    expect(unauthenticated.status).toBe(401);
+    expect(unauthenticatedBody.error.code).toBe(ErrorCode.UNAUTHORIZED);
+
+    const forbidden = await app.request('/api/entities/bulk/archive', {
+      method: 'POST',
+      headers: {
+        Authorization: `Bearer ${noDeleteKey.plaintextKey}`,
+        'Content-Type': 'application/json'
+      },
+      body: JSON.stringify({
+        ids: [storeBody.entity.id]
+      })
+    });
+    const forbiddenBody = (await forbidden.json()) as {
+      error: { code: string };
+    };
+
+    expect(forbidden.status).toBe(403);
+    expect(forbiddenBody.error.code).toBe(ErrorCode.FORBIDDEN);
+
+    const statusRows = await database.pool.query<{ status: string | null }>(
+      'SELECT status FROM entities WHERE id = $1',
+      [storeBody.entity.id]
+    );
+    expect(statusRows.rows[0]?.status).toBeNull();
+  }, 120_000);
+
+  it('bulk archives accessible ids and returns mixed failures', async () => {
+    if (!database) {
+      throw new Error('test database not initialized');
+    }
+
+    const app = createApp({ pool: database.pool });
+    const writerKey = (await createKey(database.pool, {
+      name: `rest-bulk-writer-${crypto.randomUUID()}`,
+      scopes: ['read', 'write', 'delete'],
+      allowedVisibility: ['shared', 'work']
+    }))._unsafeUnwrap();
+    const archiveKey = (await createKey(database.pool, {
+      name: `rest-bulk-archive-${crypto.randomUUID()}`,
+      scopes: ['delete'],
+      allowedVisibility: ['shared']
+    }))._unsafeUnwrap();
+    const missingId = '00000000-0000-0000-0000-000000000404';
+
+    const createEntity = async (body: Record<string, unknown>) => {
+      const response = await app.request('/api/entities', {
+        method: 'POST',
+        headers: {
+          Authorization: `Bearer ${writerKey.plaintextKey}`,
+          'Content-Type': 'application/json'
+        },
+        body: JSON.stringify(body)
+      });
+      expect(response.status).toBe(201);
+      return (await response.json()) as { entity: { id: string } };
+    };
+
+    const archived = await createEntity({
+      type: 'memory',
+      content: 'bulk archive success',
+      visibility: 'shared'
+    });
+    const inaccessible = await createEntity({
+      type: 'memory',
+      content: 'bulk archive inaccessible',
+      visibility: 'work'
+    });
+
+    const response = await app.request('/api/entities/bulk/archive', {
+      method: 'POST',
+      headers: {
+        Authorization: `Bearer ${archiveKey.plaintextKey}`,
+        'Content-Type': 'application/json'
+      },
+      body: JSON.stringify({
+        ids: [archived.entity.id, missingId, inaccessible.entity.id]
+      })
+    });
+    const body = (await response.json()) as {
+      archived: Array<{ id: string }>;
+      failed: Array<{ id: string; code: string; message: string }>;
+    };
+
+    expect(response.status).toBe(200);
+    expect(body.archived).toEqual([{ id: archived.entity.id }]);
+    expect(body.failed).toEqual([
+      {
+        id: missingId,
+        code: ErrorCode.NOT_FOUND,
+        message: 'Entity not found'
+      },
+      expect.objectContaining({
+        id: inaccessible.entity.id,
+        code: ErrorCode.FORBIDDEN,
+        message: expect.any(String)
+      })
+    ]);
+
+    const rows = await database.pool.query<{ id: string; status: string | null }>(
+      'SELECT id, status FROM entities WHERE id = ANY($1)',
+      [[archived.entity.id, inaccessible.entity.id]]
+    );
+    const byId = Object.fromEntries(rows.rows.map((row) => [row.id, row.status]));
+    expect(byId[archived.entity.id]).toBe('archived');
+    expect(byId[inaccessible.entity.id]).toBeNull();
+  }, 120_000);
+
   it('searches enriched entities and validates empty queries', async () => {
     if (!database) {
       throw new Error('test database not initialized');

@@ -6,7 +6,7 @@ ticket: TICKET-001-backend-bulk-archive
 wave: WAVE-002
 slug: rest-bulk-archive-endpoint
 title: REST Bulk Archive Endpoint
-status: in_progress
+status: review
 depends_on:
   - TASK-001-bulk-archive-service
 conflict_domains:
@@ -30,7 +30,7 @@ verification:
 
 ## Status
 
-in_progress
+review
 
 ## Parent Ticket
 
@@ -153,10 +153,10 @@ regex convention.
 
 ## Task-Level Definition of Done
 
-- [ ] Objective is complete.
-- [ ] Verification evidence is recorded.
-- [ ] No unresolved P1/P2 review findings remain.
-- [ ] Shared-context updates, if any, are proposed for controller reconciliation.
+- [x] Objective is complete.
+- [x] Verification evidence is recorded.
+- [x] No unresolved P1/P2 review findings remain.
+- [x] Shared-context updates, if any, are proposed for controller reconciliation.
 
 ## Validation Steps
 
@@ -164,7 +164,12 @@ regex convention.
 
 ## Verification Evidence
 
-- Not run yet.
+- RED: `npm test -- tests/contract/rest-api.test.ts` failed with 5 expected
+  missing-route assertions for `POST /api/entities/bulk/archive` returning
+  `404` before implementation; 17 existing tests passed.
+- GREEN: `npm test -- tests/contract/rest-api.test.ts` passed with 22 tests.
+- `npm run typecheck` passed.
+- `git diff --check` passed after moving this task file to `review/`.
 
 ## Review Feedback
 
@@ -182,4 +187,10 @@ regex convention.
 
 ## Completion Notes
 
-- None yet.
+- Added `POST /api/entities/bulk/archive` REST validation and route wiring in
+  `src/transport/rest.ts`, consuming the existing `bulkArchiveEntities`
+  service.
+- Added REST contract coverage for invalid body shapes, UUID validation,
+  max-500 IDs, auth/delete-scope behavior, and mixed archived/failed payloads.
+- No shared-context contract updates are needed; implementation matches the
+  existing explicit-ID archive contract.

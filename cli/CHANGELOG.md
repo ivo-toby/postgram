@@ -1,3 +1,9 @@
+## [1.32.1](https://github.com/ivo-toby/postgram/compare/cli-v1.32.0...cli-v1.32.1) (2026-06-14)
+
+### Bug Fixes
+
+* Fix MCP input coercion ([#69](https://github.com/ivo-toby/postgram/issues/69)) ([cc67afe](https://github.com/ivo-toby/postgram/commit/cc67afe9d9df44991b197dd76b28be9735740b2a))
+
 ## [1.32.0](https://github.com/ivo-toby/postgram/compare/cli-v1.31.0...cli-v1.32.0) (2026-06-09)
 
 ### Features

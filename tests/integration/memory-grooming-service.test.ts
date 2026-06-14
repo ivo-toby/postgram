@@ -100,6 +100,40 @@ describe('memory-grooming-service', () => {
     expect(row.rows[0]?.status).toBeNull();
   });
 
+  it('previews all eligible session-context memories when limit is omitted', async () => {
+    if (!database) {
+      throw new Error('test database not initialized');
+    }
+
+    const stored = (
+      await Promise.all(
+        Array.from({ length: 51 }, (_, index) =>
+          storeEntity(database!.pool, makeAuthContext(), {
+            type: 'memory',
+            content: `Session context ${index} should be included when no limit is set.`,
+            visibility: 'personal',
+            metadata: {
+              memory_role: 'session_context',
+              session_scope: { kind: 'client', client_id: 'codex' },
+              groom_after: '2026-01-01T00:00:00.000Z'
+            }
+          })
+        )
+      )
+    ).map((result) => result._unsafeUnwrap());
+
+    const preview = await previewSessionContextGrooming(database.pool, {
+      clientId: 'codex',
+      now: new Date('2026-05-31T00:00:00.000Z')
+    });
+
+    if (preview.isErr()) {
+      throw preview.error;
+    }
+
+    expect(preview.value.eligible).toHaveLength(stored.length);
+  });
+
   it('ignores malformed groom_after values without aborting preview', async () => {
     if (!database) {
       throw new Error('test database not initialized');

@@ -21,7 +21,7 @@ export type GroomingScope =
 
 export type GroomingFilters = {
   olderThanMs: number;
-  limit: number;
+  limit?: number | undefined;
   topic?: string | undefined;
   sessionId?: string | undefined;
   tags?: string[] | undefined;
@@ -54,7 +54,7 @@ type GroomingInput = {
   clientId?: string | undefined;
   allowedVisibility?: Visibility[] | undefined;
   now: Date;
-  limit: number;
+  limit?: number | undefined;
   olderThanMs?: number | undefined;
   topic?: string | undefined;
   sessionId?: string | undefined;
@@ -200,11 +200,13 @@ function normalizeTags(
 }
 
 function normalizeFilters(input: GroomingInput): GroomingFilters {
-  if (!Number.isInteger(input.limit) || input.limit <= 0) {
-    throw new AppError(
-      ErrorCode.VALIDATION,
-      'limit must be a positive integer'
-    );
+  if (input.limit !== undefined) {
+    if (!Number.isInteger(input.limit) || input.limit <= 0) {
+      throw new AppError(
+        ErrorCode.VALIDATION,
+        'limit must be a positive integer'
+      );
+    }
   }
 
   const olderThanMs = input.olderThanMs ?? 7 * 24 * 60 * 60 * 1000;
@@ -349,7 +351,11 @@ function buildCandidateQuery({
     values.push(filters.tags);
   }
 
-  values.push(filters.limit);
+  const limitClause =
+    filters.limit === undefined ? '' : `LIMIT $${paramIndex}`;
+  if (filters.limit !== undefined) {
+    values.push(filters.limit);
+  }
 
   return {
     text: `
@@ -360,7 +366,7 @@ function buildCandidateQuery({
         COALESCE(metadata #>> '{session_scope,client_id}', ''),
         created_at ASC,
         id ASC
-      LIMIT $${paramIndex}
+      ${limitClause}
     `,
     values
   };
@@ -451,7 +457,7 @@ export function groomSessionContext(
     mode: GroomingMode;
     dryRun: boolean;
     confirm: boolean;
-    limit: number;
+    limit?: number | undefined;
     olderThanMs?: number | undefined;
     topic?: string | undefined;
     sessionId?: string | undefined;

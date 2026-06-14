@@ -223,7 +223,7 @@ admin/operator workflow.
 CLI dry-run:
 
 ```bash
-pgm memory groom --dry-run --older-than 7d --limit 50
+pgm memory groom --dry-run --older-than 7d
 ```
 
 CLI archive, with optional filters:
@@ -238,11 +238,13 @@ MCP self-grooming uses `groom_session_context`:
 {
   "mode": "dry_run",
   "older_than": "7d",
-  "limit": 50,
   "topic": "postgram",
   "tags": ["session-context"]
 }
 ```
+
+Grooming has no default candidate cap. Pass `--limit <n>` or `limit` only when
+you intentionally want a bounded batch.
 
 Do not pass or invent a client id for self-grooming. Postgram derives scope
 from the API key. Use `pgm-admin memory groom --client-id <id>` or

@@ -106,7 +106,8 @@ every session-context scope. `--all-clients` keeps each client scope separate;
 it is operational batching, not cross-client consolidation.
 `--older-than <duration>` defaults to `7d` and accepts values like `30m`,
 `4h`, `7d`, or `0d`. `--dry-run` previews eligible memories without calling
-the LLM.
+the LLM. Grooming has no default candidate cap; pass `--limit <n>` when you
+want to process a bounded batch.
 `--mode archive --yes` archives eligible working context directly.
 `--mode promote --yes` uses the configured extraction LLM to decide whether
 each session-context memory should be promoted; promoted memories are distilled
@@ -117,7 +118,7 @@ Authenticated users and agents can self-groom only their own client-scoped
 session context:
 
 ```bash
-pgm memory groom --dry-run --older-than 7d --limit 50
+pgm memory groom --dry-run --older-than 7d
 pgm memory groom --older-than 14d --topic postgram --tag session-context --yes
 ```
 
@@ -131,7 +132,6 @@ MCP clients can use the `groom_session_context` tool with the same self scope:
 {
   "mode": "dry_run",
   "older_than": "7d",
-  "limit": 50,
   "topic": "postgram",
   "session_id": "optional-session-id",
   "tags": ["session-context"]
@@ -146,7 +146,7 @@ client scopes every three days at 03:17 and appends JSON output to a log. Cron
 does not provide a TTY, so use `docker compose exec -T`:
 
 ```cron
-17 3 */3 * * cd /path/to/postgram && docker compose exec -T mcp-server pgm-admin --json memory groom --all-clients --older-than 7d --mode promote --yes --limit 50 >> /var/log/postgram-memory-groom.log 2>&1
+17 3 */3 * * cd /path/to/postgram && docker compose exec -T mcp-server pgm-admin --json memory groom --all-clients --older-than 7d --mode promote --yes >> /var/log/postgram-memory-groom.log 2>&1
 ```
 
 Use `--mode archive --yes` instead if you want to archive eligible working

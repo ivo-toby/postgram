@@ -5,9 +5,11 @@ import { promisify } from 'node:util';
 import path from 'node:path';
 
 import { createKey } from '../../src/auth/key-service.js';
+import type { AuthContext } from '../../src/auth/types.js';
 import { createApp } from '../../src/index.js';
 import { createEmbeddingService } from '../../src/services/embedding-service.js';
 import { createEnrichmentWorker } from '../../src/services/enrichment-worker.js';
+import { storeEntity } from '../../src/services/entity-service.js';
 import {
   createTestDatabase,
   resetTestDatabase,
@@ -441,6 +443,69 @@ describe('pgm CLI', () => {
     const byId = Object.fromEntries(rows.rows.map((row) => [row.id, row.status]));
     expect(byId[ownBody.entity.id]).toBeNull();
     expect(byId[otherBody.entity.id]).toBeNull();
+  }, 120_000);
+
+  it('does not cap self-grooming candidates when --limit is omitted', async () => {
+    if (!database) {
+      throw new Error('test database not initialized');
+    }
+
+    const ownKey = (
+      await createKey(database.pool, {
+        name: `self-groom-unlimited-${crypto.randomUUID()}`,
+        clientId: 'codex-cli',
+        scopes: ['read', 'write', 'delete'],
+        allowedVisibility: ['personal']
+      })
+    )._unsafeUnwrap();
+    const auth: AuthContext = {
+      apiKeyId: ownKey.record.id,
+      keyName: ownKey.record.name,
+      clientId: 'codex-cli',
+      scopes: ['read', 'write', 'delete'],
+      allowedTypes: null,
+      allowedVisibility: ['personal']
+    };
+
+    (
+      await Promise.all(
+        Array.from({ length: 51 }, (_, index) =>
+          storeEntity(database!.pool, auth, {
+            type: 'memory',
+            content: `CLI groom candidate ${index} should not be capped by default.`,
+            visibility: 'personal',
+            metadata: {
+              memory_role: 'session_context',
+              session_scope: { kind: 'client', client_id: 'codex-cli' },
+              topic: 'unlimited-groom',
+              groom_after: '2026-01-01T00:00:00.000Z'
+            }
+          })
+        )
+      )
+    ).forEach((result) => result._unsafeUnwrap());
+
+    const result = await runPgm(
+      [
+        'memory',
+        'groom',
+        '--dry-run',
+        '--older-than',
+        '30d',
+        '--topic',
+        'unlimited-groom',
+        '--json'
+      ],
+      {
+        PGM_API_URL: baseUrl,
+        PGM_API_KEY: ownKey.plaintextKey
+      }
+    );
+    const body = parseJson(result.stdout) as {
+      eligible: Array<{ id: string }>;
+    };
+
+    expect(body.eligible).toHaveLength(51);
   }, 120_000);
 
   it('archives only the authenticated client session context after --yes confirmation', async () => {

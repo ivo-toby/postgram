@@ -2,7 +2,7 @@
 id: EPIC-search-cleanup-basket-VALIDATION
 kind: validation_checklist
 epic: EPIC-search-cleanup-basket
-status: wave_004_reconciled
+status: epic_validation_passed
 created_at: 2026-06-14
 updated_at: 2026-06-14
 ---
@@ -105,3 +105,6 @@ WAVE-004 used manual direct worker polling and is now reconciled. All planned
 waves are complete; epic validation is next. Full data-backed browser archive
 validation remains blocked until a local backend, delete-scoped API key, and
 disposable seed entities are available.
+
+Epic validation passed on 2026-06-14. Final PR draft is prepared in
+`final-pr.md`; GitHub PR creation is next.

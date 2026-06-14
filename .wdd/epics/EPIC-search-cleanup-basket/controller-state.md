@@ -3,7 +3,7 @@ id: EPIC-search-cleanup-basket-CONTROLLER
 kind: controller_state
 epic: EPIC-search-cleanup-basket
 active_wave: null
-status: wave_004_reconciled
+status: epic_validation_passed
 updated_at: 2026-06-14
 ---
 
@@ -21,10 +21,10 @@ checkout.
 
 WAVE-004 is done and reconciled.
 
-Next phase: `wdd-epic-validation`. All planned implementation waves are
-complete. Full data-backed browser archive validation remains blocked until a
-local backend, delete-scoped API key, and disposable seed entities are
-available.
+Epic validation passed. Final PR draft is prepared at `final-pr.md`.
+
+Next phase: create a draft GitHub PR from
+`codex/epic/search-cleanup-basket` into `main`.
 
 ## Wave Summary
 
@@ -52,7 +52,7 @@ Scheduler reference: none:wave_reconciled
 Fallback prompt:
 
 ```text
-Run wdd-epic-validation for EPIC-search-cleanup-basket. All planned waves are complete; final data-backed browser archive validation remains pending until a local backend, delete-scoped API key, and disposable seed entities are available.
+Create the final draft PR for EPIC-search-cleanup-basket from codex/epic/search-cleanup-basket into main, then record the PR URL in final-pr.md, orchestration.json, and controller-state.md.
 ```
 
 ## WAVE-001 Task Gates
@@ -179,7 +179,10 @@ Run wdd-epic-validation for EPIC-search-cleanup-basket. All planned waves are co
 - 2026-06-14: TASK-007 merged into the epic branch in `b9cdcd0` after
   `REVIEW_PASS`.
 - 2026-06-14: WAVE-004 reconciled and marked done.
+- 2026-06-14: `origin/main` was merged into the epic branch in `f436e95`
+  before final validation.
+- 2026-06-14: Epic validation passed and final PR draft was prepared.
 
 ## Next Action
 
-- Run `wdd-epic-validation`.
+- Create the draft GitHub PR and record the PR URL.

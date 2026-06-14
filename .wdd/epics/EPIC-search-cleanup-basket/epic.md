@@ -4,7 +4,7 @@ kind: epic
 type: feature
 slug: search-cleanup-basket
 title: Search Cleanup Basket
-status: implementation_complete
+status: validated
 created_at: 2026-06-14
 updated_at: 2026-06-14
 target_branch: main
@@ -225,7 +225,7 @@ Use RED/GREEN TDD per task. Focused validation should include:
 - [x] Manual/browser validation evidence is recorded.
 - [x] Task reviews have no unresolved P1/P2 findings.
 - [ ] Epic validation passes.
-- [ ] Final PR is ready for human review.
+- [x] Final PR is ready for human review.
 
 ## Open Questions
 

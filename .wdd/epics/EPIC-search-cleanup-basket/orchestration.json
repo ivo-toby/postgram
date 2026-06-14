@@ -6,7 +6,7 @@
     "targetBranch": "main",
     "baseBranch": "codex/epic/search-cleanup-basket",
     "slug": "search-cleanup-basket",
-    "status": "implementation_complete"
+    "status": "validated"
   },
   "configuration": {
     "storageMode": "local-markdown",
@@ -647,7 +647,26 @@
     "nextWave": {
       "id": null,
       "status": "all_waves_complete",
-      "nextPhase": "epic_validation"
+      "nextPhase": "final_pr"
     }
+  },
+  "epicValidation": {
+    "status": "passed",
+    "path": "epic-validation.md",
+    "validatedAt": "2026-06-14T15:40:00+02:00",
+    "targetBranchFreshness": "origin/main_merged_at_f436e95",
+    "blockers": [],
+    "knownLimitations": [
+      "Full data-backed browser archive validation requires a local backend, delete-scoped API key, and disposable seed entities."
+    ],
+    "nextPhase": "wdd-final-pr"
+  },
+  "finalPr": {
+    "status": "draft_prepared",
+    "path": "final-pr.md",
+    "targetBranch": "main",
+    "sourceBranch": "codex/epic/search-cleanup-basket",
+    "url": null,
+    "draft": true
   }
 }

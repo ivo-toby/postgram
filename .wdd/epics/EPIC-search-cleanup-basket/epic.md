@@ -218,7 +218,7 @@ Use RED/GREEN TDD per task. Focused validation should include:
 - [x] Search result selection supports checkbox, select-all-loaded, and
       shift-click visible range selection.
 - [x] Persistent cleanup basket is implemented and covered.
-- [ ] Review drawer supports counts, item removal, clear basket, final archive,
+- [x] Review drawer supports counts, item removal, clear basket, final archive,
       success cleanup, and failure retention.
 - [ ] No hard delete or query-level archive path exists.
 - [ ] Focused and broad verification commands pass for the changed areas.

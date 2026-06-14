@@ -56,7 +56,10 @@ before editing code.
   local merge commit `a593403`.
 - WAVE-002 is done and reconciled. The REST bulk archive endpoint and Search
   result selection are merged into the epic branch.
-- WAVE-003 is active and contains the cleanup basket review drawer task.
+- WAVE-003 is done and reconciled. The cleanup basket review drawer component
+  is merged into the epic branch.
+- WAVE-004 is the next ready wave and contains the final Search cleanup flow
+  integration task.
 
 ## Recent Durable Memory
 

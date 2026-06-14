@@ -6,7 +6,7 @@ ticket: TICKET-004-review-archive-integration
 wave: WAVE-003
 slug: cleanup-basket-review-drawer
 title: Cleanup Basket Review Drawer
-status: review
+status: done
 depends_on:
   - TASK-002-rest-bulk-archive-endpoint
   - TASK-003-ui-bulk-archive-api-client
@@ -20,10 +20,11 @@ review_model_class: review
 branch: codex/task/TASK-006-cleanup-basket-review-drawer
 worker_worktree: /Users/ivo.toby/.codex/worktrees/dabec7ed-521f-42fd-b18e-0c0d542e7ccc/postgram-TASK-006-cleanup-basket-review-drawer
 worktree_status: verified
-pr: null
+pr: local-merge:04e4c52
 worker_thread_id: 019ec631-30c7-7d21-82d4-1ac079ab603b
-current_gate: worker_ready_for_review
-branch_freshness: current_at_dispatch
+review_thread_id: 019ec63c-5963-7e43-97fc-02a931bbd7db
+current_gate: merged
+branch_freshness: current_at_merge
 verification:
   - npm --prefix ui run test -- --run src/components/CleanupBasketDrawer.test.tsx
   - npm --prefix ui run typecheck
@@ -33,7 +34,7 @@ verification:
 
 ## Status
 
-review
+done
 
 ## Parent Ticket
 
@@ -132,7 +133,7 @@ Worker: Arendt (`019ec631-30c7-7d21-82d4-1ac079ab603b`).
 
 ## PR / Patch Reference
 
-None yet.
+local-merge:04e4c52
 
 ## RED-GREEN TDD Plan
 
@@ -198,6 +199,14 @@ next task.
 - Final validation: `npm --prefix ui run typecheck` passed with
   `tsc --noEmit`.
 - Final validation: `git diff --check` passed.
+- Reviewer Peirce (`019ec63c-5963-7e43-97fc-02a931bbd7db`) returned
+  `REVIEW_PASS` with no P1/P2/P3 findings.
+- Controller merged branch `codex/task/TASK-006-cleanup-basket-review-drawer`
+  into `codex/epic/search-cleanup-basket` in `04e4c52`.
+- Controller merged-branch verification passed:
+  `npm --prefix ui run test -- --run src/components/CleanupBasketDrawer.test.tsx src/hooks/useCleanupBasket.test.ts src/lib/api.test.ts`
+  (21 tests), `npm --prefix ui run typecheck`, and
+  `git diff --check HEAD~1..HEAD`.
 
 ## Review Feedback
 
@@ -231,3 +240,4 @@ next task.
   and `applyArchiveResult` helpers plus the existing `api` client; visible
   SearchPage result cleanup after archive remains TASK-007 scope.
 - Final gate: ready for controller review.
+- Final status: merged and done.

@@ -2,7 +2,7 @@
 id: EPIC-search-cleanup-basket-VALIDATION
 kind: validation_checklist
 epic: EPIC-search-cleanup-basket
-status: wave_003_active
+status: wave_003_reconciled
 created_at: 2026-06-14
 updated_at: 2026-06-14
 ---
@@ -100,5 +100,5 @@ updated_at: 2026-06-14
 WAVE-002 is active after user confirmation. Heartbeat automation was attempted
 again during activation but no dedicated automation/heartbeat tool was exposed;
 the controller used manual direct agent polling for this wave. WAVE-002 is now
-reconciled. WAVE-003 is active with no user confirmation requirement and uses
-manual direct worker polling.
+reconciled. WAVE-003 used manual direct worker polling, is now reconciled, and
+WAVE-004 is ready with no user confirmation requirement.

@@ -107,11 +107,15 @@ Dependency status:
   `codex/epic/search-cleanup-basket` in local merge commit `47e4423`.
 - `TASK-005-search-result-selection` is done and merged into
   `codex/epic/search-cleanup-basket` in local merge commit `0f1c3f1`.
-- `TASK-006-cleanup-basket-review-drawer` is planned for WAVE-003 and remains
-  required before this final integration task starts.
+- `TASK-006-cleanup-basket-review-drawer` is done and merged into
+  `codex/epic/search-cleanup-basket` in local merge commit `04e4c52`.
 - SearchPage selection already owns checkbox/select-all-loaded/shift-click and
   add-selected-to-basket behavior; final integration should preserve those
   interactions while adding the review drawer entry point and archive cleanup.
+- Wire `CleanupBasketDrawer` by passing the existing `api` client,
+  `useCleanupBasket.items`, `remove`, `clear`, `applyArchiveResult`, and
+  `onClose`. The final integration task owns removing successfully archived IDs
+  from visible SearchPage results, fetched detail, and current selection.
 
 ## Conflict Domains
 

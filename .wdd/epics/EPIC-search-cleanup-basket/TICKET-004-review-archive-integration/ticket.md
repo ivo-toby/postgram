@@ -63,7 +63,7 @@ Complete the user-facing cleanup workflow and validate it end to end.
 
 | Task | Status | Wave | Summary |
 |------|--------|------|---------|
-| TASK-006-cleanup-basket-review-drawer | in_progress | WAVE-003 | Add review drawer component and archive action tests |
+| TASK-006-cleanup-basket-review-drawer | done | WAVE-003 | Add review drawer component and archive action tests |
 | TASK-007-search-cleanup-flow-integration | todo | WAVE-004 | Integrate complete flow and run final validation |
 
 ## Dependencies

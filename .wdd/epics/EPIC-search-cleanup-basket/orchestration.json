@@ -390,7 +390,7 @@
     },
     {
       "id": "WAVE-003",
-      "status": "in_progress",
+      "status": "done",
       "strategy": {
         "profile": "standard",
         "executionMode": "bundled",
@@ -420,8 +420,8 @@
         {
           "id": "TASK-006-cleanup-basket-review-drawer",
           "ticket": "TICKET-004-review-archive-integration",
-          "path": "TICKET-004-review-archive-integration/in-progress/TASK-006-cleanup-basket-review-drawer.md",
-          "status": "in_progress",
+          "path": "TICKET-004-review-archive-integration/done/TASK-006-cleanup-basket-review-drawer.md",
+          "status": "done",
           "dependsOn": [
             "TASK-002-rest-bulk-archive-endpoint",
             "TASK-003-ui-bulk-archive-api-client",
@@ -435,20 +435,50 @@
           "assignedModel": "implementationComplex",
           "reviewModel": "review",
           "workerThreadId": "019ec631-30c7-7d21-82d4-1ac079ab603b",
-          "reviewThreadId": null,
+          "reviewThreadId": "019ec63c-5963-7e43-97fc-02a931bbd7db",
           "branch": "codex/task/TASK-006-cleanup-basket-review-drawer",
           "workerWorktree": "/Users/ivo.toby/.codex/worktrees/dabec7ed-521f-42fd-b18e-0c0d542e7ccc/postgram-TASK-006-cleanup-basket-review-drawer",
           "worktreeStatus": "verified",
-          "pr": null,
-          "latestCommit": null,
-          "branchFreshness": "current_at_dispatch",
+          "pr": "local-merge:04e4c52",
+          "latestCommit": "fdcc6eb",
+          "branchFreshness": "current_at_merge",
           "blockingFeedback": [],
-          "verification": null,
-          "currentGate": "worker_dispatched",
+          "verification": {
+            "result": "passed",
+            "commands": [
+              "npm --prefix ui run test -- --run src/components/CleanupBasketDrawer.test.tsx",
+              "npm --prefix ui run typecheck",
+              "git diff --check"
+            ],
+            "controllerCommands": [
+              "npm --prefix ui run test -- --run src/components/CleanupBasketDrawer.test.tsx src/hooks/useCleanupBasket.test.ts src/lib/api.test.ts",
+              "npm --prefix ui run typecheck",
+              "git diff --check HEAD~1..HEAD"
+            ],
+            "evidence": "Worker verification and controller merged-branch verification passed; reviewer Peirce returned REVIEW_PASS with no P1/P2/P3 findings."
+          },
+          "currentGate": "merged",
           "workerNickname": "Arendt"
         }
       ],
-      "activatedAt": "2026-06-14T14:51:00+02:00"
+      "activatedAt": "2026-06-14T14:51:00+02:00",
+      "reconciledAt": "2026-06-14T15:10:00+02:00",
+      "reconciliation": {
+        "result": "done",
+        "mergeCommit": "04e4c52",
+        "closeoutCommit": null,
+        "verification": [
+          "npm --prefix ui run test -- --run src/components/CleanupBasketDrawer.test.tsx src/hooks/useCleanupBasket.test.ts src/lib/api.test.ts",
+          "npm --prefix ui run typecheck",
+          "git diff --check HEAD~1..HEAD"
+        ],
+        "review": "TASK-006 received reviewer REVIEW_PASS with no P1/P2/P3 findings.",
+        "drift": [
+          "CleanupBasketDrawer is standalone and not wired into SearchPage yet.",
+          "TASK-007 should pass api, basket items, remove, clear, applyArchiveResult, and onClose into the drawer.",
+          "Visible SearchPage result cleanup after archive remains TASK-007 scope."
+        ]
+      }
     },
     {
       "id": "WAVE-004",
@@ -522,16 +552,16 @@
       "shared-context/resources/task-findings.md"
     ],
     "pendingReconciliation": [],
-    "lastReconciledWave": "WAVE-002"
+    "lastReconciledWave": "WAVE-003"
   },
   "monitoring": {
     "mode": "manual",
-    "cadence": "adaptive_20_minutes_until_pr_or_patch",
-    "status": "manual_fallback_active",
-    "lastCheckedAt": "2026-06-14T14:51:00+02:00",
-    "nextCheckDueAt": "2026-06-14T15:11:00+02:00",
-    "schedulerRef": "none:automation_update_unavailable",
-    "fallbackPrompt": "Poll WAVE-003 worker directly: TASK-006-cleanup-basket-review-drawer. If complete, review as needed, verify, merge to epic branch, then reconcile WAVE-003 before starting WAVE-004."
+    "cadence": "stopped",
+    "status": "stopped_reconciled",
+    "lastCheckedAt": "2026-06-14T15:10:00+02:00",
+    "nextCheckDueAt": null,
+    "schedulerRef": "none:wave_reconciled",
+    "fallbackPrompt": "Run wdd-start-wave for EPIC-search-cleanup-basket WAVE-004. WAVE-004 contains TASK-007-search-cleanup-flow-integration and has no user confirmation requirement."
   },
   "currentGates": {
     "epicBranch": {
@@ -562,16 +592,16 @@
       "TASK-004-cleanup-basket-state": "merged",
       "TASK-002-rest-bulk-archive-endpoint": "merged",
       "TASK-005-search-result-selection": "merged",
-      "TASK-006-cleanup-basket-review-drawer": "worker_dispatched"
+      "TASK-006-cleanup-basket-review-drawer": "merged"
     },
     "waveCompletion": {
       "WAVE-001": "done",
       "WAVE-002": "done",
-      "WAVE-003": "in_progress"
+      "WAVE-003": "done"
     },
     "nextWave": {
-      "id": "WAVE-003",
-      "status": "active",
+      "id": "WAVE-004",
+      "status": "ready",
       "strategyConfirmation": "not_required"
     }
   }

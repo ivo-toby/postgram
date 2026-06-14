@@ -18,8 +18,9 @@ reconciliation. This file starts empty by design.
 WAVE-001 completed the backend bulk archive service, UI API helper, and cleanup
 basket state hook. Add further concise confirmed facts here when later tasks
 discover behavior that downstream workers, reviewers, or validators need.
-WAVE-002 completed the REST endpoint and Search result selection; WAVE-003 can
-build the review drawer against the now-merged backend/UI contracts.
+WAVE-002 completed the REST endpoint and Search result selection. WAVE-003
+completed the review drawer; WAVE-004 can wire the full Search cleanup flow
+against the now-merged backend/UI/drawer contracts.
 
 ## Details
 
@@ -101,3 +102,20 @@ Controller reconciliation rules:
   already owning checkbox/select-all-loaded/shift-click behavior. SearchPage
   shift-click uses the prior visible selection anchor and applies the clicked
   checkbox state across that visible range.
+
+### WAVE-003 Completion
+
+- Source task: WAVE-003 reconciliation input
+- Source PR/branch: `codex/epic/search-cleanup-basket` merge commit `04e4c52`
+- Status: confirmed
+- Summary: `CleanupBasketDrawer` is merged as a standalone component with
+  focused tests and no premature SearchPage integration.
+- Why it matters: WAVE-004 can wire the drawer into SearchPage using the
+  committed component contract without reimplementing drawer behavior.
+- Affected files or areas: `ui/src/components/CleanupBasketDrawer.tsx`,
+  `ui/src/components/CleanupBasketDrawer.test.tsx`, and final SearchPage
+  integration.
+- Follow-up implications: TASK-007 should pass `api`, `useCleanupBasket.items`,
+  `remove`, `clear`, `applyArchiveResult`, and `onClose` into the drawer, then
+  handle visible SearchPage result/detail/selection cleanup after successful
+  archive IDs are returned.

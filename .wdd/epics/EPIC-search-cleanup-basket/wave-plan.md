@@ -18,7 +18,7 @@ updated_at: 2026-06-14
 | TASK-003-ui-bulk-archive-api-client | TICKET-002-cleanup-basket-foundation | None | UI API client, UI API tests | done |
 | TASK-004-cleanup-basket-state | TICKET-002-cleanup-basket-foundation | None | cleanup basket hook/types/tests, localStorage behavior | done |
 | TASK-005-search-result-selection | TICKET-003-search-selection | TASK-004-cleanup-basket-state | SearchPage, SearchPage tests, result card UI | done |
-| TASK-006-cleanup-basket-review-drawer | TICKET-004-review-archive-integration | TASK-002-rest-bulk-archive-endpoint, TASK-003-ui-bulk-archive-api-client, TASK-004-cleanup-basket-state | drawer component/tests, basket archive-result behavior | in_progress |
+| TASK-006-cleanup-basket-review-drawer | TICKET-004-review-archive-integration | TASK-002-rest-bulk-archive-endpoint, TASK-003-ui-bulk-archive-api-client, TASK-004-cleanup-basket-state | drawer component/tests, basket archive-result behavior | done |
 | TASK-007-search-cleanup-flow-integration | TICKET-004-review-archive-integration | TASK-002-rest-bulk-archive-endpoint, TASK-005-search-result-selection, TASK-006-cleanup-basket-review-drawer | SearchPage, final integrated flow, manual validation | todo |
 
 ## Dependency Grid
@@ -191,7 +191,7 @@ Drift notes:
 
 ### WAVE-003
 
-Status: in_progress
+Status: done
 
 Tasks:
 
@@ -229,12 +229,29 @@ Activation rule:
 
 Stop condition:
 
-- TASK-006 is done, blocked, cancelled, or explicitly closed.
-- Wave reconciliation is complete before WAVE-004 starts.
+- TASK-006 is done.
+- Wave reconciliation completed on 2026-06-14.
+- WAVE-004 can start after this reconciliation commit.
+
+Completion evidence:
+
+- TASK-006 worker commit: `fdcc6eb`.
+- TASK-006 merge commit: `04e4c52`.
+- TASK-006 review: Peirce `REVIEW_PASS`, no P1/P2/P3.
+- Verification passed:
+  - `npm --prefix ui run test -- --run src/components/CleanupBasketDrawer.test.tsx src/hooks/useCleanupBasket.test.ts src/lib/api.test.ts`
+  - `npm --prefix ui run typecheck`
+  - `git diff --check HEAD~1..HEAD`
+
+Drift notes:
+
+- `CleanupBasketDrawer` exposes explicit props for TASK-007 integration:
+  `api`, `items`, `onArchiveResult`, `onRemoveItem`, `onClear`, and `onClose`.
+- Visible SearchPage result cleanup after archive remains WAVE-004 scope.
 
 ### WAVE-004
 
-Status: planned
+Status: ready
 
 Tasks:
 
@@ -265,6 +282,7 @@ Why this grouping is safe:
 Activation rule:
 
 - Activate after WAVE-003 reconciliation confirms the drawer task is done.
+- WAVE-003 reconciliation confirmed the drawer task is done on 2026-06-14.
 
 Stop condition:
 

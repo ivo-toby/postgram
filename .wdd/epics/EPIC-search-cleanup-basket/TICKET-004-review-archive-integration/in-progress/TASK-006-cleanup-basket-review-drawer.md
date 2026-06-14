@@ -19,10 +19,11 @@ assigned_model_class: implementationComplex
 review_model_class: review
 branch: codex/task/TASK-006-cleanup-basket-review-drawer
 worker_worktree: /Users/ivo.toby/.codex/worktrees/dabec7ed-521f-42fd-b18e-0c0d542e7ccc/postgram-TASK-006-cleanup-basket-review-drawer
-worktree_status: pending_creation
+worktree_status: verified
 pr: null
-current_gate: worktree_pending
-branch_freshness: current_at_activation
+worker_thread_id: 019ec631-30c7-7d21-82d4-1ac079ab603b
+current_gate: worker_dispatched
+branch_freshness: current_at_dispatch
 verification:
   - npm --prefix ui run test -- --run src/components/CleanupBasketDrawer.test.tsx
   - npm --prefix ui run typecheck
@@ -125,7 +126,9 @@ codex/task/TASK-006-cleanup-basket-review-drawer
 
 /Users/ivo.toby/.codex/worktrees/dabec7ed-521f-42fd-b18e-0c0d542e7ccc/postgram-TASK-006-cleanup-basket-review-drawer
 
-Status: pending creation by controller before worker dispatch.
+Status: verified by controller.
+
+Worker: Arendt (`019ec631-30c7-7d21-82d4-1ac079ab603b`).
 
 ## PR / Patch Reference
 

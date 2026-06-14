@@ -73,7 +73,7 @@ Poll WAVE-003 worker directly: TASK-006-cleanup-basket-review-drawer. If complet
 
 | Task | Ticket | Branch | Worktree | Worker | Gate | Verification |
 |------|--------|--------|----------|--------|------|--------------|
-| TASK-006-cleanup-basket-review-drawer | TICKET-004-review-archive-integration | codex/task/TASK-006-cleanup-basket-review-drawer | `/Users/ivo.toby/.codex/worktrees/dabec7ed-521f-42fd-b18e-0c0d542e7ccc/postgram-TASK-006-cleanup-basket-review-drawer` | pending dispatch | worktree_pending | pending |
+| TASK-006-cleanup-basket-review-drawer | TICKET-004-review-archive-integration | codex/task/TASK-006-cleanup-basket-review-drawer | `/Users/ivo.toby/.codex/worktrees/dabec7ed-521f-42fd-b18e-0c0d542e7ccc/postgram-TASK-006-cleanup-basket-review-drawer` | Arendt (`019ec631-30c7-7d21-82d4-1ac079ab603b`) | worker_dispatched | pending |
 
 ## Verification Status
 
@@ -136,6 +136,7 @@ Poll WAVE-003 worker directly: TASK-006-cleanup-basket-review-drawer. If complet
 - 2026-06-14: WAVE-002 reconciled and marked done.
 - 2026-06-14: WAVE-003 activated for
   `TASK-006-cleanup-basket-review-drawer`.
+- 2026-06-14: WAVE-003 worktree was created and worker Arendt was assigned.
 
 ## Next Action
 

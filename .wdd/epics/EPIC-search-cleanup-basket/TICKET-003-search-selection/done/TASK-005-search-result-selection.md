@@ -6,7 +6,7 @@ ticket: TICKET-003-search-selection
 wave: WAVE-002
 slug: search-result-selection
 title: Search Result Selection
-status: review
+status: done
 depends_on:
   - TASK-004-cleanup-basket-state
 conflict_domains:
@@ -17,10 +17,11 @@ review_model_class: review
 branch: codex/task/TASK-005-search-result-selection
 worker_worktree: /Users/ivo.toby/.codex/worktrees/dabec7ed-521f-42fd-b18e-0c0d542e7ccc/postgram-TASK-005-search-result-selection
 worktree_status: verified
-pr: null
+pr: local-merge:0f1c3f1
 worker_thread_id: 019ec61b-5ecc-7293-be12-93dfe9846204
-current_gate: worker_ready_for_review
-branch_freshness: current_at_dispatch
+review_thread_id: 019ec627-2295-7f23-8dd0-eb5e5dcdb3ad
+current_gate: merged
+branch_freshness: current_at_merge
 verification:
   - npm --prefix ui run test -- --run src/components/SearchPage.test.tsx
   - npm --prefix ui run typecheck
@@ -30,7 +31,7 @@ verification:
 
 ## Status
 
-review
+done
 
 ## Parent Ticket
 
@@ -122,7 +123,7 @@ Worker: Erdos (`019ec61b-5ecc-7293-be12-93dfe9846204`).
 
 ## PR / Patch Reference
 
-None yet.
+local-merge:0f1c3f1
 
 ## RED-GREEN TDD Plan
 
@@ -191,6 +192,14 @@ readable.
 - Final validation: `npm --prefix ui run typecheck` passed with
   `tsc --noEmit`.
 - Final validation: `git diff --check` passed.
+- Reviewer Anscombe (`019ec627-2295-7f23-8dd0-eb5e5dcdb3ad`) returned
+  `REVIEW_PASS` with no P1/P2/P3 findings.
+- Controller merged branch `codex/task/TASK-005-search-result-selection`
+  into `codex/epic/search-cleanup-basket` in `0f1c3f1`.
+- Controller merged-branch verification passed:
+  `npm --prefix ui run test -- --run src/components/SearchPage.test.tsx`
+  (5 tests), `npm --prefix ui run typecheck`, `npm run typecheck`, and
+  `git diff --check HEAD~2..HEAD`.
 
 ## Review Feedback
 
@@ -221,3 +230,4 @@ readable.
   shift-click uses the prior visible selection anchor and applies the clicked
   checkbox's checked state across the visible range.
 - Final gate: ready for controller review.
+- Final status: merged and done.

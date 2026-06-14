@@ -212,12 +212,12 @@ Use RED/GREEN TDD per task. Focused validation should include:
 
 ## Definition of Done
 
-- [ ] Backend bulk archive service is implemented and covered.
-- [ ] REST bulk archive endpoint is implemented and covered.
-- [ ] UI API client supports the endpoint and is covered.
-- [ ] Search result selection supports checkbox, select-all-loaded, and
+- [x] Backend bulk archive service is implemented and covered.
+- [x] REST bulk archive endpoint is implemented and covered.
+- [x] UI API client supports the endpoint and is covered.
+- [x] Search result selection supports checkbox, select-all-loaded, and
       shift-click visible range selection.
-- [ ] Persistent cleanup basket is implemented and covered.
+- [x] Persistent cleanup basket is implemented and covered.
 - [ ] Review drawer supports counts, item removal, clear basket, final archive,
       success cleanup, and failure retention.
 - [ ] No hard delete or query-level archive path exists.

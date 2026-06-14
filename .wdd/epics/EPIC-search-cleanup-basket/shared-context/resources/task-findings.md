@@ -18,6 +18,8 @@ reconciliation. This file starts empty by design.
 WAVE-001 completed the backend bulk archive service, UI API helper, and cleanup
 basket state hook. Add further concise confirmed facts here when later tasks
 discover behavior that downstream workers, reviewers, or validators need.
+WAVE-002 completed the REST endpoint and Search result selection; WAVE-003 can
+build the review drawer against the now-merged backend/UI contracts.
 
 ## Details
 
@@ -77,3 +79,25 @@ Controller reconciliation rules:
   `ui/src/hooks/useCleanupBasket.test.ts`.
 - Follow-up implications: Use `npm --prefix ui` commands for UI task
   validation; do not use `npm --workspace ui` unless root workspaces change.
+
+### WAVE-002 Completion
+
+- Source task: WAVE-002 reconciliation input
+- Source PR/branch: `codex/epic/search-cleanup-basket` merge commits
+  `47e4423` and `0f1c3f1`
+- Status: confirmed
+- Summary: REST `POST /api/entities/bulk/archive` and Search result selection
+  are merged into the epic branch with focused verification and full-profile
+  reviews passing.
+- Why it matters: WAVE-003 can implement the review drawer against the
+  committed REST/API/basket contracts, and WAVE-004 can later integrate the
+  complete Search cleanup flow.
+- Affected files or areas: `src/transport/rest.ts`,
+  `tests/contract/rest-api.test.ts`, `ui/src/components/SearchPage.tsx`, and
+  `ui/src/components/SearchPage.test.tsx`.
+- Follow-up implications: Drawer/integration tasks should call
+  `api.bulkArchiveEntities(ids)` for reviewed basket IDs, preserve archive-only
+  language, keep failed IDs in the basket, and treat SearchPage selection as
+  already owning checkbox/select-all-loaded/shift-click behavior. SearchPage
+  shift-click uses the prior visible selection anchor and applies the clicked
+  checkbox state across that visible range.

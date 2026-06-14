@@ -6,7 +6,7 @@ ticket: TICKET-001-backend-bulk-archive
 wave: WAVE-002
 slug: rest-bulk-archive-endpoint
 title: REST Bulk Archive Endpoint
-status: review
+status: done
 depends_on:
   - TASK-001-bulk-archive-service
 conflict_domains:
@@ -18,10 +18,11 @@ review_model_class: review
 branch: codex/task/TASK-002-rest-bulk-archive-endpoint
 worker_worktree: /Users/ivo.toby/.codex/worktrees/dabec7ed-521f-42fd-b18e-0c0d542e7ccc/postgram-TASK-002-rest-bulk-archive-endpoint
 worktree_status: verified
-pr: null
+pr: local-merge:47e4423
 worker_thread_id: 019ec61b-5e6f-7e60-8cd9-79177615cae7
-current_gate: worker_dispatched
-branch_freshness: current_at_dispatch
+review_thread_id: 019ec624-e246-78a3-b8eb-c6c1073da2fe
+current_gate: merged
+branch_freshness: current_at_merge
 verification:
   - npm test -- tests/contract/rest-api.test.ts
 ---
@@ -30,7 +31,7 @@ verification:
 
 ## Status
 
-review
+done
 
 ## Parent Ticket
 
@@ -118,7 +119,7 @@ Worker: Curie (`019ec61b-5e6f-7e60-8cd9-79177615cae7`).
 
 ## PR / Patch Reference
 
-None yet.
+local-merge:47e4423
 
 ## RED-GREEN TDD Plan
 
@@ -170,6 +171,13 @@ regex convention.
 - GREEN: `npm test -- tests/contract/rest-api.test.ts` passed with 22 tests.
 - `npm run typecheck` passed.
 - `git diff --check` passed after moving this task file to `review/`.
+- Reviewer Banach (`019ec624-e246-78a3-b8eb-c6c1073da2fe`) returned
+  `REVIEW_PASS` with no P1/P2/P3 findings.
+- Controller merged branch `codex/task/TASK-002-rest-bulk-archive-endpoint`
+  into `codex/epic/search-cleanup-basket` in `47e4423`.
+- Controller merged-branch verification passed:
+  `npm test -- tests/contract/rest-api.test.ts` (22 tests),
+  `npm run typecheck`, and `git diff --check HEAD~2..HEAD`.
 
 ## Review Feedback
 
@@ -194,3 +202,4 @@ regex convention.
   max-500 IDs, auth/delete-scope behavior, and mixed archived/failed payloads.
 - No shared-context contract updates are needed; implementation matches the
   existing explicit-ID archive contract.
+- Final status: merged and done.

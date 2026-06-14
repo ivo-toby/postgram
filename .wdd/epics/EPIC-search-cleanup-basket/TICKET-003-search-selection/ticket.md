@@ -4,7 +4,7 @@ kind: ticket
 epic: EPIC-search-cleanup-basket
 slug: search-selection
 title: Search Result Selection
-status: in_progress
+status: done
 task_count: 1
 depends_on:
   - TICKET-002-cleanup-basket-foundation
@@ -58,7 +58,7 @@ basket.
 
 | Task | Status | Wave | Summary |
 |------|--------|------|---------|
-| TASK-005-search-result-selection | in_progress | WAVE-002 | Add Search result selection and selected action bar |
+| TASK-005-search-result-selection | done | WAVE-002 | Add Search result selection and selected action bar |
 
 ## Dependencies
 
@@ -87,6 +87,6 @@ basket.
 
 ## Completion Criteria
 
-- [ ] All child tasks have resolved review and verification gates.
-- [ ] Shared context updates were reconciled.
-- [ ] Ticket status matches child task state.
+- [x] All child tasks have resolved review and verification gates.
+- [x] Shared context updates were reconciled.
+- [x] Ticket status matches child task state.

@@ -69,9 +69,9 @@ Complete the user-facing cleanup workflow and validate it end to end.
 ## Dependencies
 
 - Depends on:
-  - TICKET-001-backend-bulk-archive
-  - TICKET-002-cleanup-basket-foundation
-  - TICKET-003-search-selection
+  - TICKET-001-backend-bulk-archive (done through WAVE-002)
+  - TICKET-002-cleanup-basket-foundation (done through WAVE-001)
+  - TICKET-003-search-selection (done through WAVE-002)
 - Blocks:
   - Epic validation.
 

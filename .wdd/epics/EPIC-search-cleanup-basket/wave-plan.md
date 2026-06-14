@@ -14,10 +14,10 @@ updated_at: 2026-06-14
 | Task | Ticket | Depends On | Conflict Domains | Status |
 |------|--------|------------|------------------|--------|
 | TASK-001-bulk-archive-service | TICKET-001-backend-bulk-archive | None | entity-service, entity integration tests, auth/delete, audit | done |
-| TASK-002-rest-bulk-archive-endpoint | TICKET-001-backend-bulk-archive | TASK-001-bulk-archive-service | REST transport, REST contract tests, entity service export | in_progress |
+| TASK-002-rest-bulk-archive-endpoint | TICKET-001-backend-bulk-archive | TASK-001-bulk-archive-service | REST transport, REST contract tests, entity service export | done |
 | TASK-003-ui-bulk-archive-api-client | TICKET-002-cleanup-basket-foundation | None | UI API client, UI API tests | done |
 | TASK-004-cleanup-basket-state | TICKET-002-cleanup-basket-foundation | None | cleanup basket hook/types/tests, localStorage behavior | done |
-| TASK-005-search-result-selection | TICKET-003-search-selection | TASK-004-cleanup-basket-state | SearchPage, SearchPage tests, result card UI | in_progress |
+| TASK-005-search-result-selection | TICKET-003-search-selection | TASK-004-cleanup-basket-state | SearchPage, SearchPage tests, result card UI | done |
 | TASK-006-cleanup-basket-review-drawer | TICKET-004-review-archive-integration | TASK-002-rest-bulk-archive-endpoint, TASK-003-ui-bulk-archive-api-client, TASK-004-cleanup-basket-state | drawer component/tests, basket archive-result behavior | todo |
 | TASK-007-search-cleanup-flow-integration | TICKET-004-review-archive-integration | TASK-002-rest-bulk-archive-endpoint, TASK-005-search-result-selection, TASK-006-cleanup-basket-review-drawer | SearchPage, final integrated flow, manual validation | todo |
 
@@ -115,7 +115,7 @@ Drift notes:
 
 ### WAVE-002
 
-Status: in_progress
+Status: done
 
 Tasks:
 
@@ -161,12 +161,37 @@ Activation rule:
 
 Stop condition:
 
-- Both tasks are done, blocked, cancelled, or explicitly closed.
-- Wave reconciliation is complete before WAVE-003 starts.
+- Both tasks are done.
+- Wave reconciliation completed on 2026-06-14.
+- WAVE-003 can start after this reconciliation commit.
+
+Completion evidence:
+
+- TASK-002 worker commit: `fd36f86`.
+- TASK-002 merge commit: `47e4423`.
+- TASK-002 review: Banach `REVIEW_PASS`, no P1/P2/P3.
+- TASK-005 worker commit: `c4b5ef0`.
+- TASK-005 merge commit: `0f1c3f1`.
+- TASK-005 review: Anscombe `REVIEW_PASS`, no P1/P2/P3.
+- Verification passed:
+  - `npm test -- tests/contract/rest-api.test.ts`
+  - `npm --prefix ui run test -- --run src/components/SearchPage.test.tsx`
+  - `npm --prefix ui run typecheck`
+  - `npm run typecheck`
+  - `git diff --check HEAD~2..HEAD`
+
+Drift notes:
+
+- UI Search selection stores selected snapshots in the existing
+  `useCleanupBasket` hook and reads the active API key from `pgm_api_key`.
+- SearchPage shift-click uses the prior visible selection anchor and applies
+  the clicked checkbox state across that visible range.
+- WAVE-002 used manual direct polling because the heartbeat/automation tool was
+  not callable in this thread.
 
 ### WAVE-003
 
-Status: planned
+Status: ready
 
 Tasks:
 
@@ -197,6 +222,7 @@ Why this grouping is safe:
 Activation rule:
 
 - Activate after WAVE-002 reconciliation confirms dependencies are done.
+- WAVE-002 reconciliation confirmed dependencies are done on 2026-06-14.
 
 Stop condition:
 

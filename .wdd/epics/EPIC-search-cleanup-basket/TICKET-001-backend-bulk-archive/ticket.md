@@ -4,7 +4,7 @@ kind: ticket
 epic: EPIC-search-cleanup-basket
 slug: backend-bulk-archive
 title: Backend Bulk Archive
-status: in_progress
+status: done
 task_count: 2
 depends_on: []
 conflict_domains:
@@ -59,7 +59,7 @@ basket UI.
 | Task | Status | Wave | Summary |
 |------|--------|------|---------|
 | TASK-001-bulk-archive-service | done | WAVE-001 | Add service-layer bulk archive with tests |
-| TASK-002-rest-bulk-archive-endpoint | in_progress | WAVE-002 | Add REST route, validation, and contract tests |
+| TASK-002-rest-bulk-archive-endpoint | done | WAVE-002 | Add REST route, validation, and contract tests |
 
 ## Dependencies
 
@@ -88,6 +88,6 @@ basket UI.
 
 ## Completion Criteria
 
-- [ ] All child tasks have resolved review and verification gates.
-- [ ] Shared context updates were reconciled.
-- [ ] Ticket status matches child task state.
+- [x] All child tasks have resolved review and verification gates.
+- [x] Shared context updates were reconciled.
+- [x] Ticket status matches child task state.

@@ -50,13 +50,14 @@ before editing code.
 - WDD profile: `standard`.
 - Review mode: `risk_based`.
 - Monitoring mode: `adaptive`.
-- WAVE-001 is merged and ready for reconciliation; its task files are under
-  ticket `done/` folders.
+- WAVE-001 is done and reconciled.
 - Planned structure: 4 tickets, 7 tasks, 4 waves.
 - WAVE-001 was confirmed by user override as `standard parallel` and merged in
   local merge commit `a593403`.
-- WAVE-002 still requires user confirmation because it includes public
-  REST/API contract changes and SearchPage conflict risk.
+- WAVE-002 is done and reconciled. The REST bulk archive endpoint and Search
+  result selection are merged into the epic branch.
+- WAVE-003 is the next ready wave and contains the cleanup basket review drawer
+  task.
 
 ## Recent Durable Memory
 

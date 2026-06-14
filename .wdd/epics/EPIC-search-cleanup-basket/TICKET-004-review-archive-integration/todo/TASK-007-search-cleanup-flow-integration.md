@@ -101,6 +101,18 @@ record manual/browser validation evidence.
 - `TASK-005-search-result-selection`
 - `TASK-006-cleanup-basket-review-drawer`
 
+Dependency status:
+
+- `TASK-002-rest-bulk-archive-endpoint` is done and merged into
+  `codex/epic/search-cleanup-basket` in local merge commit `47e4423`.
+- `TASK-005-search-result-selection` is done and merged into
+  `codex/epic/search-cleanup-basket` in local merge commit `0f1c3f1`.
+- `TASK-006-cleanup-basket-review-drawer` is planned for WAVE-003 and remains
+  required before this final integration task starts.
+- SearchPage selection already owns checkbox/select-all-loaded/shift-click and
+  add-selected-to-basket behavior; final integration should preserve those
+  interactions while adding the review drawer entry point and archive cleanup.
+
 ## Conflict Domains
 
 - `ui/src/components/SearchPage.tsx`
@@ -156,6 +168,8 @@ has grown beyond a small inline role.
 
 - Record final browser/manual validation findings if they affect future cleanup
   workflow work.
+- Preserve archive-only language and retain failed basket items with messages
+  after partial failures.
 
 ## Task-Level Definition of Done
 

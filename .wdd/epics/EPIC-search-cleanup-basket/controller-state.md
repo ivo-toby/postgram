@@ -2,8 +2,8 @@
 id: EPIC-search-cleanup-basket-CONTROLLER
 kind: controller_state
 epic: EPIC-search-cleanup-basket
-active_wave: WAVE-002
-status: wave_002_active
+active_wave: null
+status: wave_002_reconciled
 updated_at: 2026-06-14
 ---
 
@@ -19,39 +19,38 @@ checkout.
 
 ## Current Outcome
 
-WAVE-002 is active.
+WAVE-002 is done and reconciled.
 
-Current phase: create or verify WAVE-002 task worktrees, dispatch both workers
-in parallel, then monitor manually because the heartbeat tool is not callable in
-this thread.
+Next phase: `wdd-start-wave` for WAVE-003. WAVE-003 contains
+`TASK-006-cleanup-basket-review-drawer` and does not require user confirmation.
 
 ## Wave Summary
 
 | Wave | Tasks | Strategy | Status |
 |------|-------|----------|--------|
 | WAVE-001 | TASK-001-bulk-archive-service, TASK-003-ui-bulk-archive-api-client, TASK-004-cleanup-basket-state | standard / parallel / risk_based / adaptive | done |
-| WAVE-002 | TASK-002-rest-bulk-archive-endpoint, TASK-005-search-result-selection | full / parallel / risk_based / adaptive | active |
-| WAVE-003 | TASK-006-cleanup-basket-review-drawer | standard / bundled / risk_based / adaptive | planned |
+| WAVE-002 | TASK-002-rest-bulk-archive-endpoint, TASK-005-search-result-selection | full / parallel / risk_based / adaptive | done |
+| WAVE-003 | TASK-006-cleanup-basket-review-drawer | standard / bundled / risk_based / adaptive | ready |
 | WAVE-004 | TASK-007-search-cleanup-flow-integration | standard / bundled / risk_based / adaptive | planned |
 
 ## Monitoring
 
 Mode: manual
 
-Cadence: adaptive 20 minutes until PR or patch
+Cadence: stopped
 
-Status: manual_fallback_active
+Status: stopped_reconciled
 
-Last check: 2026-06-14T14:24:41+02:00
+Last check: 2026-06-14T14:50:00+02:00
 
-Next check due: 2026-06-14T14:45:00+02:00
+Next check due: None
 
-Scheduler reference: none:automation_update_unavailable
+Scheduler reference: none:wave_reconciled
 
 Fallback prompt:
 
 ```text
-Poll WAVE-002 workers directly: TASK-002-rest-bulk-archive-endpoint and TASK-005-search-result-selection. If complete, run reviews, verify, merge to epic branch, then reconcile WAVE-002 before starting WAVE-003.
+Run wdd-start-wave for EPIC-search-cleanup-basket WAVE-003. WAVE-003 contains TASK-006-cleanup-basket-review-drawer and has no user confirmation requirement.
 ```
 
 ## WAVE-001 Task Gates
@@ -66,8 +65,8 @@ Poll WAVE-002 workers directly: TASK-002-rest-bulk-archive-endpoint and TASK-005
 
 | Task | Ticket | Branch | Worktree | Worker | Gate | Verification |
 |------|--------|--------|----------|--------|------|--------------|
-| TASK-002-rest-bulk-archive-endpoint | TICKET-001-backend-bulk-archive | codex/task/TASK-002-rest-bulk-archive-endpoint | `/Users/ivo.toby/.codex/worktrees/dabec7ed-521f-42fd-b18e-0c0d542e7ccc/postgram-TASK-002-rest-bulk-archive-endpoint` | Curie (`019ec61b-5e6f-7e60-8cd9-79177615cae7`) | worker_dispatched | pending |
-| TASK-005-search-result-selection | TICKET-003-search-selection | codex/task/TASK-005-search-result-selection | `/Users/ivo.toby/.codex/worktrees/dabec7ed-521f-42fd-b18e-0c0d542e7ccc/postgram-TASK-005-search-result-selection` | Erdos (`019ec61b-5ecc-7293-be12-93dfe9846204`) | worker_dispatched | pending |
+| TASK-002-rest-bulk-archive-endpoint | TICKET-001-backend-bulk-archive | codex/task/TASK-002-rest-bulk-archive-endpoint | `/Users/ivo.toby/.codex/worktrees/dabec7ed-521f-42fd-b18e-0c0d542e7ccc/postgram-TASK-002-rest-bulk-archive-endpoint` | Curie (`019ec61b-5e6f-7e60-8cd9-79177615cae7`) | merged in `47e4423` | Banach `REVIEW_PASS`; REST tests/typecheck passed |
+| TASK-005-search-result-selection | TICKET-003-search-selection | codex/task/TASK-005-search-result-selection | `/Users/ivo.toby/.codex/worktrees/dabec7ed-521f-42fd-b18e-0c0d542e7ccc/postgram-TASK-005-search-result-selection` | Erdos (`019ec61b-5ecc-7293-be12-93dfe9846204`) | merged in `0f1c3f1` | Anscombe `REVIEW_PASS`; SearchPage tests/UI typecheck passed |
 
 ## Verification Status
 
@@ -78,6 +77,12 @@ Poll WAVE-002 workers directly: TASK-002-rest-bulk-archive-endpoint and TASK-005
 - `npm --prefix ui run typecheck`: passed.
 - `npm run typecheck`: passed.
 - `git diff --check`: passed.
+- `npm test -- tests/contract/rest-api.test.ts`: passed, 1 file, 22 tests.
+- `npm --prefix ui run test -- --run src/components/SearchPage.test.tsx`:
+  passed, 1 file, 5 tests.
+- `npm --prefix ui run typecheck`: passed after WAVE-002 merge.
+- `npm run typecheck`: passed after WAVE-002 merge.
+- `git diff --check HEAD~2..HEAD`: passed after WAVE-002 merge.
 
 ## Shared Context Reconciliation
 
@@ -87,6 +92,11 @@ Poll WAVE-002 workers directly: TASK-002-rest-bulk-archive-endpoint and TASK-005
   `pgm_cleanup_basket:v1:<api-key-fingerprint>`.
 - Reconciled backend archive semantics: bulk archive reuses single-delete
   archive behavior and audit operation.
+- Reconciled WAVE-002 REST route: `POST /api/entities/bulk/archive` validates
+  UUID IDs, non-empty arrays, max 500 IDs, and delegates to the service.
+- Reconciled Search selection behavior: checkbox/select-all-loaded/shift-click
+  visible range selection are now owned by `SearchPage.tsx`; add-selected uses
+  `useCleanupBasket`.
 
 ## Future Wave Readiness
 
@@ -94,7 +104,9 @@ Poll WAVE-002 workers directly: TASK-002-rest-bulk-archive-endpoint and TASK-005
 - TASK-005 dependency `TASK-004-cleanup-basket-state` is done and merged.
 - WAVE-002 confirmation is recorded as user on 2026-06-14:
   `ok, full parallel for wave 2`.
-- WAVE-003 remains blocked until WAVE-002 is complete and reconciled.
+- TASK-006 dependencies `TASK-002`, `TASK-003`, and `TASK-004` are done and
+  merged.
+- WAVE-003 is ready and does not require user confirmation.
 
 ## Event Log
 
@@ -110,8 +122,12 @@ Poll WAVE-002 workers directly: TASK-002-rest-bulk-archive-endpoint and TASK-005
   automation/heartbeat tool was exposed, so WAVE-002 uses manual direct polling.
 - 2026-06-14: WAVE-002 worktrees were created and workers Curie and Erdos were
   assigned for parallel dispatch.
+- 2026-06-14: TASK-002 merged into the epic branch in `47e4423` after
+  `REVIEW_PASS`.
+- 2026-06-14: TASK-005 merged into the epic branch in `0f1c3f1` after
+  `REVIEW_PASS`.
+- 2026-06-14: WAVE-002 reconciled and marked done.
 
 ## Next Action
 
-- Create or verify WAVE-002 task worktrees, dispatch both workers, then poll
-  manually at the recorded cadence.
+- Run `wdd-start-wave` for WAVE-003.

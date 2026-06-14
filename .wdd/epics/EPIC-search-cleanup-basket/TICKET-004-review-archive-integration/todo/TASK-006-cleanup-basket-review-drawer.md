@@ -97,6 +97,17 @@ surfaces partial failures.
 - `TASK-003-ui-bulk-archive-api-client`
 - `TASK-004-cleanup-basket-state`
 
+Dependency status:
+
+- `TASK-002-rest-bulk-archive-endpoint` is done and merged into
+  `codex/epic/search-cleanup-basket` in local merge commit `47e4423`.
+- `TASK-003-ui-bulk-archive-api-client` is done and merged into
+  `codex/epic/search-cleanup-basket` in local merge commit `a593403`.
+- `TASK-004-cleanup-basket-state` is done and merged into
+  `codex/epic/search-cleanup-basket` in local merge commit `a593403`.
+- Use `api.bulkArchiveEntities(ids)` for the final reviewed archive action and
+  `useCleanupBasket` archive-result helpers for success/failure updates.
+
 ## Conflict Domains
 
 - cleanup basket drawer component
@@ -149,6 +160,8 @@ next task.
 ## Durable Memory Notes To Consider
 
 - Record any drawer API/prop contract that affects final integration.
+- Preserve archive-only language; do not introduce hard-delete or query-level
+  archive controls.
 
 ## Task-Level Definition of Done
 

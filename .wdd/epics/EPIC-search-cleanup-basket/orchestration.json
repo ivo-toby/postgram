@@ -49,7 +49,7 @@
     {
       "id": "TICKET-001-backend-bulk-archive",
       "path": "TICKET-001-backend-bulk-archive/ticket.md",
-      "status": "in_progress",
+      "status": "done",
       "taskIds": [
         "TASK-001-bulk-archive-service",
         "TASK-002-rest-bulk-archive-endpoint"
@@ -67,7 +67,7 @@
     {
       "id": "TICKET-003-search-selection",
       "path": "TICKET-003-search-selection/ticket.md",
-      "status": "in_progress",
+      "status": "done",
       "taskIds": [
         "TASK-005-search-result-selection"
       ]
@@ -262,7 +262,7 @@
     },
     {
       "id": "WAVE-002",
-      "status": "in_progress",
+      "status": "done",
       "strategy": {
         "profile": "full",
         "executionMode": "parallel",
@@ -284,8 +284,8 @@
         {
           "id": "TASK-002-rest-bulk-archive-endpoint",
           "ticket": "TICKET-001-backend-bulk-archive",
-          "path": "TICKET-001-backend-bulk-archive/in-progress/TASK-002-rest-bulk-archive-endpoint.md",
-          "status": "in_progress",
+          "path": "TICKET-001-backend-bulk-archive/done/TASK-002-rest-bulk-archive-endpoint.md",
+          "status": "done",
           "dependsOn": [
             "TASK-001-bulk-archive-service"
           ],
@@ -297,23 +297,36 @@
           "assignedModel": "implementationComplex",
           "reviewModel": "review",
           "workerThreadId": "019ec61b-5e6f-7e60-8cd9-79177615cae7",
-          "reviewThreadId": null,
+          "reviewThreadId": "019ec624-e246-78a3-b8eb-c6c1073da2fe",
           "branch": "codex/task/TASK-002-rest-bulk-archive-endpoint",
           "workerWorktree": "/Users/ivo.toby/.codex/worktrees/dabec7ed-521f-42fd-b18e-0c0d542e7ccc/postgram-TASK-002-rest-bulk-archive-endpoint",
           "worktreeStatus": "verified",
-          "pr": null,
-          "latestCommit": null,
-          "branchFreshness": "current_at_dispatch",
+          "pr": "local-merge:47e4423",
+          "latestCommit": "fd36f86",
+          "branchFreshness": "current_at_merge",
           "blockingFeedback": [],
-          "verification": null,
-          "currentGate": "worker_dispatched",
+          "verification": {
+            "result": "passed",
+            "commands": [
+              "npm test -- tests/contract/rest-api.test.ts",
+              "npm run typecheck",
+              "git diff --check"
+            ],
+            "controllerCommands": [
+              "npm test -- tests/contract/rest-api.test.ts",
+              "npm run typecheck",
+              "git diff --check HEAD~2..HEAD"
+            ],
+            "evidence": "Worker verification and controller merged-branch verification passed; reviewer Banach returned REVIEW_PASS with no P1/P2/P3 findings."
+          },
+          "currentGate": "merged",
           "workerNickname": "Curie"
         },
         {
           "id": "TASK-005-search-result-selection",
           "ticket": "TICKET-003-search-selection",
-          "path": "TICKET-003-search-selection/in-progress/TASK-005-search-result-selection.md",
-          "status": "in_progress",
+          "path": "TICKET-003-search-selection/done/TASK-005-search-result-selection.md",
+          "status": "done",
           "dependsOn": [
             "TASK-004-cleanup-basket-state"
           ],
@@ -324,20 +337,56 @@
           "assignedModel": "implementationComplex",
           "reviewModel": "review",
           "workerThreadId": "019ec61b-5ecc-7293-be12-93dfe9846204",
-          "reviewThreadId": null,
+          "reviewThreadId": "019ec627-2295-7f23-8dd0-eb5e5dcdb3ad",
           "branch": "codex/task/TASK-005-search-result-selection",
           "workerWorktree": "/Users/ivo.toby/.codex/worktrees/dabec7ed-521f-42fd-b18e-0c0d542e7ccc/postgram-TASK-005-search-result-selection",
           "worktreeStatus": "verified",
-          "pr": null,
-          "latestCommit": null,
-          "branchFreshness": "current_at_dispatch",
+          "pr": "local-merge:0f1c3f1",
+          "latestCommit": "c4b5ef0",
+          "branchFreshness": "current_at_merge",
           "blockingFeedback": [],
-          "verification": null,
-          "currentGate": "worker_dispatched",
+          "verification": {
+            "result": "passed",
+            "commands": [
+              "npm --prefix ui run test -- --run src/components/SearchPage.test.tsx",
+              "npm --prefix ui run typecheck",
+              "git diff --check"
+            ],
+            "controllerCommands": [
+              "npm --prefix ui run test -- --run src/components/SearchPage.test.tsx",
+              "npm --prefix ui run typecheck",
+              "npm run typecheck",
+              "git diff --check HEAD~2..HEAD"
+            ],
+            "evidence": "Worker verification and controller merged-branch verification passed; reviewer Anscombe returned REVIEW_PASS with no P1/P2/P3 findings."
+          },
+          "currentGate": "merged",
           "workerNickname": "Erdos"
         }
       ],
-      "activatedAt": "2026-06-14T14:24:41+02:00"
+      "activatedAt": "2026-06-14T14:24:41+02:00",
+      "reconciledAt": "2026-06-14T14:50:00+02:00",
+      "reconciliation": {
+        "result": "done",
+        "mergeCommits": [
+          "47e4423",
+          "0f1c3f1"
+        ],
+        "closeoutCommit": null,
+        "verification": [
+          "npm test -- tests/contract/rest-api.test.ts",
+          "npm --prefix ui run test -- --run src/components/SearchPage.test.tsx",
+          "npm --prefix ui run typecheck",
+          "npm run typecheck",
+          "git diff --check HEAD~2..HEAD"
+        ],
+        "review": "TASK-002 and TASK-005 received full-profile reviewer REVIEW_PASS results with no P1/P2/P3 findings.",
+        "drift": [
+          "SearchPage selection uses current visible result order for shift-click ranges.",
+          "SearchPage add-selected stores snapshots via useCleanupBasket using pgm_api_key context.",
+          "Heartbeat automation was unavailable; WAVE-002 used manual direct polling."
+        ]
+      }
     },
     {
       "id": "WAVE-003",
@@ -471,16 +520,16 @@
       "shared-context/resources/task-findings.md"
     ],
     "pendingReconciliation": [],
-    "lastReconciledWave": "WAVE-001"
+    "lastReconciledWave": "WAVE-002"
   },
   "monitoring": {
     "mode": "manual",
-    "cadence": "adaptive_20_minutes_until_pr_or_patch",
-    "status": "manual_fallback_active",
-    "lastCheckedAt": "2026-06-14T14:24:41+02:00",
-    "nextCheckDueAt": "2026-06-14T14:45:00+02:00",
-    "schedulerRef": "none:automation_update_unavailable",
-    "fallbackPrompt": "Poll WAVE-002 workers directly: TASK-002-rest-bulk-archive-endpoint and TASK-005-search-result-selection. If complete, run reviews, verify, merge to epic branch, then reconcile WAVE-002 before starting WAVE-003."
+    "cadence": "stopped",
+    "status": "stopped_reconciled",
+    "lastCheckedAt": "2026-06-14T14:50:00+02:00",
+    "nextCheckDueAt": null,
+    "schedulerRef": "none:wave_reconciled",
+    "fallbackPrompt": "Run wdd-start-wave for EPIC-search-cleanup-basket WAVE-003. WAVE-003 contains TASK-006-cleanup-basket-review-drawer and has no user confirmation requirement."
   },
   "currentGates": {
     "epicBranch": {
@@ -508,17 +557,17 @@
       "TASK-001-bulk-archive-service": "merged",
       "TASK-003-ui-bulk-archive-api-client": "merged",
       "TASK-004-cleanup-basket-state": "merged",
-      "TASK-002-rest-bulk-archive-endpoint": "worker_dispatched",
-      "TASK-005-search-result-selection": "worker_dispatched"
+      "TASK-002-rest-bulk-archive-endpoint": "merged",
+      "TASK-005-search-result-selection": "merged"
     },
     "waveCompletion": {
       "WAVE-001": "done",
-      "WAVE-002": "in_progress"
+      "WAVE-002": "done"
     },
     "nextWave": {
-      "id": "WAVE-002",
-      "status": "active",
-      "strategyConfirmation": "confirmed_full_parallel"
+      "id": "WAVE-003",
+      "status": "ready",
+      "strategyConfirmation": "not_required"
     }
   }
 }

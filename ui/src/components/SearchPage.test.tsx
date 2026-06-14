@@ -1,7 +1,7 @@
 import { beforeEach, describe, expect, it, vi } from 'vitest';
-import { fireEvent, render, screen, waitFor } from '@testing-library/react';
+import { fireEvent, render, screen, waitFor, within } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
-import type { ApiClient } from '../lib/api.ts';
+import type { ApiClient, BulkArchiveEntitiesResponse } from '../lib/api.ts';
 import type { Entity } from '../lib/types.ts';
 import SearchPage from './SearchPage.tsx';
 import { getCleanupBasketStorageKey, type CleanupBasketItem } from '../hooks/useCleanupBasket.ts';
@@ -27,7 +27,13 @@ function entity(overrides: Partial<Entity> = {}): Entity {
   };
 }
 
-function apiWithEntities(entities: Entity[], total = entities.length): ApiClient {
+const EMPTY_ARCHIVE_RESPONSE: BulkArchiveEntitiesResponse = { archived: [], failed: [] };
+
+function apiWithEntities(
+  entities: Entity[],
+  total = entities.length,
+  archiveResponse: BulkArchiveEntitiesResponse = EMPTY_ARCHIVE_RESPONSE
+): ApiClient {
   return {
     listEntities: vi.fn(async () => ({
       items: entities,
@@ -39,6 +45,7 @@ function apiWithEntities(entities: Entity[], total = entities.length): ApiClient
     getEntity: vi.fn(),
     listEdges: vi.fn(async () => ({ edges: [] })),
     deleteEntity: vi.fn(),
+    bulkArchiveEntities: vi.fn(async () => archiveResponse),
   } as unknown as ApiClient;
 }
 
@@ -106,9 +113,13 @@ function installBrowserApis() {
   });
 }
 
-async function renderSearchPage(entities: Entity[], total = entities.length) {
+async function renderSearchPage(
+  entities: Entity[],
+  total = entities.length,
+  archiveResponse: BulkArchiveEntitiesResponse = EMPTY_ARCHIVE_RESPONSE
+) {
   const user = userEvent.setup();
-  const api = apiWithEntities(entities, total);
+  const api = apiWithEntities(entities, total, archiveResponse);
   window.localStorage.setItem('pgm_api_key', API_KEY);
 
   render(<SearchPage api={api} onOpenInGraph={vi.fn()} />);
@@ -204,5 +215,90 @@ describe('SearchPage result selection', () => {
     expect(screen.getByRole('checkbox', { name: 'Select First cleanup candidate' })).not.toBeChecked();
     expect(screen.getByRole('checkbox', { name: 'Select Second cleanup candidate' })).not.toBeChecked();
     expect(screen.queryByText('2 selected')).not.toBeInTheDocument();
+  });
+
+  it('opens and closes the cleanup basket drawer from the header count', async () => {
+    const { user } = await renderSearchPage([
+      entity({ id: 'entity-1', content: 'First cleanup candidate' }),
+      entity({ id: 'entity-2', content: 'Second cleanup candidate' }),
+    ]);
+
+    await user.click(screen.getByRole('checkbox', { name: 'Select First cleanup candidate' }));
+    await user.click(screen.getByRole('button', { name: /add selected to basket/i }));
+
+    const openBasket = screen.getByRole('button', { name: /open cleanup basket, 1 item/i });
+    expect(openBasket).toHaveTextContent('1');
+
+    await user.click(openBasket);
+
+    expect(screen.getByRole('dialog', { name: /cleanup basket/i })).toBeInTheDocument();
+    expect(screen.getByText('1 reviewed ID')).toBeInTheDocument();
+
+    await user.click(screen.getByRole('button', { name: /close cleanup basket/i }));
+
+    await waitFor(() => {
+      expect(screen.queryByRole('dialog', { name: /cleanup basket/i })).not.toBeInTheDocument();
+    });
+  });
+
+  it('archives reviewed basket IDs and removes archived entities from search state', async () => {
+    const { api, user } = await renderSearchPage([
+      entity({ id: 'entity-1', content: 'First cleanup candidate' }),
+      entity({ id: 'entity-2', content: 'Second cleanup candidate' }),
+      entity({ id: 'entity-3', content: 'Third cleanup candidate' }),
+    ], 3, {
+      archived: [{ id: 'entity-1' }, { id: 'entity-2' }],
+      failed: [],
+    });
+
+    await user.click(screen.getByRole('button', { name: /open first cleanup candidate detail/i }));
+    await waitFor(() => expect(api.listEdges).toHaveBeenCalledWith('entity-1'));
+
+    await user.click(screen.getByRole('checkbox', { name: 'Select First cleanup candidate' }));
+    await user.click(screen.getByRole('checkbox', { name: 'Select Second cleanup candidate' }));
+    await user.click(screen.getByRole('button', { name: /add selected to basket/i }));
+    await user.click(screen.getByRole('checkbox', { name: 'Select First cleanup candidate' }));
+    expect(screen.getByText('1 selected')).toBeInTheDocument();
+
+    await user.click(screen.getByRole('button', { name: /open cleanup basket, 2 items/i }));
+    await user.click(screen.getByRole('button', { name: /archive 2 reviewed ids/i }));
+
+    expect(api.bulkArchiveEntities).toHaveBeenCalledWith(['entity-1', 'entity-2']);
+    expect(await screen.findByText('Archived 2 entities.')).toBeInTheDocument();
+    await waitFor(() => {
+      expect(screen.queryByRole('checkbox', { name: 'Select First cleanup candidate' })).not.toBeInTheDocument();
+      expect(screen.queryByRole('checkbox', { name: 'Select Second cleanup candidate' })).not.toBeInTheDocument();
+    });
+    expect(screen.getByRole('checkbox', { name: 'Select Third cleanup candidate' })).toBeInTheDocument();
+    expect(screen.queryByText('1 selected')).not.toBeInTheDocument();
+    expect(screen.getByText('Cleanup basket is empty.')).toBeInTheDocument();
+  });
+
+  it('keeps partial archive failures in the cleanup basket with messages', async () => {
+    const { api, user } = await renderSearchPage([
+      entity({ id: 'entity-1', content: 'First cleanup candidate' }),
+      entity({ id: 'entity-2', content: 'Second cleanup candidate' }),
+      entity({ id: 'entity-3', content: 'Third cleanup candidate' }),
+    ], 3, {
+      archived: [{ id: 'entity-1' }],
+      failed: [{ id: 'entity-2', code: 'FORBIDDEN', message: 'Entity not found or not deletable' }],
+    });
+
+    await user.click(screen.getByRole('checkbox', { name: 'Select First cleanup candidate' }));
+    await user.click(screen.getByRole('checkbox', { name: 'Select Second cleanup candidate' }));
+    await user.click(screen.getByRole('button', { name: /add selected to basket/i }));
+    await user.click(screen.getByRole('button', { name: /open cleanup basket, 2 items/i }));
+    await user.click(screen.getByRole('button', { name: /archive 2 reviewed ids/i }));
+
+    expect(api.bulkArchiveEntities).toHaveBeenCalledWith(['entity-1', 'entity-2']);
+    expect(await screen.findByText('Archived 1 entity. 1 item needs attention.')).toBeInTheDocument();
+    await waitFor(() => {
+      expect(screen.queryByRole('checkbox', { name: 'Select First cleanup candidate' })).not.toBeInTheDocument();
+    });
+    expect(screen.getByRole('checkbox', { name: 'Select Second cleanup candidate' })).toBeInTheDocument();
+    const dialog = screen.getByRole('dialog', { name: /cleanup basket/i });
+    expect(within(dialog).getByText('1 reviewed ID')).toBeInTheDocument();
+    expect(within(dialog).getByText('Second cleanup candidate')).toBeInTheDocument();
+    expect(within(dialog).getByText('Entity not found or not deletable')).toBeInTheDocument();
   });
 });

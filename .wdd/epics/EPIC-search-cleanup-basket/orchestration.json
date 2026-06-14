@@ -526,17 +526,18 @@
           ],
           "assignedModel": "implementationComplex",
           "reviewModel": "review",
-          "workerThreadId": null,
+          "workerThreadId": "019ec642-e86e-7ed0-94bf-35d5d119d59e",
           "reviewThreadId": null,
           "branch": "codex/task/TASK-007-search-cleanup-flow-integration",
           "workerWorktree": "/Users/ivo.toby/.codex/worktrees/dabec7ed-521f-42fd-b18e-0c0d542e7ccc/postgram-TASK-007-search-cleanup-flow-integration",
-          "worktreeStatus": "pending_creation",
+          "worktreeStatus": "verified",
           "pr": null,
           "latestCommit": null,
-          "branchFreshness": "current_at_activation",
+          "branchFreshness": "current_at_dispatch",
           "blockingFeedback": [],
           "verification": null,
-          "currentGate": "worktree_pending"
+          "currentGate": "worker_dispatched",
+          "workerNickname": "Feynman"
         }
       ],
       "activatedAt": "2026-06-14T15:10:44+02:00"
@@ -586,7 +587,7 @@
       "TASK-002-rest-bulk-archive-endpoint": "verified",
       "TASK-005-search-result-selection": "verified",
       "TASK-006-cleanup-basket-review-drawer": "verified",
-      "TASK-007-search-cleanup-flow-integration": "pending_creation"
+      "TASK-007-search-cleanup-flow-integration": "verified"
     },
     "workerDispatch": {
       "TASK-001-bulk-archive-service": "merged",
@@ -595,7 +596,7 @@
       "TASK-002-rest-bulk-archive-endpoint": "merged",
       "TASK-005-search-result-selection": "merged",
       "TASK-006-cleanup-basket-review-drawer": "merged",
-      "TASK-007-search-cleanup-flow-integration": "not_dispatched"
+      "TASK-007-search-cleanup-flow-integration": "worker_dispatched"
     },
     "waveCompletion": {
       "WAVE-001": "done",

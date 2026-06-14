@@ -79,7 +79,7 @@ Poll WAVE-004 worker directly: TASK-007-search-cleanup-flow-integration. If comp
 
 | Task | Ticket | Branch | Worktree | Worker | Gate | Verification |
 |------|--------|--------|----------|--------|------|--------------|
-| TASK-007-search-cleanup-flow-integration | TICKET-004-review-archive-integration | codex/task/TASK-007-search-cleanup-flow-integration | `/Users/ivo.toby/.codex/worktrees/dabec7ed-521f-42fd-b18e-0c0d542e7ccc/postgram-TASK-007-search-cleanup-flow-integration` | pending dispatch | worktree_pending | pending |
+| TASK-007-search-cleanup-flow-integration | TICKET-004-review-archive-integration | codex/task/TASK-007-search-cleanup-flow-integration | `/Users/ivo.toby/.codex/worktrees/dabec7ed-521f-42fd-b18e-0c0d542e7ccc/postgram-TASK-007-search-cleanup-flow-integration` | Feynman (`019ec642-e86e-7ed0-94bf-35d5d119d59e`) | worker_dispatched | pending |
 
 ## Verification Status
 
@@ -157,6 +157,7 @@ Poll WAVE-004 worker directly: TASK-007-search-cleanup-flow-integration. If comp
 - 2026-06-14: WAVE-003 reconciled and marked done.
 - 2026-06-14: WAVE-004 activated for
   `TASK-007-search-cleanup-flow-integration`.
+- 2026-06-14: WAVE-004 worktree was created and worker Feynman was assigned.
 
 ## Next Action
 

@@ -6,7 +6,7 @@ ticket: TICKET-001-backend-bulk-archive
 wave: WAVE-002
 slug: rest-bulk-archive-endpoint
 title: REST Bulk Archive Endpoint
-status: todo
+status: in_progress
 depends_on:
   - TASK-001-bulk-archive-service
 conflict_domains:
@@ -16,10 +16,10 @@ conflict_domains:
 assigned_model_class: implementationComplex
 review_model_class: review
 branch: codex/task/TASK-002-rest-bulk-archive-endpoint
-worker_worktree: null
-worktree_status: unassigned
+worker_worktree: /Users/ivo.toby/.codex/worktrees/dabec7ed-521f-42fd-b18e-0c0d542e7ccc/postgram-TASK-002-rest-bulk-archive-endpoint
+worktree_status: pending_creation
 pr: null
-current_gate: not_started
+current_gate: worktree_pending
 branch_freshness: unknown
 verification:
   - npm test -- tests/contract/rest-api.test.ts
@@ -29,7 +29,7 @@ verification:
 
 ## Status
 
-todo
+in_progress
 
 ## Parent Ticket
 
@@ -109,9 +109,9 @@ codex/task/TASK-002-rest-bulk-archive-endpoint
 
 ## Worker Worktree
 
-None assigned yet. The controller must create or verify an isolated worktree for
-this task before dispatching a repository-writing worker, then provide that path
-to the worker.
+/Users/ivo.toby/.codex/worktrees/dabec7ed-521f-42fd-b18e-0c0d542e7ccc/postgram-TASK-002-rest-bulk-archive-endpoint
+
+Status: pending creation by controller before worker dispatch.
 
 ## PR / Patch Reference
 

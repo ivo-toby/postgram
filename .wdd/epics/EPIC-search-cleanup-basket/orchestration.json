@@ -67,7 +67,7 @@
     {
       "id": "TICKET-003-search-selection",
       "path": "TICKET-003-search-selection/ticket.md",
-      "status": "planned",
+      "status": "in_progress",
       "taskIds": [
         "TASK-005-search-result-selection"
       ]
@@ -262,14 +262,14 @@
     },
     {
       "id": "WAVE-002",
-      "status": "planned",
+      "status": "in_progress",
       "strategy": {
         "profile": "full",
         "executionMode": "parallel",
         "reviewMode": "risk_based",
         "monitoringMode": "adaptive",
         "recommendedBy": "wdd-plan-epic",
-        "confirmedBy": null,
+        "confirmedBy": "user on 2026-06-14: ok, full parallel for wave 2",
         "requiresUserConfirmation": true,
         "confidence": "medium",
         "rationale": [
@@ -284,8 +284,8 @@
         {
           "id": "TASK-002-rest-bulk-archive-endpoint",
           "ticket": "TICKET-001-backend-bulk-archive",
-          "path": "TICKET-001-backend-bulk-archive/todo/TASK-002-rest-bulk-archive-endpoint.md",
-          "status": "todo",
+          "path": "TICKET-001-backend-bulk-archive/in-progress/TASK-002-rest-bulk-archive-endpoint.md",
+          "status": "in_progress",
           "dependsOn": [
             "TASK-001-bulk-archive-service"
           ],
@@ -299,20 +299,20 @@
           "workerThreadId": null,
           "reviewThreadId": null,
           "branch": "codex/task/TASK-002-rest-bulk-archive-endpoint",
-          "workerWorktree": null,
-          "worktreeStatus": "unassigned",
+          "workerWorktree": "/Users/ivo.toby/.codex/worktrees/dabec7ed-521f-42fd-b18e-0c0d542e7ccc/postgram-TASK-002-rest-bulk-archive-endpoint",
+          "worktreeStatus": "pending_creation",
           "pr": null,
           "latestCommit": null,
-          "branchFreshness": "unknown",
+          "branchFreshness": "current_at_activation",
           "blockingFeedback": [],
           "verification": null,
-          "currentGate": "not_started"
+          "currentGate": "worktree_pending"
         },
         {
           "id": "TASK-005-search-result-selection",
           "ticket": "TICKET-003-search-selection",
-          "path": "TICKET-003-search-selection/todo/TASK-005-search-result-selection.md",
-          "status": "todo",
+          "path": "TICKET-003-search-selection/in-progress/TASK-005-search-result-selection.md",
+          "status": "in_progress",
           "dependsOn": [
             "TASK-004-cleanup-basket-state"
           ],
@@ -325,16 +325,17 @@
           "workerThreadId": null,
           "reviewThreadId": null,
           "branch": "codex/task/TASK-005-search-result-selection",
-          "workerWorktree": null,
-          "worktreeStatus": "unassigned",
+          "workerWorktree": "/Users/ivo.toby/.codex/worktrees/dabec7ed-521f-42fd-b18e-0c0d542e7ccc/postgram-TASK-005-search-result-selection",
+          "worktreeStatus": "pending_creation",
           "pr": null,
           "latestCommit": null,
-          "branchFreshness": "unknown",
+          "branchFreshness": "current_at_activation",
           "blockingFeedback": [],
           "verification": null,
-          "currentGate": "not_started"
+          "currentGate": "worktree_pending"
         }
-      ]
+      ],
+      "activatedAt": "2026-06-14T14:24:41+02:00"
     },
     {
       "id": "WAVE-003",
@@ -473,11 +474,11 @@
   "monitoring": {
     "mode": "manual",
     "cadence": "adaptive_20_minutes_until_pr_or_patch",
-    "status": "stopped_reconciled",
-    "lastCheckedAt": "2026-06-14T13:46:00+02:00",
-    "nextCheckDueAt": null,
-    "schedulerRef": "none:wave_reconciled",
-    "fallbackPrompt": "Run wdd-start-wave for EPIC-search-cleanup-basket WAVE-002 only after confirming or overriding the WAVE-002 strategy. WAVE-002 tasks are TASK-002-rest-bulk-archive-endpoint and TASK-005-search-result-selection."
+    "status": "manual_fallback_active",
+    "lastCheckedAt": "2026-06-14T14:24:41+02:00",
+    "nextCheckDueAt": "2026-06-14T14:45:00+02:00",
+    "schedulerRef": "none:automation_update_unavailable",
+    "fallbackPrompt": "Poll WAVE-002 workers directly: TASK-002-rest-bulk-archive-endpoint and TASK-005-search-result-selection. If complete, run reviews, verify, merge to epic branch, then reconcile WAVE-002 before starting WAVE-003."
   },
   "currentGates": {
     "epicBranch": {
@@ -490,27 +491,32 @@
     },
     "waveStrategyConfirmation": {
       "WAVE-001": "confirmed_override_standard_parallel",
-      "WAVE-002": "required",
+      "WAVE-002": "confirmed_full_parallel",
       "WAVE-003": "not_required",
       "WAVE-004": "not_required"
     },
     "workerWorktrees": {
       "TASK-001-bulk-archive-service": "verified",
       "TASK-003-ui-bulk-archive-api-client": "verified",
-      "TASK-004-cleanup-basket-state": "verified"
+      "TASK-004-cleanup-basket-state": "verified",
+      "TASK-002-rest-bulk-archive-endpoint": "pending_creation",
+      "TASK-005-search-result-selection": "pending_creation"
     },
     "workerDispatch": {
       "TASK-001-bulk-archive-service": "merged",
       "TASK-003-ui-bulk-archive-api-client": "merged",
-      "TASK-004-cleanup-basket-state": "merged"
+      "TASK-004-cleanup-basket-state": "merged",
+      "TASK-002-rest-bulk-archive-endpoint": "not_dispatched",
+      "TASK-005-search-result-selection": "not_dispatched"
     },
     "waveCompletion": {
-      "WAVE-001": "done"
+      "WAVE-001": "done",
+      "WAVE-002": "in_progress"
     },
     "nextWave": {
       "id": "WAVE-002",
-      "status": "planned",
-      "strategyConfirmation": "required"
+      "status": "active",
+      "strategyConfirmation": "confirmed_full_parallel"
     }
   }
 }

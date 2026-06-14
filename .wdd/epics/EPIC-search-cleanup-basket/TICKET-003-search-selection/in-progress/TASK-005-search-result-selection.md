@@ -6,7 +6,7 @@ ticket: TICKET-003-search-selection
 wave: WAVE-002
 slug: search-result-selection
 title: Search Result Selection
-status: todo
+status: in_progress
 depends_on:
   - TASK-004-cleanup-basket-state
 conflict_domains:
@@ -15,10 +15,10 @@ conflict_domains:
 assigned_model_class: implementationComplex
 review_model_class: review
 branch: codex/task/TASK-005-search-result-selection
-worker_worktree: null
-worktree_status: unassigned
+worker_worktree: /Users/ivo.toby/.codex/worktrees/dabec7ed-521f-42fd-b18e-0c0d542e7ccc/postgram-TASK-005-search-result-selection
+worktree_status: pending_creation
 pr: null
-current_gate: not_started
+current_gate: worktree_pending
 branch_freshness: unknown
 verification:
   - npm --prefix ui run test -- --run src/components/SearchPage.test.tsx
@@ -29,7 +29,7 @@ verification:
 
 ## Status
 
-todo
+in_progress
 
 ## Parent Ticket
 
@@ -113,9 +113,9 @@ codex/task/TASK-005-search-result-selection
 
 ## Worker Worktree
 
-None assigned yet. The controller must create or verify an isolated worktree for
-this task before dispatching a repository-writing worker, then provide that path
-to the worker.
+/Users/ivo.toby/.codex/worktrees/dabec7ed-521f-42fd-b18e-0c0d542e7ccc/postgram-TASK-005-search-result-selection
+
+Status: pending creation by controller before worker dispatch.
 
 ## PR / Patch Reference
 

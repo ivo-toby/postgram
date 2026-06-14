@@ -14,10 +14,10 @@ updated_at: 2026-06-14
 | Task | Ticket | Depends On | Conflict Domains | Status |
 |------|--------|------------|------------------|--------|
 | TASK-001-bulk-archive-service | TICKET-001-backend-bulk-archive | None | entity-service, entity integration tests, auth/delete, audit | done |
-| TASK-002-rest-bulk-archive-endpoint | TICKET-001-backend-bulk-archive | TASK-001-bulk-archive-service | REST transport, REST contract tests, entity service export | todo |
+| TASK-002-rest-bulk-archive-endpoint | TICKET-001-backend-bulk-archive | TASK-001-bulk-archive-service | REST transport, REST contract tests, entity service export | in_progress |
 | TASK-003-ui-bulk-archive-api-client | TICKET-002-cleanup-basket-foundation | None | UI API client, UI API tests | done |
 | TASK-004-cleanup-basket-state | TICKET-002-cleanup-basket-foundation | None | cleanup basket hook/types/tests, localStorage behavior | done |
-| TASK-005-search-result-selection | TICKET-003-search-selection | TASK-004-cleanup-basket-state | SearchPage, SearchPage tests, result card UI | todo |
+| TASK-005-search-result-selection | TICKET-003-search-selection | TASK-004-cleanup-basket-state | SearchPage, SearchPage tests, result card UI | in_progress |
 | TASK-006-cleanup-basket-review-drawer | TICKET-004-review-archive-integration | TASK-002-rest-bulk-archive-endpoint, TASK-003-ui-bulk-archive-api-client, TASK-004-cleanup-basket-state | drawer component/tests, basket archive-result behavior | todo |
 | TASK-007-search-cleanup-flow-integration | TICKET-004-review-archive-integration | TASK-002-rest-bulk-archive-endpoint, TASK-005-search-result-selection, TASK-006-cleanup-basket-review-drawer | SearchPage, final integrated flow, manual validation | todo |
 
@@ -93,7 +93,7 @@ Stop condition:
 
 - All WAVE-001 tasks are done.
 - Wave reconciliation completed on 2026-06-14.
-- WAVE-002 requires strategy confirmation before activation.
+- WAVE-002 was activated after user confirmation.
 
 Completion evidence:
 
@@ -115,7 +115,7 @@ Drift notes:
 
 ### WAVE-002
 
-Status: planned
+Status: in_progress
 
 Tasks:
 
@@ -130,7 +130,7 @@ Recommended strategy:
 - Monitoring mode: adaptive
 - Confidence: medium
 - Requires user confirmation: yes
-- Confirmed by: null
+- Confirmed by: user on 2026-06-14: `ok, full parallel for wave 2`
 
 Rationale:
 
@@ -154,6 +154,10 @@ Activation rule:
   high-risk/full profile strategy.
 - Dispatch both tasks if their dependencies are done and epic branch artifacts
   are synced.
+- Activated on 2026-06-14 after user confirmed `full parallel` for WAVE-002.
+- Heartbeat automation was attempted again during activation but no dedicated
+  automation/heartbeat tool was exposed in this thread; use manual direct agent
+  polling for this wave.
 
 Stop condition:
 
@@ -251,7 +255,7 @@ Stop condition:
 
 - WAVE-001 was initially recommended as `full parallel`; user confirmed the
   `standard parallel` override on 2026-06-14.
-- WAVE-002 remains marked `full` profile and requires confirmation because the
-  epic includes public REST contract work and SearchPage conflict risk.
+- WAVE-002 is confirmed as `full parallel` by the user on 2026-06-14 and uses
+  manual monitoring fallback because the heartbeat tool was not callable.
 - UI work is split so basket state can land before SearchPage selection, and
   SearchPage final integration waits until review drawer behavior is ready.

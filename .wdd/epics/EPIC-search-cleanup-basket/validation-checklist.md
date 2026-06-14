@@ -2,7 +2,7 @@
 id: EPIC-search-cleanup-basket-VALIDATION
 kind: validation_checklist
 epic: EPIC-search-cleanup-basket
-status: wave_001_reconciled
+status: wave_002_active
 created_at: 2026-06-14
 updated_at: 2026-06-14
 ---
@@ -43,7 +43,8 @@ updated_at: 2026-06-14
 - [x] Confirmation requirements are recorded when strategy requires them.
 - [x] WAVE-001 user confirmation is recorded as
       `override WAVE-001 standard parallel`.
-- [ ] WAVE-002 user confirmation is still required before activation.
+- [x] WAVE-002 user confirmation is recorded as
+      `ok, full parallel for wave 2`.
 - [x] Active-wave tasks can run concurrently only when dependencies,
       conflict-domain blockers, prerequisites, and blocked status allow it.
 - [x] Stop conditions require reconciliation before the next wave starts.
@@ -96,4 +97,6 @@ updated_at: 2026-06-14
 
 ## Planning Result
 
-WAVE-001 is reconciled. WAVE-002 still requires confirmation before activation.
+WAVE-002 is active after user confirmation. Heartbeat automation was attempted
+again during activation but no dedicated automation/heartbeat tool was exposed;
+the controller will use manual direct agent polling for this wave.

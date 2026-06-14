@@ -4,7 +4,7 @@ kind: ticket
 epic: EPIC-search-cleanup-basket
 slug: search-selection
 title: Search Result Selection
-status: planned
+status: in_progress
 task_count: 1
 depends_on:
   - TICKET-002-cleanup-basket-foundation
@@ -58,7 +58,7 @@ basket.
 
 | Task | Status | Wave | Summary |
 |------|--------|------|---------|
-| TASK-005-search-result-selection | todo | WAVE-002 | Add Search result selection and selected action bar |
+| TASK-005-search-result-selection | in_progress | WAVE-002 | Add Search result selection and selected action bar |
 
 ## Dependencies
 

@@ -29,6 +29,21 @@ function apiWithArchiveResponse(response: BulkArchiveEntitiesResponse): ApiClien
   } as unknown as ApiClient;
 }
 
+function apiWithArchiveImplementation(
+  implementation: (ids: string[]) => Promise<BulkArchiveEntitiesResponse>
+): ApiClient {
+  return {
+    bulkArchiveEntities: vi.fn(implementation),
+  } as unknown as ApiClient;
+}
+
+function basketItems(count: number): CleanupBasketItem[] {
+  return Array.from({ length: count }, (_, index) => {
+    const id = `entity-${index + 1}`;
+    return basketItem({ id, content: `Cleanup candidate ${index + 1}` });
+  });
+}
+
 function renderStatefulDrawer({
   initialItems,
   response,
@@ -58,6 +73,36 @@ function renderStatefulDrawer({
 
   render(<Harness />);
   return { api, user };
+}
+
+function renderStatefulDrawerWithApi({
+  initialItems,
+  api,
+}: {
+  initialItems: CleanupBasketItem[];
+  api: ApiClient;
+}) {
+  const user = userEvent.setup();
+
+  function Harness() {
+    const [items, setItems] = useState(initialItems);
+
+    return (
+      <CleanupBasketDrawer
+        api={api}
+        items={items}
+        onArchiveResult={result => {
+          setItems(current => applyCleanupBasketArchiveResult(current, result));
+        }}
+        onClear={() => setItems([])}
+        onClose={vi.fn()}
+        onRemoveItem={id => setItems(current => current.filter(item => item.id !== id))}
+      />
+    );
+  }
+
+  render(<Harness />);
+  return { user };
 }
 
 describe('CleanupBasketDrawer', () => {
@@ -178,5 +223,64 @@ describe('CleanupBasketDrawer', () => {
     await waitFor(() => expect(screen.queryByText('First cleanup candidate')).not.toBeInTheDocument());
     expect(screen.getByText('Second cleanup candidate')).toBeInTheDocument();
     expect(screen.getByText('Entity not found or not deletable')).toBeInTheDocument();
+  });
+
+  it('archives reviewed IDs in batches capped at 500 IDs per request', async () => {
+    const initialItems = basketItems(501);
+    const api = apiWithArchiveImplementation(async ids => ({
+      archived: ids.map(id => ({ id })),
+      failed: [],
+    }));
+    const onArchiveResult = vi.fn();
+    const user = userEvent.setup();
+
+    render(
+      <CleanupBasketDrawer
+        api={api}
+        items={initialItems}
+        onArchiveResult={onArchiveResult}
+        onClear={vi.fn()}
+        onClose={vi.fn()}
+        onRemoveItem={vi.fn()}
+      />
+    );
+
+    await user.click(screen.getByRole('button', { name: /archive 501 reviewed ids/i }));
+
+    await waitFor(() => expect(api.bulkArchiveEntities).toHaveBeenCalledTimes(2));
+    expect(api.bulkArchiveEntities).toHaveBeenNthCalledWith(1, initialItems.slice(0, 500).map(item => item.id));
+    expect(api.bulkArchiveEntities).toHaveBeenNthCalledWith(2, ['entity-501']);
+    expect(onArchiveResult).toHaveBeenCalledWith({
+      archived: initialItems.map(item => ({ id: item.id })),
+      failed: [],
+    });
+    expect(await screen.findByText('Archived 501 entities.')).toBeInTheDocument();
+  });
+
+  it('keeps remaining IDs in the basket when a later archive batch request fails', async () => {
+    const initialItems = basketItems(501);
+    const api = apiWithArchiveImplementation(async ids => {
+      if (ids.includes('entity-501')) {
+        throw new Error('Gateway timeout');
+      }
+      return {
+        archived: ids.map(id => ({ id })),
+        failed: [],
+      };
+    });
+
+    const { user } = renderStatefulDrawerWithApi({ initialItems, api });
+
+    await user.click(screen.getByRole('button', { name: /archive 501 reviewed ids/i }));
+
+    await waitFor(() => expect(api.bulkArchiveEntities).toHaveBeenCalledTimes(2));
+    expect(api.bulkArchiveEntities).toHaveBeenNthCalledWith(1, initialItems.slice(0, 500).map(item => item.id));
+    expect(api.bulkArchiveEntities).toHaveBeenNthCalledWith(2, ['entity-501']);
+    expect(await screen.findByText('Archived 500 entities. 1 item needs attention.')).toBeInTheDocument();
+    await waitFor(() => {
+      expect(screen.queryByText('Cleanup candidate 1')).not.toBeInTheDocument();
+    });
+    expect(screen.getByText('Cleanup candidate 501')).toBeInTheDocument();
+    expect(screen.getByText('Gateway timeout')).toBeInTheDocument();
   });
 });

@@ -11,6 +11,8 @@ export type CleanupBasketDrawerProps = {
   onRemoveItem: (id: string) => void;
 };
 
+const BULK_ARCHIVE_BATCH_SIZE = 500;
+
 type SummaryEntry = {
   label: string;
   count: number;
@@ -44,6 +46,46 @@ function truncate(value: string, limit: number): string {
 
 function pluralize(count: number, singular: string, plural = `${singular}s`): string {
   return count === 1 ? singular : plural;
+}
+
+function chunkIds(ids: string[], size: number): string[][] {
+  const chunks: string[][] = [];
+  for (let index = 0; index < ids.length; index += size) {
+    chunks.push(ids.slice(index, index + size));
+  }
+  return chunks;
+}
+
+function archiveRequestFailureMessage(error: unknown): string {
+  if (error instanceof Error && error.message.trim()) return error.message;
+  return 'Archive failed.';
+}
+
+function archiveRequestFailures(ids: string[], error: unknown): BulkArchiveEntitiesResponse['failed'] {
+  const message = archiveRequestFailureMessage(error);
+  return ids.map(id => ({ id, code: 'REQUEST_FAILED', message }));
+}
+
+async function archiveIdsInBatches(
+  api: Pick<ApiClient, 'bulkArchiveEntities'>,
+  ids: string[]
+): Promise<BulkArchiveEntitiesResponse> {
+  const result: BulkArchiveEntitiesResponse = { archived: [], failed: [] };
+  const batches = chunkIds(ids, BULK_ARCHIVE_BATCH_SIZE);
+
+  for (let batchIndex = 0; batchIndex < batches.length; batchIndex += 1) {
+    const batch = batches[batchIndex];
+    try {
+      const batchResult = await api.bulkArchiveEntities(batch);
+      result.archived.push(...batchResult.archived);
+      result.failed.push(...batchResult.failed);
+    } catch (error) {
+      result.failed.push(...archiveRequestFailures(batches.slice(batchIndex).flat(), error));
+      break;
+    }
+  }
+
+  return result;
 }
 
 function formatArchiveFeedback(result: BulkArchiveEntitiesResponse): ArchiveFeedback {
@@ -121,7 +163,7 @@ export default function CleanupBasketDrawer({
     setFeedback(null);
 
     try {
-      const result = await api.bulkArchiveEntities(items.map(item => item.id));
+      const result = await archiveIdsInBatches(api, items.map(item => item.id));
       onArchiveResult(result);
       setFeedback(formatArchiveFeedback(result));
     } catch (error) {

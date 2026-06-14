@@ -6,7 +6,7 @@ ticket: TICKET-004-review-archive-integration
 wave: WAVE-004
 slug: search-cleanup-flow-integration
 title: Search Cleanup Flow Integration
-status: review
+status: done
 depends_on:
   - TASK-002-rest-bulk-archive-endpoint
   - TASK-005-search-result-selection
@@ -21,10 +21,11 @@ review_model_class: review
 branch: codex/task/TASK-007-search-cleanup-flow-integration
 worker_worktree: /Users/ivo.toby/.codex/worktrees/dabec7ed-521f-42fd-b18e-0c0d542e7ccc/postgram-TASK-007-search-cleanup-flow-integration
 worktree_status: verified
-pr: null
+pr: local-merge:b9cdcd0
 worker_thread_id: 019ec642-e86e-7ed0-94bf-35d5d119d59e
-current_gate: worker_ready_for_review
-branch_freshness: current_at_dispatch
+review_thread_id: 019ec64d-4d91-76d1-a5a1-99e287c2cafd
+current_gate: merged
+branch_freshness: current_at_merge
 verification:
   - npm --prefix ui run test -- --run src/components/SearchPage.test.tsx
   - npm --prefix ui run typecheck
@@ -35,7 +36,7 @@ verification:
 
 ## Status
 
-review
+done
 
 ## Parent Ticket
 
@@ -142,7 +143,7 @@ Worker: Feynman (`019ec642-e86e-7ed0-94bf-35d5d119d59e`).
 
 ## PR / Patch Reference
 
-None yet.
+local-merge:b9cdcd0
 
 ## RED-GREEN TDD Plan
 
@@ -222,6 +223,22 @@ has grown beyond a small inline role.
     proxy `ECONNREFUSED` for `/api/queue` and `/api/entities`. To run the full
     manual pass, the controller should provide a local backend, a delete-scoped
     API key, and disposable seed entities.
+- Reviewer Gauss (`019ec64d-4d91-76d1-a5a1-99e287c2cafd`) returned
+  `REVIEW_PASS` with no P1/P2/P3 findings.
+- Controller merged branch `codex/task/TASK-007-search-cleanup-flow-integration`
+  into `codex/epic/search-cleanup-basket` in `b9cdcd0`.
+- Controller merged-branch verification passed:
+  `npm --prefix ui run test -- --run src/components/SearchPage.test.tsx`
+  (8 tests),
+  `npm --prefix ui run test -- --run src/components/CleanupBasketDrawer.test.tsx src/hooks/useCleanupBasket.test.ts src/lib/api.test.ts`
+  (21 tests), `npm --prefix ui run typecheck`,
+  `npm test -- tests/contract/rest-api.test.ts` (22 tests),
+  `npm run typecheck`, and `git diff --check HEAD~1..HEAD`.
+- Controller browser smoke passed at `http://127.0.0.1:5173/`: Search rendered
+  `Open cleanup basket, 0 items`; the empty drawer opened, showed disabled
+  clear/archive controls, closed successfully, and emitted no browser console
+  errors. Full data-backed archive validation remains blocked by the missing
+  local backend/API key/seed data noted above.
 
 ## Review Feedback
 
@@ -252,3 +269,4 @@ has grown beyond a small inline role.
 - No hard-delete UI, query-level archive, backend semantics, REST contract, or
   UI API client contract changes were made.
 - Shared-context update needed: none.
+- Final status: merged and done.

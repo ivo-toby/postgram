@@ -6,7 +6,7 @@
     "targetBranch": "main",
     "baseBranch": "codex/epic/search-cleanup-basket",
     "slug": "search-cleanup-basket",
-    "status": "in_progress"
+    "status": "implementation_complete"
   },
   "configuration": {
     "storageMode": "local-markdown",
@@ -75,7 +75,7 @@
     {
       "id": "TICKET-004-review-archive-integration",
       "path": "TICKET-004-review-archive-integration/ticket.md",
-      "status": "in_progress",
+      "status": "done",
       "taskIds": [
         "TASK-006-cleanup-basket-review-drawer",
         "TASK-007-search-cleanup-flow-integration"
@@ -482,7 +482,7 @@
     },
     {
       "id": "WAVE-004",
-      "status": "in_progress",
+      "status": "done",
       "strategy": {
         "profile": "standard",
         "executionMode": "bundled",
@@ -511,8 +511,8 @@
         {
           "id": "TASK-007-search-cleanup-flow-integration",
           "ticket": "TICKET-004-review-archive-integration",
-          "path": "TICKET-004-review-archive-integration/in-progress/TASK-007-search-cleanup-flow-integration.md",
-          "status": "in_progress",
+          "path": "TICKET-004-review-archive-integration/done/TASK-007-search-cleanup-flow-integration.md",
+          "status": "done",
           "dependsOn": [
             "TASK-002-rest-bulk-archive-endpoint",
             "TASK-005-search-result-selection",
@@ -527,20 +527,60 @@
           "assignedModel": "implementationComplex",
           "reviewModel": "review",
           "workerThreadId": "019ec642-e86e-7ed0-94bf-35d5d119d59e",
-          "reviewThreadId": null,
+          "reviewThreadId": "019ec64d-4d91-76d1-a5a1-99e287c2cafd",
           "branch": "codex/task/TASK-007-search-cleanup-flow-integration",
           "workerWorktree": "/Users/ivo.toby/.codex/worktrees/dabec7ed-521f-42fd-b18e-0c0d542e7ccc/postgram-TASK-007-search-cleanup-flow-integration",
           "worktreeStatus": "verified",
-          "pr": null,
-          "latestCommit": null,
-          "branchFreshness": "current_at_dispatch",
+          "pr": "local-merge:b9cdcd0",
+          "latestCommit": "f5970d2",
+          "branchFreshness": "current_at_merge",
           "blockingFeedback": [],
-          "verification": null,
-          "currentGate": "worker_dispatched",
+          "verification": {
+            "result": "passed_with_manual_limitation",
+            "commands": [
+              "npm --prefix ui run test -- --run src/components/SearchPage.test.tsx",
+              "npm --prefix ui run test -- --run src/components/CleanupBasketDrawer.test.tsx src/hooks/useCleanupBasket.test.ts src/lib/api.test.ts",
+              "npm --prefix ui run typecheck",
+              "npm test -- tests/contract/rest-api.test.ts",
+              "git diff --check"
+            ],
+            "controllerCommands": [
+              "npm --prefix ui run test -- --run src/components/SearchPage.test.tsx",
+              "npm --prefix ui run test -- --run src/components/CleanupBasketDrawer.test.tsx src/hooks/useCleanupBasket.test.ts src/lib/api.test.ts",
+              "npm --prefix ui run typecheck",
+              "npm test -- tests/contract/rest-api.test.ts",
+              "npm run typecheck",
+              "git diff --check HEAD~1..HEAD",
+              "browser smoke at http://127.0.0.1:5173/"
+            ],
+            "evidence": "Worker and controller verification passed; reviewer Gauss returned REVIEW_PASS with no P1/P2/P3 findings. Controller browser smoke verified Search cleanup basket button and empty drawer; full data-backed archive validation remains blocked without local backend/API key/seed data."
+          },
+          "currentGate": "merged",
           "workerNickname": "Feynman"
         }
       ],
-      "activatedAt": "2026-06-14T15:10:44+02:00"
+      "activatedAt": "2026-06-14T15:10:44+02:00",
+      "reconciledAt": "2026-06-14T15:32:00+02:00",
+      "reconciliation": {
+        "result": "done",
+        "mergeCommit": "b9cdcd0",
+        "closeoutCommit": null,
+        "verification": [
+          "npm --prefix ui run test -- --run src/components/SearchPage.test.tsx",
+          "npm --prefix ui run test -- --run src/components/CleanupBasketDrawer.test.tsx src/hooks/useCleanupBasket.test.ts src/lib/api.test.ts",
+          "npm --prefix ui run typecheck",
+          "npm test -- tests/contract/rest-api.test.ts",
+          "npm run typecheck",
+          "git diff --check HEAD~1..HEAD",
+          "browser smoke at http://127.0.0.1:5173/"
+        ],
+        "review": "TASK-007 received reviewer REVIEW_PASS with no P1/P2/P3 findings.",
+        "drift": [
+          "Full data-backed browser archive validation remains blocked without a local backend, delete-scoped API key, and disposable seed entities.",
+          "Controller browser smoke verified the merged UI renders the Search cleanup basket button and empty drawer without console errors.",
+          "All planned implementation waves are complete."
+        ]
+      }
     }
   ],
   "sharedContext": {
@@ -554,16 +594,16 @@
       "shared-context/resources/task-findings.md"
     ],
     "pendingReconciliation": [],
-    "lastReconciledWave": "WAVE-003"
+    "lastReconciledWave": "WAVE-004"
   },
   "monitoring": {
     "mode": "manual",
-    "cadence": "adaptive_20_minutes_until_pr_or_patch",
-    "status": "manual_fallback_active",
-    "lastCheckedAt": "2026-06-14T15:10:44+02:00",
-    "nextCheckDueAt": "2026-06-14T15:31:00+02:00",
-    "schedulerRef": "none:automation_update_unavailable",
-    "fallbackPrompt": "Poll WAVE-004 worker directly: TASK-007-search-cleanup-flow-integration. If complete, review, verify including browser/manual validation, merge to epic branch, then reconcile WAVE-004 before epic validation."
+    "cadence": "stopped",
+    "status": "stopped_reconciled",
+    "lastCheckedAt": "2026-06-14T15:32:00+02:00",
+    "nextCheckDueAt": null,
+    "schedulerRef": "none:wave_reconciled",
+    "fallbackPrompt": "Run wdd-epic-validation for EPIC-search-cleanup-basket. All planned waves are complete; final data-backed browser archive validation remains pending until a local backend, delete-scoped API key, and disposable seed entities are available."
   },
   "currentGates": {
     "epicBranch": {
@@ -596,18 +636,18 @@
       "TASK-002-rest-bulk-archive-endpoint": "merged",
       "TASK-005-search-result-selection": "merged",
       "TASK-006-cleanup-basket-review-drawer": "merged",
-      "TASK-007-search-cleanup-flow-integration": "worker_dispatched"
+      "TASK-007-search-cleanup-flow-integration": "merged"
     },
     "waveCompletion": {
       "WAVE-001": "done",
       "WAVE-002": "done",
       "WAVE-003": "done",
-      "WAVE-004": "in_progress"
+      "WAVE-004": "done"
     },
     "nextWave": {
-      "id": "WAVE-004",
-      "status": "active",
-      "strategyConfirmation": "not_required"
+      "id": null,
+      "status": "all_waves_complete",
+      "nextPhase": "epic_validation"
     }
   }
 }

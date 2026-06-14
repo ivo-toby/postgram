@@ -21,6 +21,8 @@ discover behavior that downstream workers, reviewers, or validators need.
 WAVE-002 completed the REST endpoint and Search result selection. WAVE-003
 completed the review drawer; WAVE-004 can wire the full Search cleanup flow
 against the now-merged backend/UI/drawer contracts.
+WAVE-004 completed the final Search cleanup flow integration; epic validation
+can now check the full branch.
 
 ## Details
 
@@ -119,3 +121,21 @@ Controller reconciliation rules:
   `remove`, `clear`, `applyArchiveResult`, and `onClose` into the drawer, then
   handle visible SearchPage result/detail/selection cleanup after successful
   archive IDs are returned.
+
+### WAVE-004 Completion
+
+- Source task: WAVE-004 reconciliation input
+- Source PR/branch: `codex/epic/search-cleanup-basket` merge commit `b9cdcd0`
+- Status: confirmed
+- Summary: SearchPage now wires the cleanup basket drawer, archive action, and
+  result cleanup into the full Search cleanup workflow.
+- Why it matters: All planned product implementation waves are complete; the
+  remaining WDD step is epic validation/final PR preparation.
+- Affected files or areas: `ui/src/components/SearchPage.tsx`,
+  `ui/src/components/SearchPage.test.tsx`, `ui/src/components/CleanupBasketDrawer.tsx`,
+  `ui/src/hooks/useCleanupBasket.ts`, `ui/src/lib/api.ts`, and
+  `tests/contract/rest-api.test.ts`.
+- Follow-up implications: Full data-backed browser archive validation still
+  needs a local backend, delete-scoped API key, and disposable seed entities.
+  Controller smoke verified the merged UI renders the Search cleanup basket
+  button and empty drawer without browser console errors.

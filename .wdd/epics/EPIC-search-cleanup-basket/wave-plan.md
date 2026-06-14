@@ -19,7 +19,7 @@ updated_at: 2026-06-14
 | TASK-004-cleanup-basket-state | TICKET-002-cleanup-basket-foundation | None | cleanup basket hook/types/tests, localStorage behavior | done |
 | TASK-005-search-result-selection | TICKET-003-search-selection | TASK-004-cleanup-basket-state | SearchPage, SearchPage tests, result card UI | done |
 | TASK-006-cleanup-basket-review-drawer | TICKET-004-review-archive-integration | TASK-002-rest-bulk-archive-endpoint, TASK-003-ui-bulk-archive-api-client, TASK-004-cleanup-basket-state | drawer component/tests, basket archive-result behavior | done |
-| TASK-007-search-cleanup-flow-integration | TICKET-004-review-archive-integration | TASK-002-rest-bulk-archive-endpoint, TASK-005-search-result-selection, TASK-006-cleanup-basket-review-drawer | SearchPage, final integrated flow, manual validation | in_progress |
+| TASK-007-search-cleanup-flow-integration | TICKET-004-review-archive-integration | TASK-002-rest-bulk-archive-endpoint, TASK-005-search-result-selection, TASK-006-cleanup-basket-review-drawer | SearchPage, final integrated flow, manual validation | done |
 
 ## Dependency Grid
 
@@ -251,7 +251,7 @@ Drift notes:
 
 ### WAVE-004
 
-Status: in_progress
+Status: done
 
 Tasks:
 
@@ -289,8 +289,32 @@ Activation rule:
 
 Stop condition:
 
-- TASK-007 is done, blocked, cancelled, or explicitly closed.
-- Epic validation can begin only after WAVE-004 reconciliation.
+- TASK-007 is done.
+- Wave reconciliation completed on 2026-06-14.
+- Epic validation can begin after this reconciliation commit.
+
+Completion evidence:
+
+- TASK-007 worker commit: `f5970d2`.
+- TASK-007 merge commit: `b9cdcd0`.
+- TASK-007 review: Gauss `REVIEW_PASS`, no P1/P2/P3.
+- Verification passed:
+  - `npm --prefix ui run test -- --run src/components/SearchPage.test.tsx`
+  - `npm --prefix ui run test -- --run src/components/CleanupBasketDrawer.test.tsx src/hooks/useCleanupBasket.test.ts src/lib/api.test.ts`
+  - `npm --prefix ui run typecheck`
+  - `npm test -- tests/contract/rest-api.test.ts`
+  - `npm run typecheck`
+  - `git diff --check HEAD~1..HEAD`
+- Browser smoke passed at `http://127.0.0.1:5173/`: Search rendered the
+  cleanup basket header control; the empty drawer opened and closed; no browser
+  console errors were recorded.
+
+Drift notes:
+
+- Full data-backed browser archive validation was not run because no local
+  backend, delete-scoped API key, or disposable seed entities were available.
+- WAVE-004 used manual direct polling because the heartbeat/automation tool was
+  not callable in this thread.
 
 ## Known Conflict Risks
 

@@ -4,7 +4,7 @@ kind: epic
 type: feature
 slug: search-cleanup-basket
 title: Search Cleanup Basket
-status: in_progress
+status: implementation_complete
 created_at: 2026-06-14
 updated_at: 2026-06-14
 target_branch: main
@@ -221,9 +221,9 @@ Use RED/GREEN TDD per task. Focused validation should include:
 - [x] Review drawer supports counts, item removal, clear basket, final archive,
       success cleanup, and failure retention.
 - [ ] No hard delete or query-level archive path exists.
-- [ ] Focused and broad verification commands pass for the changed areas.
-- [ ] Manual/browser validation evidence is recorded.
-- [ ] Task reviews have no unresolved P1/P2 findings.
+- [x] Focused and broad verification commands pass for the changed areas.
+- [x] Manual/browser validation evidence is recorded.
+- [x] Task reviews have no unresolved P1/P2 findings.
 - [ ] Epic validation passes.
 - [ ] Final PR is ready for human review.
 

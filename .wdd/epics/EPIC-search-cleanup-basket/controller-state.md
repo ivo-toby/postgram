@@ -2,8 +2,8 @@
 id: EPIC-search-cleanup-basket-CONTROLLER
 kind: controller_state
 epic: EPIC-search-cleanup-basket
-active_wave: WAVE-004
-status: wave_004_active
+active_wave: null
+status: wave_004_reconciled
 updated_at: 2026-06-14
 ---
 
@@ -19,11 +19,12 @@ checkout.
 
 ## Current Outcome
 
-WAVE-004 is active.
+WAVE-004 is done and reconciled.
 
-Current phase: create or verify the WAVE-004 task worktree, dispatch the final
-Search cleanup flow worker, then monitor manually because the heartbeat tool is
-not callable in this thread.
+Next phase: `wdd-epic-validation`. All planned implementation waves are
+complete. Full data-backed browser archive validation remains blocked until a
+local backend, delete-scoped API key, and disposable seed entities are
+available.
 
 ## Wave Summary
 
@@ -32,26 +33,26 @@ not callable in this thread.
 | WAVE-001 | TASK-001-bulk-archive-service, TASK-003-ui-bulk-archive-api-client, TASK-004-cleanup-basket-state | standard / parallel / risk_based / adaptive | done |
 | WAVE-002 | TASK-002-rest-bulk-archive-endpoint, TASK-005-search-result-selection | full / parallel / risk_based / adaptive | done |
 | WAVE-003 | TASK-006-cleanup-basket-review-drawer | standard / bundled / risk_based / adaptive | done |
-| WAVE-004 | TASK-007-search-cleanup-flow-integration | standard / bundled / risk_based / adaptive | active |
+| WAVE-004 | TASK-007-search-cleanup-flow-integration | standard / bundled / risk_based / adaptive | done |
 
 ## Monitoring
 
 Mode: manual
 
-Cadence: adaptive 20 minutes until PR or patch
+Cadence: stopped
 
-Status: manual_fallback_active
+Status: stopped_reconciled
 
-Last check: 2026-06-14T15:10:44+02:00
+Last check: 2026-06-14T15:32:00+02:00
 
-Next check due: 2026-06-14T15:31:00+02:00
+Next check due: None
 
-Scheduler reference: none:automation_update_unavailable
+Scheduler reference: none:wave_reconciled
 
 Fallback prompt:
 
 ```text
-Poll WAVE-004 worker directly: TASK-007-search-cleanup-flow-integration. If complete, review, verify including browser/manual validation, merge to epic branch, then reconcile WAVE-004 before epic validation.
+Run wdd-epic-validation for EPIC-search-cleanup-basket. All planned waves are complete; final data-backed browser archive validation remains pending until a local backend, delete-scoped API key, and disposable seed entities are available.
 ```
 
 ## WAVE-001 Task Gates
@@ -79,7 +80,7 @@ Poll WAVE-004 worker directly: TASK-007-search-cleanup-flow-integration. If comp
 
 | Task | Ticket | Branch | Worktree | Worker | Gate | Verification |
 |------|--------|--------|----------|--------|------|--------------|
-| TASK-007-search-cleanup-flow-integration | TICKET-004-review-archive-integration | codex/task/TASK-007-search-cleanup-flow-integration | `/Users/ivo.toby/.codex/worktrees/dabec7ed-521f-42fd-b18e-0c0d542e7ccc/postgram-TASK-007-search-cleanup-flow-integration` | Feynman (`019ec642-e86e-7ed0-94bf-35d5d119d59e`) | worker_dispatched | pending |
+| TASK-007-search-cleanup-flow-integration | TICKET-004-review-archive-integration | codex/task/TASK-007-search-cleanup-flow-integration | `/Users/ivo.toby/.codex/worktrees/dabec7ed-521f-42fd-b18e-0c0d542e7ccc/postgram-TASK-007-search-cleanup-flow-integration` | Feynman (`019ec642-e86e-7ed0-94bf-35d5d119d59e`) | merged in `b9cdcd0` | Gauss `REVIEW_PASS`; SearchPage/drawer/API/REST/typecheck passed; browser smoke passed |
 
 ## Verification Status
 
@@ -100,6 +101,18 @@ Poll WAVE-004 worker directly: TASK-007-search-cleanup-flow-integration. If comp
   passed, 3 files, 21 tests.
 - `npm --prefix ui run typecheck`: passed after WAVE-003 merge.
 - `git diff --check HEAD~1..HEAD`: passed after WAVE-003 merge.
+- `npm --prefix ui run test -- --run src/components/SearchPage.test.tsx`:
+  passed, 1 file, 8 tests.
+- `npm --prefix ui run test -- --run src/components/CleanupBasketDrawer.test.tsx src/hooks/useCleanupBasket.test.ts src/lib/api.test.ts`:
+  passed, 3 files, 21 tests after WAVE-004 merge.
+- `npm --prefix ui run typecheck`: passed after WAVE-004 merge.
+- `npm test -- tests/contract/rest-api.test.ts`: passed, 1 file, 22 tests
+  after WAVE-004 merge.
+- `npm run typecheck`: passed after WAVE-004 merge.
+- `git diff --check HEAD~1..HEAD`: passed after WAVE-004 merge.
+- Browser smoke at `http://127.0.0.1:5173/`: passed; Search rendered the
+  cleanup basket header button and empty drawer open/close, with no browser
+  console errors.
 
 ## Shared Context Reconciliation
 
@@ -117,6 +130,10 @@ Poll WAVE-004 worker directly: TASK-007-search-cleanup-flow-integration. If comp
 - Reconciled WAVE-003 drawer contract: `CleanupBasketDrawer` is standalone and
   expects `api`, basket `items`, `onArchiveResult`, `onRemoveItem`, `onClear`,
   and `onClose` props from final integration.
+- Reconciled WAVE-004 integration behavior: SearchPage now opens the drawer,
+  wires the basket/API contract, removes successfully archived IDs from visible
+  result/detail/selection state, and keeps failed IDs in the basket with
+  messages.
 
 ## Future Wave Readiness
 
@@ -128,7 +145,8 @@ Poll WAVE-004 worker directly: TASK-007-search-cleanup-flow-integration. If comp
   merged.
 - TASK-007 dependencies `TASK-002`, `TASK-005`, and `TASK-006` are done and
   merged.
-- WAVE-004 is ready and does not require user confirmation.
+- All planned waves are done and reconciled.
+- Epic validation is next.
 
 ## Event Log
 
@@ -158,8 +176,10 @@ Poll WAVE-004 worker directly: TASK-007-search-cleanup-flow-integration. If comp
 - 2026-06-14: WAVE-004 activated for
   `TASK-007-search-cleanup-flow-integration`.
 - 2026-06-14: WAVE-004 worktree was created and worker Feynman was assigned.
+- 2026-06-14: TASK-007 merged into the epic branch in `b9cdcd0` after
+  `REVIEW_PASS`.
+- 2026-06-14: WAVE-004 reconciled and marked done.
 
 ## Next Action
 
-- Create or verify the WAVE-004 task worktree, dispatch the worker, then poll
-  manually at the recorded cadence.
+- Run `wdd-epic-validation`.

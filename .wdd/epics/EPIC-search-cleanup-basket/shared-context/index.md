@@ -58,8 +58,8 @@ before editing code.
   result selection are merged into the epic branch.
 - WAVE-003 is done and reconciled. The cleanup basket review drawer component
   is merged into the epic branch.
-- WAVE-004 is active and contains the final Search cleanup flow integration
-  task.
+- WAVE-004 is done and reconciled. All planned implementation waves are
+  complete; epic validation is next.
 
 ## Recent Durable Memory
 

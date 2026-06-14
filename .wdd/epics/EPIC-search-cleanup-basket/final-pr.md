@@ -2,12 +2,20 @@
 id: EPIC-search-cleanup-basket-FINAL-PR
 kind: final_pr
 epic: EPIC-search-cleanup-basket
-status: draft
+status: created
 created_at: 2026-06-14
 updated_at: 2026-06-14
 ---
 
 # Final PR: EPIC-search-cleanup-basket
+
+GitHub PR: https://github.com/ivo-toby/postgram/pull/71
+
+Draft: yes
+
+Source: `codex/epic/search-cleanup-basket`
+
+Target: `main`
 
 ## PR Title
 

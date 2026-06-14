@@ -3,7 +3,7 @@ id: EPIC-search-cleanup-basket-CONTROLLER
 kind: controller_state
 epic: EPIC-search-cleanup-basket
 active_wave: null
-status: epic_validation_passed
+status: final_pr_created
 updated_at: 2026-06-14
 ---
 
@@ -21,10 +21,9 @@ checkout.
 
 WAVE-004 is done and reconciled.
 
-Epic validation passed. Final PR draft is prepared at `final-pr.md`.
+Draft GitHub PR created: https://github.com/ivo-toby/postgram/pull/71
 
-Next phase: create a draft GitHub PR from
-`codex/epic/search-cleanup-basket` into `main`.
+Next phase: human review.
 
 ## Wave Summary
 
@@ -52,7 +51,7 @@ Scheduler reference: none:wave_reconciled
 Fallback prompt:
 
 ```text
-Create the final draft PR for EPIC-search-cleanup-basket from codex/epic/search-cleanup-basket into main, then record the PR URL in final-pr.md, orchestration.json, and controller-state.md.
+Human review draft PR: https://github.com/ivo-toby/postgram/pull/71
 ```
 
 ## WAVE-001 Task Gates
@@ -182,7 +181,9 @@ Create the final draft PR for EPIC-search-cleanup-basket from codex/epic/search-
 - 2026-06-14: `origin/main` was merged into the epic branch in `f436e95`
   before final validation.
 - 2026-06-14: Epic validation passed and final PR draft was prepared.
+- 2026-06-14: Draft GitHub PR created:
+  https://github.com/ivo-toby/postgram/pull/71
 
 ## Next Action
 
-- Create the draft GitHub PR and record the PR URL.
+- Human review on draft PR https://github.com/ivo-toby/postgram/pull/71.

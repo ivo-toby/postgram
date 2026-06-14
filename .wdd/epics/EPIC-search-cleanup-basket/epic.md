@@ -4,7 +4,7 @@ kind: epic
 type: feature
 slug: search-cleanup-basket
 title: Search Cleanup Basket
-status: validated
+status: final_pr_created
 created_at: 2026-06-14
 updated_at: 2026-06-14
 target_branch: main

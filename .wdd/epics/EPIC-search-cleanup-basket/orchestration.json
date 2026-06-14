@@ -6,7 +6,7 @@
     "targetBranch": "main",
     "baseBranch": "codex/epic/search-cleanup-basket",
     "slug": "search-cleanup-basket",
-    "status": "validated"
+    "status": "final_pr_created"
   },
   "configuration": {
     "storageMode": "local-markdown",
@@ -647,7 +647,8 @@
     "nextWave": {
       "id": null,
       "status": "all_waves_complete",
-      "nextPhase": "final_pr"
+      "nextPhase": "human_review",
+      "finalPr": "https://github.com/ivo-toby/postgram/pull/71"
     }
   },
   "epicValidation": {
@@ -662,11 +663,13 @@
     "nextPhase": "wdd-final-pr"
   },
   "finalPr": {
-    "status": "draft_prepared",
+    "status": "created",
     "path": "final-pr.md",
     "targetBranch": "main",
     "sourceBranch": "codex/epic/search-cleanup-basket",
-    "url": null,
-    "draft": true
+    "url": "https://github.com/ivo-toby/postgram/pull/71",
+    "number": 71,
+    "draft": true,
+    "createdAt": "2026-06-14T13:41:02Z"
   }
 }

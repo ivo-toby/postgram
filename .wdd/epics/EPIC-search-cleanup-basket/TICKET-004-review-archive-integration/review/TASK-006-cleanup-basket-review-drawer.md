@@ -6,7 +6,7 @@ ticket: TICKET-004-review-archive-integration
 wave: WAVE-003
 slug: cleanup-basket-review-drawer
 title: Cleanup Basket Review Drawer
-status: in_progress
+status: review
 depends_on:
   - TASK-002-rest-bulk-archive-endpoint
   - TASK-003-ui-bulk-archive-api-client
@@ -22,7 +22,7 @@ worker_worktree: /Users/ivo.toby/.codex/worktrees/dabec7ed-521f-42fd-b18e-0c0d54
 worktree_status: verified
 pr: null
 worker_thread_id: 019ec631-30c7-7d21-82d4-1ac079ab603b
-current_gate: worker_dispatched
+current_gate: worker_ready_for_review
 branch_freshness: current_at_dispatch
 verification:
   - npm --prefix ui run test -- --run src/components/CleanupBasketDrawer.test.tsx
@@ -33,7 +33,7 @@ verification:
 
 ## Status
 
-in_progress
+review
 
 ## Parent Ticket
 
@@ -168,10 +168,10 @@ next task.
 
 ## Task-Level Definition of Done
 
-- [ ] Objective is complete.
-- [ ] Verification evidence is recorded.
-- [ ] No unresolved P1/P2 review findings remain.
-- [ ] Shared-context updates, if any, are proposed for controller reconciliation.
+- [x] Objective is complete.
+- [x] Verification evidence is recorded.
+- [x] No unresolved P1/P2 review findings remain.
+- [x] Shared-context updates, if any, are proposed for controller reconciliation.
 
 ## Validation Steps
 
@@ -180,7 +180,24 @@ next task.
 
 ## Verification Evidence
 
-- Not run yet.
+- Setup: initial `npm --prefix ui run test -- --run
+  src/components/CleanupBasketDrawer.test.tsx` could not start because UI
+  dependencies were not installed in this task worktree (`vitest: command not
+  found`); `npm --prefix ui ci` completed successfully from the existing
+  lockfile.
+- RED: after dependency install, the focused drawer test first failed because
+  `ui/src/components/CleanupBasketDrawer.tsx` did not exist.
+- RED: after adding a compile stub, `npm --prefix ui run test -- --run
+  src/components/CleanupBasketDrawer.test.tsx` failed as expected with 5
+  behavior failures for missing drawer summaries, remove, clear, archive
+  success cleanup, and partial-failure retention UI.
+- GREEN: `npm --prefix ui run test -- --run
+  src/components/CleanupBasketDrawer.test.tsx` passed: 1 test file, 5 tests.
+- Final validation: `npm --prefix ui run test -- --run
+  src/components/CleanupBasketDrawer.test.tsx` passed: 1 test file, 5 tests.
+- Final validation: `npm --prefix ui run typecheck` passed with
+  `tsc --noEmit`.
+- Final validation: `git diff --check` passed.
 
 ## Review Feedback
 
@@ -198,4 +215,19 @@ next task.
 
 ## Completion Notes
 
-- None yet.
+- Added `CleanupBasketDrawer` with explicit props for TASK-007 integration:
+  `api`, `items`, `onArchiveResult`, `onRemoveItem`, `onClear`, and `onClose`.
+- The archive action calls `api.bulkArchiveEntities` with reviewed basket IDs
+  and delegates successful/failed basket state updates to the existing
+  `useCleanupBasket` archive-result helper through `onArchiveResult`.
+- The drawer displays count summaries by type, status, and visibility; a
+  scrollable item list with preview metadata; remove and clear controls;
+  archive-only success messaging; and partial-failure retention with
+  per-item error messages.
+- Did not wire the drawer into `SearchPage`, change backend/API routes, add
+  hard delete behavior, or implement query-level archive.
+- Shared-context update proposed for controller reconciliation: TASK-007 should
+  wire this drawer by passing `useCleanupBasket`'s `items`, `remove`, `clear`,
+  and `applyArchiveResult` helpers plus the existing `api` client; visible
+  SearchPage result cleanup after archive remains TASK-007 scope.
+- Final gate: ready for controller review.

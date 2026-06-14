@@ -1,6 +1,6 @@
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import ReactMarkdown from 'react-markdown';
-import type { ApiClient } from '../lib/api.ts';
+import type { ApiClient, BulkArchiveEntitiesResponse } from '../lib/api.ts';
 import type { Edge, Entity, SearchResult } from '../lib/types.ts';
 import { ENTITY_COLORS } from '../lib/nodeStyles.ts';
 import EntityEditor from './EntityEditor.tsx';
@@ -9,6 +9,7 @@ import CreateEntityModal from './CreateEntityModal.tsx';
 import { useResizable } from '../hooks/useResizable.ts';
 import CopyUuid from './CopyUuid.tsx';
 import { useCleanupBasket } from '../hooks/useCleanupBasket.ts';
+import CleanupBasketDrawer from './CleanupBasketDrawer.tsx';
 
 const ALL_ENTITY_TYPES = ['document', 'memory', 'person', 'project', 'task', 'interaction'];
 const ALL_STATUSES = ['active', 'done', 'inbox', 'next', 'waiting', 'scheduled', 'someday'];
@@ -84,7 +85,15 @@ export default function SearchPage({ api, onOpenInGraph }: Props) {
   const [selectedResultIds, setSelectedResultIds] = useState<Set<string>>(new Set());
   const [lastSelectionAnchorId, setLastSelectionAnchorId] = useState<string | null>(null);
   const [apiKey] = useState(() => getActiveApiKey());
-  const { addMany: addManyToCleanupBasket, count: cleanupBasketCount } = useCleanupBasket({ apiKey });
+  const {
+    addMany: addManyToCleanupBasket,
+    applyArchiveResult: applyCleanupBasketArchiveResult,
+    clear: clearCleanupBasket,
+    count: cleanupBasketCount,
+    items: cleanupBasketItems,
+    remove: removeCleanupBasketItem,
+  } = useCleanupBasket({ apiKey });
+  const [cleanupBasketOpen, setCleanupBasketOpen] = useState(false);
   const [fetchedItem, setFetchedItem] = useState<ResultItem | null>(null);
   const [detailLoading, setDetailLoading] = useState(false);
   const [createOpen, setCreateOpen] = useState(false);
@@ -216,18 +225,31 @@ export default function SearchPage({ api, onOpenInGraph }: Props) {
     setFetchedItem(prev => (prev && prev.entity.id === entity.id ? { ...prev, entity } : prev));
   }, []);
 
-  const removeEntity = useCallback((id: string) => {
-    setResults(prev => prev.filter(r => r.entity.id !== id));
+  const removeEntities = useCallback((ids: string[]) => {
+    if (ids.length === 0) return;
+    const removedIds = new Set(ids);
+    setResults(prev => prev.filter(r => !removedIds.has(r.entity.id)));
     setSelectedResultIds(prev => {
-      if (!prev.has(id)) return prev;
+      let changed = false;
       const next = new Set(prev);
-      next.delete(id);
-      return next;
+      for (const id of removedIds) {
+        changed = next.delete(id) || changed;
+      }
+      return changed ? next : prev;
     });
-    setLastSelectionAnchorId(prev => (prev === id ? null : prev));
-    setFetchedItem(prev => (prev && prev.entity.id === id ? null : prev));
-    setSelectedId(prev => (prev === id ? null : prev));
+    setLastSelectionAnchorId(prev => (prev && removedIds.has(prev) ? null : prev));
+    setFetchedItem(prev => (prev && removedIds.has(prev.entity.id) ? null : prev));
+    setSelectedId(prev => (prev && removedIds.has(prev) ? null : prev));
   }, []);
+
+  const removeEntity = useCallback((id: string) => {
+    removeEntities([id]);
+  }, [removeEntities]);
+
+  const handleCleanupArchiveResult = useCallback((result: BulkArchiveEntitiesResponse) => {
+    applyCleanupBasketArchiveResult(result);
+    removeEntities(result.archived.map(entry => entry.id));
+  }, [applyCleanupBasketArchiveResult, removeEntities]);
 
   useEffect(() => {
     const node = sentinelRef.current;
@@ -379,6 +401,21 @@ export default function SearchPage({ api, onOpenInGraph }: Props) {
               aria-expanded={filtersOpen}
             >
               Filters{activeFilterCount > 0 ? ` (${activeFilterCount})` : ''}
+            </button>
+            <button
+              type="button"
+              onClick={() => setCleanupBasketOpen(true)}
+              aria-label={`Open cleanup basket, ${cleanupBasketCount} ${cleanupBasketCount === 1 ? 'item' : 'items'}`}
+              className={`shrink-0 px-3 py-3 rounded-lg border text-sm transition-colors flex items-center gap-2 ${
+                cleanupBasketCount > 0
+                  ? 'border-emerald-500 text-emerald-300 bg-emerald-500/10 hover:bg-emerald-500/20'
+                  : 'border-gray-700 text-gray-300 hover:bg-gray-800'
+              }`}
+            >
+              <span className="hidden sm:inline">Cleanup basket</span>
+              <span className="rounded-full bg-gray-950 px-2 py-0.5 text-xs tabular-nums">
+                {cleanupBasketCount}
+              </span>
             </button>
             <button
               onClick={() => setCreateOpen(true)}
@@ -623,6 +660,17 @@ export default function SearchPage({ api, onOpenInGraph }: Props) {
               setSelectedId(entity.id);
             }}
             onClose={() => setCreateOpen(false)}
+          />
+        )}
+
+        {cleanupBasketOpen && (
+          <CleanupBasketDrawer
+            api={api}
+            items={cleanupBasketItems}
+            onArchiveResult={handleCleanupArchiveResult}
+            onClear={clearCleanupBasket}
+            onClose={() => setCleanupBasketOpen(false)}
+            onRemoveItem={removeCleanupBasketItem}
           />
         )}
 

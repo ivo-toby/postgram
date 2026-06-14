@@ -6,7 +6,7 @@ ticket: TICKET-004-review-archive-integration
 wave: WAVE-004
 slug: search-cleanup-flow-integration
 title: Search Cleanup Flow Integration
-status: in_progress
+status: review
 depends_on:
   - TASK-002-rest-bulk-archive-endpoint
   - TASK-005-search-result-selection
@@ -23,7 +23,7 @@ worker_worktree: /Users/ivo.toby/.codex/worktrees/dabec7ed-521f-42fd-b18e-0c0d54
 worktree_status: verified
 pr: null
 worker_thread_id: 019ec642-e86e-7ed0-94bf-35d5d119d59e
-current_gate: worker_dispatched
+current_gate: worker_ready_for_review
 branch_freshness: current_at_dispatch
 verification:
   - npm --prefix ui run test -- --run src/components/SearchPage.test.tsx
@@ -35,7 +35,7 @@ verification:
 
 ## Status
 
-in_progress
+review
 
 ## Parent Ticket
 
@@ -180,10 +180,10 @@ has grown beyond a small inline role.
 
 ## Task-Level Definition of Done
 
-- [ ] Objective is complete.
-- [ ] Verification evidence is recorded.
-- [ ] No unresolved P1/P2 review findings remain.
-- [ ] Shared-context updates, if any, are proposed for controller reconciliation.
+- [x] Objective is complete.
+- [x] Verification evidence is recorded.
+- [x] No unresolved P1/P2 review findings remain.
+- [x] Shared-context updates, if any, are proposed for controller reconciliation.
 
 ## Validation Steps
 
@@ -195,7 +195,33 @@ has grown beyond a small inline role.
 
 ## Verification Evidence
 
-- Not run yet.
+- RED:
+  - `npm --prefix ui run test -- --run src/components/SearchPage.test.tsx`
+    failed after adding the TASK-007 integration tests, before production
+    changes. Existing 5 tests passed; 3 new tests failed because SearchPage had
+    no accessible `Open cleanup basket, N item(s)` header control and no drawer
+    integration yet.
+- GREEN / required automated validation:
+  - `npm --prefix ui run test -- --run src/components/SearchPage.test.tsx`
+    passed: 1 file, 8 tests.
+  - `npm --prefix ui run test -- --run src/components/CleanupBasketDrawer.test.tsx src/hooks/useCleanupBasket.test.ts src/lib/api.test.ts`
+    passed: 3 files, 21 tests.
+  - `npm --prefix ui run typecheck` passed.
+  - `npm test -- tests/contract/rest-api.test.ts` passed: 1 file, 22 tests.
+  - `git diff --check` passed.
+- Browser/manual validation:
+  - Started Vite at `http://127.0.0.1:5174/`, opened the app in the in-app
+    browser, entered a placeholder local API key through the login screen, and
+    verified the Search page rendered the header button
+    `Open cleanup basket, 0 items`.
+  - Verified the empty cleanup basket drawer opened and closed from the header
+    button: dialog count 1 after open, close button count 1, dialog count 0
+    after close.
+  - Full data-backed select/add/review/archive browser validation was not run
+    because no backend was running on `localhost:3100`; Vite reported expected
+    proxy `ECONNREFUSED` for `/api/queue` and `/api/entities`. To run the full
+    manual pass, the controller should provide a local backend, a delete-scoped
+    API key, and disposable seed entities.
 
 ## Review Feedback
 
@@ -213,4 +239,16 @@ has grown beyond a small inline role.
 
 ## Completion Notes
 
-- None yet.
+- Integrated `CleanupBasketDrawer` into `SearchPage` using the existing API
+  client and `useCleanupBasket` state/callback contract.
+- Added a Search header cleanup basket button/count that opens the review
+  drawer and preserves existing checkbox, select-all-loaded, shift-click, and
+  add-selected-to-basket behavior.
+- On archive responses, successful IDs leave the basket through
+  `applyArchiveResult` and are removed from visible results, fetched detail,
+  selected detail, current result selection, and selection anchor state.
+- Partial archive failures remain in the basket with drawer-visible messages
+  through the existing basket hook behavior.
+- No hard-delete UI, query-level archive, backend semantics, REST contract, or
+  UI API client contract changes were made.
+- Shared-context update needed: none.

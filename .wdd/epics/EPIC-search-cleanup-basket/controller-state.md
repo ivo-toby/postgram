@@ -2,8 +2,8 @@
 id: EPIC-search-cleanup-basket-CONTROLLER
 kind: controller_state
 epic: EPIC-search-cleanup-basket
-active_wave: null
-status: wave_002_reconciled
+active_wave: WAVE-003
+status: wave_003_active
 updated_at: 2026-06-14
 ---
 
@@ -19,10 +19,11 @@ checkout.
 
 ## Current Outcome
 
-WAVE-002 is done and reconciled.
+WAVE-003 is active.
 
-Next phase: `wdd-start-wave` for WAVE-003. WAVE-003 contains
-`TASK-006-cleanup-basket-review-drawer` and does not require user confirmation.
+Current phase: create or verify the WAVE-003 task worktree, dispatch the drawer
+worker, then monitor manually because the heartbeat tool is not callable in
+this thread.
 
 ## Wave Summary
 
@@ -30,27 +31,27 @@ Next phase: `wdd-start-wave` for WAVE-003. WAVE-003 contains
 |------|-------|----------|--------|
 | WAVE-001 | TASK-001-bulk-archive-service, TASK-003-ui-bulk-archive-api-client, TASK-004-cleanup-basket-state | standard / parallel / risk_based / adaptive | done |
 | WAVE-002 | TASK-002-rest-bulk-archive-endpoint, TASK-005-search-result-selection | full / parallel / risk_based / adaptive | done |
-| WAVE-003 | TASK-006-cleanup-basket-review-drawer | standard / bundled / risk_based / adaptive | ready |
+| WAVE-003 | TASK-006-cleanup-basket-review-drawer | standard / bundled / risk_based / adaptive | active |
 | WAVE-004 | TASK-007-search-cleanup-flow-integration | standard / bundled / risk_based / adaptive | planned |
 
 ## Monitoring
 
 Mode: manual
 
-Cadence: stopped
+Cadence: adaptive 20 minutes until PR or patch
 
-Status: stopped_reconciled
+Status: manual_fallback_active
 
-Last check: 2026-06-14T14:50:00+02:00
+Last check: 2026-06-14T14:51:00+02:00
 
-Next check due: None
+Next check due: 2026-06-14T15:11:00+02:00
 
-Scheduler reference: none:wave_reconciled
+Scheduler reference: none:automation_update_unavailable
 
 Fallback prompt:
 
 ```text
-Run wdd-start-wave for EPIC-search-cleanup-basket WAVE-003. WAVE-003 contains TASK-006-cleanup-basket-review-drawer and has no user confirmation requirement.
+Poll WAVE-003 worker directly: TASK-006-cleanup-basket-review-drawer. If complete, review as needed, verify, merge to epic branch, then reconcile WAVE-003 before starting WAVE-004.
 ```
 
 ## WAVE-001 Task Gates
@@ -67,6 +68,12 @@ Run wdd-start-wave for EPIC-search-cleanup-basket WAVE-003. WAVE-003 contains TA
 |------|--------|--------|----------|--------|------|--------------|
 | TASK-002-rest-bulk-archive-endpoint | TICKET-001-backend-bulk-archive | codex/task/TASK-002-rest-bulk-archive-endpoint | `/Users/ivo.toby/.codex/worktrees/dabec7ed-521f-42fd-b18e-0c0d542e7ccc/postgram-TASK-002-rest-bulk-archive-endpoint` | Curie (`019ec61b-5e6f-7e60-8cd9-79177615cae7`) | merged in `47e4423` | Banach `REVIEW_PASS`; REST tests/typecheck passed |
 | TASK-005-search-result-selection | TICKET-003-search-selection | codex/task/TASK-005-search-result-selection | `/Users/ivo.toby/.codex/worktrees/dabec7ed-521f-42fd-b18e-0c0d542e7ccc/postgram-TASK-005-search-result-selection` | Erdos (`019ec61b-5ecc-7293-be12-93dfe9846204`) | merged in `0f1c3f1` | Anscombe `REVIEW_PASS`; SearchPage tests/UI typecheck passed |
+
+## WAVE-003 Task Gates
+
+| Task | Ticket | Branch | Worktree | Worker | Gate | Verification |
+|------|--------|--------|----------|--------|------|--------------|
+| TASK-006-cleanup-basket-review-drawer | TICKET-004-review-archive-integration | codex/task/TASK-006-cleanup-basket-review-drawer | `/Users/ivo.toby/.codex/worktrees/dabec7ed-521f-42fd-b18e-0c0d542e7ccc/postgram-TASK-006-cleanup-basket-review-drawer` | pending dispatch | worktree_pending | pending |
 
 ## Verification Status
 
@@ -127,7 +134,10 @@ Run wdd-start-wave for EPIC-search-cleanup-basket WAVE-003. WAVE-003 contains TA
 - 2026-06-14: TASK-005 merged into the epic branch in `0f1c3f1` after
   `REVIEW_PASS`.
 - 2026-06-14: WAVE-002 reconciled and marked done.
+- 2026-06-14: WAVE-003 activated for
+  `TASK-006-cleanup-basket-review-drawer`.
 
 ## Next Action
 
-- Run `wdd-start-wave` for WAVE-003.
+- Create or verify the WAVE-003 task worktree, dispatch the worker, then poll
+  manually at the recorded cadence.

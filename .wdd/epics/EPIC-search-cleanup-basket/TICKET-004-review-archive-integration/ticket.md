@@ -4,7 +4,7 @@ kind: ticket
 epic: EPIC-search-cleanup-basket
 slug: review-archive-integration
 title: Review Drawer And Archive Integration
-status: planned
+status: in_progress
 task_count: 2
 depends_on:
   - TICKET-001-backend-bulk-archive
@@ -63,7 +63,7 @@ Complete the user-facing cleanup workflow and validate it end to end.
 
 | Task | Status | Wave | Summary |
 |------|--------|------|---------|
-| TASK-006-cleanup-basket-review-drawer | todo | WAVE-003 | Add review drawer component and archive action tests |
+| TASK-006-cleanup-basket-review-drawer | in_progress | WAVE-003 | Add review drawer component and archive action tests |
 | TASK-007-search-cleanup-flow-integration | todo | WAVE-004 | Integrate complete flow and run final validation |
 
 ## Dependencies

@@ -18,7 +18,7 @@ updated_at: 2026-06-14
 | TASK-003-ui-bulk-archive-api-client | TICKET-002-cleanup-basket-foundation | None | UI API client, UI API tests | done |
 | TASK-004-cleanup-basket-state | TICKET-002-cleanup-basket-foundation | None | cleanup basket hook/types/tests, localStorage behavior | done |
 | TASK-005-search-result-selection | TICKET-003-search-selection | TASK-004-cleanup-basket-state | SearchPage, SearchPage tests, result card UI | done |
-| TASK-006-cleanup-basket-review-drawer | TICKET-004-review-archive-integration | TASK-002-rest-bulk-archive-endpoint, TASK-003-ui-bulk-archive-api-client, TASK-004-cleanup-basket-state | drawer component/tests, basket archive-result behavior | todo |
+| TASK-006-cleanup-basket-review-drawer | TICKET-004-review-archive-integration | TASK-002-rest-bulk-archive-endpoint, TASK-003-ui-bulk-archive-api-client, TASK-004-cleanup-basket-state | drawer component/tests, basket archive-result behavior | in_progress |
 | TASK-007-search-cleanup-flow-integration | TICKET-004-review-archive-integration | TASK-002-rest-bulk-archive-endpoint, TASK-005-search-result-selection, TASK-006-cleanup-basket-review-drawer | SearchPage, final integrated flow, manual validation | todo |
 
 ## Dependency Grid
@@ -191,7 +191,7 @@ Drift notes:
 
 ### WAVE-003
 
-Status: ready
+Status: in_progress
 
 Tasks:
 
@@ -223,6 +223,9 @@ Activation rule:
 
 - Activate after WAVE-002 reconciliation confirms dependencies are done.
 - WAVE-002 reconciliation confirmed dependencies are done on 2026-06-14.
+- Activated on 2026-06-14 with no user confirmation required.
+- Heartbeat automation is not available in this thread; use manual direct
+  worker polling for this wave.
 
 Stop condition:
 

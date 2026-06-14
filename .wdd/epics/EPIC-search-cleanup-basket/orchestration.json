@@ -75,7 +75,7 @@
     {
       "id": "TICKET-004-review-archive-integration",
       "path": "TICKET-004-review-archive-integration/ticket.md",
-      "status": "planned",
+      "status": "in_progress",
       "taskIds": [
         "TASK-006-cleanup-basket-review-drawer",
         "TASK-007-search-cleanup-flow-integration"
@@ -390,7 +390,7 @@
     },
     {
       "id": "WAVE-003",
-      "status": "planned",
+      "status": "in_progress",
       "strategy": {
         "profile": "standard",
         "executionMode": "bundled",
@@ -420,8 +420,8 @@
         {
           "id": "TASK-006-cleanup-basket-review-drawer",
           "ticket": "TICKET-004-review-archive-integration",
-          "path": "TICKET-004-review-archive-integration/todo/TASK-006-cleanup-basket-review-drawer.md",
-          "status": "todo",
+          "path": "TICKET-004-review-archive-integration/in-progress/TASK-006-cleanup-basket-review-drawer.md",
+          "status": "in_progress",
           "dependsOn": [
             "TASK-002-rest-bulk-archive-endpoint",
             "TASK-003-ui-bulk-archive-api-client",
@@ -437,16 +437,17 @@
           "workerThreadId": null,
           "reviewThreadId": null,
           "branch": "codex/task/TASK-006-cleanup-basket-review-drawer",
-          "workerWorktree": null,
-          "worktreeStatus": "unassigned",
+          "workerWorktree": "/Users/ivo.toby/.codex/worktrees/dabec7ed-521f-42fd-b18e-0c0d542e7ccc/postgram-TASK-006-cleanup-basket-review-drawer",
+          "worktreeStatus": "pending_creation",
           "pr": null,
           "latestCommit": null,
-          "branchFreshness": "unknown",
+          "branchFreshness": "current_at_activation",
           "blockingFeedback": [],
           "verification": null,
-          "currentGate": "not_started"
+          "currentGate": "worktree_pending"
         }
-      ]
+      ],
+      "activatedAt": "2026-06-14T14:51:00+02:00"
     },
     {
       "id": "WAVE-004",
@@ -524,12 +525,12 @@
   },
   "monitoring": {
     "mode": "manual",
-    "cadence": "stopped",
-    "status": "stopped_reconciled",
-    "lastCheckedAt": "2026-06-14T14:50:00+02:00",
-    "nextCheckDueAt": null,
-    "schedulerRef": "none:wave_reconciled",
-    "fallbackPrompt": "Run wdd-start-wave for EPIC-search-cleanup-basket WAVE-003. WAVE-003 contains TASK-006-cleanup-basket-review-drawer and has no user confirmation requirement."
+    "cadence": "adaptive_20_minutes_until_pr_or_patch",
+    "status": "manual_fallback_active",
+    "lastCheckedAt": "2026-06-14T14:51:00+02:00",
+    "nextCheckDueAt": "2026-06-14T15:11:00+02:00",
+    "schedulerRef": "none:automation_update_unavailable",
+    "fallbackPrompt": "Poll WAVE-003 worker directly: TASK-006-cleanup-basket-review-drawer. If complete, review as needed, verify, merge to epic branch, then reconcile WAVE-003 before starting WAVE-004."
   },
   "currentGates": {
     "epicBranch": {
@@ -551,22 +552,25 @@
       "TASK-003-ui-bulk-archive-api-client": "verified",
       "TASK-004-cleanup-basket-state": "verified",
       "TASK-002-rest-bulk-archive-endpoint": "verified",
-      "TASK-005-search-result-selection": "verified"
+      "TASK-005-search-result-selection": "verified",
+      "TASK-006-cleanup-basket-review-drawer": "pending_creation"
     },
     "workerDispatch": {
       "TASK-001-bulk-archive-service": "merged",
       "TASK-003-ui-bulk-archive-api-client": "merged",
       "TASK-004-cleanup-basket-state": "merged",
       "TASK-002-rest-bulk-archive-endpoint": "merged",
-      "TASK-005-search-result-selection": "merged"
+      "TASK-005-search-result-selection": "merged",
+      "TASK-006-cleanup-basket-review-drawer": "not_dispatched"
     },
     "waveCompletion": {
       "WAVE-001": "done",
-      "WAVE-002": "done"
+      "WAVE-002": "done",
+      "WAVE-003": "in_progress"
     },
     "nextWave": {
       "id": "WAVE-003",
-      "status": "ready",
+      "status": "active",
       "strategyConfirmation": "not_required"
     }
   }

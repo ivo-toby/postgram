@@ -115,7 +115,7 @@ validation error that points to admin grooming and issue #47.
 Useful self-grooming filters:
 
 - `--older-than <duration>` defaults to `7d`
-- `--limit <n>` defaults to `50`
+- `--limit <n>` optionally caps candidates; omitted means no candidate cap
 - `--topic <topic>` optionally narrows to `metadata.topic`
 - `--session-id <id>` optionally narrows to `metadata.session_id`
 - `--tag <tag>` can be repeated and requires all supplied tags to be present
@@ -128,7 +128,6 @@ Add a `groom_session_context` MCP tool with the same self-scope as normal CLI:
 {
   "mode": "dry_run",
   "older_than": "7d",
-  "limit": 50,
   "topic": "botforge-issue-47",
   "session_id": "optional-session-id",
   "tags": ["botforge"]

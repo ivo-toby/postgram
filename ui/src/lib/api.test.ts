@@ -99,6 +99,35 @@ describe('createApiClient', () => {
     );
   });
 
+  it('POSTs entity IDs when bulk archiving entities', async () => {
+    const mockFetch = vi.mocked(fetch);
+    const response = {
+      archived: [{ id: 'id-1' }],
+      failed: [{ id: 'id-2', code: 'FORBIDDEN', message: 'Entity not found or not deletable' }],
+    };
+    mockFetch.mockResolvedValueOnce(
+      new Response(JSON.stringify(response), {
+        status: 200,
+        headers: { 'Content-Type': 'application/json' },
+      })
+    );
+
+    const client = createApiClient({ apiKey: 'key', onUnauthorized: vi.fn() });
+    await expect(client.bulkArchiveEntities(['id-1', 'id-2'])).resolves.toEqual(response);
+
+    expect(mockFetch).toHaveBeenCalledWith(
+      '/api/entities/bulk/archive',
+      expect.objectContaining({
+        method: 'POST',
+        headers: expect.objectContaining({
+          Authorization: 'Bearer key',
+          'Content-Type': 'application/json',
+        }),
+        body: JSON.stringify({ ids: ['id-1', 'id-2'] }),
+      })
+    );
+  });
+
   it('lists tasks with status, pagination, and context filters', async () => {
     const mockFetch = vi.mocked(fetch);
     mockFetch.mockResolvedValueOnce(

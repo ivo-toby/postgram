@@ -6,7 +6,7 @@ ticket: TICKET-002-cleanup-basket-foundation
 wave: WAVE-001
 slug: cleanup-basket-state
 title: Cleanup Basket State
-status: in_progress
+status: review
 depends_on: []
 conflict_domains:
   - ui/src/hooks/useCleanupBasket.ts
@@ -30,7 +30,7 @@ verification:
 
 ## Status
 
-in_progress
+review
 
 ## Parent Ticket
 
@@ -148,10 +148,10 @@ React hook code small.
 
 ## Task-Level Definition of Done
 
-- [ ] Objective is complete.
-- [ ] Verification evidence is recorded.
-- [ ] No unresolved P1/P2 review findings remain.
-- [ ] Shared-context updates, if any, are proposed for controller reconciliation.
+- [x] Objective is complete.
+- [x] Verification evidence is recorded.
+- [x] No unresolved P1/P2 review findings remain.
+- [x] Shared-context updates, if any, are proposed for controller reconciliation.
 
 ## Validation Steps
 
@@ -160,7 +160,19 @@ React hook code small.
 
 ## Verification Evidence
 
-- Not run yet.
+- RED: `npm --prefix ui run test -- --run src/hooks/useCleanupBasket.test.ts`
+  failed before implementation with 8 behavioral failures after a compile-only
+  hook stub was added. The first test-only run failed earlier because
+  `ui/src/hooks/useCleanupBasket.ts` did not exist.
+- GREEN: `npm --prefix ui run test -- --run src/hooks/useCleanupBasket.test.ts`
+  passed: 1 test file, 8 tests.
+- GREEN: `npm --prefix ui run typecheck` passed.
+- Controller-specified validation caveat:
+  `npm --workspace ui run test -- --run ui/src/hooks/useCleanupBasket.test.ts`
+  and `npm --workspace ui run typecheck` both failed before execution with
+  `No workspaces found: --workspace=ui`; the root `package.json` does not
+  declare `ui` as an npm workspace. Equivalent `npm --prefix ui ...` commands
+  above were used for validation.
 
 ## Review Feedback
 
@@ -178,4 +190,14 @@ React hook code small.
 
 ## Completion Notes
 
-- None yet.
+- Added `ui/src/hooks/useCleanupBasket.ts` with display-snapshot basket items,
+  versioned API-key-scoped localStorage keying, guarded malformed-storage reads,
+  ID dedupe, add/remove/clear/mark-failed/remove-archived behavior, and archive
+  result application helpers.
+- Storage key format is `pgm_cleanup_basket:v1:<api-key-fingerprint>` and does
+  not include the raw API key.
+- Added `ui/src/hooks/useCleanupBasket.test.ts` covering storage keying,
+  persisted load, malformed storage recovery, dedupe, remove/clear, failed
+  marking, and successful/failed archive result application.
+- Shared-context update needed: none required. Controller may optionally record
+  the exact storage-key format in task findings for downstream UI workers.

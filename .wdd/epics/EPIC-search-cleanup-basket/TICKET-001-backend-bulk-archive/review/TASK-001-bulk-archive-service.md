@@ -6,7 +6,7 @@ ticket: TICKET-001-backend-bulk-archive
 wave: WAVE-001
 slug: bulk-archive-service
 title: Bulk Archive Service
-status: in_progress
+status: review
 depends_on: []
 conflict_domains:
   - src/services/entity-service.ts
@@ -20,7 +20,7 @@ worker_worktree: /Users/ivo.toby/.codex/worktrees/dabec7ed-521f-42fd-b18e-0c0d54
 worktree_status: verified
 pr: null
 worker_thread_id: 019ec5db-dc36-7c70-8e8d-a34629d5c1da
-current_gate: no_pr
+current_gate: needs_review
 branch_freshness: current_at_dispatch
 verification:
   - npm test -- tests/integration/entity-service.test.ts
@@ -30,7 +30,7 @@ verification:
 
 ## Status
 
-in_progress
+review
 
 ## Parent Ticket
 
@@ -154,10 +154,10 @@ Extract small shared helpers only if they reduce duplication with
 
 ## Task-Level Definition of Done
 
-- [ ] Objective is complete.
-- [ ] Verification evidence is recorded.
-- [ ] No unresolved P1/P2 review findings remain.
-- [ ] Shared-context updates, if any, are proposed for controller reconciliation.
+- [x] Objective is complete.
+- [x] Verification evidence is recorded.
+- [x] No unresolved P1/P2 review findings remain.
+- [x] Shared-context updates, if any, are proposed for controller reconciliation.
 
 ## Validation Steps
 
@@ -165,7 +165,13 @@ Extract small shared helpers only if they reduce duplication with
 
 ## Verification Evidence
 
-- Not run yet.
+- RED: `npm test -- tests/integration/entity-service.test.ts` failed before
+  implementation with 2 expected failures:
+  `(0 , bulkArchiveEntities) is not a function`.
+- GREEN: `npm test -- tests/integration/entity-service.test.ts` passed:
+  1 test file, 13 tests.
+- Additional: `npm run typecheck` passed.
+- Additional: `git diff --check` passed.
 
 ## Review Feedback
 
@@ -183,4 +189,13 @@ Extract small shared helpers only if they reduce duplication with
 
 ## Completion Notes
 
-- None yet.
+- Added `bulkArchiveEntities` service API with exported input/result types.
+- Deduplicates explicit IDs in stable input order before mutation.
+- Reuses the same archive helper from `softDeleteEntity` for delete scope,
+  type access, visibility access, `status = 'archived'`, and `delete` audit
+  entries.
+- Returns mixed `archived` and `failed` arrays for per-ID missing or
+  inaccessible entities while leaving failed entities unmodified.
+- Added integration coverage for successful archive, duplicate IDs, missing
+  IDs, type and visibility failures, audit entries, and missing delete scope.
+- Shared-context update needed: none.

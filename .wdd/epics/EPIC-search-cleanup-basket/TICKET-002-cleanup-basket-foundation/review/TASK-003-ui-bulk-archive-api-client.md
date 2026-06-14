@@ -6,7 +6,7 @@ ticket: TICKET-002-cleanup-basket-foundation
 wave: WAVE-001
 slug: ui-bulk-archive-api-client
 title: UI Bulk Archive API Client
-status: in_progress
+status: review
 depends_on: []
 conflict_domains:
   - ui/src/lib/api.ts
@@ -19,7 +19,7 @@ worker_worktree: /Users/ivo.toby/.codex/worktrees/dabec7ed-521f-42fd-b18e-0c0d54
 worktree_status: verified
 pr: null
 worker_thread_id: 019ec5db-dc95-7521-9ad5-873cb2398c2c
-current_gate: no_pr
+current_gate: needs_review
 branch_freshness: current_at_dispatch
 verification:
   - npm --workspace ui run test -- --run ui/src/lib/api.test.ts
@@ -29,7 +29,7 @@ verification:
 
 ## Status
 
-in_progress
+review
 
 ## Parent Ticket
 
@@ -140,18 +140,30 @@ duplication.
 
 ## Task-Level Definition of Done
 
-- [ ] Objective is complete.
-- [ ] Verification evidence is recorded.
-- [ ] No unresolved P1/P2 review findings remain.
-- [ ] Shared-context updates, if any, are proposed for controller reconciliation.
+- [x] Objective is complete.
+- [x] Verification evidence is recorded.
+- [x] No unresolved P1/P2 review findings remain.
+- [x] Shared-context updates, if any, are proposed for controller reconciliation.
 
 ## Validation Steps
 
 - `npm --workspace ui run test -- --run ui/src/lib/api.test.ts`
+- Focused UI package command used in this checkout:
+  `npm --prefix ui run test -- --run src/lib/api.test.ts`
 
 ## Verification Evidence
 
-- Not run yet.
+- RED: `npm --prefix ui run test -- --run src/lib/api.test.ts` failed as
+  expected before implementation with
+  `TypeError: client.bulkArchiveEntities is not a function` at
+  `ui/src/lib/api.test.ts:116`.
+- GREEN: `npm --prefix ui run test -- --run src/lib/api.test.ts` passed after
+  implementation: 1 test file passed, 8 tests passed.
+- Typecheck: `npm --prefix ui run typecheck` passed with `tsc --noEmit`.
+- Expected WDD command concern:
+  `npm --workspace ui run test -- --run ui/src/lib/api.test.ts` exits before
+  running tests with `npm error No workspaces found: --workspace=ui` because
+  root `package.json` workspaces do not include `ui`.
 
 ## Review Feedback
 
@@ -169,4 +181,12 @@ duplication.
 
 ## Completion Notes
 
-- None yet.
+- Added `createApiClient().bulkArchiveEntities(ids)` using
+  `POST /api/entities/bulk/archive` with JSON body `{ ids }`.
+- Added exported `BulkArchiveEntitiesResponse` in `ui/src/lib/api.ts` matching
+  the shared archived/failed response contract.
+- Added API client coverage for URL, method, authorization header,
+  content-type header, JSON body, and returned archived/failed payload.
+- Shared-context update needed: none for the API contract. Controller may want
+  to reconcile the task validation command because `ui` is not an npm
+  workspace in this checkout.

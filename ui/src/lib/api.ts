@@ -10,6 +10,11 @@ type RequestOptions = {
   body?: unknown;
 };
 
+export type BulkArchiveEntitiesResponse = {
+  archived: Array<{ id: string }>;
+  failed: Array<{ id: string; code: string; message: string }>;
+};
+
 async function request<T>(
   apiKey: string,
   onUnauthorized: () => void,
@@ -104,6 +109,13 @@ export function createApiClient(options: ApiClientOptions) {
 
     deleteEntity(id: string) {
       return r<{ id: string; deleted: true }>(`/api/entities/${id}`, { method: 'DELETE' });
+    },
+
+    bulkArchiveEntities(ids: string[]) {
+      return r<BulkArchiveEntitiesResponse>('/api/entities/bulk/archive', {
+        method: 'POST',
+        body: { ids },
+      });
     },
 
     listTasks(params: {

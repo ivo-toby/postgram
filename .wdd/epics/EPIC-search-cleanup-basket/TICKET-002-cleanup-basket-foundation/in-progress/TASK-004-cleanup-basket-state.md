@@ -16,10 +16,11 @@ assigned_model_class: implementationSimple
 review_model_class: review
 branch: codex/task/TASK-004-cleanup-basket-state
 worker_worktree: /Users/ivo.toby/.codex/worktrees/dabec7ed-521f-42fd-b18e-0c0d542e7ccc/postgram-TASK-004-cleanup-basket-state
-worktree_status: pending_creation
+worktree_status: verified
 pr: null
-current_gate: not_started
-branch_freshness: unknown
+worker_thread_id: 019ec5db-dcf3-7cd2-90b5-44ce10a46b67
+current_gate: no_pr
+branch_freshness: current_at_dispatch
 verification:
   - npm --workspace ui run test -- --run ui/src/hooks/useCleanupBasket.test.ts
   - npm --workspace ui run typecheck
@@ -106,7 +107,9 @@ codex/task/TASK-004-cleanup-basket-state
 Assigned path:
 `/Users/ivo.toby/.codex/worktrees/dabec7ed-521f-42fd-b18e-0c0d542e7ccc/postgram-TASK-004-cleanup-basket-state`
 
-Status: pending creation.
+Status: verified.
+
+Worker: Kant (`019ec5db-dcf3-7cd2-90b5-44ce10a46b67`).
 
 ## PR / Patch Reference
 

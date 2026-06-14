@@ -145,17 +145,17 @@
           ],
           "assignedModel": "implementationComplex",
           "reviewModel": "review",
-          "workerThreadId": null,
+          "workerThreadId": "019ec5db-dc36-7c70-8e8d-a34629d5c1da",
           "reviewThreadId": null,
           "branch": "codex/task/TASK-001-bulk-archive-service",
           "workerWorktree": "/Users/ivo.toby/.codex/worktrees/dabec7ed-521f-42fd-b18e-0c0d542e7ccc/postgram-TASK-001-bulk-archive-service",
-          "worktreeStatus": "pending_creation",
+          "worktreeStatus": "verified",
           "pr": null,
           "latestCommit": null,
-          "branchFreshness": "unknown",
+          "branchFreshness": "current_at_dispatch",
           "blockingFeedback": [],
           "verification": null,
-          "currentGate": "not_started"
+          "currentGate": "no_pr"
         },
         {
           "id": "TASK-003-ui-bulk-archive-api-client",
@@ -170,17 +170,17 @@
           ],
           "assignedModel": "implementationSimple",
           "reviewModel": "review",
-          "workerThreadId": null,
+          "workerThreadId": "019ec5db-dc95-7521-9ad5-873cb2398c2c",
           "reviewThreadId": null,
           "branch": "codex/task/TASK-003-ui-bulk-archive-api-client",
           "workerWorktree": "/Users/ivo.toby/.codex/worktrees/dabec7ed-521f-42fd-b18e-0c0d542e7ccc/postgram-TASK-003-ui-bulk-archive-api-client",
-          "worktreeStatus": "pending_creation",
+          "worktreeStatus": "verified",
           "pr": null,
           "latestCommit": null,
-          "branchFreshness": "unknown",
+          "branchFreshness": "current_at_dispatch",
           "blockingFeedback": [],
           "verification": null,
-          "currentGate": "not_started"
+          "currentGate": "no_pr"
         },
         {
           "id": "TASK-004-cleanup-basket-state",
@@ -195,17 +195,17 @@
           ],
           "assignedModel": "implementationSimple",
           "reviewModel": "review",
-          "workerThreadId": null,
+          "workerThreadId": "019ec5db-dcf3-7cd2-90b5-44ce10a46b67",
           "reviewThreadId": null,
           "branch": "codex/task/TASK-004-cleanup-basket-state",
           "workerWorktree": "/Users/ivo.toby/.codex/worktrees/dabec7ed-521f-42fd-b18e-0c0d542e7ccc/postgram-TASK-004-cleanup-basket-state",
-          "worktreeStatus": "pending_creation",
+          "worktreeStatus": "verified",
           "pr": null,
           "latestCommit": null,
-          "branchFreshness": "unknown",
+          "branchFreshness": "current_at_dispatch",
           "blockingFeedback": [],
           "verification": null,
-          "currentGate": "not_started"
+          "currentGate": "no_pr"
         }
       ]
     },
@@ -421,20 +421,20 @@
   },
   "monitoring": {
     "mode": "manual",
-    "cadence": "adaptive",
-    "status": "inactive",
-    "lastCheckedAt": null,
-    "nextCheckDueAt": null,
-    "schedulerRef": null,
-    "fallbackPrompt": "Run subagent-pr-orchestration for EPIC-search-cleanup-basket WAVE-001. Read orchestration.json and controller-state.md, verify the epic branch codex/epic/search-cleanup-basket contains current activation artifact state before assigned worker worktrees branch from it, inspect every active worker and reviewer reference, update task gates, and stop when all active tasks are merged, blocked, cancelled, or ready for wdd-reconcile-wave."
+    "cadence": "adaptive_20_minutes_until_pr_or_patch",
+    "status": "active_manual_fallback",
+    "lastCheckedAt": "2026-06-14T13:19:47+02:00",
+    "nextCheckDueAt": "2026-06-14T13:39:47+02:00",
+    "schedulerRef": "manual-fallback:2026-06-14T13:39:47+02:00",
+    "fallbackPrompt": "Run subagent-pr-orchestration for EPIC-search-cleanup-basket WAVE-001. Read .wdd/epics/EPIC-search-cleanup-basket/orchestration.json and controller-state.md, inspect worker 019ec5db-dc36-7c70-8e8d-a34629d5c1da for TASK-001, worker 019ec5db-dc95-7521-9ad5-873cb2398c2c for TASK-003, and worker 019ec5db-dcf3-7cd2-90b5-44ce10a46b67 for TASK-004. Update gates, PR or patch references, verification evidence, branch freshness, and review state. Stop when all active tasks are merged, blocked, cancelled, or ready for wdd-reconcile-wave."
   },
   "currentGates": {
     "epicBranch": {
-      "status": "created_pending_activation_commit",
+      "status": "verified",
       "requiredBeforeWorkerDispatch": true
     },
     "activationArtifactsSynced": {
-      "status": "pending_commit",
+      "status": "synced_to_epic_branch",
       "requiredBeforeTaskWorktrees": true
     },
     "waveStrategyConfirmation": {
@@ -442,6 +442,16 @@
       "WAVE-002": "required",
       "WAVE-003": "not_required",
       "WAVE-004": "not_required"
+    },
+    "workerWorktrees": {
+      "TASK-001-bulk-archive-service": "verified",
+      "TASK-003-ui-bulk-archive-api-client": "verified",
+      "TASK-004-cleanup-basket-state": "verified"
+    },
+    "workerDispatch": {
+      "TASK-001-bulk-archive-service": "ready_to_start",
+      "TASK-003-ui-bulk-archive-api-client": "ready_to_start",
+      "TASK-004-cleanup-basket-state": "ready_to_start"
     }
   }
 }

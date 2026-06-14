@@ -17,10 +17,11 @@ assigned_model_class: implementationComplex
 review_model_class: review
 branch: codex/task/TASK-001-bulk-archive-service
 worker_worktree: /Users/ivo.toby/.codex/worktrees/dabec7ed-521f-42fd-b18e-0c0d542e7ccc/postgram-TASK-001-bulk-archive-service
-worktree_status: pending_creation
+worktree_status: verified
 pr: null
-current_gate: not_started
-branch_freshness: unknown
+worker_thread_id: 019ec5db-dc36-7c70-8e8d-a34629d5c1da
+current_gate: no_pr
+branch_freshness: current_at_dispatch
 verification:
   - npm test -- tests/integration/entity-service.test.ts
 ---
@@ -111,7 +112,9 @@ codex/task/TASK-001-bulk-archive-service
 Assigned path:
 `/Users/ivo.toby/.codex/worktrees/dabec7ed-521f-42fd-b18e-0c0d542e7ccc/postgram-TASK-001-bulk-archive-service`
 
-Status: pending creation.
+Status: verified.
+
+Worker: Gauss (`019ec5db-dc36-7c70-8e8d-a34629d5c1da`).
 
 ## PR / Patch Reference
 

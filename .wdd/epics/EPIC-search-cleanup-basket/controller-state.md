@@ -58,18 +58,18 @@ Mode: manual
 
 Cadence: adaptive
 
-Status: inactive until worker dispatch
+Status: active manual fallback
 
-Last check: None
+Last check: 2026-06-14T13:19:47+02:00
 
-Next check due: None
+Next check due: 2026-06-14T13:39:47+02:00
 
-Scheduler reference: None
+Scheduler reference: manual-fallback:2026-06-14T13:39:47+02:00
 
 Fallback prompt:
 
 ```text
-Run subagent-pr-orchestration for EPIC-search-cleanup-basket WAVE-001. Read orchestration.json and controller-state.md, verify the epic branch codex/epic/search-cleanup-basket contains current activation artifact state before assigned worker worktrees branch from it, inspect every active worker and reviewer reference, update task gates, and stop when all active tasks are merged, blocked, cancelled, or ready for wdd-reconcile-wave.
+Run subagent-pr-orchestration for EPIC-search-cleanup-basket WAVE-001. Read .wdd/epics/EPIC-search-cleanup-basket/orchestration.json and controller-state.md, inspect worker 019ec5db-dc36-7c70-8e8d-a34629d5c1da for TASK-001, worker 019ec5db-dc95-7521-9ad5-873cb2398c2c for TASK-003, and worker 019ec5db-dcf3-7cd2-90b5-44ce10a46b67 for TASK-004. Update gates, PR or patch references, verification evidence, branch freshness, and review state. Stop when all active tasks are merged, blocked, cancelled, or ready for wdd-reconcile-wave.
 ```
 
 Stop condition: all active-wave tasks are merged, blocked, cancelled, or ready
@@ -79,17 +79,17 @@ for `wdd-reconcile-wave`.
 
 | Task | Ticket | Branch | Worktree | PR/Patch | Gate | Worker | Reviewer |
 |------|--------|--------|----------|----------|------|--------|----------|
-| TASK-001-bulk-archive-service | TICKET-001-backend-bulk-archive | codex/task/TASK-001-bulk-archive-service | `/Users/ivo.toby/.codex/worktrees/dabec7ed-521f-42fd-b18e-0c0d542e7ccc/postgram-TASK-001-bulk-archive-service` | None | not_started | None | None |
-| TASK-003-ui-bulk-archive-api-client | TICKET-002-cleanup-basket-foundation | codex/task/TASK-003-ui-bulk-archive-api-client | `/Users/ivo.toby/.codex/worktrees/dabec7ed-521f-42fd-b18e-0c0d542e7ccc/postgram-TASK-003-ui-bulk-archive-api-client` | None | not_started | None | None |
-| TASK-004-cleanup-basket-state | TICKET-002-cleanup-basket-foundation | codex/task/TASK-004-cleanup-basket-state | `/Users/ivo.toby/.codex/worktrees/dabec7ed-521f-42fd-b18e-0c0d542e7ccc/postgram-TASK-004-cleanup-basket-state` | None | not_started | None | None |
+| TASK-001-bulk-archive-service | TICKET-001-backend-bulk-archive | codex/task/TASK-001-bulk-archive-service | `/Users/ivo.toby/.codex/worktrees/dabec7ed-521f-42fd-b18e-0c0d542e7ccc/postgram-TASK-001-bulk-archive-service` | None | no_pr | Gauss (`019ec5db-dc36-7c70-8e8d-a34629d5c1da`) | None |
+| TASK-003-ui-bulk-archive-api-client | TICKET-002-cleanup-basket-foundation | codex/task/TASK-003-ui-bulk-archive-api-client | `/Users/ivo.toby/.codex/worktrees/dabec7ed-521f-42fd-b18e-0c0d542e7ccc/postgram-TASK-003-ui-bulk-archive-api-client` | None | no_pr | Singer (`019ec5db-dc95-7521-9ad5-873cb2398c2c`) | None |
+| TASK-004-cleanup-basket-state | TICKET-002-cleanup-basket-foundation | codex/task/TASK-004-cleanup-basket-state | `/Users/ivo.toby/.codex/worktrees/dabec7ed-521f-42fd-b18e-0c0d542e7ccc/postgram-TASK-004-cleanup-basket-state` | None | no_pr | Kant (`019ec5db-dcf3-7cd2-90b5-44ce10a46b67`) | None |
 
 ## Worker Worktrees
 
 | Task | Worktree Path | Branch | Status | Required Action |
 |------|---------------|--------|--------|-----------------|
-| TASK-001-bulk-archive-service | `/Users/ivo.toby/.codex/worktrees/dabec7ed-521f-42fd-b18e-0c0d542e7ccc/postgram-TASK-001-bulk-archive-service` | codex/task/TASK-001-bulk-archive-service | pending_creation | Create or verify before dispatch |
-| TASK-003-ui-bulk-archive-api-client | `/Users/ivo.toby/.codex/worktrees/dabec7ed-521f-42fd-b18e-0c0d542e7ccc/postgram-TASK-003-ui-bulk-archive-api-client` | codex/task/TASK-003-ui-bulk-archive-api-client | pending_creation | Create or verify before dispatch |
-| TASK-004-cleanup-basket-state | `/Users/ivo.toby/.codex/worktrees/dabec7ed-521f-42fd-b18e-0c0d542e7ccc/postgram-TASK-004-cleanup-basket-state` | codex/task/TASK-004-cleanup-basket-state | pending_creation | Create or verify before dispatch |
+| TASK-001-bulk-archive-service | `/Users/ivo.toby/.codex/worktrees/dabec7ed-521f-42fd-b18e-0c0d542e7ccc/postgram-TASK-001-bulk-archive-service` | codex/task/TASK-001-bulk-archive-service | verified | Dispatch or monitor worker |
+| TASK-003-ui-bulk-archive-api-client | `/Users/ivo.toby/.codex/worktrees/dabec7ed-521f-42fd-b18e-0c0d542e7ccc/postgram-TASK-003-ui-bulk-archive-api-client` | codex/task/TASK-003-ui-bulk-archive-api-client | verified | Dispatch or monitor worker |
+| TASK-004-cleanup-basket-state | `/Users/ivo.toby/.codex/worktrees/dabec7ed-521f-42fd-b18e-0c0d542e7ccc/postgram-TASK-004-cleanup-basket-state` | codex/task/TASK-004-cleanup-basket-state | verified | Dispatch or monitor worker |
 
 ## Gate Definitions
 
@@ -107,9 +107,9 @@ for `wdd-reconcile-wave`.
 
 | Task | Epic Branch | Task Branch | Freshness | Required Action |
 |------|-------------|-------------|-----------|-----------------|
-| TASK-001-bulk-archive-service | codex/epic/search-cleanup-basket | codex/task/TASK-001-bulk-archive-service | unknown | Check before merge |
-| TASK-003-ui-bulk-archive-api-client | codex/epic/search-cleanup-basket | codex/task/TASK-003-ui-bulk-archive-api-client | unknown | Check before merge |
-| TASK-004-cleanup-basket-state | codex/epic/search-cleanup-basket | codex/task/TASK-004-cleanup-basket-state | unknown | Check before merge |
+| TASK-001-bulk-archive-service | codex/epic/search-cleanup-basket | codex/task/TASK-001-bulk-archive-service | current_at_dispatch | Check before merge |
+| TASK-003-ui-bulk-archive-api-client | codex/epic/search-cleanup-basket | codex/task/TASK-003-ui-bulk-archive-api-client | current_at_dispatch | Check before merge |
+| TASK-004-cleanup-basket-state | codex/epic/search-cleanup-basket | codex/task/TASK-004-cleanup-basket-state | current_at_dispatch | Check before merge |
 
 ## Open P1/P2 Feedback
 
@@ -136,9 +136,13 @@ for `wdd-reconcile-wave`.
   `standard / parallel / risk_based / adaptive`.
 - 2026-06-14: WAVE-001 activation artifacts prepared; task worktrees pending
   creation from the synced epic branch.
+- 2026-06-14: Codex heartbeat automation tool was unavailable; monitoring
+  downgraded to manual fallback due at 2026-06-14T13:39:47+02:00.
+- 2026-06-14: Worker refs recorded: Gauss for TASK-001, Singer for TASK-003,
+  and Kant for TASK-004.
 
 ## Next Action
 
-- Commit activation artifacts to `codex/epic/search-cleanup-basket`, create or
-  verify isolated task worktrees from that state, verify task files and
-  orchestration state inside each worktree, then dispatch WAVE-001 workers.
+- Monitor active WAVE-001 workers. Start review gates when PRs or patches
+  exist, route feedback, and reconcile the wave only after all active tasks are
+  merged, blocked, cancelled, or ready.

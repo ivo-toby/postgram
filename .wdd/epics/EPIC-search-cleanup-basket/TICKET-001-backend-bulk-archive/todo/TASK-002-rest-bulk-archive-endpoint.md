@@ -86,6 +86,13 @@ authorization, and mixed archived/failed response payloads.
 
 - `TASK-001-bulk-archive-service`
 
+Dependency status:
+
+- `TASK-001-bulk-archive-service` is done and merged into
+  `codex/epic/search-cleanup-basket` in local merge commit `a593403`.
+- Use the exported `bulkArchiveEntities` service API from
+  `src/services/entity-service.ts`.
+
 ## Conflict Domains
 
 - `src/transport/rest.ts`

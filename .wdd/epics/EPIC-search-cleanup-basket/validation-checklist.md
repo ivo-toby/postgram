@@ -2,7 +2,7 @@
 id: EPIC-search-cleanup-basket-VALIDATION
 kind: validation_checklist
 epic: EPIC-search-cleanup-basket
-status: wave_001_active
+status: wave_001_reconciled
 created_at: 2026-06-14
 updated_at: 2026-06-14
 ---
@@ -96,4 +96,4 @@ updated_at: 2026-06-14
 
 ## Planning Result
 
-WAVE-001 is active. WAVE-002 still requires confirmation before activation.
+WAVE-001 is reconciled. WAVE-002 still requires confirmation before activation.

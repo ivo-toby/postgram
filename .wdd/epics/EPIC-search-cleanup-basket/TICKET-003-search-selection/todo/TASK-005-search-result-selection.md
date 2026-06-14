@@ -91,6 +91,13 @@ detail navigation.
 
 - `TASK-004-cleanup-basket-state`
 
+Dependency status:
+
+- `TASK-004-cleanup-basket-state` is done and merged into
+  `codex/epic/search-cleanup-basket` in local merge commit `a593403`.
+- Use `useCleanupBasket`, `createCleanupBasketItem`, and related basket state
+  helpers from `ui/src/hooks/useCleanupBasket.ts`.
+
 ## Conflict Domains
 
 - `ui/src/components/SearchPage.tsx`

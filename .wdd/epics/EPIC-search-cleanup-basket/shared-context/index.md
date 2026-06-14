@@ -50,9 +50,11 @@ before editing code.
 - WDD profile: `standard`.
 - Review mode: `risk_based`.
 - Monitoring mode: `adaptive`.
-- WAVE-001 task files are active under ticket `in-progress/` folders.
+- WAVE-001 is merged and ready for reconciliation; its task files are under
+  ticket `done/` folders.
 - Planned structure: 4 tickets, 7 tasks, 4 waves.
-- WAVE-001 was confirmed by user override as `standard parallel`.
+- WAVE-001 was confirmed by user override as `standard parallel` and merged in
+  local merge commit `a593403`.
 - WAVE-002 still requires user confirmation because it includes public
   REST/API contract changes and SearchPage conflict risk.
 

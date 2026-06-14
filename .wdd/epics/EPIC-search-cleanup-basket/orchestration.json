@@ -94,7 +94,7 @@
   "waves": [
     {
       "id": "WAVE-001",
-      "status": "ready_for_reconcile",
+      "status": "done",
       "strategy": {
         "profile": "standard",
         "executionMode": "parallel",
@@ -240,7 +240,25 @@
           },
           "currentGate": "merged"
         }
-      ]
+      ],
+      "reconciledAt": "2026-06-14T13:46:00+02:00",
+      "reconciliation": {
+        "result": "done",
+        "mergeCommit": "a593403",
+        "closeoutCommit": "69bb6ff",
+        "verification": [
+          "npm test -- tests/integration/entity-service.test.ts",
+          "npm --prefix ui run test -- --run src/lib/api.test.ts src/hooks/useCleanupBasket.test.ts",
+          "npm --prefix ui run typecheck",
+          "npm run typecheck",
+          "git diff --check"
+        ],
+        "review": "TASK-001 separate review REVIEW_PASS; TASK-003/TASK-004 controller review with no P1/P2 findings",
+        "drift": [
+          "UI validation commands use npm --prefix ui rather than npm --workspace ui.",
+          "Cleanup basket storage key format is pgm_cleanup_basket:v1:<api-key-fingerprint>."
+        ]
+      }
     },
     {
       "id": "WAVE-002",
@@ -450,16 +468,16 @@
       "shared-context/resources/task-findings.md"
     ],
     "pendingReconciliation": [],
-    "lastReconciledWave": null
+    "lastReconciledWave": "WAVE-001"
   },
   "monitoring": {
     "mode": "manual",
     "cadence": "adaptive_20_minutes_until_pr_or_patch",
-    "status": "stopped_ready_for_reconcile",
-    "lastCheckedAt": "2026-06-14T13:43:30+02:00",
+    "status": "stopped_reconciled",
+    "lastCheckedAt": "2026-06-14T13:46:00+02:00",
     "nextCheckDueAt": null,
-    "schedulerRef": "manual-fallback-stopped:ready_for_reconcile",
-    "fallbackPrompt": "Run wdd-reconcile-wave for EPIC-search-cleanup-basket WAVE-001. Read orchestration.json, controller-state.md, wave-plan.md, done task files, and shared-context task findings. Confirm WAVE-001 merged evidence and decide whether WAVE-002 is ready for activation confirmation."
+    "schedulerRef": "none:wave_reconciled",
+    "fallbackPrompt": "Run wdd-start-wave for EPIC-search-cleanup-basket WAVE-002 only after confirming or overriding the WAVE-002 strategy. WAVE-002 tasks are TASK-002-rest-bulk-archive-endpoint and TASK-005-search-result-selection."
   },
   "currentGates": {
     "epicBranch": {
@@ -487,7 +505,12 @@
       "TASK-004-cleanup-basket-state": "merged"
     },
     "waveCompletion": {
-      "WAVE-001": "ready_for_reconcile"
+      "WAVE-001": "done"
+    },
+    "nextWave": {
+      "id": "WAVE-002",
+      "status": "planned",
+      "strategyConfirmation": "required"
     }
   }
 }

@@ -49,7 +49,7 @@ updated_at: 2026-06-14
 
 ### WAVE-001
 
-Status: ready_for_reconcile
+Status: done
 
 Tasks:
 
@@ -92,7 +92,26 @@ Activation rule:
 Stop condition:
 
 - All WAVE-001 tasks are done.
-- Wave reconciliation is required before WAVE-002 starts.
+- Wave reconciliation completed on 2026-06-14.
+- WAVE-002 requires strategy confirmation before activation.
+
+Completion evidence:
+
+- Merge commit: `a593403`.
+- Closeout commit: `69bb6ff`.
+- Reconciliation result: done.
+- Verification passed:
+  - `npm test -- tests/integration/entity-service.test.ts`
+  - `npm --prefix ui run test -- --run src/lib/api.test.ts src/hooks/useCleanupBasket.test.ts`
+  - `npm --prefix ui run typecheck`
+  - `npm run typecheck`
+
+Drift notes:
+
+- UI validation commands use `npm --prefix ui ...`; root `package.json` does
+  not declare `ui` as an npm workspace.
+- Cleanup basket storage key format is
+  `pgm_cleanup_basket:v1:<api-key-fingerprint>`.
 
 ### WAVE-002
 

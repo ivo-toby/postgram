@@ -7,6 +7,7 @@ import {
   createEnrichmentWorker
 } from '../../src/services/enrichment-worker.js';
 import {
+  bulkArchiveEntities,
   listEntities,
   recallEntity,
   softDeleteEntity,
@@ -337,6 +338,140 @@ describe('entity-service', () => {
     );
     expect(recalled.isOk()).toBe(true);
     expect(recalled._unsafeUnwrap().status).toBe('archived');
+  }, 120_000);
+
+  it('bulk archives accessible deduped IDs and reports missing and inaccessible IDs', async () => {
+    if (!database) {
+      throw new Error('test database not initialized');
+    }
+
+    const fullAuth = makeAuthContext();
+    const bulkAuth = makeAuthContext({
+      scopes: ['delete'],
+      allowedTypes: ['memory'],
+      allowedVisibility: ['shared']
+    });
+    const missingId = '00000000-0000-0000-0000-000000000404';
+
+    const firstAllowed = (await storeEntity(database.pool, fullAuth, {
+      type: 'memory',
+      content: 'bulk archive first',
+      visibility: 'shared'
+    }))._unsafeUnwrap();
+    const secondAllowed = (await storeEntity(database.pool, fullAuth, {
+      type: 'memory',
+      content: 'bulk archive second',
+      visibility: 'shared'
+    }))._unsafeUnwrap();
+    const inaccessibleType = (await storeEntity(database.pool, fullAuth, {
+      type: 'project',
+      content: 'type-restricted entity',
+      visibility: 'shared'
+    }))._unsafeUnwrap();
+    const inaccessibleVisibility = (await storeEntity(database.pool, fullAuth, {
+      type: 'memory',
+      content: 'visibility-restricted entity',
+      visibility: 'work'
+    }))._unsafeUnwrap();
+
+    const result = await bulkArchiveEntities(database.pool, bulkAuth, {
+      ids: [
+        firstAllowed.id,
+        firstAllowed.id,
+        missingId,
+        inaccessibleType.id,
+        inaccessibleVisibility.id,
+        secondAllowed.id
+      ]
+    });
+
+    expect(result.isOk()).toBe(true);
+    expect(result._unsafeUnwrap()).toMatchObject({
+      archived: [
+        { id: firstAllowed.id },
+        { id: secondAllowed.id }
+      ],
+      failed: [
+        {
+          id: missingId,
+          code: ErrorCode.NOT_FOUND,
+          message: 'Entity not found'
+        },
+        {
+          id: inaccessibleType.id,
+          code: ErrorCode.FORBIDDEN
+        },
+        {
+          id: inaccessibleVisibility.id,
+          code: ErrorCode.FORBIDDEN
+        }
+      ]
+    });
+
+    await expect(
+      recallEntity(database.pool, fullAuth, firstAllowed.id)
+        .then((recalled) => recalled._unsafeUnwrap().status)
+    ).resolves.toBe('archived');
+    await expect(
+      recallEntity(database.pool, fullAuth, secondAllowed.id)
+        .then((recalled) => recalled._unsafeUnwrap().status)
+    ).resolves.toBe('archived');
+    await expect(
+      recallEntity(database.pool, fullAuth, inaccessibleType.id)
+        .then((recalled) => recalled._unsafeUnwrap().status)
+    ).resolves.toBeNull();
+    await expect(
+      recallEntity(database.pool, fullAuth, inaccessibleVisibility.id)
+        .then((recalled) => recalled._unsafeUnwrap().status)
+    ).resolves.toBeNull();
+
+    const auditRows = await database.pool.query<{
+      operation: string;
+      entity_id: string | null;
+    }>(
+      `
+        SELECT operation, entity_id
+        FROM audit_log
+        WHERE operation = 'delete'
+        ORDER BY timestamp ASC
+      `
+    );
+
+    expect(auditRows.rows).toEqual([
+      { operation: 'delete', entity_id: firstAllowed.id },
+      { operation: 'delete', entity_id: secondAllowed.id }
+    ]);
+  }, 120_000);
+
+  it('rejects bulk archive when auth lacks delete scope', async () => {
+    if (!database) {
+      throw new Error('test database not initialized');
+    }
+
+    const auth = makeAuthContext();
+    const stored = (await storeEntity(database.pool, auth, {
+      type: 'memory',
+      content: 'bulk archive needs delete scope',
+      visibility: 'shared'
+    }))._unsafeUnwrap();
+
+    const result = await bulkArchiveEntities(
+      database.pool,
+      makeAuthContext({ scopes: ['read', 'write'] }),
+      { ids: [stored.id] }
+    );
+
+    expect(result.isErr()).toBe(true);
+    expect(result._unsafeUnwrapErr().code).toBe(ErrorCode.FORBIDDEN);
+
+    const recalled = await recallEntity(database.pool, auth, stored.id);
+    expect(recalled.isOk()).toBe(true);
+    expect(recalled._unsafeUnwrap().status).toBeNull();
+
+    const auditRows = await database.pool.query<{ count: string }>(
+      "SELECT count(*)::text AS count FROM audit_log WHERE operation = 'delete'"
+    );
+    expect(auditRows.rows[0]?.count).toBe('0');
   }, 120_000);
 
   it('removes stale chunks when content is cleared', async () => {

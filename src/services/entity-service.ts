@@ -74,6 +74,15 @@ type ListEntitiesInput = {
   includeArchived?: boolean | undefined;
 };
 
+export type BulkArchiveEntitiesInput = {
+  ids: string[];
+};
+
+export type BulkArchiveEntitiesResult = {
+  archived: Array<{ id: string }>;
+  failed: Array<{ id: string; code: string; message: string }>;
+};
+
 function toAppError(error: unknown, fallbackMessage: string): AppError {
   if (error instanceof AppError) {
     return error;
@@ -130,6 +139,45 @@ function assertEntityAccess(
   requireScope(auth, scope);
   checkTypeAccess(auth, entity.type);
   checkVisibilityAccess(auth, entity.visibility);
+}
+
+async function archiveEntityForDelete(
+  pool: Pool,
+  auth: AuthContext,
+  id: string
+): Promise<void> {
+  requireScope(auth, 'delete');
+
+  const existingRow = await fetchEntityRow(pool, id);
+  if (!existingRow) {
+    throw new AppError(ErrorCode.NOT_FOUND, 'Entity not found');
+  }
+
+  const existing = mapEntity(existingRow);
+
+  assertEntityAccess(auth, existing, 'delete');
+
+  const result = await pool.query(
+    `
+      UPDATE entities
+      SET status = 'archived'
+      WHERE id = $1
+    `,
+    [id]
+  );
+
+  if (result.rowCount !== 1) {
+    throw new AppError(ErrorCode.NOT_FOUND, 'Entity not found');
+  }
+
+  await appendAuditEntry(pool, {
+    apiKeyId: auth.apiKeyId,
+    operation: 'delete',
+    entityId: id,
+    details: {
+      type: existing.type
+    }
+  });
 }
 
 export function storeEntity(
@@ -381,38 +429,7 @@ export function softDeleteEntity(
 ): ServiceResult<{ id: string; deleted: true }> {
   return ResultAsync.fromPromise(
     (async () => {
-      requireScope(auth, 'delete');
-
-      const existingRow = await fetchEntityRow(pool, id);
-      if (!existingRow) {
-        throw new AppError(ErrorCode.NOT_FOUND, 'Entity not found');
-      }
-
-      const existing = mapEntity(existingRow);
-
-      assertEntityAccess(auth, existing, 'delete');
-
-      const result = await pool.query(
-        `
-          UPDATE entities
-          SET status = 'archived'
-          WHERE id = $1
-        `,
-        [id]
-      );
-
-      if (result.rowCount !== 1) {
-        throw new AppError(ErrorCode.NOT_FOUND, 'Entity not found');
-      }
-
-      await appendAuditEntry(pool, {
-        apiKeyId: auth.apiKeyId,
-        operation: 'delete',
-        entityId: id,
-        details: {
-          type: existing.type
-        }
-      });
+      await archiveEntityForDelete(pool, auth, id);
 
       return {
         id,
@@ -420,6 +437,47 @@ export function softDeleteEntity(
       };
     })(),
     (error) => toAppError(error, 'Failed to delete entity')
+  );
+}
+
+export function bulkArchiveEntities(
+  pool: Pool,
+  auth: AuthContext,
+  input: BulkArchiveEntitiesInput
+): ServiceResult<BulkArchiveEntitiesResult> {
+  return ResultAsync.fromPromise(
+    (async () => {
+      requireScope(auth, 'delete');
+
+      const archived: BulkArchiveEntitiesResult['archived'] = [];
+      const failed: BulkArchiveEntitiesResult['failed'] = [];
+      const seen = new Set<string>();
+
+      for (const id of input.ids) {
+        if (seen.has(id)) {
+          continue;
+        }
+        seen.add(id);
+
+        try {
+          await archiveEntityForDelete(pool, auth, id);
+          archived.push({ id });
+        } catch (error) {
+          const appError = toAppError(error, 'Failed to archive entity');
+          failed.push({
+            id,
+            code: appError.code,
+            message: appError.message
+          });
+        }
+      }
+
+      return {
+        archived,
+        failed
+      };
+    })(),
+    (error) => toAppError(error, 'Failed to bulk archive entities')
   );
 }
 

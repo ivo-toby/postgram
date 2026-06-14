@@ -1645,15 +1645,18 @@ memoryCommand
   .option('--all-clients', 'groom all client scopes')
   .option('--older-than <duration>', 'only groom memories older than this (e.g. 30m, 4h, 7d, 0d)', '7d')
   .option('--mode <mode>', 'archive or promote', 'archive')
-  .option('--limit <limit>', 'maximum candidates', '50')
+  .option('--limit <limit>', 'maximum candidates')
   .option('--dry-run', 'preview without mutating')
   .option('--yes', 'confirm mutation')
   .action(async (options, command) => {
     const json = isJsonMode(command);
-    const limit = Number.parseInt(options.limit, 10);
-    if (!Number.isInteger(limit) || limit <= 0) {
-      await handleCliFailure(new Error('--limit must be a positive integer'), json);
-      return;
+    let limit: number | undefined;
+    if (options.limit !== undefined) {
+      limit = Number.parseInt(options.limit, 10);
+      if (!Number.isInteger(limit) || limit <= 0) {
+        await handleCliFailure(new Error('--limit must be a positive integer'), json);
+        return;
+      }
     }
 
     const clientIdOption: unknown = options.clientId;
@@ -1715,7 +1718,7 @@ memoryCommand
             scope,
             mode: options.mode,
             olderThan,
-            limit,
+            limit: limit ?? null,
             eligible: preview.value.eligible.length
           }
         });
@@ -1725,7 +1728,7 @@ memoryCommand
               dryRun: true,
               scope,
               olderThan,
-              limit,
+              limit: limit ?? null,
               archived: 0,
               promoted: 0,
               skipped: 0,
@@ -1760,7 +1763,7 @@ memoryCommand
           skipped: result.value.skipped,
           mode: options.mode,
           olderThan,
-          limit
+          limit: limit ?? null
         }
       });
 
@@ -1769,7 +1772,7 @@ memoryCommand
             ...result.value,
             scope,
             olderThan,
-            limit,
+            limit: limit ?? null,
             mode: options.mode
           }
         : [

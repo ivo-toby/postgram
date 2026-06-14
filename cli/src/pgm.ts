@@ -543,7 +543,7 @@ memoryCommand
     'only include memories older than this (e.g. 15m, 2h, 7d)',
     '7d'
   )
-  .option('--limit <limit>', 'maximum candidates', '50')
+  .option('--limit <limit>', 'maximum candidates')
   .option('--topic <topic>', 'filter by topic')
   .option('--session-id <sessionId>', 'filter by session id')
   .option(
@@ -558,9 +558,12 @@ memoryCommand
   .option('--yes', 'confirm archive mutation')
   .action(async (options, command) => {
     await runWithClient(command, async (client, json) => {
-      const limit = Number.parseInt(options.limit, 10);
-      if (!Number.isInteger(limit) || limit <= 0) {
-        throw new AppError(ErrorCode.VALIDATION, '--limit must be a positive integer');
+      let limit: number | undefined;
+      if (options.limit !== undefined) {
+        limit = Number.parseInt(options.limit, 10);
+        if (!Number.isInteger(limit) || limit <= 0) {
+          throw new AppError(ErrorCode.VALIDATION, '--limit must be a positive integer');
+        }
       }
 
       if (options.dryRun !== true && options.yes !== true) {

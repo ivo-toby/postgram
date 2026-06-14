@@ -86,7 +86,7 @@ const selfGroomSessionContextSchema = z
     dry_run: z.boolean().optional(),
     confirmed: z.boolean().optional(),
     older_than_ms: z.number().int().nonnegative().optional(),
-    limit: z.number().int().positive().max(50).optional(),
+    limit: z.number().int().positive().optional(),
     topic: z.string().optional(),
     session_id: z.string().optional(),
     tags: z.array(z.string()).optional()
@@ -323,7 +323,7 @@ export function registerRestRoutes(
       clientId: auth.clientId,
       allowedVisibility: auth.allowedVisibility,
       now,
-      limit: body.limit ?? 50,
+      limit: body.limit,
       olderThanMs: body.older_than_ms,
       topic: body.topic,
       sessionId: body.session_id,

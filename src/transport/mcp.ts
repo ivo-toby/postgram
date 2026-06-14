@@ -406,7 +406,7 @@ function createSessionServer(
         const mode = args.mode ?? 'dry_run';
         const olderThanText = args.older_than ?? '7d';
         const olderThanMs = parseGroomingDuration(olderThanText);
-        const limit = args.limit ?? 50;
+        const limit = args.limit;
         const sharedInput = {
           scope,
           now: new Date(),
@@ -436,7 +436,7 @@ function createSessionServer(
             mode,
             olderThan: olderThanText,
             olderThanMs,
-            limit,
+            limit: limit ?? null,
             scope,
             eligibleCount: eligible.length,
             eligible
@@ -451,7 +451,7 @@ function createSessionServer(
             mode,
             olderThan: olderThanText,
             olderThanMs,
-            limit,
+            limit: limit ?? null,
             scope,
             archived: 0,
             archivedCount: 0,
@@ -487,7 +487,7 @@ function createSessionServer(
           mode,
           olderThan: olderThanText,
           olderThanMs,
-          limit,
+          limit: limit ?? null,
           scope,
           archived,
           archivedCount: archived,

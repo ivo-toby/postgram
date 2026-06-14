@@ -1288,7 +1288,7 @@ describe('pgm-admin CLI', () => {
       mode: string;
       scope: { kind: string; clientId?: string };
       olderThan: string;
-      limit: number;
+      limit: number | null;
       promotions: Array<{ sourceId: string; durableId: string }>;
     };
     expect(body).toMatchObject({
@@ -1298,7 +1298,7 @@ describe('pgm-admin CLI', () => {
       skipped: 0,
       mode: 'archive',
       olderThan: '7d',
-      limit: 50,
+      limit: null,
       scope: { kind: 'client', clientId: 'codex' },
       promotions: []
     });

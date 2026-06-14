@@ -140,6 +140,8 @@ for `wdd-reconcile-wave`.
   downgraded to manual fallback due at 2026-06-14T13:39:47+02:00.
 - 2026-06-14: Worker refs recorded: Gauss for TASK-001, Singer for TASK-003,
   and Kant for TASK-004.
+- 2026-06-14: WAVE-001 worker dispatch prompts prepared for the verified task
+  worktrees.
 
 ## Next Action
 

@@ -449,9 +449,9 @@
       "TASK-004-cleanup-basket-state": "verified"
     },
     "workerDispatch": {
-      "TASK-001-bulk-archive-service": "ready_to_start",
-      "TASK-003-ui-bulk-archive-api-client": "ready_to_start",
-      "TASK-004-cleanup-basket-state": "ready_to_start"
+      "TASK-001-bulk-archive-service": "dispatched",
+      "TASK-003-ui-bulk-archive-api-client": "dispatched",
+      "TASK-004-cleanup-basket-state": "dispatched"
     }
   }
 }

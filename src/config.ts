@@ -12,6 +12,11 @@ const configSchema = z
     DATABASE_URL: z.string().min(1),
     OPENAI_API_KEY: optionalString,
     PORT: z.coerce.number().int().positive().default(3100),
+    OAUTH_ENABLED: z
+      .enum(['true', 'false'])
+      .default('false')
+      .transform((v) => v === 'true'),
+    PUBLIC_BASE_URL: optionalString,
     LOG_LEVEL: z
       .enum(['trace', 'debug', 'info', 'warn', 'error', 'fatal'])
       .default('info'),
@@ -192,6 +197,14 @@ const configSchema = z
         code: z.ZodIssueCode.custom,
         path: ['EXTRACTION_BASE_URL'],
         message: 'EXTRACTION_BASE_URL is required for EXTRACTION_PROVIDER=openai-compatible'
+      });
+    }
+
+    if (cfg.OAUTH_ENABLED && !cfg.PUBLIC_BASE_URL) {
+      ctx.addIssue({
+        code: z.ZodIssueCode.custom,
+        path: ['PUBLIC_BASE_URL'],
+        message: 'PUBLIC_BASE_URL is required when OAUTH_ENABLED=true'
       });
     }
   });

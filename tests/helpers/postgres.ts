@@ -65,6 +65,9 @@ export async function createTestDatabase(): Promise<TestDatabase> {
 export async function resetTestDatabase(pool: Pool): Promise<void> {
   await pool.query(`
     TRUNCATE TABLE
+      oauth_tokens,
+      oauth_authorization_codes,
+      oauth_clients,
       audit_log,
       chunks,
       document_sources,

@@ -22,6 +22,7 @@ import {
 import { ensureEmbeddingIdentityAgreement } from './services/embeddings/admin.js';
 import { createEnrichmentWorker } from './services/enrichment-worker.js';
 import { registerMcpRoutes } from './transport/mcp.js';
+import { registerOAuthRoutes } from './transport/oauth.js';
 import { registerRestRoutes } from './transport/rest.js';
 import { createLogger } from './util/logger.js';
 import {
@@ -45,6 +46,10 @@ type AppOptions = {
   pool?: Pool;
   embeddingService?: EmbeddingService | undefined;
   extractionEnabled?: boolean | undefined;
+  oauth?: {
+    enabled: boolean;
+    publicBaseUrl?: string | undefined;
+  } | undefined;
   getHealthStatus?: () => Promise<HealthStatus> | HealthStatus;
 };
 
@@ -149,6 +154,18 @@ export function createApp(
   });
 
   if (options.pool) {
+    if (options.oauth?.enabled) {
+      if (!options.oauth.publicBaseUrl) {
+        throw new AppError(
+          ErrorCode.VALIDATION,
+          'PUBLIC_BASE_URL is required when OAuth is enabled'
+        );
+      }
+      registerOAuthRoutes(app, options.pool, {
+        publicBaseUrl: options.oauth.publicBaseUrl
+      });
+    }
+
     app.use('/api/*', createAuthMiddleware({ pool: options.pool }));
     registerRestRoutes(app, options.pool, {
       embeddingService: options.embeddingService,
@@ -158,6 +175,9 @@ export function createApp(
     });
     registerMcpRoutes(app, options.pool, {
       embeddingService: options.embeddingService,
+      resourceMetadataUrl: options.oauth?.enabled && options.oauth.publicBaseUrl
+        ? `${options.oauth.publicBaseUrl.replace(/\/$/, '')}/.well-known/oauth-protected-resource/mcp`
+        : undefined,
       ...(options.extractionEnabled !== undefined
         ? { extractionEnabled: options.extractionEnabled }
         : {})
@@ -321,6 +341,10 @@ export async function startServer(): Promise<{
     pool,
     embeddingService,
     extractionEnabled: config.EXTRACTION_ENABLED,
+    oauth: {
+      enabled: config.OAUTH_ENABLED,
+      publicBaseUrl: config.PUBLIC_BASE_URL
+    },
     getHealthStatus: () => createHealthStatus(pool)
   });
 

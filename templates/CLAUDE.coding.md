@@ -162,3 +162,10 @@ Use specific tags such as `decision`, `constraint`, `bug`, `root-cause`, or
   should distill the stable claim.
 - Personal visibility is the default unless the memory should surface in a
   shared work context.
+
+## Configuration Changes
+
+Whenever a runtime configuration value is added or renamed, update the Docker
+setup in the same change. Check `docker-compose.yml`, `.env.example`, Dockerfile
+defaults, deployment docs, and README tables so container deployments receive
+the new value.

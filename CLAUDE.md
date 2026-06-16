@@ -18,6 +18,11 @@ Red/Green TDD with SDD specifications.
 
 IMPORTANT: before pushing code, use /codex (skill-codex) to have your changes reviewed by Codex, fix all p0, p1 and p2 issues at before pushing, after fixing, ask for a review again, until no p0, p1 or p2 issues remain. After pushing, create a PR.
 
+Whenever a runtime configuration value is added or renamed, update the Docker
+setup in the same change. Check `docker-compose.yml`, `.env.example`, Dockerfile
+defaults, deployment docs, and README tables so container deployments receive
+the new value.
+
 ## Recent Changes
 - 002-local-embeddings: Added TypeScript 5.9 on Node.js 22+ (LTS) + Hono (HTTP), `@modelcontextprotocol/sdk` (MCP SSE),
 

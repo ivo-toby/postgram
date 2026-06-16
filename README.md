@@ -342,6 +342,8 @@ Expected:
 | `DATABASE_URL`                | yes         |         | Full Postgres connection string                                                                                                |
 | `OPENAI_API_KEY`              | conditional |         | Required when `EMBEDDING_PROVIDER=openai` OR (`EXTRACTION_ENABLED=true` AND `EXTRACTION_PROVIDER=openai`). Optional otherwise. |
 | `PORT`                        | no          | `3100`  | HTTP/MCP server port                                                                                                           |
+| `OAUTH_ENABLED`               | no          | `false` | Enable OAuth authorization-code, PKCE, and Dynamic Client Registration routes for native remote MCP connectors.                 |
+| `PUBLIC_BASE_URL`             | conditional |         | Public HTTPS origin for OAuth metadata and callback URLs. Required when `OAUTH_ENABLED=true`. Example: `https://postgram.example.com`. |
 | `LOG_LEVEL`                   | no          | `info`  | pino log level                                                                                                                 |
 | `ENRICHMENT_POLL_INTERVAL_MS` | no          | `1000`  | Enrichment worker poll interval                                                                                                |
 
@@ -626,7 +628,7 @@ All `/api/*` routes require `Authorization: Bearer <api-key>`.
 
 ## MCP Overview
 
-MCP is served over SSE at:
+MCP is served over Streamable HTTP at:
 
 ```text
 http://127.0.0.1:3100/mcp
@@ -653,6 +655,29 @@ token-heavy outputs default to compact agent-friendly responses:
 
 The underlying API remains JSON; compacting and TOON happen only in MCP/CLI
 handlers.
+
+### Native Claude Connectors
+
+Claude Code can continue to connect with the existing static bearer API key
+flow. Claude Desktop, Claude Web, and mobile use the Connectors UI for remote
+MCP servers, where arbitrary static headers are not available. Enable OAuth so
+those clients can register and connect without `mcp-remote`:
+
+```bash
+OAUTH_ENABLED=true
+PUBLIC_BASE_URL=https://postgram.example.com
+```
+
+Add `${PUBLIC_BASE_URL}/mcp` as the connector URL in Claude. Claude discovers
+`/.well-known/oauth-protected-resource/mcp`, registers itself through
+`/oauth/register`, opens `/oauth/authorize`, and receives OAuth tokens from
+`/oauth/token`.
+
+The authorize page asks for an existing Postgram API key once. Tokens issued
+from that approval inherit the API key's scopes, `client_id`, allowed entity
+types, and allowed visibility. If the source API key is revoked, OAuth access
+and refresh tokens derived from it stop working. Existing `Authorization:
+Bearer <api-key>` clients and `/mcp?apiKey=...` keep working unchanged.
 
 ## CLI (`pgm`)
 

@@ -6,9 +6,9 @@ import type { Pool } from 'pg';
 
 import {
   checkTypeAccess,
-  requireScope,
-  validateKey
+  requireScope
 } from '../auth/key-service.js';
+import { validateBearerToken } from '../auth/bearer.js';
 import type { AuthContext } from '../auth/types.js';
 import type { EmbeddingService } from '../services/embedding-service.js';
 import {
@@ -285,13 +285,7 @@ async function authenticateSession(
     throw new AppError(ErrorCode.UNAUTHORIZED, 'Missing Bearer token');
   }
 
-  const result = await validateKey(pool, token);
-  return result.match(
-    (value) => value,
-    (error) => {
-      throw error;
-    }
-  );
+  return validateBearerToken(pool, token);
 }
 
 function createSessionServer(
@@ -965,6 +959,7 @@ export function registerMcpRoutes(
   options: {
     embeddingService?: EmbeddingService | undefined;
     extractionEnabled?: boolean | undefined;
+    resourceMetadataUrl?: string | undefined;
   } = {}
 ): void {
   app.all('/mcp', async (c) => {
@@ -981,6 +976,15 @@ export function registerMcpRoutes(
       return transport.handleRequest(c.req.raw);
     } catch (error) {
       const appError = normalizeError(error);
+      if (
+        appError.code === ErrorCode.UNAUTHORIZED
+        && options.resourceMetadataUrl
+      ) {
+        c.header(
+          'WWW-Authenticate',
+          `Bearer error="invalid_token", error_description="${appError.message}", resource_metadata="${options.resourceMetadataUrl}"`
+        );
+      }
       return c.json(
         toErrorResponse(appError),
         toHttpStatus(appError.code) as 401 | 403 | 404 | 409 | 500 | 502

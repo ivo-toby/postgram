@@ -8,7 +8,8 @@ import {
   toErrorResponse,
   toHttpStatus
 } from '../util/errors.js';
-import { touchLastUsedAt, validateKey } from './key-service.js';
+import { touchLastUsedAt } from './key-service.js';
+import { validateBearerToken } from './bearer.js';
 import type { AuthContext } from './types.js';
 
 type AuthVariables = {
@@ -38,19 +39,21 @@ export function createAuthMiddleware({
     }
 
     const token = header.slice(7);
-    const validated = await validateKey(pool, token);
 
-    if (validated.isErr()) {
-      const error = validated.error;
+    try {
+      const auth = await validateBearerToken(pool, token);
+      c.set('auth', auth);
+      if (auth.apiKeyId) await touchLastUsedAt(pool, auth.apiKeyId);
+      await next();
+    } catch (error) {
+      const appError =
+        error instanceof AppError
+          ? error
+          : new AppError(ErrorCode.INTERNAL, 'Failed to validate bearer token');
       return c.json(
-        toErrorResponse(error),
-        toHttpStatus(error.code) as ContentfulStatusCode
+        toErrorResponse(appError),
+        toHttpStatus(appError.code) as ContentfulStatusCode
       );
     }
-
-    const auth = validated.value;
-    c.set('auth', auth);
-    if (auth.apiKeyId) await touchLastUsedAt(pool, auth.apiKeyId);
-    await next();
   };
 }

@@ -24,6 +24,9 @@ services:
       OPENAI_API_KEY: ${OPENAI_API_KEY:-}
       LOG_LEVEL: ${LOG_LEVEL:-info}
       PORT: ${PORT:-3100}
+      # OAuth for native remote MCP connectors
+      OAUTH_ENABLED: ${OAUTH_ENABLED:-false}
+      PUBLIC_BASE_URL: ${PUBLIC_BASE_URL:-}
       # Embeddings
       EMBEDDING_PROVIDER: ${EMBEDDING_PROVIDER:-openai}
       EMBEDDING_MODEL: ${EMBEDDING_MODEL:-}

@@ -143,10 +143,3 @@ Common relation types: `involves`, `assigned_to`, `part_of`, `blocked_by`,
 - **Check the queue** — if search results seem stale or entities aren't
   appearing, run `mcp__postgram__queue` to see if enrichment is still in
   progress.
-
-## Configuration Changes
-
-Whenever a runtime configuration value is added or renamed, update the Docker
-setup in the same change. Check `docker-compose.yml`, `.env.example`, Dockerfile
-defaults, deployment docs, and README tables so container deployments receive
-the new value.

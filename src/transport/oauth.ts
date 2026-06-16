@@ -264,11 +264,12 @@ export function registerOAuthRoutes(
   });
 
   app.post('/oauth/authorize', async (c) => {
-    const body = await parseFormBody(c);
-    const redirectUri = getRequiredString(body.redirect_uri, 'redirect_uri');
-    const state = getOptionalString(body.state);
+    let body: Record<string, unknown> = {};
 
     try {
+      body = await parseFormBody(c);
+      const redirectUri = getRequiredString(body.redirect_uri, 'redirect_uri');
+      const state = getOptionalString(body.state);
       const code = await createAuthorizationCode(pool, {
         publicBaseUrl,
         responseType: getRequiredString(body.response_type, 'response_type'),

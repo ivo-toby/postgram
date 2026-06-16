@@ -151,6 +151,76 @@ describe('OAuth connector routes', () => {
     });
   });
 
+  it('rejects localhost redirect URIs with non-HTTP schemes', async () => {
+    if (!database) {
+      throw new Error('test database not initialized');
+    }
+
+    const app = createApp({
+      pool: database.pool,
+      oauth: {
+        enabled: true,
+        publicBaseUrl: OAUTH_PUBLIC_BASE_URL
+      }
+    });
+
+    const response = await app.request('/oauth/register', {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json'
+      },
+      body: JSON.stringify({
+        client_name: 'Malformed Connector',
+        redirect_uris: ['ftp://localhost/callback'],
+        grant_types: ['authorization_code', 'refresh_token'],
+        response_types: ['code'],
+        token_endpoint_auth_method: 'none'
+      })
+    });
+    const body: unknown = await response.json();
+
+    expect(response.status).toBe(400);
+    expect(body).toEqual({
+      error: 'invalid_client_metadata',
+      error_description: 'redirect_uris must contain valid HTTPS URLs'
+    });
+  });
+
+  it('returns OAuth-shaped errors for malformed authorize form posts', async () => {
+    if (!database) {
+      throw new Error('test database not initialized');
+    }
+
+    const app = createApp({
+      pool: database.pool,
+      oauth: {
+        enabled: true,
+        publicBaseUrl: OAUTH_PUBLIC_BASE_URL
+      }
+    });
+
+    const response = await app.request('/oauth/authorize', {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/x-www-form-urlencoded'
+      },
+      body: new URLSearchParams({
+        response_type: 'code',
+        client_id: 'missing-redirect-client',
+        code_challenge: 'challenge',
+        code_challenge_method: 'S256',
+        api_key: 'pgm_missing'
+      }).toString()
+    });
+    const body: unknown = await response.json();
+
+    expect(response.status).toBe(400);
+    expect(body).toEqual({
+      error: 'invalid_request',
+      error_description: 'redirect_uri is required'
+    });
+  });
+
   it('exchanges an API-key-approved PKCE code for OAuth tokens', async () => {
     if (!database) {
       throw new Error('test database not initialized');

@@ -155,11 +155,18 @@ function toEpochSeconds(date: Date): number {
   return Math.floor(date.getTime() / 1000);
 }
 
-function isHttpsUrl(value: string): boolean {
+function isAllowedRedirectUri(value: string): boolean {
   try {
     const parsed = new URL(value);
-    return parsed.protocol === 'https:' || parsed.hostname === 'localhost'
-      || parsed.hostname === '127.0.0.1';
+    if (parsed.protocol === 'https:') {
+      return true;
+    }
+
+    return parsed.protocol === 'http:' && (
+      parsed.hostname === 'localhost'
+      || parsed.hostname === '127.0.0.1'
+      || parsed.hostname === '[::1]'
+    );
   } catch {
     return false;
   }
@@ -175,7 +182,7 @@ function assertRedirectUris(value: string[] | undefined): string[] {
   }
 
   for (const uri of value) {
-    if (!isHttpsUrl(uri)) {
+    if (!isAllowedRedirectUri(uri)) {
       throw new OAuthHttpError(
         400,
         'invalid_client_metadata',

@@ -49,6 +49,8 @@ type PromotionDecision = {
 
 type GroomingMode = 'archive' | 'promote';
 type DurableGroomingMode = 'review' | 'mark';
+type DurableGroomingApplicationMode = 'auto' | 'rewrite' | 'archive';
+type DurableGroomingApplicationAction = 'rewrite' | 'archive' | 'skip';
 
 export type DurableGroomingOutcome =
   | 'keep'
@@ -86,6 +88,24 @@ type DurableGroomingInput = {
   includeReviewed?: boolean | undefined;
 };
 
+type DurableGroomingApplicationInput = {
+  now: Date;
+  mode: DurableGroomingApplicationMode;
+  dryRun: boolean;
+  confirm: boolean;
+  statuses?: DurableGroomingOutcome[] | undefined;
+  limit?: number | undefined;
+  topic?: string | undefined;
+  tags?: string[] | undefined;
+  visibility?: Visibility | undefined;
+  callLlm?: CallLlm | undefined;
+};
+
+type DurableRewriteDecision = {
+  content: string;
+  tags?: string[] | undefined;
+};
+
 export type GroomingResult = {
   archived: number;
   promoted: number;
@@ -105,6 +125,22 @@ export type DurableMemoryGroomingResult = {
     suggestedAction?: string | undefined;
     suggestedContent?: string | undefined;
     suggestedTags?: string[] | undefined;
+  }>;
+};
+
+export type DurableGroomingApplicationResult = {
+  reviewed: number;
+  rewritten: number;
+  archived: number;
+  skipped: number;
+  dryRun: boolean;
+  outcomes: Array<{
+    id: string;
+    status: DurableGroomingOutcome;
+    action: DurableGroomingApplicationAction;
+    reason: string;
+    content?: string | undefined;
+    tags?: string[] | undefined;
   }>;
 };
 
@@ -167,6 +203,44 @@ export const DURABLE_MEMORY_GROOMING_SCHEMA = {
     }
   }
 } as const;
+
+export const DURABLE_MEMORY_REWRITE_SCHEMA = {
+  type: 'object',
+  additionalProperties: false,
+  required: ['content'],
+  properties: {
+    content: {
+      type: 'string',
+      description:
+        'Clean durable memory content. Preserve stable truth and remove transient execution noise.'
+    },
+    tags: {
+      type: 'array',
+      items: { type: 'string' },
+      description: 'Optional durable-memory tags to add.'
+    }
+  }
+} as const;
+
+const DEFAULT_DURABLE_APPLY_STATUSES: DurableGroomingOutcome[] = [
+  'needs_grooming',
+  'archive',
+  'superseded'
+];
+
+function durableApplyStatusesForMode(
+  mode: DurableGroomingApplicationMode
+): DurableGroomingOutcome[] {
+  if (mode === 'rewrite') {
+    return ['needs_grooming'];
+  }
+
+  if (mode === 'archive') {
+    return ['archive', 'superseded'];
+  }
+
+  return DEFAULT_DURABLE_APPLY_STATUSES;
+}
 
 function toAppError(error: unknown, fallbackMessage: string): AppError {
   if (error instanceof AppError) {
@@ -317,6 +391,39 @@ function parseDurableGroomingDecision(
   };
 }
 
+function parseDurableRewriteDecision(response: string): DurableRewriteDecision {
+  const parsed = JSON.parse(stripMarkdownFences(response)) as Record<
+    string,
+    unknown
+  >;
+
+  const content =
+    typeof parsed.content === 'string' && parsed.content.trim().length > 0
+      ? parsed.content.trim()
+      : undefined;
+
+  if (!content) {
+    throw new AppError(
+      ErrorCode.VALIDATION,
+      'Durable rewrite decision must include content'
+    );
+  }
+
+  const tags = Array.isArray(parsed.tags)
+    ? parsed.tags
+        .filter(
+          (tag): tag is string =>
+            typeof tag === 'string' && tag.trim().length > 0
+        )
+        .map((tag) => tag.trim())
+    : undefined;
+
+  return {
+    content,
+    tags
+  };
+}
+
 function promotionParseErrorDecision(error: unknown): PromotionDecision {
   const message =
     error instanceof Error && error.message.trim().length > 0
@@ -374,6 +481,72 @@ function normalizeDurableFilters(input: DurableGroomingInput): GroomingFilters &
     ...normalized,
     visibility: input.visibility,
     includeReviewed: input.includeReviewed ?? false
+  };
+}
+
+function normalizeDurableApplicationInput(
+  input: DurableGroomingApplicationInput
+): {
+  mode: DurableGroomingApplicationMode;
+  statuses: DurableGroomingOutcome[];
+  limit?: number | undefined;
+  topic?: string | undefined;
+  tags?: string[] | undefined;
+  visibility?: Visibility | undefined;
+} {
+  if (
+    input.mode !== 'auto' &&
+    input.mode !== 'rewrite' &&
+    input.mode !== 'archive'
+  ) {
+    throw new AppError(
+      ErrorCode.VALIDATION,
+      'mode must be auto, rewrite, or archive'
+    );
+  }
+
+  if (input.limit !== undefined) {
+    if (!Number.isInteger(input.limit) || input.limit <= 0) {
+      throw new AppError(
+        ErrorCode.VALIDATION,
+        'limit must be a positive integer'
+      );
+    }
+  }
+
+  const requestedStatuses = Array.from(
+    new Set(input.statuses?.length ? input.statuses : DEFAULT_DURABLE_APPLY_STATUSES)
+  );
+  if (!requestedStatuses.every(isDurableGroomingOutcome)) {
+    throw new AppError(
+      ErrorCode.VALIDATION,
+      'statuses must be durable grooming outcomes'
+    );
+  }
+  const actionableStatuses = durableApplyStatusesForMode(input.mode);
+  const statuses =
+    input.mode === 'auto'
+      ? requestedStatuses
+      : requestedStatuses.filter((status) =>
+          actionableStatuses.includes(status)
+        );
+
+  return {
+    mode: input.mode,
+    statuses,
+    limit: input.limit,
+    topic:
+      typeof input.topic === 'string' && input.topic.trim().length > 0
+        ? input.topic.trim()
+        : undefined,
+    tags: input.tags?.length
+      ? Array.from(
+          new Set(
+            input.tags.map((tag) => tag.trim()).filter((tag) => tag.length > 0)
+          )
+        )
+      : undefined,
+    visibility: input.visibility
   };
 }
 
@@ -606,6 +779,54 @@ function buildDurableCandidateQuery({
   };
 }
 
+function buildDurableApplicationCandidateQuery({
+  filters
+}: {
+  filters: ReturnType<typeof normalizeDurableApplicationInput>;
+}): { text: string; values: unknown[] } {
+  const conditions = [
+    "type = 'memory'",
+    "status IS DISTINCT FROM 'archived'",
+    "COALESCE(metadata->>'memory_role', 'durable_memory') = 'durable_memory'",
+    "metadata #>> '{durable_grooming,applied_at}' IS NULL",
+    `metadata #>> '{durable_grooming,status}' = ANY($1::text[])`
+  ];
+  const values: unknown[] = [filters.statuses];
+  let paramIndex = 2;
+
+  if (filters.topic) {
+    conditions.push(`metadata->>'topic' = $${paramIndex++}`);
+    values.push(filters.topic);
+  }
+
+  if (filters.tags?.length) {
+    conditions.push(`tags @> $${paramIndex++}::text[]`);
+    values.push(filters.tags);
+  }
+
+  if (filters.visibility) {
+    conditions.push(`visibility = $${paramIndex++}`);
+    values.push(filters.visibility);
+  }
+
+  const limitClause =
+    filters.limit === undefined ? '' : `LIMIT $${paramIndex}`;
+  if (filters.limit !== undefined) {
+    values.push(filters.limit);
+  }
+
+  return {
+    text: `
+      SELECT id, content, visibility, owner, tags, metadata, created_at
+      FROM entities
+      WHERE ${conditions.join('\n        AND ')}
+      ORDER BY created_at ASC, id ASC
+      ${limitClause}
+    `,
+    values
+  };
+}
+
 export function buildSessionContextPromotionPrompt(
   candidate: GroomingCandidate
 ): string {
@@ -680,6 +901,43 @@ export function buildDurableMemoryGroomingPrompt(
   ].join('\n');
 }
 
+export function buildDurableMemoryRewritePrompt(
+  candidate: GroomingCandidate
+): string {
+  const durableGrooming = getDurableGroomingMetadata(candidate);
+
+  return [
+    'Rewrite this durable_memory record into clean durable memory content.',
+    '',
+    'Durable memory is long-lived project or user knowledge that future agents may trust. Preserve stable decisions, constraints, root causes, preferences, and verified outcomes. Remove stale execution breadcrumbs, transient branch status, duplicate chatter, and session transcript noise.',
+    '',
+    'Rules:',
+    '- Preserve stable decisions and outcomes exactly enough that future agents can rely on them.',
+    '- Do not invent facts or broaden scope beyond the original memory.',
+    '- Prefer one concise third-person or project-scoped paragraph.',
+    '- Return strict JSON matching the provided schema.',
+    '',
+    'Grooming label:',
+    JSON.stringify(durableGrooming, null, 2),
+    '',
+    'Candidate:',
+    JSON.stringify(
+      {
+        id: candidate.id,
+        role: 'durable_memory',
+        createdAt: candidate.createdAt,
+        visibility: candidate.visibility,
+        owner: candidate.owner,
+        tags: candidate.tags,
+        metadata: candidate.metadata,
+        content: candidate.content
+      },
+      null,
+      2
+    )
+  ].join('\n');
+}
+
 function mapGroomingCandidate(row: {
   id: string;
   content: string | null;
@@ -698,6 +956,340 @@ function mapGroomingCandidate(row: {
     metadata: row.metadata,
     createdAt: row.created_at.toISOString()
   };
+}
+
+function getDurableGroomingMetadata(
+  candidate: GroomingCandidate
+): Record<string, unknown> {
+  const value = candidate.metadata.durable_grooming;
+  return value && typeof value === 'object' && !Array.isArray(value)
+    ? (value as Record<string, unknown>)
+    : {};
+}
+
+function getDurableApplicationStatus(
+  candidate: GroomingCandidate
+): DurableGroomingOutcome {
+  const status = getDurableGroomingMetadata(candidate).status;
+  if (!isDurableGroomingOutcome(status)) {
+    throw new AppError(
+      ErrorCode.VALIDATION,
+      `durable grooming status is invalid for ${candidate.id}`
+    );
+  }
+
+  return status;
+}
+
+function getSuggestedTags(value: unknown): string[] | undefined {
+  return Array.isArray(value)
+    ? value
+        .filter(
+          (tag): tag is string =>
+            typeof tag === 'string' && tag.trim().length > 0
+        )
+        .map((tag) => tag.trim())
+    : undefined;
+}
+
+function mergeTags(existing: string[], additional: string[] | undefined): string[] {
+  return Array.from(
+    new Set(
+      [...existing, ...(additional ?? [])]
+        .map((tag) => tag.trim())
+        .filter((tag) => tag.length > 0)
+    )
+  );
+}
+
+function planDurableApplicationAction(
+  status: DurableGroomingOutcome,
+  mode: DurableGroomingApplicationMode
+): DurableGroomingApplicationAction {
+  if (mode === 'rewrite') {
+    return status === 'needs_grooming' ? 'rewrite' : 'skip';
+  }
+
+  if (mode === 'archive') {
+    return status === 'archive' || status === 'superseded'
+      ? 'archive'
+      : 'skip';
+  }
+
+  if (status === 'needs_grooming') {
+    return 'rewrite';
+  }
+
+  if (status === 'archive' || status === 'superseded') {
+    return 'archive';
+  }
+
+  return 'skip';
+}
+
+function buildApplicationOutcome(
+  candidate: GroomingCandidate,
+  mode: DurableGroomingApplicationMode
+): DurableGroomingApplicationResult['outcomes'][number] {
+  const status = getDurableApplicationStatus(candidate);
+  const action = planDurableApplicationAction(status, mode);
+  const durableGrooming = getDurableGroomingMetadata(candidate);
+  const reason =
+    typeof durableGrooming.reason === 'string' &&
+    durableGrooming.reason.trim().length > 0
+      ? durableGrooming.reason.trim()
+      : action === 'skip'
+        ? `Status ${status} is not actionable in ${mode} mode`
+        : `Apply ${status} durable grooming label`;
+
+  return {
+    id: candidate.id,
+    status,
+    action,
+    reason
+  };
+}
+
+function buildAppliedDurableGroomingMetadata({
+  prior,
+  nextStatus,
+  appliedAction,
+  now
+}: {
+  prior: Record<string, unknown>;
+  nextStatus?: DurableGroomingOutcome | undefined;
+  appliedAction: Exclude<DurableGroomingApplicationAction, 'skip'>;
+  now: Date;
+}): Record<string, unknown> {
+  const previousStatus = prior.status;
+  const previousReason = prior.reason;
+
+  return {
+    ...prior,
+    ...(nextStatus ? { status: nextStatus } : {}),
+    ...(typeof previousStatus === 'string'
+      ? { previous_status: previousStatus }
+      : {}),
+    ...(typeof previousReason === 'string'
+      ? { previous_reason: previousReason }
+      : {}),
+    applied_action: appliedAction,
+    applied_at: now.toISOString(),
+    applied_by: 'pgm-admin memory apply-durable-grooming'
+  };
+}
+
+async function resolveRewriteDecision(
+  candidate: GroomingCandidate,
+  callLlm: CallLlm | undefined
+): Promise<DurableRewriteDecision | undefined> {
+  const durableGrooming = getDurableGroomingMetadata(candidate);
+  const suggestedContent = readOptionalString(
+    durableGrooming,
+    'suggested_content',
+    'suggestedContent'
+  );
+
+  if (suggestedContent) {
+    return {
+      content: suggestedContent,
+      tags: getSuggestedTags(
+        durableGrooming.suggested_tags ?? durableGrooming.suggestedTags
+      )
+    };
+  }
+
+  if (!callLlm) {
+    return undefined;
+  }
+
+  const response = await callLlm(
+    buildDurableMemoryRewritePrompt(candidate),
+    DURABLE_MEMORY_REWRITE_SCHEMA
+  );
+  return parseDurableRewriteDecision(response);
+}
+
+export function applyDurableGrooming(
+  pool: Pool,
+  input: DurableGroomingApplicationInput
+): ServiceResult<DurableGroomingApplicationResult> {
+  return ResultAsync.fromPromise(
+    (async () => {
+      const filters = normalizeDurableApplicationInput(input);
+
+      if (!input.dryRun && !input.confirm) {
+        throw new AppError(
+          ErrorCode.VALIDATION,
+          '--yes is required outside dry-run'
+        );
+      }
+
+      const result = await pool.query<{
+        id: string;
+        content: string | null;
+        visibility: Visibility;
+        owner: string | null;
+        tags: string[];
+        metadata: Record<string, unknown>;
+        created_at: Date;
+      }>(
+        buildDurableApplicationCandidateQuery({
+          filters
+        })
+      );
+      const candidates = result.rows.map(mapGroomingCandidate);
+      const planned = candidates.map((candidate) =>
+        buildApplicationOutcome(candidate, filters.mode)
+      );
+
+      if (input.dryRun || candidates.length === 0) {
+        return {
+          reviewed: planned.length,
+          rewritten: 0,
+          archived: 0,
+          skipped: planned.filter((outcome) => outcome.action === 'skip')
+            .length,
+          dryRun: input.dryRun,
+          outcomes: planned
+        };
+      }
+
+      const outcomes: DurableGroomingApplicationResult['outcomes'] = [];
+      let rewritten = 0;
+      let archived = 0;
+      let skipped = 0;
+
+      const client = await pool.connect();
+      try {
+        await client.query('BEGIN');
+
+        for (const candidate of candidates) {
+          const plannedOutcome = buildApplicationOutcome(candidate, filters.mode);
+          if (plannedOutcome.action === 'skip') {
+            skipped += 1;
+            outcomes.push(plannedOutcome);
+            continue;
+          }
+
+          const durableGrooming = getDurableGroomingMetadata(candidate);
+
+          if (plannedOutcome.action === 'archive') {
+            const nextDurableGrooming = buildAppliedDurableGroomingMetadata({
+              prior: durableGrooming,
+              appliedAction: 'archive',
+              now: input.now
+            });
+
+            await client.query(
+              `
+                UPDATE entities
+                SET
+                  status = 'archived',
+                  metadata = jsonb_set(metadata, '{durable_grooming}', $2::jsonb, true)
+                WHERE id = $1
+              `,
+              [candidate.id, JSON.stringify(nextDurableGrooming)]
+            );
+            archived += 1;
+            outcomes.push(plannedOutcome);
+            continue;
+          }
+
+          let rewrite: DurableRewriteDecision | undefined;
+          try {
+            rewrite = await resolveRewriteDecision(candidate, input.callLlm);
+          } catch (error) {
+            skipped += 1;
+            outcomes.push({
+              ...plannedOutcome,
+              action: 'skip',
+              reason:
+                error instanceof Error && error.message.trim().length > 0
+                  ? `Skipped rewrite: ${error.message.trim()}`
+                  : 'Skipped rewrite: invalid rewrite response'
+            });
+            continue;
+          }
+
+          if (!rewrite) {
+            skipped += 1;
+            outcomes.push({
+              ...plannedOutcome,
+              action: 'skip',
+              reason:
+                'Skipped rewrite: no suggested_content was available and no LLM rewriter was configured'
+            });
+            continue;
+          }
+
+          const nextDurableGrooming = buildAppliedDurableGroomingMetadata({
+            prior: durableGrooming,
+            nextStatus: 'keep',
+            appliedAction: 'rewrite',
+            now: input.now
+          });
+          const nextTags = mergeTags(candidate.tags, rewrite.tags);
+
+          await client.query(
+            `
+              DELETE FROM edges
+              WHERE source_id = $1
+                AND source = 'llm-extraction'
+            `,
+            [candidate.id]
+          );
+          await client.query('DELETE FROM chunks WHERE entity_id = $1', [
+            candidate.id
+          ]);
+          await client.query(
+            `
+              UPDATE entities
+              SET
+                content = $2,
+                tags = $3,
+                metadata = jsonb_set(metadata, '{durable_grooming}', $4::jsonb, true),
+                enrichment_status = 'pending',
+                enrichment_attempts = 0,
+                enrichment_error = NULL,
+                version = version + 1
+              WHERE id = $1
+            `,
+            [
+              candidate.id,
+              rewrite.content,
+              nextTags,
+              JSON.stringify(nextDurableGrooming)
+            ]
+          );
+
+          rewritten += 1;
+          outcomes.push({
+            ...plannedOutcome,
+            content: rewrite.content,
+            ...(rewrite.tags?.length ? { tags: rewrite.tags } : {})
+          });
+        }
+
+        await client.query('COMMIT');
+
+        return {
+          reviewed: planned.length,
+          rewritten,
+          archived,
+          skipped,
+          dryRun: false,
+          outcomes
+        };
+      } catch (error) {
+        await client.query('ROLLBACK');
+        throw error;
+      } finally {
+        client.release();
+      }
+    })(),
+    (error) => toAppError(error, 'Failed to apply durable grooming')
+  );
 }
 
 export function previewDurableMemoryGrooming(

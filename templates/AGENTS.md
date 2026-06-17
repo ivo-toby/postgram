@@ -109,6 +109,11 @@ active durable memories and writes `metadata.durable_grooming` labels such as
 archive durable memories by itself. Treat those labels as follow-up work for an
 explicit operator workflow.
 
+Operator durable cleanup uses `pgm-admin memory apply-durable-grooming`. Run
+with `--dry-run` first, then `--yes` to apply labels: `needs_grooming` rows are
+rewritten, while `archive` and `superseded` rows are archived. Ordinary coding
+agents must not apply these labels unless the user explicitly asks.
+
 For session continuity, search session context first:
 
 ```

@@ -1672,6 +1672,207 @@ describe('pgm-admin CLI', () => {
     expect(getCliErrorOutput(error)).toContain('--mode must be review or mark');
   }, 120_000);
 
+  it('memory apply-durable-grooming previews rewrite and archive actions', async () => {
+    if (!database) {
+      throw new Error('test database not initialized');
+    }
+
+    const databaseUrl = getDatabaseUrl(database);
+    const seededKey = (await createKey(database.pool, {
+      name: `durable-apply-preview-${crypto.randomUUID()}`,
+      scopes: ['read', 'write', 'delete'],
+      allowedVisibility: ['personal']
+    }))._unsafeUnwrap();
+    const auth = makeAuthContext(seededKey.record.id);
+
+    const rewrite = (await storeEntity(database.pool, auth, {
+      type: 'memory',
+      content: 'Noisy durable memory for CLI apply preview.',
+      visibility: 'personal',
+      metadata: {
+        memory_role: 'durable_memory',
+        topic: 'cli-durable-apply-preview',
+        durable_grooming: {
+          status: 'needs_grooming',
+          reason: 'Noisy but useful.',
+          reviewed_at: '2026-06-17T00:00:00.000Z',
+          suggested_content: 'Clean durable memory for CLI apply preview.'
+        }
+      }
+    }))._unsafeUnwrap();
+    const archive = (await storeEntity(database.pool, auth, {
+      type: 'memory',
+      content: 'Obsolete durable memory for CLI apply preview.',
+      visibility: 'personal',
+      metadata: {
+        memory_role: 'durable_memory',
+        topic: 'cli-durable-apply-preview',
+        durable_grooming: {
+          status: 'archive',
+          reason: 'Obsolete.',
+          reviewed_at: '2026-06-17T00:00:00.000Z'
+        }
+      }
+    }))._unsafeUnwrap();
+
+    const dryRun = await runAdmin(
+      [
+        'memory',
+        'apply-durable-grooming',
+        '--dry-run',
+        '--topic',
+        'cli-durable-apply-preview',
+        '--json'
+      ],
+      { DATABASE_URL: databaseUrl }
+    );
+    const body = parseJson(dryRun.stdout) as {
+      dryRun: boolean;
+      reviewed: number;
+      outcomes: Array<{ id: string; action: string; status: string }>;
+    };
+
+    expect(body).toMatchObject({
+      dryRun: true,
+      reviewed: 2
+    });
+    expect(body.outcomes).toEqual([
+      { id: rewrite.id, status: 'needs_grooming', action: 'rewrite', reason: 'Noisy but useful.' },
+      { id: archive.id, status: 'archive', action: 'archive', reason: 'Obsolete.' }
+    ]);
+  }, 120_000);
+
+  it('memory apply-durable-grooming rewrites and archives labeled durable memories', async () => {
+    if (!database) {
+      throw new Error('test database not initialized');
+    }
+
+    const databaseUrl = getDatabaseUrl(database);
+    const seededKey = (await createKey(database.pool, {
+      name: `durable-apply-mutate-${crypto.randomUUID()}`,
+      scopes: ['read', 'write', 'delete'],
+      allowedVisibility: ['personal']
+    }))._unsafeUnwrap();
+    const auth = makeAuthContext(seededKey.record.id);
+
+    const rewrite = (await storeEntity(database.pool, auth, {
+      type: 'memory',
+      content: 'Noisy durable memory for CLI apply mutation.',
+      visibility: 'personal',
+      tags: ['postgram'],
+      metadata: {
+        memory_role: 'durable_memory',
+        topic: 'cli-durable-apply-mutate',
+        durable_grooming: {
+          status: 'needs_grooming',
+          reason: 'Noisy but useful.',
+          reviewed_at: '2026-06-17T00:00:00.000Z',
+          suggested_content: 'Clean durable memory for CLI apply mutation.',
+          suggested_tags: ['memory-grooming']
+        }
+      }
+    }))._unsafeUnwrap();
+    const archive = (await storeEntity(database.pool, auth, {
+      type: 'memory',
+      content: 'Superseded durable memory for CLI apply mutation.',
+      visibility: 'personal',
+      metadata: {
+        memory_role: 'durable_memory',
+        topic: 'cli-durable-apply-mutate',
+        durable_grooming: {
+          status: 'superseded',
+          reason: 'Covered by a newer memory.',
+          reviewed_at: '2026-06-17T00:00:00.000Z'
+        }
+      }
+    }))._unsafeUnwrap();
+
+    const result = await runAdmin(
+      [
+        'memory',
+        'apply-durable-grooming',
+        '--yes',
+        '--topic',
+        'cli-durable-apply-mutate',
+        '--json'
+      ],
+      { DATABASE_URL: databaseUrl }
+    );
+    const body = parseJson(result.stdout) as {
+      dryRun: boolean;
+      rewritten: number;
+      archived: number;
+      skipped: number;
+    };
+
+    expect(body).toMatchObject({
+      dryRun: false,
+      rewritten: 1,
+      archived: 1,
+      skipped: 0
+    });
+
+    const rows = await database.pool.query<{
+      id: string;
+      status: string | null;
+      content: string | null;
+      tags: string[];
+      metadata: Record<string, unknown>;
+    }>(
+      'SELECT id, status, content, tags, metadata FROM entities WHERE id = ANY($1)',
+      [[rewrite.id, archive.id]]
+    );
+    const byId = Object.fromEntries(rows.rows.map((row) => [row.id, row]));
+    expect(byId[rewrite.id]?.content).toBe(
+      'Clean durable memory for CLI apply mutation.'
+    );
+    expect(byId[rewrite.id]?.tags).toEqual(
+      expect.arrayContaining(['postgram', 'memory-grooming'])
+    );
+    expect(byId[rewrite.id]?.metadata.durable_grooming).toMatchObject({
+      status: 'keep',
+      previous_status: 'needs_grooming',
+      applied_action: 'rewrite',
+      applied_by: 'pgm-admin memory apply-durable-grooming'
+    });
+    expect(byId[archive.id]?.status).toBe('archived');
+
+    const auditRows = await database.pool.query<{
+      operation: string;
+      details: Record<string, unknown>;
+    }>(
+      "SELECT operation, details FROM audit_log WHERE operation = 'memory.apply_durable_grooming' ORDER BY timestamp DESC LIMIT 1"
+    );
+    expect(auditRows.rows[0]?.operation).toBe(
+      'memory.apply_durable_grooming'
+    );
+    expect(auditRows.rows[0]?.details).toMatchObject({
+      mode: 'auto',
+      rewritten: 1,
+      archived: 1
+    });
+  }, 120_000);
+
+  it('memory apply-durable-grooming rejects invalid statuses', async () => {
+    if (!database) {
+      throw new Error('test database not initialized');
+    }
+
+    const output = await runAdminFailureOutput(
+      [
+        'memory',
+        'apply-durable-grooming',
+        '--dry-run',
+        '--status',
+        'nope',
+        '--json'
+      ],
+      { DATABASE_URL: getDatabaseUrl(database) }
+    );
+
+    expect(output).toContain('--status must be one of keep, needs_grooming, archive, superseded');
+  }, 120_000);
+
   describe('purge command', () => {
     it('permanently deletes archived entities', async () => {
       if (!database) throw new Error('test database not initialized');

@@ -166,7 +166,21 @@ rows with no `metadata.memory_role`, and classifies them as `keep`,
 `needs_grooming`, `archive`, or `superseded`. Mark mode writes
 `metadata.durable_grooming` with the outcome, reason, review timestamp, and any
 LLM suggestions. It does not rewrite content, change status, archive rows, or
-merge duplicates; those remain explicit future operator actions.
+merge duplicates.
+
+To actually clean the marked rows, apply the grooming labels:
+
+```bash
+pgm-admin memory apply-durable-grooming --dry-run
+pgm-admin memory apply-durable-grooming --yes
+```
+
+Apply mode defaults to `auto`: `needs_grooming` memories are rewritten from the
+stored suggestion or the configured extraction LLM, while `archive` and
+`superseded` memories are archived. Rewrites clear stale chunks and re-queue
+embedding enrichment. Use `--mode rewrite` or `--mode archive`, plus
+`--status`, `--topic`, `--tag`, `--visibility`, or `--limit`, to narrow the
+batch.
 
 ### 2. Async Enrichment
 

@@ -2,7 +2,9 @@ import { afterAll, beforeAll, beforeEach, describe, expect, it } from 'vitest';
 
 import { storeEntity } from '../../src/services/entity-service.js';
 import {
+  applyDurableGrooming,
   buildDurableMemoryGroomingPrompt,
+  buildDurableMemoryRewritePrompt,
   buildSessionContextPromotionPrompt,
   groomDurableMemory,
   groomSessionContext,
@@ -1348,5 +1350,463 @@ describe('memory-grooming-service', () => {
     expect(prompt).toContain(
       'Durable memory: stable outcome plus stale execution details.'
     );
+  });
+
+  it('previews durable grooming application actions without mutating rows', async () => {
+    if (!database) {
+      throw new Error('test database not initialized');
+    }
+
+    const rewrite = (
+      await storeEntity(database.pool, makeAuthContext(), {
+        type: 'memory',
+        content: 'Durable fact mixed with stale branch chatter.',
+        visibility: 'personal',
+        tags: ['postgram'],
+        metadata: {
+          memory_role: 'durable_memory',
+          topic: 'durable-apply',
+          durable_grooming: {
+            status: 'needs_grooming',
+            reason: 'Stable fact mixed with stale execution detail.',
+            reviewed_at: '2026-06-17T00:00:00.000Z',
+            suggested_content: 'Postgram durable grooming has an apply step.'
+          }
+        }
+      })
+    )._unsafeUnwrap();
+    const archive = (
+      await storeEntity(database.pool, makeAuthContext(), {
+        type: 'memory',
+        content: 'Obsolete durable memory.',
+        visibility: 'personal',
+        metadata: {
+          memory_role: 'durable_memory',
+          topic: 'durable-apply',
+          durable_grooming: {
+            status: 'archive',
+            reason: 'No longer useful.',
+            reviewed_at: '2026-06-17T00:00:00.000Z'
+          }
+        }
+      })
+    )._unsafeUnwrap();
+    await storeEntity(database.pool, makeAuthContext(), {
+      type: 'memory',
+      content: 'Clean durable memory.',
+      visibility: 'personal',
+      metadata: {
+        memory_role: 'durable_memory',
+        topic: 'durable-apply',
+        durable_grooming: {
+          status: 'keep',
+          reason: 'Useful as-is.',
+          reviewed_at: '2026-06-17T00:00:00.000Z'
+        }
+      }
+    });
+
+    const result = await applyDurableGrooming(database.pool, {
+      now: new Date('2026-06-18T00:00:00.000Z'),
+      mode: 'auto',
+      dryRun: true,
+      confirm: false,
+      topic: 'durable-apply'
+    });
+
+    expect(result.isOk()).toBe(true);
+    expect(result._unsafeUnwrap()).toMatchObject({
+      dryRun: true,
+      reviewed: 2,
+      rewritten: 0,
+      archived: 0,
+      skipped: 0,
+      outcomes: [
+        { id: rewrite.id, status: 'needs_grooming', action: 'rewrite' },
+        { id: archive.id, status: 'archive', action: 'archive' }
+      ]
+    });
+
+    const rows = await database.pool.query<{
+      id: string;
+      status: string | null;
+      content: string | null;
+    }>('SELECT id, status, content FROM entities WHERE id = ANY($1)', [
+      [rewrite.id, archive.id]
+    ]);
+    const byId = Object.fromEntries(rows.rows.map((row) => [row.id, row]));
+    expect(byId[rewrite.id]?.content).toBe(
+      'Durable fact mixed with stale branch chatter.'
+    );
+    expect(byId[archive.id]?.status).toBeNull();
+  });
+
+  it('applies durable grooming by rewriting noisy memories and archiving obsolete ones', async () => {
+    if (!database) {
+      throw new Error('test database not initialized');
+    }
+
+    const rewrite = (
+      await storeEntity(database.pool, makeAuthContext(), {
+        type: 'memory',
+        content: 'Stable outcome mixed with stale PR-monitor details.',
+        visibility: 'personal',
+        tags: ['postgram', 'old-tag'],
+        metadata: {
+          memory_role: 'durable_memory',
+          topic: 'durable-apply-mutate',
+          durable_grooming: {
+            status: 'needs_grooming',
+            reason: 'Contains stale execution detail.',
+            reviewed_at: '2026-06-17T00:00:00.000Z',
+            suggested_content:
+              'Postgram durable grooming can apply cleanup labels to durable memory.',
+            suggested_tags: ['memory-grooming']
+          }
+        }
+      })
+    )._unsafeUnwrap();
+    const obsolete = (
+      await storeEntity(database.pool, makeAuthContext(), {
+        type: 'memory',
+        content: 'Obsolete status note.',
+        visibility: 'personal',
+        metadata: {
+          memory_role: 'durable_memory',
+          topic: 'durable-apply-mutate',
+          durable_grooming: {
+            status: 'superseded',
+            reason: 'Covered by newer durable memory.',
+            reviewed_at: '2026-06-17T00:00:00.000Z'
+          }
+        }
+      })
+    )._unsafeUnwrap();
+    const target = (
+      await storeEntity(database.pool, makeAuthContext(), {
+        type: 'project',
+        content: 'Durable memory grooming target.',
+        visibility: 'personal'
+      })
+    )._unsafeUnwrap();
+    await database.pool.query(
+      `
+        INSERT INTO chunks (entity_id, chunk_index, content, embedding, model_id, token_count)
+        SELECT $1, 0, 'old chunk', ('[' || repeat('0,', 1535) || '0]')::vector, id, 2
+        FROM embedding_models
+        WHERE is_active = true
+        LIMIT 1
+      `,
+      [rewrite.id]
+    );
+    await database.pool.query(
+      `
+        INSERT INTO edges (source_id, target_id, relation, source, confidence)
+        VALUES ($1, $2, 'involves', 'llm-extraction', 0.9),
+               ($1, $2, 'part_of', 'manual', 1.0)
+      `,
+      [rewrite.id, target.id]
+    );
+
+    const result = await applyDurableGrooming(database.pool, {
+      now: new Date('2026-06-18T00:00:00.000Z'),
+      mode: 'auto',
+      dryRun: false,
+      confirm: true,
+      topic: 'durable-apply-mutate'
+    });
+
+    expect(result.isOk()).toBe(true);
+    expect(result._unsafeUnwrap()).toMatchObject({
+      dryRun: false,
+      reviewed: 2,
+      rewritten: 1,
+      archived: 1,
+      skipped: 0
+    });
+
+    const rows = await database.pool.query<{
+      id: string;
+      status: string | null;
+      content: string | null;
+      tags: string[];
+      enrichment_status: string | null;
+      metadata: Record<string, unknown>;
+    }>(
+      'SELECT id, status, content, tags, enrichment_status, metadata FROM entities WHERE id = ANY($1)',
+      [[rewrite.id, obsolete.id]]
+    );
+    const byId = Object.fromEntries(rows.rows.map((row) => [row.id, row]));
+
+    expect(byId[rewrite.id]?.content).toBe(
+      'Postgram durable grooming can apply cleanup labels to durable memory.'
+    );
+    expect(byId[rewrite.id]?.status).toBeNull();
+    expect(byId[rewrite.id]?.tags).toEqual(
+      expect.arrayContaining(['postgram', 'old-tag', 'memory-grooming'])
+    );
+    expect(byId[rewrite.id]?.enrichment_status).toBe('pending');
+    expect(byId[rewrite.id]?.metadata.durable_grooming).toMatchObject({
+      status: 'keep',
+      previous_status: 'needs_grooming',
+      applied_action: 'rewrite',
+      applied_at: '2026-06-18T00:00:00.000Z',
+      applied_by: 'pgm-admin memory apply-durable-grooming'
+    });
+    expect(byId[obsolete.id]?.status).toBe('archived');
+    expect(byId[obsolete.id]?.metadata.durable_grooming).toMatchObject({
+      status: 'superseded',
+      applied_action: 'archive',
+      applied_at: '2026-06-18T00:00:00.000Z'
+    });
+
+    const chunks = await database.pool.query<{ count: string }>(
+      'SELECT COUNT(*)::text AS count FROM chunks WHERE entity_id = $1',
+      [rewrite.id]
+    );
+    expect(chunks.rows[0]?.count).toBe('0');
+
+    const edges = await database.pool.query<{
+      relation: string;
+      source: string | null;
+    }>(
+      'SELECT relation, source FROM edges WHERE source_id = $1 ORDER BY relation',
+      [rewrite.id]
+    );
+    expect(edges.rows).toEqual([{ relation: 'part_of', source: 'manual' }]);
+  });
+
+  it('filters mode-specific durable grooming candidates before applying limits', async () => {
+    if (!database) {
+      throw new Error('test database not initialized');
+    }
+
+    const olderArchive = (
+      await storeEntity(database.pool, makeAuthContext(), {
+        type: 'memory',
+        content: 'Archive label should not consume rewrite limit.',
+        visibility: 'personal',
+        metadata: {
+          memory_role: 'durable_memory',
+          topic: 'durable-apply-limit-rewrite',
+          durable_grooming: {
+            status: 'archive',
+            reason: 'Obsolete.'
+          }
+        }
+      })
+    )._unsafeUnwrap();
+    const rewrite = (
+      await storeEntity(database.pool, makeAuthContext(), {
+        type: 'memory',
+        content: 'Rewrite label should be selected.',
+        visibility: 'personal',
+        metadata: {
+          memory_role: 'durable_memory',
+          topic: 'durable-apply-limit-rewrite',
+          durable_grooming: {
+            status: 'needs_grooming',
+            reason: 'Noisy but useful.',
+            suggested_content: 'Rewritten durable fact.'
+          }
+        }
+      })
+    )._unsafeUnwrap();
+    await backdateEntity(database.pool, olderArchive.id, '2026-04-01T00:00:00.000Z');
+    await backdateEntity(database.pool, rewrite.id, '2026-04-02T00:00:00.000Z');
+
+    const rewriteResult = await applyDurableGrooming(database.pool, {
+      now: new Date('2026-06-18T00:00:00.000Z'),
+      mode: 'rewrite',
+      dryRun: true,
+      confirm: false,
+      topic: 'durable-apply-limit-rewrite',
+      limit: 1
+    });
+
+    expect(rewriteResult.isOk()).toBe(true);
+    expect(rewriteResult._unsafeUnwrap()).toMatchObject({
+      reviewed: 1,
+      outcomes: [{ id: rewrite.id, status: 'needs_grooming', action: 'rewrite' }]
+    });
+
+    const olderRewrite = (
+      await storeEntity(database.pool, makeAuthContext(), {
+        type: 'memory',
+        content: 'Rewrite label should not consume archive limit.',
+        visibility: 'personal',
+        metadata: {
+          memory_role: 'durable_memory',
+          topic: 'durable-apply-limit-archive',
+          durable_grooming: {
+            status: 'needs_grooming',
+            reason: 'Needs cleanup.',
+            suggested_content: 'Rewritten durable fact.'
+          }
+        }
+      })
+    )._unsafeUnwrap();
+    const archive = (
+      await storeEntity(database.pool, makeAuthContext(), {
+        type: 'memory',
+        content: 'Archive label should be selected.',
+        visibility: 'personal',
+        metadata: {
+          memory_role: 'durable_memory',
+          topic: 'durable-apply-limit-archive',
+          durable_grooming: {
+            status: 'superseded',
+            reason: 'Covered by newer memory.'
+          }
+        }
+      })
+    )._unsafeUnwrap();
+    await backdateEntity(database.pool, olderRewrite.id, '2026-04-01T00:00:00.000Z');
+    await backdateEntity(database.pool, archive.id, '2026-04-02T00:00:00.000Z');
+
+    const archiveResult = await applyDurableGrooming(database.pool, {
+      now: new Date('2026-06-18T00:00:00.000Z'),
+      mode: 'archive',
+      dryRun: true,
+      confirm: false,
+      topic: 'durable-apply-limit-archive',
+      limit: 1
+    });
+
+    expect(archiveResult.isOk()).toBe(true);
+    expect(archiveResult._unsafeUnwrap()).toMatchObject({
+      reviewed: 1,
+      outcomes: [{ id: archive.id, status: 'superseded', action: 'archive' }]
+    });
+  });
+
+  it('uses the extraction LLM to rewrite durable memories when no suggestion exists', async () => {
+    if (!database) {
+      throw new Error('test database not initialized');
+    }
+
+    const stored = (
+      await storeEntity(database.pool, makeAuthContext(), {
+        type: 'memory',
+        content: 'Stable fact plus noisy session transcript.',
+        visibility: 'personal',
+        metadata: {
+          memory_role: 'durable_memory',
+          topic: 'durable-apply-llm',
+          durable_grooming: {
+            status: 'needs_grooming',
+            reason: 'Needs distillation.',
+            reviewed_at: '2026-06-17T00:00:00.000Z'
+          }
+        }
+      })
+    )._unsafeUnwrap();
+
+    const result = await applyDurableGrooming(database.pool, {
+      now: new Date('2026-06-18T00:00:00.000Z'),
+      mode: 'rewrite',
+      dryRun: false,
+      confirm: true,
+      topic: 'durable-apply-llm',
+      callLlm: (prompt, schema) => {
+        expect(prompt).toContain('Stable fact plus noisy session transcript.');
+        expect(prompt).toContain('Needs distillation.');
+        expect(schema).toEqual(expect.objectContaining({ type: 'object' }));
+        return Promise.resolve(
+          JSON.stringify({
+            content: 'Postgram durable grooming rewrites noisy durable memory into a clean stable fact.',
+            tags: ['postgram', 'durable-memory']
+          })
+        );
+      }
+    });
+
+    expect(result.isOk()).toBe(true);
+    expect(result._unsafeUnwrap()).toMatchObject({
+      rewritten: 1,
+      archived: 0,
+      skipped: 0,
+      outcomes: [
+        expect.objectContaining({
+          id: stored.id,
+          status: 'needs_grooming',
+          action: 'rewrite'
+        })
+      ]
+    });
+
+    const row = await database.pool.query<{
+      content: string | null;
+      tags: string[];
+    }>('SELECT content, tags FROM entities WHERE id = $1', [stored.id]);
+    expect(row.rows[0]?.content).toBe(
+      'Postgram durable grooming rewrites noisy durable memory into a clean stable fact.'
+    );
+    expect(row.rows[0]?.tags).toEqual(
+      expect.arrayContaining(['postgram', 'durable-memory'])
+    );
+  });
+
+  it('requires confirmation before applying durable grooming mutations', async () => {
+    if (!database) {
+      throw new Error('test database not initialized');
+    }
+
+    const result = await applyDurableGrooming(database.pool, {
+      now: new Date('2026-06-18T00:00:00.000Z'),
+      mode: 'auto',
+      dryRun: false,
+      confirm: false
+    });
+
+    expect(result.isErr()).toBe(true);
+    expect(result._unsafeUnwrapErr().code).toBe('VALIDATION');
+  });
+
+  it('reports confirmed durable grooming application with no matches as non-dry-run', async () => {
+    if (!database) {
+      throw new Error('test database not initialized');
+    }
+
+    const result = await applyDurableGrooming(database.pool, {
+      now: new Date('2026-06-18T00:00:00.000Z'),
+      mode: 'auto',
+      dryRun: false,
+      confirm: true,
+      topic: 'durable-apply-empty'
+    });
+
+    expect(result.isOk()).toBe(true);
+    expect(result._unsafeUnwrap()).toMatchObject({
+      reviewed: 0,
+      rewritten: 0,
+      archived: 0,
+      skipped: 0,
+      dryRun: false,
+      outcomes: []
+    });
+  });
+
+  it('builds a durable rewrite prompt that preserves the stable claim', () => {
+    const prompt = buildDurableMemoryRewritePrompt({
+      id: 'memory-1',
+      content: 'Stable outcome plus stale execution transcript.',
+      visibility: 'personal',
+      owner: null,
+      tags: ['postgram'],
+      metadata: {
+        memory_role: 'durable_memory',
+        durable_grooming: {
+          status: 'needs_grooming',
+          reason: 'Mixed stable fact and transient execution detail.'
+        }
+      },
+      createdAt: '2026-05-24T00:00:00.000Z'
+    });
+
+    expect(prompt).toContain('Rewrite this durable_memory record');
+    expect(prompt).toContain('Preserve stable decisions');
+    expect(prompt).toContain('Mixed stable fact and transient execution detail.');
+    expect(prompt).toContain('Stable outcome plus stale execution transcript.');
   });
 });

@@ -59,6 +59,27 @@ export const RELATIONS = [
 
 const RELATION_SET = new Set<string>(RELATIONS);
 
+function parseTargetType(value: unknown): string | null {
+  return typeof value === 'string' &&
+    (TARGET_TYPES as readonly string[]).includes(value)
+    ? value
+    : null;
+}
+
+function isRelationTargetTypeCompatible(
+  relation: string,
+  targetType: string | null
+): boolean {
+  if (targetType === null) return true;
+  if (relation === 'discussed_with' || relation === 'assigned_to') {
+    return targetType === 'person';
+  }
+  if (relation === 'part_of') {
+    return targetType !== 'person';
+  }
+  return true;
+}
+
 // JSON Schema passed to Ollama's `format` field. Ollama's structured-output
 // mode constrains the model's decoder to emit JSON that validates against
 // this schema — models like Gemma3 that don't reliably follow prose
@@ -125,17 +146,19 @@ export function parseExtractionResponse(response: string): ExtractionResult[] {
     }
 
     return (items as RawExtraction[])
-      .filter((item) =>
-        typeof item.target_name === 'string' && item.target_name.length > 0 &&
-        typeof item.relation === 'string' && RELATION_SET.has(item.relation)
-      )
       .map((item) => ({
+        item,
+        targetType: parseTargetType(item.target_type)
+      }))
+      .filter(({ item, targetType }) =>
+        typeof item.target_name === 'string' && item.target_name.length > 0 &&
+        typeof item.relation === 'string' &&
+        RELATION_SET.has(item.relation) &&
+        isRelationTargetTypeCompatible(item.relation, targetType)
+      )
+      .map(({ item, targetType }) => ({
         targetName: item.target_name!,
-        targetType:
-          typeof item.target_type === 'string' &&
-          (TARGET_TYPES as readonly string[]).includes(item.target_type)
-            ? item.target_type
-            : null,
+        targetType,
         relation: item.relation!,
         confidence: typeof item.confidence === 'number'
           ? Math.max(0, Math.min(1, item.confidence))
@@ -386,9 +409,9 @@ function escapeLikePattern(value: string): string {
  * Resolve a target name (as emitted by the LLM) to an existing entity id.
  *
  * Three-stage strategy:
- *   1. Exact case-insensitive match on `metadata.title` OR `content`, across
- *      all types. Precise enough that cross-type matches here are almost
- *      always intended (and the old ILIKE behaviour accepted them too).
+ *   1. Exact case-insensitive match on `metadata.title` OR `content`, filtered
+ *      by target type when the LLM supplied one. This prevents a requested
+ *      `person` edge from linking to a same-title `document`.
  *   2. ILIKE substring fallback, restricted to entities that do not yet
  *      have chunks. This keeps extraction linking working during the brief
  *      pending-enrichment window when stage 3 can't help, without
@@ -414,6 +437,7 @@ export async function findMatchingEntityByName(
       SELECT id FROM entities
       WHERE status IS DISTINCT FROM 'archived'
         AND id != $1
+        AND ($3::text IS NULL OR type = $3)
         AND (
           lower(metadata->>'title') = lower($2)
           OR lower(content) = lower($2)
@@ -423,7 +447,7 @@ export async function findMatchingEntityByName(
         created_at DESC
       LIMIT 1
     `,
-    [params.sourceId, params.targetName]
+    [params.sourceId, params.targetName, params.targetType]
   );
   if (exactMatch.rows[0]) {
     return { id: exactMatch.rows[0].id };

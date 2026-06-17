@@ -139,6 +139,94 @@ describe('extraction-service', () => {
     expect(edges._unsafeUnwrap().map((e) => e.relation).sort()).toEqual(['involves', 'part_of']);
   }, 120_000);
 
+  it('skips relation and target-type pairs that are semantically incompatible', async () => {
+    if (!database) throw new Error('test database not initialized');
+    const auth = makeAuthContext();
+    const embeddingService = createEmbeddingService();
+
+    const project = (await storeEntity(database.pool, auth, {
+      type: 'project',
+      content: 'Claude project: health',
+      metadata: { title: 'Claude project: health' }
+    }))._unsafeUnwrap();
+    await seedChunksFor(database.pool, embeddingService, project);
+
+    const source = (await storeEntity(database.pool, auth, {
+      type: 'interaction',
+      content: 'Conversation about Claude project health'
+    }))._unsafeUnwrap();
+
+    const mockLlm = () => Promise.resolve(JSON.stringify([
+      {
+        target_name: 'Claude project: health',
+        target_type: 'project',
+        relation: 'discussed_with',
+        confidence: 0.9
+      }
+    ]));
+
+    const linked = await extractAndLinkRelationships(
+      database.pool,
+      auth,
+      {
+        id: source.id,
+        type: source.type,
+        content: source.content!,
+        visibility: source.visibility,
+        owner: source.owner
+      },
+      { callLlm: mockLlm, embeddingService, matchMinSimilarity: 0.5 }
+    );
+
+    expect(linked).toBe(0);
+    const edges = await listEdges(database.pool, auth, source.id);
+    expect(edges._unsafeUnwrap()).toHaveLength(0);
+  }, 120_000);
+
+  it('does not exact-match a target to an entity with a different supplied target type', async () => {
+    if (!database) throw new Error('test database not initialized');
+    const auth = makeAuthContext();
+    const embeddingService = createEmbeddingService();
+
+    const document = (await storeEntity(database.pool, auth, {
+      type: 'document',
+      content: 'Christian Bieneck',
+      metadata: { title: 'Christian Bieneck' }
+    }))._unsafeUnwrap();
+    await seedChunksFor(database.pool, embeddingService, document);
+
+    const source = (await storeEntity(database.pool, auth, {
+      type: 'interaction',
+      content: 'Conversation with Christian Bieneck'
+    }))._unsafeUnwrap();
+
+    const mockLlm = () => Promise.resolve(JSON.stringify([
+      {
+        target_name: 'Christian Bieneck',
+        target_type: 'person',
+        relation: 'discussed_with',
+        confidence: 0.95
+      }
+    ]));
+
+    const linked = await extractAndLinkRelationships(
+      database.pool,
+      auth,
+      {
+        id: source.id,
+        type: source.type,
+        content: source.content!,
+        visibility: source.visibility,
+        owner: source.owner
+      },
+      { callLlm: mockLlm, embeddingService, matchMinSimilarity: 0.5 }
+    );
+
+    expect(linked).toBe(0);
+    const edges = await listEdges(database.pool, auth, source.id);
+    expect(edges._unsafeUnwrap()).toHaveLength(0);
+  }, 120_000);
+
   it('skips matches whose similarity is below the threshold', async () => {
     if (!database) throw new Error('test database not initialized');
     const auth = makeAuthContext();

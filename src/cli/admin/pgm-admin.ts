@@ -17,11 +17,13 @@ import { createEdge } from '../../services/edge-service.js';
 import { findSemanticNeighbors } from '../../services/extraction-service.js';
 import type { validateEdgeBatch as validateEdgeBatchFn } from '../../services/edge-validation-service.js';
 import {
+  applyDurableGrooming,
   groomDurableMemory,
   groomSessionContext,
   previewDurableMemoryGrooming,
   previewSessionContextGrooming,
   type CallLlm,
+  type DurableGroomingOutcome,
   type GroomingScope
 } from '../../services/memory-grooming-service.js';
 import { AppError, ErrorCode, toErrorResponse } from '../../util/errors.js';
@@ -85,6 +87,17 @@ type DurableGroomCommandOptions = {
   tag?: string[] | undefined;
   visibility?: string | undefined;
   includeReviewed?: boolean | undefined;
+  dryRun?: boolean | undefined;
+  yes?: boolean | undefined;
+};
+
+type DurableApplyCommandOptions = {
+  mode?: string | undefined;
+  status?: string[] | undefined;
+  limit?: string | undefined;
+  topic?: string | undefined;
+  tag?: string[] | undefined;
+  visibility?: string | undefined;
   dryRun?: boolean | undefined;
   yes?: boolean | undefined;
 };
@@ -1655,6 +1668,40 @@ function parseTagFilters(value: unknown): string[] | undefined {
   return normalized.length ? normalized : undefined;
 }
 
+function parseDurableApplyStatuses(
+  value: unknown
+): DurableGroomingOutcome[] | undefined {
+  if (value === undefined) {
+    return undefined;
+  }
+
+  const rawValues = Array.isArray(value) ? value : [value];
+  const statuses = rawValues.flatMap((entry) =>
+    typeof entry === 'string' ? entry.split(',') : []
+  );
+  const normalized = Array.from(
+    new Set(statuses.map((status) => status.trim()).filter(Boolean))
+  );
+  const allowed: DurableGroomingOutcome[] = [
+    'keep',
+    'needs_grooming',
+    'archive',
+    'superseded'
+  ];
+
+  for (const status of normalized) {
+    if (!allowed.includes(status as DurableGroomingOutcome)) {
+      throw new Error(
+        '--status must be one of keep, needs_grooming, archive, superseded'
+      );
+    }
+  }
+
+  return normalized.length
+    ? (normalized as DurableGroomingOutcome[])
+    : undefined;
+}
+
 async function createExtractionCallLlm(purpose: string): Promise<CallLlm> {
   const config = loadConfig();
   if (!config.EXTRACTION_ENABLED) {
@@ -1975,6 +2022,122 @@ memoryCommand
           }
         : [
             `Marked ${result.value.marked} durable memories older than ${olderThan} (${result.value.reviewed} reviewed)`
+          ];
+    });
+  });
+
+memoryCommand
+  .command('apply-durable-grooming')
+  .description('Apply durable grooming labels by rewriting or archiving durable memories')
+  .option('--mode <mode>', 'auto, rewrite, or archive', 'auto')
+  .option('--status <status...>', 'durable_grooming status filter; repeat or comma-separate values')
+  .option('--limit <limit>', 'maximum candidates')
+  .option('--topic <topic>', 'metadata topic filter')
+  .option('--tag <tag...>', 'required tag filter; repeat or comma-separate values')
+  .option('--visibility <visibility>', 'personal, work, or shared')
+  .option('--dry-run', 'preview without mutating')
+  .option('--yes', 'confirm mutation')
+  .action(async (options: DurableApplyCommandOptions, command) => {
+    const json = isJsonMode(command);
+    let limit: number | undefined;
+    if (options.limit !== undefined) {
+      limit = Number.parseInt(options.limit, 10);
+      if (!Number.isInteger(limit) || limit <= 0) {
+        await handleCliFailure(new Error('--limit must be a positive integer'), json);
+        return;
+      }
+    }
+
+    const rawMode = options.mode ?? 'auto';
+    if (rawMode !== 'auto' && rawMode !== 'rewrite' && rawMode !== 'archive') {
+      await handleCliFailure(
+        new Error('--mode must be auto, rewrite, or archive'),
+        json
+      );
+      return;
+    }
+    const mode: 'auto' | 'rewrite' | 'archive' = rawMode;
+
+    let visibility: Visibility | undefined;
+    let tags: string[] | undefined;
+    let statuses: DurableGroomingOutcome[] | undefined;
+    try {
+      visibility = parseGroomVisibility(options.visibility);
+      tags = parseTagFilters(options.tag);
+      statuses = parseDurableApplyStatuses(options.status);
+    } catch (error) {
+      await handleCliFailure(error, json);
+      return;
+    }
+
+    const dryRun = Boolean(options.dryRun);
+    let callLlm: CallLlm | undefined;
+    if (!dryRun && mode !== 'archive') {
+      try {
+        callLlm = await createExtractionCallLlm('durable memory cleanup');
+      } catch {
+        // Suggested content from the mark phase is enough for many rows. The
+        // service will skip rows that still require an LLM rewrite.
+        callLlm = undefined;
+      }
+    }
+
+    await runWithPool(json, async (pool) => {
+      const common = {
+        now: new Date(),
+        mode,
+        limit,
+        statuses,
+        topic:
+          typeof options.topic === 'string' && options.topic.trim().length > 0
+            ? options.topic.trim()
+            : undefined,
+        tags,
+        visibility
+      };
+
+      const result = await applyDurableGrooming(pool, {
+        ...common,
+        dryRun,
+        confirm: Boolean(options.yes),
+        callLlm
+      });
+      if (result.isErr()) {
+        throw result.error;
+      }
+
+      await appendAuditEntry(pool, {
+        operation: dryRun
+          ? 'memory.apply_durable_grooming.dry_run'
+          : 'memory.apply_durable_grooming',
+        details: {
+          mode,
+          statuses: statuses ?? null,
+          limit: limit ?? null,
+          topic: common.topic ?? null,
+          tags: tags ?? null,
+          visibility: visibility ?? null,
+          reviewed: result.value.reviewed,
+          rewritten: result.value.rewritten,
+          archived: result.value.archived,
+          skipped: result.value.skipped
+        }
+      });
+
+      return json
+        ? {
+            ...result.value,
+            mode,
+            statuses: statuses ?? null,
+            limit: limit ?? null,
+            topic: common.topic ?? null,
+            tags: tags ?? null,
+            visibility: visibility ?? null
+          }
+        : [
+            dryRun
+              ? `Would apply durable grooming to ${result.value.reviewed} memories (${result.value.outcomes.filter((outcome) => outcome.action === 'rewrite').length} rewrite, ${result.value.outcomes.filter((outcome) => outcome.action === 'archive').length} archive, ${result.value.skipped} skip)`
+              : `Applied durable grooming to ${result.value.reviewed} memories (${result.value.rewritten} rewritten, ${result.value.archived} archived, ${result.value.skipped} skipped)`
           ];
     });
   });

@@ -265,8 +265,21 @@ pgm-admin memory groom-durable --mode mark --yes --older-than 30d
 
 Mark mode writes `metadata.durable_grooming` with a status, reason,
 `reviewed_at`, and optional LLM suggestions. Treat `needs_grooming`, `archive`,
-and `superseded` as review labels for a later explicit operator action, not as
-permission for an agent to rewrite or delete durable memory.
+and `superseded` as review labels until an operator explicitly applies them.
+
+To clean marked durable memory, use:
+
+```bash
+pgm-admin memory apply-durable-grooming --dry-run
+pgm-admin memory apply-durable-grooming --yes
+```
+
+Apply mode defaults to `auto`: `needs_grooming` rows are rewritten from stored
+suggestions or the configured extraction LLM, and `archive`/`superseded` rows
+are archived. It records `applied_at` metadata; rewritten rows are marked
+`keep`, stale chunks are deleted, and embedding enrichment is queued again. Use
+`--mode rewrite`, `--mode archive`, `--status`, `--topic`, `--tag`,
+`--visibility`, or `--limit` to narrow the batch.
 
 ## Principles
 
@@ -282,7 +295,7 @@ permission for an agent to rewrite or delete durable memory.
 - **Separate continuity from knowledge** — use `session_context` for active-thread state and `durable_memory` for stable facts. Do not make session context durable by copying it verbatim.
 - **Use memory as recall, not graph source, by default** — both durable and session-context memories are embedded for semantic search but skipped by graph extraction unless an operator explicitly enables memory extraction.
 - **Let Postgram groom** — promotion from session context to durable memory should be handled by Postgram's groomer or an explicit operator workflow, because promotion changes the authority and sharing level of the memory. The groomer uses the configured extraction LLM to assess whether eligible session context deserves promotion and stores only the distilled durable memory, not a verbatim copy.
-- **Treat durable grooming marks as labels** — `durable_grooming` metadata flags follow-up work; it does not by itself make durable memory non-authoritative or safe to delete.
+- **Treat durable grooming marks as labels until applied** — `durable_grooming` metadata flags follow-up work. Only `pgm-admin memory apply-durable-grooming --yes` turns those labels into rewrites or archives.
 
 ## Failure modes to recognize
 

@@ -1,3 +1,9 @@
+## [1.33.2](https://github.com/ivo-toby/postgram/compare/cli-v1.33.1...cli-v1.33.2) (2026-06-17)
+
+### Bug Fixes
+
+* **extraction:** reject incompatible edge targets ([937cccc](https://github.com/ivo-toby/postgram/commit/937cccc97f6fafcefbb8cb6a54db4c2dfda60538))
+
 ## [1.33.1](https://github.com/ivo-toby/postgram/compare/cli-v1.33.0...cli-v1.33.1) (2026-06-17)
 
 ### Bug Fixes

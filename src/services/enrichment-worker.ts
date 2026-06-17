@@ -398,19 +398,22 @@ export function createEnrichmentWorker(options: EnrichmentWorkerOptions) {
             extractionMemoryMode: options.extractionMemoryMode
           })
         ) {
-          await options.pool.query(
-            `UPDATE entities
-             SET extraction_status = NULL,
-                 extraction_error = NULL,
-                 extraction_model_override = NULL,
-                 extraction_provider_override = NULL
-             WHERE id = $1
-               AND extraction_status = 'pending'`,
-            [entity.id]
-          );
-          await lockClient
-            .query('SELECT pg_advisory_unlock(hashtext($1))', [entity.id])
-            .catch(() => undefined);
+          try {
+            await options.pool.query(
+              `UPDATE entities
+               SET extraction_status = NULL,
+                   extraction_error = NULL,
+                   extraction_model_override = NULL,
+                   extraction_provider_override = NULL
+               WHERE id = $1
+                 AND extraction_status = 'pending'`,
+              [entity.id]
+            );
+          } finally {
+            await lockClient
+              .query('SELECT pg_advisory_unlock(hashtext($1))', [entity.id])
+              .catch(() => undefined);
+          }
           return true;
         }
 

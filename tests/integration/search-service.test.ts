@@ -253,6 +253,49 @@ describe('search-service', () => {
     expect(contents).not.toContain('Memory lifecycle roles discussion for Talon.');
   }, 120_000);
 
+  it('limits memory role search filters to memory entities', async () => {
+    if (!database) {
+      throw new Error('test database not initialized');
+    }
+
+    const embeddingService = createEmbeddingService();
+    const auth = makeAuthContext();
+
+    await storeEntity(database.pool, auth, {
+      type: 'memory',
+      visibility: 'personal',
+      content: 'Durable memory role filter search target.',
+      metadata: { memory_role: 'durable_memory' }
+    });
+    await storeEntity(database.pool, auth, {
+      type: 'document',
+      visibility: 'personal',
+      content: 'Document role filter search target.'
+    });
+
+    await createEnrichmentWorker({
+      pool: database.pool,
+      embeddingService
+    }).runOnce();
+
+    const result = await searchEntities(
+      database.pool,
+      auth,
+      {
+        query: 'role filter search target',
+        memoryRole: 'durable_memory',
+        threshold: 0,
+        limit: 10
+      },
+      { embeddingService }
+    );
+
+    expect(result.isOk()).toBe(true);
+    expect(result._unsafeUnwrap().results.map((entry) => entry.entity.type)).toEqual([
+      'memory'
+    ]);
+  }, 120_000);
+
   it('keeps other clients session context out of unfiltered memory search', async () => {
     if (!database) {
       throw new Error('test database not initialized');

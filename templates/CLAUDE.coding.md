@@ -12,6 +12,12 @@ Do not use Postgram as a general knowledge-work system during coding sessions.
 Avoid broad document/person/task exploration unless the user explicitly asks for
 it or the coding task cannot proceed without that context.
 
+Memory entities are embedded for semantic recall by default, but they are not
+graph-extracted by default, including durable memory. During coding work, treat
+memory as a searched continuity layer. Use graph expansion for source knowledge
+such as documents or interactions, or for memory only when an operator has
+explicitly enabled memory extraction.
+
 ### Session Start
 
 At the start of a coding session, always search recent session context for the
@@ -155,6 +161,8 @@ Use specific tags such as `decision`, `constraint`, `bug`, `root-cause`, or
 - Keep Postgram calls relevant to the coding task.
 - Use targeted durable-memory searches when the triggers match; avoid broad
   all-memory or graph exploration during coding unless the user asks.
+- Do not depend on graph neighbours for memory recall unless memory extraction
+  has been explicitly enabled; use `memory_role` search filters instead.
 - Prefer repo inspection over broad memory exploration for code facts.
 - Store concise, third-person or project-scoped facts, not transcripts.
 - Do not store code; the code lives in the repo.

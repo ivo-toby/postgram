@@ -43,9 +43,11 @@ Use it when the user asks:
 mcp__postgram__search { "query": "authentication design", "limit": 3, "expand_graph": true }
 ```
 
-Graph edges only exist after LLM extraction has processed the document. If
-`related` is empty, check `mcp__postgram__queue` — extraction may still be
-running. Flat search always works regardless of extraction status.
+Graph edges only exist after LLM extraction has processed source knowledge such
+as documents or interactions. Memory entities are embedded for semantic recall
+but are not graph-extracted by default, including durable memory. If `related`
+is empty for source knowledge, check `mcp__postgram__queue` — extraction may
+still be running. Flat search always works regardless of extraction status.
 
 ### When to store (do this without being asked)
 
@@ -59,8 +61,11 @@ running. Flat search always works regardless of extraction status.
 
 Use durable memory for stable facts future agents should trust. Use session
 context for active-thread continuity ("where were we?"), resumability, open
-questions, and current working state. Session context is embedded for semantic
-recall, scoped to the authenticated client, and skipped by graph extraction.
+questions, and current working state. Memory is embedded for semantic recall
+and skipped by graph extraction by default; operators can opt memory extraction
+back in with Postgram runtime configuration when they explicitly want graph
+edges from memory summaries. Session context is scoped to the authenticated
+client.
 Do not manually set `client_id`; Postgram derives session scope from the
 authenticated API key. Use `agent_id` only as optional metadata.
 Do not promote session context by copying it verbatim into durable memory;

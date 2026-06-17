@@ -511,7 +511,10 @@ export function listEntities(
             AND visibility = ANY($8)
             AND (
               $11::text IS NULL
-              OR COALESCE(metadata->>'memory_role', 'durable_memory') = $11
+              OR (
+                type = 'memory'
+                AND COALESCE(metadata->>'memory_role', 'durable_memory') = $11
+              )
             )
           ORDER BY created_at DESC
           LIMIT $9

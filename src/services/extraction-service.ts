@@ -80,6 +80,23 @@ function isRelationTargetTypeCompatible(
   return true;
 }
 
+function isRelationSourceTargetTypeCompatible(
+  sourceType: string,
+  relation: string,
+  targetType: string | null
+): boolean {
+  if (targetType === null) return true;
+  if (sourceType === 'document' && relation === 'assigned_to') return false;
+  if (
+    sourceType === 'interaction' &&
+    targetType === 'document' &&
+    (relation === 'caused_by' || relation === 'part_of')
+  ) {
+    return false;
+  }
+  return true;
+}
+
 // JSON Schema passed to Ollama's `format` field. Ollama's structured-output
 // mode constrains the model's decoder to emit JSON that validates against
 // this schema — models like Gemma3 that don't reliably follow prose
@@ -332,6 +349,7 @@ export type ExtractionDebugEvent =
 export type ExtractionDecision =
   | 'matched_existing'
   | 'auto_created'
+  | 'skipped_relation_shape'
   | 'skipped_below_confidence'
   | 'skipped_type_not_allowed'
   | 'skipped_auto_create_disabled'
@@ -373,7 +391,7 @@ type FindMatchParams = {
 };
 
 export type FindMatchResult =
-  | { id: string }
+  | { id: string; type: string }
   | { id: null; reason: 'no_match' | 'semantic_skipped' };
 
 /**
@@ -432,9 +450,9 @@ export async function findMatchingEntityByName(
   embeddingService: EmbeddingService,
   params: FindMatchParams
 ): Promise<FindMatchResult> {
-  const exactMatch = await pool.query<{ id: string }>(
+  const exactMatch = await pool.query<{ id: string; type: string }>(
     `
-      SELECT id FROM entities
+      SELECT id, type FROM entities
       WHERE status IS DISTINCT FROM 'archived'
         AND id != $1
         AND ($3::text IS NULL OR type = $3)
@@ -450,13 +468,16 @@ export async function findMatchingEntityByName(
     [params.sourceId, params.targetName, params.targetType]
   );
   if (exactMatch.rows[0]) {
-    return { id: exactMatch.rows[0].id };
+    return {
+      id: exactMatch.rows[0].id,
+      type: exactMatch.rows[0].type
+    };
   }
 
   const escapedName = escapeLikePattern(params.targetName);
-  const substringMatch = await pool.query<{ id: string }>(
+  const substringMatch = await pool.query<{ id: string; type: string }>(
     `
-      SELECT e.id
+      SELECT e.id, e.type
       FROM entities e
       WHERE e.status IS DISTINCT FROM 'archived'
         AND e.id != $1
@@ -471,7 +492,10 @@ export async function findMatchingEntityByName(
     [params.sourceId, `%${escapedName}%`, params.targetType]
   );
   if (substringMatch.rows[0]) {
-    return { id: substringMatch.rows[0].id };
+    return {
+      id: substringMatch.rows[0].id,
+      type: substringMatch.rows[0].type
+    };
   }
 
   // Exact + substring missed → try semantic. Resolving the active model and
@@ -498,9 +522,13 @@ export async function findMatchingEntityByName(
   }
   if (!vector) return { id: null, reason: 'semantic_skipped' };
 
-  const chunkMatch = await pool.query<{ id: string; similarity: string }>(
+  const chunkMatch = await pool.query<{
+    id: string;
+    type: string;
+    similarity: string;
+  }>(
     `
-      SELECT e.id, 1 - (c.embedding <=> $1::vector) AS similarity
+      SELECT e.id, e.type, 1 - (c.embedding <=> $1::vector) AS similarity
       FROM chunks c
       JOIN entities e ON e.id = c.entity_id
       WHERE e.status IS DISTINCT FROM 'archived'
@@ -521,7 +549,7 @@ export async function findMatchingEntityByName(
   if (!row) return { id: null, reason: 'no_match' };
   const similarity = Number(row.similarity);
   return similarity >= params.minSimilarity
-    ? { id: row.id }
+    ? { id: row.id, type: row.type }
     : { id: null, reason: 'no_match' };
 }
 
@@ -675,11 +703,24 @@ export async function extractAndLinkRelationships(
   for (const extraction of extractions) {
     const baseLog = {
       entityId: source.id,
+      sourceType: source.type,
       target: extraction.targetName,
       targetType: extraction.targetType,
       relation: extraction.relation,
       confidence: extraction.confidence
     };
+    if (!isRelationSourceTargetTypeCompatible(
+      source.type,
+      extraction.relation,
+      extraction.targetType
+    )) {
+      debugLog?.('extraction.decision', {
+        ...baseLog,
+        decision: 'skipped_relation_shape'
+      });
+      continue;
+    }
+
     const matchResult = await findMatchingEntityByName(pool, embeddingService, {
       targetName: extraction.targetName,
       targetType: extraction.targetType,
@@ -689,6 +730,9 @@ export async function extractAndLinkRelationships(
     });
 
     let matchedEntityId: string | null = matchResult.id;
+    let matchedEntityType: string | null = matchResult.id === null
+      ? null
+      : matchResult.type;
     let wasAutoCreated = false;
 
     if (!matchedEntityId) {
@@ -764,6 +808,7 @@ export async function extractAndLinkRelationships(
         ]
       );
       matchedEntityId = created.rows[0]?.id ?? null;
+      matchedEntityType = extraction.targetType;
       if (!matchedEntityId) {
         debugLog?.('extraction.decision', {
           ...baseLog,
@@ -773,6 +818,20 @@ export async function extractAndLinkRelationships(
         continue;
       }
       wasAutoCreated = true;
+    }
+
+    if (!isRelationSourceTargetTypeCompatible(
+      source.type,
+      extraction.relation,
+      matchedEntityType
+    )) {
+      debugLog?.('extraction.decision', {
+        ...baseLog,
+        decision: 'skipped_relation_shape',
+        matchedEntityId,
+        matchedEntityType
+      });
+      continue;
     }
 
     const result = await createEdge(pool, auth, {

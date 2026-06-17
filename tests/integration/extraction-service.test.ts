@@ -183,6 +183,99 @@ describe('extraction-service', () => {
     expect(edges._unsafeUnwrap()).toHaveLength(0);
   }, 120_000);
 
+  it('skips relation/source/target triples that overclaim extraction semantics', async () => {
+    if (!database) throw new Error('test database not initialized');
+    const auth = makeAuthContext();
+    const embeddingService = createEmbeddingService();
+
+    const alice = (await storeEntity(database.pool, auth, {
+      type: 'person',
+      content: 'Alice',
+      metadata: { title: 'Alice' }
+    }))._unsafeUnwrap();
+    await seedChunksFor(database.pool, embeddingService, alice);
+
+    const recipe = (await storeEntity(database.pool, auth, {
+      type: 'document',
+      content: 'Pasta Recipe',
+      metadata: { title: 'Pasta Recipe' }
+    }))._unsafeUnwrap();
+    await seedChunksFor(database.pool, embeddingService, recipe);
+
+    const documentSource = (await storeEntity(database.pool, auth, {
+      type: 'document',
+      content: 'Meeting note that mentions Alice'
+    }))._unsafeUnwrap();
+
+    const interactionSource = (await storeEntity(database.pool, auth, {
+      type: 'interaction',
+      content: 'Claude conversation that mentions Pasta Recipe'
+    }))._unsafeUnwrap();
+
+    const documentLinked = await extractAndLinkRelationships(
+      database.pool,
+      auth,
+      {
+        id: documentSource.id,
+        type: documentSource.type,
+        content: documentSource.content!,
+        visibility: documentSource.visibility,
+        owner: documentSource.owner
+      },
+      {
+        callLlm: () => Promise.resolve(JSON.stringify([
+          {
+            target_name: 'Alice',
+            target_type: 'person',
+            relation: 'assigned_to',
+            confidence: 0.95
+          }
+        ])),
+        embeddingService,
+        matchMinSimilarity: 0.5
+      }
+    );
+
+    const interactionLinked = await extractAndLinkRelationships(
+      database.pool,
+      auth,
+      {
+        id: interactionSource.id,
+        type: interactionSource.type,
+        content: interactionSource.content!,
+        visibility: interactionSource.visibility,
+        owner: interactionSource.owner
+      },
+      {
+        callLlm: () => Promise.resolve(JSON.stringify([
+          {
+            target_name: 'Pasta Recipe',
+            target_type: 'document',
+            relation: 'caused_by',
+            confidence: 0.9
+          },
+          {
+            target_name: 'Pasta Recipe',
+            target_type: 'document',
+            relation: 'part_of',
+            confidence: 0.95
+          }
+        ])),
+        embeddingService,
+        matchMinSimilarity: 0.5
+      }
+    );
+
+    expect(documentLinked).toBe(0);
+    expect(interactionLinked).toBe(0);
+    expect(
+      (await listEdges(database.pool, auth, documentSource.id))._unsafeUnwrap()
+    ).toHaveLength(0);
+    expect(
+      (await listEdges(database.pool, auth, interactionSource.id))._unsafeUnwrap()
+    ).toHaveLength(0);
+  }, 120_000);
+
   it('does not exact-match a target to an entity with a different supplied target type', async () => {
     if (!database) throw new Error('test database not initialized');
     const auth = makeAuthContext();

@@ -304,6 +304,7 @@ export async function startServer(): Promise<{
     pool,
     embeddingService,
     extractionEnabled: config.EXTRACTION_ENABLED,
+    extractionMemoryMode: config.EXTRACTION_MEMORY_MODE,
     callLlm,
     callLlmFactory,
     logger,

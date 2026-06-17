@@ -16,6 +16,7 @@ import { getMemoryRole } from './memory-role-service.js';
 
 type PendingEntityRow = {
   id: string;
+  type: string;
   content: string;
   metadata: Record<string, unknown>;
   extraction_status: string | null;
@@ -46,10 +47,16 @@ type CallLlmFactory = (
   model: string | null
 ) => CallLlm;
 
+export type ExtractionMemoryMode =
+  | 'embed_only'
+  | 'extract_durable'
+  | 'extract_all';
+
 type EnrichmentWorkerOptions = {
   pool: Pool;
   embeddingService?: EmbeddingService;
   extractionEnabled?: boolean;
+  extractionMemoryMode?: ExtractionMemoryMode | undefined;
   callLlm?: CallLlm | undefined;
   callLlmFactory?: CallLlmFactory | undefined;
   logger?: Logger;
@@ -86,11 +93,49 @@ async function rollbackQuietly(client: PoolClient): Promise<void> {
 const MAX_ERROR_LENGTH = 2000;
 
 function truncateErrorMessage(error: unknown): string {
-  const raw =
-    error instanceof Error ? error.message : String(error ?? 'unknown error');
+  let raw: string;
+  if (error instanceof Error) {
+    raw = error.message;
+  } else if (typeof error === 'string') {
+    raw = error;
+  } else if (error === null || error === undefined) {
+    raw = 'unknown error';
+  } else {
+    try {
+      raw = JSON.stringify(error) ?? 'unknown error';
+    } catch {
+      raw = 'unknown error';
+    }
+  }
   return raw.length > MAX_ERROR_LENGTH
     ? `${raw.slice(0, MAX_ERROR_LENGTH)}…`
     : raw;
+}
+
+function shouldQueueExtractionForEntity(input: {
+  type: string;
+  metadata: Record<string, unknown>;
+  extractionEnabled?: boolean | undefined;
+  extractionMemoryMode?: ExtractionMemoryMode | undefined;
+}): boolean {
+  if (!input.extractionEnabled) {
+    return false;
+  }
+
+  if (input.type !== 'memory') {
+    return true;
+  }
+
+  const mode = input.extractionMemoryMode ?? 'embed_only';
+  if (mode === 'extract_all') {
+    return true;
+  }
+
+  if (mode === 'extract_durable') {
+    return getMemoryRole(input.metadata) === 'durable_memory';
+  }
+
+  return false;
 }
 
 export function createEnrichmentWorker(options: EnrichmentWorkerOptions) {
@@ -135,7 +180,7 @@ export function createEnrichmentWorker(options: EnrichmentWorkerOptions) {
 
       const pending = await client.query<PendingEntityRow>(
         `
-          SELECT id, content, metadata, extraction_status
+          SELECT id, type, content, metadata, extraction_status
           FROM entities
           WHERE content IS NOT NULL
             AND (
@@ -198,8 +243,12 @@ export function createEnrichmentWorker(options: EnrichmentWorkerOptions) {
       }
 
       const shouldQueueExtraction =
-        Boolean(options.extractionEnabled) &&
-        getMemoryRole(entity.metadata) !== 'session_context';
+        shouldQueueExtractionForEntity({
+          type: entity.type,
+          metadata: entity.metadata,
+          extractionEnabled: options.extractionEnabled,
+          extractionMemoryMode: options.extractionMemoryMode
+        });
 
       if (options.extractionEnabled) {
         await client.query(
@@ -316,7 +365,7 @@ export function createEnrichmentWorker(options: EnrichmentWorkerOptions) {
     // for a per-entity advisory lock.
     const candidates = await options.pool.query<PendingExtractionRow>(
       `
-        SELECT id, content, type, visibility, owner,
+        SELECT id, content, type, metadata, visibility, owner,
                extraction_model_override, extraction_provider_override
         FROM entities
         WHERE extraction_status = 'pending'
@@ -339,6 +388,30 @@ export function createEnrichmentWorker(options: EnrichmentWorkerOptions) {
         );
         if (!lockRes.rows[0]?.locked) {
           continue;
+        }
+
+        if (
+          !shouldQueueExtractionForEntity({
+            type: entity.type,
+            metadata: entity.metadata,
+            extractionEnabled: options.extractionEnabled,
+            extractionMemoryMode: options.extractionMemoryMode
+          })
+        ) {
+          await options.pool.query(
+            `UPDATE entities
+             SET extraction_status = NULL,
+                 extraction_error = NULL,
+                 extraction_model_override = NULL,
+                 extraction_provider_override = NULL
+             WHERE id = $1
+               AND extraction_status = 'pending'`,
+            [entity.id]
+          );
+          await lockClient
+            .query('SELECT pg_advisory_unlock(hashtext($1))', [entity.id])
+            .catch(() => undefined);
+          return true;
         }
 
         const entityCallLlm = resolveCallLlm(

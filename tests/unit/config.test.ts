@@ -103,6 +103,23 @@ describe('config', () => {
     expect(cfg.EMBEDDING_DIMENSIONS).toBeUndefined();
   });
 
+  it('defaults memory extraction to embeddings only', () => {
+    const cfg = loadConfig(baseEnv({ OPENAI_API_KEY: 'sk-test' }));
+
+    expect(cfg.EXTRACTION_MEMORY_MODE).toBe('embed_only');
+  });
+
+  it('accepts explicit memory extraction modes', () => {
+    const cfg = loadConfig(
+      baseEnv({
+        OPENAI_API_KEY: 'sk-test',
+        EXTRACTION_MEMORY_MODE: 'extract_durable'
+      })
+    );
+
+    expect(cfg.EXTRACTION_MEMORY_MODE).toBe('extract_durable');
+  });
+
   it('leaves EMBEDDING_BASE_URL undefined when unset so callers can fall back to OLLAMA_BASE_URL', () => {
     const cfg = loadConfig(
       baseEnv({

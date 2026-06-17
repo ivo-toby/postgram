@@ -166,6 +166,58 @@ describe('REST entity endpoints', () => {
     expect(row.rows[0]?.extraction_status).toBe('skipped');
   }, 120_000);
 
+  it('lists memories by memory_role', async () => {
+    const { app, apiKey, clientId } = await createAuthorizedApp();
+
+    const createMemory = async (content: string, metadata: Record<string, unknown>) => {
+      const response = await app.request('/api/entities', {
+        method: 'POST',
+        headers: {
+          Authorization: `Bearer ${apiKey}`,
+          'Content-Type': 'application/json'
+        },
+        body: JSON.stringify({
+          type: 'memory',
+          content,
+          visibility: 'shared',
+          metadata
+        })
+      });
+
+      expect(response.status).toBe(201);
+      return (await response.json()) as { entity: { id: string } };
+    };
+
+    const sessionContext = await createMemory(
+      'Session context visible through the role filter.',
+      {
+        memory_role: 'session_context',
+        session_scope: { kind: 'client', client_id: clientId }
+      }
+    );
+    await createMemory('Durable memory excluded by the role filter.', {
+      memory_role: 'durable_memory'
+    });
+
+    const listResponse = await app.request(
+      '/api/entities?type=memory&memory_role=session_context',
+      {
+        headers: {
+          Authorization: `Bearer ${apiKey}`
+        }
+      }
+    );
+    const listBody = (await listResponse.json()) as {
+      items: Array<{ id: string; metadata: Record<string, unknown> }>;
+    };
+
+    expect(listResponse.status).toBe(200);
+    expect(listBody.items.map((item) => item.id)).toEqual([
+      sessionContext.entity.id
+    ]);
+    expect(listBody.items[0]?.metadata.memory_role).toBe('session_context');
+  }, 120_000);
+
   it('supports owner-scoped create, list, search, and graph queries', async () => {
     if (!database) {
       throw new Error('test database not initialized');

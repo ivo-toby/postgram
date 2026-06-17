@@ -205,7 +205,7 @@ describe('enrichment-worker', () => {
 
     // And a regular entity, to confirm the normal path still queues extraction.
     const normal = (await storeEntity(database.pool, makeAuthContext(), {
-      type: 'memory',
+      type: 'document',
       content: 'normal entity that should get extracted'
     }))._unsafeUnwrap();
 
@@ -259,7 +259,7 @@ describe('enrichment-worker', () => {
       pool: database.pool,
       embeddingService: createEmbeddingService(),
       extractionEnabled: true,
-      callLlm: async () => '[]'
+      callLlm: () => Promise.resolve('[]')
     });
 
     await worker.runOnce();
@@ -281,6 +281,141 @@ describe('enrichment-worker', () => {
       extraction_status: null
     });
     expect(chunks.rows[0]?.count).toBeGreaterThan(0);
+  }, 120_000);
+
+  it('embeds durable memory without graph extraction by default', async () => {
+    if (!database) {
+      throw new Error('test database not initialized');
+    }
+
+    const stored = (await storeEntity(database.pool, makeAuthContext(), {
+      type: 'memory',
+      content: 'Durable memory about Postgram extraction policy.',
+      visibility: 'personal',
+      metadata: {
+        memory_role: 'durable_memory'
+      }
+    }))._unsafeUnwrap();
+
+    let llmCalls = 0;
+    const worker = createEnrichmentWorker({
+      pool: database.pool,
+      embeddingService: createEmbeddingService(),
+      extractionEnabled: true,
+      callLlm: () => {
+        llmCalls += 1;
+        return Promise.resolve('[]');
+      }
+    });
+
+    await worker.runOnce();
+
+    const entity = await database.pool.query<{
+      enrichment_status: string;
+      extraction_status: string | null;
+    }>(
+      'SELECT enrichment_status, extraction_status FROM entities WHERE id = $1',
+      [stored.id]
+    );
+    const chunks = await database.pool.query<{ count: number }>(
+      'SELECT count(*)::int AS count FROM chunks WHERE entity_id = $1',
+      [stored.id]
+    );
+
+    expect(entity.rows[0]).toEqual({
+      enrichment_status: 'completed',
+      extraction_status: null
+    });
+    expect(chunks.rows[0]?.count).toBeGreaterThan(0);
+    expect(llmCalls).toBe(0);
+  }, 120_000);
+
+  it('can opt durable memory back into graph extraction', async () => {
+    if (!database) {
+      throw new Error('test database not initialized');
+    }
+
+    const stored = (await storeEntity(database.pool, makeAuthContext(), {
+      type: 'memory',
+      content: 'Durable memory that should be graph extracted.',
+      visibility: 'personal',
+      metadata: {
+        memory_role: 'durable_memory'
+      }
+    }))._unsafeUnwrap();
+
+    const worker = createEnrichmentWorker({
+      pool: database.pool,
+      embeddingService: createEmbeddingService(),
+      extractionEnabled: true,
+      extractionMemoryMode: 'extract_durable',
+      callLlm: () => Promise.resolve('[]')
+    });
+
+    await worker.runOnce();
+
+    const entity = await database.pool.query<{
+      enrichment_status: string;
+      extraction_status: string | null;
+    }>(
+      'SELECT enrichment_status, extraction_status FROM entities WHERE id = $1',
+      [stored.id]
+    );
+
+    expect(entity.rows[0]).toEqual({
+      enrichment_status: 'completed',
+      extraction_status: 'completed'
+    });
+  }, 120_000);
+
+  it('clears already-pending memory extraction when memory extraction is disabled by default', async () => {
+    if (!database) {
+      throw new Error('test database not initialized');
+    }
+
+    const stored = (await storeEntity(database.pool, makeAuthContext(), {
+      type: 'memory',
+      content: 'Durable memory that was queued before the default policy changed.',
+      visibility: 'personal',
+      metadata: {
+        memory_role: 'durable_memory'
+      }
+    }))._unsafeUnwrap();
+    await database.pool.query(
+      `UPDATE entities
+       SET enrichment_status = 'completed',
+           extraction_status = 'pending'
+       WHERE id = $1`,
+      [stored.id]
+    );
+
+    let llmCalls = 0;
+    const worker = createEnrichmentWorker({
+      pool: database.pool,
+      embeddingService: createEmbeddingService(),
+      extractionEnabled: true,
+      callLlm: () => {
+        llmCalls += 1;
+        return Promise.resolve('[]');
+      }
+    });
+
+    const processed = await worker.runOnce();
+
+    const entity = await database.pool.query<{
+      extraction_status: string | null;
+      extraction_error: string | null;
+    }>(
+      'SELECT extraction_status, extraction_error FROM entities WHERE id = $1',
+      [stored.id]
+    );
+
+    expect(processed).toBe(1);
+    expect(entity.rows[0]).toEqual({
+      extraction_status: null,
+      extraction_error: null
+    });
+    expect(llmCalls).toBe(0);
   }, 120_000);
 
   it('preserves skipped extraction while embedding entities', async () => {
@@ -336,11 +471,11 @@ describe('enrichment-worker', () => {
     // Two entities both queued for extraction. Only one has an override set
     // — verifies the worker dispatches per-row, not in batch.
     const overridden = (await storeEntity(database.pool, makeAuthContext(), {
-      type: 'memory',
+      type: 'document',
       content: 'entity that should be extracted with the override model'
     }))._unsafeUnwrap();
     const defaulted = (await storeEntity(database.pool, makeAuthContext(), {
-      type: 'memory',
+      type: 'document',
       content: 'entity that should be extracted with the default model'
     }))._unsafeUnwrap();
     await database.pool.query(

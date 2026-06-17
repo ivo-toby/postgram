@@ -20,6 +20,7 @@ import {
 } from './owner-filter.js';
 import {
   buildSessionContextMetadata,
+  type MemoryRole,
   type SessionContextInput
 } from './memory-role-service.js';
 
@@ -68,6 +69,7 @@ type ListEntitiesInput = {
   status?: EntityStatus | undefined;
   visibility?: Visibility | undefined;
   owner?: string | undefined;
+  memoryRole?: MemoryRole | undefined;
   tags?: string[] | undefined;
   limit?: number | undefined;
   offset?: number | undefined;
@@ -507,6 +509,10 @@ export function listEntities(
             AND ($6::text[] IS NULL OR tags @> $6)
             AND ($7::text[] IS NULL OR type = ANY($7))
             AND visibility = ANY($8)
+            AND (
+              $11::text IS NULL
+              OR COALESCE(metadata->>'memory_role', 'durable_memory') = $11
+            )
           ORDER BY created_at DESC
           LIMIT $9
           OFFSET $10
@@ -521,7 +527,8 @@ export function listEntities(
           auth.allowedTypes,
           auth.allowedVisibility,
           limit,
-          offset
+          offset,
+          input.memoryRole ?? null
         ]
       );
 

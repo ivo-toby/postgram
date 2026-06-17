@@ -46,6 +46,53 @@ describe('createApiClient', () => {
     );
   });
 
+  it('passes memory role when listing entities', async () => {
+    const mockFetch = vi.mocked(fetch);
+    mockFetch.mockResolvedValueOnce(
+      new Response(JSON.stringify({ items: [], total: 0, limit: 100, offset: 0 }), {
+        status: 200,
+        headers: { 'Content-Type': 'application/json' },
+      })
+    );
+
+    const client = createApiClient({ apiKey: 'test-key', onUnauthorized: vi.fn() });
+    await client.listEntities({ type: 'memory', memory_role: 'session_context' });
+
+    expect(mockFetch).toHaveBeenCalledWith(
+      '/api/entities?type=memory&memory_role=session_context&limit=100&offset=0',
+      expect.any(Object)
+    );
+  });
+
+  it('passes memory role when searching entities', async () => {
+    const mockFetch = vi.mocked(fetch);
+    mockFetch.mockResolvedValueOnce(
+      new Response(JSON.stringify({ results: [] }), {
+        status: 200,
+        headers: { 'Content-Type': 'application/json' },
+      })
+    );
+
+    const client = createApiClient({ apiKey: 'test-key', onUnauthorized: vi.fn() });
+    await client.searchEntities({
+      query: 'active context',
+      type: 'memory',
+      memory_role: 'session_context',
+    });
+
+    expect(mockFetch).toHaveBeenCalledWith(
+      '/api/search',
+      expect.objectContaining({
+        method: 'POST',
+        body: JSON.stringify({
+          query: 'active context',
+          type: 'memory',
+          memory_role: 'session_context',
+        }),
+      })
+    );
+  });
+
   it('calls onUnauthorized on 401', async () => {
     const mockFetch = vi.mocked(fetch);
     mockFetch.mockResolvedValueOnce(

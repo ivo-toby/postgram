@@ -61,6 +61,7 @@ export function createApiClient(options: ApiClientOptions) {
       status?: string;
       visibility?: string;
       owner?: string;
+      memory_role?: 'durable_memory' | 'session_context';
       tags?: string[];
       limit?: number;
       offset?: number;
@@ -71,6 +72,7 @@ export function createApiClient(options: ApiClientOptions) {
       if (params.status) qs.set('status', params.status);
       if (params.visibility) qs.set('visibility', params.visibility);
       if (params.owner) qs.set('owner', params.owner);
+      if (params.memory_role) qs.set('memory_role', params.memory_role);
       if (params.tags?.length) qs.set('tags', params.tags.join(','));
       qs.set('limit', String(params.limit ?? 100));
       qs.set('offset', String(params.offset ?? 0));
@@ -160,6 +162,7 @@ export function createApiClient(options: ApiClientOptions) {
       tags?: string[];
       visibility?: string;
       owner?: string;
+      memory_role?: 'durable_memory' | 'session_context';
       limit?: number;
       threshold?: number;
       recency_weight?: number;

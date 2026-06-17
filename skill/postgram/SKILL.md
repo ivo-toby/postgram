@@ -46,7 +46,7 @@ Postgram supports two roles for `memory` entities:
 - `durable_memory`: long-lived facts, decisions, preferences, constraints, root causes, and completed-work summaries.
 - `session_context`: short-lived working context used to resume an active or recent conversation.
 
-Use durable memory for information future agents should treat as stable. Use session context for "where we are in this thread" continuity. Session context is embedded for semantic recall, but does not participate in graph extraction.
+Use durable memory for information future agents should treat as stable. Use session context for "where we are in this thread" continuity. Memory entities are embedded for semantic recall by default, but do not participate in graph extraction by default, including durable memory. Operators can opt memory extraction back in with Postgram runtime configuration when they explicitly want graph edges from memory summaries.
 
 When using MCP and a `store_session_context` tool is available, prefer it for session context. It sets the correct metadata and client scope automatically.
 
@@ -148,7 +148,7 @@ Keep the compact default for normal continuity searches. Add `--full-response`
 only when you need to inspect metadata, timestamps, version, source, or raw
 similarity.
 
-For durable knowledge, prefer durable memories and source documents. Treat old session-context hits as working notes, not authoritative facts.
+For durable knowledge, prefer durable memories and source documents. Treat old session-context hits as working notes, not authoritative facts. Do not expect durable memories to appear as graph neighbours unless an operator has explicitly enabled memory extraction; use ordinary `memory_role=durable_memory` search for durable-memory recall.
 
 ### Search with graph expansion
 
@@ -165,7 +165,7 @@ Use `--expand-graph` whenever relationships matter — tracing a decision, under
 - "What else is connected to Y?" — open-ended graph neighbourhood traversal
 - Any time semantic search alone feels too flat
 
-**Important:** graph edges only exist for documents that have been through extraction (`extraction_status = completed`). Check `pgm queue` if `related` is empty — extraction may still be in progress.
+**Important:** graph edges only exist for source knowledge that has been through extraction (`extraction_status = completed`). Memory entities are embed-only by default, so memory may be searchable without producing graph neighbours. Check `pgm queue` if `related` is empty for a document or interaction — extraction may still be in progress.
 
 ### Recall by id
 
@@ -263,6 +263,7 @@ LLM-assisted promotion.
 - **Don't duplicate** — search first when the user's phrasing suggests something may already exist. Postgram stores everything; a cluttered knowledge base is worse than a sparse one.
 - **When storing from a long exchange**, store a _summary_ memory with the key facts, not the full transcript. The transcript belongs in the conversation log; the memory is the distilled signal.
 - **Separate continuity from knowledge** — use `session_context` for active-thread state and `durable_memory` for stable facts. Do not make session context durable by copying it verbatim.
+- **Use memory as recall, not graph source, by default** — both durable and session-context memories are embedded for semantic search but skipped by graph extraction unless an operator explicitly enables memory extraction.
 - **Let Postgram groom** — promotion from session context to durable memory should be handled by Postgram's groomer or an explicit operator workflow, because promotion changes the authority and sharing level of the memory. The groomer uses the configured extraction LLM to assess whether eligible session context deserves promotion and stores only the distilled durable memory, not a verbatim copy.
 
 ## Failure modes to recognize
@@ -343,3 +344,4 @@ pgm store --type memory --visibility personal \
 - Don't store secrets (API keys, tokens, credentials) — audit log records every write.
 - Don't use it for volatile state (counters, session tokens, caches).
 - Don't treat session-context memory as durable truth. It is working context until groomed or promoted by Postgram's LLM-assisted groomer.
+- Don't assume memory entities create graph edges. By default they are semantic-recall records only; graph extraction is for source knowledge unless explicitly configured otherwise.

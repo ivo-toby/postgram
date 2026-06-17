@@ -25,6 +25,9 @@ const configSchema = z
       .enum(['true', 'false'])
       .default('false')
       .transform((v) => v === 'true'),
+    EXTRACTION_MEMORY_MODE: z
+      .enum(['embed_only', 'extract_durable', 'extract_all'])
+      .default('embed_only'),
     EXTRACTION_PROVIDER: z
       .enum(['openai', 'anthropic', 'ollama', 'openai-compatible'])
       .default('openai'),

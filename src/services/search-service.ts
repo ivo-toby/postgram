@@ -217,7 +217,10 @@ async function runHybridSearch(
         AND ${ownerSqlCondition('e.owner', '$7')}
         AND (
           $11::text IS NULL
-          OR COALESCE(e.metadata->>'memory_role', 'durable_memory') = $11
+          OR (
+            e.type = 'memory'
+            AND COALESCE(e.metadata->>'memory_role', 'durable_memory') = $11
+          )
         )
         AND ${scopedMemoryVisibilitySql('e.metadata', '$12')}
       ORDER BY c.embedding <=> $1::vector

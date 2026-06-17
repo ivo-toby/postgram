@@ -464,6 +464,7 @@ export function registerRestRoutes(
     const status = c.req.query('status');
     const visibility = c.req.query('visibility');
     const owner = c.req.query('owner');
+    const memoryRole = c.req.query('memory_role');
 
     if (type && !entityTypeSchema.safeParse(type).success) {
       throw toValidationError('Invalid entity type');
@@ -481,6 +482,10 @@ export function registerRestRoutes(
       throw toValidationError('Invalid owner');
     }
 
+    if (memoryRole && !memoryRoleSchema.safeParse(memoryRole).success) {
+      throw toValidationError('Invalid memory role');
+    }
+
     const includeArchived = c.req.query('include_archived') === 'true';
 
     const result = await listEntities(pool, auth, {
@@ -488,6 +493,10 @@ export function registerRestRoutes(
       status: status as EntityStatus | undefined,
       visibility: visibility as Visibility | undefined,
       owner,
+      memoryRole: memoryRole as
+        | 'durable_memory'
+        | 'session_context'
+        | undefined,
       tags: tags ? tags.split(',').filter(Boolean) : undefined,
       limit: parseQueryNumber(c.req.query('limit'), 50),
       offset: parseQueryNumber(c.req.query('offset'), 0),

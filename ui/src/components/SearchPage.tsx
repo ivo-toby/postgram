@@ -14,6 +14,10 @@ import CleanupBasketDrawer from './CleanupBasketDrawer.tsx';
 const ALL_ENTITY_TYPES = ['document', 'memory', 'person', 'project', 'task', 'interaction'];
 const ALL_STATUSES = ['active', 'done', 'inbox', 'next', 'waiting', 'scheduled', 'someday'];
 const ALL_VISIBILITIES = ['personal', 'work', 'shared'];
+const MEMORY_ROLES = [
+  { label: 'durable', value: 'durable_memory' },
+  { label: 'session context', value: 'session_context' },
+] as const;
 const PAGE_SIZE = 20;
 const SEMANTIC_MAX = 50;
 const API_KEY_STORAGE_KEY = 'pgm_api_key';
@@ -24,12 +28,14 @@ type Props = {
 };
 
 type SearchMode = 'semantic' | 'list';
+type MemoryRoleFilter = '' | 'durable_memory' | 'session_context';
 
 type Filters = {
   query: string;
   mode: SearchMode;
   types: Set<string>;
   statuses: Set<string>;
+  memoryRole: MemoryRoleFilter;
   visibility: string;
   owner: string;
   tags: string[];
@@ -45,6 +51,7 @@ const initialFilters: Filters = {
   mode: 'semantic',
   types: new Set(),
   statuses: new Set(),
+  memoryRole: '',
   visibility: '',
   owner: '',
   tags: [],
@@ -110,10 +117,11 @@ export default function SearchPage({ api, onOpenInGraph }: Props) {
   const fetchPage = useCallback(async (f: Filters, offset: number): Promise<{ items: ResultItem[]; total: number | null; hasMore: boolean }> => {
     if (f.mode === 'semantic' && f.query.trim()) {
       if (offset > 0) return { items: [], total: null, hasMore: false };
-      const primaryType = f.types.size === 1 ? [...f.types][0] : undefined;
+      const primaryType = f.memoryRole ? 'memory' : f.types.size === 1 ? [...f.types][0] : undefined;
       const res = await api.searchEntities({
         query: f.query,
         ...(primaryType ? { type: primaryType } : {}),
+        ...(f.memoryRole ? { memory_role: f.memoryRole } : {}),
         ...(f.tags.length ? { tags: f.tags } : {}),
         ...(f.visibility ? { visibility: f.visibility } : {}),
         ...(f.owner.trim() ? { owner: f.owner.trim() } : {}),
@@ -130,16 +138,17 @@ export default function SearchPage({ api, onOpenInGraph }: Props) {
         similarity: r.similarity,
         related: r.related,
       }));
-      if (f.types.size > 1) items = items.filter(i => f.types.has(i.entity.type));
+      if (!f.memoryRole && f.types.size > 1) items = items.filter(i => f.types.has(i.entity.type));
       if (f.statuses.size > 0) items = items.filter(i => i.entity.status && f.statuses.has(i.entity.status));
       return { items, total: items.length, hasMore: false };
     }
 
-    const primaryType = f.types.size === 1 ? [...f.types][0] : undefined;
+    const primaryType = f.memoryRole ? 'memory' : f.types.size === 1 ? [...f.types][0] : undefined;
     const primaryStatus = f.statuses.size === 1 ? [...f.statuses][0] : undefined;
     const res = await api.listEntities({
       ...(primaryType ? { type: primaryType } : {}),
       ...(primaryStatus ? { status: primaryStatus } : {}),
+      ...(f.memoryRole ? { memory_role: f.memoryRole } : {}),
       ...(f.visibility ? { visibility: f.visibility } : {}),
       ...(f.owner.trim() ? { owner: f.owner.trim() } : {}),
       ...(f.tags.length ? { tags: f.tags } : {}),
@@ -148,7 +157,7 @@ export default function SearchPage({ api, onOpenInGraph }: Props) {
       ...(f.showArchived ? { include_archived: true } : {}),
     });
     let items: Entity[] = res.items as Entity[];
-    if (f.types.size > 1) items = items.filter(e => f.types.has(e.type));
+    if (!f.memoryRole && f.types.size > 1) items = items.filter(e => f.types.has(e.type));
     if (f.statuses.size > 1) items = items.filter(e => e.status && f.statuses.has(e.status));
     if (f.query.trim()) {
       const q = f.query.toLowerCase();
@@ -270,6 +279,14 @@ export default function SearchPage({ api, onOpenInGraph }: Props) {
     });
   }, []);
 
+  const updateMemoryRole = useCallback((memoryRole: MemoryRoleFilter) => {
+    setFilters(prev => ({
+      ...prev,
+      memoryRole,
+      types: memoryRole ? new Set(['memory']) : prev.types,
+    }));
+  }, []);
+
   const addTag = useCallback((raw: string) => {
     const tag = raw.trim().replace(/,$/, '').trim();
     if (!tag) return;
@@ -356,8 +373,9 @@ export default function SearchPage({ api, onOpenInGraph }: Props) {
   }, [addManyToCleanupBasket, clearResultSelection, selectedResultItems]);
 
   const activeFilterCount =
-    filters.types.size +
+    (filters.memoryRole ? 0 : filters.types.size) +
     filters.statuses.size +
+    (filters.memoryRole ? 1 : 0) +
     filters.tags.length +
     (filters.visibility ? 1 : 0) +
     (filters.owner.trim() ? 1 : 0) +
@@ -499,6 +517,32 @@ export default function SearchPage({ api, onOpenInGraph }: Props) {
                   />
                   Show archived
                 </label>
+              </Section>
+
+              <Section title="Memory role">
+                <div className="flex flex-wrap gap-1.5">
+                  <button
+                    onClick={() => updateMemoryRole('')}
+                    aria-label="Filter memory role any"
+                    className={`px-2 py-0.5 rounded-full text-xs border ${
+                      !filters.memoryRole ? 'border-blue-500 text-blue-300' : 'border-gray-700 text-gray-400 hover:text-white'
+                    }`}
+                  >
+                    any
+                  </button>
+                  {MEMORY_ROLES.map(role => (
+                    <button
+                      key={role.value}
+                      onClick={() => updateMemoryRole(role.value)}
+                      aria-label={`Filter memory role ${role.label}`}
+                      className={`px-2 py-0.5 rounded-full text-xs border ${
+                        filters.memoryRole === role.value ? 'border-blue-500 text-blue-300' : 'border-gray-700 text-gray-400 hover:text-white'
+                      }`}
+                    >
+                      {role.label}
+                    </button>
+                  ))}
+                </div>
               </Section>
 
               <Section title="Visibility">

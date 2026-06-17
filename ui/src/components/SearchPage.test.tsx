@@ -164,6 +164,28 @@ describe('SearchPage result selection', () => {
     await waitFor(() => expect(api.listEdges).toHaveBeenCalledWith('entity-1'));
   });
 
+  it('filters browse results by session-context memory role', async () => {
+    const { api, user } = await renderSearchPage([
+      entity({
+        id: 'entity-1',
+        content: 'Session context cleanup candidate',
+        metadata: { memory_role: 'session_context' },
+      }),
+    ]);
+
+    await user.click(screen.getByRole('button', { name: /^filters/i }));
+    await user.click(screen.getByRole('button', { name: /filter memory role session context/i }));
+
+    await waitFor(() => {
+      expect(api.listEntities).toHaveBeenLastCalledWith(
+        expect.objectContaining({
+          type: 'memory',
+          memory_role: 'session_context',
+        })
+      );
+    });
+  });
+
   it('shift-click selects a visible result range from the previous anchor', async () => {
     const { user } = await renderSearchPage([
       entity({ id: 'entity-1', content: 'First cleanup candidate' }),

@@ -300,6 +300,71 @@ describe('entity-service', () => {
     );
   }, 120_000);
 
+  it('filters listed memories by memory role', async () => {
+    if (!database) {
+      throw new Error('test database not initialized');
+    }
+
+    const auth = makeAuthContext();
+    const sessionContext = (await storeEntity(database.pool, auth, {
+      type: 'memory',
+      content: 'Session context that should be listed separately.',
+      visibility: 'personal',
+      metadata: {
+        memory_role: 'session_context',
+        session_scope: { kind: 'client', client_id: auth.clientId }
+      }
+    }))._unsafeUnwrap();
+    await storeEntity(database.pool, auth, {
+      type: 'memory',
+      content: 'Durable memory that should not match the session filter.',
+      visibility: 'personal',
+      metadata: {
+        memory_role: 'durable_memory'
+      }
+    });
+
+    const listed = await listEntities(database.pool, auth, {
+      type: 'memory',
+      memoryRole: 'session_context'
+    } as never);
+
+    expect(listed.isOk()).toBe(true);
+    expect(listed._unsafeUnwrap().items.map((entry) => entry.id)).toEqual([
+      sessionContext.id
+    ]);
+  }, 120_000);
+
+  it('limits memory role list filters to memory entities', async () => {
+    if (!database) {
+      throw new Error('test database not initialized');
+    }
+
+    const auth = makeAuthContext();
+    const durableMemory = (await storeEntity(database.pool, auth, {
+      type: 'memory',
+      content: 'Durable memory that should match the durable role filter.',
+      visibility: 'personal',
+      metadata: {
+        memory_role: 'durable_memory'
+      }
+    }))._unsafeUnwrap();
+    await storeEntity(database.pool, auth, {
+      type: 'document',
+      content: 'Document without a memory role must not match durable memory filtering.',
+      visibility: 'personal'
+    });
+
+    const listed = await listEntities(database.pool, auth, {
+      memoryRole: 'durable_memory'
+    } as never);
+
+    expect(listed.isOk()).toBe(true);
+    expect(listed._unsafeUnwrap().items.map((entry) => entry.id)).toEqual([
+      durableMemory.id
+    ]);
+  }, 120_000);
+
   it('allows delete-only keys to soft delete accessible entities', async () => {
     if (!database) {
       throw new Error('test database not initialized');

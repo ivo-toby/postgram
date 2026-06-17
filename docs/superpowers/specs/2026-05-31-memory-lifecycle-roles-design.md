@@ -179,18 +179,19 @@ Enrichment should be role-aware.
 
 | Entity | Embedding | Graph extraction |
 |--------|-----------|------------------|
-| `memory_role=durable_memory` | Yes | Yes, when extraction is enabled |
-| `memory_role=session_context` | Yes | No |
+| `memory_role=durable_memory` | Yes | No by default; yes only when `EXTRACTION_MEMORY_MODE=extract_durable` or `extract_all` |
+| `memory_role=session_context` | Yes | No by default; yes only when `EXTRACTION_MEMORY_MODE=extract_all` |
 | `document` | Yes | Existing behavior |
 | `task` | Existing behavior | Existing behavior |
 
 The principle is:
 
-> Embed for recall. Extract graph for knowledge.
+> Embed memory for recall. Extract graph for source knowledge by default.
 
-Session-context memory needs semantic recall, but graph extraction would create
-noisy edges from provisional working notes. Durable memory has earned the right
-to participate in the knowledge graph.
+Memory needs semantic recall, but graph extraction can create noisy person,
+interaction, and project edges from agent-written summaries. Operators can opt
+durable or all memory back into graph extraction with `EXTRACTION_MEMORY_MODE`
+when a deployment wants memory-derived graph edges.
 
 ---
 

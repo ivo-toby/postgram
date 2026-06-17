@@ -1,3 +1,9 @@
+## [1.33.1](https://github.com/ivo-toby/postgram/compare/cli-v1.33.0...cli-v1.33.1) (2026-06-17)
+
+### Bug Fixes
+
+* **extraction:** reject unsupported relations ([87be042](https://github.com/ivo-toby/postgram/commit/87be0427531cf5ad12d32163fcac07c826f48ce2))
+
 ## [1.33.0](https://github.com/ivo-toby/postgram/compare/cli-v1.32.1...cli-v1.33.0) (2026-06-17)
 
 ### Features

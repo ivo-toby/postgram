@@ -57,6 +57,8 @@ export const RELATIONS = [
   'mentioned_in'
 ] as const;
 
+const RELATION_SET = new Set<string>(RELATIONS);
+
 // JSON Schema passed to Ollama's `format` field. Ollama's structured-output
 // mode constrains the model's decoder to emit JSON that validates against
 // this schema — models like Gemma3 that don't reliably follow prose
@@ -125,7 +127,7 @@ export function parseExtractionResponse(response: string): ExtractionResult[] {
     return (items as RawExtraction[])
       .filter((item) =>
         typeof item.target_name === 'string' && item.target_name.length > 0 &&
-        typeof item.relation === 'string' && item.relation.length > 0
+        typeof item.relation === 'string' && RELATION_SET.has(item.relation)
       )
       .map((item) => ({
         targetName: item.target_name!,
@@ -852,4 +854,3 @@ export async function extractAndLinkRelationships(
 
   return linked;
 }
-

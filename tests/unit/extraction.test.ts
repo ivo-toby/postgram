@@ -46,6 +46,23 @@ describe('parseExtractionResponse', () => {
     expect(result).toHaveLength(1);
   });
 
+  it('filters out entries with unsupported relation strings', () => {
+    const response = JSON.stringify([
+      { target_name: 'Valid', target_type: 'person', relation: 'involves', confidence: 0.9 },
+      { target_name: 'Invalid', target_type: 'person', relation: 'involved_in', confidence: 0.9 },
+      { target_name: 'Also invalid', target_type: 'person', relation: 'mentions', confidence: 0.9 }
+    ]);
+
+    expect(parseExtractionResponse(response)).toEqual([
+      {
+        targetName: 'Valid',
+        targetType: 'person',
+        relation: 'involves',
+        confidence: 0.9
+      }
+    ]);
+  });
+
   it('wraps a bare object (lax model output) into a single-item list', () => {
     const response = JSON.stringify({
       target_name: 'Alice',

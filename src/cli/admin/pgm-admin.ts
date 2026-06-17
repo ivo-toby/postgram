@@ -17,7 +17,9 @@ import { createEdge } from '../../services/edge-service.js';
 import { findSemanticNeighbors } from '../../services/extraction-service.js';
 import type { validateEdgeBatch as validateEdgeBatchFn } from '../../services/edge-validation-service.js';
 import {
+  groomDurableMemory,
   groomSessionContext,
+  previewDurableMemoryGrooming,
   previewSessionContextGrooming,
   type CallLlm,
   type GroomingScope
@@ -73,6 +75,18 @@ type AuditRow = {
   details: Record<string, unknown>;
   timestamp: Date;
   key_name: string | null;
+};
+
+type DurableGroomCommandOptions = {
+  olderThan?: string | undefined;
+  mode?: string | undefined;
+  limit?: string | undefined;
+  topic?: string | undefined;
+  tag?: string[] | undefined;
+  visibility?: string | undefined;
+  includeReviewed?: boolean | undefined;
+  dryRun?: boolean | undefined;
+  yes?: boolean | undefined;
 };
 
 function createPool(): Pool {
@@ -1613,6 +1627,34 @@ function formatGroomScope(scope: GroomingScope): string {
   return scope.kind === 'all_clients' ? 'all clients' : `client ${scope.clientId}`;
 }
 
+function parseGroomVisibility(value: unknown): Visibility | undefined {
+  if (value === undefined) {
+    return undefined;
+  }
+
+  if (value !== 'personal' && value !== 'work' && value !== 'shared') {
+    throw new Error('--visibility must be personal, work, or shared');
+  }
+
+  return value;
+}
+
+function parseTagFilters(value: unknown): string[] | undefined {
+  if (value === undefined) {
+    return undefined;
+  }
+
+  const rawValues = Array.isArray(value) ? value : [value];
+  const tags = rawValues.flatMap((entry) =>
+    typeof entry === 'string' ? entry.split(',') : []
+  );
+  const normalized = Array.from(
+    new Set(tags.map((tag) => tag.trim()).filter((tag) => tag.length > 0))
+  );
+
+  return normalized.length ? normalized : undefined;
+}
+
 async function createExtractionCallLlm(purpose: string): Promise<CallLlm> {
   const config = loadConfig();
   if (!config.EXTRACTION_ENABLED) {
@@ -1779,6 +1821,160 @@ memoryCommand
             options.mode === 'promote'
               ? `Archived ${result.value.archived} session-context memories for ${scopeLabel} older than ${olderThan} (${result.value.promoted} promoted, ${result.value.skipped} skipped)`
               : `Archived ${result.value.archived} session-context memories for ${scopeLabel} older than ${olderThan}`
+          ];
+    });
+  });
+
+memoryCommand
+  .command('groom-durable')
+  .description('Preview or mark durable memories that need grooming')
+  .option('--older-than <duration>', 'only review memories older than this (e.g. 30m, 4h, 30d, 0d)', '30d')
+  .option('--mode <mode>', 'review or mark', 'review')
+  .option('--limit <limit>', 'maximum candidates')
+  .option('--topic <topic>', 'metadata topic filter')
+  .option('--tag <tag...>', 'required tag filter; repeat or comma-separate values')
+  .option('--visibility <visibility>', 'personal, work, or shared')
+  .option('--include-reviewed', 'include durable memories already reviewed by durable grooming')
+  .option('--dry-run', 'preview without mutating')
+  .option('--yes', 'confirm mutation')
+  .action(async (options: DurableGroomCommandOptions, command) => {
+    const json = isJsonMode(command);
+    let limit: number | undefined;
+    if (options.limit !== undefined) {
+      limit = Number.parseInt(options.limit, 10);
+      if (!Number.isInteger(limit) || limit <= 0) {
+        await handleCliFailure(new Error('--limit must be a positive integer'), json);
+        return;
+      }
+    }
+
+    const mode = options.mode ?? 'review';
+    if (mode !== 'review' && mode !== 'mark') {
+      await handleCliFailure(new Error('--mode must be review or mark'), json);
+      return;
+    }
+
+    const olderThan = options.olderThan ?? '30d';
+    let olderThanMs: number;
+    try {
+      olderThanMs = parseGroomOlderThan(olderThan);
+    } catch (error) {
+      await handleCliFailure(error, json);
+      return;
+    }
+
+    let visibility: Visibility | undefined;
+    let tags: string[] | undefined;
+    try {
+      visibility = parseGroomVisibility(options.visibility);
+      tags = parseTagFilters(options.tag);
+    } catch (error) {
+      await handleCliFailure(error, json);
+      return;
+    }
+
+    const dryRun = Boolean(options.dryRun) || mode === 'review';
+    let callLlm: CallLlm | undefined;
+    if (mode === 'mark' && !dryRun) {
+      try {
+        callLlm = await createExtractionCallLlm('durable memory grooming');
+      } catch (error) {
+        await handleCliFailure(error, json);
+        return;
+      }
+    }
+
+    await runWithPool(json, async (pool) => {
+      const common = {
+        now: new Date(),
+        limit,
+        olderThanMs,
+        topic:
+          typeof options.topic === 'string' && options.topic.trim().length > 0
+            ? options.topic.trim()
+            : undefined,
+        tags,
+        visibility,
+        includeReviewed: Boolean(options.includeReviewed)
+      };
+
+      if (dryRun) {
+        const preview = await previewDurableMemoryGrooming(pool, common);
+        if (preview.isErr()) {
+          throw preview.error;
+        }
+
+        await appendAuditEntry(pool, {
+          operation: 'memory.groom_durable.dry_run',
+          details: {
+            mode,
+            olderThan,
+            limit: limit ?? null,
+            topic: common.topic ?? null,
+            tags: tags ?? null,
+            visibility: visibility ?? null,
+            includeReviewed: Boolean(options.includeReviewed),
+            eligible: preview.value.eligible.length
+          }
+        });
+
+        return json
+          ? {
+              dryRun: true,
+              mode,
+              olderThan,
+              limit: limit ?? null,
+              topic: common.topic ?? null,
+              tags: tags ?? null,
+              visibility: visibility ?? null,
+              includeReviewed: Boolean(options.includeReviewed),
+              eligible: preview.value.eligible,
+              outcomes: []
+            }
+          : [
+              `Would review ${preview.value.eligible.length} durable memories older than ${olderThan}`
+            ];
+      }
+
+      const result = await groomDurableMemory(pool, {
+        ...common,
+        mode,
+        dryRun: false,
+        confirm: Boolean(options.yes),
+        callLlm
+      });
+      if (result.isErr()) {
+        throw result.error;
+      }
+
+      await appendAuditEntry(pool, {
+        operation: 'memory.groom_durable',
+        details: {
+          mode,
+          olderThan,
+          limit: limit ?? null,
+          topic: common.topic ?? null,
+          tags: tags ?? null,
+          visibility: visibility ?? null,
+          includeReviewed: Boolean(options.includeReviewed),
+          reviewed: result.value.reviewed,
+          marked: result.value.marked
+        }
+      });
+
+      return json
+        ? {
+            ...result.value,
+            mode,
+            olderThan,
+            limit: limit ?? null,
+            topic: common.topic ?? null,
+            tags: tags ?? null,
+            visibility: visibility ?? null,
+            includeReviewed: Boolean(options.includeReviewed)
+          }
+        : [
+            `Marked ${result.value.marked} durable memories older than ${olderThan} (${result.value.reviewed} reviewed)`
           ];
     });
   });

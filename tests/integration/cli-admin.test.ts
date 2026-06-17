@@ -1,5 +1,6 @@
 import { afterAll, beforeAll, beforeEach, describe, expect, it } from 'vitest';
 import { execFile } from 'node:child_process';
+import { createServer } from 'node:http';
 import { promisify } from 'node:util';
 import path from 'node:path';
 import type { Pool } from 'pg';
@@ -47,6 +48,16 @@ async function runAdmin(args: string[], env: NodeJS.ProcessEnv) {
     maxBuffer: 10_000_000,
     timeout: 120_000
   });
+}
+
+async function runAdminFailureOutput(args: string[], env: NodeJS.ProcessEnv): Promise<string> {
+  try {
+    await runAdmin(args, env);
+  } catch (error) {
+    return getCliErrorOutput(error);
+  }
+
+  throw new Error(`Expected pgm-admin ${args.join(' ')} to fail`);
 }
 
 function makeAuthContext(apiKeyId = '00000000-0000-0000-0000-000000000000'): AuthContext {
@@ -139,6 +150,53 @@ async function seedChunksFor(
       ]
     );
   }
+}
+
+type StubOllamaChat = {
+  url: string;
+  calls: Array<{ model: string; messages: Array<{ role: string; content: string }> }>;
+  close: () => Promise<void>;
+};
+
+async function startStubOllamaChat(responseContent: string): Promise<StubOllamaChat> {
+  const calls: StubOllamaChat['calls'] = [];
+
+  const server = createServer((req, res) => {
+    const chunks: Buffer[] = [];
+    req.on('data', (chunk: Buffer) => chunks.push(chunk));
+    req.on('end', () => {
+      if (req.method !== 'POST' || req.url !== '/api/chat') {
+        res.statusCode = 404;
+        res.end();
+        return;
+      }
+
+      const body = JSON.parse(Buffer.concat(chunks).toString('utf8')) as {
+        model: string;
+        messages: Array<{ role: string; content: string }>;
+      };
+      calls.push(body);
+
+      res.statusCode = 200;
+      res.setHeader('Content-Type', 'application/json');
+      res.end(JSON.stringify({ message: { content: responseContent } }));
+    });
+  });
+
+  await new Promise<void>((resolve) => server.listen(0, '127.0.0.1', resolve));
+  const address = server.address();
+  if (!address || typeof address === 'string') {
+    throw new Error('stub Ollama chat server failed to bind');
+  }
+
+  return {
+    url: `http://127.0.0.1:${address.port}`,
+    calls,
+    close: () =>
+      new Promise<void>((resolve, reject) => {
+        server.close((err) => (err ? reject(err) : resolve()));
+      })
+  };
 }
 
 describe('pgm-admin CLI', () => {
@@ -1319,22 +1377,18 @@ describe('pgm-admin CLI', () => {
 
     const databaseUrl = getDatabaseUrl(database);
 
-    const neitherError = await runAdmin(['memory', 'groom', '--dry-run', '--json'], {
+    const neitherError = await runAdminFailureOutput(['memory', 'groom', '--dry-run', '--json'], {
       DATABASE_URL: databaseUrl
-    }).catch((error) => error);
-    expect(getCliErrorOutput(neitherError)).toContain(
-      'Specify exactly one of --client-id <id> or --all-clients'
-    );
+    });
+    expect(neitherError).toContain('Specify exactly one of --client-id <id> or --all-clients');
 
-    const bothError = await runAdmin(
+    const bothError = await runAdminFailureOutput(
       ['memory', 'groom', '--client-id', 'codex', '--all-clients', '--dry-run', '--json'],
       {
         DATABASE_URL: databaseUrl
       }
-    ).catch((error) => error);
-    expect(getCliErrorOutput(bothError)).toContain(
-      'Specify exactly one of --client-id <id> or --all-clients'
     );
+    expect(bothError).toContain('Specify exactly one of --client-id <id> or --all-clients');
   }, 120_000);
 
   it('memory groom dry-run can assess all clients with an explicit age window', async () => {
@@ -1405,19 +1459,217 @@ describe('pgm-admin CLI', () => {
 
     const databaseUrl = getDatabaseUrl(database);
 
-    const negativeError = await runAdmin(
+    const negativeError = await runAdminFailureOutput(
       ['memory', 'groom', '--client-id', 'codex', '--older-than', '-1d', '--dry-run', '--json'],
       { DATABASE_URL: databaseUrl }
-    ).catch((error) => error);
-    expect(getCliErrorOutput(negativeError)).toContain("Invalid duration '-1d'");
-    expect(getCliErrorOutput(negativeError)).toContain("Use format like '30m', '4h', or '7d'");
+    );
+    expect(negativeError).toContain("Invalid duration '-1d'");
+    expect(negativeError).toContain("Use format like '30m', '4h', or '7d'");
 
-    const weekError = await runAdmin(
+    const weekError = await runAdminFailureOutput(
       ['memory', 'groom', '--client-id', 'codex', '--older-than', '1w', '--dry-run', '--json'],
       { DATABASE_URL: databaseUrl }
-    ).catch((error) => error);
-    expect(getCliErrorOutput(weekError)).toContain("Invalid duration '1w'");
-    expect(getCliErrorOutput(weekError)).toContain("Use format like '30m', '4h', or '7d'");
+    );
+    expect(weekError).toContain("Invalid duration '1w'");
+    expect(weekError).toContain("Use format like '30m', '4h', or '7d'");
+  }, 120_000);
+
+  it('memory groom-durable previews durable candidates in dry-run mode', async () => {
+    if (!database) {
+      throw new Error('test database not initialized');
+    }
+
+    const databaseUrl = getDatabaseUrl(database);
+    const seededKey = (await createKey(database.pool, {
+      name: `durable-groom-preview-${crypto.randomUUID()}`,
+      scopes: ['read', 'write', 'delete'],
+      allowedVisibility: ['personal']
+    }))._unsafeUnwrap();
+    const auth = makeAuthContext(seededKey.record.id);
+
+    const eligible = (await storeEntity(database.pool, auth, {
+      type: 'memory',
+      content: 'Durable memory eligible for CLI preview.',
+      visibility: 'personal',
+      tags: ['postgram', 'cleanup'],
+      metadata: {
+        memory_role: 'durable_memory',
+        topic: 'cli-durable-preview'
+      }
+    }))._unsafeUnwrap();
+    await database.pool.query(
+      "UPDATE entities SET created_at = '2026-04-01T00:00:00.000Z' WHERE id = $1",
+      [eligible.id]
+    );
+
+    await storeEntity(database.pool, auth, {
+      type: 'memory',
+      content: 'Session context excluded from durable CLI preview.',
+      visibility: 'personal',
+      tags: ['postgram', 'cleanup'],
+      metadata: {
+        memory_role: 'session_context',
+        session_scope: { kind: 'client', client_id: 'codex' },
+        topic: 'cli-durable-preview'
+      }
+    });
+
+    const dryRun = await runAdmin(
+      [
+        'memory',
+        'groom-durable',
+        '--dry-run',
+        '--older-than',
+        '0d',
+        '--topic',
+        'cli-durable-preview',
+        '--tag',
+        'cleanup',
+        '--json'
+      ],
+      { DATABASE_URL: databaseUrl }
+    );
+    const body = parseJson(dryRun.stdout) as {
+      dryRun: boolean;
+      mode: string;
+      eligible: Array<{ id: string }>;
+      outcomes: Array<{ id: string; outcome: string }>;
+    };
+
+    expect(body).toMatchObject({
+      dryRun: true,
+      mode: 'review'
+    });
+    expect(body.eligible.map((entry) => entry.id)).toEqual([eligible.id]);
+    expect(body.outcomes).toEqual([]);
+  }, 120_000);
+
+  it('memory groom-durable marks durable candidates and emits audit rows', async () => {
+    if (!database) {
+      throw new Error('test database not initialized');
+    }
+
+    const databaseUrl = getDatabaseUrl(database);
+    const stub = await startStubOllamaChat(
+      JSON.stringify({
+        outcome: 'needs_grooming',
+        reason: 'Stable outcome is mixed with stale execution detail.',
+        suggested_action: 'distill',
+        suggested_content: 'Postgram durable grooming should mark noisy memory before rewriting it.',
+        suggested_tags: ['postgram', 'memory-grooming']
+      })
+    );
+
+    try {
+      const seededKey = (await createKey(database.pool, {
+        name: `durable-groom-mark-${crypto.randomUUID()}`,
+        scopes: ['read', 'write', 'delete'],
+        allowedVisibility: ['personal']
+      }))._unsafeUnwrap();
+      const auth = makeAuthContext(seededKey.record.id);
+
+      const eligible = (await storeEntity(database.pool, auth, {
+        type: 'memory',
+        content: 'Durable memory eligible for CLI mark mode.',
+        visibility: 'personal',
+        tags: ['postgram'],
+        metadata: {
+          memory_role: 'durable_memory',
+          topic: 'cli-durable-mark'
+        }
+      }))._unsafeUnwrap();
+      await database.pool.query(
+        "UPDATE entities SET created_at = '2026-04-01T00:00:00.000Z' WHERE id = $1",
+        [eligible.id]
+      );
+
+      const result = await runAdmin(
+        [
+          'memory',
+          'groom-durable',
+          '--mode',
+          'mark',
+          '--yes',
+          '--older-than',
+          '0d',
+          '--topic',
+          'cli-durable-mark',
+          '--json'
+        ],
+        {
+          DATABASE_URL: databaseUrl,
+          EXTRACTION_ENABLED: 'true',
+          EXTRACTION_PROVIDER: 'ollama',
+          EXTRACTION_MODEL: 'llama3',
+          OPENAI_API_KEY: 'sk-test-fake',
+          OLLAMA_BASE_URL: stub.url
+        }
+      );
+      const body = parseJson(result.stdout) as {
+        dryRun: boolean;
+        mode: string;
+        marked: number;
+        outcomes: Array<{ id: string; outcome: string }>;
+      };
+
+      expect(body).toMatchObject({
+        dryRun: false,
+        mode: 'mark',
+        marked: 1
+      });
+      expect(body.outcomes).toEqual([
+        expect.objectContaining({
+          id: eligible.id,
+          outcome: 'needs_grooming'
+        })
+      ]);
+      expect(stub.calls).toHaveLength(1);
+
+      const row = await database.pool.query<{
+        status: string | null;
+        metadata: Record<string, unknown>;
+      }>('SELECT status, metadata FROM entities WHERE id = $1', [eligible.id]);
+
+      expect(row.rows[0]?.status).toBeNull();
+      expect(row.rows[0]?.metadata.durable_grooming).toMatchObject({
+        status: 'needs_grooming',
+        reason: 'Stable outcome is mixed with stale execution detail.',
+        suggested_action: 'distill'
+      });
+
+      const auditRows = await database.pool.query<{
+        operation: string;
+        details: Record<string, unknown>;
+      }>(
+        "SELECT operation, details FROM audit_log WHERE operation = 'memory.groom_durable' ORDER BY timestamp DESC LIMIT 1"
+      );
+      expect(auditRows.rows[0]?.operation).toBe('memory.groom_durable');
+      expect(auditRows.rows[0]?.details).toMatchObject({
+        mode: 'mark',
+        marked: 1
+      });
+    } finally {
+      await stub.close();
+    }
+  }, 120_000);
+
+  it('memory groom-durable rejects invalid modes', async () => {
+    if (!database) {
+      throw new Error('test database not initialized');
+    }
+
+    const databaseUrl = getDatabaseUrl(database);
+    let error: unknown;
+    try {
+      await runAdmin(
+        ['memory', 'groom-durable', '--mode', 'rewrite', '--dry-run', '--json'],
+        { DATABASE_URL: databaseUrl }
+      );
+    } catch (caught) {
+      error = caught;
+    }
+
+    expect(getCliErrorOutput(error)).toContain('--mode must be review or mark');
   }, 120_000);
 
   describe('purge command', () => {
@@ -1483,11 +1735,12 @@ describe('pgm-admin CLI', () => {
       const { stdout } = await runAdmin(['purge', '--all', '--type', 'memory'], { DATABASE_URL: dbUrl });
       expect(stdout).toMatch(/Permanently deleted 1/);
 
-      const check = await database.pool.query(
-        'SELECT id, type FROM entities WHERE id = ANY($1)', [[e1.id, e2.id]]
+      const check = await database.pool.query<{ id: string; type: string }>(
+        'SELECT id, type FROM entities WHERE id = ANY($1)',
+        [[e1.id, e2.id]]
       );
       expect(check.rows).toHaveLength(1);
-      expect(check.rows[0].type).toBe('document');
+      expect(check.rows[0]?.type).toBe('document');
     }, 120_000);
 
     it('dry-run does not delete anything', async () => {
@@ -1572,11 +1825,12 @@ describe('pgm-admin CLI', () => {
       const { stdout } = await runAdmin(['purge', '--all', '--older-than', '30d'], { DATABASE_URL: dbUrl });
       expect(stdout).toMatch(/Permanently deleted 1/);
 
-      const check = await database.pool.query(
-        'SELECT id FROM entities WHERE id = ANY($1)', [[e1.id, e2.id]]
+      const check = await database.pool.query<{ id: string }>(
+        'SELECT id FROM entities WHERE id = ANY($1)',
+        [[e1.id, e2.id]]
       );
       expect(check.rows).toHaveLength(1);
-      expect(check.rows[0].id).toBe(e2.id);
+      expect(check.rows[0]?.id).toBe(e2.id);
     }, 120_000);
   });
 

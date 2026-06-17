@@ -251,6 +251,23 @@ from the API key. Use `pgm-admin memory groom --client-id <id>` or
 `--all-clients` only as an operator, and use admin `--mode promote --yes` for
 LLM-assisted promotion.
 
+### Groom durable memory quality
+
+Use this only as an operator/admin workflow. Durable grooming reviews active
+`durable_memory` rows, including legacy memories with no explicit
+`memory_role`, and marks whether they should be kept, groomed later, archived,
+or treated as superseded. It does not rewrite content or archive rows.
+
+```bash
+pgm-admin memory groom-durable --dry-run --older-than 30d
+pgm-admin memory groom-durable --mode mark --yes --older-than 30d
+```
+
+Mark mode writes `metadata.durable_grooming` with a status, reason,
+`reviewed_at`, and optional LLM suggestions. Treat `needs_grooming`, `archive`,
+and `superseded` as review labels for a later explicit operator action, not as
+permission for an agent to rewrite or delete durable memory.
+
 ## Principles
 
 - **Prefer JSON output** (`--json`) when parsing results into further actions. Human table output is for direct display.
@@ -265,6 +282,7 @@ LLM-assisted promotion.
 - **Separate continuity from knowledge** — use `session_context` for active-thread state and `durable_memory` for stable facts. Do not make session context durable by copying it verbatim.
 - **Use memory as recall, not graph source, by default** — both durable and session-context memories are embedded for semantic search but skipped by graph extraction unless an operator explicitly enables memory extraction.
 - **Let Postgram groom** — promotion from session context to durable memory should be handled by Postgram's groomer or an explicit operator workflow, because promotion changes the authority and sharing level of the memory. The groomer uses the configured extraction LLM to assess whether eligible session context deserves promotion and stores only the distilled durable memory, not a verbatim copy.
+- **Treat durable grooming marks as labels** — `durable_grooming` metadata flags follow-up work; it does not by itself make durable memory non-authoritative or safe to delete.
 
 ## Failure modes to recognize
 

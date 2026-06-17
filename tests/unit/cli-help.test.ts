@@ -101,5 +101,11 @@ describe('CLI help text', () => {
     expect(normalizeHelp(keyHelp)).toContain(
       'one stable client identity per agent/client for session-context scope'
     );
+
+    const memoryHelp = await helpFor(PGM_ADMIN_ENTRYPOINT, [
+      'memory',
+      '--help'
+    ]);
+    expect(normalizeHelp(memoryHelp)).toContain('groom-durable');
   });
 });

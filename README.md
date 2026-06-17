@@ -153,6 +153,21 @@ Use `--mode archive --yes` instead if you want to archive eligible working
 context without LLM-assisted promotion. Run the same command with `--dry-run`
 first to verify the eligible set.
 
+Operators can also review durable memory quality without mutating the durable
+claim itself:
+
+```bash
+pgm-admin memory groom-durable --dry-run --older-than 30d
+pgm-admin memory groom-durable --mode mark --yes --older-than 30d
+```
+
+Durable grooming selects active `durable_memory` rows, including legacy memory
+rows with no `metadata.memory_role`, and classifies them as `keep`,
+`needs_grooming`, `archive`, or `superseded`. Mark mode writes
+`metadata.durable_grooming` with the outcome, reason, review timestamp, and any
+LLM suggestions. It does not rewrite content, change status, archive rows, or
+merge duplicates; those remain explicit future operator actions.
+
 ### 2. Async Enrichment
 
 Entities with content are persisted first and enriched later. Each entity

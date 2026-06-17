@@ -163,6 +163,9 @@ Use specific tags such as `decision`, `constraint`, `bug`, `root-cause`, or
   all-memory or graph exploration during coding unless the user asks.
 - Do not depend on graph neighbours for memory recall unless memory extraction
   has been explicitly enabled; use `memory_role` search filters instead.
+- Treat `metadata.durable_grooming` as an operator review label. It can mean a
+  durable memory needs follow-up, but it is not permission to rewrite or delete
+  durable memory during ordinary coding work.
 - Prefer repo inspection over broad memory exploration for code facts.
 - Store concise, third-person or project-scoped facts, not transcripts.
 - Do not store code; the code lives in the repo.

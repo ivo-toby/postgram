@@ -103,6 +103,12 @@ Do not manually copy session context into durable memory. Postgram grooming
 promotes eligible session context through an LLM-assisted distillation step and
 archives the source context with provenance.
 
+Operator durable grooming uses `pgm-admin memory groom-durable`. It reviews
+active durable memories and writes `metadata.durable_grooming` labels such as
+`keep`, `needs_grooming`, `archive`, or `superseded`; it does not rewrite or
+archive durable memories by itself. Treat those labels as follow-up work for an
+explicit operator workflow.
+
 For session continuity, search session context first:
 
 ```

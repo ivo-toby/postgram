@@ -2,8 +2,11 @@ import { afterAll, beforeAll, beforeEach, describe, expect, it } from 'vitest';
 
 import { storeEntity } from '../../src/services/entity-service.js';
 import {
+  buildDurableMemoryGroomingPrompt,
   buildSessionContextPromotionPrompt,
+  groomDurableMemory,
   groomSessionContext,
+  previewDurableMemoryGrooming,
   previewSessionContextGrooming
 } from '../../src/services/memory-grooming-service.js';
 import type { AuthContext } from '../../src/auth/types.js';
@@ -966,6 +969,384 @@ describe('memory-grooming-service', () => {
     expect(prompt).toContain('Do not promote verbatim');
     expect(prompt).toContain(
       'Session context: an implementation choice exists.'
+    );
+  });
+
+  it('previews eligible durable memories without selecting other entity roles', async () => {
+    if (!database) {
+      throw new Error('test database not initialized');
+    }
+
+    const durable = (
+      await storeEntity(database.pool, makeAuthContext(), {
+        type: 'memory',
+        content: 'Durable memory with stale execution breadcrumbs.',
+        visibility: 'personal',
+        tags: ['postgram', 'decision'],
+        metadata: {
+          memory_role: 'durable_memory',
+          topic: 'durable-grooming'
+        }
+      })
+    )._unsafeUnwrap();
+    await backdateEntity(database.pool, durable.id, '2026-04-01T00:00:00.000Z');
+
+    const implicitDurable = (
+      await storeEntity(database.pool, makeAuthContext(), {
+        type: 'memory',
+        content: 'Legacy memory without an explicit role.',
+        visibility: 'personal',
+        tags: ['postgram'],
+        metadata: {
+          topic: 'durable-grooming'
+        }
+      })
+    )._unsafeUnwrap();
+    await backdateEntity(
+      database.pool,
+      implicitDurable.id,
+      '2026-04-02T00:00:00.000Z'
+    );
+
+    await storeEntity(database.pool, makeAuthContext(), {
+      type: 'memory',
+      content: 'Session context should not be durable-groomed.',
+      visibility: 'personal',
+      metadata: {
+        memory_role: 'session_context',
+        session_scope: { kind: 'client', client_id: 'codex' },
+        topic: 'durable-grooming'
+      }
+    });
+    await storeEntity(database.pool, makeAuthContext(), {
+      type: 'document',
+      content: 'Document should not be durable-groomed.',
+      visibility: 'personal',
+      metadata: {
+        topic: 'durable-grooming'
+      }
+    });
+
+    const archived = (
+      await storeEntity(database.pool, makeAuthContext(), {
+        type: 'memory',
+        content: 'Archived durable memory should not be previewed.',
+        visibility: 'personal',
+        metadata: {
+          memory_role: 'durable_memory',
+          topic: 'durable-grooming'
+        }
+      })
+    )._unsafeUnwrap();
+    await database.pool.query(
+      "UPDATE entities SET status = 'archived' WHERE id = $1",
+      [archived.id]
+    );
+
+    const reviewed = (
+      await storeEntity(database.pool, makeAuthContext(), {
+        type: 'memory',
+        content: 'Already reviewed durable memory.',
+        visibility: 'personal',
+        tags: ['postgram'],
+        metadata: {
+          memory_role: 'durable_memory',
+          topic: 'durable-grooming',
+          durable_grooming: {
+            reviewed_at: '2026-05-01T00:00:00.000Z',
+            status: 'keep'
+          }
+        }
+      })
+    )._unsafeUnwrap();
+    await backdateEntity(
+      database.pool,
+      reviewed.id,
+      '2026-04-03T00:00:00.000Z'
+    );
+
+    const preview = await previewDurableMemoryGrooming(database.pool, {
+      now: new Date('2026-06-17T00:00:00.000Z'),
+      olderThanMs: 30 * 24 * 60 * 60 * 1000,
+      topic: 'durable-grooming',
+      tags: ['postgram']
+    });
+
+    expect(preview.isOk()).toBe(true);
+    expect(preview._unsafeUnwrap().eligible.map((entry) => entry.id)).toEqual([
+      durable.id,
+      implicitDurable.id
+    ]);
+
+    const previewWithReviewed = await previewDurableMemoryGrooming(
+      database.pool,
+      {
+        now: new Date('2026-06-17T00:00:00.000Z'),
+        olderThanMs: 30 * 24 * 60 * 60 * 1000,
+        topic: 'durable-grooming',
+        tags: ['postgram'],
+        includeReviewed: true
+      }
+    );
+
+    expect(previewWithReviewed.isOk()).toBe(true);
+    expect(
+      previewWithReviewed._unsafeUnwrap().eligible.map((entry) => entry.id)
+    ).toEqual([durable.id, implicitDurable.id, reviewed.id]);
+  });
+
+  it('filters durable grooming preview by visibility, age, topic, tags, and limit', async () => {
+    if (!database) {
+      throw new Error('test database not initialized');
+    }
+
+    const auth = {
+      ...makeAuthContext(),
+      allowedVisibility: ['personal', 'work'] as AuthContext['allowedVisibility']
+    };
+    const first = (
+      await storeEntity(database.pool, auth, {
+        type: 'memory',
+        content: 'First work durable memory.',
+        visibility: 'work',
+        tags: ['postgram', 'cleanup'],
+        metadata: {
+          memory_role: 'durable_memory',
+          topic: 'durable-filtering'
+        }
+      })
+    )._unsafeUnwrap();
+    await backdateEntity(database.pool, first.id, '2026-04-01T00:00:00.000Z');
+
+    const second = (
+      await storeEntity(database.pool, auth, {
+        type: 'memory',
+        content: 'Second work durable memory.',
+        visibility: 'work',
+        tags: ['postgram', 'cleanup'],
+        metadata: {
+          memory_role: 'durable_memory',
+          topic: 'durable-filtering'
+        }
+      })
+    )._unsafeUnwrap();
+    await backdateEntity(database.pool, second.id, '2026-04-02T00:00:00.000Z');
+
+    await storeEntity(database.pool, auth, {
+      type: 'memory',
+      content: 'Wrong visibility durable memory.',
+      visibility: 'personal',
+      tags: ['postgram', 'cleanup'],
+      metadata: {
+        memory_role: 'durable_memory',
+        topic: 'durable-filtering'
+      }
+    });
+    await storeEntity(database.pool, auth, {
+      type: 'memory',
+      content: 'Wrong topic durable memory.',
+      visibility: 'work',
+      tags: ['postgram', 'cleanup'],
+      metadata: {
+        memory_role: 'durable_memory',
+        topic: 'other-topic'
+      }
+    });
+    await storeEntity(database.pool, auth, {
+      type: 'memory',
+      content: 'Wrong tag durable memory.',
+      visibility: 'work',
+      tags: ['postgram'],
+      metadata: {
+        memory_role: 'durable_memory',
+        topic: 'durable-filtering'
+      }
+    });
+
+    const preview = await previewDurableMemoryGrooming(database.pool, {
+      now: new Date('2026-06-17T00:00:00.000Z'),
+      olderThanMs: 30 * 24 * 60 * 60 * 1000,
+      topic: 'durable-filtering',
+      tags: ['cleanup'],
+      visibility: 'work',
+      limit: 1
+    });
+
+    expect(preview.isOk()).toBe(true);
+    expect(preview._unsafeUnwrap().eligible.map((entry) => entry.id)).toEqual([
+      first.id
+    ]);
+    expect(second.id).toEqual(expect.any(String));
+  });
+
+  it('requires confirmation before marking durable grooming outcomes', async () => {
+    if (!database) {
+      throw new Error('test database not initialized');
+    }
+
+    const result = await groomDurableMemory(database.pool, {
+      now: new Date('2026-06-17T00:00:00.000Z'),
+      mode: 'mark',
+      dryRun: false,
+      confirm: false,
+      olderThanMs: 0,
+      callLlm: () =>
+        Promise.resolve(JSON.stringify({ outcome: 'keep', reason: 'Useful.' }))
+    });
+
+    expect(result.isErr()).toBe(true);
+    expect(result._unsafeUnwrapErr().code).toBe('VALIDATION');
+  });
+
+  it('marks durable memories without rewriting or archiving them', async () => {
+    if (!database) {
+      throw new Error('test database not initialized');
+    }
+
+    const stored = (
+      await storeEntity(database.pool, makeAuthContext(), {
+        type: 'memory',
+        content: 'Stable outcome mixed with stale PR monitor details.',
+        visibility: 'personal',
+        tags: ['postgram'],
+        metadata: {
+          memory_role: 'durable_memory',
+          topic: 'durable-marking'
+        }
+      })
+    )._unsafeUnwrap();
+    await backdateEntity(database.pool, stored.id, '2026-04-01T00:00:00.000Z');
+
+    const result = await groomDurableMemory(database.pool, {
+      now: new Date('2026-06-17T00:00:00.000Z'),
+      mode: 'mark',
+      dryRun: false,
+      confirm: true,
+      olderThanMs: 30 * 24 * 60 * 60 * 1000,
+      topic: 'durable-marking',
+      callLlm: (prompt, schema) => {
+        expect(prompt).toContain('durable_memory');
+        expect(prompt).toContain(stored.content);
+        expect(schema).toEqual(expect.objectContaining({ type: 'object' }));
+        return Promise.resolve(
+          JSON.stringify({
+            outcome: 'needs_grooming',
+            reason: 'Contains stable truth mixed with stale execution detail.',
+            suggested_action: 'distill',
+            suggested_content: 'Postgram durable grooming should label noisy durable memory before rewriting it.',
+            suggested_tags: ['postgram', 'memory-grooming']
+          })
+        );
+      }
+    });
+
+    expect(result.isOk()).toBe(true);
+    expect(result._unsafeUnwrap()).toMatchObject({
+      reviewed: 1,
+      marked: 1,
+      dryRun: false,
+      outcomes: [
+        {
+          id: stored.id,
+          outcome: 'needs_grooming',
+          reason: 'Contains stable truth mixed with stale execution detail.',
+          suggestedAction: 'distill'
+        }
+      ]
+    });
+
+    const row = await database.pool.query<{
+      status: string | null;
+      content: string | null;
+      metadata: Record<string, unknown>;
+    }>('SELECT status, content, metadata FROM entities WHERE id = $1', [
+      stored.id
+    ]);
+
+    expect(row.rows[0]?.status).toBeNull();
+    expect(row.rows[0]?.content).toBe(stored.content);
+    expect(row.rows[0]?.metadata.durable_grooming).toMatchObject({
+      status: 'needs_grooming',
+      reason: 'Contains stable truth mixed with stale execution detail.',
+      reviewed_at: '2026-06-17T00:00:00.000Z',
+      reviewed_by: 'pgm-admin memory groom-durable',
+      suggested_action: 'distill',
+      suggested_content:
+        'Postgram durable grooming should label noisy durable memory before rewriting it.',
+      suggested_tags: ['postgram', 'memory-grooming']
+    });
+  });
+
+  it('marks malformed durable grooming LLM responses as needs_grooming', async () => {
+    if (!database) {
+      throw new Error('test database not initialized');
+    }
+
+    const stored = (
+      await storeEntity(database.pool, makeAuthContext(), {
+        type: 'memory',
+        content: 'Durable memory that receives malformed grooming JSON.',
+        visibility: 'personal',
+        metadata: {
+          memory_role: 'durable_memory',
+          topic: 'durable-parse-error'
+        }
+      })
+    )._unsafeUnwrap();
+    await backdateEntity(database.pool, stored.id, '2026-04-01T00:00:00.000Z');
+
+    const result = await groomDurableMemory(database.pool, {
+      now: new Date('2026-06-17T00:00:00.000Z'),
+      mode: 'mark',
+      dryRun: false,
+      confirm: true,
+      olderThanMs: 0,
+      topic: 'durable-parse-error',
+      callLlm: () => Promise.resolve(JSON.stringify({ reason: 'No outcome.' }))
+    });
+
+    expect(result.isOk()).toBe(true);
+    expect(result._unsafeUnwrap().outcomes).toEqual([
+      expect.objectContaining({
+        id: stored.id,
+        outcome: 'needs_grooming',
+        suggestedAction: 'inspect'
+      })
+    ]);
+
+    const row = await database.pool.query<{
+      metadata: Record<string, unknown>;
+    }>('SELECT metadata FROM entities WHERE id = $1', [stored.id]);
+
+    expect(row.rows[0]?.metadata.durable_grooming).toMatchObject({
+      status: 'needs_grooming',
+      suggested_action: 'inspect'
+    });
+    expect(
+      (
+        row.rows[0]?.metadata.durable_grooming as
+          | { reason?: string }
+          | undefined
+      )?.reason
+    ).toContain('Durable grooming decision must include outcome');
+  });
+
+  it('builds a durable grooming prompt that preserves stable outcomes', () => {
+    const prompt = buildDurableMemoryGroomingPrompt({
+      id: 'memory-1',
+      content: 'Durable memory: stable outcome plus stale execution details.',
+      visibility: 'personal',
+      owner: null,
+      tags: ['postgram'],
+      metadata: { memory_role: 'durable_memory' },
+      createdAt: '2026-05-24T00:00:00.000Z'
+    });
+
+    expect(prompt).toContain('durable_memory');
+    expect(prompt).toContain('needs_grooming');
+    expect(prompt).toContain('Do not recommend archiving solely because a memory is old');
+    expect(prompt).toContain(
+      'Durable memory: stable outcome plus stale execution details.'
     );
   });
 });

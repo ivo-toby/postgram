@@ -48,6 +48,21 @@ type PromotionDecision = {
 };
 
 type GroomingMode = 'archive' | 'promote';
+type DurableGroomingMode = 'review' | 'mark';
+
+export type DurableGroomingOutcome =
+  | 'keep'
+  | 'needs_grooming'
+  | 'archive'
+  | 'superseded';
+
+type DurableGroomingDecision = {
+  outcome: DurableGroomingOutcome;
+  reason: string;
+  suggestedAction?: string | undefined;
+  suggestedContent?: string | undefined;
+  suggestedTags?: string[] | undefined;
+};
 
 type GroomingInput = {
   scope?: GroomingScope | undefined;
@@ -61,12 +76,36 @@ type GroomingInput = {
   tags?: string[] | undefined;
 };
 
+type DurableGroomingInput = {
+  now: Date;
+  limit?: number | undefined;
+  olderThanMs?: number | undefined;
+  topic?: string | undefined;
+  tags?: string[] | undefined;
+  visibility?: Visibility | undefined;
+  includeReviewed?: boolean | undefined;
+};
+
 export type GroomingResult = {
   archived: number;
   promoted: number;
   skipped: number;
   dryRun: boolean;
   promotions: Array<{ sourceId: string; durableId: string }>;
+};
+
+export type DurableMemoryGroomingResult = {
+  reviewed: number;
+  marked: number;
+  dryRun: boolean;
+  outcomes: Array<{
+    id: string;
+    outcome: DurableGroomingOutcome;
+    reason: string;
+    suggestedAction?: string | undefined;
+    suggestedContent?: string | undefined;
+    suggestedTags?: string[] | undefined;
+  }>;
 };
 
 export const SESSION_CONTEXT_PROMOTION_SCHEMA = {
@@ -93,6 +132,38 @@ export const SESSION_CONTEXT_PROMOTION_SCHEMA = {
       type: 'array',
       items: { type: 'string' },
       description: 'Short durable-memory tags to attach when promote is true.'
+    }
+  }
+} as const;
+
+export const DURABLE_MEMORY_GROOMING_SCHEMA = {
+  type: 'object',
+  additionalProperties: false,
+  required: ['outcome', 'reason'],
+  properties: {
+    outcome: {
+      type: 'string',
+      enum: ['keep', 'needs_grooming', 'archive', 'superseded'],
+      description: 'Durable memory grooming classification.'
+    },
+    reason: {
+      type: 'string',
+      description: 'Brief explanation for this classification.'
+    },
+    suggested_action: {
+      type: 'string',
+      description:
+        'Optional operator action such as distill, merge, inspect, or retain.'
+    },
+    suggested_content: {
+      type: 'string',
+      description:
+        'Optional replacement or distilled durable memory suggestion.'
+    },
+    suggested_tags: {
+      type: 'array',
+      items: { type: 'string' },
+      description: 'Optional tag suggestions for a later rewrite.'
     }
   }
 } as const;
@@ -170,6 +241,82 @@ function parsePromotionDecision(response: string): PromotionDecision {
   };
 }
 
+function isDurableGroomingOutcome(
+  value: unknown
+): value is DurableGroomingOutcome {
+  return (
+    value === 'keep' ||
+    value === 'needs_grooming' ||
+    value === 'archive' ||
+    value === 'superseded'
+  );
+}
+
+function readOptionalString(
+  parsed: Record<string, unknown>,
+  snakeKey: string,
+  camelKey: string
+): string | undefined {
+  const value = parsed[snakeKey] ?? parsed[camelKey];
+  return typeof value === 'string' && value.trim().length > 0
+    ? value.trim()
+    : undefined;
+}
+
+function parseDurableGroomingDecision(
+  response: string
+): DurableGroomingDecision {
+  const parsed = JSON.parse(stripMarkdownFences(response)) as Record<
+    string,
+    unknown
+  >;
+
+  if (!isDurableGroomingOutcome(parsed.outcome)) {
+    throw new AppError(
+      ErrorCode.VALIDATION,
+      'Durable grooming decision must include outcome'
+    );
+  }
+
+  const reason =
+    typeof parsed.reason === 'string' && parsed.reason.trim().length > 0
+      ? parsed.reason.trim()
+      : undefined;
+
+  if (!reason) {
+    throw new AppError(
+      ErrorCode.VALIDATION,
+      'Durable grooming decision must include a reason'
+    );
+  }
+
+  const suggestedTagsValue = parsed.suggested_tags ?? parsed.suggestedTags;
+  const suggestedTags = Array.isArray(suggestedTagsValue)
+    ? suggestedTagsValue
+        .filter(
+          (tag): tag is string =>
+            typeof tag === 'string' && tag.trim().length > 0
+        )
+        .map((tag) => tag.trim())
+    : undefined;
+
+  return {
+    outcome: parsed.outcome,
+    reason,
+    suggestedAction: readOptionalString(
+      parsed,
+      'suggested_action',
+      'suggestedAction'
+    ),
+    suggestedContent: readOptionalString(
+      parsed,
+      'suggested_content',
+      'suggestedContent'
+    ),
+    suggestedTags
+  };
+}
+
 function promotionParseErrorDecision(error: unknown): PromotionDecision {
   const message =
     error instanceof Error && error.message.trim().length > 0
@@ -179,6 +326,21 @@ function promotionParseErrorDecision(error: unknown): PromotionDecision {
   return {
     promote: false,
     reason: `Invalid promotion decision: ${message}`
+  };
+}
+
+function durableGroomingParseErrorDecision(
+  error: unknown
+): DurableGroomingDecision {
+  const message =
+    error instanceof Error && error.message.trim().length > 0
+      ? error.message.trim()
+      : 'Malformed durable grooming response';
+
+  return {
+    outcome: 'needs_grooming',
+    reason: `Invalid durable grooming decision: ${message}`,
+    suggestedAction: 'inspect'
   };
 }
 
@@ -197,6 +359,22 @@ function normalizeTags(
   return Array.from(
     new Set(durableTags.map((tag) => tag.trim()).filter(Boolean))
   );
+}
+
+function normalizeDurableFilters(input: DurableGroomingInput): GroomingFilters & {
+  visibility?: Visibility | undefined;
+  includeReviewed: boolean;
+} {
+  const normalized = normalizeFilters({
+    ...input,
+    olderThanMs: input.olderThanMs ?? 30 * 24 * 60 * 60 * 1000
+  });
+
+  return {
+    ...normalized,
+    visibility: input.visibility,
+    includeReviewed: input.includeReviewed ?? false
+  };
 }
 
 function normalizeFilters(input: GroomingInput): GroomingFilters {
@@ -372,6 +550,62 @@ function buildCandidateQuery({
   };
 }
 
+function buildDurableCandidateQuery({
+  filters,
+  now
+}: {
+  filters: ReturnType<typeof normalizeDurableFilters>;
+  now: Date;
+}): { text: string; values: unknown[] } {
+  const conditions = [
+    "type = 'memory'",
+    "status IS DISTINCT FROM 'archived'",
+    "COALESCE(metadata->>'memory_role', 'durable_memory') = 'durable_memory'"
+  ];
+  const values: unknown[] = [];
+  let paramIndex = 1;
+
+  if (!filters.includeReviewed) {
+    conditions.push("metadata #>> '{durable_grooming,reviewed_at}' IS NULL");
+  }
+
+  const ageCutoff = new Date(now.getTime() - filters.olderThanMs);
+  conditions.push(`created_at <= $${paramIndex++}::timestamptz`);
+  values.push(ageCutoff.toISOString());
+
+  if (filters.topic) {
+    conditions.push(`metadata->>'topic' = $${paramIndex++}`);
+    values.push(filters.topic);
+  }
+
+  if (filters.tags?.length) {
+    conditions.push(`tags @> $${paramIndex++}::text[]`);
+    values.push(filters.tags);
+  }
+
+  if (filters.visibility) {
+    conditions.push(`visibility = $${paramIndex++}`);
+    values.push(filters.visibility);
+  }
+
+  const limitClause =
+    filters.limit === undefined ? '' : `LIMIT $${paramIndex}`;
+  if (filters.limit !== undefined) {
+    values.push(filters.limit);
+  }
+
+  return {
+    text: `
+      SELECT id, content, visibility, owner, tags, metadata, created_at
+      FROM entities
+      WHERE ${conditions.join('\n        AND ')}
+      ORDER BY created_at ASC, id ASC
+      ${limitClause}
+    `,
+    values
+  };
+}
+
 export function buildSessionContextPromotionPrompt(
   candidate: GroomingCandidate
 ): string {
@@ -406,6 +640,270 @@ export function buildSessionContextPromotionPrompt(
   ].join('\n');
 }
 
+export function buildDurableMemoryGroomingPrompt(
+  candidate: GroomingCandidate
+): string {
+  return [
+    'You are Postgram durable memory grooming. Classify whether a durable_memory record needs follow-up.',
+    '',
+    'Durable memory is long-lived project or user knowledge that future agents may trust. The goal is to preserve stable truth while identifying stale execution breadcrumbs, duplicate wording, mixed concerns, or obsolete status notes.',
+    '',
+    'Outcomes:',
+    '- keep: the durable memory remains useful as-is.',
+    '- needs_grooming: the memory is valuable but should later be distilled, split, merged, or cleaned.',
+    '- archive: the memory no longer appears useful. Use this sparingly.',
+    '- superseded: the memory appears replaced by newer durable memory.',
+    '',
+    'Rules:',
+    '- Preserve durable decisions, constraints, root causes, preferences, and verified outcomes.',
+    '- Do not recommend archiving solely because a memory is old.',
+    '- Prefer needs_grooming when stable truth is mixed with stale execution noise.',
+    '- Use archive only when the memory no longer appears useful.',
+    '- Do not rewrite the memory. Suggested content is only an operator hint for a later workflow.',
+    '- Return strict JSON matching the provided schema.',
+    '',
+    'Candidate:',
+    JSON.stringify(
+      {
+        id: candidate.id,
+        role: 'durable_memory',
+        createdAt: candidate.createdAt,
+        visibility: candidate.visibility,
+        owner: candidate.owner,
+        tags: candidate.tags,
+        metadata: candidate.metadata,
+        content: candidate.content
+      },
+      null,
+      2
+    )
+  ].join('\n');
+}
+
+function mapGroomingCandidate(row: {
+  id: string;
+  content: string | null;
+  visibility: Visibility;
+  owner: string | null;
+  tags: string[];
+  metadata: Record<string, unknown>;
+  created_at: Date;
+}): GroomingCandidate {
+  return {
+    id: row.id,
+    content: row.content,
+    visibility: row.visibility,
+    owner: row.owner,
+    tags: row.tags,
+    metadata: row.metadata,
+    createdAt: row.created_at.toISOString()
+  };
+}
+
+export function previewDurableMemoryGrooming(
+  pool: Pool,
+  input: DurableGroomingInput
+): ServiceResult<GroomingPreview> {
+  return ResultAsync.fromPromise(
+    (async () => {
+      const filters = normalizeDurableFilters(input);
+      const result = await pool.query<{
+        id: string;
+        content: string | null;
+        visibility: Visibility;
+        owner: string | null;
+        tags: string[];
+        metadata: Record<string, unknown>;
+        created_at: Date;
+      }>(
+        buildDurableCandidateQuery({
+          filters,
+          now: input.now
+        })
+      );
+
+      return {
+        eligible: result.rows.map(mapGroomingCandidate)
+      };
+    })(),
+    (error) => toAppError(error, 'Failed to preview durable memory grooming')
+  );
+}
+
+function buildDurableGroomingMetadata(
+  decision: DurableGroomingDecision,
+  now: Date
+): Record<string, unknown> {
+  const durableGrooming: Record<string, unknown> = {
+    status: decision.outcome,
+    reason: decision.reason,
+    reviewed_at: now.toISOString(),
+    reviewed_by: 'pgm-admin memory groom-durable'
+  };
+
+  if (decision.suggestedAction) {
+    durableGrooming.suggested_action = decision.suggestedAction;
+  }
+
+  if (decision.suggestedContent) {
+    durableGrooming.suggested_content = decision.suggestedContent;
+  }
+
+  if (decision.suggestedTags?.length) {
+    durableGrooming.suggested_tags = decision.suggestedTags;
+  }
+
+  return { durable_grooming: durableGrooming };
+}
+
+function mapDurableOutcome(
+  candidate: GroomingCandidate,
+  decision: DurableGroomingDecision
+): DurableMemoryGroomingResult['outcomes'][number] {
+  return {
+    id: candidate.id,
+    outcome: decision.outcome,
+    reason: decision.reason,
+    ...(decision.suggestedAction
+      ? { suggestedAction: decision.suggestedAction }
+      : {}),
+    ...(decision.suggestedContent
+      ? { suggestedContent: decision.suggestedContent }
+      : {}),
+    ...(decision.suggestedTags?.length
+      ? { suggestedTags: decision.suggestedTags }
+      : {})
+  };
+}
+
+export function groomDurableMemory(
+  pool: Pool,
+  input: DurableGroomingInput & {
+    mode: DurableGroomingMode;
+    dryRun: boolean;
+    confirm: boolean;
+    callLlm?: CallLlm | undefined;
+  }
+): ServiceResult<DurableMemoryGroomingResult> {
+  return ResultAsync.fromPromise(
+    (async () => {
+      const filters = normalizeDurableFilters(input);
+
+      if (input.mode !== 'review' && input.mode !== 'mark') {
+        throw new AppError(
+          ErrorCode.VALIDATION,
+          'mode must be review or mark'
+        );
+      }
+
+      if (!input.dryRun && input.mode === 'mark' && !input.confirm) {
+        throw new AppError(
+          ErrorCode.VALIDATION,
+          '--yes is required outside dry-run'
+        );
+      }
+
+      if (input.mode === 'mark' && !input.dryRun && !input.callLlm) {
+        throw new AppError(
+          ErrorCode.VALIDATION,
+          'callLlm is required for durable memory grooming'
+        );
+      }
+
+      const preview = await previewDurableMemoryGrooming(pool, {
+        ...input,
+        limit: filters.limit,
+        olderThanMs: filters.olderThanMs,
+        topic: filters.topic,
+        tags: filters.tags,
+        visibility: filters.visibility,
+        includeReviewed: filters.includeReviewed
+      });
+      if (preview.isErr()) {
+        throw preview.error;
+      }
+
+      const decisions: Array<{
+        candidate: GroomingCandidate;
+        decision: DurableGroomingDecision;
+      }> = [];
+
+      for (const candidate of preview.value.eligible) {
+        if (!input.callLlm) {
+          decisions.push({
+            candidate,
+            decision: {
+              outcome: 'keep',
+              reason: 'Preview candidate; no LLM classifier was provided.'
+            }
+          });
+          continue;
+        }
+
+        const response = await input.callLlm(
+          buildDurableMemoryGroomingPrompt(candidate),
+          DURABLE_MEMORY_GROOMING_SCHEMA
+        );
+        let decision: DurableGroomingDecision;
+        try {
+          decision = parseDurableGroomingDecision(response);
+        } catch (error) {
+          decision = durableGroomingParseErrorDecision(error);
+        }
+
+        decisions.push({ candidate, decision });
+      }
+
+      const outcomes = decisions.map(({ candidate, decision }) =>
+        mapDurableOutcome(candidate, decision)
+      );
+
+      if (input.dryRun || input.mode === 'review' || decisions.length === 0) {
+        return {
+          reviewed: decisions.length,
+          marked: 0,
+          dryRun: input.dryRun,
+          outcomes
+        };
+      }
+
+      const client = await pool.connect();
+      try {
+        await client.query('BEGIN');
+
+        for (const { candidate, decision } of decisions) {
+          await client.query(
+            `
+              UPDATE entities
+              SET metadata = metadata || $2::jsonb
+              WHERE id = $1
+            `,
+            [
+              candidate.id,
+              JSON.stringify(buildDurableGroomingMetadata(decision, input.now))
+            ]
+          );
+        }
+
+        await client.query('COMMIT');
+
+        return {
+          reviewed: decisions.length,
+          marked: decisions.length,
+          dryRun: false,
+          outcomes
+        };
+      } catch (error) {
+        await client.query('ROLLBACK');
+        throw error;
+      } finally {
+        client.release();
+      }
+    })(),
+    (error) => toAppError(error, 'Failed to groom durable memory')
+  );
+}
+
 export function previewSessionContextGrooming(
   pool: Pool,
   input: GroomingInput
@@ -432,15 +930,7 @@ export function previewSessionContextGrooming(
       );
 
       return {
-        eligible: result.rows.map((row) => ({
-          id: row.id,
-          content: row.content,
-          visibility: row.visibility,
-          owner: row.owner,
-          tags: row.tags,
-          metadata: row.metadata,
-          createdAt: row.created_at.toISOString()
-        }))
+        eligible: result.rows.map(mapGroomingCandidate)
       };
     })(),
     (error) => toAppError(error, 'Failed to preview memory grooming')

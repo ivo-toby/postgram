@@ -1,3 +1,9 @@
+## [1.33.0](https://github.com/ivo-toby/postgram/compare/cli-v1.32.1...cli-v1.33.0) (2026-06-17)
+
+### Features
+
+* apply durable memory grooming ([#75](https://github.com/ivo-toby/postgram/issues/75)) ([eca2d2a](https://github.com/ivo-toby/postgram/commit/eca2d2a8f88695a1c84d862093ec4342d027571b))
+
 ## [1.32.1](https://github.com/ivo-toby/postgram/compare/cli-v1.32.0...cli-v1.32.1) (2026-06-14)
 
 ### Bug Fixes

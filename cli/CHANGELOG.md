@@ -1,3 +1,9 @@
+## [1.33.3](https://github.com/ivo-toby/postgram/compare/cli-v1.33.2...cli-v1.33.3) (2026-06-17)
+
+### Bug Fixes
+
+* **extraction:** reject overclaimed relation shapes ([f0c8755](https://github.com/ivo-toby/postgram/commit/f0c87559d6ed707e42d36aacd2f1ca47af08c984))
+
 ## [1.33.2](https://github.com/ivo-toby/postgram/compare/cli-v1.33.1...cli-v1.33.2) (2026-06-17)
 
 ### Bug Fixes

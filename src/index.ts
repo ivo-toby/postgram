@@ -97,6 +97,23 @@ export function buildEmbeddingProviderConfig(
     };
   }
 
+  if (config.EMBEDDING_PROVIDER === 'openai-compatible') {
+    const baseUrl = config.EMBEDDING_BASE_URL;
+    if (!baseUrl) {
+      throw new AppError(
+        ErrorCode.VALIDATION,
+        'EMBEDDING_BASE_URL is required for EMBEDDING_PROVIDER=openai-compatible'
+      );
+    }
+    return {
+      provider: 'openai-compatible',
+      model,
+      dimensions,
+      baseUrl,
+      apiKey: config.EMBEDDING_API_KEY
+    };
+  }
+
   const baseUrl = config.EMBEDDING_BASE_URL ?? config.OLLAMA_BASE_URL;
   return {
     provider: 'ollama',
@@ -108,7 +125,9 @@ export function buildEmbeddingProviderConfig(
 }
 
 function describeHost(providerConfig: EmbeddingProviderConfig): string {
-  return providerConfig.provider === 'ollama' ? providerConfig.baseUrl : 'api.openai.com';
+  if (providerConfig.provider === 'ollama') return providerConfig.baseUrl;
+  if (providerConfig.provider === 'openai-compatible') return providerConfig.baseUrl;
+  return 'api.openai.com';
 }
 
 export function createApp(
@@ -324,10 +343,27 @@ export async function startServer(): Promise<{
     }
   });
   let workerActive = true;
+  // How long the worker pauses when a rate-limit (429) is returned by the LLM
+  // API. Overridable via env for operators who want a different backoff.
+  const rateLimitBackoffMs = (() => {
+    const raw = process.env.EXTRACTION_RATE_LIMIT_BACKOFF_MS;
+    const parsed = raw ? Number(raw) : Number.NaN;
+    return Number.isFinite(parsed) && parsed > 0 ? parsed : 60_000;
+  })();
   const workerLoop = async () => {
     while (workerActive) {
       try {
-        await worker.runOnce();
+        const { rateLimited } = await worker.runOnce();
+        if (rateLimited) {
+          logger.warn(
+            { backoffMs: rateLimitBackoffMs },
+            'LLM rate limit hit — pausing extraction worker'
+          );
+          await new Promise<void>((resolve) => {
+            setTimeout(resolve, rateLimitBackoffMs);
+          });
+          continue;
+        }
       } catch (error) {
         logger.error({ err: error }, 'enrichment worker iteration failed');
       }

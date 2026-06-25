@@ -14,57 +14,46 @@ services:
       retries: 5
     restart: unless-stopped
 
+  ollama:
+    image: ollama/ollama
+    volumes:
+      - ollama_data:/root/.ollama
+    restart: unless-stopped
+
   mcp-server:
-    build: .
+    image: postgram-mcp-server:latest
     depends_on:
       postgres:
         condition: service_healthy
     environment:
       DATABASE_URL: postgres://postgram:${POSTGRES_PASSWORD}@postgres:5432/postgram
-      OPENAI_API_KEY: ${OPENAI_API_KEY:-}
       LOG_LEVEL: ${LOG_LEVEL:-info}
       PORT: ${PORT:-3100}
-      # OAuth for native remote MCP connectors
-      OAUTH_ENABLED: ${OAUTH_ENABLED:-false}
-      PUBLIC_BASE_URL: ${PUBLIC_BASE_URL:-}
-      # Embeddings
-      EMBEDDING_PROVIDER: ${EMBEDDING_PROVIDER:-openai}
+      EMBEDDING_PROVIDER: ${EMBEDDING_PROVIDER:-ollama}
       EMBEDDING_MODEL: ${EMBEDDING_MODEL:-}
       EMBEDDING_DIMENSIONS: ${EMBEDDING_DIMENSIONS:-}
-      EMBEDDING_BASE_URL: ${EMBEDDING_BASE_URL:-}
+      EMBEDDING_BASE_URL: ${EMBEDDING_BASE_URL:-http://ollama:11434}
       EMBEDDING_API_KEY: ${EMBEDDING_API_KEY:-}
-      # LLM extraction
       EXTRACTION_ENABLED: ${EXTRACTION_ENABLED:-false}
       EXTRACTION_MEMORY_MODE: ${EXTRACTION_MEMORY_MODE:-embed_only}
       EXTRACTION_PROVIDER: ${EXTRACTION_PROVIDER:-openai}
       EXTRACTION_MODEL: ${EXTRACTION_MODEL:-}
       EXTRACTION_BASE_URL: ${EXTRACTION_BASE_URL:-}
       EXTRACTION_API_KEY: ${EXTRACTION_API_KEY:-}
-      EXTRACTION_AUTO_CREATE_ENTITIES: ${EXTRACTION_AUTO_CREATE_ENTITIES:-false}
-      EXTRACTION_AUTO_CREATE_TYPES: ${EXTRACTION_AUTO_CREATE_TYPES:-person,project,interaction}
-      EXTRACTION_AUTO_CREATE_MIN_CONFIDENCE: ${EXTRACTION_AUTO_CREATE_MIN_CONFIDENCE:-0.7}
-      EXTRACTION_REASONING_EFFORT: ${EXTRACTION_REASONING_EFFORT:-}
-      ANTHROPIC_API_KEY: ${ANTHROPIC_API_KEY:-}
-      OLLAMA_BASE_URL: ${OLLAMA_BASE_URL:-http://localhost:11434}
-      OLLAMA_API_KEY: ${OLLAMA_API_KEY:-}
-      LLM_REQUEST_TIMEOUT_MS: ${LLM_REQUEST_TIMEOUT_MS:-}
-      ENRICHMENT_POLL_INTERVAL_MS: ${ENRICHMENT_POLL_INTERVAL_MS:-1000}
-      EXTRACTION_DEBUG_LOG: ${EXTRACTION_DEBUG_LOG:-false}
+      OAUTH_ENABLED: ${OAUTH_ENABLED:-false}
+      PUBLIC_BASE_URL: ${PUBLIC_BASE_URL:-}
     ports:
-      # Defaults to loopback-only on the host (safest). To expose on the LAN
-      # for reachability from other machines, set PORT_BIND_HOST=0.0.0.0 in
-      # your .env. Prefer running behind a reverse proxy (Caddy) with TLS for
-      # anything beyond a trusted homelab.
-      - '${PORT_BIND_HOST:-127.0.0.1}:${PORT:-3101}:3100'
+      - '0.0.0.0:3101:3100'
     restart: unless-stopped
 
   postgram-ui:
-    build: ./ui
+    image: postgram-postgram-ui:latest
     ports:
-      - '${UI_BIND_HOST:-127.0.0.1}:3000:3000'
+      - '${UI_BIND_HOST:-0.0.0.0}:${UI_PORT:-3102}:80'
     depends_on:
       - mcp-server
     restart: unless-stopped
 
 volumes:
   pgdata:
+  ollama_data:

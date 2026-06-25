@@ -97,6 +97,23 @@ export function buildEmbeddingProviderConfig(
     };
   }
 
+  if (config.EMBEDDING_PROVIDER === 'openai-compatible') {
+    const baseUrl = config.EMBEDDING_BASE_URL;
+    if (!baseUrl) {
+      throw new AppError(
+        ErrorCode.VALIDATION,
+        'EMBEDDING_BASE_URL is required for EMBEDDING_PROVIDER=openai-compatible'
+      );
+    }
+    return {
+      provider: 'openai-compatible',
+      model,
+      dimensions,
+      baseUrl,
+      apiKey: config.EMBEDDING_API_KEY
+    };
+  }
+
   const baseUrl = config.EMBEDDING_BASE_URL ?? config.OLLAMA_BASE_URL;
   return {
     provider: 'ollama',
@@ -108,7 +125,9 @@ export function buildEmbeddingProviderConfig(
 }
 
 function describeHost(providerConfig: EmbeddingProviderConfig): string {
-  return providerConfig.provider === 'ollama' ? providerConfig.baseUrl : 'api.openai.com';
+  if (providerConfig.provider === 'ollama') return providerConfig.baseUrl;
+  if (providerConfig.provider === 'openai-compatible') return providerConfig.baseUrl;
+  return 'api.openai.com';
 }
 
 export function createApp(

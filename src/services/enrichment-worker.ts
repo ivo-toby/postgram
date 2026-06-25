@@ -327,6 +327,17 @@ export function createEnrichmentWorker(options: EnrichmentWorkerOptions) {
         throw error;
       }
 
+      if (isRateLimitError(error)) {
+        // 429 from the embedding API is transient — re-throw so the worker
+        // loop applies back-off. The entity stays 'pending' (the transaction
+        // was rolled back) and will be retried after the pause.
+        logger.warn(
+          { entityId: entity.id },
+          'enrichment deferred — embedding rate limit (429), will back off and retry'
+        );
+        throw error;
+      }
+
       logger.warn({ err: error, entityId: entity.id }, 'enrichment failed');
 
       await options.pool.query(
@@ -549,8 +560,16 @@ export function createEnrichmentWorker(options: EnrichmentWorkerOptions) {
       if (await hasPendingEnrichment()) {
         const activeModel = await embeddingService.getActiveModel(options.pool);
 
-        while (await processNextEnrichmentEntity(activeModel)) {
-          processed += 1;
+        try {
+          while (await processNextEnrichmentEntity(activeModel)) {
+            processed += 1;
+          }
+        } catch (error) {
+          if (isRateLimitError(error)) {
+            rateLimited = true;
+          } else {
+            throw error;
+          }
         }
       }
 

@@ -567,6 +567,7 @@ export function createEnrichmentWorker(options: EnrichmentWorkerOptions) {
         } catch (error) {
           if (isRateLimitError(error)) {
             rateLimited = true;
+            return { processed, rateLimited };
           } else {
             throw error;
           }
@@ -590,6 +591,7 @@ export function createEnrichmentWorker(options: EnrichmentWorkerOptions) {
         } catch (error) {
           if (isRateLimitError(error)) {
             rateLimited = true;
+            return { processed, rateLimited };
           } else {
             throw error;
           }

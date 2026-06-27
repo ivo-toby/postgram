@@ -549,6 +549,7 @@ export function registerRestRoutes(
         chunk_content: entry.chunkContent,
         similarity: entry.similarity,
         score: entry.score,
+        ...(entry.edges ? { edges: entry.edges } : {}),
         ...(entry.related ? { related: entry.related } : {})
       }))
     });

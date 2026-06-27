@@ -82,6 +82,22 @@ commands (`search`, `list`, `task list`, `expand`) when an agent needs the
 smallest readable output. TOON and compacting are CLI-layer formats; the
 Postgram API remains JSON.
 
+Compact search may include an `edges` summary:
+
+```json
+"edges": {
+  "count": 3,
+  "relations": [{ "relation": "mentioned_in", "count": 2 }]
+}
+```
+
+`edges.count` and `edges.relations` are traversal affordances. They tell an
+agent that graph context exists without returning neighbor content. Use
+`--expand-graph` or `pgm expand <entity-id>` when the user asks about causes,
+provenance, decisions, dependencies, blockers, ownership, involvement,
+discussion participants, connected context, or ambiguous search hits. Do not
+expand when the compact result already answers a direct fact.
+
 ## Memory Roles
 
 Store durable memory:

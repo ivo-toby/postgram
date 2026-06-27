@@ -678,10 +678,17 @@ token-heavy outputs default to compact agent-friendly responses:
   writes, `link`) return compact ids/status/version instead of echoing full
   metadata and timestamps
 - `search`, `task_list`, and `expand` return compact rows/graph payloads by
-  default
+  default; compact search may include `edges.count` and `edges.relations` as
+  cheap traversal affordances
 - pass `full_response: true` to get the full REST-shaped payload
 - pass `toon: true` on list-like tools (`search`, `task_list`, `expand`) to
   receive compact TOON text from the MCP layer
+
+Compact `edges` summaries contain counts and relation labels only. They do not
+include neighbor content. Use `expand_graph` or `expand` when the user needs
+causes, provenance, decisions, dependencies, blockers, ownership, involvement,
+discussion participants, connected context, or graph-based disambiguation.
+Avoid expansion for direct facts already present in the compact result.
 
 The underlying API remains JSON; compacting and TOON happen only in MCP/CLI
 handlers.
@@ -1051,10 +1058,10 @@ under `.claude/` in this repo so you can decide where to put it.
 To get the most out of Postgram across sessions, add Postgram-aware guidance to
 your global `~/.claude/CLAUDE.md`. A ready-to-use template is provided at
 [`templates/CLAUDE.md`](templates/CLAUDE.md) — it covers when to search (with
-type filters), when to use `expand_graph`, when to store, when to link, and
-general principles. Copy the relevant sections into your own `CLAUDE.md` and
-Claude will proactively use the MCP tools to persist and recall knowledge
-without being asked.
+type filters), how to inspect compact `edges.count`/`edges.relations`, when to
+use `expand_graph`, when to store, when to link, and general principles. Copy
+the relevant sections into your own `CLAUDE.md` and Claude will proactively use
+the MCP tools to persist and recall knowledge without being asked.
 
 For coding agents that should avoid broad knowledge-work behavior, use
 [`templates/AGENTS.coding.md`](templates/AGENTS.coding.md) or [`templates/CLAUDE.coding.md`](templates/CLAUDE.coding.md). It narrows Postgram

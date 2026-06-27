@@ -28,7 +28,10 @@ async function runPgm(args: string[], env: NodeJS.ProcessEnv) {
   return execFileAsync(TSX_BIN, [PGM_ENTRYPOINT, ...args], {
     env: {
       ...process.env,
-      ...env
+      ...env,
+      NODE_OPTIONS: [process.env.NODE_OPTIONS, '--no-deprecation']
+        .filter(Boolean)
+        .join(' ')
     },
     cwd: process.cwd(),
     maxBuffer: 10_000_000,
@@ -42,7 +45,10 @@ async function runPgmCapture(args: string[], env: NodeJS.ProcessEnv) {
       const child = spawn(TSX_BIN, [PGM_ENTRYPOINT, ...args], {
         env: {
           ...process.env,
-          ...env
+          ...env,
+          NODE_OPTIONS: [process.env.NODE_OPTIONS, '--no-deprecation']
+            .filter(Boolean)
+            .join(' ')
         },
         cwd: process.cwd()
       });
@@ -1001,7 +1007,7 @@ describe('pgm CLI', () => {
       env
     );
     expect(toonResult.stdout).toContain(
-      'results[1]{id,type,score,content,chunk,tags,related}:'
+      'results[1]{id,type,score,content,chunk,tags,edges,related}:'
     );
     expect(toonResult.stdout).toContain(stored.id);
     expect(toonResult.stdout).not.toContain('created_at');
@@ -1108,13 +1114,38 @@ describe('pgm CLI', () => {
       }
     });
 
+    const literalVersionResult = await runPgm(
+      [
+        'task',
+        'update',
+        addBody.entity.id,
+        '--version',
+        String(updateBody.entity.version),
+        '--content',
+        '--version',
+        '--json',
+        '--full-response'
+      ],
+      {
+        PGM_API_URL: baseUrl,
+        PGM_API_KEY: createdKey.plaintextKey
+      }
+    );
+    const literalVersionBody = parseJson(literalVersionResult.stdout) as {
+      entity: {
+        version: number;
+        content: string;
+      };
+    };
+    expect(literalVersionBody.entity.content).toBe('--version');
+
     const completeResult = await runPgm(
       [
         'task',
         'complete',
         addBody.entity.id,
         '--version',
-        String(updateBody.entity.version),
+        String(literalVersionBody.entity.version),
         '--json',
         '--full-response'
       ],

@@ -99,8 +99,10 @@ pgm search "what the user asked about" --limit 5 --json
 ```
 
 `pgm search --json` is compact by default: it returns id, type, score, content,
-matched chunk, tags, and compact related entries, while omitting token-heavy
-metadata, timestamps, nested `entity` objects, and raw similarity. Use
+matched chunk, tags, cheap edge summaries (`edges.count` and
+`edges.relations`), and compact related entries when expansion is requested,
+while omitting token-heavy metadata, timestamps, nested `entity` objects, and
+raw similarity. Use
 `--full-response` only when you need the full API-shaped payload:
 
 ```bash
@@ -156,14 +158,22 @@ For durable knowledge, prefer durable memories and source documents. Treat old s
 pgm search "what the user asked about" --limit 5 --expand-graph --json
 ```
 
-Use `--expand-graph` whenever relationships matter — tracing a decision, understanding who worked on something, exploring what's connected to a topic. Each result gains a `related` array of graph-connected entities with their `relation` and `direction`.
+Compact search may show `edges.count` and `edges.relations`. Treat those as
+traversal affordances: they tell you graph context exists without spending
+tokens on neighbor content. Use `--expand-graph` when relationships matter —
+tracing a decision, understanding who worked on something, exploring what's
+connected to a topic. Each expanded result gains a `related` array of
+graph-connected entities with their `relation` and `direction`.
 
 **When to use expand_graph:**
 
 - "Who was involved in X?" — edges like `involves`, `assigned_to`, `mentioned_in` surface people and meetings
 - "What led to this decision?" — follow `caused_by`, `depends_on`, `part_of` edges
 - "What else is connected to Y?" — open-ended graph neighbourhood traversal
-- Any time semantic search alone feels too flat
+- Similar search hits need disambiguation through graph context
+
+Do not expand when the user only needs a direct fact from the compact result.
+Keep traversal deliberate to control token use.
 
 **Important:** graph edges only exist for source knowledge that has been through extraction (`extraction_status = completed`). Memory entities are embed-only by default, so memory may be searchable without producing graph neighbours. Check `pgm queue` if `related` is empty for a document or interaction — extraction may still be in progress.
 

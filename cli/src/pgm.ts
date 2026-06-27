@@ -42,6 +42,26 @@ function readCliVersion(): string {
   return packageJson.version;
 }
 
+function rewriteTaskVersionOption(argv: string[]): void {
+  const taskIndex = argv.indexOf('task', 2);
+  if (taskIndex === -1) {
+    return;
+  }
+
+  const taskCommandName = argv[taskIndex + 1];
+  if (taskCommandName !== 'update' && taskCommandName !== 'complete') {
+    return;
+  }
+
+  for (let index = taskIndex + 2; index < argv.length; index += 1) {
+    if (argv[index] === '--version') {
+      argv[index] = '--expected-version';
+    }
+  }
+}
+
+rewriteTaskVersionOption(process.argv);
+
 function formatStoredEntity(entity: {
   id: string;
   type: string;
@@ -887,16 +907,16 @@ taskCommand
   .option('--tags <tags>', 'comma-separated tags')
   .option('--visibility <visibility>', 'updated task visibility')
   .option('--metadata <json>', 'JSON metadata object')
-  .option('--version <version>', 'expected version', '')
+  .option('--expected-version <version>', 'expected version; --version is accepted for compatibility', '')
   .option('--full-response', 'emit the full API response when used with --json')
   .action(async (id, options, command) => {
     await runWithClient(command, async (client, json) => {
-      if (!options.version) {
+      if (!options.expectedVersion) {
         throw new AppError(ErrorCode.VALIDATION, '--version is required');
       }
 
       const body = await client.updateTask(id, {
-        version: Number(options.version),
+        version: Number(options.expectedVersion),
         content: options.content,
         context: options.context,
         status: options.status,
@@ -926,15 +946,15 @@ taskCommand
   .command('complete')
   .description('Mark a task complete')
   .argument('id', 'task ID')
-  .option('--version <version>', 'expected version')
+  .option('--expected-version <version>', 'expected version; --version is accepted for compatibility')
   .option('--full-response', 'emit the full API response when used with --json')
   .action(async (id, options, command) => {
     await runWithClient(command, async (client, json) => {
-      if (options.version === undefined) {
+      if (options.expectedVersion === undefined) {
         throw new AppError(ErrorCode.VALIDATION, '--version is required');
       }
 
-      const body = await client.completeTask(id, Number(options.version));
+      const body = await client.completeTask(id, Number(options.expectedVersion));
       return json
         ? options.fullResponse === true
           ? body

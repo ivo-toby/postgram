@@ -28,7 +28,10 @@ async function runPgm(args: string[], env: NodeJS.ProcessEnv) {
   return execFileAsync(TSX_BIN, [PGM_ENTRYPOINT, ...args], {
     env: {
       ...process.env,
-      ...env
+      ...env,
+      NODE_OPTIONS: [process.env.NODE_OPTIONS, '--no-deprecation']
+        .filter(Boolean)
+        .join(' ')
     },
     cwd: process.cwd(),
     maxBuffer: 10_000_000,
@@ -42,7 +45,10 @@ async function runPgmCapture(args: string[], env: NodeJS.ProcessEnv) {
       const child = spawn(TSX_BIN, [PGM_ENTRYPOINT, ...args], {
         env: {
           ...process.env,
-          ...env
+          ...env,
+          NODE_OPTIONS: [process.env.NODE_OPTIONS, '--no-deprecation']
+            .filter(Boolean)
+            .join(' ')
         },
         cwd: process.cwd()
       });
@@ -1001,7 +1007,7 @@ describe('pgm CLI', () => {
       env
     );
     expect(toonResult.stdout).toContain(
-      'results[1]{id,type,score,content,chunk,tags,related}:'
+      'results[1]{id,type,score,content,chunk,tags,edges,related}:'
     );
     expect(toonResult.stdout).toContain(stored.id);
     expect(toonResult.stdout).not.toContain('created_at');

@@ -319,6 +319,46 @@ async function runHybridSearch(
   };
 }
 
+async function fetchSearchEdgeSummaries(
+  pool: Pool,
+  auth: AuthContext,
+  input: SearchInput,
+  resultEntityIds: string[]
+): Promise<Map<string, SearchEdgeSummary>> {
+  if (resultEntityIds.length === 0) {
+    return new Map();
+  }
+
+  const rows = await pool.query<SearchEdgeSummaryRow>(
+    `
+      SELECT anchor.id AS result_entity_id, e.relation
+      FROM unnest($1::uuid[]) AS anchor(id)
+      JOIN edges e ON e.source_id = anchor.id OR e.target_id = anchor.id
+      JOIN entities src ON src.id = e.source_id
+      JOIN entities tgt ON tgt.id = e.target_id
+      WHERE src.status IS DISTINCT FROM 'archived'
+        AND tgt.status IS DISTINCT FROM 'archived'
+        AND ($2::text[] IS NULL OR src.type = ANY($2))
+        AND ($2::text[] IS NULL OR tgt.type = ANY($2))
+        AND src.visibility = ANY($3)
+        AND tgt.visibility = ANY($3)
+        AND ${ownerSqlCondition('src.owner', '$4')}
+        AND ${ownerSqlCondition('tgt.owner', '$4')}
+        AND ${scopedMemoryVisibilitySql('src.metadata', '$5')}
+        AND ${scopedMemoryVisibilitySql('tgt.metadata', '$5')}
+    `,
+    [
+      resultEntityIds,
+      auth.allowedTypes,
+      auth.allowedVisibility,
+      input.owner ?? null,
+      auth.clientId
+    ]
+  );
+
+  return buildSearchEdgeSummaries(rows.rows);
+}
+
 export function searchEntities(
   pool: Pool,
   auth: AuthContext,
@@ -366,10 +406,22 @@ export function searchEntities(
         now
       });
 
+      const resultEntityIds = results.results.map((r) => r.entityId);
+      const edgeSummaries = await fetchSearchEdgeSummaries(
+        pool,
+        auth,
+        input,
+        resultEntityIds
+      );
+      for (const result of results.results) {
+        const summary = edgeSummaries.get(result.entityId);
+        if (summary) {
+          result.edges = summary;
+        }
+      }
+
       if (input.expandGraph && results.results.length > 0) {
         // Batch graph expansion: 2 queries total instead of 2N
-        const resultEntityIds = results.results.map((r) => r.entityId);
-
         const allEdges = await pool.query<{
           source_id: string; target_id: string; relation: string;
         }>(

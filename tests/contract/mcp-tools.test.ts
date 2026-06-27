@@ -996,6 +996,27 @@ describe('MCP tools', () => {
         entity: { id: string };
       };
 
+      const neighbor = extractStructuredPayload(
+        (await client.callTool({
+          name: 'store',
+          arguments: {
+            type: 'project',
+            content: 'Postgram edge affordance neighbor'
+          }
+        })) as ToolResultPayload
+      ) as {
+        entity: { id: string };
+      };
+
+      await client.callTool({
+        name: 'link',
+        arguments: {
+          source_id: stored.entity.id,
+          target_id: neighbor.entity.id,
+          relation: 'depends_on'
+        }
+      });
+
       await createEnrichmentWorker({
         pool: database!.pool,
         embeddingService
@@ -1017,9 +1038,61 @@ describe('MCP tools', () => {
           similarity: number;
         }>;
       };
-      expect(full.results[0]?.entity.id).toBe(stored.entity.id);
-      expect(full.results[0]?.chunk_content).toContain('compact search');
-      expect(full.results[0]?.similarity).toEqual(expect.any(Number));
+      const fullHit = full.results.find(
+        (entry) => entry.entity.id === stored.entity.id
+      );
+      expect(fullHit?.chunk_content).toContain('compact search');
+      expect(fullHit?.similarity).toEqual(expect.any(Number));
+
+      const compact = extractStructuredPayload(
+        (await client.callTool({
+          name: 'search',
+          arguments: {
+            query: 'compact search',
+            threshold: 0
+          }
+        })) as ToolResultPayload
+      ) as {
+        results: Array<{
+          id: string;
+          edges?: {
+            count: number;
+            relations: Array<{ relation: string; count: number }>;
+          };
+          related?: unknown[];
+        }>;
+      };
+      const compactHit = compact.results.find(
+        (entry) => entry.id === stored.entity.id
+      );
+      expect(compactHit?.edges).toEqual({
+        count: 1,
+        relations: [{ relation: 'depends_on', count: 1 }]
+      });
+      expect(compactHit).not.toHaveProperty('related');
+
+      const expanded = extractStructuredPayload(
+        (await client.callTool({
+          name: 'search',
+          arguments: {
+            query: 'compact search',
+            threshold: 0,
+            expand_graph: true
+          }
+        })) as ToolResultPayload
+      ) as {
+        results: Array<{
+          id: string;
+          edges?: unknown;
+          related?: Array<{ relation: string }>;
+        }>;
+      };
+      const expandedHit = expanded.results.find(
+        (entry) => entry.id === stored.entity.id
+      );
+      expect(expandedHit?.related?.map((entry) => entry.relation)).toContain(
+        'depends_on'
+      );
 
       const toonResult = (await client.callTool({
         name: 'search',
@@ -1033,9 +1106,10 @@ describe('MCP tools', () => {
         toonResult.content?.find((item) => item.type === 'text')?.text ?? '';
       expect(toonResult.structuredContent).toEqual({ toon: toonText });
       expect(toonText).toContain(
-        'results[1]{id,type,score,content,chunk,tags,related}:'
+        '{id,type,score,content,chunk,tags,edges,related}:'
       );
       expect(toonText).toContain(stored.entity.id);
+      expect(toonText).toContain('1 edges: depends_on=1');
       expect(toonText).not.toContain('created_at');
     } finally {
       await close();

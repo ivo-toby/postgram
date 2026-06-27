@@ -34,6 +34,13 @@ const fullSearchResponse = {
       chunk_content: 'token compact search response shape',
       similarity: 0.99,
       score: 0.88,
+      edges: {
+        count: 3,
+        relations: [
+          { relation: 'mentioned_in', count: 2 },
+          { relation: 'depends_on', count: 1 }
+        ]
+      },
       related: [
         {
           entity: {
@@ -178,6 +185,13 @@ describe('search output formatting', () => {
           content: 'token compact search response shape',
           chunk: 'token compact search response shape',
           tags: ['tokens'],
+          edges: {
+            count: 3,
+            relations: [
+              { relation: 'mentioned_in', count: 2 },
+              { relation: 'depends_on', count: 1 }
+            ]
+          },
           related: [
             {
               id: 'fedcba98-7654-3210-fedc-ba9876543210',
@@ -198,10 +212,11 @@ describe('search output formatting', () => {
     );
 
     expect(toon).toContain(
-      'results[1]{id,type,score,content,chunk,tags,related}:'
+      'results[1]{id,type,score,content,chunk,tags,edges,related}:'
     );
     expect(toon).toContain('01234567-89ab-cdef-0123-456789abcdef,memory,0.88');
     expect(toon).toContain('tokens');
+    expect(toon).toContain('3 edges: mentioned_in=2|depends_on=1');
     expect(toon).toContain('related[1]{id,type,relation,direction,content}:');
     expect(toon).not.toContain('metadata');
     expect(toon).not.toContain('created_at');

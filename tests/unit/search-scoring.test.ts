@@ -3,6 +3,7 @@ import { describe, expect, it } from 'vitest';
 import {
   applyRecencyBoost,
   blendScores,
+  buildSearchEdgeSummaries,
   deduplicateResults,
   normalizeBm25Scores
 } from '../../src/services/search-service.js';
@@ -82,5 +83,34 @@ describe('deduplicateResults', () => {
       { entityId: 'a', score: 0.9, chunkContent: 'best chunk' },
       { entityId: 'b', score: 0.7, chunkContent: 'other chunk' }
     ]);
+  });
+});
+
+describe('buildSearchEdgeSummaries', () => {
+  it('counts visible edges and sorts relation summaries stably', () => {
+    const summaries = buildSearchEdgeSummaries([
+      { result_entity_id: 'a', relation: 'mentioned_in' },
+      { result_entity_id: 'a', relation: 'depends_on' },
+      { result_entity_id: 'a', relation: 'mentioned_in' },
+      { result_entity_id: 'a', relation: 'blocked_by' },
+      { result_entity_id: 'b', relation: 'related_to' }
+    ]);
+
+    expect(summaries.get('a')).toEqual({
+      count: 4,
+      relations: [
+        { relation: 'mentioned_in', count: 2 },
+        { relation: 'blocked_by', count: 1 },
+        { relation: 'depends_on', count: 1 }
+      ]
+    });
+    expect(summaries.get('b')).toEqual({
+      count: 1,
+      relations: [{ relation: 'related_to', count: 1 }]
+    });
+  });
+
+  it('returns an empty map when there are no visible edge rows', () => {
+    expect(buildSearchEdgeSummaries([]).size).toBe(0);
   });
 });

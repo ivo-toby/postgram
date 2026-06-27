@@ -47,11 +47,22 @@ export type SearchResult = {
   chunkContent: string;
   similarity: number;
   score: number;
+  edges?: SearchEdgeSummary | undefined;
   related?: Array<{
     entity: { id: string; type: string; content: string | null; metadata: Record<string, unknown> };
     relation: string;
     direction: 'outgoing' | 'incoming';
   }> | undefined;
+};
+
+export type SearchEdgeSummary = {
+  count: number;
+  relations: Array<{ relation: string; count: number }>;
+};
+
+export type SearchEdgeSummaryRow = {
+  result_entity_id: string;
+  relation: string;
 };
 
 type SearchInput = {
@@ -151,6 +162,36 @@ export function deduplicateResults<T extends { entityId: string; score: number }
   }
 
   return Array.from(bestByEntity.values()).sort((left, right) => right.score - left.score);
+}
+
+export function buildSearchEdgeSummaries(
+  rows: SearchEdgeSummaryRow[]
+): Map<string, SearchEdgeSummary> {
+  const relationsByEntityId = new Map<string, Map<string, number>>();
+
+  for (const row of rows) {
+    const relationCounts =
+      relationsByEntityId.get(row.result_entity_id) ?? new Map<string, number>();
+    relationCounts.set(row.relation, (relationCounts.get(row.relation) ?? 0) + 1);
+    relationsByEntityId.set(row.result_entity_id, relationCounts);
+  }
+
+  const summaries = new Map<string, SearchEdgeSummary>();
+  for (const [entityId, relationCounts] of relationsByEntityId) {
+    const relations = Array.from(relationCounts.entries())
+      .map(([relation, count]) => ({ relation, count }))
+      .sort(
+        (left, right) =>
+          right.count - left.count || left.relation.localeCompare(right.relation)
+      );
+
+    summaries.set(entityId, {
+      count: relations.reduce((total, entry) => total + entry.count, 0),
+      relations
+    });
+  }
+
+  return summaries;
 }
 
 const VECTOR_WEIGHT = 0.6;

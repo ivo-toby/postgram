@@ -519,7 +519,7 @@ function createSessionServer(
     'search',
     {
       description:
-        'Search stored knowledge using hybrid BM25 + vector similarity with recency weighting. Set expand_graph=true to also return graph-connected entities (requires extraction to have run on the matching documents — use the queue tool to check status). Use expand_graph when exploring relationships, tracing decisions, or understanding what else is connected to a topic.',
+        'Search stored knowledge using hybrid BM25 + vector similarity with recency weighting. Compact results may include edges.count and edges.relations so agents can see traversable graph context without neighbor content. Set expand_graph=true to also return graph-connected entities (requires extraction to have run on the matching documents — use the queue tool to check status). Use expand_graph when exploring relationships, tracing decisions, or understanding what else is connected to a topic; avoid it for direct facts already present in compact results.',
       inputSchema: {
         query: z.string().min(1),
         type: entityTypeSchema.optional(),

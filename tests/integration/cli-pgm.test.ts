@@ -1114,13 +1114,38 @@ describe('pgm CLI', () => {
       }
     });
 
+    const literalVersionResult = await runPgm(
+      [
+        'task',
+        'update',
+        addBody.entity.id,
+        '--version',
+        String(updateBody.entity.version),
+        '--content',
+        '--version',
+        '--json',
+        '--full-response'
+      ],
+      {
+        PGM_API_URL: baseUrl,
+        PGM_API_KEY: createdKey.plaintextKey
+      }
+    );
+    const literalVersionBody = parseJson(literalVersionResult.stdout) as {
+      entity: {
+        version: number;
+        content: string;
+      };
+    };
+    expect(literalVersionBody.entity.content).toBe('--version');
+
     const completeResult = await runPgm(
       [
         'task',
         'complete',
         addBody.entity.id,
         '--version',
-        String(updateBody.entity.version),
+        String(literalVersionBody.entity.version),
         '--json',
         '--full-response'
       ],

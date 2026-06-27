@@ -1038,6 +1038,7 @@ describe('MCP tools', () => {
           similarity: number;
         }>;
       };
+      expect(full.results).toHaveLength(2);
       const fullHit = full.results.find(
         (entry) => entry.entity.id === stored.entity.id
       );
@@ -1062,6 +1063,7 @@ describe('MCP tools', () => {
           related?: unknown[];
         }>;
       };
+      expect(compact.results).toHaveLength(2);
       const compactHit = compact.results.find(
         (entry) => entry.id === stored.entity.id
       );
@@ -1087,9 +1089,14 @@ describe('MCP tools', () => {
           related?: Array<{ relation: string }>;
         }>;
       };
+      expect(expanded.results).toHaveLength(2);
       const expandedHit = expanded.results.find(
         (entry) => entry.id === stored.entity.id
       );
+      expect(expandedHit?.edges).toEqual({
+        count: 1,
+        relations: [{ relation: 'depends_on', count: 1 }]
+      });
       expect(expandedHit?.related?.map((entry) => entry.relation)).toContain(
         'depends_on'
       );
@@ -1106,7 +1113,7 @@ describe('MCP tools', () => {
         toonResult.content?.find((item) => item.type === 'text')?.text ?? '';
       expect(toonResult.structuredContent).toEqual({ toon: toonText });
       expect(toonText).toContain(
-        '{id,type,score,content,chunk,tags,edges,related}:'
+        'results[2]{id,type,score,content,chunk,tags,edges,related}:'
       );
       expect(toonText).toContain(stored.entity.id);
       expect(toonText).toContain('1 edges: depends_on=1');

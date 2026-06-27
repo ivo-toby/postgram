@@ -42,25 +42,14 @@ function readCliVersion(): string {
   return packageJson.version;
 }
 
-function rewriteTaskVersionOption(argv: string[]): void {
-  const taskIndex = argv.indexOf('task', 2);
-  if (taskIndex === -1) {
-    return;
-  }
-
-  const taskCommandName = argv[taskIndex + 1];
-  if (taskCommandName !== 'update' && taskCommandName !== 'complete') {
-    return;
-  }
-
-  for (let index = taskIndex + 2; index < argv.length; index += 1) {
-    if (argv[index] === '--version') {
-      argv[index] = '--expected-version';
-    }
+function printTopLevelVersionAndExit(argv: string[]): void {
+  if (argv.length === 3 && (argv[2] === '--version' || argv[2] === '-V')) {
+    process.stdout.write(`${readCliVersion()}\n`);
+    process.exit(0);
   }
 }
 
-rewriteTaskVersionOption(process.argv);
+printTopLevelVersionAndExit(process.argv);
 
 function formatStoredEntity(entity: {
   id: string;
@@ -427,7 +416,6 @@ const program = new Command();
 program
   .name('pgm')
   .description('Postgram CLI for humans and agents')
-  .version(readCliVersion())
   .option('--json', 'emit compact JSON for agents where supported');
 
 program
@@ -907,16 +895,16 @@ taskCommand
   .option('--tags <tags>', 'comma-separated tags')
   .option('--visibility <visibility>', 'updated task visibility')
   .option('--metadata <json>', 'JSON metadata object')
-  .option('--expected-version <version>', 'expected version; --version is accepted for compatibility', '')
+  .option('--version <version>', 'expected version', '')
   .option('--full-response', 'emit the full API response when used with --json')
   .action(async (id, options, command) => {
     await runWithClient(command, async (client, json) => {
-      if (!options.expectedVersion) {
+      if (!options.version) {
         throw new AppError(ErrorCode.VALIDATION, '--version is required');
       }
 
       const body = await client.updateTask(id, {
-        version: Number(options.expectedVersion),
+        version: Number(options.version),
         content: options.content,
         context: options.context,
         status: options.status,
@@ -946,15 +934,15 @@ taskCommand
   .command('complete')
   .description('Mark a task complete')
   .argument('id', 'task ID')
-  .option('--expected-version <version>', 'expected version; --version is accepted for compatibility')
+  .option('--version <version>', 'expected version')
   .option('--full-response', 'emit the full API response when used with --json')
   .action(async (id, options, command) => {
     await runWithClient(command, async (client, json) => {
-      if (options.expectedVersion === undefined) {
+      if (options.version === undefined) {
         throw new AppError(ErrorCode.VALIDATION, '--version is required');
       }
 
-      const body = await client.completeTask(id, Number(options.expectedVersion));
+      const body = await client.completeTask(id, Number(options.version));
       return json
         ? options.fullResponse === true
           ? body

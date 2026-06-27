@@ -331,11 +331,19 @@ async function fetchSearchEdgeSummaries(
 
   const rows = await pool.query<SearchEdgeSummaryRow>(
     `
-      SELECT anchor.id AS result_entity_id, e.relation
-      FROM unnest($1::uuid[]) AS anchor(id)
-      JOIN edges e ON e.source_id = anchor.id OR e.target_id = anchor.id
-      JOIN entities src ON src.id = e.source_id
-      JOIN entities tgt ON tgt.id = e.target_id
+      WITH result_edges AS (
+        SELECT e.source_id AS result_entity_id, e.source_id, e.target_id, e.relation
+        FROM unnest($1::uuid[]) AS anchor(id)
+        JOIN edges e ON e.source_id = anchor.id
+        UNION ALL
+        SELECT e.target_id AS result_entity_id, e.source_id, e.target_id, e.relation
+        FROM unnest($1::uuid[]) AS anchor(id)
+        JOIN edges e ON e.target_id = anchor.id
+      )
+      SELECT result_edges.result_entity_id, result_edges.relation
+      FROM result_edges
+      JOIN entities src ON src.id = result_edges.source_id
+      JOIN entities tgt ON tgt.id = result_edges.target_id
       WHERE src.status IS DISTINCT FROM 'archived'
         AND tgt.status IS DISTINCT FROM 'archived'
         AND ($2::text[] IS NULL OR src.type = ANY($2))
@@ -407,16 +415,18 @@ export function searchEntities(
       });
 
       const resultEntityIds = results.results.map((r) => r.entityId);
-      const edgeSummaries = await fetchSearchEdgeSummaries(
-        pool,
-        auth,
-        input,
-        resultEntityIds
-      );
-      for (const result of results.results) {
-        const summary = edgeSummaries.get(result.entityId);
-        if (summary) {
-          result.edges = summary;
+      if (!input.expandGraph) {
+        const edgeSummaries = await fetchSearchEdgeSummaries(
+          pool,
+          auth,
+          input,
+          resultEntityIds
+        );
+        for (const result of results.results) {
+          const summary = edgeSummaries.get(result.entityId);
+          if (summary) {
+            result.edges = summary;
+          }
         }
       }
 
@@ -468,17 +478,34 @@ export function searchEntities(
           );
 
           const neighborMap = new Map(neighbors.rows.map((n) => [n.id, n]));
+          const edgeSummaryRows: SearchEdgeSummaryRow[] = [];
 
           for (const result of results.results) {
             const edgeInfo = edgesByEntityId.get(result.entityId);
             if (!edgeInfo) continue;
-            result.related = edgeInfo
+            const related = edgeInfo
               .map((info) => {
                 const entity = neighborMap.get(info.entityId);
                 if (!entity) return null;
                 return { entity, relation: info.relation, direction: info.direction };
               })
               .filter((r): r is NonNullable<typeof r> => r !== null);
+            result.related = related;
+
+            for (const entry of related) {
+              edgeSummaryRows.push({
+                result_entity_id: result.entityId,
+                relation: entry.relation
+              });
+            }
+          }
+
+          const edgeSummaries = buildSearchEdgeSummaries(edgeSummaryRows);
+          for (const result of results.results) {
+            const summary = edgeSummaries.get(result.entityId);
+            if (summary) {
+              result.edges = summary;
+            }
           }
         }
       }

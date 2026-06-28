@@ -617,6 +617,10 @@ transport-layer conveniences for MCP and the CLI only.
 so large repos don't send a single oversized payload. Each upload batch is
 capped at ~50 files or ~4 MB, whichever comes first.
 
+If `PGM_API_URL` points through a reverse proxy, make sure that proxy allows
+request bodies larger than the upload batch size. The bundled UI nginx proxy
+sets `client_max_body_size 64m`; other proxies need an equivalent limit.
+
 ### Knowledge graph
 
 - `POST /api/edges` — create edge

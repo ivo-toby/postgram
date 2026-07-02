@@ -24,6 +24,10 @@ export type SearchResponse = {
     chunk_content: string;
     similarity: number;
     score: number;
+    edges?: {
+      count: number;
+      relations: Array<{ relation: string; count: number }>;
+    };
     related?: Array<{
       entity: { id: string; type: string; content: string | null; metadata: Record<string, unknown> };
       relation: string;

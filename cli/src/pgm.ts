@@ -42,6 +42,15 @@ function readCliVersion(): string {
   return packageJson.version;
 }
 
+function printTopLevelVersionAndExit(argv: string[]): void {
+  if (argv.length === 3 && (argv[2] === '--version' || argv[2] === '-V')) {
+    process.stdout.write(`${readCliVersion()}\n`);
+    process.exit(0);
+  }
+}
+
+printTopLevelVersionAndExit(process.argv);
+
 function formatStoredEntity(entity: {
   id: string;
   type: string;
@@ -407,7 +416,6 @@ const program = new Command();
 program
   .name('pgm')
   .description('Postgram CLI for humans and agents')
-  .version(readCliVersion())
   .option('--json', 'emit compact JSON for agents where supported');
 
 program

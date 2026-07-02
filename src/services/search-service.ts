@@ -47,11 +47,22 @@ export type SearchResult = {
   chunkContent: string;
   similarity: number;
   score: number;
+  edges?: SearchEdgeSummary | undefined;
   related?: Array<{
     entity: { id: string; type: string; content: string | null; metadata: Record<string, unknown> };
     relation: string;
     direction: 'outgoing' | 'incoming';
   }> | undefined;
+};
+
+export type SearchEdgeSummary = {
+  count: number;
+  relations: Array<{ relation: string; count: number }>;
+};
+
+export type SearchEdgeSummaryRow = {
+  result_entity_id: string;
+  relation: string;
 };
 
 type SearchInput = {
@@ -151,6 +162,36 @@ export function deduplicateResults<T extends { entityId: string; score: number }
   }
 
   return Array.from(bestByEntity.values()).sort((left, right) => right.score - left.score);
+}
+
+export function buildSearchEdgeSummaries(
+  rows: SearchEdgeSummaryRow[]
+): Map<string, SearchEdgeSummary> {
+  const relationsByEntityId = new Map<string, Map<string, number>>();
+
+  for (const row of rows) {
+    const relationCounts =
+      relationsByEntityId.get(row.result_entity_id) ?? new Map<string, number>();
+    relationCounts.set(row.relation, (relationCounts.get(row.relation) ?? 0) + 1);
+    relationsByEntityId.set(row.result_entity_id, relationCounts);
+  }
+
+  const summaries = new Map<string, SearchEdgeSummary>();
+  for (const [entityId, relationCounts] of relationsByEntityId) {
+    const relations = Array.from(relationCounts.entries())
+      .map(([relation, count]) => ({ relation, count }))
+      .sort(
+        (left, right) =>
+          right.count - left.count || left.relation.localeCompare(right.relation)
+      );
+
+    summaries.set(entityId, {
+      count: relations.reduce((total, entry) => total + entry.count, 0),
+      relations
+    });
+  }
+
+  return summaries;
 }
 
 const VECTOR_WEIGHT = 0.6;
@@ -278,6 +319,54 @@ async function runHybridSearch(
   };
 }
 
+async function fetchSearchEdgeSummaries(
+  pool: Pool,
+  auth: AuthContext,
+  input: SearchInput,
+  resultEntityIds: string[]
+): Promise<Map<string, SearchEdgeSummary>> {
+  if (resultEntityIds.length === 0) {
+    return new Map();
+  }
+
+  const rows = await pool.query<SearchEdgeSummaryRow>(
+    `
+      WITH result_edges AS (
+        SELECT e.source_id AS result_entity_id, e.source_id, e.target_id, e.relation
+        FROM unnest($1::uuid[]) AS anchor(id)
+        JOIN edges e ON e.source_id = anchor.id
+        UNION ALL
+        SELECT e.target_id AS result_entity_id, e.source_id, e.target_id, e.relation
+        FROM unnest($1::uuid[]) AS anchor(id)
+        JOIN edges e ON e.target_id = anchor.id
+      )
+      SELECT result_edges.result_entity_id, result_edges.relation
+      FROM result_edges
+      JOIN entities src ON src.id = result_edges.source_id
+      JOIN entities tgt ON tgt.id = result_edges.target_id
+      WHERE src.status IS DISTINCT FROM 'archived'
+        AND tgt.status IS DISTINCT FROM 'archived'
+        AND ($2::text[] IS NULL OR src.type = ANY($2))
+        AND ($2::text[] IS NULL OR tgt.type = ANY($2))
+        AND src.visibility = ANY($3)
+        AND tgt.visibility = ANY($3)
+        AND ${ownerSqlCondition('src.owner', '$4')}
+        AND ${ownerSqlCondition('tgt.owner', '$4')}
+        AND ${scopedMemoryVisibilitySql('src.metadata', '$5')}
+        AND ${scopedMemoryVisibilitySql('tgt.metadata', '$5')}
+    `,
+    [
+      resultEntityIds,
+      auth.allowedTypes,
+      auth.allowedVisibility,
+      input.owner ?? null,
+      auth.clientId
+    ]
+  );
+
+  return buildSearchEdgeSummaries(rows.rows);
+}
+
 export function searchEntities(
   pool: Pool,
   auth: AuthContext,
@@ -325,10 +414,24 @@ export function searchEntities(
         now
       });
 
+      const resultEntityIds = results.results.map((r) => r.entityId);
+      if (!input.expandGraph) {
+        const edgeSummaries = await fetchSearchEdgeSummaries(
+          pool,
+          auth,
+          input,
+          resultEntityIds
+        );
+        for (const result of results.results) {
+          const summary = edgeSummaries.get(result.entityId);
+          if (summary) {
+            result.edges = summary;
+          }
+        }
+      }
+
       if (input.expandGraph && results.results.length > 0) {
         // Batch graph expansion: 2 queries total instead of 2N
-        const resultEntityIds = results.results.map((r) => r.entityId);
-
         const allEdges = await pool.query<{
           source_id: string; target_id: string; relation: string;
         }>(
@@ -375,17 +478,34 @@ export function searchEntities(
           );
 
           const neighborMap = new Map(neighbors.rows.map((n) => [n.id, n]));
+          const edgeSummaryRows: SearchEdgeSummaryRow[] = [];
 
           for (const result of results.results) {
             const edgeInfo = edgesByEntityId.get(result.entityId);
             if (!edgeInfo) continue;
-            result.related = edgeInfo
+            const related = edgeInfo
               .map((info) => {
                 const entity = neighborMap.get(info.entityId);
                 if (!entity) return null;
                 return { entity, relation: info.relation, direction: info.direction };
               })
               .filter((r): r is NonNullable<typeof r> => r !== null);
+            result.related = related;
+
+            for (const entry of related) {
+              edgeSummaryRows.push({
+                result_entity_id: result.entityId,
+                relation: entry.relation
+              });
+            }
+          }
+
+          const edgeSummaries = buildSearchEdgeSummaries(edgeSummaryRows);
+          for (const result of results.results) {
+            const summary = edgeSummaries.get(result.entityId);
+            if (summary) {
+              result.edges = summary;
+            }
           }
         }
       }

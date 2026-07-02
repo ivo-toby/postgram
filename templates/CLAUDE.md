@@ -29,15 +29,25 @@ for the smallest readable MCP output.
 
 ### When to use expand_graph
 
+Start with compact search. If a result has `edges.count > 0`, inspect
+`edges.relations` before deciding whether to traverse. The `edges` field is a
+cheap affordance: it tells you graph context exists without returning neighbor
+content.
+
 Add `"expand_graph": true` when relationships matter — not just finding a
-document, but understanding what is connected to it. Each result gains a
-`related` array of graph-connected entities with `relation` and `direction`.
+document, but understanding what is connected to it. Each expanded result gains
+a `related` array of graph-connected entities with `relation` and `direction`.
 
 Use it when the user asks:
 
 - Who was involved in X / who owns Y
 - What led to a decision, what depends on something
 - What else is connected to a topic (open-ended exploration)
+- Causes, provenance, blockers, or discussion participants
+- Similar search hits need graph context for disambiguation
+
+Do not expand when the user only needs a direct fact from the compact result.
+Keep traversal deliberate to control token use.
 
 ```
 mcp__postgram__search { "query": "authentication design", "limit": 3, "expand_graph": true }

@@ -6,7 +6,7 @@ ticket: TICKET-004-runtime-configuration
 wave: WAVE-004
 slug: settings-secret-store
 title: Settings And Secret Store
-status: in_progress
+status: review
 depends_on:
   - TASK-003-runtime-config-feasibility
   - TASK-005-admin-session-routes
@@ -20,22 +20,27 @@ assigned_model_class: implementationComplex
 review_model_class: review
 branch: codex/task/TASK-009-settings-secret-store
 worker_worktree: /Users/ivo.toby/workspace/postgram/.worktrees/TASK-009-settings-secret-store
-worktree_status: verified_dispatched
-pr: null
+worktree_status: verified
+pr: https://github.com/ivo-toby/postgram/pull/81
 worker_thread_id: 019f3333-4104-7b02-b1aa-1fce6978e410
-review_thread_id: null
-current_gate: no_pr
-branch_freshness: current_at_dispatch
+review_thread_id: 019f334b-60fb-7712-8406-458f8ac26762
+current_gate: review
+branch_freshness: current_at_pr
 verification:
   - npm test -- tests/integration/admin-settings-service.test.ts
   - npm run typecheck
+  - git diff --check
+  - npx eslint src/services/admin-settings-service.ts src/config.ts tests/integration/admin-settings-service.test.ts tests/unit/config.test.ts tests/helpers/postgres.ts
+  - npm test -- tests/unit/config.test.ts
+  - npm test -- tests/integration/migration.test.ts
+  - npm test -- tests/integration/admin-auth-service.test.ts
 ---
 
 # TASK-009-settings-secret-store: Settings And Secret Store
 
 ## Status
 
-in_progress
+review
 
 ## Parent Ticket
 
@@ -122,7 +127,7 @@ Verified and dispatched at 2026-07-05T16:47:34Z with worker Euclid
 
 ## PR / Patch Reference
 
-None yet.
+Draft PR: https://github.com/ivo-toby/postgram/pull/81
 
 ## RED-GREEN TDD Plan
 
@@ -160,10 +165,10 @@ Keep generic setting storage separate from provider-specific validation.
 
 ## Task-Level Definition of Done
 
-- [ ] Settings persistence exists.
-- [ ] Secret readback is redacted.
-- [ ] Tests cover validation and reset helpers.
-- [ ] New config values are documented if added.
+- [x] Settings persistence exists.
+- [x] Secret readback is redacted.
+- [x] Tests cover validation and reset helpers.
+- [x] New config values are documented if added.
 
 ## Validation Steps
 
@@ -172,13 +177,37 @@ Keep generic setting storage separate from provider-specific validation.
 
 ## Verification Evidence
 
-- Not run yet.
+- RED: `npm test -- tests/integration/admin-settings-service.test.ts` failed
+  before implementation because `admin-settings-service` did not exist.
+- RED: `npm test -- tests/unit/config.test.ts` failed before config support
+  because `ADMIN_SETTINGS_ENCRYPTION_KEY` was not parsed.
+- RED: review-driven regression proved `saveRuntimeSetting` accepted
+  `OPENAI_API_KEY` as plaintext settings JSON before the secret-key guard.
+- GREEN: `npm test -- tests/integration/admin-settings-service.test.ts`
+  passed: 1 test file, 7 tests.
+- GREEN: `npm test -- tests/unit/config.test.ts` passed: 1 test file,
+  23 tests.
+- Adjacent: `npm test -- tests/integration/migration.test.ts` passed:
+  1 test file, 2 tests.
+- Adjacent: `npm test -- tests/integration/admin-auth-service.test.ts`
+  passed: 1 test file, 11 tests.
+- Static: `npm run typecheck` passed.
+- Static: `npx eslint src/services/admin-settings-service.ts src/config.ts
+  tests/integration/admin-settings-service.test.ts tests/unit/config.test.ts
+  tests/helpers/postgres.ts` passed.
+- Static: `git diff --check` passed.
+- Review: `codex review --uncommitted` first found one P1 about
+  credential-shaped keys bypassing the encrypted secret store through generic
+  settings persistence. Fixed before push.
+- Review: second `codex review --uncommitted` returned no blocking issues.
 
 ## Review Feedback
 
 ### P1
 
-- None.
+- Resolved before push: reject credential-shaped keys such as
+  `OPENAI_API_KEY` in plain runtime setting save/read/validation paths so
+  provider secrets cannot bypass encrypted write-only storage.
 
 ### P2
 
@@ -190,8 +219,23 @@ Keep generic setting storage separate from provider-specific validation.
 
 ## Completion Notes
 
-- WAVE-004 activation started at 2026-07-05T16:47:34Z as the
-  settings/secret-store hybrid bundle. Branch/worktree creation is pending the
-  pushed activation artifact commit.
-- Controller verified the worktree and dispatched worker Euclid
-  (`019f3333-4104-7b02-b1aa-1fce6978e410`). No PR or patch exists yet.
+- Added migration `011_admin_settings.sql` with `admin_runtime_settings`,
+  `admin_runtime_secrets`, and `audit_log.admin_user_id`.
+- Added `admin-settings-service` APIs for settings persistence, validation
+  metadata updates, encrypted provider-secret writes, and redacted secret
+  metadata reads/lists.
+- Implemented AES-256-GCM secret encryption with one external installation
+  key, provided as `ADMIN_SETTINGS_ENCRYPTION_KEY`.
+- Plain runtime settings reject credential-shaped keys such as `_API_KEY`,
+  `_TOKEN`, `_PASSWORD`, `_SECRET`, and `_PRIVATE_KEY`, plus
+  `DATABASE_URL` and `ADMIN_SETTINGS_ENCRYPTION_KEY`.
+- Added the future HTTP authority contract assertion for `/admin/api/*`
+  session/CSRF semantics and TASK-006 step-up for secret writes; no HTTP
+  routes are exposed by this task.
+- Updated `.env.example`, `docker-compose.yml`, and `README.md` for
+  `ADMIN_SETTINGS_ENCRYPTION_KEY`.
+- Updated the shared Postgres test reset helper for settings and secrets
+  tables.
+- Shared-context update needed: none. TASK-010 can consume this service for
+  provider validation/apply behavior.
+- Final gate: draft PR #81 ready for review.

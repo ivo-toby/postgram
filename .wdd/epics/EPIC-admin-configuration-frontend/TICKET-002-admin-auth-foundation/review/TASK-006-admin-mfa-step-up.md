@@ -23,8 +23,8 @@ worktree_status: clean_pushed
 pr: https://github.com/ivo-toby/postgram/pull/82
 worker_thread_id: 019f3333-4033-7463-9819-aa3dec286b4c
 review_thread_id: 019f322c-02e7-7590-8b8e-ebdd1e9c52ac
-current_gate: review
-branch_freshness: current_with_epic_at_fix
+current_gate: review_passed_pending_merge
+branch_freshness: current_after_epic_merge
 verification:
   - npm test -- tests/contract/admin-mfa-routes.test.ts
   - npm test -- tests/integration/admin-auth-service.test.ts
@@ -308,3 +308,24 @@ Keep MFA helpers isolated from ordinary API-key auth.
   `audit_log.admin_user_id` column exists, preserves compatibility before that
   migration lands, adds direct MFA/step-up 429 route coverage, and refreshes
   the branch against the latest epic state.
+- 2026-07-05T17:59:04Z controller observed local clean TASK-006 fix commits
+  through `392313355f802679128daee2680bd01d016059df`, including
+  `7d3bfee fix: structure admin mfa audit actor`, and task evidence for the
+  P3 route-rate-limit regression. The branch is current with the epic branch
+  locally, but still ahead of origin and PR #82 remains at old head
+  `3cfca6e9da0d1f5b675616e28546302a6fcad7f4`. Controller nudged Tesla for the
+  missing push, PR update, and final status token in
+  `019f3371-0282-78d3-83fd-b9b8ba1aac24`.
+- 2026-07-05T18:05:13Z controller observed Tesla `DONE` and PR #82 updated to
+  `392313355f802679128daee2680bd01d016059df`. Controller verification passed:
+  `git diff --check origin/codex/epic/admin-configuration-frontend...HEAD`,
+  orchestration JSON parse, `npm test -- tests/contract/admin-mfa-routes.test.ts`
+  with 6 tests, `npm test -- tests/integration/admin-auth-service.test.ts` with
+  15 tests, and `npm run typecheck`. Follow-up review requested from Lorentz in
+  `019f3375-9922-7283-8c64-702aceaae82f`.
+- 2026-07-05T18:10Z Lorentz returned `REVIEW_PASS` for PR #82 follow-up review.
+- 2026-07-05T18:14Z controller merged latest epic checkpoint `e626ec9` into
+  the task branch for final freshness; only this WDD task file conflicted, and
+  the resolution preserved Tesla's fix evidence plus Lorentz `REVIEW_PASS`.
+- Final gate: draft PR #82 is review-passed and current with the latest epic
+  branch; merge into the epic branch is pending controller merge sequencing.

@@ -19,7 +19,7 @@ assigned_model_class: implementationComplex
 review_model_class: review
 branch: codex/task/TASK-006-admin-mfa-step-up
 worker_worktree: /Users/ivo.toby/workspace/postgram/.worktrees/TASK-006-admin-mfa-step-up
-worktree_status: verified_dispatched
+worktree_status: active_uncommitted
 pr: null
 worker_thread_id: 019f3333-4033-7463-9819-aa3dec286b4c
 review_thread_id: null
@@ -218,3 +218,8 @@ Keep MFA helpers isolated from ordinary API-key auth.
   artifact commit.
 - Controller verified the worktree and dispatched worker Tesla
   (`019f3333-4033-7463-9819-aa3dec286b4c`). No PR or patch exists yet.
+- 2026-07-05T17:12:04Z controller heartbeat observed active uncommitted work
+  in `src/auth/admin-middleware.ts`, `src/transport/admin.ts`,
+  `src/auth/admin-mfa-service.ts`, `tests/contract/admin-mfa-routes.test.ts`,
+  and `tests/integration/admin-auth-service.test.ts`. No PR or patch exists
+  yet; branch remains current with the epic branch at `f9bbc0f`.

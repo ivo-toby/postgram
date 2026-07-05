@@ -6,7 +6,7 @@ ticket: TICKET-004-runtime-configuration
 wave: WAVE-004
 slug: settings-secret-store
 title: Settings And Secret Store
-status: todo
+status: in_progress
 depends_on:
   - TASK-003-runtime-config-feasibility
   - TASK-005-admin-session-routes
@@ -19,13 +19,13 @@ conflict_domains:
 assigned_model_class: implementationComplex
 review_model_class: review
 branch: codex/task/TASK-009-settings-secret-store
-worker_worktree: null
-worktree_status: unassigned
+worker_worktree: /Users/ivo.toby/workspace/postgram/.worktrees/TASK-009-settings-secret-store
+worktree_status: pending_creation
 pr: null
 worker_thread_id: null
 review_thread_id: null
-current_gate: not_started
-branch_freshness: unknown
+current_gate: pending_worktree
+branch_freshness: activation_base_pending
 verification:
   - npm test -- tests/integration/admin-settings-service.test.ts
   - npm run typecheck
@@ -35,7 +35,7 @@ verification:
 
 ## Status
 
-todo
+in_progress
 
 ## Parent Ticket
 
@@ -111,7 +111,10 @@ codex/task/TASK-009-settings-secret-store
 
 ## Worker Worktree
 
-None assigned yet.
+/Users/ivo.toby/workspace/postgram/.worktrees/TASK-009-settings-secret-store
+
+Assigned by WAVE-004 activation. The controller must create and verify this
+isolated worktree before dispatch.
 
 ## PR / Patch Reference
 
@@ -183,4 +186,6 @@ Keep generic setting storage separate from provider-specific validation.
 
 ## Completion Notes
 
-- None yet.
+- WAVE-004 activation started at 2026-07-05T16:47:34Z as the
+  settings/secret-store hybrid bundle. Branch/worktree creation is pending the
+  pushed activation artifact commit.

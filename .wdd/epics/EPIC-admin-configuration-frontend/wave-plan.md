@@ -18,10 +18,10 @@ updated_at: 2026-07-05
 | TASK-003-runtime-config-feasibility | TICKET-001-feasibility-security-design | None | `src/config.ts`, `src/index.ts`, provider lifecycle, Docker docs | done |
 | TASK-004-admin-auth-persistence | TICKET-002-admin-auth-foundation | TASK-001, TASK-002 | migrations, `src/auth/**`, admin auth services, integration tests | done |
 | TASK-005-admin-session-routes | TICKET-002-admin-auth-foundation | TASK-004 | admin routes, cookies, CSRF, lockout, auth contract tests | done |
-| TASK-006-admin-mfa-step-up | TICKET-002-admin-auth-foundation | TASK-004, TASK-005 | MFA tables, TOTP service, step-up middleware, sensitive action gates | todo |
+| TASK-006-admin-mfa-step-up | TICKET-002-admin-auth-foundation | TASK-004, TASK-005 | MFA tables, TOTP service, step-up middleware, sensitive action gates | in_progress |
 | TASK-007-admin-api-shell-diagnostics | TICKET-003-admin-api-foundation | TASK-005, TASK-006 | admin transport, diagnostics routes, admin middleware | todo |
 | TASK-008-admin-key-audit-stats-api | TICKET-003-admin-api-foundation | TASK-007 | key service, audit querying, stats service, admin API contracts | todo |
-| TASK-009-settings-secret-store | TICKET-004-runtime-configuration | TASK-003, TASK-005 | settings migrations, secret encryption, config service | todo |
+| TASK-009-settings-secret-store | TICKET-004-runtime-configuration | TASK-003, TASK-005 | settings migrations, secret encryption, config service | in_progress |
 | TASK-010-provider-config-apply | TICKET-004-runtime-configuration | TASK-009 | provider lifecycle, validation flows, config tests, worker reload semantics | todo |
 | TASK-011-admin-auth-ui | TICKET-005-admin-frontend | TASK-006 | React auth shell, admin session client, MFA UI, UI routing | todo |
 | TASK-012-admin-ops-dashboard-ui | TICKET-005-admin-frontend | TASK-008, TASK-011 | API key UI, audit/stats/health pages, admin API client | todo |
@@ -290,7 +290,7 @@ Drift notes:
 
 ### WAVE-004
 
-Status: ready_to_start
+Status: in_progress
 
 Tasks:
 
@@ -321,6 +321,8 @@ Activation rule:
 - Dispatch as two subgroups: auth/MFA and settings/secrets.
 - Ready after WAVE-003 reconciliation on 2026-07-05; activation is left to the
   next `wdd-start-wave` step.
+- Activated at 2026-07-05T16:47:34Z. TASK-006 and TASK-009 are assigned as
+  separate hybrid bundles with dedicated branches and worktrees.
 
 Stop condition:
 

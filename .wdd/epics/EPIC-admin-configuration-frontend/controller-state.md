@@ -52,9 +52,9 @@ Cadence: 15 minutes
 
 Status: active no-PR monitoring
 
-Last check: 2026-07-05T15:31:16Z
+Last check: 2026-07-05T15:45:04Z
 
-Next check due: 2026-07-05T15:46:16Z
+Next check due: 2026-07-05T16:00:04Z
 
 Scheduler reference: `postgram-admin-wave-003-wdd-heartbeat`
 
@@ -98,7 +98,7 @@ needed.
 | TASK-002-threat-model-bootstrap | TICKET-001-feasibility-security-design | codex/task/WAVE-001-admin-feasibility-gate | cleaned_up | reconciled | P2 bootstrap ownership feedback resolved; REVIEW_PASS; merged in `1f11365` |
 | TASK-003-runtime-config-feasibility | TICKET-001-feasibility-security-design | codex/task/WAVE-001-admin-feasibility-gate | cleaned_up | reconciled | P3 provider URL/egress test feedback addressed; REVIEW_PASS; merged in `1f11365` |
 | TASK-004-admin-auth-persistence | TICKET-002-admin-auth-foundation | codex/task/TASK-004-admin-auth-persistence | cleaned_up | reconciled | REVIEW_PASS; freshness verification passed; merged in `0f96769`; PR #79 merged; WAVE-002 reconciled |
-| TASK-005-admin-session-routes | TICKET-002-admin-auth-foundation | codex/task/TASK-005-admin-session-routes | active_uncommitted | no_pr | worker-reported uncommitted verification passed; waiting for commit, push, PR, and final status |
+| TASK-005-admin-session-routes | TICKET-002-admin-auth-foundation | codex/task/TASK-005-admin-session-routes | active_uncommitted | no_pr | worker-reported uncommitted verification passed; waiting for commit, freshness refresh, push, PR, and final status |
 | TASK-006-admin-mfa-step-up | TICKET-002-admin-auth-foundation | codex/task/TASK-006-admin-mfa-step-up | not_created | planned | `npm test -- tests/contract/admin-mfa-routes.test.ts`; `npm test -- tests/integration/admin-auth-service.test.ts`; `npm run typecheck` |
 | TASK-007-admin-api-shell-diagnostics | TICKET-003-admin-api-foundation | codex/task/TASK-007-admin-api-shell-diagnostics | not_created | planned | `npm test -- tests/contract/admin-api.test.ts`; `npm run typecheck` |
 | TASK-008-admin-key-audit-stats-api | TICKET-003-admin-api-foundation | codex/task/TASK-008-admin-key-audit-stats-api | not_created | planned | `npm test -- tests/contract/admin-key-audit-stats.test.ts`; `npm test -- tests/integration/key-service.test.ts`; `npm run typecheck` |
@@ -213,7 +213,9 @@ needed.
 - WAVE-004 remains blocked until WAVE-003 is reconciled.
 - WAVE-003 branch/worktree has active uncommitted TASK-005 implementation
   changes from worker Leibniz. No commit, push, PR, patch, final worker status,
-  or review thread exists yet.
+  or review thread exists yet. The task branch remains at `79d1265` while the
+  epic branch is at controller checkpoint `79884a2`, so branch freshness must
+  be refreshed before PR/review or merge.
 
 ## Verification Status
 
@@ -253,6 +255,10 @@ needed.
   tests passed with 36 tests, and `git diff --check` passed. Controller has not
   advanced to review because there is no commit, push, PR, patch, or final
   worker status yet.
+- WAVE-003 2026-07-05T15:45:04Z observation: the worker worktree still has
+  active uncommitted TASK-005 changes, now including `tests/unit/errors.test.ts`.
+  No PR exists for `codex/task/TASK-005-admin-session-routes`, the task branch
+  is still at `79d1265`, and the epic branch is at `79884a2`.
 
 ## Event Log
 
@@ -348,6 +354,14 @@ needed.
   push, draft PR, task PR reference, and final status token
   (`019f32e7-fed1-7291-8563-3703792e793e`). Next check due
   2026-07-05T15:46:16Z.
+- 2026-07-05T15:45:04Z: Heartbeat inspected Leibniz again. The worker still
+  has no final status, no pushed commit, and no PR or patch. The worktree has
+  active uncommitted TASK-005 changes in the expected admin route/middleware
+  files plus `tests/unit/errors.test.ts`; the task branch is still `79d1265`
+  while the epic branch is `79884a2`. The controller nudged Leibniz for the
+  missing commit, branch freshness refresh, push, draft PR, task PR reference,
+  and final status token (`019f32f5-c789-7540-8be1-a7e4d3799eca`). Next check
+  due 2026-07-05T16:00:04Z.
 
 ## Next Action
 

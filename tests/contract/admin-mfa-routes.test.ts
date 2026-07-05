@@ -91,6 +91,10 @@ function totpCode(secret: string, now = new Date()): string {
   return String(binary % 1_000_000).padStart(6, '0');
 }
 
+function invalidTotpCode(secret: string): string {
+  return totpCode(secret) === '000000' ? '000001' : '000000';
+}
+
 async function setupPendingFirstAdmin(database: TestDatabase): Promise<{
   app: ReturnType<typeof createApp>;
   cookie: string;
@@ -515,6 +519,129 @@ describe('admin MFA routes', () => {
       'admin.mfa.challenge',
       'admin.step_up'
     ]);
+  }, 120_000);
+
+  it('rate-limits MFA verification and step-up route attempts', async () => {
+    if (!database) {
+      throw new Error('test database not initialized');
+    }
+
+    const { app, cookie, csrfToken } = await setupPendingFirstAdmin(database);
+    const enrollResponse = await app.request('/admin/api/session/mfa/enroll', {
+      method: 'POST',
+      headers: {
+        Cookie: cookie,
+        'X-CSRF-Token': csrfToken
+      }
+    });
+    const enrollBody = (await enrollResponse.json()) as {
+      factor: { id: string };
+      secret: string;
+    };
+    expect(enrollResponse.status).toBe(201);
+
+    const invalidCode = invalidTotpCode(enrollBody.secret);
+    for (let attempt = 0; attempt < 5; attempt += 1) {
+      const failedVerifyResponse = await app.request(
+        '/admin/api/session/mfa/verify',
+        {
+          method: 'POST',
+          headers: {
+            Cookie: cookie,
+            'Content-Type': 'application/json',
+            'X-CSRF-Token': csrfToken
+          },
+          body: JSON.stringify({
+            factorId: enrollBody.factor.id,
+            code: invalidCode
+          })
+        }
+      );
+      expect(failedVerifyResponse.status).toBe(401);
+    }
+
+    const limitedVerifyResponse = await app.request(
+      '/admin/api/session/mfa/verify',
+      {
+        method: 'POST',
+        headers: {
+          Cookie: cookie,
+          'Content-Type': 'application/json',
+          'X-CSRF-Token': csrfToken
+        },
+        body: JSON.stringify({
+          factorId: enrollBody.factor.id,
+          code: totpCode(enrollBody.secret)
+        })
+      }
+    );
+    const limitedVerifyBody: unknown = await limitedVerifyResponse.json();
+    expect(limitedVerifyResponse.status).toBe(429);
+    expect(limitedVerifyBody).toMatchObject({
+      error: {
+        code: ErrorCode.RATE_LIMITED,
+        message: 'Too many MFA attempts'
+      }
+    });
+
+    await database.pool.query(
+      "DELETE FROM admin_auth_attempts WHERE attempt_type = 'mfa'"
+    );
+
+    const verifyResponse = await app.request('/admin/api/session/mfa/verify', {
+      method: 'POST',
+      headers: {
+        Cookie: cookie,
+        'Content-Type': 'application/json',
+        'X-CSRF-Token': csrfToken
+      },
+      body: JSON.stringify({
+        factorId: enrollBody.factor.id,
+        code: totpCode(enrollBody.secret)
+      })
+    });
+    expect(verifyResponse.status).toBe(200);
+
+    for (let attempt = 0; attempt < 5; attempt += 1) {
+      const failedStepUpResponse = await app.request(
+        '/admin/api/session/step-up',
+        {
+          method: 'POST',
+          headers: {
+            Cookie: cookie,
+            'Content-Type': 'application/json',
+            'X-CSRF-Token': csrfToken
+          },
+          body: JSON.stringify({
+            code: invalidCode
+          })
+        }
+      );
+      expect(failedStepUpResponse.status).toBe(401);
+    }
+
+    const limitedStepUpResponse = await app.request(
+      '/admin/api/session/step-up',
+      {
+        method: 'POST',
+        headers: {
+          Cookie: cookie,
+          'Content-Type': 'application/json',
+          'X-CSRF-Token': csrfToken
+        },
+        body: JSON.stringify({
+          code: totpCode(enrollBody.secret)
+        })
+      }
+    );
+    const limitedStepUpBody: unknown = await limitedStepUpResponse.json();
+    expect(limitedStepUpResponse.status).toBe(429);
+    expect(limitedStepUpBody).toMatchObject({
+      error: {
+        code: ErrorCode.RATE_LIMITED,
+        message: 'Too many step-up attempts'
+      }
+    });
   }, 120_000);
 
   it('does not allow ordinary API-key bearer or MCP OAuth bearer tokens to bypass MFA endpoints', async () => {

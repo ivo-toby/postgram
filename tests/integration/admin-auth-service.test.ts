@@ -23,7 +23,8 @@ import {
   beginAdminTotpEnrollment,
   generateTotpCode,
   verifyAdminTotpChallenge,
-  verifyAdminTotpEnrollment
+  verifyAdminTotpEnrollment,
+  verifyAdminTotpStepUp
 } from '../../src/auth/admin-mfa-service.js';
 import { isAdminStepUpFresh } from '../../src/auth/admin-middleware.js';
 import { createKey } from '../../src/auth/key-service.js';
@@ -695,6 +696,106 @@ describe('admin-auth-service', () => {
     expect(stored.rows[0]?.mfa_verified_at?.toISOString()).toBe(
       now.toISOString()
     );
+  }, 120_000);
+
+  it('writes structured admin actor attribution for MFA audit rows when the audit schema supports it', async () => {
+    if (!database) {
+      throw new Error('test database not initialized');
+    }
+
+    await database.pool.query(`
+      ALTER TABLE audit_log
+      ADD COLUMN IF NOT EXISTS admin_user_id uuid REFERENCES admin_users(id) ON DELETE SET NULL
+    `);
+
+    const now = new Date('2026-07-05T10:00:00.000Z');
+    const user = (
+      await createAdminUser(database.pool, {
+        email: 'mfa-audit@example.com',
+        password: 'Correct-Horse-Battery-42!'
+      })
+    )._unsafeUnwrap();
+    const session = (
+      await createAdminSession(database.pool, {
+        adminUserId: user.id,
+        ttlMs: 60 * 60 * 1000,
+        now
+      })
+    )._unsafeUnwrap();
+    const enrollment = (
+      await beginAdminTotpEnrollment(database.pool, {
+        adminUserId: user.id,
+        accountName: user.email,
+        issuer: 'Postgram',
+        secretKey: ADMIN_MFA_SECRET_KEY,
+        now
+      })
+    )._unsafeUnwrap();
+
+    const verified = await verifyAdminTotpEnrollment(database.pool, {
+      adminUserId: user.id,
+      sessionId: session.session.id,
+      factorId: enrollment.factor.id,
+      code: generateTotpCode(enrollment.secret, { now }),
+      secretKey: ADMIN_MFA_SECRET_KEY,
+      now
+    });
+    expect(verified.isOk()).toBe(true);
+
+    const loginSession = (
+      await createAdminSession(database.pool, {
+        adminUserId: user.id,
+        ttlMs: 60 * 60 * 1000,
+        now
+      })
+    )._unsafeUnwrap();
+    const challenge = await verifyAdminTotpChallenge(database.pool, {
+      adminUserId: user.id,
+      sessionId: loginSession.session.id,
+      code: generateTotpCode(enrollment.secret, { now }),
+      secretKey: ADMIN_MFA_SECRET_KEY,
+      now
+    });
+    expect(challenge.isOk()).toBe(true);
+
+    const stepUp = await verifyAdminTotpStepUp(database.pool, {
+      adminUserId: user.id,
+      sessionId: loginSession.session.id,
+      code: generateTotpCode(enrollment.secret, { now }),
+      secretKey: ADMIN_MFA_SECRET_KEY,
+      now
+    });
+    expect(stepUp.isOk()).toBe(true);
+
+    const auditRows = await database.pool.query<{
+      operation: string;
+      admin_user_id: string | null;
+      details: Record<string, unknown>;
+    }>(
+      `
+        SELECT operation, admin_user_id, details
+        FROM audit_log
+        WHERE operation IN (
+          'admin.mfa.enroll',
+          'admin.mfa.verify',
+          'admin.mfa.challenge',
+          'admin.step_up'
+        )
+        ORDER BY operation ASC
+      `
+    );
+    expect(auditRows.rows.map((row) => row.operation).sort()).toEqual([
+      'admin.mfa.challenge',
+      'admin.mfa.enroll',
+      'admin.mfa.verify',
+      'admin.step_up'
+    ]);
+    expect(auditRows.rows.every((row) => row.admin_user_id === user.id)).toBe(
+      true
+    );
+    expect(
+      auditRows.rows.every((row) => row.details.adminUserId === user.id)
+    ).toBe(true);
   }, 120_000);
 
   it('challenges verified TOTP factors without accepting missing or invalid factors', async () => {

@@ -408,6 +408,29 @@ async function writeAdminMfaAudit(
     details?: Record<string, unknown> | undefined;
   }
 ): Promise<void> {
+  const details = {
+    adminUserId: input.adminUserId,
+    ...(input.factorId ? { factorId: input.factorId } : {}),
+    ...(input.details ?? {})
+  };
+
+  if (await auditLogHasAdminUserIdColumn(client)) {
+    await client.query(
+      `
+        INSERT INTO audit_log (
+          api_key_id,
+          admin_user_id,
+          operation,
+          entity_id,
+          details
+        )
+        VALUES (NULL, $1, $2, $3, $4)
+      `,
+      [input.adminUserId, input.operation, input.factorId ?? null, details]
+    );
+    return;
+  }
+
   await client.query(
     `
       INSERT INTO audit_log (
@@ -418,16 +441,26 @@ async function writeAdminMfaAudit(
       )
       VALUES (NULL, $1, $2, $3)
     `,
-    [
-      input.operation,
-      input.factorId ?? null,
-      {
-        adminUserId: input.adminUserId,
-        ...(input.factorId ? { factorId: input.factorId } : {}),
-        ...(input.details ?? {})
-      }
-    ]
+    [input.operation, input.factorId ?? null, details]
   );
+}
+
+async function auditLogHasAdminUserIdColumn(
+  client: PoolClient
+): Promise<boolean> {
+  const result = await client.query<{ exists: boolean }>(
+    `
+      SELECT EXISTS (
+        SELECT 1
+        FROM information_schema.columns
+        WHERE table_schema = current_schema()
+          AND table_name = 'audit_log'
+          AND column_name = 'admin_user_id'
+      ) AS exists
+    `
+  );
+
+  return result.rows[0]?.exists === true;
 }
 
 async function rollbackQuietly(client: PoolClient): Promise<void> {

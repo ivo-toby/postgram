@@ -1,0 +1,171 @@
+---
+id: TASK-013-admin-config-ui
+kind: task
+epic: EPIC-admin-configuration-frontend
+ticket: TICKET-005-admin-frontend
+wave: WAVE-008
+slug: admin-config-ui
+title: Admin Config UI
+status: todo
+depends_on:
+  - TASK-010-provider-config-apply
+  - TASK-011-admin-auth-ui
+conflict_domains:
+  - ui/src/components/**
+  - ui/src/lib/**
+  - ui/src/hooks/**
+assigned_model_class: implementationComplex
+review_model_class: review
+branch: codex/task/TASK-013-admin-config-ui
+worker_worktree: null
+worktree_status: unassigned
+pr: null
+worker_thread_id: null
+review_thread_id: null
+current_gate: not_started
+branch_freshness: unknown
+verification:
+  - npm --prefix ui run test -- --run src/components/AdminConfig.test.tsx
+  - npm --prefix ui run typecheck
+---
+
+# TASK-013-admin-config-ui: Admin Config UI
+
+## Status
+
+todo
+
+## Parent Ticket
+
+TICKET-005-admin-frontend
+
+## Wave
+
+WAVE-008
+
+## Objective
+
+Add runtime provider/model configuration UI with redacted secrets, validation,
+connection testing, and apply warnings.
+
+## Scope
+
+- Included:
+  - Embedding and extraction configuration forms.
+  - Secret write/update controls with redacted display.
+  - Test connection / validate controls.
+  - Apply/reload/restart-required messaging.
+  - Tests for redaction, validation errors, and step-up.
+- Excluded:
+  - Maintenance job UI.
+
+## Non-Scope
+
+- Do not make embedding dimension changes look like a harmless text edit.
+
+## Relevant Context
+
+### Local Context
+
+- `ui/src/lib/adminApi.ts`
+- `ui/src/components/admin/*`
+- `ui/src/components/StatusWidget.tsx`
+
+### Shared Context References
+
+- `../../shared-context/resources/migration-config-notes.md`
+- `../../shared-context/resources/security-model.md`
+- `../../shared-context/resources/testing-validation.md`
+
+## Likely Files / Areas
+
+- `ui/src/components/admin/AdminConfig.tsx`
+- `ui/src/lib/adminApi.ts`
+- `ui/src/components/AdminConfig.test.tsx`
+
+## Dependencies
+
+- TASK-010-provider-config-apply
+- TASK-011-admin-auth-ui
+
+## Conflict Domains
+
+- `ui/src/components/**`
+- `ui/src/lib/**`
+- `ui/src/hooks/**`
+
+## Assigned Model Class
+
+implementationComplex
+
+## Branch
+
+codex/task/TASK-013-admin-config-ui
+
+## Worker Worktree
+
+None assigned yet.
+
+## PR / Patch Reference
+
+None yet.
+
+## RED-GREEN TDD Plan
+
+### RED
+
+Add UI tests for config load, redacted secret state, validation failure,
+connection-test result, apply warning, and sensitive change confirmation.
+
+### GREEN
+
+Implement config form components and admin API client calls.
+
+### REFACTOR
+
+Share form validation and danger confirmation components with later
+maintenance UI if useful.
+
+## Implementation Notes
+
+- Keep secret inputs intentionally blank unless the operator is replacing a
+  value.
+- Present restart/reembed/maintenance implications before apply.
+
+## Durable Memory Notes To Consider
+
+- Record durable memory if final configuration UX creates stable conventions.
+
+## Task-Level Definition of Done
+
+- [ ] Configuration UI is implemented and covered.
+- [ ] Secret values are never displayed.
+- [ ] Dangerous provider/dimension changes are clearly warned.
+- [ ] UI typecheck passes.
+
+## Validation Steps
+
+- `npm --prefix ui run test -- --run src/components/AdminConfig.test.tsx`
+- `npm --prefix ui run typecheck`
+
+## Verification Evidence
+
+- Not run yet.
+
+## Review Feedback
+
+### P1
+
+- None.
+
+### P2
+
+- None.
+
+### P3
+
+- None.
+
+## Completion Notes
+
+- None yet.

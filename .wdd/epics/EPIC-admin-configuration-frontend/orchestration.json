@@ -1,0 +1,1120 @@
+{
+  "schemaVersion": 1,
+  "epic": {
+    "id": "EPIC-admin-configuration-frontend",
+    "name": "Safe Admin Configuration Frontend",
+    "targetBranch": "main",
+    "epicBranch": "codex/epic/admin-configuration-frontend",
+    "slug": "admin-configuration-frontend",
+    "status": "planned"
+  },
+  "configuration": {
+    "storageMode": "local-markdown",
+    "profile": "full",
+    "reviewMode": "risk_based",
+    "monitoringMode": "adaptive",
+    "models": {
+      "planning": "configured-model-key",
+      "implementationSimple": "configured-model-key",
+      "implementationComplex": "configured-model-key",
+      "review": "configured-model-key",
+      "feedbackFix": "configured-model-key",
+      "epicValidation": "configured-model-key",
+      "prDescription": "configured-model-key"
+    },
+    "reviewPolicy": {
+      "p1BlocksMerge": true,
+      "p2BlocksMerge": true,
+      "p3CreatesFollowUp": true
+    },
+    "branching": {
+      "epicBranchConvention": "codex/epic/[epic-slug]",
+      "taskBranchConvention": "codex/task/[task-id]-[task-slug]",
+      "taskPrTarget": "epic branch",
+      "finalPrTarget": "target branch",
+      "epicBranchRequiredBeforeWorkerDispatch": true,
+      "activationArtifactsSyncedBeforeTaskWorktrees": true,
+      "isolatedWorktreePerRepositoryTask": true,
+      "workersMaySwitchControllerCheckout": false
+    }
+  },
+  "controllerRules": {
+    "epicBranchCreatedOrVerifiedBeforeWorkerDispatch": true,
+    "activationArtifactsSyncedBeforeTaskWorktrees": true,
+    "isolatedWorktreePerRepositoryWritingTask": true,
+    "workersMustNotSwitchControllerCheckout": true,
+    "workersMustNotMergeOwnPr": true,
+    "reconcileSharedContextAfterEveryWave": true
+  },
+  "tickets": [
+    {
+      "id": "TICKET-001-feasibility-security-design",
+      "path": "TICKET-001-feasibility-security-design/ticket.md",
+      "status": "todo",
+      "taskIds": [
+        "TASK-001-admin-surface-inventory",
+        "TASK-002-threat-model-bootstrap",
+        "TASK-003-runtime-config-feasibility"
+      ]
+    },
+    {
+      "id": "TICKET-002-admin-auth-foundation",
+      "path": "TICKET-002-admin-auth-foundation/ticket.md",
+      "status": "todo",
+      "taskIds": [
+        "TASK-004-admin-auth-persistence",
+        "TASK-005-admin-session-routes",
+        "TASK-006-admin-mfa-step-up"
+      ]
+    },
+    {
+      "id": "TICKET-003-admin-api-foundation",
+      "path": "TICKET-003-admin-api-foundation/ticket.md",
+      "status": "todo",
+      "taskIds": [
+        "TASK-007-admin-api-shell-diagnostics",
+        "TASK-008-admin-key-audit-stats-api"
+      ]
+    },
+    {
+      "id": "TICKET-004-runtime-configuration",
+      "path": "TICKET-004-runtime-configuration/ticket.md",
+      "status": "todo",
+      "taskIds": [
+        "TASK-009-settings-secret-store",
+        "TASK-010-provider-config-apply"
+      ]
+    },
+    {
+      "id": "TICKET-005-admin-frontend",
+      "path": "TICKET-005-admin-frontend/ticket.md",
+      "status": "todo",
+      "taskIds": [
+        "TASK-011-admin-auth-ui",
+        "TASK-012-admin-ops-dashboard-ui",
+        "TASK-013-admin-config-ui"
+      ]
+    },
+    {
+      "id": "TICKET-006-maintenance-jobs",
+      "path": "TICKET-006-maintenance-jobs/ticket.md",
+      "status": "todo",
+      "taskIds": [
+        "TASK-014-admin-job-foundation",
+        "TASK-015-maintenance-admin-api",
+        "TASK-016-maintenance-admin-ui"
+      ]
+    },
+    {
+      "id": "TICKET-007-docker-e2e-validation",
+      "path": "TICKET-007-docker-e2e-validation/ticket.md",
+      "status": "todo",
+      "taskIds": [
+        "TASK-017-docker-first-run-no-cli",
+        "TASK-018-security-epic-validation"
+      ]
+    }
+  ],
+  "taskOrder": [
+    "TASK-001-admin-surface-inventory",
+    "TASK-002-threat-model-bootstrap",
+    "TASK-003-runtime-config-feasibility",
+    "TASK-004-admin-auth-persistence",
+    "TASK-005-admin-session-routes",
+    "TASK-006-admin-mfa-step-up",
+    "TASK-009-settings-secret-store",
+    "TASK-007-admin-api-shell-diagnostics",
+    "TASK-010-provider-config-apply",
+    "TASK-008-admin-key-audit-stats-api",
+    "TASK-014-admin-job-foundation",
+    "TASK-011-admin-auth-ui",
+    "TASK-015-maintenance-admin-api",
+    "TASK-012-admin-ops-dashboard-ui",
+    "TASK-013-admin-config-ui",
+    "TASK-016-maintenance-admin-ui",
+    "TASK-017-docker-first-run-no-cli",
+    "TASK-018-security-epic-validation"
+  ],
+  "waves": [
+    {
+      "id": "WAVE-001",
+      "status": "planned",
+      "strategy": {
+        "profile": "full",
+        "executionMode": "bundled",
+        "reviewMode": "risk_based",
+        "monitoringMode": "adaptive",
+        "recommendedBy": "wdd-plan-epic",
+        "confirmedBy": null,
+        "requiresUserConfirmation": true,
+        "confidence": "medium",
+        "rationale": [
+          "Feasibility, threat model, and runtime configuration research are coupled.",
+          "This wave decides whether the safe admin-plane hypothesis can proceed.",
+          "Broad implementation must wait for bootstrap and secret-storage decisions."
+        ],
+        "bundleGroups": [
+          [
+            "TASK-001-admin-surface-inventory",
+            "TASK-002-threat-model-bootstrap",
+            "TASK-003-runtime-config-feasibility"
+          ]
+        ],
+        "overrideHistory": []
+      },
+      "tasks": [
+        "TASK-001-admin-surface-inventory",
+        "TASK-002-threat-model-bootstrap",
+        "TASK-003-runtime-config-feasibility"
+      ]
+    },
+    {
+      "id": "WAVE-002",
+      "status": "planned",
+      "strategy": {
+        "profile": "full",
+        "executionMode": "bundled",
+        "reviewMode": "risk_based",
+        "monitoringMode": "adaptive",
+        "recommendedBy": "wdd-plan-epic",
+        "confirmedBy": null,
+        "requiresUserConfirmation": true,
+        "confidence": "high",
+        "rationale": [
+          "Admin auth persistence is security-critical and migration-heavy.",
+          "The persistence contract should be proven before route work starts."
+        ],
+        "bundleGroups": [
+          [
+            "TASK-004-admin-auth-persistence"
+          ]
+        ],
+        "overrideHistory": []
+      },
+      "tasks": [
+        "TASK-004-admin-auth-persistence"
+      ]
+    },
+    {
+      "id": "WAVE-003",
+      "status": "planned",
+      "strategy": {
+        "profile": "full",
+        "executionMode": "bundled",
+        "reviewMode": "risk_based",
+        "monitoringMode": "adaptive",
+        "recommendedBy": "wdd-plan-epic",
+        "confirmedBy": null,
+        "requiresUserConfirmation": true,
+        "confidence": "high",
+        "rationale": [
+          "Session routes define the browser admin boundary.",
+          "Admin API work must wait for CSRF, lockout, and session semantics."
+        ],
+        "bundleGroups": [
+          [
+            "TASK-005-admin-session-routes"
+          ]
+        ],
+        "overrideHistory": []
+      },
+      "tasks": [
+        "TASK-005-admin-session-routes"
+      ]
+    },
+    {
+      "id": "WAVE-004",
+      "status": "planned",
+      "strategy": {
+        "profile": "full",
+        "executionMode": "hybrid",
+        "reviewMode": "risk_based",
+        "monitoringMode": "adaptive",
+        "recommendedBy": "wdd-plan-epic",
+        "confirmedBy": null,
+        "requiresUserConfirmation": true,
+        "confidence": "medium",
+        "rationale": [
+          "MFA/step-up and settings/secret storage both depend on the admin session boundary.",
+          "They can be separate subgroups if migration ordering is reconciled carefully."
+        ],
+        "bundleGroups": [
+          [
+            "TASK-006-admin-mfa-step-up"
+          ],
+          [
+            "TASK-009-settings-secret-store"
+          ]
+        ],
+        "overrideHistory": []
+      },
+      "tasks": [
+        "TASK-006-admin-mfa-step-up",
+        "TASK-009-settings-secret-store"
+      ]
+    },
+    {
+      "id": "WAVE-005",
+      "status": "planned",
+      "strategy": {
+        "profile": "full",
+        "executionMode": "hybrid",
+        "reviewMode": "risk_based",
+        "monitoringMode": "adaptive",
+        "recommendedBy": "wdd-plan-epic",
+        "confirmedBy": null,
+        "requiresUserConfirmation": true,
+        "confidence": "medium",
+        "rationale": [
+          "Admin API shell and provider apply/reload behavior have separable ownership.",
+          "Both tasks affect public admin contracts or runtime provider lifecycle."
+        ],
+        "bundleGroups": [
+          [
+            "TASK-007-admin-api-shell-diagnostics"
+          ],
+          [
+            "TASK-010-provider-config-apply"
+          ]
+        ],
+        "overrideHistory": []
+      },
+      "tasks": [
+        "TASK-007-admin-api-shell-diagnostics",
+        "TASK-010-provider-config-apply"
+      ]
+    },
+    {
+      "id": "WAVE-006",
+      "status": "planned",
+      "strategy": {
+        "profile": "full",
+        "executionMode": "hybrid",
+        "reviewMode": "risk_based",
+        "monitoringMode": "adaptive",
+        "recommendedBy": "wdd-plan-epic",
+        "confirmedBy": null,
+        "requiresUserConfirmation": true,
+        "confidence": "medium",
+        "rationale": [
+          "API-key/audit/stats endpoints and job foundation share audit semantics but can stay in separate service subgroups.",
+          "Both expose privileged admin-facing behavior."
+        ],
+        "bundleGroups": [
+          [
+            "TASK-008-admin-key-audit-stats-api"
+          ],
+          [
+            "TASK-014-admin-job-foundation"
+          ]
+        ],
+        "overrideHistory": []
+      },
+      "tasks": [
+        "TASK-008-admin-key-audit-stats-api",
+        "TASK-014-admin-job-foundation"
+      ]
+    },
+    {
+      "id": "WAVE-007",
+      "status": "planned",
+      "strategy": {
+        "profile": "full",
+        "executionMode": "parallel",
+        "reviewMode": "risk_based",
+        "monitoringMode": "adaptive",
+        "recommendedBy": "wdd-plan-epic",
+        "confirmedBy": null,
+        "requiresUserConfirmation": true,
+        "confidence": "medium",
+        "rationale": [
+          "The admin auth UI and maintenance API are mostly frontend versus backend ownership.",
+          "Full review is still required because both expose sensitive flows."
+        ],
+        "bundleGroups": [],
+        "overrideHistory": []
+      },
+      "tasks": [
+        "TASK-011-admin-auth-ui",
+        "TASK-015-maintenance-admin-api"
+      ]
+    },
+    {
+      "id": "WAVE-008",
+      "status": "planned",
+      "strategy": {
+        "profile": "full",
+        "executionMode": "hybrid",
+        "reviewMode": "risk_based",
+        "monitoringMode": "adaptive",
+        "recommendedBy": "wdd-plan-epic",
+        "confirmedBy": null,
+        "requiresUserConfirmation": true,
+        "confidence": "medium",
+        "rationale": [
+          "Operations and configuration UI share layout and API client contracts.",
+          "They can be separate subgroups if shared types are reconciled early."
+        ],
+        "bundleGroups": [
+          [
+            "TASK-012-admin-ops-dashboard-ui"
+          ],
+          [
+            "TASK-013-admin-config-ui"
+          ]
+        ],
+        "overrideHistory": []
+      },
+      "tasks": [
+        "TASK-012-admin-ops-dashboard-ui",
+        "TASK-013-admin-config-ui"
+      ]
+    },
+    {
+      "id": "WAVE-009",
+      "status": "planned",
+      "strategy": {
+        "profile": "full",
+        "executionMode": "bundled",
+        "reviewMode": "risk_based",
+        "monitoringMode": "adaptive",
+        "recommendedBy": "wdd-plan-epic",
+        "confirmedBy": null,
+        "requiresUserConfirmation": true,
+        "confidence": "high",
+        "rationale": [
+          "Maintenance UI should wait for the approved backend API contract.",
+          "Dry-run, confirmation, progress, and audit feedback belong in one coherent surface."
+        ],
+        "bundleGroups": [
+          [
+            "TASK-016-maintenance-admin-ui"
+          ]
+        ],
+        "overrideHistory": []
+      },
+      "tasks": [
+        "TASK-016-maintenance-admin-ui"
+      ]
+    },
+    {
+      "id": "WAVE-010",
+      "status": "planned",
+      "strategy": {
+        "profile": "full",
+        "executionMode": "bundled",
+        "reviewMode": "risk_based",
+        "monitoringMode": "adaptive",
+        "recommendedBy": "wdd-plan-epic",
+        "confirmedBy": null,
+        "requiresUserConfirmation": true,
+        "confidence": "medium",
+        "rationale": [
+          "This wave proves the single Docker first-run no-CLI product hypothesis.",
+          "Docker, docs, and smoke evidence should be reconciled together."
+        ],
+        "bundleGroups": [
+          [
+            "TASK-017-docker-first-run-no-cli"
+          ]
+        ],
+        "overrideHistory": []
+      },
+      "tasks": [
+        "TASK-017-docker-first-run-no-cli"
+      ]
+    },
+    {
+      "id": "WAVE-011",
+      "status": "planned",
+      "strategy": {
+        "profile": "full",
+        "executionMode": "bundled",
+        "reviewMode": "risk_based",
+        "monitoringMode": "adaptive",
+        "recommendedBy": "wdd-plan-epic",
+        "confirmedBy": null,
+        "requiresUserConfirmation": false,
+        "confidence": "high",
+        "rationale": [
+          "Final validation is a single security-focused review and evidence task.",
+          "It should run only after Docker first-run evidence exists."
+        ],
+        "bundleGroups": [
+          [
+            "TASK-018-security-epic-validation"
+          ]
+        ],
+        "overrideHistory": []
+      },
+      "tasks": [
+        "TASK-018-security-epic-validation"
+      ]
+    }
+  ],
+  "taskState": [
+    {
+      "id": "TASK-001-admin-surface-inventory",
+      "ticket": "TICKET-001-feasibility-security-design",
+      "path": "TICKET-001-feasibility-security-design/todo/TASK-001-admin-surface-inventory.md",
+      "status": "todo",
+      "dependsOn": [],
+      "conflictDomains": [
+        "src/cli/admin/pgm-admin.ts",
+        "shared-context/resources/admin-surface-inventory.md",
+        "admin service boundaries"
+      ],
+      "assignedModel": "planning",
+      "reviewModel": "review",
+      "branch": "codex/task/TASK-001-admin-surface-inventory",
+      "workerThreadId": null,
+      "reviewThreadId": null,
+      "workerWorktree": null,
+      "worktreeStatus": "not_created",
+      "pr": null,
+      "latestCommit": null,
+      "branchFreshness": "not_started",
+      "blockingFeedback": [],
+      "verification": {
+        "result": "not_run",
+        "commands": [
+          "git diff --check"
+        ],
+        "evidence": null
+      },
+      "currentGate": "planned"
+    },
+    {
+      "id": "TASK-002-threat-model-bootstrap",
+      "ticket": "TICKET-001-feasibility-security-design",
+      "path": "TICKET-001-feasibility-security-design/todo/TASK-002-threat-model-bootstrap.md",
+      "status": "todo",
+      "dependsOn": [],
+      "conflictDomains": [
+        "shared-context/resources/security-model.md",
+        "docker exposure model",
+        "admin bootstrap design"
+      ],
+      "assignedModel": "planning",
+      "reviewModel": "review",
+      "branch": "codex/task/TASK-002-threat-model-bootstrap",
+      "workerThreadId": null,
+      "reviewThreadId": null,
+      "workerWorktree": null,
+      "worktreeStatus": "not_created",
+      "pr": null,
+      "latestCommit": null,
+      "branchFreshness": "not_started",
+      "blockingFeedback": [],
+      "verification": {
+        "result": "not_run",
+        "commands": [
+          "git diff --check"
+        ],
+        "evidence": null
+      },
+      "currentGate": "planned"
+    },
+    {
+      "id": "TASK-003-runtime-config-feasibility",
+      "ticket": "TICKET-001-feasibility-security-design",
+      "path": "TICKET-001-feasibility-security-design/todo/TASK-003-runtime-config-feasibility.md",
+      "status": "todo",
+      "dependsOn": [],
+      "conflictDomains": [
+        "src/config.ts",
+        "src/index.ts",
+        "docker-compose.yml",
+        "shared-context/resources/migration-config-notes.md"
+      ],
+      "assignedModel": "planning",
+      "reviewModel": "review",
+      "branch": "codex/task/TASK-003-runtime-config-feasibility",
+      "workerThreadId": null,
+      "reviewThreadId": null,
+      "workerWorktree": null,
+      "worktreeStatus": "not_created",
+      "pr": null,
+      "latestCommit": null,
+      "branchFreshness": "not_started",
+      "blockingFeedback": [],
+      "verification": {
+        "result": "not_run",
+        "commands": [
+          "git diff --check"
+        ],
+        "evidence": null
+      },
+      "currentGate": "planned"
+    },
+    {
+      "id": "TASK-004-admin-auth-persistence",
+      "ticket": "TICKET-002-admin-auth-foundation",
+      "path": "TICKET-002-admin-auth-foundation/todo/TASK-004-admin-auth-persistence.md",
+      "status": "todo",
+      "dependsOn": [
+        "TASK-001-admin-surface-inventory",
+        "TASK-002-threat-model-bootstrap"
+      ],
+      "conflictDomains": [
+        "migrations",
+        "src/auth/**",
+        "admin auth services",
+        "tests/integration/admin-auth-service.test.ts"
+      ],
+      "assignedModel": "implementationComplex",
+      "reviewModel": "review",
+      "branch": "codex/task/TASK-004-admin-auth-persistence",
+      "workerThreadId": null,
+      "reviewThreadId": null,
+      "workerWorktree": null,
+      "worktreeStatus": "not_created",
+      "pr": null,
+      "latestCommit": null,
+      "branchFreshness": "not_started",
+      "blockingFeedback": [],
+      "verification": {
+        "result": "not_run",
+        "commands": [
+          "npm test -- tests/integration/admin-auth-service.test.ts",
+          "npm run typecheck"
+        ],
+        "evidence": null
+      },
+      "currentGate": "planned"
+    },
+    {
+      "id": "TASK-005-admin-session-routes",
+      "ticket": "TICKET-002-admin-auth-foundation",
+      "path": "TICKET-002-admin-auth-foundation/todo/TASK-005-admin-session-routes.md",
+      "status": "todo",
+      "dependsOn": [
+        "TASK-004-admin-auth-persistence"
+      ],
+      "conflictDomains": [
+        "admin routes",
+        "cookie sessions",
+        "CSRF middleware",
+        "tests/contract/admin-auth-routes.test.ts"
+      ],
+      "assignedModel": "implementationComplex",
+      "reviewModel": "review",
+      "branch": "codex/task/TASK-005-admin-session-routes",
+      "workerThreadId": null,
+      "reviewThreadId": null,
+      "workerWorktree": null,
+      "worktreeStatus": "not_created",
+      "pr": null,
+      "latestCommit": null,
+      "branchFreshness": "not_started",
+      "blockingFeedback": [],
+      "verification": {
+        "result": "not_run",
+        "commands": [
+          "npm test -- tests/contract/admin-auth-routes.test.ts",
+          "npm run typecheck"
+        ],
+        "evidence": null
+      },
+      "currentGate": "planned"
+    },
+    {
+      "id": "TASK-006-admin-mfa-step-up",
+      "ticket": "TICKET-002-admin-auth-foundation",
+      "path": "TICKET-002-admin-auth-foundation/todo/TASK-006-admin-mfa-step-up.md",
+      "status": "todo",
+      "dependsOn": [
+        "TASK-004-admin-auth-persistence",
+        "TASK-005-admin-session-routes"
+      ],
+      "conflictDomains": [
+        "MFA persistence",
+        "TOTP service",
+        "step-up middleware",
+        "sensitive admin action gates"
+      ],
+      "assignedModel": "implementationComplex",
+      "reviewModel": "review",
+      "branch": "codex/task/TASK-006-admin-mfa-step-up",
+      "workerThreadId": null,
+      "reviewThreadId": null,
+      "workerWorktree": null,
+      "worktreeStatus": "not_created",
+      "pr": null,
+      "latestCommit": null,
+      "branchFreshness": "not_started",
+      "blockingFeedback": [],
+      "verification": {
+        "result": "not_run",
+        "commands": [
+          "npm test -- tests/contract/admin-mfa-routes.test.ts",
+          "npm test -- tests/integration/admin-auth-service.test.ts",
+          "npm run typecheck"
+        ],
+        "evidence": null
+      },
+      "currentGate": "planned"
+    },
+    {
+      "id": "TASK-007-admin-api-shell-diagnostics",
+      "ticket": "TICKET-003-admin-api-foundation",
+      "path": "TICKET-003-admin-api-foundation/todo/TASK-007-admin-api-shell-diagnostics.md",
+      "status": "todo",
+      "dependsOn": [
+        "TASK-005-admin-session-routes"
+      ],
+      "conflictDomains": [
+        "admin transport",
+        "diagnostics routes",
+        "admin middleware",
+        "tests/contract/admin-api.test.ts"
+      ],
+      "assignedModel": "implementationComplex",
+      "reviewModel": "review",
+      "branch": "codex/task/TASK-007-admin-api-shell-diagnostics",
+      "workerThreadId": null,
+      "reviewThreadId": null,
+      "workerWorktree": null,
+      "worktreeStatus": "not_created",
+      "pr": null,
+      "latestCommit": null,
+      "branchFreshness": "not_started",
+      "blockingFeedback": [],
+      "verification": {
+        "result": "not_run",
+        "commands": [
+          "npm test -- tests/contract/admin-api.test.ts",
+          "npm run typecheck"
+        ],
+        "evidence": null
+      },
+      "currentGate": "planned"
+    },
+    {
+      "id": "TASK-008-admin-key-audit-stats-api",
+      "ticket": "TICKET-003-admin-api-foundation",
+      "path": "TICKET-003-admin-api-foundation/todo/TASK-008-admin-key-audit-stats-api.md",
+      "status": "todo",
+      "dependsOn": [
+        "TASK-007-admin-api-shell-diagnostics"
+      ],
+      "conflictDomains": [
+        "src/auth/key-service.ts",
+        "audit querying",
+        "stats service",
+        "tests/contract/admin-key-audit-stats.test.ts"
+      ],
+      "assignedModel": "implementationComplex",
+      "reviewModel": "review",
+      "branch": "codex/task/TASK-008-admin-key-audit-stats-api",
+      "workerThreadId": null,
+      "reviewThreadId": null,
+      "workerWorktree": null,
+      "worktreeStatus": "not_created",
+      "pr": null,
+      "latestCommit": null,
+      "branchFreshness": "not_started",
+      "blockingFeedback": [],
+      "verification": {
+        "result": "not_run",
+        "commands": [
+          "npm test -- tests/contract/admin-key-audit-stats.test.ts",
+          "npm test -- tests/integration/key-service.test.ts",
+          "npm run typecheck"
+        ],
+        "evidence": null
+      },
+      "currentGate": "planned"
+    },
+    {
+      "id": "TASK-009-settings-secret-store",
+      "ticket": "TICKET-004-runtime-configuration",
+      "path": "TICKET-004-runtime-configuration/todo/TASK-009-settings-secret-store.md",
+      "status": "todo",
+      "dependsOn": [
+        "TASK-003-runtime-config-feasibility",
+        "TASK-005-admin-session-routes"
+      ],
+      "conflictDomains": [
+        "settings migrations",
+        "secret encryption",
+        "config service",
+        "tests/integration/admin-settings-service.test.ts"
+      ],
+      "assignedModel": "implementationComplex",
+      "reviewModel": "review",
+      "branch": "codex/task/TASK-009-settings-secret-store",
+      "workerThreadId": null,
+      "reviewThreadId": null,
+      "workerWorktree": null,
+      "worktreeStatus": "not_created",
+      "pr": null,
+      "latestCommit": null,
+      "branchFreshness": "not_started",
+      "blockingFeedback": [],
+      "verification": {
+        "result": "not_run",
+        "commands": [
+          "npm test -- tests/integration/admin-settings-service.test.ts",
+          "npm run typecheck"
+        ],
+        "evidence": null
+      },
+      "currentGate": "planned"
+    },
+    {
+      "id": "TASK-010-provider-config-apply",
+      "ticket": "TICKET-004-runtime-configuration",
+      "path": "TICKET-004-runtime-configuration/todo/TASK-010-provider-config-apply.md",
+      "status": "todo",
+      "dependsOn": [
+        "TASK-009-settings-secret-store"
+      ],
+      "conflictDomains": [
+        "provider lifecycle",
+        "validation flows",
+        "src/config.ts",
+        "enrichment worker reload semantics"
+      ],
+      "assignedModel": "implementationComplex",
+      "reviewModel": "review",
+      "branch": "codex/task/TASK-010-provider-config-apply",
+      "workerThreadId": null,
+      "reviewThreadId": null,
+      "workerWorktree": null,
+      "worktreeStatus": "not_created",
+      "pr": null,
+      "latestCommit": null,
+      "branchFreshness": "not_started",
+      "blockingFeedback": [],
+      "verification": {
+        "result": "not_run",
+        "commands": [
+          "npm test -- tests/integration/admin-provider-config.test.ts",
+          "npm test -- tests/unit/config.test.ts",
+          "npm run typecheck"
+        ],
+        "evidence": null
+      },
+      "currentGate": "planned"
+    },
+    {
+      "id": "TASK-011-admin-auth-ui",
+      "ticket": "TICKET-005-admin-frontend",
+      "path": "TICKET-005-admin-frontend/todo/TASK-011-admin-auth-ui.md",
+      "status": "todo",
+      "dependsOn": [
+        "TASK-006-admin-mfa-step-up"
+      ],
+      "conflictDomains": [
+        "ui/src/App.tsx",
+        "ui/src/lib/api.ts",
+        "admin auth components",
+        "UI routing"
+      ],
+      "assignedModel": "implementationComplex",
+      "reviewModel": "review",
+      "branch": "codex/task/TASK-011-admin-auth-ui",
+      "workerThreadId": null,
+      "reviewThreadId": null,
+      "workerWorktree": null,
+      "worktreeStatus": "not_created",
+      "pr": null,
+      "latestCommit": null,
+      "branchFreshness": "not_started",
+      "blockingFeedback": [],
+      "verification": {
+        "result": "not_run",
+        "commands": [
+          "npm --prefix ui run test -- --run src/components/AdminAuth.test.tsx",
+          "npm --prefix ui run typecheck"
+        ],
+        "evidence": null
+      },
+      "currentGate": "planned"
+    },
+    {
+      "id": "TASK-012-admin-ops-dashboard-ui",
+      "ticket": "TICKET-005-admin-frontend",
+      "path": "TICKET-005-admin-frontend/todo/TASK-012-admin-ops-dashboard-ui.md",
+      "status": "todo",
+      "dependsOn": [
+        "TASK-008-admin-key-audit-stats-api",
+        "TASK-011-admin-auth-ui"
+      ],
+      "conflictDomains": [
+        "admin API client",
+        "API key UI",
+        "audit/stats/health pages",
+        "UI tests"
+      ],
+      "assignedModel": "implementationComplex",
+      "reviewModel": "review",
+      "branch": "codex/task/TASK-012-admin-ops-dashboard-ui",
+      "workerThreadId": null,
+      "reviewThreadId": null,
+      "workerWorktree": null,
+      "worktreeStatus": "not_created",
+      "pr": null,
+      "latestCommit": null,
+      "branchFreshness": "not_started",
+      "blockingFeedback": [],
+      "verification": {
+        "result": "not_run",
+        "commands": [
+          "npm --prefix ui run test -- --run src/components/AdminOps.test.tsx",
+          "npm --prefix ui run typecheck"
+        ],
+        "evidence": null
+      },
+      "currentGate": "planned"
+    },
+    {
+      "id": "TASK-013-admin-config-ui",
+      "ticket": "TICKET-005-admin-frontend",
+      "path": "TICKET-005-admin-frontend/todo/TASK-013-admin-config-ui.md",
+      "status": "todo",
+      "dependsOn": [
+        "TASK-010-provider-config-apply",
+        "TASK-011-admin-auth-ui"
+      ],
+      "conflictDomains": [
+        "runtime config UI",
+        "secret redaction",
+        "provider validation UI",
+        "admin API client"
+      ],
+      "assignedModel": "implementationComplex",
+      "reviewModel": "review",
+      "branch": "codex/task/TASK-013-admin-config-ui",
+      "workerThreadId": null,
+      "reviewThreadId": null,
+      "workerWorktree": null,
+      "worktreeStatus": "not_created",
+      "pr": null,
+      "latestCommit": null,
+      "branchFreshness": "not_started",
+      "blockingFeedback": [],
+      "verification": {
+        "result": "not_run",
+        "commands": [
+          "npm --prefix ui run test -- --run src/components/AdminConfig.test.tsx",
+          "npm --prefix ui run typecheck"
+        ],
+        "evidence": null
+      },
+      "currentGate": "planned"
+    },
+    {
+      "id": "TASK-014-admin-job-foundation",
+      "ticket": "TICKET-006-maintenance-jobs",
+      "path": "TICKET-006-maintenance-jobs/todo/TASK-014-admin-job-foundation.md",
+      "status": "todo",
+      "dependsOn": [
+        "TASK-006-admin-mfa-step-up",
+        "TASK-009-settings-secret-store"
+      ],
+      "conflictDomains": [
+        "job tables",
+        "job service",
+        "audit integration",
+        "progress state"
+      ],
+      "assignedModel": "implementationComplex",
+      "reviewModel": "review",
+      "branch": "codex/task/TASK-014-admin-job-foundation",
+      "workerThreadId": null,
+      "reviewThreadId": null,
+      "workerWorktree": null,
+      "worktreeStatus": "not_created",
+      "pr": null,
+      "latestCommit": null,
+      "branchFreshness": "not_started",
+      "blockingFeedback": [],
+      "verification": {
+        "result": "not_run",
+        "commands": [
+          "npm test -- tests/integration/admin-job-service.test.ts",
+          "npm run typecheck"
+        ],
+        "evidence": null
+      },
+      "currentGate": "planned"
+    },
+    {
+      "id": "TASK-015-maintenance-admin-api",
+      "ticket": "TICKET-006-maintenance-jobs",
+      "path": "TICKET-006-maintenance-jobs/todo/TASK-015-maintenance-admin-api.md",
+      "status": "todo",
+      "dependsOn": [
+        "TASK-008-admin-key-audit-stats-api",
+        "TASK-010-provider-config-apply",
+        "TASK-014-admin-job-foundation"
+      ],
+      "conflictDomains": [
+        "graph maintenance services",
+        "memory grooming services",
+        "embedding maintenance services",
+        "tests/contract/admin-maintenance-api.test.ts"
+      ],
+      "assignedModel": "implementationComplex",
+      "reviewModel": "review",
+      "branch": "codex/task/TASK-015-maintenance-admin-api",
+      "workerThreadId": null,
+      "reviewThreadId": null,
+      "workerWorktree": null,
+      "worktreeStatus": "not_created",
+      "pr": null,
+      "latestCommit": null,
+      "branchFreshness": "not_started",
+      "blockingFeedback": [],
+      "verification": {
+        "result": "not_run",
+        "commands": [
+          "npm test -- tests/contract/admin-maintenance-api.test.ts",
+          "npm test -- tests/integration/cli-admin.test.ts",
+          "npm run typecheck"
+        ],
+        "evidence": null
+      },
+      "currentGate": "planned"
+    },
+    {
+      "id": "TASK-016-maintenance-admin-ui",
+      "ticket": "TICKET-006-maintenance-jobs",
+      "path": "TICKET-006-maintenance-jobs/todo/TASK-016-maintenance-admin-ui.md",
+      "status": "todo",
+      "dependsOn": [
+        "TASK-011-admin-auth-ui",
+        "TASK-015-maintenance-admin-api"
+      ],
+      "conflictDomains": [
+        "maintenance UI",
+        "confirmation controls",
+        "progress polling",
+        "admin API client"
+      ],
+      "assignedModel": "implementationComplex",
+      "reviewModel": "review",
+      "branch": "codex/task/TASK-016-maintenance-admin-ui",
+      "workerThreadId": null,
+      "reviewThreadId": null,
+      "workerWorktree": null,
+      "worktreeStatus": "not_created",
+      "pr": null,
+      "latestCommit": null,
+      "branchFreshness": "not_started",
+      "blockingFeedback": [],
+      "verification": {
+        "result": "not_run",
+        "commands": [
+          "npm --prefix ui run test -- --run src/components/AdminMaintenance.test.tsx",
+          "npm --prefix ui run typecheck"
+        ],
+        "evidence": null
+      },
+      "currentGate": "planned"
+    },
+    {
+      "id": "TASK-017-docker-first-run-no-cli",
+      "ticket": "TICKET-007-docker-e2e-validation",
+      "path": "TICKET-007-docker-e2e-validation/todo/TASK-017-docker-first-run-no-cli.md",
+      "status": "todo",
+      "dependsOn": [
+        "TASK-012-admin-ops-dashboard-ui",
+        "TASK-013-admin-config-ui",
+        "TASK-016-maintenance-admin-ui"
+      ],
+      "conflictDomains": [
+        "docker-compose.yml",
+        ".env.example",
+        "README.md",
+        "deployment docs",
+        "smoke tests"
+      ],
+      "assignedModel": "implementationComplex",
+      "reviewModel": "review",
+      "branch": "codex/task/TASK-017-docker-first-run-no-cli",
+      "workerThreadId": null,
+      "reviewThreadId": null,
+      "workerWorktree": null,
+      "worktreeStatus": "not_created",
+      "pr": null,
+      "latestCommit": null,
+      "branchFreshness": "not_started",
+      "blockingFeedback": [],
+      "verification": {
+        "result": "not_run",
+        "commands": [
+          "docker compose config",
+          "npm run typecheck",
+          "npm --prefix ui run build"
+        ],
+        "evidence": null
+      },
+      "currentGate": "planned"
+    },
+    {
+      "id": "TASK-018-security-epic-validation",
+      "ticket": "TICKET-007-docker-e2e-validation",
+      "path": "TICKET-007-docker-e2e-validation/todo/TASK-018-security-epic-validation.md",
+      "status": "todo",
+      "dependsOn": [
+        "TASK-017-docker-first-run-no-cli"
+      ],
+      "conflictDomains": [
+        "security review",
+        "broad validation",
+        "final handoff",
+        "epic validation"
+      ],
+      "assignedModel": "epicValidation",
+      "reviewModel": "review",
+      "branch": "codex/task/TASK-018-security-epic-validation",
+      "workerThreadId": null,
+      "reviewThreadId": null,
+      "workerWorktree": null,
+      "worktreeStatus": "not_created",
+      "pr": null,
+      "latestCommit": null,
+      "branchFreshness": "not_started",
+      "blockingFeedback": [],
+      "verification": {
+        "result": "not_run",
+        "commands": [
+          "npm run typecheck",
+          "npm test",
+          "npm run lint",
+          "npm run build",
+          "npm --prefix ui run typecheck",
+          "npm --prefix ui run test -- --run",
+          "npm --prefix ui run build",
+          "docker compose config"
+        ],
+        "evidence": null
+      },
+      "currentGate": "planned"
+    }
+  ],
+  "monitoring": {
+    "mode": "manual",
+    "cadence": "adaptive",
+    "status": "not_started",
+    "lastCheck": null,
+    "nextCheckDue": null,
+    "schedulerReference": null,
+    "fallbackPrompt": "Start WAVE-001 for EPIC-admin-configuration-frontend only after user confirms the full bundled feasibility gate. Verify epic branch artifacts are synced before creating worker worktrees."
+  },
+  "sharedContext": {
+    "index": "shared-context/index.md",
+    "resources": [
+      "shared-context/resources/admin-surface-inventory.md",
+      "shared-context/resources/security-model.md",
+      "shared-context/resources/testing-validation.md",
+      "shared-context/resources/architecture.md",
+      "shared-context/resources/api-contracts.md",
+      "shared-context/resources/migration-config-notes.md"
+    ],
+    "reconcileAfterEveryWave": true
+  }
+}

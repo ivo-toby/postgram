@@ -43,6 +43,10 @@ configuration, maintenance jobs, or Docker behavior.
 - First-run bootstrap posture is a generated one-time token delivered through a
   trusted local operator channel, stored hash-only, required before first admin
   creation, and invalidated after first active MFA-backed admin setup.
+- Admin route/session posture is now implemented under `/admin/api/*` with a
+  dedicated `pgm_admin_session` HttpOnly cookie, `X-CSRF-Token` CSRF header,
+  safe bootstrap/login errors, and no reuse of ordinary API-key or MCP OAuth
+  bearer credentials as admin identity.
 - Runtime configuration should be installation-wide DB-backed settings plus
   encrypted write-only secrets. One minimal installation encryption key may
   remain outside the DB through env/Docker secret.
@@ -115,6 +119,33 @@ configuration, maintenance jobs, or Docker behavior.
     admin `pending_mfa` until TASK-006 completes activation.
   - TASK-006 must use `admin_mfa_factors` and session MFA state to perform the
     active first-admin transition only after verified MFA.
+
+### WAVE-003 Admin Session Routes
+
+- Status: merged and reconciled on 2026-07-05.
+- PR: https://github.com/ivo-toby/postgram/pull/80, merged at
+  2026-07-05T16:25:30Z.
+- Merge commit: `ecfe9ac`; task-branch freshness merge: `e3dd76a`.
+- Review: Lorentz `REVIEW_PASS`, no P1/P2 findings.
+- Implemented route/session contract:
+  - `src/transport/admin.ts` registers `/admin/api/bootstrap/status`,
+    `/admin/api/bootstrap/setup`, `/admin/api/session/login`,
+    `/admin/api/session/current`, `/admin/api/session/csrf`, and
+    `/admin/api/session/logout`.
+  - `src/auth/admin-middleware.ts` validates `pgm_admin_session`, issues and
+    verifies `X-CSRF-Token`, and sets no-store session response headers.
+  - Bootstrap setup creates only a `pending_mfa` admin session; full admin
+    authority still waits for TASK-006 MFA activation.
+  - Bootstrap/login errors are intentionally generic, and ordinary Postgram API
+    keys or MCP OAuth bearer tokens do not authorize admin routes.
+- Carry-forward gates:
+  - TASK-006 must treat pending-MFA sessions as setup/MFA-only and add the
+    active/MFA/step-up guard for privileged admin operations.
+  - TASK-007 and later admin APIs must compose the WAVE-003 session/CSRF
+    middleware with the WAVE-004 active/MFA gate instead of adding another auth
+    boundary.
+  - TASK-011 must use cookie-based admin sessions and CSRF refresh, not
+    localStorage admin bearer tokens.
 
 ## Recent Durable Memory
 

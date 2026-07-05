@@ -48,6 +48,44 @@ WAVE-001 route implications:
 - Maintenance routes must be typed operation routes, not CLI command passthrough
   routes.
 
+## WAVE-003 Implemented Auth Routes
+
+TASK-005 merged the first concrete admin route contract in PR #80.
+
+Implemented endpoints:
+
+- `GET /admin/api/bootstrap/status` returns only `{ state }`, where state is
+  `unbootstrapped`, `locked`, `configured`, or `misconfigured`; it never returns
+  bootstrap token material.
+- `POST /admin/api/bootstrap/setup` accepts `bootstrapToken`, `email`,
+  `password`, and optional `displayName`; on success it creates a `pending_mfa`
+  first admin, sets the admin session cookie, and returns `state:
+  "mfa_required"`, `user`, `session`, and `csrfToken`.
+- `POST /admin/api/session/login` accepts `email` and `password`, applies the
+  login lockout checks, sets the admin session cookie, and returns `user`,
+  `session`, and `csrfToken`.
+- `GET /admin/api/session/current` returns the current admin `user` and
+  `session` for a valid admin session cookie.
+- `GET /admin/api/session/csrf` returns a fresh `csrfToken` for a valid admin
+  session cookie.
+- `POST /admin/api/session/logout` requires a valid admin session and CSRF
+  token, invalidates the session, clears the cookie, and returns `{ ok: true }`.
+
+Implemented client/security contract:
+
+- The session cookie name is `pgm_admin_session`; it is HttpOnly, SameSite
+  `Lax`, path-scoped to `/admin`, and `Secure` when served over HTTPS or
+  non-loopback HTTP hosts.
+- Unsafe admin methods use `X-CSRF-Token`; future mutating admin routes should
+  use the same header unless a reviewed route task replaces it everywhere.
+- Session, CSRF, and bootstrap status responses set no-store/no-cache headers
+  and vary on `Cookie`.
+- Missing, invalid, expired, used, or malformed bootstrap tokens map to a safe
+  generic setup failure. Login failures map to a safe generic sign-in failure.
+- A pending-MFA session is not full admin authority. TASK-006 must add the
+  active/MFA/step-up gate before business admin APIs use the session as
+  privileged authorization.
+
 ## Response Shape
 
 Use the existing app error response style where practical:

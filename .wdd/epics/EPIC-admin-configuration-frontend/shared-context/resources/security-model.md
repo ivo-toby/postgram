@@ -236,6 +236,44 @@ Carry-forward security gates:
   only after verified MFA enrollment/challenge, and must keep TOTP secrets
   write-only/redacted.
 
+## WAVE-003 Reconciled Admin Session Routes
+
+TASK-005 implemented the admin HTTP session boundary in PR #80 and merged it in
+`ecfe9ac`.
+
+Implemented security behavior:
+
+- Admin auth routes live under `/admin/api/*` and are registered separately
+  from ordinary `/api/*` bearer routes and MCP OAuth routes.
+- Bootstrap status exposes only coarse state and never returns token material.
+- Bootstrap setup uses the TASK-004 `createFirstAdminWithBootstrapToken`
+  transaction and maps missing, invalid, expired, used, malformed, validation,
+  and rate-limited token failures to safe route errors without token-validity
+  leakage.
+- Login uses the TASK-004 password verifier and safe generic sign-in errors.
+  The service keeps the dummy Argon2 verification path for missing-user timing
+  resistance, and route-level lockout checks include a global failure budget as
+  well as identifier-specific checks.
+- Admin sessions are carried by the HttpOnly `pgm_admin_session` cookie with
+  SameSite `Lax`, `/admin` path scope, and environment-aware `Secure` behavior.
+- Mutating admin session routes require `X-CSRF-Token`; missing or invalid CSRF
+  receives `403`.
+- Session and bootstrap responses set no-store/no-cache headers and vary on
+  `Cookie`.
+- Ordinary Postgram API-key bearer tokens and MCP OAuth bearer tokens do not
+  satisfy admin session middleware.
+
+Carry-forward security gates:
+
+- A `pending_mfa` session created by bootstrap/setup or login is not full admin
+  authority. Until TASK-006 lands, it should be treated as setup/current/csrf/
+  logout-capable only.
+- TASK-006 must add the active-admin/MFA completion check and step-up helper.
+  Later business admin routes must compose that gate with the WAVE-003 session
+  and CSRF middleware.
+- If later proxy/TLS work changes trusted-header handling, it must retest
+  cookie `Secure` behavior; loopback HTTP remains for local development only.
+
 ## OAuth/OIDC Boundary
 
 Existing OAuth/DCR is for native remote MCP connectors. It lets external clients
@@ -309,9 +347,9 @@ Before implementation tasks are considered safe, tests/review must prove:
 
 ## Open Security Questions
 
-- The exact CSRF pattern is still open: synchronizer token stored with the
-  server-side session is preferred unless later route design chooses and tests
-  another pattern.
+- WAVE-003 implemented HMAC-signed CSRF tokens presented via `X-CSRF-Token` for
+  admin session routes. Later route design may replace this only with a
+  reviewed, cross-route migration and tests.
 - The exact MFA recovery/reset path is still open. Do not add a weak recovery
   shortcut in the first implementation.
 - Trusted reverse-proxy header handling is still open and should not be assumed

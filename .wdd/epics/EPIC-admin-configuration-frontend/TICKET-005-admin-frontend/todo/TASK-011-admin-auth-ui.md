@@ -135,6 +135,17 @@ Keep admin auth UI separate from current API-key login.
 
 - Use cookie-based session semantics; client code should not handle admin bearer
   tokens.
+- Use the WAVE-003 route contract:
+  `/admin/api/bootstrap/status`, `/admin/api/bootstrap/setup`,
+  `/admin/api/session/login`, `/admin/api/session/current`,
+  `/admin/api/session/csrf`, and `/admin/api/session/logout`.
+- Treat bootstrap setup and login responses that return `state: "mfa_required"`
+  as pending-MFA state; full admin navigation should wait for the TASK-006
+  active/MFA session signal.
+- Send `X-CSRF-Token` on unsafe admin requests after obtaining it from setup,
+  login, or `/admin/api/session/csrf`.
+- UI tests should prove no admin session token, bootstrap token, TOTP secret,
+  or admin bearer credential is written to localStorage.
 - Keep operational UI dense and restrained.
 
 ## Durable Memory Notes To Consider

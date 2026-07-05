@@ -18,11 +18,11 @@ assigned_model_class: implementationComplex
 review_model_class: review
 branch: codex/task/TASK-005-admin-session-routes
 worker_worktree: /Users/ivo.toby/workspace/postgram/.worktrees/TASK-005-admin-session-routes
-worktree_status: clean_pushed
+worktree_status: cleaned_up
 pr: https://github.com/ivo-toby/postgram/pull/80
 worker_thread_id: 019f32d9-051d-7c40-8daf-2e05d9888901
 review_thread_id: 019f322c-02e7-7590-8b8e-ebdd1e9c52ac
-current_gate: merged
+current_gate: reconciled
 branch_freshness: current_at_merge
 verification:
   - npm test -- tests/contract/admin-auth-routes.test.ts
@@ -216,6 +216,10 @@ Keep route parsing and cookie helpers focused and reusable for MFA routes.
   `npm run typecheck`, adjacent auth/transport regression suite (50 tests),
   and touched-file ESLint.
 - Lorentz review returned `REVIEW_PASS` with no P1/P2 findings.
+- WAVE-003 reconciliation confirmed PR #80 remote `MERGED` state at
+  2026-07-05T16:25:30Z, reconciled shared context/downstream task briefs, and
+  cleaned up the TASK-005 worktree with `git worktree remove` followed by
+  `git worktree prune`.
 
 ## Review Feedback
 
@@ -259,3 +263,6 @@ Keep route parsing and cookie helpers focused and reusable for MFA routes.
   TASK-006 still owns MFA activation.
 - Admin routes reject ordinary API-key and MCP OAuth bearer tokens because they
   require the dedicated HttpOnly admin session cookie.
+- WAVE-003 reconciliation completed on 2026-07-05. Future admin APIs must use
+  the WAVE-003 session/CSRF boundary and wait for TASK-006 active-MFA/step-up
+  authority before exposing privileged operations.

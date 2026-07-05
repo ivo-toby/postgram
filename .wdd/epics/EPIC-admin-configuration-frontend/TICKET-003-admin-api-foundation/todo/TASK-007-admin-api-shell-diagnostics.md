@@ -9,6 +9,7 @@ title: Admin API Shell And Diagnostics
 status: todo
 depends_on:
   - TASK-005-admin-session-routes
+  - TASK-006-admin-mfa-step-up
 conflict_domains:
   - src/transport/**
   - src/services/**
@@ -84,6 +85,7 @@ Add the authenticated admin API shell and first read-only diagnostics endpoints.
 ## Dependencies
 
 - TASK-005-admin-session-routes
+- TASK-006-admin-mfa-step-up
 
 ## Conflict Domains
 
@@ -126,6 +128,13 @@ Keep route response shapes reusable for frontend API client.
 
 - Diagnostics must not reveal stored secret values.
 - Prefer existing queue/health/model helpers when safe.
+- Use the WAVE-003 `/admin/api/*` route family and `createAdminSessionMiddleware`
+  for session/CSRF behavior; do not add a second admin auth system.
+- Diagnostics should require the active-admin/MFA guard from TASK-006. A valid
+  pending-MFA session is enough for setup/current/csrf/logout, but not for
+  operational diagnostics.
+- Contract tests must prove ordinary Postgram API-key bearer tokens and MCP
+  OAuth bearer tokens still fail on the admin diagnostics routes.
 
 ## Durable Memory Notes To Consider
 

@@ -17,9 +17,9 @@ updated_at: 2026-07-05
 | TASK-002-threat-model-bootstrap | TICKET-001-feasibility-security-design | None | admin auth architecture, Docker exposure model, shared context | done |
 | TASK-003-runtime-config-feasibility | TICKET-001-feasibility-security-design | None | `src/config.ts`, `src/index.ts`, provider lifecycle, Docker docs | done |
 | TASK-004-admin-auth-persistence | TICKET-002-admin-auth-foundation | TASK-001, TASK-002 | migrations, `src/auth/**`, admin auth services, integration tests | done |
-| TASK-005-admin-session-routes | TICKET-002-admin-auth-foundation | TASK-004 | admin routes, cookies, CSRF, lockout, auth contract tests | in_progress |
+| TASK-005-admin-session-routes | TICKET-002-admin-auth-foundation | TASK-004 | admin routes, cookies, CSRF, lockout, auth contract tests | done |
 | TASK-006-admin-mfa-step-up | TICKET-002-admin-auth-foundation | TASK-004, TASK-005 | MFA tables, TOTP service, step-up middleware, sensitive action gates | todo |
-| TASK-007-admin-api-shell-diagnostics | TICKET-003-admin-api-foundation | TASK-005 | admin transport, diagnostics routes, admin middleware | todo |
+| TASK-007-admin-api-shell-diagnostics | TICKET-003-admin-api-foundation | TASK-005, TASK-006 | admin transport, diagnostics routes, admin middleware | todo |
 | TASK-008-admin-key-audit-stats-api | TICKET-003-admin-api-foundation | TASK-007 | key service, audit querying, stats service, admin API contracts | todo |
 | TASK-009-settings-secret-store | TICKET-004-runtime-configuration | TASK-003, TASK-005 | settings migrations, secret encryption, config service | todo |
 | TASK-010-provider-config-apply | TICKET-004-runtime-configuration | TASK-009 | provider lifecycle, validation flows, config tests, worker reload semantics | todo |
@@ -41,8 +41,8 @@ updated_at: 2026-07-05
 | TASK-003-runtime-config-feasibility | TASK-009-settings-secret-store | None |
 | TASK-004-admin-auth-persistence | TASK-005-admin-session-routes, TASK-006-admin-mfa-step-up | TASK-001-admin-surface-inventory, TASK-002-threat-model-bootstrap |
 | TASK-005-admin-session-routes | TASK-006-admin-mfa-step-up, TASK-007-admin-api-shell-diagnostics, TASK-009-settings-secret-store | TASK-004-admin-auth-persistence |
-| TASK-006-admin-mfa-step-up | TASK-011-admin-auth-ui, TASK-014-admin-job-foundation | TASK-004-admin-auth-persistence, TASK-005-admin-session-routes |
-| TASK-007-admin-api-shell-diagnostics | TASK-008-admin-key-audit-stats-api | TASK-005-admin-session-routes |
+| TASK-006-admin-mfa-step-up | TASK-007-admin-api-shell-diagnostics, TASK-011-admin-auth-ui, TASK-014-admin-job-foundation | TASK-004-admin-auth-persistence, TASK-005-admin-session-routes |
+| TASK-007-admin-api-shell-diagnostics | TASK-008-admin-key-audit-stats-api | TASK-005-admin-session-routes, TASK-006-admin-mfa-step-up |
 | TASK-008-admin-key-audit-stats-api | TASK-012-admin-ops-dashboard-ui, TASK-015-maintenance-admin-api | TASK-007-admin-api-shell-diagnostics |
 | TASK-009-settings-secret-store | TASK-010-provider-config-apply, TASK-014-admin-job-foundation | TASK-003-runtime-config-feasibility, TASK-005-admin-session-routes |
 | TASK-010-provider-config-apply | TASK-013-admin-config-ui, TASK-015-maintenance-admin-api | TASK-009-settings-secret-store |
@@ -216,7 +216,7 @@ Drift notes:
 
 ### WAVE-003
 
-Status: in_progress
+Status: done
 
 Tasks:
 
@@ -251,10 +251,46 @@ Stop condition:
 
 - Admin auth contract tests pass.
 - Ordinary API keys and existing MCP OAuth tokens cannot call admin routes.
+- WAVE-003 reconciliation completed on 2026-07-05.
+
+Completion evidence:
+
+- PR #80: merged by GitHub at 2026-07-05T16:25:30Z.
+- Worker branch freshness merge: `e3dd76a`.
+- Epic merge commit: `ecfe9ac`.
+- Closeout commit: `ff338b1`.
+- Review: Lorentz `REVIEW_PASS`, no P1/P2 findings.
+- Verification passed:
+  - `git diff --check origin/codex/epic/admin-configuration-frontend...HEAD`
+  - `npm test -- tests/contract/admin-auth-routes.test.ts` (9 tests)
+  - `npm run typecheck`
+  - `npm test -- tests/unit/errors.test.ts tests/integration/admin-auth-service.test.ts tests/integration/auth-middleware.test.ts tests/contract/oauth-routes.test.ts tests/contract/mcp-oauth.test.ts tests/contract/rest-api.test.ts` (50 tests)
+  - touched-file ESLint for the admin route, middleware, service, index, error,
+    contract-test, and adjacent auth-service test files
+
+Reconciled decisions:
+
+- Admin auth routes are dedicated `/admin/api/*` browser-session routes, not
+  ordinary `/api/*` bearer routes.
+- `pgm_admin_session` is the admin session cookie; `X-CSRF-Token` is the unsafe
+  method CSRF header.
+- Bootstrap status exposes only state; setup/login failures use generic safe
+  errors.
+- Bootstrap setup creates only `pending_mfa` admin/session state. Full admin
+  authority still waits for TASK-006 MFA activation.
+
+Drift notes:
+
+- TASK-006 must add active-admin/MFA and step-up middleware on top of the
+  WAVE-003 session/CSRF middleware.
+- TASK-007 now explicitly depends on TASK-006 so read-only diagnostics cannot
+  treat pending-MFA sessions as privileged admin access.
+- TASK-011 must consume cookie/CSRF routes and avoid admin bearer-token
+  localStorage patterns.
 
 ### WAVE-004
 
-Status: planned
+Status: ready_to_start
 
 Tasks:
 
@@ -269,7 +305,8 @@ Recommended strategy:
 - Monitoring mode: adaptive
 - Confidence: medium
 - Requires user confirmation: yes
-- Confirmed by: null
+- Confirmed by: Ivo via Codex sequential-waves request on 2026-07-05; start
+  step still pending
 
 Rationale:
 
@@ -282,6 +319,8 @@ Activation rule:
 
 - Activate after WAVE-003 reconciliation.
 - Dispatch as two subgroups: auth/MFA and settings/secrets.
+- Ready after WAVE-003 reconciliation on 2026-07-05; activation is left to the
+  next `wdd-start-wave` step.
 
 Stop condition:
 

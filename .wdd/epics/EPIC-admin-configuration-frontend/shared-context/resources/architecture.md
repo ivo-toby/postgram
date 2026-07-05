@@ -125,6 +125,32 @@ Route/API implication:
 - TASK-006 should add MFA/step-up behavior on top of the existing
   `admin_mfa_factors` and `admin_sessions.mfa_verified_at` state.
 
+## WAVE-003 Implemented Admin Transport Boundary
+
+PR #80 added the first admin transport layer and merged it in `ecfe9ac`.
+
+Concrete backend surface:
+
+- `src/transport/admin.ts` registers the `/admin/api/bootstrap/*` and
+  `/admin/api/session/*` route family.
+- `src/auth/admin-middleware.ts` centralizes admin session cookie lookup,
+  session validation, no-store response headers, CSRF token issuance, and CSRF
+  enforcement for unsafe methods.
+- `src/index.ts` wires `registerAdminRoutes(app, pool)` beside the existing
+  REST, OAuth, and MCP transports without reusing ordinary bearer auth.
+- TASK-005 route handlers call the WAVE-002 admin persistence services rather
+  than duplicating password, bootstrap-token, or session-token logic.
+
+Architecture implication:
+
+- Future admin API files should extend the existing admin transport or split it
+  behind the same `/admin/api/*` namespace; they should not create a second
+  admin auth boundary.
+- The current middleware verifies session and CSRF only. Privileged admin
+  operations need the TASK-006 active-MFA and step-up middleware layered on top.
+- Frontend work should call these routes with cookies and CSRF headers, not
+  localStorage admin tokens or ordinary Postgram API keys.
+
 ## Open Architecture Questions
 
 - Can extraction provider settings be hot-reloaded safely in the first

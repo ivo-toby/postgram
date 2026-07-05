@@ -161,6 +161,40 @@ Carry-forward test expectations:
 - TASK-006 tests should assert the pending first admin cannot become active
   except through verified MFA completion.
 
+## WAVE-003 Verification Evidence
+
+TASK-005 merged in PR #80 with Lorentz `REVIEW_PASS` and no P1/P2 findings.
+
+Passed before merge after task-branch freshness merge `e3dd76a`:
+
+- `git diff --check origin/codex/epic/admin-configuration-frontend...HEAD`
+- `npm test -- tests/contract/admin-auth-routes.test.ts` (9 tests)
+- `npm run typecheck`
+- `npm test -- tests/unit/errors.test.ts tests/integration/admin-auth-service.test.ts tests/integration/auth-middleware.test.ts tests/contract/oauth-routes.test.ts tests/contract/mcp-oauth.test.ts tests/contract/rest-api.test.ts` (50 tests)
+- `npx eslint src/auth/admin-middleware.ts src/auth/admin-service.ts src/transport/admin.ts src/index.ts src/util/errors.ts tests/contract/admin-auth-routes.test.ts tests/integration/admin-auth-service.test.ts tests/unit/errors.test.ts`
+
+Coverage added:
+
+- Public bootstrap status returns only state and no bootstrap token material.
+- Bootstrap setup rejects missing, invalid, expired, used, and rate-limited
+  tokens with safe generic route errors.
+- Successful bootstrap setup creates a `pending_mfa` admin, sets the admin
+  session cookie, and returns a CSRF token without granting full admin authority.
+- Login/logout/current-session/CSRF refresh routes use the admin session cookie
+  and no-store response headers.
+- Mutating session routes reject missing or invalid CSRF tokens.
+- Ordinary Postgram API keys and MCP OAuth bearer tokens do not authorize
+  admin routes.
+
+Carry-forward test expectations:
+
+- TASK-006 must add tests that pending-MFA sessions cannot reach privileged
+  admin APIs and can become active only through verified MFA.
+- TASK-007 and later admin API tests must prove session+CSRF middleware is
+  composed with the active/MFA gate for privileged endpoints.
+- TASK-011 UI tests must cover cookie-based sessions and CSRF refresh without
+  storing admin bearer credentials in localStorage.
+
 ## Durable Memory
 
 ### Docker First-Run Must Be Tested, Not Assumed

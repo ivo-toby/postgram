@@ -152,6 +152,18 @@ Keep MFA helpers isolated from ordinary API-key auth.
 - The first-admin activation path must update the `pending_mfa` admin to
   `active` only after verified TOTP enrollment/challenge, and must not return
   stored TOTP secrets after enrollment.
+- TASK-005 now provides `/admin/api/session/current`,
+  `/admin/api/session/csrf`, and `/admin/api/session/logout` for a valid
+  `pgm_admin_session` cookie, plus CSRF enforcement through `X-CSRF-Token`.
+  Keep those setup/session routes usable for pending-MFA sessions, but add a
+  separate active-admin/MFA guard for privileged admin operations.
+- `createAdminSessionMiddleware` currently proves a valid session and CSRF
+  token; it does not by itself prove the admin user is `active` or MFA-verified.
+  This task must add the helper/middleware that future admin APIs compose on
+  top of it.
+- Tests should explicitly prove ordinary API-key bearer tokens, MCP OAuth
+  bearer tokens, and pending-MFA sessions cannot bypass the MFA/active-admin
+  gate.
 
 ## Durable Memory Notes To Consider
 

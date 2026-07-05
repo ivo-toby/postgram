@@ -136,6 +136,16 @@ Keep generic setting storage separate from provider-specific validation.
 
 - Follow the selected secret key-management strategy from TASK-003.
 - Update Docker/docs only if a new required runtime config value is introduced.
+- This task should build persistence/service APIs, not a separate admin auth
+  layer. Any HTTP exposure must use the WAVE-003 `/admin/api/*` session/CSRF
+  boundary and, for secret writes or reads of sensitive metadata, the TASK-006
+  active-MFA/step-up guard.
+- Service read APIs may return safe metadata such as `configured`, validation
+  state, timestamps, and provider identity, but must never return plaintext
+  secrets, token hashes, ciphertext, or reusable prefixes.
+- Tests should include a handoff assertion or service contract note that
+  ordinary API-key bearer auth and MCP OAuth bearer auth are not accepted as
+  admin authority for settings/secrets routes when those routes are added.
 
 ## Durable Memory Notes To Consider
 

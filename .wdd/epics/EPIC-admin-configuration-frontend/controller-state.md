@@ -207,8 +207,8 @@ freshness, and stop when WAVE-002 is ready for wdd-reconcile-wave.
 - Reconciliation verification: task files are in `done/`, shared context is
   reconciled, worktree cleanup completed, `orchestration.json` parses, and
   `git diff --check` passed.
-- WAVE-002 activation verification pending: activation artifacts must be
-  committed before the TASK-004 branch/worktree is created.
+- WAVE-002 activation verification: activation artifacts committed, TASK-004
+  branch/worktree verified, Parfit dispatched, and heartbeat monitoring active.
 - Product code tests: not run; this turn planned WDD artifacts only.
 
 ## Event Log

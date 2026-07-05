@@ -20,6 +20,7 @@ import {
 } from '../helpers/postgres.js';
 
 const SECRET_PLAINTEXT = 'sk-postgram-secret-value-must-not-leak-1234567890';
+const SECRET_PREFIX = SECRET_PLAINTEXT.slice(0, 16);
 
 function encryptionKey(): string {
   return randomBytes(32).toString('base64url');
@@ -37,6 +38,7 @@ async function createActor(database: TestDatabase): Promise<string> {
 function assertSafeJson(value: unknown): void {
   const serialized = JSON.stringify(value);
   expect(serialized).not.toContain(SECRET_PLAINTEXT);
+  expect(serialized).not.toContain(SECRET_PREFIX);
   expect(serialized).not.toContain('ciphertext');
   expect(serialized).not.toContain('nonce');
   expect(serialized).not.toContain('authTag');
@@ -202,7 +204,7 @@ describe('admin-settings-service', () => {
       purpose: 'embedding',
       validation: {
         status: 'unvalidated',
-        metadata: { reason: 'saved-not-tested' }
+        metadata: {}
       },
       updatedByAdminUserId: actorId
     });
@@ -241,6 +243,64 @@ describe('admin-settings-service', () => {
     expect(stored.rows[0]?.ciphertext).not.toContain(SECRET_PLAINTEXT);
     expect(stored.rows[0]?.nonce).toBeTruthy();
     expect(stored.rows[0]?.auth_tag).toBeTruthy();
+  }, 120_000);
+
+  it('does not persist or return arbitrary validation metadata for secrets', async () => {
+    if (!database) {
+      throw new Error('test database not initialized');
+    }
+
+    const key = encryptionKey();
+    const saved = await saveRuntimeSecret(database.pool, {
+      name: 'OPENAI_API_KEY',
+      plaintext: SECRET_PLAINTEXT,
+      provider: 'openai',
+      purpose: 'embedding',
+      encryptionKey: key,
+      validation: {
+        status: 'error',
+        message: 'Provider validation failed',
+        metadata: {
+          authorization: `Bearer ${SECRET_PLAINTEXT}`,
+          tokenPrefix: SECRET_PREFIX,
+          providerResponse: {
+            headers: {
+              authorization: `Bearer ${SECRET_PLAINTEXT}`
+            },
+            body: {
+              sample: SECRET_PREFIX
+            }
+          }
+        }
+      }
+    });
+
+    expect(saved.isOk()).toBe(true);
+    expect(saved._unsafeUnwrap().validation).toMatchObject({
+      status: 'error',
+      message: 'Provider validation failed',
+      metadata: {}
+    });
+    assertSafeJson(saved._unsafeUnwrap());
+
+    const metadata = await getRuntimeSecretMetadata(
+      database.pool,
+      'OPENAI_API_KEY'
+    );
+    expect(metadata.isOk()).toBe(true);
+    expect(metadata._unsafeUnwrap()?.validation.metadata).toEqual({});
+    assertSafeJson(metadata._unsafeUnwrap());
+
+    const stored = await database.pool.query<{
+      validation_metadata: Record<string, unknown>;
+    }>(
+      `
+        SELECT validation_metadata
+        FROM admin_runtime_secrets
+        WHERE name = 'OPENAI_API_KEY'
+      `
+    );
+    expect(stored.rows[0]?.validation_metadata).toEqual({});
   }, 120_000);
 
   it('replaces secret values without leaking plaintext or reusable prefixes to audit rows', async () => {

@@ -438,6 +438,21 @@ function normalizeValidation(input: RuntimeValidationInput | undefined): {
   };
 }
 
+function normalizeSecretValidation(
+  input: RuntimeValidationInput | undefined
+): {
+  status: RuntimeValidationStatus;
+  message: string | null;
+  metadata: JsonObject;
+  validatedAt: Date | null;
+} {
+  const validation = normalizeValidation(input);
+  return {
+    ...validation,
+    metadata: {}
+  };
+}
+
 function mapValidation(row: {
   validation_status: RuntimeValidationStatus;
   validation_message: string | null;
@@ -449,6 +464,18 @@ function mapValidation(row: {
     message: row.validation_message,
     metadata: row.validation_metadata,
     validatedAt: row.validated_at?.toISOString() ?? null
+  };
+}
+
+function mapSecretValidation(row: {
+  validation_status: RuntimeValidationStatus;
+  validation_message: string | null;
+  validation_metadata: JsonObject;
+  validated_at: Date | null;
+}): RuntimeValidationRecord {
+  return {
+    ...mapValidation(row),
+    metadata: {}
   };
 }
 
@@ -476,7 +503,7 @@ function mapSecretMetadata(row: RuntimeSecretRow): RuntimeSecretMetadata {
     purpose: row.purpose,
     algorithm: row.algorithm,
     keyVersion: row.key_version,
-    validation: mapValidation(row),
+    validation: mapSecretValidation(row),
     updatedByAdminUserId: row.updated_by_admin_user_id,
     createdAt: row.created_at.toISOString(),
     updatedAt: row.updated_at.toISOString()
@@ -767,7 +794,7 @@ export function saveRuntimeSecret(
       const purpose = requireSecretPurpose(input.purpose);
       const plaintext = requirePlaintextSecret(input.plaintext);
       const encrypted = encryptSecret(plaintext, input.encryptionKey);
-      const validation = normalizeValidation(input.validation);
+      const validation = normalizeSecretValidation(input.validation);
       const keyVersion = requireKeyVersion(input.keyVersion);
       const now = input.now ?? new Date();
       const actorAdminUserId = input.actorAdminUserId ?? null;

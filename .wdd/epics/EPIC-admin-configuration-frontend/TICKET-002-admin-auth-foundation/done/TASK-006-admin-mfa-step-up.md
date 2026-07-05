@@ -6,7 +6,7 @@ ticket: TICKET-002-admin-auth-foundation
 wave: WAVE-004
 slug: admin-mfa-step-up
 title: Admin MFA And Step-Up
-status: review
+status: done
 depends_on:
   - TASK-004-admin-auth-persistence
   - TASK-005-admin-session-routes
@@ -23,8 +23,8 @@ worktree_status: clean_pushed
 pr: https://github.com/ivo-toby/postgram/pull/82
 worker_thread_id: 019f3333-4033-7463-9819-aa3dec286b4c
 review_thread_id: 019f322c-02e7-7590-8b8e-ebdd1e9c52ac
-current_gate: review_passed_pending_merge
-branch_freshness: current_after_epic_merge
+current_gate: merged
+branch_freshness: current_at_merge
 verification:
   - npm test -- tests/contract/admin-mfa-routes.test.ts
   - npm test -- tests/integration/admin-auth-service.test.ts
@@ -37,7 +37,7 @@ verification:
 
 ## Status
 
-review
+done
 
 ## Parent Ticket
 
@@ -327,5 +327,7 @@ Keep MFA helpers isolated from ordinary API-key auth.
 - 2026-07-05T18:14Z controller merged latest epic checkpoint `e626ec9` into
   the task branch for final freshness; only this WDD task file conflicted, and
   the resolution preserved Tesla's fix evidence plus Lorentz `REVIEW_PASS`.
-- Final gate: draft PR #82 is review-passed and current with the latest epic
-  branch; merge into the epic branch is pending controller merge sequencing.
+- 2026-07-05T18:16Z controller merged TASK-006 into the epic branch in
+  `6666508a56bbbb083100c86a0b57ff767fcb30a6` after Lorentz `REVIEW_PASS`,
+  final branch freshness, and passing verification. Task moved to `done/`;
+  worktree cleanup is deferred until WAVE-004 reconciliation.

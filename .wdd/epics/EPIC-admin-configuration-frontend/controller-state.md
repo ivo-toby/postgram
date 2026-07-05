@@ -29,12 +29,12 @@ WAVE-003 is done and reconciled. PR #80 was merged by GitHub at
 2026-07-05T16:25:30Z, TASK-005 was merged into the epic branch in `ecfe9ac`,
 and the TASK-005 worktree was cleaned up.
 
-Next phase: monitor PR #82 follow-up review and then finish WAVE-004. PR #81
-follow-up review returned `REVIEW_PASS`, final branch freshness passed, and
-TASK-009 was merged locally into the epic branch in `b63ad08`; task file moved
-to `done/` with cleanup deferred to reconciliation. PR #82 was pushed at
-`3923133`, controller verification passed, and Lorentz follow-up review was
-requested in `019f3375-9922-7283-8c64-702aceaae82f`. Do not start WAVE-005.
+Next phase: WAVE-004 reconciliation handoff. PR #81/TASK-009 and PR
+#82/TASK-006 both returned `REVIEW_PASS`, final branch freshness passed, and
+both bundles are merged into the epic branch: TASK-009 in `b63ad08`, TASK-006
+in `6666508`. Task files are in `done/`, cleanup is deferred, shared-context
+reconciliation is queued, and WAVE-004 is ready for `wdd-reconcile-wave`. Do
+not start WAVE-005.
 
 ## Wave Summary
 
@@ -60,9 +60,9 @@ Cadence: 5 minutes
 
 Status: active
 
-Last check: 2026-07-05T18:12:00Z
+Last check: 2026-07-05T18:16:00Z
 
-Next check due: 2026-07-05T18:17:00Z
+Next check due: 2026-07-05T18:21:00Z
 
 Scheduler reference: `postgram-admin-wave-004-start-heartbeat`
 
@@ -78,12 +78,11 @@ controller-state.md, then inspect workers Tesla
 WAVE-004-admin-mfa-step-up / TASK-006 and Euclid
 (019f3333-4104-7b02-b1aa-1fce6978e410) for
 WAVE-004-settings-secret-store / TASK-009, including their assigned worktrees.
-Update gates, branch freshness, verification, PR refs, review refs, feedback,
-shared-context reconciliation status, and monitoring timestamps. TASK-009 is
-merged; poll Lorentz follow-up review for PR #82. If PR #82 passes, refresh
-against the latest epic branch, rerun required verification, and merge or mark
-merge_ready according to policy. If PR #82 blocks, route exact P1/P2 feedback.
-Do not start WAVE-005.
+Run WAVE-004 reconciliation. Confirm TASK-006 and TASK-009 are merged into the
+epic branch, task files are in `done/`, current gates are merged,
+WAVE-004 waveCompletion is ready_for_reconciliation, cleanup is deferred,
+blocking feedback is empty, and shared-context reconciliation is queued. Do not
+start WAVE-005.
 ```
 
 ## Active Wave Strategy
@@ -126,7 +125,7 @@ Do not start WAVE-005.
 | TASK-003-runtime-config-feasibility | TICKET-001-feasibility-security-design | codex/task/WAVE-001-admin-feasibility-gate | cleaned_up | reconciled | P3 provider URL/egress test feedback addressed; REVIEW_PASS; merged in `1f11365` |
 | TASK-004-admin-auth-persistence | TICKET-002-admin-auth-foundation | codex/task/TASK-004-admin-auth-persistence | cleaned_up | reconciled | REVIEW_PASS; freshness verification passed; merged in `0f96769`; PR #79 merged; WAVE-002 reconciled |
 | TASK-005-admin-session-routes | TICKET-002-admin-auth-foundation | codex/task/TASK-005-admin-session-routes | cleaned_up | reconciled | REVIEW_PASS; freshness verification passed; merged in `ecfe9ac`; PR #80 merged; WAVE-003 reconciled |
-| TASK-006-admin-mfa-step-up | TICKET-002-admin-auth-foundation | codex/task/TASK-006-admin-mfa-step-up | clean_pushed | followup_reviewing | PR #82 pushed at `3923133`; controller verified diff check, orchestration JSON, MFA route contract tests (6), admin-auth integration tests (15), and typecheck; Lorentz follow-up review requested in `019f3375-9922-7283-8c64-702aceaae82f` |
+| TASK-006-admin-mfa-step-up | TICKET-002-admin-auth-foundation | codex/task/TASK-006-admin-mfa-step-up | clean_pushed | merged | REVIEW_PASS; final branch freshness passed at `8c04680`; merged locally into epic branch in `6666508`; cleanup deferred to reconciliation |
 | TASK-007-admin-api-shell-diagnostics | TICKET-003-admin-api-foundation | codex/task/TASK-007-admin-api-shell-diagnostics | not_created | planned | `npm test -- tests/contract/admin-api.test.ts`; `npm run typecheck` |
 | TASK-008-admin-key-audit-stats-api | TICKET-003-admin-api-foundation | codex/task/TASK-008-admin-key-audit-stats-api | not_created | planned | `npm test -- tests/contract/admin-key-audit-stats.test.ts`; `npm test -- tests/integration/key-service.test.ts`; `npm run typecheck` |
 | TASK-009-settings-secret-store | TICKET-004-runtime-configuration | codex/task/TASK-009-settings-secret-store | clean_pushed | merged | PR #81 follow-up REVIEW_PASS, final branch freshness passed at `ca9c96f`, merged locally into epic branch in `b63ad08`; cleanup deferred to reconciliation |
@@ -228,6 +227,10 @@ Do not start WAVE-005.
   `ca9c96f`; focused settings verification passed. TASK-009 merged into the
   epic branch in `b63ad08` and moved to `done/`. PR #82 remains in follow-up
   review.
+- WAVE-004 2026-07-05T18:16:00Z observation: Lorentz returned `REVIEW_PASS`
+  for PR #82, final branch freshness passed at `8c04680`, focused MFA/auth and
+  settings verification passed after merging TASK-009, and TASK-006 merged
+  into the epic branch in `6666508`. WAVE-004 is ready for reconciliation.
 
 ## WAVE-001 Reconciled State
 
@@ -417,6 +420,15 @@ Do not start WAVE-005.
   `mergeStateStatus=CLEAN`; controller ran settings service integration tests,
   typecheck, staged/unstaged diff checks, and orchestration JSON parse. TASK-009
   merged into epic branch in `b63ad08`; cleanup is deferred.
+- WAVE-004 2026-07-05T18:16:00Z TASK-006 merge verification: Lorentz returned
+  `REVIEW_PASS`; PR #82 branch was current with epic (`rev-list` = `0 6`) and
+  GitHub reported `mergeStateStatus=CLEAN`. Controller ran
+  `git diff --check`, orchestration JSON parse,
+  `npm test -- tests/contract/admin-mfa-routes.test.ts` (6 tests),
+  `npm test -- tests/integration/admin-auth-service.test.ts` (15 tests),
+  `npm test -- tests/integration/admin-settings-service.test.ts` (8 tests), and
+  `npm run typecheck`; all passed. TASK-006 merged into epic branch in
+  `6666508`; cleanup is deferred.
 
 ## Event Log
 
@@ -605,11 +617,17 @@ Do not start WAVE-005.
   moved TASK-009 to `done/`, and left cleanup deferred to WAVE-004
   reconciliation. PR #82 follow-up review is still pending. Next check due
   2026-07-05T18:17:00Z.
+- 2026-07-05T18:16:00Z: Lorentz returned `REVIEW_PASS` for PR #82. Controller
+  refreshed PR #82 against the epic branch containing TASK-009, resolved the
+  WDD task-file-only conflict, reran focused MFA/auth/settings verification,
+  pushed task branch `8c04680`, merged TASK-006 into the epic branch in
+  `6666508`, moved TASK-006 to `done/`, and left both WAVE-004 worktree
+  cleanups deferred to reconciliation. WAVE-004 is ready for
+  `wdd-reconcile-wave`; next check due 2026-07-05T18:21:00Z.
 
 ## Next Action
 
-Run the next WAVE-004 controller heartbeat at 2026-07-05T18:17:00Z to inspect
-Lorentz follow-up review for PR #82. If PR #82 passes, refresh it against the
-latest epic branch, rerun required verification, and merge or mark merge_ready
-according to policy. If PR #82 blocks, route exact P1/P2 feedback. Do not start
-WAVE-005.
+Run the next WAVE-004 heartbeat at 2026-07-05T18:21:00Z as a
+`wdd-reconcile-wave` handoff. Reconcile WAVE-004 shared context and downstream
+task notes, clean up WAVE-004 worktrees if safe, update artifacts, and stop
+before WAVE-005.

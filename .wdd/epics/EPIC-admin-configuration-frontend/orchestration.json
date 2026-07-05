@@ -50,7 +50,7 @@
     {
       "id": "TICKET-001-feasibility-security-design",
       "path": "TICKET-001-feasibility-security-design/ticket.md",
-      "status": "in_progress",
+      "status": "review",
       "taskIds": [
         "TASK-001-admin-surface-inventory",
         "TASK-002-threat-model-bootstrap",
@@ -182,68 +182,65 @@
           "workerThreadId": "019f3215-2eb6-75f2-81f0-bf527e73258b",
           "workerNickname": "Singer",
           "reviewThreadId": "019f322c-02e7-7590-8b8e-ebdd1e9c52ac",
-          "currentGate": "reviewing",
-          "branchFreshness": "current_at_follow_up_review_request",
+          "currentGate": "merge_ready",
+          "branchFreshness": "current_at_merge_start",
           "pr": "https://github.com/ivo-toby/postgram/pull/78",
           "latestCommit": "4ef5792860fed0544db45a0eb6a635cd4423f393",
-          "blockingFeedback": [
-            {
-              "priority": "P2",
-              "id": "P2-bootstrap-ownership-task-gates",
-              "owner": "Singer",
-              "reviewer": "Lorentz",
-              "reviewThreadId": "019f322c-02e7-7590-8b8e-ebdd1e9c52ac",
-              "routedAt": "2026-07-05T12:13:33Z",
-              "summary": "Bootstrap takeover controls need explicit future-task ownership: hash-only token storage, expiry, single-use invalidation, atomic first-admin activation, route behavior, and MFA-before-active checks must be testable across TASK-004/TASK-005/TASK-006.",
-              "status": "pending_follow_up_review",
-              "fixCommit": "4ef5792860fed0544db45a0eb6a635cd4423f393",
-              "followUpReviewRequestedAt": "2026-07-05T12:25:33Z"
-            },
-            {
-              "priority": "P2",
-              "id": "P2-stale-worker-dispatch-gate",
-              "owner": "Singer",
-              "reviewer": "Lorentz",
-              "reviewThreadId": "019f322c-02e7-7590-8b8e-ebdd1e9c52ac",
-              "routedAt": "2026-07-05T12:13:33Z",
-              "summary": "PR branch orchestration currentGates.workerDispatch no_pr was fixed to ready_for_review in Singer commit 4ef5792.",
-              "status": "pending_follow_up_review",
-              "fixCommit": "4ef5792860fed0544db45a0eb6a635cd4423f393",
-              "followUpReviewRequestedAt": "2026-07-05T12:25:33Z"
-            }
-          ],
+          "blockingFeedback": [],
           "verification": {
             "result": "passed",
             "commands": [
-              "git diff --check",
+              "git diff --check origin/codex/epic/admin-configuration-frontend...HEAD",
               "node -e JSON.parse(orchestration.json)",
               "gh pr view 78"
             ],
-            "evidence": "Controller verified Singer fix commit 4ef5792 is pushed to PR #78, git diff --check passed, orchestration JSON parsed, PR #78 is open/draft with clean merge state, and PR branch currentGates.workerDispatch is ready_for_review."
+            "evidence": "Singer verification passed; controller verified PR #78 head 4ef5792, clean merge state, orchestration JSON parse, diff whitespace, and Lorentz follow-up REVIEW_PASS."
           },
           "verifiedAt": "2026-07-05T11:36:08Z",
           "dispatchedAt": "2026-07-05T11:41:41Z",
           "reviewNickname": "Lorentz",
-          "reviewStartedAt": "2026-07-05T12:05:03Z",
           "feedback": {
+            "p2": [
+              {
+                "priority": "P2",
+                "id": "P2-bootstrap-ownership-task-gates",
+                "status": "resolved",
+                "owner": "Singer",
+                "reviewer": "Lorentz",
+                "reviewThreadId": "019f322c-02e7-7590-8b8e-ebdd1e9c52ac",
+                "resolvedAt": "2026-07-05T12:25:33Z",
+                "fixCommit": "4ef5792860fed0544db45a0eb6a635cd4423f393",
+                "summary": "TASK-004/TASK-005/TASK-006 now explicitly split bootstrap token persistence, route behavior, MFA completion, and pending-MFA first-admin activation testability."
+              },
+              {
+                "priority": "P2",
+                "id": "P2-stale-worker-dispatch-gate",
+                "status": "resolved",
+                "owner": "Singer",
+                "reviewer": "Lorentz",
+                "reviewThreadId": "019f322c-02e7-7590-8b8e-ebdd1e9c52ac",
+                "resolvedAt": "2026-07-05T12:25:33Z",
+                "fixCommit": "4ef5792860fed0544db45a0eb6a635cd4423f393",
+                "summary": "PR branch currentGates.workerDispatch is ready_for_review, not no_pr."
+              }
+            ],
             "p3": [
               {
                 "priority": "P3",
                 "id": "P3-provider-url-egress-test-gate",
+                "status": "addressed",
                 "owner": "Singer",
                 "reviewer": "Lorentz",
                 "reviewThreadId": "019f322c-02e7-7590-8b8e-ebdd1e9c52ac",
-                "routedAt": "2026-07-05T12:13:33Z",
-                "summary": "TASK-010/testing expectations now explicitly cover provider URL/egress or SSRF safety; pending reviewer confirmation.",
-                "status": "pending_follow_up_review",
+                "resolvedAt": "2026-07-05T12:25:33Z",
                 "fixCommit": "4ef5792860fed0544db45a0eb6a635cd4423f393",
-                "followUpReviewRequestedAt": "2026-07-05T12:25:33Z"
+                "summary": "TASK-010 and shared validation now explicitly require provider URL/egress/SSRF safety coverage."
               }
             ]
           },
-          "feedbackRoutedAt": "2026-07-05T12:13:33Z",
-          "reviewResult": "FOLLOW_UP_REVIEW_REQUESTED",
-          "followUpReviewRequestedAt": "2026-07-05T12:25:33Z"
+          "reviewResult": "REVIEW_PASS",
+          "reviewedAt": "2026-07-05T12:25:33Z",
+          "mergeReadyAt": "2026-07-05T12:25:33Z"
         }
       ]
     },
@@ -535,8 +532,8 @@
     {
       "id": "TASK-001-admin-surface-inventory",
       "ticket": "TICKET-001-feasibility-security-design",
-      "path": "TICKET-001-feasibility-security-design/in-progress/TASK-001-admin-surface-inventory.md",
-      "status": "in_progress",
+      "path": "TICKET-001-feasibility-security-design/review/TASK-001-admin-surface-inventory.md",
+      "status": "review",
       "dependsOn": [],
       "conflictDomains": [
         "src/cli/admin/pgm-admin.ts",
@@ -552,42 +549,30 @@
       "worktreeStatus": "verified",
       "pr": "https://github.com/ivo-toby/postgram/pull/78",
       "latestCommit": "4ef5792860fed0544db45a0eb6a635cd4423f393",
-      "branchFreshness": "current_at_follow_up_review_request",
-      "blockingFeedback": [
-        {
-          "priority": "P2",
-          "id": "P2-stale-worker-dispatch-gate",
-          "owner": "Singer",
-          "reviewer": "Lorentz",
-          "reviewThreadId": "019f322c-02e7-7590-8b8e-ebdd1e9c52ac",
-          "routedAt": "2026-07-05T12:13:33Z",
-          "summary": "PR branch orchestration currentGates.workerDispatch no_pr was fixed to ready_for_review in Singer commit 4ef5792.",
-          "status": "pending_follow_up_review",
-          "fixCommit": "4ef5792860fed0544db45a0eb6a635cd4423f393",
-          "followUpReviewRequestedAt": "2026-07-05T12:25:33Z"
-        }
-      ],
+      "branchFreshness": "current_at_merge_start",
+      "blockingFeedback": [],
       "verification": {
         "result": "passed",
         "commands": [
-          "git diff --check",
+          "git diff --check origin/codex/epic/admin-configuration-frontend...HEAD",
           "node -e JSON.parse(orchestration.json)",
           "gh pr view 78"
         ],
-        "evidence": "Controller verified Singer fix commit 4ef5792 is pushed to PR #78, git diff --check passed, orchestration JSON parsed, PR #78 is open/draft with clean merge state, and PR branch currentGates.workerDispatch is ready_for_review."
+        "evidence": "Singer verification passed; controller verified PR #78 head 4ef5792, clean merge state, orchestration JSON parse, diff whitespace, and Lorentz follow-up REVIEW_PASS."
       },
-      "currentGate": "reviewing",
+      "currentGate": "merge_ready",
       "workerNickname": "Singer",
       "reviewNickname": "Lorentz",
       "feedback": {
         "p3": []
-      }
+      },
+      "reviewResult": "REVIEW_PASS"
     },
     {
       "id": "TASK-002-threat-model-bootstrap",
       "ticket": "TICKET-001-feasibility-security-design",
-      "path": "TICKET-001-feasibility-security-design/in-progress/TASK-002-threat-model-bootstrap.md",
-      "status": "in_progress",
+      "path": "TICKET-001-feasibility-security-design/review/TASK-002-threat-model-bootstrap.md",
+      "status": "review",
       "dependsOn": [],
       "conflictDomains": [
         "shared-context/resources/security-model.md",
@@ -603,54 +588,30 @@
       "worktreeStatus": "verified",
       "pr": "https://github.com/ivo-toby/postgram/pull/78",
       "latestCommit": "4ef5792860fed0544db45a0eb6a635cd4423f393",
-      "branchFreshness": "current_at_follow_up_review_request",
-      "blockingFeedback": [
-        {
-          "priority": "P2",
-          "id": "P2-bootstrap-ownership-task-gates",
-          "owner": "Singer",
-          "reviewer": "Lorentz",
-          "reviewThreadId": "019f322c-02e7-7590-8b8e-ebdd1e9c52ac",
-          "routedAt": "2026-07-05T12:13:33Z",
-          "summary": "Bootstrap takeover controls need explicit future-task ownership: hash-only token storage, expiry, single-use invalidation, atomic first-admin activation, route behavior, and MFA-before-active checks must be testable across TASK-004/TASK-005/TASK-006.",
-          "status": "pending_follow_up_review",
-          "fixCommit": "4ef5792860fed0544db45a0eb6a635cd4423f393",
-          "followUpReviewRequestedAt": "2026-07-05T12:25:33Z"
-        },
-        {
-          "priority": "P2",
-          "id": "P2-stale-worker-dispatch-gate",
-          "owner": "Singer",
-          "reviewer": "Lorentz",
-          "reviewThreadId": "019f322c-02e7-7590-8b8e-ebdd1e9c52ac",
-          "routedAt": "2026-07-05T12:13:33Z",
-          "summary": "PR branch orchestration currentGates.workerDispatch no_pr was fixed to ready_for_review in Singer commit 4ef5792.",
-          "status": "pending_follow_up_review",
-          "fixCommit": "4ef5792860fed0544db45a0eb6a635cd4423f393",
-          "followUpReviewRequestedAt": "2026-07-05T12:25:33Z"
-        }
-      ],
+      "branchFreshness": "current_at_merge_start",
+      "blockingFeedback": [],
       "verification": {
         "result": "passed",
         "commands": [
-          "git diff --check",
+          "git diff --check origin/codex/epic/admin-configuration-frontend...HEAD",
           "node -e JSON.parse(orchestration.json)",
           "gh pr view 78"
         ],
-        "evidence": "Controller verified Singer fix commit 4ef5792 is pushed to PR #78, git diff --check passed, orchestration JSON parsed, PR #78 is open/draft with clean merge state, and PR branch currentGates.workerDispatch is ready_for_review."
+        "evidence": "Singer verification passed; controller verified PR #78 head 4ef5792, clean merge state, orchestration JSON parse, diff whitespace, and Lorentz follow-up REVIEW_PASS."
       },
-      "currentGate": "reviewing",
+      "currentGate": "merge_ready",
       "workerNickname": "Singer",
       "reviewNickname": "Lorentz",
       "feedback": {
         "p3": []
-      }
+      },
+      "reviewResult": "REVIEW_PASS"
     },
     {
       "id": "TASK-003-runtime-config-feasibility",
       "ticket": "TICKET-001-feasibility-security-design",
-      "path": "TICKET-001-feasibility-security-design/in-progress/TASK-003-runtime-config-feasibility.md",
-      "status": "in_progress",
+      "path": "TICKET-001-feasibility-security-design/review/TASK-003-runtime-config-feasibility.md",
+      "status": "review",
       "dependsOn": [],
       "conflictDomains": [
         "src/config.ts",
@@ -667,31 +628,18 @@
       "worktreeStatus": "verified",
       "pr": "https://github.com/ivo-toby/postgram/pull/78",
       "latestCommit": "4ef5792860fed0544db45a0eb6a635cd4423f393",
-      "branchFreshness": "current_at_follow_up_review_request",
-      "blockingFeedback": [
-        {
-          "priority": "P2",
-          "id": "P2-stale-worker-dispatch-gate",
-          "owner": "Singer",
-          "reviewer": "Lorentz",
-          "reviewThreadId": "019f322c-02e7-7590-8b8e-ebdd1e9c52ac",
-          "routedAt": "2026-07-05T12:13:33Z",
-          "summary": "PR branch orchestration currentGates.workerDispatch no_pr was fixed to ready_for_review in Singer commit 4ef5792.",
-          "status": "pending_follow_up_review",
-          "fixCommit": "4ef5792860fed0544db45a0eb6a635cd4423f393",
-          "followUpReviewRequestedAt": "2026-07-05T12:25:33Z"
-        }
-      ],
+      "branchFreshness": "current_at_merge_start",
+      "blockingFeedback": [],
       "verification": {
         "result": "passed",
         "commands": [
-          "git diff --check",
+          "git diff --check origin/codex/epic/admin-configuration-frontend...HEAD",
           "node -e JSON.parse(orchestration.json)",
           "gh pr view 78"
         ],
-        "evidence": "Controller verified Singer fix commit 4ef5792 is pushed to PR #78, git diff --check passed, orchestration JSON parsed, PR #78 is open/draft with clean merge state, and PR branch currentGates.workerDispatch is ready_for_review."
+        "evidence": "Singer verification passed; controller verified PR #78 head 4ef5792, clean merge state, orchestration JSON parse, diff whitespace, and Lorentz follow-up REVIEW_PASS."
       },
-      "currentGate": "reviewing",
+      "currentGate": "merge_ready",
       "workerNickname": "Singer",
       "reviewNickname": "Lorentz",
       "feedback": {
@@ -699,17 +647,17 @@
           {
             "priority": "P3",
             "id": "P3-provider-url-egress-test-gate",
+            "status": "addressed",
             "owner": "Singer",
             "reviewer": "Lorentz",
             "reviewThreadId": "019f322c-02e7-7590-8b8e-ebdd1e9c52ac",
-            "routedAt": "2026-07-05T12:13:33Z",
-            "summary": "TASK-010/testing expectations now explicitly cover provider URL/egress or SSRF safety; pending reviewer confirmation.",
-            "status": "pending_follow_up_review",
+            "resolvedAt": "2026-07-05T12:25:33Z",
             "fixCommit": "4ef5792860fed0544db45a0eb6a635cd4423f393",
-            "followUpReviewRequestedAt": "2026-07-05T12:25:33Z"
+            "summary": "TASK-010 and shared validation now explicitly require provider URL/egress/SSRF safety coverage."
           }
         ]
-      }
+      },
+      "reviewResult": "REVIEW_PASS"
     },
     {
       "id": "TASK-004-admin-auth-persistence",
@@ -1263,11 +1211,11 @@
   "monitoring": {
     "mode": "codex_thread_heartbeat",
     "cadence": "FREQ=MINUTELY;INTERVAL=5",
-    "status": "active",
+    "status": "active_until_reconciliation",
     "lastCheckedAt": "2026-07-05T12:25:33Z",
     "nextCheckDueAt": "2026-07-05T12:30:33Z",
     "schedulerRef": "postgram-admin-wave-001-wdd-heartbeat",
-    "fallbackPrompt": "Resume WAVE-001 for EPIC-admin-configuration-frontend. Read .wdd/epics/EPIC-admin-configuration-frontend/orchestration.json and controller-state.md, inspect PR https://github.com/ivo-toby/postgram/pull/78, worker Singer (019f3215-2eb6-75f2-81f0-bf527e73258b), reviewer Lorentz (019f322c-02e7-7590-8b8e-ebdd1e9c52ac), and the assigned worktree /Users/ivo.toby/workspace/postgram/.worktrees/WAVE-001-admin-feasibility-gate. Check Lorentz follow-up review of Singer fix commit 4ef5792; if review passes, enforce branch freshness and prepare merge or reconciliation, otherwise route any remaining P1/P2 feedback."
+    "fallbackPrompt": "Run wdd-reconcile-wave for EPIC-admin-configuration-frontend WAVE-001. The WAVE-001 bundle PR #78 passed review after fix commit 4ef5792 and is being merged into the epic branch; inspect controller-state.md and orchestration.json, verify merged task/shared-context state, reconcile WAVE-001 decisions, and stop before starting WAVE-002."
   },
   "sharedContext": {
     "index": "shared-context/index.md",
@@ -1311,66 +1259,65 @@
         "workerThreadId": "019f3215-2eb6-75f2-81f0-bf527e73258b",
         "workerNickname": "Singer",
         "reviewThreadId": "019f322c-02e7-7590-8b8e-ebdd1e9c52ac",
-        "currentGate": "reviewing",
-        "branchFreshness": "current_at_follow_up_review_request",
+        "currentGate": "merge_ready",
+        "branchFreshness": "current_at_merge_start",
         "pr": "https://github.com/ivo-toby/postgram/pull/78",
         "latestCommit": "4ef5792860fed0544db45a0eb6a635cd4423f393",
-        "blockingFeedback": [
-          {
-            "priority": "P2",
-            "id": "P2-bootstrap-ownership-task-gates",
-            "owner": "Singer",
-            "reviewer": "Lorentz",
-            "reviewThreadId": "019f322c-02e7-7590-8b8e-ebdd1e9c52ac",
-            "routedAt": "2026-07-05T12:13:33Z",
-            "summary": "Bootstrap takeover controls need explicit future-task ownership: hash-only token storage, expiry, single-use invalidation, atomic first-admin activation, route behavior, and MFA-before-active checks must be testable across TASK-004/TASK-005/TASK-006.",
-            "status": "pending_follow_up_review",
-            "fixCommit": "4ef5792860fed0544db45a0eb6a635cd4423f393",
-            "followUpReviewRequestedAt": "2026-07-05T12:25:33Z"
-          },
-          {
-            "priority": "P2",
-            "id": "P2-stale-worker-dispatch-gate",
-            "owner": "Singer",
-            "reviewer": "Lorentz",
-            "reviewThreadId": "019f322c-02e7-7590-8b8e-ebdd1e9c52ac",
-            "routedAt": "2026-07-05T12:13:33Z",
-            "summary": "PR branch orchestration currentGates.workerDispatch no_pr was fixed to ready_for_review in Singer commit 4ef5792.",
-            "status": "pending_follow_up_review",
-            "fixCommit": "4ef5792860fed0544db45a0eb6a635cd4423f393",
-            "followUpReviewRequestedAt": "2026-07-05T12:25:33Z"
-          }
-        ],
+        "blockingFeedback": [],
         "verification": {
-          "result": "not_run",
+          "result": "passed",
           "commands": [
-            "git diff --check"
+            "git diff --check origin/codex/epic/admin-configuration-frontend...HEAD",
+            "node -e JSON.parse(orchestration.json)",
+            "gh pr view 78"
           ],
-          "evidence": null
+          "evidence": "Singer verification passed; controller verified PR #78 head 4ef5792, clean merge state, orchestration JSON parse, diff whitespace, and Lorentz follow-up REVIEW_PASS."
         },
         "verifiedAt": "2026-07-05T11:36:08Z",
         "dispatchedAt": "2026-07-05T11:41:41Z",
         "reviewNickname": "Lorentz",
-        "reviewStartedAt": "2026-07-05T12:05:03Z",
         "feedback": {
+          "p2": [
+            {
+              "priority": "P2",
+              "id": "P2-bootstrap-ownership-task-gates",
+              "status": "resolved",
+              "owner": "Singer",
+              "reviewer": "Lorentz",
+              "reviewThreadId": "019f322c-02e7-7590-8b8e-ebdd1e9c52ac",
+              "resolvedAt": "2026-07-05T12:25:33Z",
+              "fixCommit": "4ef5792860fed0544db45a0eb6a635cd4423f393",
+              "summary": "TASK-004/TASK-005/TASK-006 now explicitly split bootstrap token persistence, route behavior, MFA completion, and pending-MFA first-admin activation testability."
+            },
+            {
+              "priority": "P2",
+              "id": "P2-stale-worker-dispatch-gate",
+              "status": "resolved",
+              "owner": "Singer",
+              "reviewer": "Lorentz",
+              "reviewThreadId": "019f322c-02e7-7590-8b8e-ebdd1e9c52ac",
+              "resolvedAt": "2026-07-05T12:25:33Z",
+              "fixCommit": "4ef5792860fed0544db45a0eb6a635cd4423f393",
+              "summary": "PR branch currentGates.workerDispatch is ready_for_review, not no_pr."
+            }
+          ],
           "p3": [
             {
               "priority": "P3",
               "id": "P3-provider-url-egress-test-gate",
+              "status": "addressed",
               "owner": "Singer",
               "reviewer": "Lorentz",
               "reviewThreadId": "019f322c-02e7-7590-8b8e-ebdd1e9c52ac",
-              "routedAt": "2026-07-05T12:13:33Z",
-              "summary": "TASK-010/testing expectations now explicitly cover provider URL/egress or SSRF safety; pending reviewer confirmation.",
-              "status": "pending_follow_up_review",
+              "resolvedAt": "2026-07-05T12:25:33Z",
               "fixCommit": "4ef5792860fed0544db45a0eb6a635cd4423f393",
-              "followUpReviewRequestedAt": "2026-07-05T12:25:33Z"
+              "summary": "TASK-010 and shared validation now explicitly require provider URL/egress/SSRF safety coverage."
             }
           ]
         },
-        "feedbackRoutedAt": "2026-07-05T12:13:33Z",
-        "reviewResult": "FOLLOW_UP_REVIEW_REQUESTED",
-        "followUpReviewRequestedAt": "2026-07-05T12:25:33Z"
+        "reviewResult": "REVIEW_PASS",
+        "reviewedAt": "2026-07-05T12:25:33Z",
+        "mergeReadyAt": "2026-07-05T12:25:33Z"
       }
     ]
   },
@@ -1393,10 +1340,10 @@
       "WAVE-001-admin-feasibility-gate": "verified"
     },
     "workerDispatch": {
-      "WAVE-001-admin-feasibility-gate": "reviewing"
+      "WAVE-001-admin-feasibility-gate": "merge_ready"
     },
     "waveCompletion": {
-      "WAVE-001": "in_progress"
+      "WAVE-001": "merge_ready"
     },
     "nextWave": {
       "id": "WAVE-002",
@@ -1404,65 +1351,64 @@
     },
     "monitoring": {
       "mode": "codex_thread_heartbeat",
-      "status": "active",
+      "status": "active_until_reconciliation",
       "schedulerRef": "postgram-admin-wave-001-wdd-heartbeat",
       "cadence": "FREQ=MINUTELY;INTERVAL=5",
       "lastCheckedAt": "2026-07-05T12:25:33Z",
       "nextCheckDueAt": "2026-07-05T12:30:33Z",
-      "fallbackPrompt": "Resume WAVE-001 for EPIC-admin-configuration-frontend. Read .wdd/epics/EPIC-admin-configuration-frontend/orchestration.json and controller-state.md, inspect PR https://github.com/ivo-toby/postgram/pull/78, worker Singer (019f3215-2eb6-75f2-81f0-bf527e73258b), reviewer Lorentz (019f322c-02e7-7590-8b8e-ebdd1e9c52ac), and the assigned worktree /Users/ivo.toby/workspace/postgram/.worktrees/WAVE-001-admin-feasibility-gate. Check Lorentz follow-up review of Singer fix commit 4ef5792; if review passes, enforce branch freshness and prepare merge or reconciliation, otherwise route any remaining P1/P2 feedback."
+      "fallbackPrompt": "Run wdd-reconcile-wave for EPIC-admin-configuration-frontend WAVE-001. The WAVE-001 bundle PR #78 passed review after fix commit 4ef5792 and is being merged into the epic branch; inspect controller-state.md and orchestration.json, verify merged task/shared-context state, reconcile WAVE-001 decisions, and stop before starting WAVE-002."
     },
     "review": {
       "WAVE-001-admin-feasibility-gate": {
-        "status": "follow_up_review_requested",
-        "result": "FOLLOW_UP_REVIEW_REQUESTED",
+        "status": "passed",
+        "result": "REVIEW_PASS",
         "pr": "https://github.com/ivo-toby/postgram/pull/78",
         "latestCommit": "4ef5792860fed0544db45a0eb6a635cd4423f393",
         "reviewThreadId": "019f322c-02e7-7590-8b8e-ebdd1e9c52ac",
         "reviewNickname": "Lorentz",
         "workerThreadId": "019f3215-2eb6-75f2-81f0-bf527e73258b",
         "workerNickname": "Singer",
-        "blockingFeedback": [
+        "blockingFeedback": [],
+        "resolvedFeedback": [
           {
             "priority": "P2",
             "id": "P2-bootstrap-ownership-task-gates",
+            "status": "resolved",
             "owner": "Singer",
             "reviewer": "Lorentz",
             "reviewThreadId": "019f322c-02e7-7590-8b8e-ebdd1e9c52ac",
-            "routedAt": "2026-07-05T12:13:33Z",
-            "summary": "Bootstrap takeover controls need explicit future-task ownership: hash-only token storage, expiry, single-use invalidation, atomic first-admin activation, route behavior, and MFA-before-active checks must be testable across TASK-004/TASK-005/TASK-006.",
-            "status": "pending_follow_up_review",
+            "resolvedAt": "2026-07-05T12:25:33Z",
             "fixCommit": "4ef5792860fed0544db45a0eb6a635cd4423f393",
-            "followUpReviewRequestedAt": "2026-07-05T12:25:33Z"
+            "summary": "TASK-004/TASK-005/TASK-006 now explicitly split bootstrap token persistence, route behavior, MFA completion, and pending-MFA first-admin activation testability."
           },
           {
             "priority": "P2",
             "id": "P2-stale-worker-dispatch-gate",
+            "status": "resolved",
             "owner": "Singer",
             "reviewer": "Lorentz",
             "reviewThreadId": "019f322c-02e7-7590-8b8e-ebdd1e9c52ac",
-            "routedAt": "2026-07-05T12:13:33Z",
-            "summary": "PR branch orchestration currentGates.workerDispatch no_pr was fixed to ready_for_review in Singer commit 4ef5792.",
-            "status": "pending_follow_up_review",
+            "resolvedAt": "2026-07-05T12:25:33Z",
             "fixCommit": "4ef5792860fed0544db45a0eb6a635cd4423f393",
-            "followUpReviewRequestedAt": "2026-07-05T12:25:33Z"
-          }
-        ],
-        "nonBlockingFeedback": [
+            "summary": "PR branch currentGates.workerDispatch is ready_for_review, not no_pr."
+          },
           {
             "priority": "P3",
             "id": "P3-provider-url-egress-test-gate",
+            "status": "addressed",
             "owner": "Singer",
             "reviewer": "Lorentz",
             "reviewThreadId": "019f322c-02e7-7590-8b8e-ebdd1e9c52ac",
-            "routedAt": "2026-07-05T12:13:33Z",
-            "summary": "TASK-010/testing expectations now explicitly cover provider URL/egress or SSRF safety; pending reviewer confirmation.",
-            "status": "pending_follow_up_review",
+            "resolvedAt": "2026-07-05T12:25:33Z",
             "fixCommit": "4ef5792860fed0544db45a0eb6a635cd4423f393",
-            "followUpReviewRequestedAt": "2026-07-05T12:25:33Z"
+            "summary": "TASK-010 and shared validation now explicitly require provider URL/egress/SSRF safety coverage."
           }
         ],
-        "followUpReviewRequestedAt": "2026-07-05T12:25:33Z"
+        "reviewedAt": "2026-07-05T12:25:33Z"
       }
+    },
+    "branchFreshness": {
+      "WAVE-001-admin-feasibility-gate": "current_at_merge_start"
     }
   }
 }

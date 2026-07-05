@@ -35,6 +35,19 @@ Avoid:
 - Adding generic command execution routes.
 - Adding SQL routes.
 
+WAVE-001 route implications:
+
+- Bootstrap status may be public but must expose only state, never token
+  material.
+- First admin setup must require bootstrap token proof. The route layer may
+  create a pending/non-active first-admin setup state through TASK-004 services,
+  but active admin access is completed only by the TASK-006 MFA enrollment and
+  verification transition.
+- Admin routes should ignore/reject `Authorization: Bearer` API keys or MCP
+  OAuth access tokens rather than treating them as admin credentials.
+- Maintenance routes must be typed operation routes, not CLI command passthrough
+  routes.
+
 ## Response Shape
 
 Use the existing app error response style where practical:
@@ -47,6 +60,10 @@ Use the existing app error response style where practical:
   and candidate summaries.
 - Long-running operations should return a job ID and initial status rather than
   blocking request threads.
+- Secret fields must be write-only. Read responses may include
+  `configured: true`, validation status, timestamps, provider identity, and
+  safe metadata, but never plaintext, hashes, ciphertext, or token prefixes
+  unless a later security review explicitly allows a non-sensitive prefix.
 
 ## Security Contract
 
@@ -64,6 +81,7 @@ Endpoints should reject:
 - Missing or invalid CSRF token on mutation.
 - Ordinary Postgram API-key bearer token.
 - MCP OAuth bearer token.
+- Missing or stale step-up state for sensitive mutations.
 
 ## Audit Contract
 
@@ -75,6 +93,8 @@ Every admin mutation should record:
 - Safe request summary.
 - Result summary.
 - Failure summary where relevant.
+- Whether the request was dry-run, apply, retry, cancel, or rollback where that
+  applies.
 
 Existing `audit_log` can be extended or complemented, but admin actor
 attribution must not be hidden inside free-form details only.
@@ -83,6 +103,15 @@ attribution must not be hidden inside free-form details only.
 
 - Should the admin route namespace be served by the backend only, or should the
   UI have a separate `/admin` build route?
-- Should CSRF tokens be double-submit cookie, synchronizer token, or session
-  stored token?
 - What job response model is needed for maintenance operations?
+
+## WAVE-001 Contract Preferences
+
+- Prefer a synchronizer CSRF token stored with the server-side admin session
+  unless a later route task chooses and tests a different pattern.
+- Prefer job responses for any operation that calls providers, scans many rows,
+  deletes data, changes embedding identity, or may outlive a short HTTP
+  request.
+- Prefer separate dry-run and apply endpoints or an explicit `mode` field with
+  strict enum validation. Apply requests should reference recent dry-run/job
+  evidence where practical.

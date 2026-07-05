@@ -48,16 +48,20 @@ WAVE-004
 ## Objective
 
 Add TOTP MFA enrollment/challenge and step-up enforcement for sensitive admin
-actions.
+actions, including the first-admin transition from pending setup state to
+active admin access.
 
 ## Scope
 
 - Included:
   - TOTP enrollment, verification, disable/reset guardrails if in first scope.
   - Session state indicating MFA completion.
+  - First-admin setup completion: verify MFA enrollment/challenge and atomically
+    transition the TASK-004 pending first admin to active status.
   - Recent re-auth or step-up marker for sensitive actions.
   - Middleware/helper for endpoints requiring step-up.
-  - Tests for bypass attempts.
+  - Tests for bypass attempts and for the inactive/pending first admin before
+    MFA completion.
 - Excluded:
   - WebAuthn unless Wave 1 explicitly made it first scope.
   - UI screens.
@@ -122,7 +126,9 @@ None yet.
 ### RED
 
 Add tests for MFA enrollment, challenge failure/success, session before MFA,
-step-up required on sensitive placeholder endpoint, and replay/expired step-up.
+pending first-admin denial before MFA completion, active first-admin transition
+after verified MFA, step-up required on sensitive placeholder endpoint, and
+replay/expired step-up.
 
 ### GREEN
 
@@ -137,6 +143,9 @@ Keep MFA helpers isolated from ordinary API-key auth.
 - Use well-reviewed primitives or small focused implementation for TOTP.
 - Never return stored TOTP secret after enrollment.
 - Audit MFA enrollment and step-up sensitive operations.
+- TASK-004 owns bootstrap token persistence and pending first-admin state;
+  TASK-005 owns route/session/CSRF behavior; this task owns the testable
+  transition that a first admin is not active until MFA is verified.
 
 ## Durable Memory Notes To Consider
 
@@ -146,6 +155,9 @@ Keep MFA helpers isolated from ordinary API-key auth.
 ## Task-Level Definition of Done
 
 - [ ] MFA enrollment and challenge are covered.
+- [ ] First admin remains non-active/pending until MFA enrollment and
+      verification complete.
+- [ ] First admin becomes active only through the MFA completion path.
 - [ ] Sensitive action step-up helper exists and is tested.
 - [ ] API-key bearer tokens cannot bypass MFA/admin auth.
 - [ ] Secrets are redacted.

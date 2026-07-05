@@ -32,6 +32,8 @@ Backend:
   embedding, model, audit, stats, and queue logic.
 - Keep `/api/*` bearer auth for ordinary user and agent workflows.
 - Keep OAuth/DCR connector routes separate from admin login.
+- Add a bootstrap/status flow that never returns bootstrap token material over
+  HTTP.
 
 Persistence:
 
@@ -45,13 +47,15 @@ Persistence:
 Configuration:
 
 - Current provider setup is env-driven in `src/config.ts` and `src/index.ts`.
-- Feasibility work must decide which values move into a DB-backed settings
-  service.
-- Secret values should be write-only after creation and encrypted or otherwise
-  protected according to the chosen key-management strategy.
-- Provider/model changes need validation before save and an apply strategy:
-  hot reload, worker reinitialization, controlled restart, or queued
-  maintenance.
+- WAVE-001 chose installation-wide DB-backed runtime settings for UI-managed
+  provider/config values.
+- Secret values should be write-only after creation and encrypted at the
+  application layer with an installation encryption key kept outside the DB.
+- Provider/model changes need explicit save/validate/apply states. Extraction
+  settings should reload the worker/factory when safe; embedding identity
+  changes require migration job handling.
+- Bootstrap-only deployment values such as `DATABASE_URL`, ports, bind hosts,
+  and the installation encryption key stay outside browser editing.
 
 Frontend:
 
@@ -65,8 +69,9 @@ Frontend:
 Docker:
 
 - The desired operator path is `docker compose up`, then browser-based setup.
-- Safe first-run bootstrap is the hardest Docker question. Avoid a public
-  unauthenticated setup screen that anyone can claim.
+- Safe first-run bootstrap uses a generated one-time token delivered through a
+  trusted local operator channel. Avoid a public unauthenticated setup screen
+  that anyone can claim.
 - Any new runtime configuration values must be reflected in Docker setup and
   docs.
 
@@ -83,15 +88,27 @@ call. This avoids:
 Start with one low-risk read operation and one dangerous dry-run/apply operation
 as proof before broad refactors.
 
+## WAVE-001 Resolved Architecture Questions
+
+- Runtime settings are global installation settings for the first version.
+- Long-running maintenance and migration operations need explicit job records
+  before web exposure.
+- Admin bootstrap must prove local operator control with a one-time token; no
+  admin account can be created merely because no admin exists yet.
+- API-key bearer auth and MCP OAuth bearer tokens are rejected from admin
+  routes.
+- The current user UI API-key localStorage pattern is not reusable for admin
+  sessions.
+
 ## Open Architecture Questions
 
-- Should runtime settings be global installation settings only, or scoped by
-  profile/environment?
-- Should long-running maintenance jobs be stored as explicit job records?
-- Can provider settings be hot-reloaded safely, or should the UI drive a
-  controlled restart/reinitialize flow?
+- Can extraction provider settings be hot-reloaded safely in the first
+  implementation, or should the UI initially mark them restart-required until a
+  worker reload service is proven?
 - Should the UI and backend continue as separate Docker services, or should the
   backend serve the built UI for simpler deployment?
+- What is the exact installation encryption key name/format and Docker-secret
+  generation path?
 
 ## Durable Memory
 

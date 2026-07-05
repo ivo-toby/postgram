@@ -21,8 +21,11 @@ checkout.
 
 WAVE-001 is activated as a full-profile bundled feasibility/security gate.
 
-Next phase: Lorentz is re-reviewing Singer's fixes on draft PR
+WAVE-001 review passed after Singer's fix commit on draft PR
 https://github.com/ivo-toby/postgram/pull/78.
+
+Next phase: finish merging the WAVE-001 bundle into the epic branch, then run
+`wdd-reconcile-wave`.
 
 ## Wave Summary
 
@@ -44,9 +47,9 @@ https://github.com/ivo-toby/postgram/pull/78.
 
 Mode: codex_thread_heartbeat
 
-Cadence: adaptive, every 5 minutes during follow-up review
+Cadence: adaptive, every 5 minutes until wave reconciliation starts
 
-Status: active
+Status: active for PR review routing
 
 Last check: 2026-07-05T12:25:33Z
 
@@ -86,9 +89,9 @@ or reconciliation, otherwise route any remaining P1/P2 feedback.
 
 | Task | Ticket | Branch | Worktree | Gate | Verification |
 |------|--------|--------|----------|------|--------------|
-| TASK-001-admin-surface-inventory | TICKET-001-feasibility-security-design | codex/task/WAVE-001-admin-feasibility-gate | verified | reviewing | `git diff --check` passed |
-| TASK-002-threat-model-bootstrap | TICKET-001-feasibility-security-design | codex/task/WAVE-001-admin-feasibility-gate | verified | reviewing | Fix pushed for P2 bootstrap ownership feedback; follow-up review requested |
-| TASK-003-runtime-config-feasibility | TICKET-001-feasibility-security-design | codex/task/WAVE-001-admin-feasibility-gate | verified | reviewing | Fix pushed for P3 provider URL/egress test feedback; follow-up review requested |
+| TASK-001-admin-surface-inventory | TICKET-001-feasibility-security-design | codex/task/WAVE-001-admin-feasibility-gate | verified | merge_ready | `git diff --check` passed; REVIEW_PASS |
+| TASK-002-threat-model-bootstrap | TICKET-001-feasibility-security-design | codex/task/WAVE-001-admin-feasibility-gate | verified | merge_ready | P2 bootstrap ownership feedback resolved; REVIEW_PASS |
+| TASK-003-runtime-config-feasibility | TICKET-001-feasibility-security-design | codex/task/WAVE-001-admin-feasibility-gate | verified | merge_ready | P3 provider URL/egress test feedback addressed; REVIEW_PASS |
 | TASK-004-admin-auth-persistence | TICKET-002-admin-auth-foundation | codex/task/TASK-004-admin-auth-persistence | not_created | planned | `npm test -- tests/integration/admin-auth-service.test.ts`; `npm run typecheck` |
 | TASK-005-admin-session-routes | TICKET-002-admin-auth-foundation | codex/task/TASK-005-admin-session-routes | not_created | planned | `npm test -- tests/contract/admin-auth-routes.test.ts`; `npm run typecheck` |
 | TASK-006-admin-mfa-step-up | TICKET-002-admin-auth-foundation | codex/task/TASK-006-admin-mfa-step-up | not_created | planned | `npm test -- tests/contract/admin-mfa-routes.test.ts`; `npm test -- tests/integration/admin-auth-service.test.ts`; `npm run typecheck` |
@@ -137,19 +140,20 @@ or reconciliation, otherwise route any remaining P1/P2 feedback.
   branch/worktree creation.
 - Bundle worktree verification: passed at `fadb158`; follow-up verification
   state is being synced before dispatch.
-- Worker dispatch: Singer pushed review fixes in `4ef5792`; current gate is
-  `reviewing` for Lorentz follow-up.
+- Worker dispatch: Singer pushed review fixes in `4ef5792`; Lorentz follow-up
+  review returned `REVIEW_PASS`.
+- Current gate: `merge_ready`.
 - Monitoring: Codex heartbeat
-  `postgram-admin-wave-001-wdd-heartbeat` is active every 5 minutes during
-  follow-up review.
+  `postgram-admin-wave-001-wdd-heartbeat` remains active every 5 minutes until
+  WAVE-001 reconciliation starts.
 
-## Open Review Feedback
+## Review Feedback
 
-| Priority | Scope | Owner | Status | Summary |
-|----------|-------|-------|--------|---------|
-| P2 | Bootstrap ownership across TASK-004/TASK-005/TASK-006 | Lorentz | pending_follow_up_review | Singer pushed fixes in `4ef5792`; waiting for reviewer confirmation. |
-| P2 | WDD orchestration consistency | Lorentz | pending_follow_up_review | Singer set PR branch `currentGates.workerDispatch` to `ready_for_review`; waiting for reviewer confirmation. |
-| P3 | Runtime provider URL safety | Lorentz | pending_follow_up_review | Singer added explicit URL/egress safety expectations for TASK-010; waiting for reviewer confirmation. |
+| Priority | Scope | Result | Summary |
+|----------|-------|--------|---------|
+| P2 | Bootstrap ownership across TASK-004/TASK-005/TASK-006 | resolved | TASK-004/TASK-005/TASK-006 now split bootstrap persistence, route behavior, MFA completion, and activation testability. |
+| P2 | WDD orchestration consistency | resolved | PR branch `currentGates.workerDispatch` is now `ready_for_review`. |
+| P3 | Runtime provider URL safety | addressed | TASK-010 and shared validation now explicitly require URL/egress/SSRF safety coverage. |
 
 ## Shared Context Reconciliation Rules
 
@@ -162,6 +166,7 @@ or reconciliation, otherwise route any remaining P1/P2 feedback.
 ## Verification Status
 
 - Planning artifact syntax check: passed with `git diff --check`.
+- WAVE-001 worker verification: passed with `git diff --check`.
 - `orchestration.json` parse and dependency-wave consistency check: passed.
 - Product code tests: not run; this turn planned WDD artifacts only.
 
@@ -191,12 +196,14 @@ or reconciliation, otherwise route any remaining P1/P2 feedback.
   controller verified `git diff --check`, orchestration JSON parsing, PR clean
   state, and `currentGates.workerDispatch = ready_for_review`, then requested
   Lorentz follow-up review.
+- 2026-07-05T12:25:33Z: Lorentz follow-up review returned `REVIEW_PASS` with
+  no remaining findings.
 
 ## Next Action
 
-Heartbeat or controller next tick:
+Controller next tick:
 
 ```text
-Poll Lorentz's follow-up review for PR #78. If it passes, enforce branch
-freshness and prepare merge/reconcile; otherwise route remaining P1/P2 feedback.
+Finish the WAVE-001 merge into the epic branch, then run `wdd-reconcile-wave`
+for EPIC-admin-configuration-frontend WAVE-001.
 ```

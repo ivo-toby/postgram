@@ -6,7 +6,7 @@ ticket: TICKET-001-feasibility-security-design
 wave: WAVE-001
 slug: runtime-config-feasibility
 title: Runtime Config Feasibility
-status: in_progress
+status: review
 depends_on: []
 conflict_domains:
   - .wdd/epics/EPIC-admin-configuration-frontend/shared-context/**
@@ -16,10 +16,10 @@ review_model_class: review
 branch: codex/task/WAVE-001-admin-feasibility-gate
 worker_worktree: /Users/ivo.toby/workspace/postgram/.worktrees/WAVE-001-admin-feasibility-gate
 worktree_status: verified
-pr: null
+pr: https://github.com/ivo-toby/postgram/pull/78
 worker_thread_id: 019f3215-2eb6-75f2-81f0-bf527e73258b
 review_thread_id: null
-current_gate: no_pr
+current_gate: ready_for_review
 branch_freshness: current
 verification:
   - git diff --check
@@ -29,7 +29,7 @@ verification:
 
 ## Status
 
-in_progress
+review
 
 ## Parent Ticket
 
@@ -108,7 +108,7 @@ isolated worktree before dispatch.
 
 ## PR / Patch Reference
 
-None yet.
+https://github.com/ivo-toby/postgram/pull/78
 
 ## RED-GREEN TDD Plan
 
@@ -137,10 +137,10 @@ Condense repeated setting notes into a table.
 
 ## Task-Level Definition of Done
 
-- [ ] Current config surface is classified.
-- [ ] Secret storage strategy is chosen or marked blocking.
-- [ ] Apply/reload/restart strategy is chosen.
-- [ ] Later implementation tasks have clear scope.
+- [x] Current config surface is classified.
+- [x] Secret storage strategy is chosen or marked blocking.
+- [x] Apply/reload/restart strategy is chosen.
+- [x] Later implementation tasks have clear scope.
 
 ## Validation Steps
 
@@ -148,7 +148,7 @@ Condense repeated setting notes into a table.
 
 ## Verification Evidence
 
-- Not run yet.
+- 2026-07-05: `git diff --check` passed.
 
 ## Review Feedback
 
@@ -166,4 +166,11 @@ Condense repeated setting notes into a table.
 
 ## Completion Notes
 
-- None yet.
+- Inspected `src/config.ts`, `src/index.ts`,
+  `src/services/embeddings/providers.ts`, `src/services/llm-provider.ts`,
+  `docker-compose.yml`, `.env.example`, and `README.md`.
+- Updated `shared-context/resources/migration-config-notes.md` with the
+  per-setting lifecycle classification, DB-backed settings model, encrypted
+  write-only secret strategy, and save/validate/apply behavior.
+- Recorded follow-on Docker/config drift for `LLM_REQUEST_TIMEOUT_MS` and
+  extraction tuning settings before admin UI ownership.

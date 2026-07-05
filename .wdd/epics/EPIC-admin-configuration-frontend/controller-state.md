@@ -213,9 +213,11 @@ freshness before merge.
 - WAVE-002 is done and reconciled.
 - WAVE-003 is active after Ivo requested sequential wave execution.
 - WAVE-004 remains blocked until WAVE-003 is reconciled.
-- WAVE-003 has draft PR #80 open and clean against epic base `f2d48cd`.
-  Lorentz review is in progress. WAVE-004 remains blocked until WAVE-003 is
-  reviewed, merged, and reconciled.
+- WAVE-003 has draft PR #80 open against epic base `f2d48cd`. Lorentz review
+  is in progress. After the controller review-state checkpoint `b016bee`,
+  GitHub reports PR merge state `UNKNOWN`, so branch freshness must be enforced
+  after review passes and before merge. WAVE-004 remains blocked until WAVE-003
+  is reviewed, merged, and reconciled.
 
 ## Verification Status
 
@@ -390,11 +392,13 @@ freshness before merge.
 - 2026-07-05T16:16:04Z: Leibniz returned `DONE_WITH_CONCERNS`, pushed branch
   `codex/task/TASK-005-admin-session-routes` at
   `01c59a9586c0311a48aa5c55ffd7784f2a3aaccc`, and opened draft PR #80 against
-  the epic branch. GitHub reports PR #80 is open, draft, and mergeable
-  (`mergeStateStatus: CLEAN`) against base `f2d48cd`. The controller requested
-  Lorentz review (`019f3311-ae9d-79b1-84f3-ede0958df215`), moved the gate to
-  `reviewing`, and updated heartbeat cadence to 5 minutes. Next check due
-  2026-07-05T16:21:04Z.
+  the epic branch. GitHub initially reported PR #80 open, draft, and mergeable
+  against base `f2d48cd`. The controller requested Lorentz review
+  (`019f3311-ae9d-79b1-84f3-ede0958df215`), moved the gate to `reviewing`, and
+  updated heartbeat cadence to 5 minutes. After the controller checkpoint
+  advanced the epic branch to `b016bee`, GitHub reports merge state `UNKNOWN`;
+  branch freshness must be enforced after review and before merge. Next check
+  due 2026-07-05T16:21:04Z.
 
 ## Next Action
 

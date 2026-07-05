@@ -441,7 +441,7 @@
           "reviewThreadId": "019f322c-02e7-7590-8b8e-ebdd1e9c52ac",
           "reviewNickname": "Lorentz",
           "currentGate": "reviewing",
-          "branchFreshness": "current_at_pr_open",
+          "branchFreshness": "stale_after_controller_review_checkpoint",
           "pr": "https://github.com/ivo-toby/postgram/pull/80",
           "latestCommit": "01c59a9586c0311a48aa5c55ffd7784f2a3aaccc",
           "blockingFeedback": [],
@@ -463,7 +463,8 @@
           "dispatchBaseCommit": "6e758524b2549d86519c25aed19f4d9617795edf",
           "lastObservedAt": "2026-07-05T16:16:04Z",
           "reviewRequestedAt": "2026-07-05T16:16:04Z",
-          "reviewSubmissionId": "019f3311-ae9d-79b1-84f3-ede0958df215"
+          "reviewSubmissionId": "019f3311-ae9d-79b1-84f3-ede0958df215",
+          "freshnessNote": "PR #80 was current at PR open against f2d48cd. After controller review-state checkpoint b016bee, GitHub reports mergeStateStatus UNKNOWN; branch freshness must be enforced after review passes and before merge."
         }
       ],
       "workerDispatchStartedAt": "2026-07-05T15:15:57Z"
@@ -963,7 +964,7 @@
       "worktreeStatus": "clean_pushed",
       "pr": "https://github.com/ivo-toby/postgram/pull/80",
       "latestCommit": "01c59a9586c0311a48aa5c55ffd7784f2a3aaccc",
-      "branchFreshness": "current_at_pr_open",
+      "branchFreshness": "stale_after_controller_review_checkpoint",
       "blockingFeedback": [],
       "verification": {
         "result": "passed_with_worker_concern",
@@ -986,7 +987,8 @@
       "dispatchBaseCommit": "6e758524b2549d86519c25aed19f4d9617795edf",
       "lastObservedAt": "2026-07-05T16:16:04Z",
       "reviewRequestedAt": "2026-07-05T16:16:04Z",
-      "reviewSubmissionId": "019f3311-ae9d-79b1-84f3-ede0958df215"
+      "reviewSubmissionId": "019f3311-ae9d-79b1-84f3-ede0958df215",
+      "freshnessNote": "PR #80 was current at PR open against f2d48cd. After controller review-state checkpoint b016bee, GitHub reports mergeStateStatus UNKNOWN; branch freshness must be enforced after review passes and before merge."
     },
     {
       "id": "TASK-006-admin-mfa-step-up",
@@ -1515,7 +1517,7 @@
         "reviewThreadId": "019f322c-02e7-7590-8b8e-ebdd1e9c52ac",
         "reviewNickname": "Lorentz",
         "currentGate": "reviewing",
-        "branchFreshness": "current_at_pr_open",
+        "branchFreshness": "stale_after_controller_review_checkpoint",
         "pr": "https://github.com/ivo-toby/postgram/pull/80",
         "latestCommit": "01c59a9586c0311a48aa5c55ffd7784f2a3aaccc",
         "blockingFeedback": [],
@@ -1537,7 +1539,8 @@
         "dispatchBaseCommit": "6e758524b2549d86519c25aed19f4d9617795edf",
         "lastObservedAt": "2026-07-05T16:16:04Z",
         "reviewRequestedAt": "2026-07-05T16:16:04Z",
-        "reviewSubmissionId": "019f3311-ae9d-79b1-84f3-ede0958df215"
+        "reviewSubmissionId": "019f3311-ae9d-79b1-84f3-ede0958df215",
+        "freshnessNote": "PR #80 was current at PR open against f2d48cd. After controller review-state checkpoint b016bee, GitHub reports mergeStateStatus UNKNOWN; branch freshness must be enforced after review passes and before merge."
       }
     ]
   },
@@ -1662,7 +1665,7 @@
     "branchFreshness": {
       "WAVE-001-admin-feasibility-gate": "current_at_merge",
       "WAVE-002-admin-auth-persistence": "current_at_merge",
-      "WAVE-003-admin-session-routes": "current_at_pr_open"
+      "WAVE-003-admin-session-routes": "stale_after_controller_review_checkpoint"
     },
     "merge": {
       "WAVE-001-admin-feasibility-gate": {
@@ -1719,9 +1722,12 @@
         "headSha": "01c59a9586c0311a48aa5c55ffd7784f2a3aaccc",
         "baseRef": "codex/epic/admin-configuration-frontend",
         "baseSha": "f2d48cdfd33b8e94fc14dafcd66a206f3fff7a72",
-        "mergeStateStatus": "CLEAN",
+        "mergeStateStatus": "UNKNOWN",
         "createdAt": "2026-07-05T16:14:14Z",
-        "updatedAt": "2026-07-05T16:14:36Z"
+        "updatedAt": "2026-07-05T16:14:36Z",
+        "baseShaAtPrOpen": "f2d48cdfd33b8e94fc14dafcd66a206f3fff7a72",
+        "latestObservedEpicSha": "b016bee69292cf620a2584d5e863d3f06fbd9ffc",
+        "freshnessNote": "PR #80 was current at PR open against f2d48cd. After controller review-state checkpoint b016bee, GitHub reports mergeStateStatus UNKNOWN; branch freshness must be enforced after review passes and before merge."
       }
     },
     "cleanup": {
@@ -1790,8 +1796,8 @@
           "patch": null,
           "worktreeStatus": "clean_pushed",
           "branchHead": "01c59a9586c0311a48aa5c55ffd7784f2a3aaccc",
-          "epicHead": "f2d48cdfd33b8e94fc14dafcd66a206f3fff7a72",
-          "branchFreshness": "current_at_pr_open",
+          "epicHead": "b016bee69292cf620a2584d5e863d3f06fbd9ffc",
+          "branchFreshness": "stale_after_controller_review_checkpoint",
           "observedFiles": [
             ".wdd/epics/EPIC-admin-configuration-frontend/TICKET-002-admin-auth-foundation/review/TASK-005-admin-session-routes.md",
             "src/auth/admin-middleware.ts",
@@ -1805,7 +1811,8 @@
           ],
           "verification": "Leibniz reported after rebase onto origin/codex/epic/admin-configuration-frontend at f2d48cd: npm test -- tests/contract/admin-auth-routes.test.ts passed (9 tests); npm run typecheck passed; adjacent errors/admin-auth-service/auth-middleware/oauth/mcp-oauth/rest-api suite passed (50 tests); touched-file ESLint passed; git diff --check passed; local Codex review gate found no blocking correctness, security, or maintainability issues. Concern: repo-wide npm run lint -- ... still reports unrelated existing baseline failures outside the TASK-005 diff; direct lint on touched files passed.",
           "concern": "Repo-wide npm run lint -- ... still reports unrelated existing baseline lint failures outside the TASK-005 diff; touched-file ESLint passed.",
-          "note": "Draft PR #80 is open and mergeable; Lorentz review requested."
+          "note": "Draft PR #80 is open and mergeable; Lorentz review requested.",
+          "freshnessNote": "PR #80 was current at PR open against f2d48cd. After controller review-state checkpoint b016bee, GitHub reports mergeStateStatus UNKNOWN; branch freshness must be enforced after review passes and before merge."
         },
         "cleanupState": "not_started"
       }
@@ -1835,8 +1842,9 @@
     "workerNickname": "Leibniz",
     "lastObservedAt": "2026-07-05T16:16:04Z",
     "worktreeStatus": "clean_pushed",
-    "branchFreshness": "current_at_pr_open",
+    "branchFreshness": "stale_after_controller_review_checkpoint",
     "pr": "https://github.com/ivo-toby/postgram/pull/80",
-    "latestCommit": "01c59a9586c0311a48aa5c55ffd7784f2a3aaccc"
+    "latestCommit": "01c59a9586c0311a48aa5c55ffd7784f2a3aaccc",
+    "freshnessNote": "PR #80 was current at PR open against f2d48cd. After controller review-state checkpoint b016bee, GitHub reports mergeStateStatus UNKNOWN; branch freshness must be enforced after review passes and before merge."
   }
 }

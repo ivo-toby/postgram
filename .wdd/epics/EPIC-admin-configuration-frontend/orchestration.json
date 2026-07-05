@@ -519,7 +519,7 @@
     },
     {
       "id": "WAVE-004",
-      "status": "ready_for_reconciliation",
+      "status": "done",
       "strategy": {
         "profile": "full",
         "executionMode": "hybrid",
@@ -557,12 +557,12 @@
           ],
           "branch": "codex/task/TASK-006-admin-mfa-step-up",
           "worktree": "/Users/ivo.toby/workspace/postgram/.worktrees/TASK-006-admin-mfa-step-up",
-          "worktreeStatus": "clean_pushed",
+          "worktreeStatus": "cleaned_up",
           "workerThreadId": "019f3333-4033-7463-9819-aa3dec286b4c",
           "workerNickname": "Tesla",
           "reviewThreadId": "019f322c-02e7-7590-8b8e-ebdd1e9c52ac",
           "reviewNickname": "Lorentz",
-          "currentGate": "merged",
+          "currentGate": "reconciled",
           "branchFreshness": "current_at_merge",
           "pr": "https://github.com/ivo-toby/postgram/pull/82",
           "latestCommit": "8c0468020234fb67e60d6b79c77ca2df1fce0a28",
@@ -579,8 +579,8 @@
             "evidence": "Controller verified PR #82 pushed fix 3923133: diff check passed, orchestration JSON parsed, admin MFA route contract suite passed with 6 tests, admin-auth-service integration suite passed with 15 tests, and typecheck passed. Follow-up review requested from Lorentz in 019f3375-9922-7283-8c64-702aceaae82f."
           },
           "activatedAt": "2026-07-05T16:47:34Z",
-          "cleanupState": "cleanup_deferred",
-          "sharedContextReconciliation": "queued",
+          "cleanupState": "cleaned_up",
+          "sharedContextReconciliation": "completed",
           "dispatchedAt": "2026-07-05T16:47:34Z",
           "dispatchBaseCommit": "f183a28fe3e6ef51bf672c2af495cf9128091fba",
           "lastObservedAt": "2026-07-05T18:16:00Z",
@@ -597,7 +597,14 @@
           "followupReviewSubmissionId": "019f3375-9922-7283-8c64-702aceaae82f",
           "mergeCommit": "6666508a56bbbb083100c86a0b57ff767fcb30a6",
           "mergedAt": "2026-07-05T18:16:00Z",
-          "path": "TICKET-002-admin-auth-foundation/done/TASK-006-admin-mfa-step-up.md"
+          "path": "TICKET-002-admin-auth-foundation/done/TASK-006-admin-mfa-step-up.md",
+          "reconciledAt": "2026-07-05T18:26:34Z",
+          "cleanup": {
+            "status": "cleaned_up",
+            "cleanedAt": "2026-07-05T18:26:34Z",
+            "worktree": "/Users/ivo.toby/workspace/postgram/.worktrees/TASK-006-admin-mfa-step-up",
+            "evidence": "Worker worktree was clean and pushed; ran git worktree remove /Users/ivo.toby/workspace/postgram/.worktrees/TASK-006-admin-mfa-step-up and git worktree prune during WAVE-004 reconciliation."
+          }
         },
         {
           "id": "WAVE-004-settings-secret-store",
@@ -606,12 +613,12 @@
           ],
           "branch": "codex/task/TASK-009-settings-secret-store",
           "worktree": "/Users/ivo.toby/workspace/postgram/.worktrees/TASK-009-settings-secret-store",
-          "worktreeStatus": "clean_pushed",
+          "worktreeStatus": "cleaned_up",
           "workerThreadId": "019f3333-4104-7b02-b1aa-1fce6978e410",
           "workerNickname": "Euclid",
           "reviewThreadId": "019f322c-02e7-7590-8b8e-ebdd1e9c52ac",
           "reviewNickname": "Lorentz",
-          "currentGate": "merged",
+          "currentGate": "reconciled",
           "branchFreshness": "current_at_merge",
           "pr": "https://github.com/ivo-toby/postgram/pull/81",
           "latestCommit": "ca9c96fa4f08249f9612d89857e994b3a243bd2f",
@@ -627,8 +634,8 @@
             "evidence": "Controller verified PR #81 pushed fix e03421a: diff check passed, orchestration JSON parsed, admin-settings-service integration suite passed with 8 tests, and typecheck passed. Follow-up review requested from Lorentz in 019f3371-9537-7962-925b-b69f1cea2fa6."
           },
           "activatedAt": "2026-07-05T16:47:34Z",
-          "cleanupState": "cleanup_deferred",
-          "sharedContextReconciliation": "queued",
+          "cleanupState": "cleaned_up",
+          "sharedContextReconciliation": "completed",
           "dispatchedAt": "2026-07-05T16:47:34Z",
           "dispatchBaseCommit": "f183a28fe3e6ef51bf672c2af495cf9128091fba",
           "lastObservedAt": "2026-07-05T18:16:00Z",
@@ -665,17 +672,25 @@
           ],
           "mergeCommit": "b63ad08619f3fb96606a7adc2fcd84118c106637",
           "mergedAt": "2026-07-05T18:16:00Z",
-          "path": "TICKET-004-runtime-configuration/done/TASK-009-settings-secret-store.md"
+          "path": "TICKET-004-runtime-configuration/done/TASK-009-settings-secret-store.md",
+          "reconciledAt": "2026-07-05T18:26:34Z",
+          "cleanup": {
+            "status": "cleaned_up",
+            "cleanedAt": "2026-07-05T18:26:34Z",
+            "worktree": "/Users/ivo.toby/workspace/postgram/.worktrees/TASK-009-settings-secret-store",
+            "evidence": "Worker worktree was clean and pushed; ran git worktree remove /Users/ivo.toby/workspace/postgram/.worktrees/TASK-009-settings-secret-store and git worktree prune during WAVE-004 reconciliation."
+          }
         }
       ],
       "activationCommit": "f183a28fe3e6ef51bf672c2af495cf9128091fba",
-      "dispatchState": "merged",
+      "dispatchState": "reconciled",
       "lastObservedAt": "2026-07-05T18:16:00Z",
-      "completedAt": "2026-07-05T18:16:00Z"
+      "completedAt": "2026-07-05T18:16:00Z",
+      "reconciledAt": "2026-07-05T18:26:34Z"
     },
     {
       "id": "WAVE-005",
-      "status": "planned",
+      "status": "ready_to_start",
       "strategy": {
         "profile": "full",
         "executionMode": "hybrid",
@@ -702,7 +717,9 @@
       "tasks": [
         "TASK-007-admin-api-shell-diagnostics",
         "TASK-010-provider-config-apply"
-      ]
+      ],
+      "readyAt": "2026-07-05T18:26:34Z",
+      "readyReason": "WAVE-004 reconciled; dependencies TASK-006 and TASK-009 are done."
     },
     {
       "id": "WAVE-006",
@@ -1199,7 +1216,7 @@
       "workerThreadId": "019f3333-4033-7463-9819-aa3dec286b4c",
       "reviewThreadId": "019f322c-02e7-7590-8b8e-ebdd1e9c52ac",
       "workerWorktree": "/Users/ivo.toby/workspace/postgram/.worktrees/TASK-006-admin-mfa-step-up",
-      "worktreeStatus": "clean_pushed",
+      "worktreeStatus": "cleaned_up",
       "pr": "https://github.com/ivo-toby/postgram/pull/82",
       "latestCommit": "8c0468020234fb67e60d6b79c77ca2df1fce0a28",
       "branchFreshness": "current_at_merge",
@@ -1215,9 +1232,9 @@
         ],
         "evidence": "Controller verified PR #82 pushed fix 3923133: diff check passed, orchestration JSON parsed, admin MFA route contract suite passed with 6 tests, admin-auth-service integration suite passed with 15 tests, and typecheck passed. Follow-up review requested from Lorentz in 019f3375-9922-7283-8c64-702aceaae82f."
       },
-      "currentGate": "merged",
-      "cleanupState": "cleanup_deferred",
-      "sharedContextReconciliation": "queued",
+      "currentGate": "reconciled",
+      "cleanupState": "cleaned_up",
+      "sharedContextReconciliation": "completed",
       "activatedAt": "2026-07-05T16:47:34Z",
       "bundle": "WAVE-004-admin-mfa-step-up",
       "workerNickname": "Tesla",
@@ -1237,7 +1254,14 @@
       "followupReviewRequestedAt": "2026-07-05T18:05:13Z",
       "followupReviewSubmissionId": "019f3375-9922-7283-8c64-702aceaae82f",
       "mergeCommit": "6666508a56bbbb083100c86a0b57ff767fcb30a6",
-      "mergedAt": "2026-07-05T18:16:00Z"
+      "mergedAt": "2026-07-05T18:16:00Z",
+      "reconciledAt": "2026-07-05T18:26:34Z",
+      "cleanup": {
+        "status": "cleaned_up",
+        "cleanedAt": "2026-07-05T18:26:34Z",
+        "worktree": "/Users/ivo.toby/workspace/postgram/.worktrees/TASK-006-admin-mfa-step-up",
+        "evidence": "Worker worktree was clean and pushed; ran git worktree remove /Users/ivo.toby/workspace/postgram/.worktrees/TASK-006-admin-mfa-step-up and git worktree prune during WAVE-004 reconciliation."
+      }
     },
     {
       "id": "TASK-007-admin-api-shell-diagnostics",
@@ -1332,7 +1356,7 @@
       "workerThreadId": "019f3333-4104-7b02-b1aa-1fce6978e410",
       "reviewThreadId": "019f322c-02e7-7590-8b8e-ebdd1e9c52ac",
       "workerWorktree": "/Users/ivo.toby/workspace/postgram/.worktrees/TASK-009-settings-secret-store",
-      "worktreeStatus": "clean_pushed",
+      "worktreeStatus": "cleaned_up",
       "pr": "https://github.com/ivo-toby/postgram/pull/81",
       "latestCommit": "ca9c96fa4f08249f9612d89857e994b3a243bd2f",
       "branchFreshness": "current_at_merge",
@@ -1347,9 +1371,9 @@
         ],
         "evidence": "Controller verified PR #81 pushed fix e03421a: diff check passed, orchestration JSON parsed, admin-settings-service integration suite passed with 8 tests, and typecheck passed. Follow-up review requested from Lorentz in 019f3371-9537-7962-925b-b69f1cea2fa6."
       },
-      "currentGate": "merged",
-      "cleanupState": "cleanup_deferred",
-      "sharedContextReconciliation": "queued",
+      "currentGate": "reconciled",
+      "cleanupState": "cleaned_up",
+      "sharedContextReconciliation": "completed",
       "activatedAt": "2026-07-05T16:47:34Z",
       "bundle": "WAVE-004-settings-secret-store",
       "workerNickname": "Euclid",
@@ -1389,7 +1413,14 @@
         }
       ],
       "mergeCommit": "b63ad08619f3fb96606a7adc2fcd84118c106637",
-      "mergedAt": "2026-07-05T18:16:00Z"
+      "mergedAt": "2026-07-05T18:16:00Z",
+      "reconciledAt": "2026-07-05T18:26:34Z",
+      "cleanup": {
+        "status": "cleaned_up",
+        "cleanedAt": "2026-07-05T18:26:34Z",
+        "worktree": "/Users/ivo.toby/workspace/postgram/.worktrees/TASK-009-settings-secret-store",
+        "evidence": "Worker worktree was clean and pushed; ran git worktree remove /Users/ivo.toby/workspace/postgram/.worktrees/TASK-009-settings-secret-store and git worktree prune during WAVE-004 reconciliation."
+      }
     },
     {
       "id": "TASK-010-provider-config-apply",
@@ -1727,12 +1758,12 @@
   ],
   "monitoring": {
     "mode": "codex_thread_heartbeat",
-    "cadence": "5m",
-    "status": "handoff_to_reconciliation",
-    "lastCheckedAt": "2026-07-05T18:18:00Z",
-    "nextCheckDueAt": "2026-07-05T18:21:00Z",
+    "cadence": "none",
+    "status": "stopped",
+    "lastCheckedAt": "2026-07-05T18:26:34Z",
+    "nextCheckDueAt": null,
     "schedulerRef": "postgram-admin-wave-004-start-heartbeat",
-    "fallbackPrompt": "Run one bounded WDD reconciliation handoff heartbeat for /Users/ivo.toby/workspace/postgram, epic EPIC-admin-configuration-frontend, active wave WAVE-004. Use the wdd-reconcile-wave skill. Start in /Users/ivo.toby/workspace/postgram on branch codex/epic/admin-configuration-frontend. Read .wdd/epics/EPIC-admin-configuration-frontend/orchestration.json and controller-state.md. Confirm WAVE-004 bundles TASK-009-settings-secret-store and TASK-006-admin-mfa-step-up are merged into the epic branch in local merge commits b63ad086 and 6666508, task files are in done/, currentGates.workerDispatch entries are merged, WAVE-004 waveCompletion is ready_for_reconciliation, branch freshness is current_at_merge, cleanup is cleanup_deferred, blocking feedback is empty, and shared-context reconciliation is queued. Run wdd-reconcile-wave for WAVE-004, reconcile settings/secret-store and MFA/step-up decisions into shared context and downstream tasks, update orchestration.json and controller-state.md, clean up WAVE-004 worktrees if safe, and stop before starting WAVE-005."
+    "fallbackPrompt": "WAVE-004 is reconciled and monitoring is stopped. Next phase is wdd-start-wave for WAVE-005; do not start it from the WAVE-004 reconciliation heartbeat."
   },
   "sharedContext": {
     "index": "shared-context/index.md",
@@ -1746,140 +1777,7 @@
     ],
     "reconcileAfterEveryWave": true
   },
-  "activeWave": {
-    "id": "WAVE-004",
-    "activatedAt": "2026-07-05T16:47:34Z",
-    "strategy": {
-      "profile": "full",
-      "executionMode": "hybrid",
-      "reviewMode": "risk_based",
-      "monitoringMode": "adaptive",
-      "confirmedBy": "Ivo via Codex sequential-waves request on 2026-07-05"
-    },
-    "eligibleTasks": [
-      "TASK-006-admin-mfa-step-up",
-      "TASK-009-settings-secret-store"
-    ],
-    "nonEligibleTasks": [],
-    "bundles": [
-      {
-        "id": "WAVE-004-admin-mfa-step-up",
-        "tasks": [
-          "TASK-006-admin-mfa-step-up"
-        ],
-        "branch": "codex/task/TASK-006-admin-mfa-step-up",
-        "worktree": "/Users/ivo.toby/workspace/postgram/.worktrees/TASK-006-admin-mfa-step-up",
-        "worktreeStatus": "clean_pushed",
-        "workerThreadId": "019f3333-4033-7463-9819-aa3dec286b4c",
-        "workerNickname": "Tesla",
-        "reviewThreadId": "019f322c-02e7-7590-8b8e-ebdd1e9c52ac",
-        "reviewNickname": "Lorentz",
-        "currentGate": "merged",
-        "branchFreshness": "current_at_merge",
-        "pr": "https://github.com/ivo-toby/postgram/pull/82",
-        "latestCommit": "8c0468020234fb67e60d6b79c77ca2df1fce0a28",
-        "blockingFeedback": [],
-        "verification": {
-          "result": "controller_verified_fix",
-          "commands": [
-            "git diff --check origin/codex/epic/admin-configuration-frontend...HEAD",
-            "jq empty .wdd/epics/EPIC-admin-configuration-frontend/orchestration.json",
-            "npm test -- tests/contract/admin-mfa-routes.test.ts",
-            "npm test -- tests/integration/admin-auth-service.test.ts",
-            "npm run typecheck"
-          ],
-          "evidence": "Controller verified PR #82 pushed fix 3923133: diff check passed, orchestration JSON parsed, admin MFA route contract suite passed with 6 tests, admin-auth-service integration suite passed with 15 tests, and typecheck passed. Follow-up review requested from Lorentz in 019f3375-9922-7283-8c64-702aceaae82f."
-        },
-        "activatedAt": "2026-07-05T16:47:34Z",
-        "cleanupState": "cleanup_deferred",
-        "sharedContextReconciliation": "queued",
-        "dispatchedAt": "2026-07-05T16:47:34Z",
-        "dispatchBaseCommit": "f183a28fe3e6ef51bf672c2af495cf9128091fba",
-        "lastObservedAt": "2026-07-05T18:16:00Z",
-        "reviewResult": "REVIEW_PASS",
-        "reviewedAt": "2026-07-05T18:05:13Z",
-        "feedbackRoutedAt": "2026-07-05T17:48:34Z",
-        "feedbackSubmissionId": "019f3366-7cfd-7ee1-b852-1d20abe022d8",
-        "feedbackNudgedAt": "2026-07-05T17:59:04Z",
-        "feedbackNudgeSubmissionId": "019f3371-0282-78d3-83fd-b9b8ba1aac24",
-        "followupReviewRequestedAt": "2026-07-05T18:05:13Z",
-        "followupReviewSubmissionId": "019f3375-9922-7283-8c64-702aceaae82f",
-        "mergeCommit": "6666508a56bbbb083100c86a0b57ff767fcb30a6",
-        "mergedAt": "2026-07-05T18:16:00Z",
-        "path": "TICKET-002-admin-auth-foundation/done/TASK-006-admin-mfa-step-up.md"
-      },
-      {
-        "id": "WAVE-004-settings-secret-store",
-        "tasks": [
-          "TASK-009-settings-secret-store"
-        ],
-        "branch": "codex/task/TASK-009-settings-secret-store",
-        "worktree": "/Users/ivo.toby/workspace/postgram/.worktrees/TASK-009-settings-secret-store",
-        "worktreeStatus": "clean_pushed",
-        "workerThreadId": "019f3333-4104-7b02-b1aa-1fce6978e410",
-        "workerNickname": "Euclid",
-        "reviewThreadId": "019f322c-02e7-7590-8b8e-ebdd1e9c52ac",
-        "reviewNickname": "Lorentz",
-        "currentGate": "merged",
-        "branchFreshness": "current_at_merge",
-        "pr": "https://github.com/ivo-toby/postgram/pull/81",
-        "latestCommit": "ca9c96fa4f08249f9612d89857e994b3a243bd2f",
-        "blockingFeedback": [],
-        "verification": {
-          "result": "controller_verified_fix",
-          "commands": [
-            "git diff --check origin/codex/epic/admin-configuration-frontend...HEAD",
-            "jq empty .wdd/epics/EPIC-admin-configuration-frontend/orchestration.json",
-            "npm test -- tests/integration/admin-settings-service.test.ts",
-            "npm run typecheck"
-          ],
-          "evidence": "Controller verified PR #81 pushed fix e03421a: diff check passed, orchestration JSON parsed, admin-settings-service integration suite passed with 8 tests, and typecheck passed. Follow-up review requested from Lorentz in 019f3371-9537-7962-925b-b69f1cea2fa6."
-        },
-        "activatedAt": "2026-07-05T16:47:34Z",
-        "cleanupState": "cleanup_deferred",
-        "sharedContextReconciliation": "queued",
-        "dispatchedAt": "2026-07-05T16:47:34Z",
-        "dispatchBaseCommit": "f183a28fe3e6ef51bf672c2af495cf9128091fba",
-        "lastObservedAt": "2026-07-05T18:16:00Z",
-        "reviewResult": "REVIEW_PASS",
-        "reviewedAt": "2026-07-05T18:05:13Z",
-        "feedbackRoutedAt": "2026-07-05T17:48:34Z",
-        "feedbackSubmissionId": "019f3366-7c9b-7b33-9d93-0009fa0ec291",
-        "followupReviewRequestedAt": "2026-07-05T17:59:04Z",
-        "followupReviewSubmissionId": "019f3371-9537-7962-925b-b69f1cea2fa6",
-        "reviewedHead": "e03421a7327555d8711a8c9fb68a8a8d10c1f39a",
-        "resolvedFeedback": [
-          {
-            "priority": "P2",
-            "id": "P2-secret-validation-metadata-redaction",
-            "status": "resolved",
-            "reviewer": "Lorentz",
-            "resolvedAt": "2026-07-05T18:05:13Z",
-            "fixCommit": "5d9f1bb",
-            "reviewHead": "e03421a7327555d8711a8c9fb68a8a8d10c1f39a",
-            "summary": "Secret validation metadata is normalized/redacted to empty metadata before persistence/readback and malicious metadata regression covers bearer/token/prefix leakage."
-          },
-          {
-            "priority": "P2",
-            "id": "P2-branch-freshness-task-file-conflict",
-            "status": "resolved_for_review_pair",
-            "reviewer": "Lorentz",
-            "resolvedAt": "2026-07-05T18:05:13Z",
-            "reviewHead": "e03421a7327555d8711a8c9fb68a8a8d10c1f39a",
-            "summary": "Lorentz found merge-tree clean for the reviewed base/head pair; final branch freshness still required before merge because controller artifacts advanced."
-          }
-        ],
-        "mergeCommit": "b63ad08619f3fb96606a7adc2fcd84118c106637",
-        "mergedAt": "2026-07-05T18:16:00Z",
-        "path": "TICKET-004-runtime-configuration/done/TASK-009-settings-secret-store.md"
-      }
-    ],
-    "status": "ready_for_reconciliation",
-    "dispatchedAt": "2026-07-05T16:47:34Z",
-    "activationCommit": "f183a28fe3e6ef51bf672c2af495cf9128091fba",
-    "lastObservedAt": "2026-07-05T18:16:00Z",
-    "dispatchState": "partial_merged"
-  },
+  "activeWave": null,
   "currentGates": {
     "epicBranch": {
       "status": "verified",
@@ -1904,34 +1802,37 @@
       "WAVE-001-admin-feasibility-gate": "cleaned_up",
       "WAVE-002-admin-auth-persistence": "cleaned_up",
       "WAVE-003-admin-session-routes": "cleaned_up",
-      "WAVE-004-admin-mfa-step-up": "clean_pushed",
-      "WAVE-004-settings-secret-store": "clean_pushed"
+      "WAVE-004-admin-mfa-step-up": "cleaned_up",
+      "WAVE-004-settings-secret-store": "cleaned_up"
     },
     "workerDispatch": {
       "WAVE-001-admin-feasibility-gate": "reconciled",
       "WAVE-002-admin-auth-persistence": "reconciled",
       "WAVE-003-admin-session-routes": "reconciled",
-      "WAVE-004-admin-mfa-step-up": "merged",
-      "WAVE-004-settings-secret-store": "merged"
+      "WAVE-004-admin-mfa-step-up": "reconciled",
+      "WAVE-004-settings-secret-store": "reconciled"
     },
     "waveCompletion": {
       "WAVE-001": "done",
       "WAVE-002": "done",
       "WAVE-003": "done",
-      "WAVE-004": "ready_for_reconciliation"
+      "WAVE-004": "done",
+      "WAVE-005": "ready_to_start"
     },
     "nextWave": {
       "id": "WAVE-005",
-      "status": "blocked_until_wave_004_reconciled"
+      "status": "ready_to_start",
+      "readyAt": "2026-07-05T18:26:34Z",
+      "reason": "WAVE-004 reconciled; TASK-006 and TASK-009 are done."
     },
     "monitoring": {
       "mode": "codex_thread_heartbeat",
-      "cadence": "5m",
-      "status": "handoff_to_reconciliation",
-      "lastCheckedAt": "2026-07-05T18:18:00Z",
-      "nextCheckDueAt": "2026-07-05T18:21:00Z",
+      "cadence": "none",
+      "status": "stopped",
+      "lastCheckedAt": "2026-07-05T18:26:34Z",
+      "nextCheckDueAt": null,
       "schedulerRef": "postgram-admin-wave-004-start-heartbeat",
-      "fallbackPrompt": "Run one bounded WDD reconciliation handoff heartbeat for /Users/ivo.toby/workspace/postgram, epic EPIC-admin-configuration-frontend, active wave WAVE-004. Use the wdd-reconcile-wave skill. Start in /Users/ivo.toby/workspace/postgram on branch codex/epic/admin-configuration-frontend. Read .wdd/epics/EPIC-admin-configuration-frontend/orchestration.json and controller-state.md. Confirm WAVE-004 bundles TASK-009-settings-secret-store and TASK-006-admin-mfa-step-up are merged into the epic branch in local merge commits b63ad086 and 6666508, task files are in done/, currentGates.workerDispatch entries are merged, WAVE-004 waveCompletion is ready_for_reconciliation, branch freshness is current_at_merge, cleanup is cleanup_deferred, blocking feedback is empty, and shared-context reconciliation is queued. Run wdd-reconcile-wave for WAVE-004, reconcile settings/secret-store and MFA/step-up decisions into shared context and downstream tasks, update orchestration.json and controller-state.md, clean up WAVE-004 worktrees if safe, and stop before starting WAVE-005."
+      "fallbackPrompt": "WAVE-004 is reconciled and monitoring is stopped. Next phase is wdd-start-wave for WAVE-005; do not start it from the WAVE-004 reconciliation heartbeat."
     },
     "review": {
       "WAVE-001-admin-feasibility-gate": {
@@ -2116,35 +2017,39 @@
         "reconciliationSummary": "WAVE-003 reconciled the concrete /admin/api/* session route contract, pgm_admin_session cookie, X-CSRF-Token CSRF header, safe bootstrap/login errors, pending-MFA carry-forward gate, downstream TASK-006/TASK-007/TASK-009/TASK-011 task updates, and TASK-005 worktree cleanup. WAVE-004 is ready for wdd-start-wave; it was not started during reconciliation."
       },
       "WAVE-004-settings-secret-store": {
-        "status": "merged_pending_reconciliation",
+        "status": "merged_and_reconciled",
         "commit": "b63ad08619f3fb96606a7adc2fcd84118c106637",
         "taskBranchHead": "ca9c96fa4f08249f9612d89857e994b3a243bd2f",
         "mergedAt": "2026-07-05T18:16:00Z",
-        "cleanupState": "cleanup_deferred",
+        "cleanupState": "cleaned_up",
         "reviewResult": "REVIEW_PASS",
         "branchFreshness": "current_at_merge",
         "remotePrState": "MERGED",
         "remotePrMergedAt": "2026-07-05T18:13:59Z",
-        "remoteBasePushedAt": "2026-07-05T18:13:59Z"
+        "remoteBasePushedAt": "2026-07-05T18:13:59Z",
+        "reconciledAt": "2026-07-05T18:26:34Z",
+        "reconciliationSummary": "WAVE-004 reconciled settings/secret-store decisions into shared context and downstream task briefs; TASK-009 worktree cleaned up."
       },
       "WAVE-004-admin-mfa-step-up": {
-        "status": "merged_pending_reconciliation",
+        "status": "merged_and_reconciled",
         "commit": "6666508a56bbbb083100c86a0b57ff767fcb30a6",
         "taskBranchHead": "8c0468020234fb67e60d6b79c77ca2df1fce0a28",
         "mergedAt": "2026-07-05T18:16:00Z",
-        "cleanupState": "cleanup_deferred",
+        "cleanupState": "cleaned_up",
         "reviewResult": "REVIEW_PASS",
         "branchFreshness": "current_at_merge",
         "remotePrState": "MERGED",
         "remotePrMergedAt": "2026-07-05T18:17:48Z",
-        "remoteBasePushedAt": "2026-07-05T18:17:48Z"
+        "remoteBasePushedAt": "2026-07-05T18:17:48Z",
+        "reconciledAt": "2026-07-05T18:26:34Z",
+        "reconciliationSummary": "WAVE-004 reconciled MFA/step-up decisions into shared context and downstream task briefs; TASK-006 worktree cleaned up."
       }
     },
     "sharedContextReconciliation": {
       "WAVE-001": "completed",
       "WAVE-002": "completed",
       "WAVE-003": "completed",
-      "WAVE-004": "queued"
+      "WAVE-004": "completed"
     },
     "prState": {
       "WAVE-001-admin-feasibility-gate": {
@@ -2232,14 +2137,16 @@
         "evidence": "Worker worktree was clean; ran git worktree remove /Users/ivo.toby/workspace/postgram/.worktrees/TASK-005-admin-session-routes and git worktree prune during WAVE-003 reconciliation."
       },
       "WAVE-004-admin-mfa-step-up": {
-        "status": "cleanup_deferred",
+        "status": "cleaned_up",
+        "cleanedAt": "2026-07-05T18:26:34Z",
         "worktree": "/Users/ivo.toby/workspace/postgram/.worktrees/TASK-006-admin-mfa-step-up",
-        "evidence": "Deferred until WAVE-004 reconciliation so PR evidence and branch state remain inspectable."
+        "evidence": "Worker worktree was clean and pushed; ran git worktree remove /Users/ivo.toby/workspace/postgram/.worktrees/TASK-006-admin-mfa-step-up and git worktree prune during WAVE-004 reconciliation."
       },
       "WAVE-004-settings-secret-store": {
-        "status": "cleanup_deferred",
+        "status": "cleaned_up",
+        "cleanedAt": "2026-07-05T18:26:34Z",
         "worktree": "/Users/ivo.toby/workspace/postgram/.worktrees/TASK-009-settings-secret-store",
-        "evidence": "Deferred until WAVE-004 reconciliation so PR evidence and branch state remain inspectable."
+        "evidence": "Worker worktree was clean and pushed; ran git worktree remove /Users/ivo.toby/workspace/postgram/.worktrees/TASK-009-settings-secret-store and git worktree prune during WAVE-004 reconciliation."
       }
     },
     "worker": {
@@ -2490,30 +2397,55 @@
         ],
         "verification": "Controller verified PR #81 fix e03421a with diff check, orchestration JSON parse, admin-settings-service integration tests, and typecheck; follow-up review requested."
       }
+    },
+    "verification": {
+      "WAVE-004": {
+        "result": "reconciliation_verified",
+        "checkedAt": "2026-07-05T18:26:34Z",
+        "evidence": "Task files in done; shared context and downstream task briefs reconciled; WAVE-004 worktrees cleaned up; final syntax verification is recorded in controller-state.md."
+      }
+    },
+    "feedback": {
+      "WAVE-004": {
+        "blocking": []
+      }
     }
   },
   "lastReconciledWave": {
-    "id": "WAVE-003",
-    "reconciledAt": "2026-07-05T16:27:34Z",
+    "id": "WAVE-004",
+    "reconciledAt": "2026-07-05T18:26:34Z",
     "status": "done",
-    "nextWave": "WAVE-004",
+    "nextWave": "WAVE-005",
     "nextWaveStatus": "ready_to_start"
   },
   "lastMergedWave": {
-    "id": "WAVE-003",
-    "bundle": "WAVE-003-admin-session-routes",
-    "mergeCommit": "ecfe9ac146db0ec9d9902f336cb87aad556821c3",
-    "mergedAt": "2026-07-05T16:16:04Z",
+    "id": "WAVE-004",
+    "bundles": [
+      {
+        "id": "WAVE-004-settings-secret-store",
+        "mergeCommit": "b63ad08619f3fb96606a7adc2fcd84118c106637",
+        "mergedAt": "2026-07-05T18:16:00Z",
+        "remotePrState": "MERGED",
+        "remotePrMergedAt": "2026-07-05T18:13:59Z",
+        "pr": "https://github.com/ivo-toby/postgram/pull/81"
+      },
+      {
+        "id": "WAVE-004-admin-mfa-step-up",
+        "mergeCommit": "6666508a56bbbb083100c86a0b57ff767fcb30a6",
+        "mergedAt": "2026-07-05T18:16:00Z",
+        "remotePrState": "MERGED",
+        "remotePrMergedAt": "2026-07-05T18:17:48Z",
+        "pr": "https://github.com/ivo-toby/postgram/pull/82"
+      }
+    ],
     "status": "done",
-    "remotePrState": "MERGED",
-    "remotePrMergedAt": "2026-07-05T16:25:30Z",
-    "closeoutCommit": "ff338b1"
+    "closeoutCommit": "e5f606d"
   },
   "lastStartedWave": {
     "id": "WAVE-004",
     "activatedAt": "2026-07-05T16:47:34Z",
     "dispatchedAt": "2026-07-05T16:47:34Z",
-    "status": "ready_for_reconciliation",
+    "status": "done",
     "activationCommit": "f183a28fe3e6ef51bf672c2af495cf9128091fba",
     "bundles": [
       {
@@ -2523,10 +2455,10 @@
         ],
         "branch": "codex/task/TASK-006-admin-mfa-step-up",
         "worktree": "/Users/ivo.toby/workspace/postgram/.worktrees/TASK-006-admin-mfa-step-up",
-        "worktreeStatus": "clean_pushed",
+        "worktreeStatus": "cleaned_up",
         "workerThreadId": "019f3333-4033-7463-9819-aa3dec286b4c",
         "workerNickname": "Tesla",
-        "currentGate": "merged",
+        "currentGate": "reconciled",
         "branchFreshness": "current_at_merge",
         "latestCommit": "8c0468020234fb67e60d6b79c77ca2df1fce0a28",
         "reviewThreadId": "019f322c-02e7-7590-8b8e-ebdd1e9c52ac",
@@ -2544,8 +2476,8 @@
           ],
           "evidence": "Controller verified PR #82 pushed fix 3923133: diff check passed, orchestration JSON parsed, admin MFA route contract suite passed with 6 tests, admin-auth-service integration suite passed with 15 tests, and typecheck passed. Follow-up review requested from Lorentz in 019f3375-9922-7283-8c64-702aceaae82f."
         },
-        "cleanupState": "cleanup_deferred",
-        "sharedContextReconciliation": "queued",
+        "cleanupState": "cleaned_up",
+        "sharedContextReconciliation": "completed",
         "lastObservedAt": "2026-07-05T18:16:00Z",
         "reviewRequestedAt": "2026-07-05T17:32:34Z",
         "reviewSubmissionId": "019f3357-e7f4-7dd1-a1cf-afa9616d4a26",
@@ -2560,7 +2492,14 @@
         "followupReviewSubmissionId": "019f3375-9922-7283-8c64-702aceaae82f",
         "mergeCommit": "6666508a56bbbb083100c86a0b57ff767fcb30a6",
         "mergedAt": "2026-07-05T18:16:00Z",
-        "path": "TICKET-002-admin-auth-foundation/done/TASK-006-admin-mfa-step-up.md"
+        "path": "TICKET-002-admin-auth-foundation/done/TASK-006-admin-mfa-step-up.md",
+        "reconciledAt": "2026-07-05T18:26:34Z",
+        "cleanup": {
+          "status": "cleaned_up",
+          "cleanedAt": "2026-07-05T18:26:34Z",
+          "worktree": "/Users/ivo.toby/workspace/postgram/.worktrees/TASK-006-admin-mfa-step-up",
+          "evidence": "Worker worktree was clean and pushed; ran git worktree remove /Users/ivo.toby/workspace/postgram/.worktrees/TASK-006-admin-mfa-step-up and git worktree prune during WAVE-004 reconciliation."
+        }
       },
       {
         "id": "WAVE-004-settings-secret-store",
@@ -2569,10 +2508,10 @@
         ],
         "branch": "codex/task/TASK-009-settings-secret-store",
         "worktree": "/Users/ivo.toby/workspace/postgram/.worktrees/TASK-009-settings-secret-store",
-        "worktreeStatus": "clean_pushed",
+        "worktreeStatus": "cleaned_up",
         "workerThreadId": "019f3333-4104-7b02-b1aa-1fce6978e410",
         "workerNickname": "Euclid",
-        "currentGate": "merged",
+        "currentGate": "reconciled",
         "branchFreshness": "current_at_merge",
         "latestCommit": "ca9c96fa4f08249f9612d89857e994b3a243bd2f",
         "reviewThreadId": "019f322c-02e7-7590-8b8e-ebdd1e9c52ac",
@@ -2589,8 +2528,8 @@
           ],
           "evidence": "Controller verified PR #81 pushed fix e03421a: diff check passed, orchestration JSON parsed, admin-settings-service integration suite passed with 8 tests, and typecheck passed. Follow-up review requested from Lorentz in 019f3371-9537-7962-925b-b69f1cea2fa6."
         },
-        "cleanupState": "cleanup_deferred",
-        "sharedContextReconciliation": "queued",
+        "cleanupState": "cleaned_up",
+        "sharedContextReconciliation": "completed",
         "lastObservedAt": "2026-07-05T18:16:00Z",
         "reviewRequestedAt": "2026-07-05T17:32:34Z",
         "reviewSubmissionId": "019f3357-e7f4-7dd1-a1cf-afa9616d4a26",
@@ -2625,10 +2564,18 @@
         ],
         "mergeCommit": "b63ad08619f3fb96606a7adc2fcd84118c106637",
         "mergedAt": "2026-07-05T18:16:00Z",
-        "path": "TICKET-004-runtime-configuration/done/TASK-009-settings-secret-store.md"
+        "path": "TICKET-004-runtime-configuration/done/TASK-009-settings-secret-store.md",
+        "reconciledAt": "2026-07-05T18:26:34Z",
+        "cleanup": {
+          "status": "cleaned_up",
+          "cleanedAt": "2026-07-05T18:26:34Z",
+          "worktree": "/Users/ivo.toby/workspace/postgram/.worktrees/TASK-009-settings-secret-store",
+          "evidence": "Worker worktree was clean and pushed; ran git worktree remove /Users/ivo.toby/workspace/postgram/.worktrees/TASK-009-settings-secret-store and git worktree prune during WAVE-004 reconciliation."
+        }
       }
     ],
     "lastObservedAt": "2026-07-05T18:16:00Z",
-    "dispatchState": "partial_merged"
+    "dispatchState": "reconciled",
+    "reconciledAt": "2026-07-05T18:26:34Z"
   }
 }

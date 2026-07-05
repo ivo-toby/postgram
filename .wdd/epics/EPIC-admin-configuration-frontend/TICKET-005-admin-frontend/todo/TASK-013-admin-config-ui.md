@@ -131,6 +131,15 @@ maintenance UI if useful.
 - Keep secret inputs intentionally blank unless the operator is replacing a
   value.
 - Present restart/reembed/maintenance implications before apply.
+- Treat redacted secret metadata from WAVE-004 as the only readable secret
+  state: configured/provider/purpose/status/timestamps are okay, but plaintext,
+  ciphertext, token prefixes, auth headers, and arbitrary validation metadata
+  must never be displayed.
+- Secret write/update and provider apply controls must require the WAVE-004
+  step-up flow; use the admin API client to refresh step-up rather than adding
+  another credential prompt.
+- Tests should prove provider secret inputs are write-only, remain blank on
+  load, and are not stored in localStorage or other browser persistence.
 
 ## Durable Memory Notes To Consider
 

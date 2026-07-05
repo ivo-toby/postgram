@@ -20,11 +20,11 @@ assigned_model_class: implementationComplex
 review_model_class: review
 branch: codex/task/TASK-009-settings-secret-store
 worker_worktree: /Users/ivo.toby/workspace/postgram/.worktrees/TASK-009-settings-secret-store
-worktree_status: clean_pushed
+worktree_status: cleaned_up
 pr: https://github.com/ivo-toby/postgram/pull/81
 worker_thread_id: 019f3333-4104-7b02-b1aa-1fce6978e410
 review_thread_id: 019f322c-02e7-7590-8b8e-ebdd1e9c52ac
-current_gate: merged
+current_gate: reconciled
 branch_freshness: current_after_epic_merge
 verification:
   - npm test -- tests/integration/admin-settings-service.test.ts
@@ -226,6 +226,9 @@ Keep generic setting storage separate from provider-specific validation.
   - `git diff --check && git diff --cached --check` passed.
   - `npx eslint src/services/admin-settings-service.ts
     tests/integration/admin-settings-service.test.ts` passed.
+- Reconciliation: WAVE-004 shared context and downstream task briefs were
+  updated on 2026-07-05, and the clean pushed worktree was removed with
+  `git worktree remove` followed by `git worktree prune`.
 
 ## Review Feedback
 

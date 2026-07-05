@@ -19,11 +19,11 @@ assigned_model_class: implementationComplex
 review_model_class: review
 branch: codex/task/TASK-006-admin-mfa-step-up
 worker_worktree: /Users/ivo.toby/workspace/postgram/.worktrees/TASK-006-admin-mfa-step-up
-worktree_status: clean_pushed
+worktree_status: cleaned_up
 pr: https://github.com/ivo-toby/postgram/pull/82
 worker_thread_id: 019f3333-4033-7463-9819-aa3dec286b4c
 review_thread_id: 019f322c-02e7-7590-8b8e-ebdd1e9c52ac
-current_gate: merged
+current_gate: reconciled
 branch_freshness: current_at_merge
 verification:
   - npm test -- tests/contract/admin-mfa-routes.test.ts
@@ -241,6 +241,9 @@ Keep MFA helpers isolated from ordinary API-key auth.
   tests/integration/admin-auth-service.test.ts` passed with 15 tests; `npm run
   typecheck` passed; touched-file `npx eslint ...` passed; `git diff --check`
   passed.
+- Reconciliation: WAVE-004 shared context and downstream task briefs were
+  updated on 2026-07-05, and the clean pushed worktree was removed with
+  `git worktree remove` followed by `git worktree prune`.
 
 ## Review Feedback
 

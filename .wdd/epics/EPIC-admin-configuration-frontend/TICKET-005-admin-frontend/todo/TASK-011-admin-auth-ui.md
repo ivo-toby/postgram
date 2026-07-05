@@ -139,13 +139,20 @@ Keep admin auth UI separate from current API-key login.
   `/admin/api/bootstrap/status`, `/admin/api/bootstrap/setup`,
   `/admin/api/session/login`, `/admin/api/session/current`,
   `/admin/api/session/csrf`, and `/admin/api/session/logout`.
+- Use the WAVE-004 MFA route contract:
+  `/admin/api/session/mfa/enroll`, `/admin/api/session/mfa/verify`,
+  `/admin/api/session/mfa/challenge`, and `/admin/api/session/step-up`.
 - Treat bootstrap setup and login responses that return `state: "mfa_required"`
   as pending-MFA state; full admin navigation should wait for the TASK-006
-  active/MFA session signal.
+  active/MFA session signal. A successful MFA verify/challenge/step-up response
+  includes `user`, `session`, and `stepUp` state.
 - Send `X-CSRF-Token` on unsafe admin requests after obtaining it from setup,
   login, or `/admin/api/session/csrf`.
-- UI tests should prove no admin session token, bootstrap token, TOTP secret,
-  or admin bearer credential is written to localStorage.
+- UI tests should prove no admin session token, bootstrap token, TOTP seed,
+  `otpauthUrl`, provider secret, or admin bearer credential is written to
+  localStorage.
+- Display the enrollment secret/QR setup state only during MFA enrollment; do
+  not persist it after the verify flow advances.
 - Keep operational UI dense and restrained.
 
 ## Durable Memory Notes To Consider

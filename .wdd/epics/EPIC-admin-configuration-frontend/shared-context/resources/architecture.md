@@ -151,6 +151,40 @@ Architecture implication:
 - Frontend work should call these routes with cookies and CSRF headers, not
   localStorage admin tokens or ordinary Postgram API keys.
 
+## WAVE-004 Implemented MFA And Runtime Settings Boundaries
+
+PR #82 completed the first active-admin boundary:
+
+- `src/auth/admin-mfa-service.ts` owns TOTP enrollment, verification,
+  challenge, step-up, encrypted factor seeds, and first-admin activation.
+- `src/auth/admin-middleware.ts` now separates session/CSRF proof from active
+  MFA proof. `createAdminSessionMiddleware` remains the cookie/CSRF layer;
+  `createActiveAdminMiddleware` is the business-admin authorization layer.
+- `src/transport/admin.ts` keeps MFA and step-up routes inside the existing
+  `/admin/api/session/*` route family.
+
+PR #81 completed the first runtime settings persistence boundary:
+
+- `src/db/migrations/011_admin_settings.sql` extends `audit_log` with
+  `admin_user_id` and adds `admin_runtime_settings` plus
+  `admin_runtime_secrets`.
+- `src/services/admin-settings-service.ts` owns settings/secret persistence,
+  classification, validation state, redacted secret metadata, and audit writes.
+- `ADMIN_SETTINGS_ENCRYPTION_KEY` and `ADMIN_MFA_SECRET_KEY` are minimal
+  outside-database installation keys. Later Docker work must make their
+  generation/persistence path explicit.
+
+Architecture implication:
+
+- TASK-007 should reuse the existing admin transport and compose
+  `createAdminSessionMiddleware` with `createActiveAdminMiddleware`; read-only
+  diagnostics are still privileged admin APIs and must not accept pending-MFA
+  sessions.
+- TASK-010 should build provider validation/apply around
+  `admin-settings-service` rather than introducing a parallel settings store.
+- TASK-014 and later maintenance work can rely on structured
+  `audit_log.admin_user_id` for admin actor attribution.
+
 ## Open Architecture Questions
 
 - Can extraction provider settings be hot-reloaded safely in the first
@@ -158,8 +192,8 @@ Architecture implication:
   worker reload service is proven?
 - Should the UI and backend continue as separate Docker services, or should the
   backend serve the built UI for simpler deployment?
-- What is the exact installation encryption key name/format and Docker-secret
-  generation path?
+- What is the Docker-secret generation and persistence path for
+  `ADMIN_SETTINGS_ENCRYPTION_KEY` and `ADMIN_MFA_SECRET_KEY`?
 
 ## Durable Memory
 

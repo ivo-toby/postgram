@@ -274,6 +274,55 @@ Carry-forward security gates:
 - If later proxy/TLS work changes trusted-header handling, it must retest
   cookie `Secure` behavior; loopback HTTP remains for local development only.
 
+## WAVE-004 Reconciled MFA And Secret Controls
+
+TASK-006 and TASK-009 completed the MFA/step-up and settings/secret-store
+security foundations in PR #82 and PR #81.
+
+Implemented MFA controls:
+
+- TOTP factor seeds are encrypted before persistence using
+  `ADMIN_MFA_SECRET_KEY`; plaintext seeds are returned only during enrollment.
+- MFA verification is the only path that transitions the first bootstrap admin
+  from `pending_mfa` to `active`.
+- `admin_sessions.mfa_verified_at` is the step-up marker. The default freshness
+  window is ten minutes through `ADMIN_STEP_UP_TTL_MS`.
+- `createActiveAdminMiddleware` denies pending-MFA sessions, inactive users,
+  missing MFA verification, and stale step-up state when `requireStepUp` is
+  enabled.
+- MFA enrollment, verification, challenge, and step-up attempts are audited.
+  When `audit_log.admin_user_id` exists, MFA audit rows populate it
+  structurally instead of hiding actor attribution only in JSON details.
+- MFA verification and step-up routes have direct rate-limit regression
+  coverage.
+
+Implemented settings and secret controls:
+
+- `admin_runtime_settings` stores typed non-secret JSON values only. Secret-
+  shaped keys such as provider API keys are rejected from plain settings paths.
+- `admin_runtime_secrets` stores provider secrets as AES-256-GCM ciphertext,
+  nonce, auth tag, key version, provider, purpose, and validation status using
+  the installation key supplied through `ADMIN_SETTINGS_ENCRYPTION_KEY`.
+- Secret read/list paths return configured metadata only. They never return
+  plaintext, ciphertext, hashes, auth tags, reusable token prefixes, or
+  caller-provided validation metadata.
+- Secret validation metadata is normalized/redacted to `{}` before persistence
+  and on readback so provider responses, authorization headers, token prefixes,
+  or other attacker-supplied metadata cannot leak through redacted reads.
+- Settings and secret saves write admin audit rows with structured
+  `audit_log.admin_user_id` attribution where available.
+
+Carry-forward security gates:
+
+- Every privileged admin API added after WAVE-004 should compose
+  `createAdminSessionMiddleware` with `createActiveAdminMiddleware`. Secret
+  writes, key create/revoke, dangerous config apply, maintenance apply, and
+  migration jobs must require recent step-up.
+- TASK-010 must treat admin-configured provider URLs as attacker-controlled and
+  define/test the egress/SSRF policy before running connection tests.
+- UI tasks must never store admin session tokens, bootstrap tokens, TOTP seeds,
+  provider secrets, or admin bearer credentials in localStorage.
+
 ## OAuth/OIDC Boundary
 
 Existing OAuth/DCR is for native remote MCP connectors. It lets external clients

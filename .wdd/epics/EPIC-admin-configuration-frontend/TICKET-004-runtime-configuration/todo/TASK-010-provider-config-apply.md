@@ -77,9 +77,11 @@ approved first runtime settings scope.
 
 - `src/config.ts`
 - `src/index.ts`
+- `src/services/admin-settings-service.ts`
 - `src/services/embeddings/providers.ts`
 - `src/services/embeddings/admin.ts`
 - `src/services/llm-provider.ts`
+- `src/db/migrations/011_admin_settings.sql`
 - `docker-compose.yml`
 - `README.md`
 
@@ -151,6 +153,23 @@ Keep provider construction logic centralized to avoid env/DB drift.
   the chosen allow/deny policy for schemes, hostnames/IPs, local-provider
   exceptions, metadata/link-local/private-network handling, redirects if
   allowed, and error redaction.
+- Build on WAVE-004 `src/services/admin-settings-service.ts`; do not create a
+  parallel settings or secret store. Non-secret provider settings belong in
+  `admin_runtime_settings`, and provider secrets belong in
+  `admin_runtime_secrets`.
+- Use `ADMIN_SETTINGS_ENCRYPTION_KEY` for secret persistence. The service
+  expects a 32-byte base64url key, or `base64:` prefixed base64, supplied
+  outside the database.
+- Secret validation metadata for secret records must remain `{}` on save and
+  readback. Store only safe validation status/message for secrets; never persist
+  provider response bodies, authorization headers, token prefixes, or reusable
+  identifiers in redacted metadata.
+- Future HTTP endpoints must honor
+  `ADMIN_SETTINGS_HTTP_AUTHORITY_CONTRACT`: `/admin/api/*`, admin session
+  cookie, CSRF on mutations, ordinary API-key/MCP OAuth bearer rejection, and
+  recent step-up for secret writes/apply operations.
+- Use structured `audit_log.admin_user_id` attribution for provider config
+  mutations.
 
 ## Durable Memory Notes To Consider
 

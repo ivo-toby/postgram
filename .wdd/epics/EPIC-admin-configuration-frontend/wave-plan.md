@@ -18,10 +18,10 @@ updated_at: 2026-07-05
 | TASK-003-runtime-config-feasibility | TICKET-001-feasibility-security-design | None | `src/config.ts`, `src/index.ts`, provider lifecycle, Docker docs | done |
 | TASK-004-admin-auth-persistence | TICKET-002-admin-auth-foundation | TASK-001, TASK-002 | migrations, `src/auth/**`, admin auth services, integration tests | done |
 | TASK-005-admin-session-routes | TICKET-002-admin-auth-foundation | TASK-004 | admin routes, cookies, CSRF, lockout, auth contract tests | done |
-| TASK-006-admin-mfa-step-up | TICKET-002-admin-auth-foundation | TASK-004, TASK-005 | MFA tables, TOTP service, step-up middleware, sensitive action gates | in_progress |
+| TASK-006-admin-mfa-step-up | TICKET-002-admin-auth-foundation | TASK-004, TASK-005 | MFA tables, TOTP service, step-up middleware, sensitive action gates | done |
 | TASK-007-admin-api-shell-diagnostics | TICKET-003-admin-api-foundation | TASK-005, TASK-006 | admin transport, diagnostics routes, admin middleware | todo |
 | TASK-008-admin-key-audit-stats-api | TICKET-003-admin-api-foundation | TASK-007 | key service, audit querying, stats service, admin API contracts | todo |
-| TASK-009-settings-secret-store | TICKET-004-runtime-configuration | TASK-003, TASK-005 | settings migrations, secret encryption, config service | in_progress |
+| TASK-009-settings-secret-store | TICKET-004-runtime-configuration | TASK-003, TASK-005 | settings migrations, secret encryption, config service | done |
 | TASK-010-provider-config-apply | TICKET-004-runtime-configuration | TASK-009 | provider lifecycle, validation flows, config tests, worker reload semantics | todo |
 | TASK-011-admin-auth-ui | TICKET-005-admin-frontend | TASK-006 | React auth shell, admin session client, MFA UI, UI routing | todo |
 | TASK-012-admin-ops-dashboard-ui | TICKET-005-admin-frontend | TASK-008, TASK-011 | API key UI, audit/stats/health pages, admin API client | todo |
@@ -290,7 +290,7 @@ Drift notes:
 
 ### WAVE-004
 
-Status: in_progress
+Status: done
 
 Tasks:
 
@@ -323,6 +323,8 @@ Activation rule:
   next `wdd-start-wave` step.
 - Activated at 2026-07-05T16:47:34Z. TASK-006 and TASK-009 are assigned as
   separate hybrid bundles with dedicated branches and worktrees.
+- Reconciled on 2026-07-05 after both bundles merged and WAVE-004 worktrees
+  were cleaned up.
 
 Stop condition:
 
@@ -330,9 +332,51 @@ Stop condition:
 - Settings and secret storage tests pass.
 - Migration ordering and rollback posture are documented in shared context.
 
+Completion evidence:
+
+- PR #81: merged by GitHub at 2026-07-05T18:13:59Z.
+- PR #82: merged by GitHub at 2026-07-05T18:17:48Z.
+- TASK-009 task-branch freshness merge: `ca9c96f`.
+- TASK-009 epic merge commit: `b63ad08`.
+- TASK-006 task-branch freshness merge: `8c04680`.
+- TASK-006 epic merge commit: `6666508`.
+- Review: Lorentz `REVIEW_PASS` for both PRs after P2 fixes.
+- Verification passed:
+  - `git diff --check`
+  - `jq empty .wdd/epics/EPIC-admin-configuration-frontend/orchestration.json`
+  - `npm test -- tests/integration/admin-settings-service.test.ts` (8 tests)
+  - `npm test -- tests/contract/admin-mfa-routes.test.ts` (6 tests)
+  - `npm test -- tests/integration/admin-auth-service.test.ts` (15 tests)
+  - `npm run typecheck`
+
+Reconciled decisions:
+
+- Admin TOTP seeds are encrypted with `ADMIN_MFA_SECRET_KEY` and are
+  write-only after enrollment.
+- The first bootstrap admin becomes active only through MFA verification.
+- `createActiveAdminMiddleware` is the active/MFA/step-up gate that future
+  privileged admin APIs should compose after session/CSRF middleware.
+- Runtime settings persist as typed JSON in `admin_runtime_settings`.
+- Provider secrets persist as AES-256-GCM encrypted rows in
+  `admin_runtime_secrets` using `ADMIN_SETTINGS_ENCRYPTION_KEY`.
+- Secret validation metadata is normalized/redacted to `{}` so redacted reads
+  cannot leak provider responses, bearer tokens, or reusable prefixes.
+- `audit_log.admin_user_id` is now the structured admin actor attribution path.
+
+Drift notes:
+
+- TASK-007 must require active-MFA admin sessions for diagnostics; pending-MFA
+  sessions remain setup/session/MFA-only.
+- TASK-010 must reuse `admin-settings-service`, preserve secret redaction, and
+  add explicit provider URL/egress/SSRF policy tests.
+- TASK-014 and later mutation/job work should use structured
+  `audit_log.admin_user_id` plus recent step-up for sensitive operations.
+- TASK-017 must make Docker/operator handling for both admin encryption keys
+  explicit.
+
 ### WAVE-005
 
-Status: planned
+Status: ready_to_start
 
 Tasks:
 

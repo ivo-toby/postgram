@@ -67,6 +67,8 @@ Add the authenticated admin API shell and first read-only diagnostics endpoints.
 
 - `src/index.ts`
 - `src/transport/rest.ts`
+- `src/transport/admin.ts`
+- `src/auth/admin-middleware.ts`
 - `src/services/queue-service.ts`
 - `src/services/embeddings/admin.ts`
 - `tests/contract/rest-api.test.ts`
@@ -133,8 +135,17 @@ Keep route response shapes reusable for frontend API client.
 - Diagnostics should require the active-admin/MFA guard from TASK-006. A valid
   pending-MFA session is enough for setup/current/csrf/logout, but not for
   operational diagnostics.
+- Compose `createAdminSessionMiddleware({ pool })` with
+  `createActiveAdminMiddleware()` from `src/auth/admin-middleware.ts`.
+  Diagnostics are read-only, so they should not require recent step-up unless a
+  diagnostic exposes sensitive secret/config metadata beyond coarse status.
+- Use `admin_settings_service` redacted metadata only for safe configuration
+  status. Do not return stored provider secrets, ciphertext, token prefixes, or
+  arbitrary secret validation metadata.
 - Contract tests must prove ordinary Postgram API-key bearer tokens and MCP
   OAuth bearer tokens still fail on the admin diagnostics routes.
+- Contract tests must also prove a pending-MFA session receives `403` from the
+  diagnostics shell while an active MFA session succeeds.
 
 ## Durable Memory Notes To Consider
 

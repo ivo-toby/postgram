@@ -47,9 +47,16 @@ configuration, maintenance jobs, or Docker behavior.
   dedicated `pgm_admin_session` HttpOnly cookie, `X-CSRF-Token` CSRF header,
   safe bootstrap/login errors, and no reuse of ordinary API-key or MCP OAuth
   bearer credentials as admin identity.
+- Admin MFA/step-up posture is now implemented with encrypted TOTP factors via
+  `ADMIN_MFA_SECRET_KEY`, active-admin middleware, a ten-minute step-up window,
+  and first-admin activation only after MFA verification.
 - Runtime configuration should be installation-wide DB-backed settings plus
   encrypted write-only secrets. One minimal installation encryption key may
   remain outside the DB through env/Docker secret.
+- Settings and secret persistence is now implemented with
+  `admin_runtime_settings`, `admin_runtime_secrets`,
+  `ADMIN_SETTINGS_ENCRYPTION_KEY`, structured admin audit attribution, and
+  secret validation metadata normalized/redacted to `{}`.
 - Provider/config applies use explicit save/validate/apply states. Extraction
   tuning can reload the worker once implemented; embedding identity changes are
   migration-sensitive and require dedicated dry-run/apply jobs.
@@ -146,6 +153,44 @@ configuration, maintenance jobs, or Docker behavior.
     boundary.
   - TASK-011 must use cookie-based admin sessions and CSRF refresh, not
     localStorage admin bearer tokens.
+
+### WAVE-004 Admin MFA And Settings Secret Store
+
+- Status: merged and reconciled on 2026-07-05.
+- PRs: https://github.com/ivo-toby/postgram/pull/81 and
+  https://github.com/ivo-toby/postgram/pull/82, merged at
+  2026-07-05T18:13:59Z and 2026-07-05T18:17:48Z.
+- Merge commits: `b63ad08` for TASK-009 settings/secrets and `6666508` for
+  TASK-006 MFA/step-up.
+- Reviews: Lorentz `REVIEW_PASS` after P2 fixes for secret validation metadata
+  redaction and structured MFA audit actor attribution.
+- Implemented MFA/security contract:
+  - `src/auth/admin-mfa-service.ts` stores TOTP factors encrypted with
+    `ADMIN_MFA_SECRET_KEY`; plaintext seeds are write-only after enrollment.
+  - `/admin/api/session/mfa/enroll`, `/mfa/verify`, `/mfa/challenge`, and
+    `/session/step-up` extend the existing session/CSRF route family.
+  - `createActiveAdminMiddleware` gates privileged routes on active admin
+    status, MFA completion, and optional recent step-up.
+- Implemented settings/secret contract:
+  - `src/db/migrations/011_admin_settings.sql` adds
+    `admin_runtime_settings`, `admin_runtime_secrets`, and
+    `audit_log.admin_user_id`.
+  - `src/services/admin-settings-service.ts` stores non-secret settings as
+    typed JSON and provider secrets as AES-256-GCM ciphertext using
+    `ADMIN_SETTINGS_ENCRYPTION_KEY`.
+  - Secret read/list paths return configured metadata only; plaintext,
+    ciphertext, hashes, reusable prefixes, and arbitrary validation metadata
+    stay out of redacted reads.
+- Carry-forward gates:
+  - TASK-007 and later admin APIs must compose the WAVE-003 session/CSRF
+    middleware with `createActiveAdminMiddleware`; sensitive mutations must set
+    `requireStepUp: true`.
+  - TASK-010 must build provider validation/apply on the merged settings
+    service, preserve secret validation metadata redaction, and still prove
+    provider URL/egress/SSRF safety.
+  - TASK-011/TASK-013 frontend work must treat admin sessions as cookie/CSRF
+    state, keep secret fields write-only, and never persist admin session,
+    bootstrap, TOTP, or provider secret material in localStorage.
 
 ## Recent Durable Memory
 

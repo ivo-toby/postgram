@@ -139,6 +139,14 @@ Keep docs honest about emergency CLI fallback and public exposure risks.
 
 - Preserve loopback-safe defaults unless Wave 1 chose otherwise.
 - Include exact evidence commands and results in task completion notes.
+- WAVE-004 introduced two outside-database installation keys:
+  `ADMIN_MFA_SECRET_KEY` for encrypted TOTP factors and
+  `ADMIN_SETTINGS_ENCRYPTION_KEY` for provider secret storage. The Docker
+  happy path must document how these are generated, persisted, rotated or
+  backed up, and supplied without putting usable secrets in database backups.
+- The clean-volume smoke should prove setup fails closed when required admin
+  encryption keys are absent or invalid, and succeeds when the documented
+  Docker/operator path provides them.
 
 ## Durable Memory Notes To Consider
 

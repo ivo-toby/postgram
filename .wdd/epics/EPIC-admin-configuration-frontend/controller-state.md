@@ -2,8 +2,8 @@
 id: EPIC-admin-configuration-frontend-CONTROLLER
 kind: controller_state
 epic: EPIC-admin-configuration-frontend
-active_wave: WAVE-004
-status: in_progress
+active_wave: null
+status: wave_reconciled
 updated_at: 2026-07-05
 ---
 
@@ -19,25 +19,20 @@ checkout.
 
 ## Current Outcome
 
-WAVE-004 is active after WAVE-003 reconciliation. The hybrid wave contains two
-independent bundles: TASK-006-admin-mfa-step-up and
-TASK-009-settings-secret-store. Activation artifacts were pushed in `f183a28`;
-both task branches/worktrees were created from that commit, pushed to GitHub,
-verified, and dispatched.
-
-WAVE-003 is done and reconciled. PR #80 was merged by GitHub at
-2026-07-05T16:25:30Z, TASK-005 was merged into the epic branch in `ecfe9ac`,
-and the TASK-005 worktree was cleaned up.
-
-Next phase: WAVE-004 reconciliation handoff. PR #81/TASK-009 and PR
-#82/TASK-006 both returned `REVIEW_PASS`, final branch freshness passed, and
-both bundles are merged into the epic branch: TASK-009 in `b63ad08`, TASK-006
-in `6666508`. Task files are in `done/`, cleanup is deferred, shared-context
-reconciliation is queued, and WAVE-004 is ready for `wdd-reconcile-wave`. Do
-not start WAVE-005.
-
-GitHub marked PR #81 `MERGED` at 2026-07-05T18:13:59Z and PR #82 `MERGED` at
+WAVE-004 is done and reconciled. PR #81/TASK-009 and PR #82/TASK-006 both
+returned `REVIEW_PASS`, final branch freshness passed, and both bundles merged
+into the epic branch: TASK-009 in `b63ad08`, TASK-006 in `6666508`. GitHub
+marked PR #81 `MERGED` at 2026-07-05T18:13:59Z and PR #82 `MERGED` at
 2026-07-05T18:17:48Z after the epic branch push.
+
+Reconciliation updated shared context for MFA/step-up, settings/secret storage,
+structured admin audit actor attribution, and downstream task handoff notes.
+Both WAVE-004 task files are in `done/`, both worker gates are reconciled, and
+both clean pushed WAVE-004 worktrees were removed with `git worktree remove`
+and `git worktree prune`.
+
+WAVE-005 is ready to start next. This heartbeat stopped before starting
+WAVE-005.
 
 ## Wave Summary
 
@@ -46,8 +41,8 @@ GitHub marked PR #81 `MERGED` at 2026-07-05T18:13:59Z and PR #82 `MERGED` at
 | WAVE-001 | TASK-001, TASK-002, TASK-003 | full / bundled / risk_based / adaptive | done | confirmed by Ivo via Codex request on 2026-07-05 |
 | WAVE-002 | TASK-004 | full / bundled / risk_based / adaptive | done | confirmed by Ivo via Codex request on 2026-07-05 |
 | WAVE-003 | TASK-005 | full / bundled / risk_based / adaptive | done | confirmed by Ivo via Codex sequential-waves request on 2026-07-05 |
-| WAVE-004 | TASK-006, TASK-009 | full / hybrid / risk_based / adaptive | in_progress | confirmed by Ivo via sequential-waves request on 2026-07-05 |
-| WAVE-005 | TASK-007, TASK-010 | full / hybrid / risk_based / adaptive | planned | required |
+| WAVE-004 | TASK-006, TASK-009 | full / hybrid / risk_based / adaptive | done | confirmed by Ivo via sequential-waves request on 2026-07-05 |
+| WAVE-005 | TASK-007, TASK-010 | full / hybrid / risk_based / adaptive | ready_to_start | required |
 | WAVE-006 | TASK-008, TASK-014 | full / hybrid / risk_based / adaptive | planned | required |
 | WAVE-007 | TASK-011, TASK-015 | full / parallel / risk_based / adaptive | planned | required |
 | WAVE-008 | TASK-012, TASK-013 | full / hybrid / risk_based / adaptive | planned | required |
@@ -61,51 +56,25 @@ Mode: codex_thread_heartbeat
 
 Cadence: 5 minutes
 
-Status: active
+Status: stopped
 
-Last check: 2026-07-05T18:16:00Z
+Last check: 2026-07-05T18:26:34Z
 
-Next check due: 2026-07-05T18:21:00Z
+Next check due: none
 
 Scheduler reference: `postgram-admin-wave-004-start-heartbeat`
 
 Fallback prompt:
 
 ```text
-Run one bounded WDD controller heartbeat for /Users/ivo.toby/workspace/postgram,
-epic EPIC-admin-configuration-frontend, active wave WAVE-004. Use the
-subagent-pr-orchestration skill. Start on branch
-codex/epic/admin-configuration-frontend. Read orchestration.json and
-controller-state.md, then inspect workers Tesla
-(019f3333-4033-7463-9819-aa3dec286b4c) for
-WAVE-004-admin-mfa-step-up / TASK-006 and Euclid
-(019f3333-4104-7b02-b1aa-1fce6978e410) for
-WAVE-004-settings-secret-store / TASK-009, including their assigned worktrees.
-Run WAVE-004 reconciliation. Confirm TASK-006 and TASK-009 are merged into the
-epic branch, task files are in `done/`, current gates are merged,
-WAVE-004 waveCompletion is ready_for_reconciliation, cleanup is deferred,
-blocking feedback is empty, and shared-context reconciliation is queued. Do not
-start WAVE-005.
+WAVE-004 is reconciled and monitoring is stopped. Next phase is
+`wdd-start-wave` for WAVE-005; do not start it from the WAVE-004
+reconciliation heartbeat.
 ```
 
 ## Active Wave Strategy
 
-- Wave: WAVE-004
-- Profile: full
-- Execution mode: hybrid
-- Review mode: risk_based
-- Monitoring mode: adaptive
-- Confirmation: Ivo via Codex sequential-waves request on 2026-07-05
-- Bundle: WAVE-004-admin-mfa-step-up
-- Bundle branch: `codex/task/TASK-006-admin-mfa-step-up`
-- Bundle worktree:
-  `/Users/ivo.toby/workspace/postgram/.worktrees/TASK-006-admin-mfa-step-up`
-- Worker: Tesla (`019f3333-4033-7463-9819-aa3dec286b4c`)
-- Bundle: WAVE-004-settings-secret-store
-- Bundle branch: `codex/task/TASK-009-settings-secret-store`
-- Bundle worktree:
-  `/Users/ivo.toby/workspace/postgram/.worktrees/TASK-009-settings-secret-store`
-- Worker: Euclid (`019f3333-4104-7b02-b1aa-1fce6978e410`)
+- None. WAVE-004 is reconciled and WAVE-005 is ready to start.
 
 ## Last Reconciled Wave
 
@@ -118,6 +87,10 @@ start WAVE-005.
 - WAVE-003: done and reconciled at 2026-07-05T16:27:34Z.
 - PR #80: merged at 2026-07-05T16:25:30Z.
 - Worker worktree: cleaned up.
+- WAVE-004: done and reconciled at 2026-07-05T18:26:34Z.
+- PR #81: merged at 2026-07-05T18:13:59Z.
+- PR #82: merged at 2026-07-05T18:17:48Z.
+- Worker worktrees: cleaned up.
 
 ## Task Gates
 
@@ -128,10 +101,10 @@ start WAVE-005.
 | TASK-003-runtime-config-feasibility | TICKET-001-feasibility-security-design | codex/task/WAVE-001-admin-feasibility-gate | cleaned_up | reconciled | P3 provider URL/egress test feedback addressed; REVIEW_PASS; merged in `1f11365` |
 | TASK-004-admin-auth-persistence | TICKET-002-admin-auth-foundation | codex/task/TASK-004-admin-auth-persistence | cleaned_up | reconciled | REVIEW_PASS; freshness verification passed; merged in `0f96769`; PR #79 merged; WAVE-002 reconciled |
 | TASK-005-admin-session-routes | TICKET-002-admin-auth-foundation | codex/task/TASK-005-admin-session-routes | cleaned_up | reconciled | REVIEW_PASS; freshness verification passed; merged in `ecfe9ac`; PR #80 merged; WAVE-003 reconciled |
-| TASK-006-admin-mfa-step-up | TICKET-002-admin-auth-foundation | codex/task/TASK-006-admin-mfa-step-up | clean_pushed | merged | REVIEW_PASS; final branch freshness passed at `8c04680`; merged locally into epic branch in `6666508`; cleanup deferred to reconciliation |
+| TASK-006-admin-mfa-step-up | TICKET-002-admin-auth-foundation | codex/task/TASK-006-admin-mfa-step-up | cleaned_up | reconciled | REVIEW_PASS; final branch freshness passed at `8c04680`; merged locally into epic branch in `6666508`; worktree cleaned up during WAVE-004 reconciliation |
 | TASK-007-admin-api-shell-diagnostics | TICKET-003-admin-api-foundation | codex/task/TASK-007-admin-api-shell-diagnostics | not_created | planned | `npm test -- tests/contract/admin-api.test.ts`; `npm run typecheck` |
 | TASK-008-admin-key-audit-stats-api | TICKET-003-admin-api-foundation | codex/task/TASK-008-admin-key-audit-stats-api | not_created | planned | `npm test -- tests/contract/admin-key-audit-stats.test.ts`; `npm test -- tests/integration/key-service.test.ts`; `npm run typecheck` |
-| TASK-009-settings-secret-store | TICKET-004-runtime-configuration | codex/task/TASK-009-settings-secret-store | clean_pushed | merged | PR #81 follow-up REVIEW_PASS, final branch freshness passed at `ca9c96f`, merged locally into epic branch in `b63ad08`; cleanup deferred to reconciliation |
+| TASK-009-settings-secret-store | TICKET-004-runtime-configuration | codex/task/TASK-009-settings-secret-store | cleaned_up | reconciled | PR #81 follow-up REVIEW_PASS, final branch freshness passed at `ca9c96f`, merged locally into epic branch in `b63ad08`; worktree cleaned up during WAVE-004 reconciliation |
 | TASK-010-provider-config-apply | TICKET-004-runtime-configuration | codex/task/TASK-010-provider-config-apply | not_created | planned | `npm test -- tests/integration/admin-provider-config.test.ts`; `npm test -- tests/unit/config.test.ts`; `npm run typecheck` |
 | TASK-011-admin-auth-ui | TICKET-005-admin-frontend | codex/task/TASK-011-admin-auth-ui | not_created | planned | `npm --prefix ui run test -- --run src/components/AdminAuth.test.tsx`; `npm --prefix ui run typecheck` |
 | TASK-012-admin-ops-dashboard-ui | TICKET-005-admin-frontend | codex/task/TASK-012-admin-ops-dashboard-ui | not_created | planned | `npm --prefix ui run test -- --run src/components/AdminOps.test.tsx`; `npm --prefix ui run typecheck` |
@@ -286,6 +259,17 @@ start WAVE-005.
   encryption key, and explicit save/validate/apply states.
 - Reconciled provider safety gate: TASK-010 must include explicit provider
   URL/egress/SSRF safety coverage.
+- Reconciled WAVE-004 MFA and step-up implementation: encrypted TOTP factors
+  via `ADMIN_MFA_SECRET_KEY`, first-admin activation only after MFA
+  verification, `createActiveAdminMiddleware`, route-level MFA/step-up rate
+  limits, and structured `audit_log.admin_user_id` attribution for MFA audit
+  rows.
+- Reconciled WAVE-004 settings and secret store implementation:
+  `admin_runtime_settings`, `admin_runtime_secrets`,
+  `ADMIN_SETTINGS_ENCRYPTION_KEY`, encrypted write-only provider secrets, and
+  secret validation metadata normalized/redacted to `{}`.
+- Reconciled downstream task handoffs: TASK-007/TASK-010 are ready for WAVE-005
+  and must use the merged active-admin and settings-service contracts.
 
 ## Future Wave Readiness
 
@@ -294,11 +278,11 @@ start WAVE-005.
 - WAVE-002 is done and reconciled.
 - WAVE-003 is done and reconciled after Ivo requested sequential wave
   execution.
-- WAVE-004 is no longer blocked by WAVE-003.
-- WAVE-003 shared context is reconciled and the TASK-005 worktree cleanup gate
-  is handled.
-- WAVE-004 is active and under heartbeat monitoring. WAVE-005 remains blocked
-  until WAVE-004 is merged/closed and reconciled.
+- WAVE-004 is done and reconciled after PR #81 and PR #82 merged.
+- WAVE-004 shared context is reconciled and TASK-006/TASK-009 worktree cleanup
+  gates are handled.
+- WAVE-005 is ready to start. Eligible tasks are
+  TASK-007-admin-api-shell-diagnostics and TASK-010-provider-config-apply.
 
 ## Verification Status
 
@@ -432,6 +416,10 @@ start WAVE-005.
   `npm test -- tests/integration/admin-settings-service.test.ts` (8 tests), and
   `npm run typecheck`; all passed. TASK-006 merged into epic branch in
   `6666508`; cleanup is deferred.
+- WAVE-004 reconciliation verification: task files are in `done/`, shared
+  context and downstream task briefs are updated, orchestration JSON parses,
+  `git diff --check` passes, and the clean TASK-006/TASK-009 worktrees were
+  removed.
 
 ## Event Log
 
@@ -629,10 +617,15 @@ start WAVE-005.
   `wdd-reconcile-wave`; next check due 2026-07-05T18:21:00Z.
 - 2026-07-05T18:18:00Z: GitHub reports PR #81 `MERGED` at
   2026-07-05T18:13:59Z and PR #82 `MERGED` at 2026-07-05T18:17:48Z.
+- 2026-07-05T18:26:34Z: Reconciled WAVE-004 shared-context decisions for
+  MFA/step-up, settings/secret storage, and structured admin audit actor
+  attribution; updated downstream TASK-007, TASK-008, TASK-010, TASK-011,
+  TASK-013, TASK-014, TASK-015, and TASK-017 handoff notes; cleaned up the
+  TASK-006 and TASK-009 worktrees; stopped WAVE-004 monitoring; and left
+  WAVE-005 ready to start.
 
 ## Next Action
 
-Run the next WAVE-004 heartbeat at 2026-07-05T18:21:00Z as a
-`wdd-reconcile-wave` handoff. Reconcile WAVE-004 shared context and downstream
-task notes, clean up WAVE-004 worktrees if safe, update artifacts, and stop
-before WAVE-005.
+Start WAVE-005 with `wdd-start-wave` when ready. WAVE-005 tasks are
+TASK-007-admin-api-shell-diagnostics and TASK-010-provider-config-apply. Do not
+resume WAVE-004 monitoring.

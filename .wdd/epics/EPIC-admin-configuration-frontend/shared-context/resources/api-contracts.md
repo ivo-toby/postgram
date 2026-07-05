@@ -86,6 +86,54 @@ Implemented client/security contract:
   active/MFA/step-up gate before business admin APIs use the session as
   privileged authorization.
 
+## WAVE-004 Implemented MFA And Step-Up Routes
+
+TASK-006 extended the same `/admin/api/session/*` browser-session contract in
+PR #82.
+
+Implemented endpoints:
+
+- `POST /admin/api/session/mfa/enroll` requires a valid admin session and CSRF
+  token, creates a pending TOTP factor, stores the encrypted factor seed, and
+  returns the enrollment secret and `otpauthUrl` only for immediate setup.
+- `POST /admin/api/session/mfa/verify` verifies the pending TOTP factor,
+  activates the first bootstrap admin when appropriate, refreshes session MFA
+  state, and returns `user`, `session`, `factor`, and `stepUp`.
+- `POST /admin/api/session/mfa/challenge` verifies MFA for an active admin
+  session and refreshes the session step-up marker.
+- `POST /admin/api/session/step-up` requires an already active, MFA-verified
+  admin session, verifies a TOTP code, and refreshes recent step-up state.
+
+Middleware contract:
+
+- `createAdminSessionMiddleware` proves only session and CSRF.
+- `createActiveAdminMiddleware()` proves active admin status plus MFA
+  completion.
+- `createActiveAdminMiddleware({ requireStepUp: true })` is required for
+  sensitive mutations such as provider secret writes, API-key create/revoke,
+  destructive maintenance apply, and migration jobs.
+- A pending-MFA session remains valid only for setup/current/csrf/logout/MFA
+  flows and must not authorize diagnostics or business admin APIs.
+
+## WAVE-004 Settings Service Handoff
+
+TASK-009 added the persistence/service contract for future settings endpoints
+in PR #81. HTTP routes are still owned by TASK-010 and later tasks.
+
+Service contract:
+
+- `src/services/admin-settings-service.ts` stores non-secret runtime settings
+  as typed JSON in `admin_runtime_settings`.
+- Provider secrets are stored through `saveRuntimeSecret` in
+  `admin_runtime_secrets`, encrypted with `ADMIN_SETTINGS_ENCRYPTION_KEY`.
+- Secret metadata reads return configured/provider/purpose/validation status
+  only. They must never expose plaintext, ciphertext, nonces, auth tags, token
+  hashes, reusable prefixes, or arbitrary provider validation metadata.
+- `ADMIN_SETTINGS_HTTP_AUTHORITY_CONTRACT` records that future HTTP settings
+  routes belong under `/admin/api/*`, reject ordinary API-key/MCP OAuth bearer
+  credentials, use the admin session cookie plus CSRF, and require step-up for
+  secret writes.
+
 ## Response Shape
 
 Use the existing app error response style where practical:

@@ -136,6 +136,10 @@ Extract duplicated CLI logic into services only where it reduces drift.
 - Preserve existing key scope/type/visibility semantics.
 - Audit admin key mutations with admin actor attribution.
 - Do not log plaintext keys.
+- Use `audit_log.admin_user_id` from WAVE-004 for structured admin actor
+  attribution; do not rely on free-form JSON details as the only actor record.
+- Key create/revoke must compose the active-MFA admin gate with recent step-up.
+  One-time plaintext key display remains create-response-only.
 
 ## Durable Memory Notes To Consider
 

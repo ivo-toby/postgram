@@ -258,15 +258,54 @@ Reset helper updates:
 - `tests/helpers/postgres.ts` truncates the new admin tables before existing
   auth/API-key tables so integration tests start from a clean auth state.
 
+## WAVE-004 Settings And MFA Migration
+
+PR #81 added `src/db/migrations/011_admin_settings.sql`; PR #82 consumed the
+existing MFA scaffolding from migration 010 and merged after migration-order
+freshness verification.
+
+Created or extended schema:
+
+- `audit_log.admin_user_id` links admin mutations to the structured admin
+  actor while preserving ordinary `api_key_id` audit attribution for non-admin
+  paths.
+- `admin_runtime_settings` stores installation-wide non-secret settings as
+  typed JSON with classification, pending/applied state, validation status,
+  validation metadata, actor, and timestamps.
+- `admin_runtime_secrets` stores provider secrets with provider/purpose
+  metadata, AES-256-GCM ciphertext, nonce, auth tag, key version, validation
+  state, actor, and timestamps.
+
+Configuration keys:
+
+- `ADMIN_SETTINGS_ENCRYPTION_KEY` is the installation secret-store key. It is
+  parsed from config as a 32-byte base64url value, or `base64:` prefixed
+  base64, and must remain outside the database.
+- `ADMIN_MFA_SECRET_KEY` encrypts admin TOTP factor seeds. Pending-MFA setup and
+  MFA challenge routes fail closed if it is missing or too short.
+
+Service invariants:
+
+- Plain runtime settings reject credential-shaped keys so provider secrets
+  cannot bypass the encrypted secret store.
+- Secret values are write-only. Redacted metadata reads do not include
+  plaintext, ciphertext, nonce, auth tag, hashes, reusable token prefixes, or
+  arbitrary validation metadata.
+- Secret validation metadata is normalized to `{}` for storage and readback.
+  TASK-010 provider validation may store safe status/message, but not raw
+  provider response metadata for secret records.
+- `tests/helpers/postgres.ts` truncates `admin_runtime_secrets` and
+  `admin_runtime_settings` before auth/API-key tables so integration tests
+  isolate runtime configuration state.
+
 Future migration reminders:
 
 - TASK-005 should not add route-only state to these tables unless the route
   semantics require it and tests prove reset ordering.
-- TASK-006 owns TOTP secret handling and may need to formalize
-  `secret_ciphertext` encryption once the installation encryption-key work is
-  available.
-- TASK-009/TASK-014 may add settings/secrets/jobs tables; reconcile migration
-  ordering against the admin auth tables before dispatching those waves.
+- TASK-014 may add admin job tables; reconcile migration ordering against
+  `audit_log.admin_user_id`, admin auth tables, and runtime settings/secrets.
+- TASK-017 must document and smoke-test the Docker/operator path for
+  `ADMIN_MFA_SECRET_KEY` and `ADMIN_SETTINGS_ENCRYPTION_KEY`.
 
 ## Docker Notes
 

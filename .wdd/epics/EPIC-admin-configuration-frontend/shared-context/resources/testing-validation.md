@@ -195,6 +195,54 @@ Carry-forward test expectations:
 - TASK-011 UI tests must cover cookie-based sessions and CSRF refresh without
   storing admin bearer credentials in localStorage.
 
+## WAVE-004 Verification Evidence
+
+TASK-006 and TASK-009 merged after Lorentz `REVIEW_PASS` with no remaining
+P1/P2 findings.
+
+TASK-006 passed before merge after task-branch freshness merge `8c04680`:
+
+- `git diff --check`
+- `jq empty .wdd/epics/EPIC-admin-configuration-frontend/orchestration.json`
+- `npm test -- tests/contract/admin-mfa-routes.test.ts` (6 tests)
+- `npm test -- tests/integration/admin-auth-service.test.ts` (15 tests)
+- `npm test -- tests/integration/admin-settings-service.test.ts` (8 tests)
+- `npm run typecheck`
+
+TASK-009 passed before merge after task-branch freshness merge `ca9c96f`:
+
+- `git diff --check`
+- `jq empty .wdd/epics/EPIC-admin-configuration-frontend/orchestration.json`
+- `npm test -- tests/integration/admin-settings-service.test.ts` (8 tests)
+- `npm run typecheck`
+- touched-file ESLint for `src/services/admin-settings-service.ts` and the
+  settings integration test
+
+Coverage added:
+
+- TOTP enrollment/verify/challenge/step-up routes, including pending-MFA
+  denial, first-admin activation only after MFA verification, step-up freshness
+  and future-date rejection, and direct MFA/step-up 429 regressions.
+- TOTP factor seed encryption with `ADMIN_MFA_SECRET_KEY` and no persisted or
+  post-enrollment plaintext secret readback.
+- Structured `audit_log.admin_user_id` attribution for MFA audit rows when the
+  column exists.
+- `admin_runtime_settings` read/write/validation behavior, including rejection
+  of credential-shaped keys from plain setting storage.
+- `admin_runtime_secrets` encrypted write-only storage with
+  `ADMIN_SETTINGS_ENCRYPTION_KEY`, redacted metadata reads, and malicious
+  secret validation metadata regression coverage.
+
+Carry-forward test expectations:
+
+- TASK-007 must cover diagnostics denial for pending-MFA sessions and ordinary
+  API-key/MCP OAuth bearer tokens, then success through session plus active-MFA
+  middleware.
+- TASK-010 must preserve secret metadata redaction and add explicit
+  provider URL/egress/SSRF policy tests before connection-test behavior.
+- TASK-011 and TASK-013 must assert that admin session, bootstrap, TOTP, and
+  provider secret material are not written to localStorage.
+
 ## Durable Memory
 
 ### Docker First-Run Must Be Tested, Not Assumed

@@ -143,6 +143,13 @@ Keep command-specific logic typed and bounded rather than generic.
 
 - Keep operation scopes explicit: all/type/id/failed/limit as applicable.
 - Surface cost or destructive implications in response metadata for the UI.
+- Compose WAVE-003 session/CSRF middleware with the WAVE-004 active-MFA gate.
+  Apply/destructive operations require recent step-up.
+- Write mutation audit rows with structured `audit_log.admin_user_id`.
+- If an operation reads provider/runtime config state, use the WAVE-004
+  settings service redacted metadata only; do not expose or persist provider
+  secrets, ciphertext, token prefixes, or arbitrary validation metadata in
+  maintenance responses or job results.
 
 ## Durable Memory Notes To Consider
 

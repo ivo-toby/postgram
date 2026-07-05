@@ -136,6 +136,15 @@ creating an overbroad abstraction.
 
 - Jobs should record requested scope and dry-run/apply mode.
 - Repeated clicks should not create confusing duplicate destructive jobs.
+- Use WAVE-004 `audit_log.admin_user_id` for structured admin actor
+  attribution on job create/update/cancel audit events.
+- Job-backed sensitive apply operations must require active MFA and recent
+  step-up; dry-run/read-only job status may use active-MFA without step-up
+  unless it exposes sensitive metadata.
+- If jobs reference runtime settings or provider secrets, record only setting
+  keys/secret names and redacted metadata. Do not store plaintext secrets,
+  ciphertext, token prefixes, or arbitrary secret validation metadata in job
+  payloads or result summaries.
 
 ## Durable Memory Notes To Consider
 

@@ -22,6 +22,7 @@ import {
 import { ensureEmbeddingIdentityAgreement } from './services/embeddings/admin.js';
 import { createEnrichmentWorker } from './services/enrichment-worker.js';
 import { registerMcpRoutes } from './transport/mcp.js';
+import { registerAdminRoutes } from './transport/admin.js';
 import { registerOAuthRoutes } from './transport/oauth.js';
 import { registerRestRoutes } from './transport/rest.js';
 import { createLogger } from './util/logger.js';
@@ -46,10 +47,12 @@ type AppOptions = {
   pool?: Pool;
   embeddingService?: EmbeddingService | undefined;
   extractionEnabled?: boolean | undefined;
-  oauth?: {
-    enabled: boolean;
-    publicBaseUrl?: string | undefined;
-  } | undefined;
+  oauth?:
+    | {
+        enabled: boolean;
+        publicBaseUrl?: string | undefined;
+      }
+    | undefined;
   getHealthStatus?: () => Promise<HealthStatus> | HealthStatus;
 };
 
@@ -108,7 +111,9 @@ export function buildEmbeddingProviderConfig(
 }
 
 function describeHost(providerConfig: EmbeddingProviderConfig): string {
-  return providerConfig.provider === 'ollama' ? providerConfig.baseUrl : 'api.openai.com';
+  return providerConfig.provider === 'ollama'
+    ? providerConfig.baseUrl
+    : 'api.openai.com';
 }
 
 export function createApp(
@@ -154,6 +159,11 @@ export function createApp(
   });
 
   if (options.pool) {
+    registerAdminRoutes(
+      app as unknown as Parameters<typeof registerAdminRoutes>[0],
+      options.pool
+    );
+
     if (options.oauth?.enabled) {
       if (!options.oauth.publicBaseUrl) {
         throw new AppError(
@@ -175,9 +185,10 @@ export function createApp(
     });
     registerMcpRoutes(app, options.pool, {
       embeddingService: options.embeddingService,
-      resourceMetadataUrl: options.oauth?.enabled && options.oauth.publicBaseUrl
-        ? `${options.oauth.publicBaseUrl.replace(/\/$/, '')}/.well-known/oauth-protected-resource/mcp`
-        : undefined,
+      resourceMetadataUrl:
+        options.oauth?.enabled && options.oauth.publicBaseUrl
+          ? `${options.oauth.publicBaseUrl.replace(/\/$/, '')}/.well-known/oauth-protected-resource/mcp`
+          : undefined,
       ...(options.extractionEnabled !== undefined
         ? { extractionEnabled: options.extractionEnabled }
         : {})
@@ -222,8 +233,11 @@ export async function startServer(): Promise<{
   await runMigrations(pool);
 
   const providerConfig = buildEmbeddingProviderConfig(config);
-  const embeddingProvider: EmbeddingProvider = createEmbeddingProvider(providerConfig);
-  const embeddingService = createEmbeddingService({ provider: embeddingProvider });
+  const embeddingProvider: EmbeddingProvider =
+    createEmbeddingProvider(providerConfig);
+  const embeddingService = createEmbeddingService({
+    provider: embeddingProvider
+  });
 
   logger.info(
     {
@@ -263,12 +277,16 @@ export async function startServer(): Promise<{
     | ((prompt: string, schema?: object) => Promise<string>)
     | undefined;
   let callLlmFactory:
-    | ((provider: string | null, model: string | null) =>
-        (prompt: string, schema?: object) => Promise<string>)
+    | ((
+        provider: string | null,
+        model: string | null
+      ) => (prompt: string, schema?: object) => Promise<string>)
     | undefined;
   if (config.EXTRACTION_ENABLED) {
     const { createLlmProvider } = await import('./services/llm-provider.js');
-    type ExtractionProvider = Parameters<typeof createLlmProvider>[0]['provider'];
+    type ExtractionProvider = Parameters<
+      typeof createLlmProvider
+    >[0]['provider'];
     const allowedProviders: readonly ExtractionProvider[] = [
       'openai',
       'anthropic',
@@ -276,10 +294,11 @@ export async function startServer(): Promise<{
       'openai-compatible'
     ];
     callLlmFactory = (providerOverride, modelOverride) => {
-      const provider: ExtractionProvider = providerOverride
-        && (allowedProviders as readonly string[]).includes(providerOverride)
-        ? (providerOverride as ExtractionProvider)
-        : config.EXTRACTION_PROVIDER;
+      const provider: ExtractionProvider =
+        providerOverride &&
+        (allowedProviders as readonly string[]).includes(providerOverride)
+          ? (providerOverride as ExtractionProvider)
+          : config.EXTRACTION_PROVIDER;
       return createLlmProvider({
         provider,
         model: modelOverride ?? config.EXTRACTION_MODEL,
@@ -383,7 +402,9 @@ if (
     if (error instanceof AppError) {
       process.stderr.write(`${error.code}: ${error.message}\n`);
     } else {
-      process.stderr.write(`${error instanceof Error ? error.message : String(error)}\n`);
+      process.stderr.write(
+        `${error instanceof Error ? error.message : String(error)}\n`
+      );
     }
     process.exitCode = 1;
   });

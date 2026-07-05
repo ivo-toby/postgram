@@ -133,6 +133,8 @@ type SessionLookupRow = AdminSessionRow & {
 
 const TOKEN_BYTES = 32;
 const MIN_PASSWORD_LENGTH = 12;
+const DUMMY_ADMIN_PASSWORD_HASH =
+  '$argon2id$v=19$m=65536,t=3,p=4$9xQbhMJBnnr3GdVXuMolRg$tREBV3P6npYAWNzcFAbPfdbyD6DtPdVNF5/kQCthblw';
 const COMMON_WEAK_PASSWORDS = new Set([
   'admin',
   'password',
@@ -330,12 +332,11 @@ export function verifyAdminPassword(
       );
 
       const row = result.rows[0];
-      if (!row || row.status === 'disabled') {
-        throw new AppError(ErrorCode.UNAUTHORIZED, 'Invalid admin credentials');
-      }
-
-      const valid = await argon2.verify(row.password_hash, input.password);
-      if (!valid) {
+      const valid = await argon2.verify(
+        row?.password_hash ?? DUMMY_ADMIN_PASSWORD_HASH,
+        input.password
+      );
+      if (!row || row.status === 'disabled' || !valid) {
         throw new AppError(ErrorCode.UNAUTHORIZED, 'Invalid admin credentials');
       }
 

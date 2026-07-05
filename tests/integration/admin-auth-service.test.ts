@@ -90,6 +90,13 @@ describe('admin-auth-service', () => {
     });
     expect(rejected.isErr()).toBe(true);
     expect(rejected._unsafeUnwrapErr().code).toBe(ErrorCode.UNAUTHORIZED);
+
+    const missing = await verifyAdminPassword(database.pool, {
+      email: 'missing@example.com',
+      password: 'Correct-Horse-Battery-43!'
+    });
+    expect(missing.isErr()).toBe(true);
+    expect(missing._unsafeUnwrapErr().code).toBe(ErrorCode.UNAUTHORIZED);
   }, 120_000);
 
   it('rejects weak admin passwords before storing users', async () => {

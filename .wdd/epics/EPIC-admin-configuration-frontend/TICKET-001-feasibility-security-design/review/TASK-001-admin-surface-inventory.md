@@ -6,7 +6,7 @@ ticket: TICKET-001-feasibility-security-design
 wave: WAVE-001
 slug: admin-surface-inventory
 title: Admin Surface Inventory
-status: in_progress
+status: review
 depends_on: []
 conflict_domains:
   - .wdd/epics/EPIC-admin-configuration-frontend/shared-context/**
@@ -19,7 +19,7 @@ worktree_status: verified
 pr: null
 worker_thread_id: 019f3215-2eb6-75f2-81f0-bf527e73258b
 review_thread_id: null
-current_gate: no_pr
+current_gate: ready_for_review
 branch_freshness: current
 verification:
   - git diff --check
@@ -29,7 +29,7 @@ verification:
 
 ## Status
 
-in_progress
+review
 
 ## Parent Ticket
 
@@ -138,10 +138,10 @@ if needed.
 
 ## Task-Level Definition of Done
 
-- [ ] Every current `pgm-admin` command is classified.
-- [ ] First-scope admin web surface is explicit.
-- [ ] Exclusions and reasons are explicit.
-- [ ] Service extraction risks are recorded.
+- [x] Every current `pgm-admin` command is classified.
+- [x] First-scope admin web surface is explicit.
+- [x] Exclusions and reasons are explicit.
+- [x] Service extraction risks are recorded.
 
 ## Validation Steps
 
@@ -149,7 +149,7 @@ if needed.
 
 ## Verification Evidence
 
-- Not run yet.
+- 2026-07-05: `git diff --check` passed.
 
 ## Review Feedback
 
@@ -167,4 +167,11 @@ if needed.
 
 ## Completion Notes
 
-- None yet.
+- Inspected `src/cli/admin/pgm-admin.ts`,
+  `tests/integration/cli-admin.test.ts`, `README.md`, and
+  `docs/manual-test-plan.md`.
+- Updated `shared-context/resources/admin-surface-inventory.md` with
+  command-by-command web eligibility, first-scope recommendations, exclusions,
+  and service extraction requirements.
+- Linked follow-on architecture, API contract, and validation implications in
+  shared context.

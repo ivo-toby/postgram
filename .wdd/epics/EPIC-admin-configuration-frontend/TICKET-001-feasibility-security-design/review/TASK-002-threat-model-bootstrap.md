@@ -6,7 +6,7 @@ ticket: TICKET-001-feasibility-security-design
 wave: WAVE-001
 slug: threat-model-bootstrap
 title: Threat Model And Bootstrap
-status: in_progress
+status: review
 depends_on: []
 conflict_domains:
   - .wdd/epics/EPIC-admin-configuration-frontend/shared-context/**
@@ -19,7 +19,7 @@ worktree_status: verified
 pr: null
 worker_thread_id: 019f3215-2eb6-75f2-81f0-bf527e73258b
 review_thread_id: null
-current_gate: no_pr
+current_gate: ready_for_review
 branch_freshness: current
 verification:
   - git diff --check
@@ -29,7 +29,7 @@ verification:
 
 ## Status
 
-in_progress
+review
 
 ## Parent Ticket
 
@@ -136,10 +136,10 @@ Separate concise shared context from longer rationale if needed.
 
 ## Task-Level Definition of Done
 
-- [ ] Threat model covers all hard requirements in shared context.
-- [ ] Bootstrap posture is chosen with rationale.
-- [ ] Open security questions are either resolved or marked blocking.
-- [ ] Later task gates are updated if decisions change dependencies.
+- [x] Threat model covers all hard requirements in shared context.
+- [x] Bootstrap posture is chosen with rationale.
+- [x] Open security questions are either resolved or marked blocking.
+- [x] Later task gates are updated if decisions change dependencies.
 
 ## Validation Steps
 
@@ -147,7 +147,7 @@ Separate concise shared context from longer rationale if needed.
 
 ## Verification Evidence
 
-- Not run yet.
+- 2026-07-05: `git diff --check` passed.
 
 ## Review Feedback
 
@@ -165,4 +165,12 @@ Separate concise shared context from longer rationale if needed.
 
 ## Completion Notes
 
-- None yet.
+- Inspected `docker-compose.yml`, `src/auth/*`, `src/transport/oauth.ts`,
+  `src/index.ts`, `README.md`, and current UI API-key login/localStorage
+  behavior.
+- Updated `shared-context/resources/security-model.md` with assets, trust
+  boundaries, attacker-controlled inputs, admin session/mutation controls,
+  Docker exposure requirements, and security review gates.
+- Chose generated one-time bootstrap token via trusted local operator channel,
+  with hash-only storage, single-use expiry, rate limiting, audit, and MFA
+  enrollment before active first-admin access.

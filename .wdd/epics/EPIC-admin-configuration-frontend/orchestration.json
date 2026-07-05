@@ -50,7 +50,7 @@
     {
       "id": "TICKET-001-feasibility-security-design",
       "path": "TICKET-001-feasibility-security-design/ticket.md",
-      "status": "in_progress",
+      "status": "review",
       "taskIds": [
         "TASK-001-admin-surface-inventory",
         "TASK-002-threat-model-bootstrap",
@@ -182,17 +182,17 @@
           "workerThreadId": "019f3215-2eb6-75f2-81f0-bf527e73258b",
           "workerNickname": "Singer",
           "reviewThreadId": null,
-          "currentGate": "no_pr",
+          "currentGate": "ready_for_review",
           "branchFreshness": "current",
           "pr": null,
           "latestCommit": null,
           "blockingFeedback": [],
           "verification": {
-            "result": "not_run",
+            "result": "passed",
             "commands": [
               "git diff --check"
             ],
-            "evidence": null
+            "evidence": "2026-07-05: git diff --check passed for WAVE-001 shared-context and task artifact updates."
           },
           "verifiedAt": "2026-07-05T11:36:08Z",
           "dispatchedAt": "2026-07-05T11:41:41Z"
@@ -487,8 +487,8 @@
     {
       "id": "TASK-001-admin-surface-inventory",
       "ticket": "TICKET-001-feasibility-security-design",
-      "path": "TICKET-001-feasibility-security-design/in-progress/TASK-001-admin-surface-inventory.md",
-      "status": "in_progress",
+      "path": "TICKET-001-feasibility-security-design/review/TASK-001-admin-surface-inventory.md",
+      "status": "review",
       "dependsOn": [],
       "conflictDomains": [
         "src/cli/admin/pgm-admin.ts",
@@ -507,20 +507,20 @@
       "branchFreshness": "current",
       "blockingFeedback": [],
       "verification": {
-        "result": "not_run",
+        "result": "passed",
         "commands": [
           "git diff --check"
         ],
-        "evidence": null
+        "evidence": "2026-07-05: git diff --check passed."
       },
-      "currentGate": "no_pr",
+      "currentGate": "ready_for_review",
       "workerNickname": "Singer"
     },
     {
       "id": "TASK-002-threat-model-bootstrap",
       "ticket": "TICKET-001-feasibility-security-design",
-      "path": "TICKET-001-feasibility-security-design/in-progress/TASK-002-threat-model-bootstrap.md",
-      "status": "in_progress",
+      "path": "TICKET-001-feasibility-security-design/review/TASK-002-threat-model-bootstrap.md",
+      "status": "review",
       "dependsOn": [],
       "conflictDomains": [
         "shared-context/resources/security-model.md",
@@ -539,20 +539,20 @@
       "branchFreshness": "current",
       "blockingFeedback": [],
       "verification": {
-        "result": "not_run",
+        "result": "passed",
         "commands": [
           "git diff --check"
         ],
-        "evidence": null
+        "evidence": "2026-07-05: git diff --check passed."
       },
-      "currentGate": "no_pr",
+      "currentGate": "ready_for_review",
       "workerNickname": "Singer"
     },
     {
       "id": "TASK-003-runtime-config-feasibility",
       "ticket": "TICKET-001-feasibility-security-design",
-      "path": "TICKET-001-feasibility-security-design/in-progress/TASK-003-runtime-config-feasibility.md",
-      "status": "in_progress",
+      "path": "TICKET-001-feasibility-security-design/review/TASK-003-runtime-config-feasibility.md",
+      "status": "review",
       "dependsOn": [],
       "conflictDomains": [
         "src/config.ts",
@@ -572,13 +572,13 @@
       "branchFreshness": "current",
       "blockingFeedback": [],
       "verification": {
-        "result": "not_run",
+        "result": "passed",
         "commands": [
           "git diff --check"
         ],
-        "evidence": null
+        "evidence": "2026-07-05: git diff --check passed."
       },
-      "currentGate": "no_pr",
+      "currentGate": "ready_for_review",
       "workerNickname": "Singer"
     },
     {
@@ -1181,17 +1181,17 @@
         "workerThreadId": "019f3215-2eb6-75f2-81f0-bf527e73258b",
         "workerNickname": "Singer",
         "reviewThreadId": null,
-        "currentGate": "no_pr",
+        "currentGate": "ready_for_review",
         "branchFreshness": "current",
         "pr": null,
         "latestCommit": null,
         "blockingFeedback": [],
         "verification": {
-          "result": "not_run",
+          "result": "passed",
           "commands": [
             "git diff --check"
           ],
-          "evidence": null
+          "evidence": "2026-07-05: git diff --check passed for WAVE-001 shared-context and task artifact updates."
         },
         "verifiedAt": "2026-07-05T11:36:08Z",
         "dispatchedAt": "2026-07-05T11:41:41Z"

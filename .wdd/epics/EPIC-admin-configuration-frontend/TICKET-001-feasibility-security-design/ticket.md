@@ -4,7 +4,7 @@ kind: ticket
 epic: EPIC-admin-configuration-frontend
 slug: feasibility-security-design
 title: Feasibility And Security Design
-status: in_progress
+status: review
 task_count: 3
 depends_on: []
 conflict_domains:
@@ -48,9 +48,9 @@ trust.
 
 | Task | Status | Wave | Summary |
 |------|--------|------|---------|
-| TASK-001-admin-surface-inventory | in_progress | WAVE-001 | Classify `pgm-admin` command feasibility and web eligibility |
-| TASK-002-threat-model-bootstrap | in_progress | WAVE-001 | Threat model admin plane and choose bootstrap posture |
-| TASK-003-runtime-config-feasibility | in_progress | WAVE-001 | Decide runtime settings, secret, and apply/reload strategy |
+| TASK-001-admin-surface-inventory | review | WAVE-001 | Classify `pgm-admin` command feasibility and web eligibility |
+| TASK-002-threat-model-bootstrap | review | WAVE-001 | Threat model admin plane and choose bootstrap posture |
+| TASK-003-runtime-config-feasibility | review | WAVE-001 | Decide runtime settings, secret, and apply/reload strategy |
 
 ## Dependencies
 
@@ -74,6 +74,7 @@ trust.
 
 ## Completion Criteria
 
-- [ ] All child tasks have resolved review and verification gates.
-- [ ] Shared context updates were reconciled.
-- [ ] Ticket status matches child task state.
+- [ ] All child tasks have resolved review gates.
+- [x] All child tasks have verification evidence.
+- [x] Shared context updates were reconciled.
+- [x] Ticket status matches child task state.

@@ -19,6 +19,31 @@ change providers and secrets, trigger expensive jobs, mutate memory/graph data,
 and potentially affect every agent connected to the instance. Treat the admin
 plane like an operations console, not a convenience page.
 
+WAVE-001 inspected:
+
+- `docker-compose.yml`
+- `src/auth/*`
+- `src/transport/oauth.ts`
+- `src/index.ts`
+- `README.md`
+- Current UI API-key login/localStorage behavior
+
+The current application has ordinary `/api/*` bearer auth and optional MCP
+connector OAuth. Neither is an admin-login boundary. Admin auth, sessions,
+MFA, CSRF, bootstrap, and sensitive mutation controls must be new admin-plane
+constructs.
+
+## RED Findings Resolved By This Model
+
+- The seed model named bootstrap risk but did not choose a first
+  implementation posture.
+- The seed model did not define the trust boundaries between admin sessions,
+  API-key bearer auth, and MCP connector OAuth precisely enough for later
+  route work.
+- Later implementation tasks needed concrete review gates for bootstrap,
+  session cookies, CSRF, MFA, secrets, destructive operations, and Docker
+  exposure.
+
 ## Threats To Cover
 
 - First-run takeover by a remote visitor before the real operator creates an
@@ -36,6 +61,44 @@ plane like an operations console, not a convenience page.
 - Long-running job confusion: repeated clicks, duplicate jobs, lost progress,
   unclear partial failure, or hidden cost.
 - Public exposure through Docker/reverse proxy defaults.
+
+## Assets And Trust Boundaries
+
+Primary assets:
+
+- Admin user identities, password hashes, MFA factors, recovery/reset state,
+  and admin sessions.
+- Bootstrap token material and first-admin setup state.
+- Runtime provider settings and encrypted provider secrets.
+- Postgram API keys, OAuth connector tokens, and the source API keys from which
+  OAuth tokens derive authority.
+- Entity, chunk, edge, task, audit, and runtime settings data.
+- Long-running maintenance jobs and their progress/results.
+
+Trust boundaries:
+
+- Public browser to admin routes: untrusted until an admin session, CSRF token,
+  and any required step-up state are verified.
+- Browser admin session to ordinary `/api/*`: admin sessions do not imply
+  ordinary API-key access unless a specific admin operation creates or displays
+  an API key.
+- Ordinary API-key bearer auth to admin routes: must always be rejected.
+- MCP OAuth bearer auth to admin routes: must always be rejected.
+- Reverse proxy to backend: headers are not trusted for auth unless explicitly
+  configured and normalized by admin middleware in a later, reviewed design.
+- Backend to database: database mutations must preserve audit attribution and
+  redaction invariants.
+- Backend to provider APIs/Ollama/OpenAI-compatible endpoints: external calls
+  can fail, hang, leak prompts to configured providers, or create cost.
+- Docker host/local operator channel to browser setup: possession of the
+  bootstrap token proves local operator access; web reachability alone does
+  not.
+
+Attacker-controlled inputs include admin login fields, bootstrap token entry,
+MFA codes, CSRF-bearing forms, all admin JSON request bodies, query filters,
+provider/base URLs, model names, secrets, maintenance selectors, OAuth
+registration/authorize/token inputs, API keys, and entity content processed by
+maintenance jobs.
 
 ## Hard Requirements
 
@@ -58,9 +121,56 @@ plane like an operations console, not a convenience page.
   request summary, result, and failure where appropriate.
 - Raw SQL and shell execution must not be web-exposed.
 
+## Chosen Bootstrap Posture
+
+WAVE-001 chooses a generated one-time bootstrap token delivered through a
+trusted local operator channel as the first implementation path.
+
+Required behavior:
+
+- On an unbootstrapped instance, the backend creates a high-entropy one-time
+  bootstrap token if no unexpired token exists.
+- Only a hash of the token is stored in the database or bootstrap state.
+- The plaintext token is displayed exactly through a trusted local channel,
+  initially container logs and/or a local-only operator command, not through
+  the public browser page.
+- The web setup flow requires the bootstrap token before creating the first
+  admin account.
+- First admin setup must enroll MFA before the account becomes fully active.
+- The bootstrap token is single-use, expires, is rate-limited, is audited, and
+  is invalidated once an admin account is active.
+- Once an active admin exists, bootstrap routes return locked/configured status
+  and cannot create another first admin.
+- If token generation/storage fails, the UI shows a locked/misconfigured state
+  rather than an unauthenticated setup form.
+- A future Docker task may add an explicit Docker secret/env override for
+  operators who do not want log-delivered bootstrap tokens, but public web
+  reachability alone must never be enough to claim setup.
+
+Rationale:
+
+- Loopback-only setup is not sufficient because a reverse proxy can expose the
+  setup page publicly.
+- A generated one-time token keeps the supported Docker path simple while
+  proving local operator control.
+- Hash-only storage keeps database backups from containing a usable bootstrap
+  token.
+- Requiring MFA in the first-admin flow avoids a weak no-MFA bootstrap gap that
+  later tasks would have to close under live admin access.
+
+Rejected as first implementation paths:
+
+- Browser-only "no admin exists, show setup wizard" because it is vulnerable to
+  public first-run takeover.
+- Permanent static default credentials because they create known-secret risk.
+- Treating an existing Postgram API key as bootstrap authority because API keys
+  are agent/user credentials, not admin identities.
+- Treating MCP connector OAuth authorization as admin login because that flow
+  intentionally inherits ordinary API-key authority.
+
 ## Bootstrap Requirements
 
-The bootstrap design must prove:
+The bootstrap implementation must prove:
 
 - Only the legitimate operator can create the first admin account.
 - Setup cannot be claimed remotely just because no admin exists yet.
@@ -69,15 +179,16 @@ The bootstrap design must prove:
 - The UI clearly signals whether the instance is unbootstrapped, locked,
   configured, or misconfigured.
 
-Candidate bootstrap patterns for planning:
+Implementation notes for later workers:
 
-- Loopback-only setup wizard by default.
-- Generated one-time bootstrap token shown through a trusted local channel.
-- Docker secret or generated persistent volume secret.
-- Reverse-proxy aware setup mode with explicit operator confirmation.
-
-The planner must choose one pattern and document tradeoffs before
-implementation.
+- Add a bootstrap status endpoint that reveals state only:
+  `unbootstrapped`, `locked`, `configured`, or `misconfigured`.
+- Do not return the bootstrap token from any HTTP endpoint.
+- Do not store the plaintext token in audit rows.
+- Rate-limit failed bootstrap attempts by IP and token hash bucket where
+  feasible, without logging the raw token.
+- Require password policy validation and MFA enrollment before marking the
+  first admin active.
 
 ## OAuth/OIDC Boundary
 
@@ -90,6 +201,74 @@ Admin OAuth/OIDC login, if implemented, must be separate:
 - Different routes and issuer/client semantics as needed.
 - Different session creation flow.
 - No path where MCP connector OAuth grants become admin sessions.
+
+## Admin Session And Mutation Controls
+
+Minimum session posture:
+
+- HttpOnly session cookie.
+- SameSite cookie policy. Use `Lax` as the default browser posture unless an
+  explicit cross-site deployment mode is designed and reviewed.
+- `Secure` cookies when the request is HTTPS or the deployment is configured
+  behind trusted TLS termination.
+- Server-side session records with expiry, rotation on login, revocation on
+  logout/password/MFA reset, and last-used tracking.
+- CSRF token required on every unsafe admin method.
+- Login, bootstrap, MFA, CSRF refresh, and step-up endpoints rate-limited.
+
+Step-up required for:
+
+- Provider secret changes.
+- API-key creation and revocation.
+- Bootstrap/admin-user recovery flows.
+- Destructive maintenance operations.
+- Embedding migrations and data purge.
+- Durable memory rewrite/archive actions.
+
+## Docker Exposure Requirements
+
+Current Compose defaults bind backend and UI to `127.0.0.1`, with optional
+`PORT_BIND_HOST=0.0.0.0` and `UI_BIND_HOST=0.0.0.0` exposure. That is a safer
+default, but it is not the admin security boundary.
+
+Later Docker/admin tasks must:
+
+- Keep loopback defaults unless a reviewed public/reverse-proxy deployment mode
+  is documented.
+- Document that reverse proxies can expose first-run setup and therefore still
+  require the bootstrap token.
+- Require TLS for production admin sessions.
+- Ensure admin cookie `Secure` behavior works behind the recommended proxy.
+- Ensure setup status pages do not leak secrets, provider tokens, environment
+  values, or whether a guessed token prefix was valid.
+
+## Security Review Gates
+
+Before implementation tasks are considered safe, tests/review must prove:
+
+- Public setup without a bootstrap token cannot create an admin.
+- Used, expired, or missing bootstrap tokens cannot create an admin.
+- First-admin setup requires MFA enrollment before active admin access.
+- Ordinary API keys and MCP OAuth bearer tokens receive 401/403 from admin
+  routes.
+- Admin mutations reject missing/invalid CSRF tokens.
+- Session cookies are HttpOnly and have the expected SameSite/Secure behavior.
+- Login/bootstrap/MFA/step-up attempts are rate-limited or locked out.
+- Secrets are write-only and redacted from responses, logs, audit rows, and UI.
+- Sensitive mutations require step-up and write audit rows with admin actor
+  attribution.
+- Destructive operations require dry-run or explicit confirmation according to
+  the command inventory.
+
+## Open Security Questions
+
+- The exact CSRF pattern is still open: synchronizer token stored with the
+  server-side session is preferred unless later route design chooses and tests
+  another pattern.
+- The exact MFA recovery/reset path is still open. Do not add a weak recovery
+  shortcut in the first implementation.
+- Trusted reverse-proxy header handling is still open and should not be assumed
+  until Docker/proxy deployment docs are updated.
 
 ## Durable Memory
 

@@ -36,6 +36,19 @@ configuration, maintenance jobs, or Docker behavior.
 - Web admin implementation should refactor shared services from `pgm-admin`
   behavior rather than shelling out to the CLI.
 - Raw SQL and generic shell command execution are out of scope for the web UI.
+- WAVE-001 first-scope admin surface is diagnostics plus API-key
+  create/list/revoke, audit query, stats/health, read-only model list, and
+  safe config read/validate. Destructive maintenance operations wait for job,
+  dry-run, confirmation, step-up, and audit foundations.
+- First-run bootstrap posture is a generated one-time token delivered through a
+  trusted local operator channel, stored hash-only, required before first admin
+  creation, and invalidated after first active MFA-backed admin setup.
+- Runtime configuration should be installation-wide DB-backed settings plus
+  encrypted write-only secrets. One minimal installation encryption key may
+  remain outside the DB through env/Docker secret.
+- Provider/config applies use explicit save/validate/apply states. Extraction
+  tuning can reload the worker once implemented; embedding identity changes are
+  migration-sensitive and require dedicated dry-run/apply jobs.
 
 ## Key Warnings
 
@@ -44,14 +57,20 @@ configuration, maintenance jobs, or Docker behavior.
 - Runtime provider settings are currently env-driven and constructed at
   startup; DB-backed config needs explicit lifecycle design.
 - Embedding dimension changes are data migrations, not simple settings edits.
+- Same-dimension embedding provider/model changes still invalidate existing
+  embedding spaces and require migration/reembedding treatment.
 - Secrets stored through the UI create backup, encryption, and rotation
   obligations.
+- `LLM_REQUEST_TIMEOUT_MS` is documented/Docker-wired but currently read
+  directly from `process.env`; formalize it before admin UI ownership.
 
 ## Known Constraints
 
 - `docker-compose.yml` currently starts Postgres, backend, and UI separately.
 - The existing UI stores API keys in localStorage and cannot be reused as an
   admin auth boundary.
+- Current Compose binds backend/UI to loopback by default, but reverse proxies
+  can still expose setup. Loopback binding is not the admin security boundary.
 - Runtime configuration value changes must update Docker and deployment-facing
   docs in the same change.
 - The epic branch convention is `codex/epic/admin-configuration-frontend`.

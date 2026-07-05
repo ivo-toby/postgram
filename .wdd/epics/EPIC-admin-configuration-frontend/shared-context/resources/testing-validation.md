@@ -24,6 +24,8 @@ coverage.
 
 - Admin user creation, password hashing, password policy, login, logout,
   sessions, session expiry, and lockout.
+- Bootstrap token generation, hash-only persistence, expiry, single-use
+  behavior, rate limiting, and public setup refusal without the token.
 - MFA enrollment, challenge, recovery or reset behavior, and enforcement for
   production/admin posture.
 - CSRF token issuance and enforcement for admin mutations.
@@ -35,6 +37,9 @@ coverage.
   display.
 - Runtime settings save, validation, secret redaction, and provider connection
   tests.
+- Installation encryption key failure/missing-key behavior for stored secrets.
+- Provider apply/reload behavior for extraction settings and embedding
+  migration refusal for unsafe identity changes.
 - Maintenance dry-run/apply flows and destructive confirmation behavior.
 - Long-running job creation, status, idempotency, cancellation if supported,
   and partial failure behavior.
@@ -99,6 +104,19 @@ Require review before merging tasks that touch:
 - Docker exposure defaults.
 
 P1/P2 security findings block merge by default.
+
+WAVE-001 specific gates for later waves:
+
+- TASK-004/TASK-005 must prove API-key bearer auth and MCP OAuth bearer tokens
+  cannot access admin routes.
+- TASK-004 must prove first-admin bootstrap cannot be claimed remotely without
+  the generated token and that MFA is required before active admin access.
+- TASK-009/TASK-010 must prove provider secrets are write-only/redacted and
+  that embedding identity changes use the migration job path.
+- TASK-014/TASK-015/TASK-016 must prove destructive operations have dry-run or
+  explicit confirmation, step-up, audit, and job/progress evidence.
+- TASK-017 must run a clean-volume Docker smoke for the no-normal-CLI setup
+  claim.
 
 ## Durable Memory
 

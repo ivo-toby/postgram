@@ -21,8 +21,9 @@ checkout.
 
 WAVE-001 is activated as a full-profile bundled feasibility/security gate.
 
-Next phase: monitor worker Singer until the bundled WAVE-001 branch produces a
-PR or patch for review.
+Next phase: review the bundled WAVE-001 branch/PR. Worker Singer has produced
+the shared-context feasibility gate updates and moved the three bundled tasks to
+review.
 
 ## Wave Summary
 
@@ -84,9 +85,9 @@ wdd-reconcile-wave.
 
 | Task | Ticket | Branch | Worktree | Gate | Verification |
 |------|--------|--------|----------|------|--------------|
-| TASK-001-admin-surface-inventory | TICKET-001-feasibility-security-design | codex/task/WAVE-001-admin-feasibility-gate | verified | no_pr | `git diff --check` |
-| TASK-002-threat-model-bootstrap | TICKET-001-feasibility-security-design | codex/task/WAVE-001-admin-feasibility-gate | verified | no_pr | `git diff --check` |
-| TASK-003-runtime-config-feasibility | TICKET-001-feasibility-security-design | codex/task/WAVE-001-admin-feasibility-gate | verified | no_pr | `git diff --check` |
+| TASK-001-admin-surface-inventory | TICKET-001-feasibility-security-design | codex/task/WAVE-001-admin-feasibility-gate | verified | ready_for_review | `git diff --check` passed |
+| TASK-002-threat-model-bootstrap | TICKET-001-feasibility-security-design | codex/task/WAVE-001-admin-feasibility-gate | verified | ready_for_review | `git diff --check` passed |
+| TASK-003-runtime-config-feasibility | TICKET-001-feasibility-security-design | codex/task/WAVE-001-admin-feasibility-gate | verified | ready_for_review | `git diff --check` passed |
 | TASK-004-admin-auth-persistence | TICKET-002-admin-auth-foundation | codex/task/TASK-004-admin-auth-persistence | not_created | planned | `npm test -- tests/integration/admin-auth-service.test.ts`; `npm run typecheck` |
 | TASK-005-admin-session-routes | TICKET-002-admin-auth-foundation | codex/task/TASK-005-admin-session-routes | not_created | planned | `npm test -- tests/contract/admin-auth-routes.test.ts`; `npm run typecheck` |
 | TASK-006-admin-mfa-step-up | TICKET-002-admin-auth-foundation | codex/task/TASK-006-admin-mfa-step-up | not_created | planned | `npm test -- tests/contract/admin-mfa-routes.test.ts`; `npm test -- tests/integration/admin-auth-service.test.ts`; `npm run typecheck` |
@@ -132,10 +133,10 @@ wdd-reconcile-wave.
   branch/worktree creation.
 - Bundle worktree verification: passed at `fadb158`; follow-up verification
   state is being synced before dispatch.
-- Worker dispatch: Singer started for the WAVE-001 bundle; current gate is
-  `no_pr`.
-- Monitoring: Codex heartbeat
-  `postgram-admin-wave-001-wdd-heartbeat` is active every 15 minutes.
+- Worker dispatch: Singer completed WAVE-001 shared-context feasibility updates;
+  current gate is `ready_for_review`.
+- Monitoring: Codex heartbeat `postgram-admin-wave-001-wdd-heartbeat` can
+  switch to review/PR monitoring once the draft PR exists.
 
 ## Shared Context Reconciliation Rules
 
@@ -148,6 +149,7 @@ wdd-reconcile-wave.
 ## Verification Status
 
 - Planning artifact syntax check: passed with `git diff --check`.
+- WAVE-001 worker verification: passed with `git diff --check`.
 - `orchestration.json` parse and dependency-wave consistency check: passed.
 - Product code tests: not run; this turn planned WDD artifacts only.
 
@@ -165,11 +167,16 @@ wdd-reconcile-wave.
 - 2026-07-05T11:41:41Z: Dispatched WAVE-001 bundled worker Singer
   (`019f3215-2eb6-75f2-81f0-bf527e73258b`) and activated Codex heartbeat
   `postgram-admin-wave-001-wdd-heartbeat`.
+- 2026-07-05: Singer completed the bundled feasibility gate, updated shared
+  context for admin command eligibility, bootstrap/security posture, and
+  runtime config strategy, moved TASK-001/TASK-002/TASK-003 to review, and
+  passed `git diff --check`.
 
 ## Next Action
 
-Heartbeat or controller next tick:
+Controller next tick:
 
 ```text
-Run subagent-pr-orchestration for EPIC-admin-configuration-frontend WAVE-001.
+Review the WAVE-001 branch/PR for EPIC-admin-configuration-frontend, then run
+wdd-reconcile-wave after review gates are resolved.
 ```

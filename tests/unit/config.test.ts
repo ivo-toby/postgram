@@ -109,6 +109,27 @@ describe('config', () => {
     expect(cfg.EXTRACTION_MEMORY_MODE).toBe('embed_only');
   });
 
+  it('parses the optional admin settings encryption key', () => {
+    const cfg = loadConfig(
+      baseEnv({
+        OPENAI_API_KEY: 'sk-test',
+        ADMIN_SETTINGS_ENCRYPTION_KEY: 'base64url-installation-key'
+      })
+    );
+
+    expect(cfg.ADMIN_SETTINGS_ENCRYPTION_KEY).toBe(
+      'base64url-installation-key'
+    );
+
+    const blank = loadConfig(
+      baseEnv({
+        OPENAI_API_KEY: 'sk-test',
+        ADMIN_SETTINGS_ENCRYPTION_KEY: ''
+      })
+    );
+    expect(blank.ADMIN_SETTINGS_ENCRYPTION_KEY).toBeUndefined();
+  });
+
   it('accepts explicit memory extraction modes', () => {
     const cfg = loadConfig(
       baseEnv({

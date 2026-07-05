@@ -22,6 +22,7 @@ services:
     environment:
       DATABASE_URL: postgres://postgram:${POSTGRES_PASSWORD}@postgres:5432/postgram
       OPENAI_API_KEY: ${OPENAI_API_KEY:-}
+      ADMIN_SETTINGS_ENCRYPTION_KEY: ${ADMIN_SETTINGS_ENCRYPTION_KEY:-}
       LOG_LEVEL: ${LOG_LEVEL:-info}
       PORT: ${PORT:-3100}
       # OAuth for native remote MCP connectors

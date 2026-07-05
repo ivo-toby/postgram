@@ -563,7 +563,7 @@
           "reviewThreadId": "019f322c-02e7-7590-8b8e-ebdd1e9c52ac",
           "reviewNickname": "Lorentz",
           "currentGate": "reviewing",
-          "branchFreshness": "current_with_epic_at_review_request",
+          "branchFreshness": "stale_needs_freshness_refresh",
           "pr": "https://github.com/ivo-toby/postgram/pull/82",
           "latestCommit": "3cfca6e9da0d1f5b675616e28546302a6fcad7f4",
           "blockingFeedback": [],
@@ -587,7 +587,7 @@
           "lastObservedAt": "2026-07-05T17:32:34Z",
           "reviewRequestedAt": "2026-07-05T17:32:34Z",
           "reviewSubmissionId": "019f3357-e7f4-7dd1-a1cf-afa9616d4a26",
-          "freshnessNote": "Task branch includes current epic head 5273ba7 at review request and GitHub mergeStateStatus was CLEAN. The controller checkpoint advances the epic branch, so freshness must be rechecked before merge."
+          "freshnessNote": "Post-controller-checkpoint freshness recheck required: after epic commit 0eb4472, PR #82 mergeStateStatus is UNKNOWN and the task branch is behind the epic branch (rev-list origin epic...HEAD = 1 3). Refresh against latest epic and rerun freshness verification before merge."
         },
         {
           "id": "WAVE-004-settings-secret-store",
@@ -628,7 +628,7 @@
           "lastObservedAt": "2026-07-05T17:32:34Z",
           "reviewRequestedAt": "2026-07-05T17:32:34Z",
           "reviewSubmissionId": "019f3357-e7f4-7dd1-a1cf-afa9616d4a26",
-          "freshnessNote": "Task branch is one epic controller commit behind at review request (rev-list origin epic...HEAD = 1 2) and GitHub mergeStateStatus is DIRTY; refresh required after review and before merge. The controller checkpoint also advances the epic branch, so freshness must be rechecked before merge."
+          "freshnessNote": "Post-controller-checkpoint freshness recheck required: PR #81 was DIRTY before the controller checkpoint and is now mergeStateStatus UNKNOWN after epic commit 0eb4472; the task branch is behind the epic branch (rev-list origin epic...HEAD = 2 2). Refresh against latest epic and rerun freshness verification before merge."
         }
       ],
       "activationCommit": "f183a28fe3e6ef51bf672c2af495cf9128091fba",
@@ -1164,7 +1164,7 @@
       "worktreeStatus": "clean_pushed",
       "pr": "https://github.com/ivo-toby/postgram/pull/82",
       "latestCommit": "3cfca6e9da0d1f5b675616e28546302a6fcad7f4",
-      "branchFreshness": "current_with_epic_at_review_request",
+      "branchFreshness": "stale_needs_freshness_refresh",
       "blockingFeedback": [],
       "verification": {
         "result": "worker_reported_passed",
@@ -1190,7 +1190,7 @@
       "reviewNickname": "Lorentz",
       "reviewRequestedAt": "2026-07-05T17:32:34Z",
       "reviewSubmissionId": "019f3357-e7f4-7dd1-a1cf-afa9616d4a26",
-      "freshnessNote": "Task branch includes current epic head 5273ba7 at review request and GitHub mergeStateStatus was CLEAN. The controller checkpoint advances the epic branch, so freshness must be rechecked before merge."
+      "freshnessNote": "Post-controller-checkpoint freshness recheck required: after epic commit 0eb4472, PR #82 mergeStateStatus is UNKNOWN and the task branch is behind the epic branch (rev-list origin epic...HEAD = 1 3). Refresh against latest epic and rerun freshness verification before merge."
     },
     {
       "id": "TASK-007-admin-api-shell-diagnostics",
@@ -1316,7 +1316,7 @@
       "reviewNickname": "Lorentz",
       "reviewRequestedAt": "2026-07-05T17:32:34Z",
       "reviewSubmissionId": "019f3357-e7f4-7dd1-a1cf-afa9616d4a26",
-      "freshnessNote": "Task branch is one epic controller commit behind at review request (rev-list origin epic...HEAD = 1 2) and GitHub mergeStateStatus is DIRTY; refresh required after review and before merge. The controller checkpoint also advances the epic branch, so freshness must be rechecked before merge."
+      "freshnessNote": "Post-controller-checkpoint freshness recheck required: PR #81 was DIRTY before the controller checkpoint and is now mergeStateStatus UNKNOWN after epic commit 0eb4472; the task branch is behind the epic branch (rev-list origin epic...HEAD = 2 2). Refresh against latest epic and rerun freshness verification before merge."
     },
     {
       "id": "TASK-010-provider-config-apply",
@@ -1894,7 +1894,7 @@
         "workerThreadId": "019f3333-4033-7463-9819-aa3dec286b4c",
         "workerNickname": "Tesla",
         "blockingFeedback": [],
-        "freshnessNote": "Task branch includes current epic head 5273ba7 at review request and GitHub mergeStateStatus was CLEAN. The controller checkpoint advances the epic branch, so freshness must be rechecked before merge."
+        "freshnessNote": "Post-controller-checkpoint freshness recheck required: after epic commit 0eb4472, PR #82 mergeStateStatus is UNKNOWN and the task branch is behind the epic branch (rev-list origin epic...HEAD = 1 3). Refresh against latest epic and rerun freshness verification before merge."
       },
       "WAVE-004-settings-secret-store": {
         "status": "reviewing",
@@ -1908,14 +1908,14 @@
         "workerThreadId": "019f3333-4104-7b02-b1aa-1fce6978e410",
         "workerNickname": "Euclid",
         "blockingFeedback": [],
-        "freshnessNote": "Task branch is one epic controller commit behind at review request (rev-list origin epic...HEAD = 1 2) and GitHub mergeStateStatus is DIRTY; refresh required after review and before merge. The controller checkpoint also advances the epic branch, so freshness must be rechecked before merge."
+        "freshnessNote": "Post-controller-checkpoint freshness recheck required: PR #81 was DIRTY before the controller checkpoint and is now mergeStateStatus UNKNOWN after epic commit 0eb4472; the task branch is behind the epic branch (rev-list origin epic...HEAD = 2 2). Refresh against latest epic and rerun freshness verification before merge."
       }
     },
     "branchFreshness": {
       "WAVE-001-admin-feasibility-gate": "current_at_merge",
       "WAVE-002-admin-auth-persistence": "current_at_merge",
       "WAVE-003-admin-session-routes": "current_at_merge",
-      "WAVE-004-admin-mfa-step-up": "current_with_epic_at_review_request",
+      "WAVE-004-admin-mfa-step-up": "stale_needs_freshness_refresh",
       "WAVE-004-settings-secret-store": "stale_needs_freshness_refresh"
     },
     "merge": {
@@ -2002,7 +2002,7 @@
         "headRef": "codex/task/TASK-006-admin-mfa-step-up",
         "headSha": "3cfca6e9da0d1f5b675616e28546302a6fcad7f4",
         "baseRef": "codex/epic/admin-configuration-frontend",
-        "mergeStateStatus": "CLEAN",
+        "mergeStateStatus": "UNKNOWN",
         "updatedAt": "2026-07-05T17:29:53Z",
         "reviewDecision": null
       },
@@ -2015,7 +2015,7 @@
         "headRef": "codex/task/TASK-009-settings-secret-store",
         "headSha": "b96ca9d5b0ff3445aa8a8231451998f86ce23e5c",
         "baseRef": "codex/epic/admin-configuration-frontend",
-        "mergeStateStatus": "DIRTY",
+        "mergeStateStatus": "UNKNOWN",
         "updatedAt": "2026-07-05T17:28:06Z",
         "reviewDecision": null
       }
@@ -2122,7 +2122,7 @@
           "patch": null,
           "worktreeStatus": "clean_pushed",
           "branchHead": "3cfca6e9da0d1f5b675616e28546302a6fcad7f4",
-          "branchFreshness": "current_with_epic_at_review_request",
+          "branchFreshness": "stale_needs_freshness_refresh",
           "verification": "Tesla reported admin MFA contract tests passed (5 tests), admin auth service integration tests passed (14 tests), typecheck passed, touched-file ESLint passed, git diff --check passed, and Codex review found no introduced correctness/security issues after P2 fixes.",
           "observedFiles": [
             "src/auth/admin-mfa-service.ts",
@@ -2135,7 +2135,8 @@
           "reviewRequestedAt": "2026-07-05T17:32:34Z",
           "reviewSubmissionId": "019f3357-e7f4-7dd1-a1cf-afa9616d4a26",
           "reviewer": "Lorentz",
-          "note": "Tesla returned DONE, pushed branch head 3cfca6e9da0d1f5b675616e28546302a6fcad7f4, opened draft PR #82, and moved the task file to review in the task branch."
+          "note": "Tesla returned DONE, pushed branch head 3cfca6e9da0d1f5b675616e28546302a6fcad7f4, opened draft PR #82, and moved the task file to review in the task branch.",
+          "freshnessNote": "Post-controller-checkpoint freshness recheck required: after epic commit 0eb4472, PR #82 mergeStateStatus is UNKNOWN and the task branch is behind the epic branch (rev-list origin epic...HEAD = 1 3). Refresh against latest epic and rerun freshness verification before merge."
         },
         "cleanupState": "not_started"
       },
@@ -2172,7 +2173,8 @@
           "reviewRequestedAt": "2026-07-05T17:32:34Z",
           "reviewSubmissionId": "019f3357-e7f4-7dd1-a1cf-afa9616d4a26",
           "reviewer": "Lorentz",
-          "note": "Euclid returned DONE, pushed branch head b96ca9d5b0ff3445aa8a8231451998f86ce23e5c, opened draft PR #81, and moved the task file to review in the task branch."
+          "note": "Euclid returned DONE, pushed branch head b96ca9d5b0ff3445aa8a8231451998f86ce23e5c, opened draft PR #81, and moved the task file to review in the task branch.",
+          "freshnessNote": "Post-controller-checkpoint freshness recheck required: PR #81 was DIRTY before the controller checkpoint and is now mergeStateStatus UNKNOWN after epic commit 0eb4472; the task branch is behind the epic branch (rev-list origin epic...HEAD = 2 2). Refresh against latest epic and rerun freshness verification before merge."
         },
         "cleanupState": "not_started"
       }
@@ -2213,7 +2215,7 @@
         "workerThreadId": "019f3333-4033-7463-9819-aa3dec286b4c",
         "workerNickname": "Tesla",
         "currentGate": "reviewing",
-        "branchFreshness": "current_with_epic_at_review_request",
+        "branchFreshness": "stale_needs_freshness_refresh",
         "latestCommit": "3cfca6e9da0d1f5b675616e28546302a6fcad7f4",
         "reviewThreadId": "019f322c-02e7-7590-8b8e-ebdd1e9c52ac",
         "reviewNickname": "Lorentz",
@@ -2236,7 +2238,7 @@
         "lastObservedAt": "2026-07-05T17:32:34Z",
         "reviewRequestedAt": "2026-07-05T17:32:34Z",
         "reviewSubmissionId": "019f3357-e7f4-7dd1-a1cf-afa9616d4a26",
-        "freshnessNote": "Task branch includes current epic head 5273ba7 at review request and GitHub mergeStateStatus was CLEAN. The controller checkpoint advances the epic branch, so freshness must be rechecked before merge."
+        "freshnessNote": "Post-controller-checkpoint freshness recheck required: after epic commit 0eb4472, PR #82 mergeStateStatus is UNKNOWN and the task branch is behind the epic branch (rev-list origin epic...HEAD = 1 3). Refresh against latest epic and rerun freshness verification before merge."
       },
       {
         "id": "WAVE-004-settings-secret-store",
@@ -2274,7 +2276,7 @@
         "lastObservedAt": "2026-07-05T17:32:34Z",
         "reviewRequestedAt": "2026-07-05T17:32:34Z",
         "reviewSubmissionId": "019f3357-e7f4-7dd1-a1cf-afa9616d4a26",
-        "freshnessNote": "Task branch is one epic controller commit behind at review request (rev-list origin epic...HEAD = 1 2) and GitHub mergeStateStatus is DIRTY; refresh required after review and before merge. The controller checkpoint also advances the epic branch, so freshness must be rechecked before merge."
+        "freshnessNote": "Post-controller-checkpoint freshness recheck required: PR #81 was DIRTY before the controller checkpoint and is now mergeStateStatus UNKNOWN after epic commit 0eb4472; the task branch is behind the epic branch (rev-list origin epic...HEAD = 2 2). Refresh against latest epic and rerun freshness verification before merge."
       }
     ],
     "lastObservedAt": "2026-07-05T17:32:34Z"

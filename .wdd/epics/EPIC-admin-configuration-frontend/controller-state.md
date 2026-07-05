@@ -34,10 +34,11 @@ with draft PR #82 for TASK-006 at `3cfca6e`; Euclid returned `DONE` with draft
 PR #81 for TASK-009 at `b96ca9d`. Lorentz review was requested at
 2026-07-05T17:32:34Z under submission
 `019f3357-e7f4-7dd1-a1cf-afa9616d4a26`. PR #82 was clean against the epic
-branch at review request; PR #81 was dirty and must be refreshed against the
-latest epic branch after review and before merge. Because this controller
-checkpoint advances the epic branch, both PRs still require a fresh branch
-freshness check before any merge decision. Do not start WAVE-005.
+branch at review request; PR #81 was dirty. After controller checkpoint
+`0eb4472` advanced the epic branch, GitHub reports both PRs as
+`mergeStateStatus=UNKNOWN`; both task branches require a fresh branch
+freshness refresh and verification before any merge decision. Do not start
+WAVE-005.
 
 ## Wave Summary
 
@@ -130,7 +131,7 @@ wdd-reconcile-wave. Do not start WAVE-005.
 | TASK-003-runtime-config-feasibility | TICKET-001-feasibility-security-design | codex/task/WAVE-001-admin-feasibility-gate | cleaned_up | reconciled | P3 provider URL/egress test feedback addressed; REVIEW_PASS; merged in `1f11365` |
 | TASK-004-admin-auth-persistence | TICKET-002-admin-auth-foundation | codex/task/TASK-004-admin-auth-persistence | cleaned_up | reconciled | REVIEW_PASS; freshness verification passed; merged in `0f96769`; PR #79 merged; WAVE-002 reconciled |
 | TASK-005-admin-session-routes | TICKET-002-admin-auth-foundation | codex/task/TASK-005-admin-session-routes | cleaned_up | reconciled | REVIEW_PASS; freshness verification passed; merged in `ecfe9ac`; PR #80 merged; WAVE-003 reconciled |
-| TASK-006-admin-mfa-step-up | TICKET-002-admin-auth-foundation | codex/task/TASK-006-admin-mfa-step-up | clean_pushed | reviewing | Draft PR #82 at `3cfca6e`; Tesla reported MFA contract, admin-auth integration, typecheck, touched-file ESLint, `git diff --check`, and Codex review passed; branch current/clean at review request |
+| TASK-006-admin-mfa-step-up | TICKET-002-admin-auth-foundation | codex/task/TASK-006-admin-mfa-step-up | clean_pushed | reviewing | Draft PR #82 at `3cfca6e`; Tesla reported MFA contract, admin-auth integration, typecheck, touched-file ESLint, `git diff --check`, and Codex review passed; post-controller-checkpoint branch freshness refresh required |
 | TASK-007-admin-api-shell-diagnostics | TICKET-003-admin-api-foundation | codex/task/TASK-007-admin-api-shell-diagnostics | not_created | planned | `npm test -- tests/contract/admin-api.test.ts`; `npm run typecheck` |
 | TASK-008-admin-key-audit-stats-api | TICKET-003-admin-api-foundation | codex/task/TASK-008-admin-key-audit-stats-api | not_created | planned | `npm test -- tests/contract/admin-key-audit-stats.test.ts`; `npm test -- tests/integration/key-service.test.ts`; `npm run typecheck` |
 | TASK-009-settings-secret-store | TICKET-004-runtime-configuration | codex/task/TASK-009-settings-secret-store | clean_pushed | reviewing | Draft PR #81 at `b96ca9d`; Euclid reported settings, config, migration, admin-auth integration, typecheck, touched-file ESLint, `git diff --check`, and Codex review passed; branch is stale/dirty and needs freshness refresh before merge |
@@ -208,9 +209,9 @@ wdd-reconcile-wave. Do not start WAVE-005.
   PRs under submission `019f3357-e7f4-7dd1-a1cf-afa9616d4a26`. PR #82 was
   `mergeStateStatus=CLEAN` at review request; PR #81 was
   `mergeStateStatus=DIRTY` and one epic controller commit behind (`rev-list` =
-  `1 2`). This controller checkpoint advances the epic branch, so both PRs must
-  be rechecked for branch freshness before merge; PR #81 is already known to
-  need refresh.
+  `1 2`). After controller checkpoint `0eb4472` advanced the epic branch,
+  GitHub reports both PRs as `mergeStateStatus=UNKNOWN`; both task branches
+  need freshness refresh and verification before merge.
 
 ## WAVE-001 Reconciled State
 
@@ -363,8 +364,10 @@ wdd-reconcile-wave. Do not start WAVE-005.
 - WAVE-004 2026-07-05T17:32:34Z review-handoff verification: Tesla and Euclid
   both returned `DONE`; draft PR #82 and draft PR #81 are open against
   `codex/epic/admin-configuration-frontend`; both worktrees are clean and
-  pushed at their PR heads; GitHub reports PR #82 `mergeStateStatus=CLEAN` and
-  PR #81 `mergeStateStatus=DIRTY`; Lorentz review was requested for both PRs.
+  pushed at their PR heads; GitHub initially reported PR #82
+  `mergeStateStatus=CLEAN` and PR #81 `mergeStateStatus=DIRTY`. After
+  controller checkpoint `0eb4472`, GitHub reports both PRs as
+  `mergeStateStatus=UNKNOWN`. Lorentz review was requested for both PRs.
   Controller did not rerun product tests during this handoff and is relying on
   worker-reported verification until review/freshness gates advance.
 
@@ -522,15 +525,15 @@ wdd-reconcile-wave. Do not start WAVE-005.
   passed. The controller requested Lorentz review for both PRs
   (`019f3357-e7f4-7dd1-a1cf-afa9616d4a26`), moved both bundle gates to
   `reviewing`, recorded PR #81 as stale/dirty pending branch freshness, and
-  updated monitoring to five-minute review cadence. Branch freshness must be
-  rechecked after this controller checkpoint is pushed; PR #81 is already known
-  stale/dirty.
+  updated monitoring to five-minute review cadence. After controller checkpoint
+  `0eb4472`, GitHub reports both PRs as `mergeStateStatus=UNKNOWN`; branch
+  freshness must be refreshed before merge.
 
 ## Next Action
 
 Run the next WAVE-004 controller heartbeat at 2026-07-05T17:37:34Z to inspect
 Lorentz review for PR #81 and PR #82. If review reports P1/P2, route feedback
 to the owning worker or a fresh fix worker. If review passes, refresh any stale
-task branch against the latest epic branch (PR #81 is already known
-stale/dirty), rerun required freshness verification, then merge or mark
-merge_ready according to policy. Do not start WAVE-005.
+task branch against the latest epic branch, rerun required freshness
+verification, then merge or mark merge_ready according to policy. Do not start
+WAVE-005.

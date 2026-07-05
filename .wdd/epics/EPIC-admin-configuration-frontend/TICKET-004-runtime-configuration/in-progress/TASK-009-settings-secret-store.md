@@ -222,3 +222,8 @@ Keep generic setting storage separate from provider-specific validation.
   = `1 2`) and needs a branch-freshness refresh after review and before merge.
   The worker branch moved its task copy to `review/`; this epic-side task copy
   records the review gate while the PR is open. Lorentz review is in progress.
+- After controller checkpoint `0eb4472` was pushed, GitHub reports PR #81
+  `mergeStateStatus=UNKNOWN` and the task branch is behind the epic branch
+  (`rev-list origin/codex/epic/admin-configuration-frontend...HEAD` = `2 2`).
+  Refresh against the latest epic branch and rerun freshness verification
+  before merge.

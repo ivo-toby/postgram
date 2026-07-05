@@ -24,7 +24,7 @@ pr: https://github.com/ivo-toby/postgram/pull/82
 worker_thread_id: 019f3333-4033-7463-9819-aa3dec286b4c
 review_thread_id: 019f322c-02e7-7590-8b8e-ebdd1e9c52ac
 current_gate: reviewing
-branch_freshness: current_with_epic_at_review_request
+branch_freshness: stale_needs_freshness_refresh
 verification:
   - npm test -- tests/contract/admin-mfa-routes.test.ts
   - npm test -- tests/integration/admin-auth-service.test.ts
@@ -240,3 +240,8 @@ Keep MFA helpers isolated from ordinary API-key auth.
   `mergeStateStatus=CLEAN`, and the worktree clean/pushed. The worker branch
   moved its task copy to `review/`; this epic-side task copy records the review
   gate while the PR is open. Lorentz review is in progress.
+- After controller checkpoint `0eb4472` was pushed, GitHub reports PR #82
+  `mergeStateStatus=UNKNOWN` and the task branch is behind the epic branch
+  (`rev-list origin/codex/epic/admin-configuration-frontend...HEAD` = `1 3`).
+  Refresh against the latest epic branch and rerun freshness verification
+  before merge.

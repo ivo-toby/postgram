@@ -19,12 +19,12 @@ assigned_model_class: implementationComplex
 review_model_class: review
 branch: codex/task/TASK-006-admin-mfa-step-up
 worker_worktree: /Users/ivo.toby/workspace/postgram/.worktrees/TASK-006-admin-mfa-step-up
-worktree_status: pr_open
+worktree_status: clean_pushed
 pr: https://github.com/ivo-toby/postgram/pull/82
 worker_thread_id: 019f3333-4033-7463-9819-aa3dec286b4c
-review_thread_id: 019f334d-2989-7921-af2a-8cf46c74bc42
+review_thread_id: 019f322c-02e7-7590-8b8e-ebdd1e9c52ac
 current_gate: review
-branch_freshness: current_with_epic_at_pr
+branch_freshness: current_with_epic_at_fix
 verification:
   - npm test -- tests/contract/admin-mfa-routes.test.ts
   - npm test -- tests/integration/admin-auth-service.test.ts
@@ -129,10 +129,14 @@ Verified and dispatched at 2026-07-05T16:47:34Z with worker Tesla
 
 ## PR / Patch Reference
 
-Draft PR: https://github.com/ivo-toby/postgram/pull/82
+Draft PR #82: https://github.com/ivo-toby/postgram/pull/82
 
-Branch `codex/task/TASK-006-admin-mfa-step-up` targets
-`codex/epic/admin-configuration-frontend`.
+Review requested from Lorentz (`019f322c-02e7-7590-8b8e-ebdd1e9c52ac`) at
+2026-07-05T17:32:34Z with submission
+`019f3357-e7f4-7dd1-a1cf-afa9616d4a26`.
+
+Feedback fix requested in submission `019f3366-7cfd-7ee1-b852-1d20abe022d8`
+after Lorentz returned `REVIEW_BLOCKED`.
 
 ## RED-GREEN TDD Plan
 
@@ -222,6 +226,21 @@ Keep MFA helpers isolated from ordinary API-key auth.
   future-dated step-up freshness. All P1/P2 findings were fixed.
 - Final Codex review gate reported no introduced correctness or security
   issues in the changed files.
+- Feedback-fix RED: `npm test -- tests/integration/admin-auth-service.test.ts`
+  failed because MFA audit rows left `audit_log.admin_user_id` null when the
+  #81 audit schema column was present.
+- Feedback-fix GREEN: `npm test -- tests/integration/admin-auth-service.test.ts`
+  passed with 15 tests after `writeAdminMfaAudit` populated
+  `audit_log.admin_user_id` when available.
+- Feedback-fix coverage: `npm test -- tests/contract/admin-mfa-routes.test.ts`
+  passed with 6 tests, including a direct 429 regression for MFA verification
+  and step-up route rate-limit branches.
+- Post-refresh verification after merging latest
+  `origin/codex/epic/admin-configuration-frontend`: `npm test --
+  tests/contract/admin-mfa-routes.test.ts` passed with 6 tests; `npm test --
+  tests/integration/admin-auth-service.test.ts` passed with 15 tests; `npm run
+  typecheck` passed; touched-file `npx eslint ...` passed; `git diff --check`
+  passed.
 
 ## Review Feedback
 
@@ -240,10 +259,19 @@ Keep MFA helpers isolated from ordinary API-key auth.
   active admin session before using the separate step-up rate-limit bucket.
 - Resolved: step-up freshness rejects future-dated `mfa_verified_at`
   timestamps.
+- Resolved: `P2-mfa-audit-structured-admin-actor` now writes
+  `audit_log.admin_user_id` when the structured actor column exists. This task
+  does not duplicate #81 migration ownership; until #81 lands, the legacy audit
+  schema remains compatible and actor attribution also remains in safe details.
+- Resolved: `P2-branch-freshness-task-file-conflict` by merging latest
+  `origin/codex/epic/admin-configuration-frontend`; product code auto-merged
+  and the only conflict was this TASK-006 task file.
 
 ### P3
 
-- None.
+- Resolved: added direct contract coverage that five failed MFA verification
+  attempts make the next MFA verification return 429, and five failed step-up
+  attempts make the next step-up return 429.
 
 ## Completion Notes
 
@@ -263,3 +291,20 @@ Keep MFA helpers isolated from ordinary API-key auth.
 - Merged the latest epic heartbeat commit into the task branch before opening
   PR #82 so the draft PR targets the current
   `codex/epic/admin-configuration-frontend` state.
+- 2026-07-05T17:32:34Z controller heartbeat observed Tesla `DONE`, draft PR
+  #82 open at `3cfca6e9da0d1f5b675616e28546302a6fcad7f4`, GitHub
+  `mergeStateStatus=CLEAN`, and the worktree clean/pushed. The worker branch
+  moved its task copy to `review/`; this epic-side task copy records the review
+  gate while the PR is open. Lorentz review is in progress.
+- After controller checkpoint `0eb4472` was pushed, GitHub reports PR #82
+  `mergeStateStatus=UNKNOWN` and the task branch is behind the epic branch
+  (`rev-list origin/codex/epic/admin-configuration-frontend...HEAD` = `1 3`).
+  Refresh against the latest epic branch and rerun freshness verification
+  before merge.
+- 2026-07-05T17:48:34Z Lorentz returned `REVIEW_BLOCKED` for PR #82 with two
+  P2 findings and one P3 suggestion. Controller routed the fixes to Tesla in
+  submission `019f3366-7cfd-7ee1-b852-1d20abe022d8`; gate was `needs_fixes`.
+- Feedback fix adds structured MFA audit actor attribution when the #81
+  `audit_log.admin_user_id` column exists, preserves compatibility before that
+  migration lands, adds direct MFA/step-up 429 route coverage, and refreshes
+  the branch against the latest epic state.

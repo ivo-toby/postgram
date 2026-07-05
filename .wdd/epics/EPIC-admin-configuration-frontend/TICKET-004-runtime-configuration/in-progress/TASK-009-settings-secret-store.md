@@ -20,12 +20,12 @@ assigned_model_class: implementationComplex
 review_model_class: review
 branch: codex/task/TASK-009-settings-secret-store
 worker_worktree: /Users/ivo.toby/workspace/postgram/.worktrees/TASK-009-settings-secret-store
-worktree_status: active_uncommitted
-pr: null
+worktree_status: clean_pushed
+pr: https://github.com/ivo-toby/postgram/pull/81
 worker_thread_id: 019f3333-4104-7b02-b1aa-1fce6978e410
-review_thread_id: null
-current_gate: no_pr
-branch_freshness: current_at_dispatch
+review_thread_id: 019f322c-02e7-7590-8b8e-ebdd1e9c52ac
+current_gate: needs_fixes
+branch_freshness: stale_needs_freshness_refresh
 verification:
   - npm test -- tests/integration/admin-settings-service.test.ts
   - npm run typecheck
@@ -122,7 +122,11 @@ Verified and dispatched at 2026-07-05T16:47:34Z with worker Euclid
 
 ## PR / Patch Reference
 
-None yet.
+Draft PR #81: https://github.com/ivo-toby/postgram/pull/81
+
+Review requested from Lorentz (`019f322c-02e7-7590-8b8e-ebdd1e9c52ac`) at
+2026-07-05T17:32:34Z with submission
+`019f3357-e7f4-7dd1-a1cf-afa9616d4a26`.
 
 ## RED-GREEN TDD Plan
 
@@ -172,7 +176,16 @@ Keep generic setting storage separate from provider-specific validation.
 
 ## Verification Evidence
 
-- Not run yet.
+- Euclid reported:
+  - `npm test -- tests/integration/admin-settings-service.test.ts` passed.
+  - `npm run typecheck` passed.
+  - `git diff --check` passed.
+  - touched-file `eslint` passed.
+  - `npm test -- tests/unit/config.test.ts` passed.
+  - `npm test -- tests/integration/migration.test.ts` passed.
+  - `npm test -- tests/integration/admin-auth-service.test.ts` passed.
+  - `codex review --uncommitted` found no blocking issues after fixing the P1
+    secret-bypass finding.
 
 ## Review Feedback
 
@@ -182,7 +195,18 @@ Keep generic setting storage separate from provider-specific validation.
 
 ### P2
 
-- None.
+- `P2-secret-validation-metadata-redaction` routed to Euclid at
+  2026-07-05T17:48:34Z (`019f3366-7c9b-7b33-9d93-0009fa0ec291`): Lorentz
+  found `saveRuntimeSecret` accepts arbitrary `validation.metadata` and
+  redacted secret metadata reads return `mapValidation(row)` unchanged,
+  allowing plaintext/token/auth/provider response metadata to leak. Fix by
+  schema-limiting/sanitizing secret validation metadata or not returning
+  arbitrary metadata, with a malicious metadata regression.
+- `P2-branch-freshness-task-file-conflict` routed to Euclid at
+  2026-07-05T17:48:34Z (`019f3366-7c9b-7b33-9d93-0009fa0ec291`): PR #81 is
+  not mergeable against the latest epic branch. Reviewer says conflicts are
+  WDD task-file only and product code auto-merges; refresh against latest epic
+  after code fix and before merge.
 
 ### P3
 
@@ -202,3 +226,18 @@ Keep generic setting storage separate from provider-specific validation.
   `tests/unit/config.test.ts`, and
   `tests/integration/admin-settings-service.test.ts`. No PR or patch exists
   yet; branch remains current with the epic branch at `f9bbc0f`.
+- 2026-07-05T17:32:34Z controller heartbeat observed Euclid `DONE`, draft PR
+  #81 open at `b96ca9d5b0ff3445aa8a8231451998f86ce23e5c`, and the worktree
+  clean/pushed. GitHub reports `mergeStateStatus=DIRTY`; the branch is one
+  epic controller commit behind (`rev-list origin/codex/epic/admin-configuration-frontend...HEAD`
+  = `1 2`) and needs a branch-freshness refresh after review and before merge.
+  The worker branch moved its task copy to `review/`; this epic-side task copy
+  records the review gate while the PR is open. Lorentz review is in progress.
+- After controller checkpoint `0eb4472` was pushed, GitHub reports PR #81
+  `mergeStateStatus=UNKNOWN` and the task branch is behind the epic branch
+  (`rev-list origin/codex/epic/admin-configuration-frontend...HEAD` = `2 2`).
+  Refresh against the latest epic branch and rerun freshness verification
+  before merge.
+- 2026-07-05T17:48:34Z Lorentz returned `REVIEW_BLOCKED` for PR #81 with two
+  P2 findings. Controller routed the fixes to Euclid in submission
+  `019f3366-7c9b-7b33-9d93-0009fa0ec291`; gate is `needs_fixes`.

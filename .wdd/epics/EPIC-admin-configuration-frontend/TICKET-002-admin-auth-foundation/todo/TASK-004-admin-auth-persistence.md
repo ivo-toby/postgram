@@ -46,21 +46,30 @@ WAVE-002
 
 ## Objective
 
-Add admin identity/session/MFA persistence and core service tests without
-registering browser routes yet.
+Add admin identity/session/MFA/bootstrap-token persistence and core service
+tests without registering browser routes yet.
 
 ## Scope
 
 - Included:
   - Admin user, session, MFA factor, and login attempt or lockout tables.
+  - Bootstrap token persistence/service contract: hash-only storage, expiry,
+    single-use consumption, invalidation after use, and persistence-backed
+    attempt/rate-limit metadata if used by the route layer.
+  - Atomic first-admin setup persistence contract: consume the bootstrap token
+    and create the first admin in a non-active/pending-MFA setup state in one
+    transaction.
   - Admin auth service functions for creating admin users, password hashing,
     password verification, session creation, session lookup, and invalidation.
   - Test helper reset updates.
-  - Integration tests for persistence and password policy.
+  - Integration tests for persistence, password policy, bootstrap token
+    lifecycle, and pending first-admin activation state.
 - Excluded:
   - HTTP routes.
   - UI.
   - OIDC login.
+  - TOTP verification or MFA route behavior; TASK-006 completes MFA and active
+    first-admin transition.
 
 ## Non-Scope
 
@@ -121,7 +130,9 @@ None yet.
 ### RED
 
 Add failing service tests for admin creation, password policy, hash storage,
-session creation/lookup, session expiry, and logout/invalidation.
+session creation/lookup, session expiry, logout/invalidation, bootstrap token
+hash/expiry/single-use behavior, and atomic first-admin creation in a
+pending-MFA/non-active state.
 
 ### GREEN
 
@@ -136,6 +147,13 @@ Keep service APIs independent from HTTP and UI concerns.
 
 - Follow existing `neverthrow` service style where practical.
 - Avoid storing plaintext secrets or MFA seeds in logs or returned payloads.
+- Store only bootstrap token hashes; never return a stored plaintext bootstrap
+  token from service reads.
+- Use a transaction/row lock or equivalent atomic guard so two concurrent
+  first-admin attempts cannot both consume the bootstrap token or activate two
+  initial admins.
+- Persist enough state for TASK-006 to prove the first admin cannot become
+  active until MFA enrollment/verification completes.
 - Update test reset order for new tables.
 
 ## Durable Memory Notes To Consider
@@ -147,6 +165,9 @@ Keep service APIs independent from HTTP and UI concerns.
 - [ ] Migrations are present and covered.
 - [ ] Admin service tests pass.
 - [ ] Password hashes and session tokens are not stored plaintext.
+- [ ] Bootstrap tokens are stored hash-only, expire, and are single-use.
+- [ ] First-admin creation is atomic and leaves the admin non-active/pending
+      MFA until TASK-006 completes the MFA transition.
 - [ ] API-key auth remains unchanged.
 
 ## Validation Steps

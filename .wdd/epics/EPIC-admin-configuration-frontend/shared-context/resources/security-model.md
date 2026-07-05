@@ -190,6 +190,19 @@ Implementation notes for later workers:
 - Require password policy validation and MFA enrollment before marking the
   first admin active.
 
+Implementation ownership split:
+
+- TASK-004 owns bootstrap token persistence and service contracts: hash-only
+  token storage, expiry, single-use consumption, invalidation after use, and
+  the atomic persistence contract that consumes the token while creating the
+  first admin in a non-active/pending-MFA state.
+- TASK-005 owns bootstrap route behavior: public status state, setup request
+  parsing, safe HTTP errors for missing/invalid/expired/used tokens, session
+  cookie behavior, CSRF semantics, and bearer-token denial on admin routes.
+- TASK-006 owns MFA completion and activation: TOTP enrollment/verification,
+  session MFA state, step-up helpers, and the testable transition proving the
+  first admin is not active until MFA is verified.
+
 ## OAuth/OIDC Boundary
 
 Existing OAuth/DCR is for native remote MCP connectors. It lets external clients
@@ -248,7 +261,8 @@ Before implementation tasks are considered safe, tests/review must prove:
 
 - Public setup without a bootstrap token cannot create an admin.
 - Used, expired, or missing bootstrap tokens cannot create an admin.
-- First-admin setup requires MFA enrollment before active admin access.
+- First-admin setup creates at most a non-active/pending-MFA admin until TASK-006
+  verifies MFA and performs the active transition.
 - Ordinary API keys and MCP OAuth bearer tokens receive 401/403 from admin
   routes.
 - Admin mutations reject missing/invalid CSRF tokens.

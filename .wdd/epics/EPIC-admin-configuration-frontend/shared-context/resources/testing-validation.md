@@ -37,6 +37,9 @@ coverage.
   display.
 - Runtime settings save, validation, secret redaction, and provider connection
   tests.
+- Provider URL/egress safety tests for admin-configured base URLs such as
+  `EXTRACTION_BASE_URL`, including the chosen scheme/host/IP allow-deny policy
+  and proof that connection tests cannot be used as generic blind SSRF.
 - Installation encryption key failure/missing-key behavior for stored secrets.
 - Provider apply/reload behavior for extraction settings and embedding
   migration refusal for unsafe identity changes.
@@ -107,12 +110,20 @@ P1/P2 security findings block merge by default.
 
 WAVE-001 specific gates for later waves:
 
-- TASK-004/TASK-005 must prove API-key bearer auth and MCP OAuth bearer tokens
-  cannot access admin routes.
-- TASK-004 must prove first-admin bootstrap cannot be claimed remotely without
-  the generated token and that MFA is required before active admin access.
+- TASK-004 must prove bootstrap token persistence is hash-only, expiring,
+  single-use, and consumed atomically with creation of a non-active/pending-MFA
+  first admin.
+- TASK-005 must prove bootstrap routes reject missing, invalid, expired, used,
+  and rate-limited tokens safely; enforce route/session/CSRF semantics; and
+  reject API-key bearer auth and MCP OAuth bearer tokens on admin routes.
+- TASK-006 must prove the first admin cannot become active until MFA enrollment
+  and verification complete, then prove the MFA completion path performs the
+  active transition and step-up state correctly.
 - TASK-009/TASK-010 must prove provider secrets are write-only/redacted and
   that embedding identity changes use the migration job path.
+- TASK-010 must prove provider URL validation enforces the chosen egress/SSRF
+  safety policy for `EXTRACTION_BASE_URL` and other provider base URLs, not
+  just generic connection-test failure/success.
 - TASK-014/TASK-015/TASK-016 must prove destructive operations have dry-run or
   explicit confirmation, step-up, audit, and job/progress evidence.
 - TASK-017 must run a clean-volume Docker smoke for the no-normal-CLI setup

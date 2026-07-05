@@ -58,6 +58,9 @@ approved first runtime settings scope.
   - Admin API/service for reading redacted provider settings.
   - Save and validate embedding/extraction provider settings.
   - Connection-test or validation endpoint.
+  - Explicit URL/egress safety validation for admin-configured provider base
+    URLs, especially `EXTRACTION_BASE_URL`, so connection tests cannot become a
+    generic server-side request primitive.
   - Apply/reload/reinitialize behavior according to TASK-003 decision.
   - Docker and docs updates for any new required config.
 - Excluded:
@@ -129,7 +132,8 @@ None yet.
 ### RED
 
 Add failing tests for redacted config read, invalid provider settings,
-connection-test failure/success, and apply behavior.
+provider URL/egress safety policy enforcement, connection-test
+failure/success, and apply behavior.
 
 ### GREEN
 
@@ -143,6 +147,10 @@ Keep provider construction logic centralized to avoid env/DB drift.
 
 - Preserve current env behavior as fallback unless Wave 1 decided otherwise.
 - Make restart-required or reembed-required states explicit in API responses.
+- Treat provider base URLs as attacker-controlled admin input. Tests must cover
+  the chosen allow/deny policy for schemes, hostnames/IPs, local-provider
+  exceptions, metadata/link-local/private-network handling, redirects if
+  allowed, and error redaction.
 
 ## Durable Memory Notes To Consider
 
@@ -153,6 +161,8 @@ Keep provider construction logic centralized to avoid env/DB drift.
 
 - [ ] Provider config APIs are covered.
 - [ ] Secrets are redacted.
+- [ ] Provider URL validation has explicit egress/SSRF-safety coverage, not
+      only generic connection-test success/failure coverage.
 - [ ] Apply/reload behavior is explicit and safe.
 - [ ] Docker/docs reflect new runtime configuration.
 

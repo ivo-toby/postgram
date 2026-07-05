@@ -52,13 +52,17 @@ CSRF protection, and login lockout/rate-limit behavior.
 
 - Included:
   - Dedicated admin route registration.
-  - Bootstrap route according to Wave 1 decision.
+  - Bootstrap status/setup routes according to the Wave 1 decision, backed by
+    TASK-004 bootstrap token and pending first-admin services.
+  - Route behavior for missing, expired, used, invalid, and rate-limited
+    bootstrap tokens without leaking token validity details.
   - Session cookie issuance and clearing.
   - CSRF token issuance and mutation enforcement.
   - Admin middleware rejecting missing/expired sessions.
   - Tests proving ordinary bearer tokens do not authorize admin endpoints.
 - Excluded:
-  - MFA implementation beyond "MFA required" placeholders if needed.
+  - MFA implementation beyond "MFA required/pending" placeholders if needed.
+  - Activating the first admin after MFA; TASK-006 owns that transition.
   - Admin business endpoints.
 
 ## Non-Scope
@@ -120,7 +124,8 @@ None yet.
 
 ### RED
 
-Write route tests for bootstrap status, successful login, logout, current
+Write route tests for bootstrap status, setup refusal without a valid token,
+used/expired bootstrap token behavior, successful login, logout, current
 session, CSRF rejection, lockout/rate-limit behavior, and bearer-token denial.
 
 ### GREEN
@@ -136,6 +141,14 @@ Keep route parsing and cookie helpers focused and reusable for MFA routes.
 - Cookie flags must be explicit and environment-aware for secure deployments.
 - Mutating admin requests must fail without CSRF.
 - Avoid leaking whether a username exists in login errors.
+- Bootstrap status may be public, but it must expose only state and never token
+  material.
+- Bootstrap setup routes must use the TASK-004 atomic persistence service; the
+  route layer owns HTTP parsing, cookies/session behavior, CSRF semantics, and
+  safe error mapping.
+- If TASK-006 is not implemented yet, first-admin setup must leave the account
+  pending/non-active and return a state that cannot be used as full admin
+  access.
 
 ## Durable Memory Notes To Consider
 
@@ -144,6 +157,8 @@ Keep route parsing and cookie helpers focused and reusable for MFA routes.
 ## Task-Level Definition of Done
 
 - [ ] Admin session routes are covered.
+- [ ] Bootstrap status/setup routes are covered for valid, missing, invalid,
+      expired, and already-used token states.
 - [ ] Admin middleware rejects ordinary API keys and OAuth tokens.
 - [ ] CSRF is enforced for mutations.
 - [ ] Lockout/rate-limit behavior is covered.

@@ -1217,7 +1217,7 @@
       "WAVE-001-admin-feasibility-gate": "verified"
     },
     "workerDispatch": {
-      "WAVE-001-admin-feasibility-gate": "no_pr"
+      "WAVE-001-admin-feasibility-gate": "ready_for_review"
     },
     "waveCompletion": {
       "WAVE-001": "in_progress"

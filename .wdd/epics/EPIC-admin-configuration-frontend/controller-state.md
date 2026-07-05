@@ -45,9 +45,9 @@ moved the three bundled tasks to review.
 
 Mode: codex_thread_heartbeat
 
-Cadence: adaptive, every 15 minutes while no PR or patch exists
+Cadence: adaptive review/PR monitoring
 
-Status: active
+Status: active for PR review routing
 
 Last check: 2026-07-05T11:41:41Z
 
@@ -175,6 +175,10 @@ wdd-reconcile-wave.
   passed `git diff --check`.
 - 2026-07-05: Draft PR opened for WAVE-001:
   https://github.com/ivo-toby/postgram/pull/78.
+- 2026-07-05: Lorentz returned REVIEW_BLOCKED on PR #78 with two P2 findings
+  and one P3. Worker Singer routed fixes into the same branch: explicit
+  bootstrap/MFA task ownership, workerDispatch gate consistency, and provider
+  URL/egress safety test expectations.
 
 ## Next Action
 

@@ -199,6 +199,12 @@ First implementation strategy:
 
 Provider validation should not leak secrets in errors. Store safe failure
 summaries and redact request headers, tokens, and provider responses.
+Admin-configured provider URLs are attacker-controlled inputs; TASK-010 must
+define and test an explicit URL/egress safety policy for `EXTRACTION_BASE_URL`,
+`EMBEDDING_BASE_URL`, `OLLAMA_BASE_URL`, and equivalent future base URLs so
+provider connection tests cannot become a generic SSRF primitive. The policy
+must cover allowed schemes, hostnames/IPs, redirects if allowed, and any
+deliberate local-provider exception such as Docker host Ollama access.
 
 ## Migration Notes
 

@@ -39,7 +39,10 @@ WAVE-001 route implications:
 
 - Bootstrap status may be public but must expose only state, never token
   material.
-- First admin creation must require bootstrap token proof and MFA enrollment.
+- First admin setup must require bootstrap token proof. The route layer may
+  create a pending/non-active first-admin setup state through TASK-004 services,
+  but active admin access is completed only by the TASK-006 MFA enrollment and
+  verification transition.
 - Admin routes should ignore/reject `Authorization: Bearer` API keys or MCP
   OAuth access tokens rather than treating them as admin credentials.
 - Maintenance routes must be typed operation routes, not CLI command passthrough

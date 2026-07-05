@@ -20,7 +20,7 @@ assigned_model_class: implementationComplex
 review_model_class: review
 branch: codex/task/TASK-009-settings-secret-store
 worker_worktree: /Users/ivo.toby/workspace/postgram/.worktrees/TASK-009-settings-secret-store
-worktree_status: verified_dispatched
+worktree_status: active_uncommitted
 pr: null
 worker_thread_id: 019f3333-4104-7b02-b1aa-1fce6978e410
 review_thread_id: null
@@ -195,3 +195,10 @@ Keep generic setting storage separate from provider-specific validation.
   pushed activation artifact commit.
 - Controller verified the worktree and dispatched worker Euclid
   (`019f3333-4104-7b02-b1aa-1fce6978e410`). No PR or patch exists yet.
+- 2026-07-05T17:12:04Z controller heartbeat observed active uncommitted work
+  in `.env.example`, `README.md`, `docker-compose.yml`, `src/config.ts`,
+  `src/db/migrations/011_admin_settings.sql`,
+  `src/services/admin-settings-service.ts`, `tests/helpers/postgres.ts`,
+  `tests/unit/config.test.ts`, and
+  `tests/integration/admin-settings-service.test.ts`. No PR or patch exists
+  yet; branch remains current with the epic branch at `f9bbc0f`.

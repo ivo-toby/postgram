@@ -29,8 +29,9 @@ WAVE-003 is done and reconciled. PR #80 was merged by GitHub at
 2026-07-05T16:25:30Z, TASK-005 was merged into the epic branch in `ecfe9ac`,
 and the TASK-005 worktree was cleaned up.
 
-Next phase: monitor workers Tesla and Euclid for PRs or patches. Do not start
-WAVE-005.
+Next phase: monitor workers Tesla and Euclid for PRs or patches. Both workers
+had active uncommitted implementation changes at the 2026-07-05T17:12:04Z
+heartbeat, with no PR or patch yet. Do not start WAVE-005.
 
 ## Wave Summary
 
@@ -56,9 +57,9 @@ Cadence: 15 minutes
 
 Status: active
 
-Last check: 2026-07-05T16:47:34Z
+Last check: 2026-07-05T17:12:04Z
 
-Next check due: 2026-07-05T17:02:34Z
+Next check due: 2026-07-05T17:27:04Z
 
 Scheduler reference: `postgram-admin-wave-004-start-heartbeat`
 
@@ -122,10 +123,10 @@ wdd-reconcile-wave. Do not start WAVE-005.
 | TASK-003-runtime-config-feasibility | TICKET-001-feasibility-security-design | codex/task/WAVE-001-admin-feasibility-gate | cleaned_up | reconciled | P3 provider URL/egress test feedback addressed; REVIEW_PASS; merged in `1f11365` |
 | TASK-004-admin-auth-persistence | TICKET-002-admin-auth-foundation | codex/task/TASK-004-admin-auth-persistence | cleaned_up | reconciled | REVIEW_PASS; freshness verification passed; merged in `0f96769`; PR #79 merged; WAVE-002 reconciled |
 | TASK-005-admin-session-routes | TICKET-002-admin-auth-foundation | codex/task/TASK-005-admin-session-routes | cleaned_up | reconciled | REVIEW_PASS; freshness verification passed; merged in `ecfe9ac`; PR #80 merged; WAVE-003 reconciled |
-| TASK-006-admin-mfa-step-up | TICKET-002-admin-auth-foundation | codex/task/TASK-006-admin-mfa-step-up | verified_dispatched | no_pr | worker Tesla dispatched; waiting for PR/patch; `npm test -- tests/contract/admin-mfa-routes.test.ts`; `npm test -- tests/integration/admin-auth-service.test.ts`; `npm run typecheck` |
+| TASK-006-admin-mfa-step-up | TICKET-002-admin-auth-foundation | codex/task/TASK-006-admin-mfa-step-up | active_uncommitted | no_pr | Tesla has active uncommitted MFA route/service/test work; no PR/patch yet; branch current with epic at `f9bbc0f` |
 | TASK-007-admin-api-shell-diagnostics | TICKET-003-admin-api-foundation | codex/task/TASK-007-admin-api-shell-diagnostics | not_created | planned | `npm test -- tests/contract/admin-api.test.ts`; `npm run typecheck` |
 | TASK-008-admin-key-audit-stats-api | TICKET-003-admin-api-foundation | codex/task/TASK-008-admin-key-audit-stats-api | not_created | planned | `npm test -- tests/contract/admin-key-audit-stats.test.ts`; `npm test -- tests/integration/key-service.test.ts`; `npm run typecheck` |
-| TASK-009-settings-secret-store | TICKET-004-runtime-configuration | codex/task/TASK-009-settings-secret-store | verified_dispatched | no_pr | worker Euclid dispatched; waiting for PR/patch; `npm test -- tests/integration/admin-settings-service.test.ts`; `npm run typecheck` |
+| TASK-009-settings-secret-store | TICKET-004-runtime-configuration | codex/task/TASK-009-settings-secret-store | active_uncommitted | no_pr | Euclid has active uncommitted settings/secret-store migration/service/config/docs work; no PR/patch yet; branch current with epic at `f9bbc0f` |
 | TASK-010-provider-config-apply | TICKET-004-runtime-configuration | codex/task/TASK-010-provider-config-apply | not_created | planned | `npm test -- tests/integration/admin-provider-config.test.ts`; `npm test -- tests/unit/config.test.ts`; `npm run typecheck` |
 | TASK-011-admin-auth-ui | TICKET-005-admin-frontend | codex/task/TASK-011-admin-auth-ui | not_created | planned | `npm --prefix ui run test -- --run src/components/AdminAuth.test.tsx`; `npm --prefix ui run typecheck` |
 | TASK-012-admin-ops-dashboard-ui | TICKET-005-admin-frontend | codex/task/TASK-012-admin-ops-dashboard-ui | not_created | planned | `npm --prefix ui run test -- --run src/components/AdminOps.test.tsx`; `npm --prefix ui run typecheck` |
@@ -189,6 +190,11 @@ wdd-reconcile-wave. Do not start WAVE-005.
   `/Users/ivo.toby/workspace/postgram/.worktrees/TASK-009-settings-secret-store`.
 - WAVE-004 task branches were created from activation commit `f183a28`, pushed
   to origin, verified, and dispatched to Tesla and Euclid.
+- WAVE-004 2026-07-05T17:12:04Z observation: Tesla and Euclid are both still
+  running. Neither worker returned a final status or opened a PR/patch. Both
+  task branches are current with the epic branch at `f9bbc0f`, and both
+  worktrees contain active uncommitted implementation changes in expected
+  task-owned areas.
 
 ## WAVE-001 Reconciled State
 
@@ -334,6 +340,10 @@ wdd-reconcile-wave. Do not start WAVE-005.
   state, both branches were pushed to origin, and workers Tesla/Euclid were
   dispatched. Product code tests are worker-owned and not run by the
   controller during activation.
+- WAVE-004 2026-07-05T17:12:04Z heartbeat verification: worker poll timed out
+  without final statuses; GitHub has no PRs for either task branch; both
+  branches are current with `origin/codex/epic/admin-configuration-frontend`;
+  no controller verification commands were run against uncommitted worker code.
 
 ## Event Log
 
@@ -479,8 +489,11 @@ wdd-reconcile-wave. Do not start WAVE-005.
   verified WAVE-004 task branches/worktrees from that commit, pushed both task
   branches to origin, dispatched worker Tesla for TASK-006 and worker Euclid
   for TASK-009, and set WAVE-004 monitoring to 15-minute heartbeat cadence.
+- 2026-07-05T17:12:04Z: Heartbeat inspected workers Tesla and Euclid. Both are
+  still running with active uncommitted changes in their assigned worktrees. No
+  PR or patch exists for either branch, so both bundle gates remain `no_pr`.
 
 ## Next Action
 
-Run the next WAVE-004 controller heartbeat at 2026-07-05T17:02:34Z to inspect
+Run the next WAVE-004 controller heartbeat at 2026-07-05T17:27:04Z to inspect
 workers Tesla and Euclid for PRs or patches.

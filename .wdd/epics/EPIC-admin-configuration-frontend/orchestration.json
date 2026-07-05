@@ -245,7 +245,13 @@
           "mergedAt": "2026-07-05T12:25:33Z",
           "mergeCommit": "1f11365",
           "cleanupState": "cleanup_deferred",
-          "sharedContextReconciliation": "queued_for_wdd-reconcile-wave"
+          "sharedContextReconciliation": "queued_for_wdd-reconcile-wave",
+          "prState": {
+            "state": "MERGED",
+            "mergedAt": "2026-07-05T12:39:56Z",
+            "remoteBasePushedAt": "2026-07-05T12:39:56Z",
+            "closeoutCommit": "5856d75"
+          }
         }
       ]
     },
@@ -576,7 +582,13 @@
       "mergedAt": "2026-07-05T12:25:33Z",
       "mergeCommit": "1f11365",
       "cleanupState": "cleanup_deferred",
-      "sharedContextReconciliation": "queued_for_wdd-reconcile-wave"
+      "sharedContextReconciliation": "queued_for_wdd-reconcile-wave",
+      "prState": {
+        "state": "MERGED",
+        "mergedAt": "2026-07-05T12:39:56Z",
+        "remoteBasePushedAt": "2026-07-05T12:39:56Z",
+        "closeoutCommit": "5856d75"
+      }
     },
     {
       "id": "TASK-002-threat-model-bootstrap",
@@ -620,7 +632,13 @@
       "mergedAt": "2026-07-05T12:25:33Z",
       "mergeCommit": "1f11365",
       "cleanupState": "cleanup_deferred",
-      "sharedContextReconciliation": "queued_for_wdd-reconcile-wave"
+      "sharedContextReconciliation": "queued_for_wdd-reconcile-wave",
+      "prState": {
+        "state": "MERGED",
+        "mergedAt": "2026-07-05T12:39:56Z",
+        "remoteBasePushedAt": "2026-07-05T12:39:56Z",
+        "closeoutCommit": "5856d75"
+      }
     },
     {
       "id": "TASK-003-runtime-config-feasibility",
@@ -677,7 +695,13 @@
       "mergedAt": "2026-07-05T12:25:33Z",
       "mergeCommit": "1f11365",
       "cleanupState": "cleanup_deferred",
-      "sharedContextReconciliation": "queued_for_wdd-reconcile-wave"
+      "sharedContextReconciliation": "queued_for_wdd-reconcile-wave",
+      "prState": {
+        "state": "MERGED",
+        "mergedAt": "2026-07-05T12:39:56Z",
+        "remoteBasePushedAt": "2026-07-05T12:39:56Z",
+        "closeoutCommit": "5856d75"
+      }
     },
     {
       "id": "TASK-004-admin-auth-persistence",
@@ -1342,7 +1366,13 @@
         "mergedAt": "2026-07-05T12:25:33Z",
         "mergeCommit": "1f11365",
         "cleanupState": "cleanup_deferred",
-        "sharedContextReconciliation": "queued_for_wdd-reconcile-wave"
+        "sharedContextReconciliation": "queued_for_wdd-reconcile-wave",
+        "prState": {
+          "state": "MERGED",
+          "mergedAt": "2026-07-05T12:39:56Z",
+          "remoteBasePushedAt": "2026-07-05T12:39:56Z",
+          "closeoutCommit": "5856d75"
+        }
       }
     ]
   },
@@ -1440,11 +1470,22 @@
         "status": "merged",
         "commit": "1f11365",
         "mergedAt": "2026-07-05T12:25:33Z",
-        "cleanupState": "cleanup_deferred"
+        "cleanupState": "cleanup_deferred",
+        "remotePrState": "MERGED",
+        "remotePrMergedAt": "2026-07-05T12:39:56Z",
+        "closeoutCommit": "5856d75"
       }
     },
     "sharedContextReconciliation": {
       "WAVE-001": "queued_for_wdd-reconcile-wave"
+    },
+    "prState": {
+      "WAVE-001-admin-feasibility-gate": {
+        "state": "MERGED",
+        "mergedAt": "2026-07-05T12:39:56Z",
+        "remoteBasePushedAt": "2026-07-05T12:39:56Z",
+        "closeoutCommit": "5856d75"
+      }
     }
   }
 }

@@ -113,6 +113,8 @@ decisions, and stop before starting WAVE-002.
 - WAVE-001 bundle worktree:
   `/Users/ivo.toby/workspace/postgram/.worktrees/WAVE-001-admin-feasibility-gate`.
 - WAVE-001 draft PR: https://github.com/ivo-toby/postgram/pull/78.
+- WAVE-001 PR state: merged by GitHub after the epic branch push at
+  2026-07-05T12:39:56Z.
 - Worker worktrees: WAVE-001 bundle cleanup deferred until reconciliation/audit
   completes.
 - Worker: Singer (`019f3215-2eb6-75f2-81f0-bf527e73258b`).
@@ -200,6 +202,8 @@ decisions, and stop before starting WAVE-002.
   `codex/task/WAVE-001-admin-feasibility-gate` into the epic branch in
   `1f11365`; moved TASK-001, TASK-002, and TASK-003 to done with cleanup
   deferred until reconciliation/audit.
+- 2026-07-05T12:39:56Z: Pushed epic closeout commit `5856d75` to origin;
+  GitHub marked PR #78 as merged.
 
 ## Next Action
 

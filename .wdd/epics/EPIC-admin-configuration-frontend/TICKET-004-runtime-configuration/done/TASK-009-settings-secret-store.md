@@ -6,7 +6,7 @@ ticket: TICKET-004-runtime-configuration
 wave: WAVE-004
 slug: settings-secret-store
 title: Settings And Secret Store
-status: review
+status: done
 depends_on:
   - TASK-003-runtime-config-feasibility
   - TASK-005-admin-session-routes
@@ -24,7 +24,7 @@ worktree_status: clean_pushed
 pr: https://github.com/ivo-toby/postgram/pull/81
 worker_thread_id: 019f3333-4104-7b02-b1aa-1fce6978e410
 review_thread_id: 019f322c-02e7-7590-8b8e-ebdd1e9c52ac
-current_gate: review_passed_pending_merge
+current_gate: merged
 branch_freshness: current_after_epic_merge
 verification:
   - npm test -- tests/integration/admin-settings-service.test.ts
@@ -40,7 +40,7 @@ verification:
 
 ## Status
 
-review
+done
 
 ## Parent Ticket
 
@@ -345,5 +345,7 @@ Keep generic setting storage separate from provider-specific validation.
 - 2026-07-05T18:10Z controller merged latest epic checkpoint `d1642d5` into
   the task branch for final freshness; only this WDD task file conflicted, and
   the resolution preserved the worker fix evidence and Lorentz `REVIEW_PASS`.
-- Final gate: draft PR #81 is review-passed and current with the latest epic
-  branch; merge into the epic branch is pending controller merge sequencing.
+- 2026-07-05T18:12Z controller merged TASK-009 into the epic branch in
+  `b63ad08619f3fb96606a7adc2fcd84118c106637` after Lorentz `REVIEW_PASS`,
+  final branch freshness, and passing verification. Task moved to `done/`;
+  worktree cleanup is deferred until WAVE-004 reconciliation.

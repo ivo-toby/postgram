@@ -1729,7 +1729,7 @@
     "mode": "codex_thread_heartbeat",
     "cadence": "5m",
     "status": "handoff_to_reconciliation",
-    "lastCheckedAt": "2026-07-05T18:16:00Z",
+    "lastCheckedAt": "2026-07-05T18:18:00Z",
     "nextCheckDueAt": "2026-07-05T18:21:00Z",
     "schedulerRef": "postgram-admin-wave-004-start-heartbeat",
     "fallbackPrompt": "Run one bounded WDD reconciliation handoff heartbeat for /Users/ivo.toby/workspace/postgram, epic EPIC-admin-configuration-frontend, active wave WAVE-004. Use the wdd-reconcile-wave skill. Start in /Users/ivo.toby/workspace/postgram on branch codex/epic/admin-configuration-frontend. Read .wdd/epics/EPIC-admin-configuration-frontend/orchestration.json and controller-state.md. Confirm WAVE-004 bundles TASK-009-settings-secret-store and TASK-006-admin-mfa-step-up are merged into the epic branch in local merge commits b63ad086 and 6666508, task files are in done/, currentGates.workerDispatch entries are merged, WAVE-004 waveCompletion is ready_for_reconciliation, branch freshness is current_at_merge, cleanup is cleanup_deferred, blocking feedback is empty, and shared-context reconciliation is queued. Run wdd-reconcile-wave for WAVE-004, reconcile settings/secret-store and MFA/step-up decisions into shared context and downstream tasks, update orchestration.json and controller-state.md, clean up WAVE-004 worktrees if safe, and stop before starting WAVE-005."
@@ -1928,7 +1928,7 @@
       "mode": "codex_thread_heartbeat",
       "cadence": "5m",
       "status": "handoff_to_reconciliation",
-      "lastCheckedAt": "2026-07-05T18:16:00Z",
+      "lastCheckedAt": "2026-07-05T18:18:00Z",
       "nextCheckDueAt": "2026-07-05T18:21:00Z",
       "schedulerRef": "postgram-admin-wave-004-start-heartbeat",
       "fallbackPrompt": "Run one bounded WDD reconciliation handoff heartbeat for /Users/ivo.toby/workspace/postgram, epic EPIC-admin-configuration-frontend, active wave WAVE-004. Use the wdd-reconcile-wave skill. Start in /Users/ivo.toby/workspace/postgram on branch codex/epic/admin-configuration-frontend. Read .wdd/epics/EPIC-admin-configuration-frontend/orchestration.json and controller-state.md. Confirm WAVE-004 bundles TASK-009-settings-secret-store and TASK-006-admin-mfa-step-up are merged into the epic branch in local merge commits b63ad086 and 6666508, task files are in done/, currentGates.workerDispatch entries are merged, WAVE-004 waveCompletion is ready_for_reconciliation, branch freshness is current_at_merge, cleanup is cleanup_deferred, blocking feedback is empty, and shared-context reconciliation is queued. Run wdd-reconcile-wave for WAVE-004, reconcile settings/secret-store and MFA/step-up decisions into shared context and downstream tasks, update orchestration.json and controller-state.md, clean up WAVE-004 worktrees if safe, and stop before starting WAVE-005."
@@ -2116,22 +2116,28 @@
         "reconciliationSummary": "WAVE-003 reconciled the concrete /admin/api/* session route contract, pgm_admin_session cookie, X-CSRF-Token CSRF header, safe bootstrap/login errors, pending-MFA carry-forward gate, downstream TASK-006/TASK-007/TASK-009/TASK-011 task updates, and TASK-005 worktree cleanup. WAVE-004 is ready for wdd-start-wave; it was not started during reconciliation."
       },
       "WAVE-004-settings-secret-store": {
-        "status": "merged_local_pending_push",
+        "status": "merged_pending_reconciliation",
         "commit": "b63ad08619f3fb96606a7adc2fcd84118c106637",
         "taskBranchHead": "ca9c96fa4f08249f9612d89857e994b3a243bd2f",
         "mergedAt": "2026-07-05T18:16:00Z",
         "cleanupState": "cleanup_deferred",
         "reviewResult": "REVIEW_PASS",
-        "branchFreshness": "current_at_merge"
+        "branchFreshness": "current_at_merge",
+        "remotePrState": "MERGED",
+        "remotePrMergedAt": "2026-07-05T18:13:59Z",
+        "remoteBasePushedAt": "2026-07-05T18:13:59Z"
       },
       "WAVE-004-admin-mfa-step-up": {
-        "status": "merged_local_pending_push",
+        "status": "merged_pending_reconciliation",
         "commit": "6666508a56bbbb083100c86a0b57ff767fcb30a6",
         "taskBranchHead": "8c0468020234fb67e60d6b79c77ca2df1fce0a28",
         "mergedAt": "2026-07-05T18:16:00Z",
         "cleanupState": "cleanup_deferred",
         "reviewResult": "REVIEW_PASS",
-        "branchFreshness": "current_at_merge"
+        "branchFreshness": "current_at_merge",
+        "remotePrState": "MERGED",
+        "remotePrMergedAt": "2026-07-05T18:17:48Z",
+        "remoteBasePushedAt": "2026-07-05T18:17:48Z"
       }
     },
     "sharedContextReconciliation": {
@@ -2172,11 +2178,11 @@
         "closeoutCommit": "ff338b1"
       },
       "WAVE-004-admin-mfa-step-up": {
-        "state": "OPEN_PENDING_REMOTE_MERGE_MARK",
+        "state": "MERGED",
         "isDraft": true,
         "url": "https://github.com/ivo-toby/postgram/pull/82",
         "number": 82,
-        "checkedAt": "2026-07-05T18:16:00Z",
+        "checkedAt": "2026-07-05T18:18:00Z",
         "headRef": "codex/task/TASK-006-admin-mfa-step-up",
         "headSha": "8c0468020234fb67e60d6b79c77ca2df1fce0a28",
         "baseRef": "codex/epic/admin-configuration-frontend",
@@ -2184,14 +2190,16 @@
         "updatedAt": "2026-07-05T18:01:49Z",
         "reviewDecision": "REVIEW_PASS",
         "localHeadSha": "392313355f802679128daee2680bd01d016059df",
-        "localMergeCommit": "6666508a56bbbb083100c86a0b57ff767fcb30a6"
+        "localMergeCommit": "6666508a56bbbb083100c86a0b57ff767fcb30a6",
+        "mergedAt": "2026-07-05T18:17:48Z",
+        "remoteBasePushedAt": "2026-07-05T18:17:48Z"
       },
       "WAVE-004-settings-secret-store": {
-        "state": "OPEN_PENDING_REMOTE_MERGE_MARK",
+        "state": "MERGED",
         "isDraft": true,
         "url": "https://github.com/ivo-toby/postgram/pull/81",
         "number": 81,
-        "checkedAt": "2026-07-05T18:16:00Z",
+        "checkedAt": "2026-07-05T18:18:00Z",
         "headRef": "codex/task/TASK-009-settings-secret-store",
         "headSha": "ca9c96fa4f08249f9612d89857e994b3a243bd2f",
         "baseRef": "codex/epic/admin-configuration-frontend",
@@ -2199,7 +2207,9 @@
         "updatedAt": "2026-07-05T18:12:00Z",
         "reviewDecision": "REVIEW_PASS",
         "reviewedHead": "e03421a7327555d8711a8c9fb68a8a8d10c1f39a",
-        "localMergeCommit": "b63ad08619f3fb96606a7adc2fcd84118c106637"
+        "localMergeCommit": "b63ad08619f3fb96606a7adc2fcd84118c106637",
+        "mergedAt": "2026-07-05T18:13:59Z",
+        "remoteBasePushedAt": "2026-07-05T18:13:59Z"
       }
     },
     "cleanup": {

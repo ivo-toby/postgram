@@ -36,6 +36,9 @@ in `6666508`. Task files are in `done/`, cleanup is deferred, shared-context
 reconciliation is queued, and WAVE-004 is ready for `wdd-reconcile-wave`. Do
 not start WAVE-005.
 
+GitHub marked PR #81 `MERGED` at 2026-07-05T18:13:59Z and PR #82 `MERGED` at
+2026-07-05T18:17:48Z after the epic branch push.
+
 ## Wave Summary
 
 | Wave | Tasks | Strategy | Status | Confirmation |
@@ -624,6 +627,8 @@ start WAVE-005.
   `6666508`, moved TASK-006 to `done/`, and left both WAVE-004 worktree
   cleanups deferred to reconciliation. WAVE-004 is ready for
   `wdd-reconcile-wave`; next check due 2026-07-05T18:21:00Z.
+- 2026-07-05T18:18:00Z: GitHub reports PR #81 `MERGED` at
+  2026-07-05T18:13:59Z and PR #82 `MERGED` at 2026-07-05T18:17:48Z.
 
 ## Next Action
 

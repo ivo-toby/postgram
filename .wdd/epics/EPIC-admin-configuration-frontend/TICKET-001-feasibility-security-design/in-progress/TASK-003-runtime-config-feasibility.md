@@ -15,12 +15,12 @@ assigned_model_class: planning
 review_model_class: review
 branch: codex/task/WAVE-001-admin-feasibility-gate
 worker_worktree: /Users/ivo.toby/workspace/postgram/.worktrees/WAVE-001-admin-feasibility-gate
-worktree_status: pending_creation
+worktree_status: verified
 pr: null
 worker_thread_id: null
 review_thread_id: null
-current_gate: activation_pending_worktree
-branch_freshness: pending_creation
+current_gate: ready_for_dispatch
+branch_freshness: current
 verification:
   - git diff --check
 ---
@@ -103,7 +103,7 @@ codex/task/WAVE-001-admin-feasibility-gate
 
 /Users/ivo.toby/workspace/postgram/.worktrees/WAVE-001-admin-feasibility-gate
 
-Assigned as part of bundled WAVE-001. The controller must create and verify this
+Assigned as part of bundled WAVE-001. The controller created and verified this
 isolated worktree before dispatch.
 
 ## PR / Patch Reference

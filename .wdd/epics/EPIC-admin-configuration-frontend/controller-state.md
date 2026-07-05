@@ -47,7 +47,7 @@ Mode: pending_scheduler
 
 Cadence: adaptive
 
-Status: activation_pending_worktree
+Status: ready_for_dispatch
 
 Last check: 2026-07-05T11:36:08Z
 
@@ -85,9 +85,9 @@ wdd-reconcile-wave.
 
 | Task | Ticket | Branch | Worktree | Gate | Verification |
 |------|--------|--------|----------|------|--------------|
-| TASK-001-admin-surface-inventory | TICKET-001-feasibility-security-design | codex/task/WAVE-001-admin-feasibility-gate | pending_creation | activation_pending_worktree | `git diff --check` |
-| TASK-002-threat-model-bootstrap | TICKET-001-feasibility-security-design | codex/task/WAVE-001-admin-feasibility-gate | pending_creation | activation_pending_worktree | `git diff --check` |
-| TASK-003-runtime-config-feasibility | TICKET-001-feasibility-security-design | codex/task/WAVE-001-admin-feasibility-gate | pending_creation | activation_pending_worktree | `git diff --check` |
+| TASK-001-admin-surface-inventory | TICKET-001-feasibility-security-design | codex/task/WAVE-001-admin-feasibility-gate | verified | ready_for_dispatch | `git diff --check` |
+| TASK-002-threat-model-bootstrap | TICKET-001-feasibility-security-design | codex/task/WAVE-001-admin-feasibility-gate | verified | ready_for_dispatch | `git diff --check` |
+| TASK-003-runtime-config-feasibility | TICKET-001-feasibility-security-design | codex/task/WAVE-001-admin-feasibility-gate | verified | ready_for_dispatch | `git diff --check` |
 | TASK-004-admin-auth-persistence | TICKET-002-admin-auth-foundation | codex/task/TASK-004-admin-auth-persistence | not_created | planned | `npm test -- tests/integration/admin-auth-service.test.ts`; `npm run typecheck` |
 | TASK-005-admin-session-routes | TICKET-002-admin-auth-foundation | codex/task/TASK-005-admin-session-routes | not_created | planned | `npm test -- tests/contract/admin-auth-routes.test.ts`; `npm run typecheck` |
 | TASK-006-admin-mfa-step-up | TICKET-002-admin-auth-foundation | codex/task/TASK-006-admin-mfa-step-up | not_created | planned | `npm test -- tests/contract/admin-mfa-routes.test.ts`; `npm test -- tests/integration/admin-auth-service.test.ts`; `npm run typecheck` |
@@ -113,12 +113,12 @@ wdd-reconcile-wave.
 - WAVE-001 bundle branch: `codex/task/WAVE-001-admin-feasibility-gate`.
 - WAVE-001 bundle worktree:
   `/Users/ivo.toby/workspace/postgram/.worktrees/WAVE-001-admin-feasibility-gate`.
-- Worker worktrees: WAVE-001 bundle pending creation.
+- Worker worktrees: WAVE-001 bundle verified.
 - Worker rule: one isolated worktree per repository-writing task before
   dispatch.
 - Controller checkout rule: workers must not switch branches in the controller
   checkout.
-- Branch freshness: WAVE-001 bundle pending creation from synced epic branch.
+- Branch freshness: WAVE-001 bundle current at creation from synced epic branch.
 
 ## WAVE-001 Active State
 
@@ -128,8 +128,10 @@ wdd-reconcile-wave.
 - WAVE-001 stop condition requires shared-context reconciliation before
   implementation waves begin.
 - Non-eligible tasks: none.
-- Activation artifact sync: pending commit to epic branch before bundle worktree
-  creation.
+- Activation artifact sync: committed to epic branch in `fadb158` before bundle
+  branch/worktree creation.
+- Bundle worktree verification: passed at `fadb158`; follow-up verification
+  state is being synced before dispatch.
 
 ## Shared Context Reconciliation Rules
 
@@ -153,6 +155,9 @@ wdd-reconcile-wave.
 - 2026-07-05T11:36:08Z: WAVE-001 activated by request. TASK-001, TASK-002,
   and TASK-003 moved to in-progress as a single bundled feasibility/security
   worker assignment.
+- 2026-07-05T11:36:08Z: Created and verified bundle branch/worktree
+  `codex/task/WAVE-001-admin-feasibility-gate` at
+  `/Users/ivo.toby/workspace/postgram/.worktrees/WAVE-001-admin-feasibility-gate`.
 
 ## Next Action
 

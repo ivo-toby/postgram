@@ -23,7 +23,7 @@ worktree_status: clean_pushed
 pr: https://github.com/ivo-toby/postgram/pull/82
 worker_thread_id: 019f3333-4033-7463-9819-aa3dec286b4c
 review_thread_id: 019f322c-02e7-7590-8b8e-ebdd1e9c52ac
-current_gate: reviewing
+current_gate: needs_fixes
 branch_freshness: stale_needs_freshness_refresh
 verification:
   - npm test -- tests/contract/admin-mfa-routes.test.ts
@@ -217,11 +217,23 @@ Keep MFA helpers isolated from ordinary API-key auth.
 
 ### P2
 
-- None.
+- `P2-mfa-audit-structured-admin-actor` routed to Tesla at
+  2026-07-05T17:48:34Z (`019f3366-7cfd-7ee1-b852-1d20abe022d8`): Lorentz
+  found `writeAdminMfaAudit` hides `adminUserId` only in JSON details, while
+  the shared contract requires structured admin actor attribution. Reconcile
+  MFA audit rows with structured admin actor attribution without duplicating
+  migration ownership.
+- `P2-branch-freshness-task-file-conflict` routed to Tesla at
+  2026-07-05T17:48:34Z (`019f3366-7cfd-7ee1-b852-1d20abe022d8`): PR #82 is
+  not mergeable against the latest epic branch. Reviewer says conflicts are
+  WDD task-file only and product code auto-merges; refresh against latest epic
+  after code fix and before merge.
 
 ### P3
 
-- None.
+- `P3-mfa-route-rate-limit-regression` routed to Tesla at
+  2026-07-05T17:48:34Z: add a direct 429/rate-limit route regression for
+  MFA/step-up if straightforward, or record why deferred as non-blocking.
 
 ## Completion Notes
 
@@ -245,3 +257,6 @@ Keep MFA helpers isolated from ordinary API-key auth.
   (`rev-list origin/codex/epic/admin-configuration-frontend...HEAD` = `1 3`).
   Refresh against the latest epic branch and rerun freshness verification
   before merge.
+- 2026-07-05T17:48:34Z Lorentz returned `REVIEW_BLOCKED` for PR #82 with two
+  P2 findings and one P3 suggestion. Controller routed the fixes to Tesla in
+  submission `019f3366-7cfd-7ee1-b852-1d20abe022d8`; gate is `needs_fixes`.

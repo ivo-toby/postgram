@@ -251,6 +251,9 @@ freshness, and stop when WAVE-002 is ready for wdd-reconcile-wave.
 - 2026-07-05T12:50:00Z: Ivo confirmed the next wave. Activated WAVE-002 for
   TASK-004-admin-auth-persistence and moved the task to in-progress with a
   pending branch/worktree assignment.
+- 2026-07-05T12:50:00Z: Synced WAVE-002 activation artifacts to the epic branch
+  in `65d428c`; task branch/worktree creation must start from this commit or
+  newer.
 
 ## Next Action
 

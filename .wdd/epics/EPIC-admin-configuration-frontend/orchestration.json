@@ -1392,8 +1392,10 @@
     },
     "activationArtifactsSynced": {
       "status": "synced_to_epic_branch",
-      "commit": "fadb158",
-      "requiredBeforeTaskWorktrees": true
+      "commit": "65d428c",
+      "requiredBeforeTaskWorktrees": true,
+      "wave": "WAVE-002",
+      "syncedAt": "2026-07-05T12:50:00Z"
     },
     "waveStrategyConfirmation": {
       "WAVE-001": "confirmed_by_ivo_2026-07-05",
@@ -1526,6 +1528,6 @@
     "reconciledAt": "2026-07-05T12:42:03Z",
     "status": "done",
     "nextWave": "WAVE-002",
-    "nextWaveStatus": "ready_for_confirmation"
+    "nextWaveStatus": "activated"
   }
 }

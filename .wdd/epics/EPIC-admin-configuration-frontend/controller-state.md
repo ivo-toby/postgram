@@ -52,9 +52,9 @@ Cadence: 15 minutes
 
 Status: active no-PR monitoring
 
-Last check: 2026-07-05T15:45:04Z
+Last check: 2026-07-05T16:00:04Z
 
-Next check due: 2026-07-05T16:00:04Z
+Next check due: 2026-07-05T16:15:04Z
 
 Scheduler reference: `postgram-admin-wave-003-wdd-heartbeat`
 
@@ -214,7 +214,7 @@ needed.
 - WAVE-003 branch/worktree has active uncommitted TASK-005 implementation
   changes from worker Leibniz. No commit, push, PR, patch, final worker status,
   or review thread exists yet. The task branch remains at `79d1265` while the
-  epic branch is at controller checkpoint `79884a2`, so branch freshness must
+  epic branch is at controller checkpoint `90d90f0`, so branch freshness must
   be refreshed before PR/review or merge.
 
 ## Verification Status
@@ -259,6 +259,13 @@ needed.
   active uncommitted TASK-005 changes, now including `tests/unit/errors.test.ts`.
   No PR exists for `codex/task/TASK-005-admin-session-routes`, the task branch
   is still at `79d1265`, and the epic branch is at `79884a2`.
+- WAVE-003 2026-07-05T16:00:04Z observation: the worker worktree still has
+  active uncommitted TASK-005 changes, now also including
+  `src/auth/admin-service.ts` and
+  `tests/integration/admin-auth-service.test.ts`. No PR exists for
+  `codex/task/TASK-005-admin-session-routes`, the task branch is still at
+  `79d1265`, and the epic branch is at `90d90f0`. Worker-reported verification
+  must be rerun or confirmed after these newer admin-service changes.
 
 ## Event Log
 
@@ -362,6 +369,16 @@ needed.
   missing commit, branch freshness refresh, push, draft PR, task PR reference,
   and final status token (`019f32f5-c789-7540-8be1-a7e4d3799eca`). Next check
   due 2026-07-05T16:00:04Z.
+- 2026-07-05T16:00:04Z: Heartbeat inspected Leibniz again. The worker still
+  has no final status, no pushed commit, and no PR or patch. The worktree has
+  active uncommitted TASK-005 changes in the admin route/middleware files,
+  `src/auth/admin-service.ts`, admin route contracts, admin-auth-service
+  integration tests, and error tests. The task branch is still `79d1265` while
+  the epic branch is `90d90f0`. The controller nudged Leibniz to either finish
+  the commit/freshness/push/draft-PR/final-status flow or return
+  `BLOCKED`/`NEEDS_CONTEXT` with the exact blocker
+  (`019f3303-8f1f-75f1-835c-e724e142a8b8`). Next check due
+  2026-07-05T16:15:04Z.
 
 ## Next Action
 

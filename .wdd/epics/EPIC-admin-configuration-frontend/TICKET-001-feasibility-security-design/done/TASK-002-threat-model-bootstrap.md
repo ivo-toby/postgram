@@ -6,7 +6,7 @@ ticket: TICKET-001-feasibility-security-design
 wave: WAVE-001
 slug: threat-model-bootstrap
 title: Threat Model And Bootstrap
-status: review
+status: done
 depends_on: []
 conflict_domains:
   - .wdd/epics/EPIC-admin-configuration-frontend/shared-context/**
@@ -15,12 +15,12 @@ assigned_model_class: planning
 review_model_class: review
 branch: codex/task/WAVE-001-admin-feasibility-gate
 worker_worktree: /Users/ivo.toby/workspace/postgram/.worktrees/WAVE-001-admin-feasibility-gate
-worktree_status: verified
+worktree_status: cleanup_deferred
 pr: https://github.com/ivo-toby/postgram/pull/78
 worker_thread_id: 019f3215-2eb6-75f2-81f0-bf527e73258b
-review_thread_id: null
-current_gate: ready_for_review
-branch_freshness: current
+review_thread_id: 019f322c-02e7-7590-8b8e-ebdd1e9c52ac
+current_gate: merged
+branch_freshness: current_at_merge
 verification:
   - git diff --check
 ---
@@ -29,7 +29,7 @@ verification:
 
 ## Status
 
-review
+done
 
 ## Parent Ticket
 
@@ -148,6 +148,8 @@ Separate concise shared context from longer rationale if needed.
 ## Verification Evidence
 
 - 2026-07-05: `git diff --check` passed.
+- 2026-07-05: Lorentz follow-up review returned `REVIEW_PASS`.
+- 2026-07-05: Merged into the epic branch in `1f11365`.
 
 ## Review Feedback
 
@@ -157,7 +159,9 @@ Separate concise shared context from longer rationale if needed.
 
 ### P2
 
-- None.
+- Resolved: TASK-004, TASK-005, and TASK-006 now explicitly split bootstrap
+  token persistence, route behavior, MFA completion, and pending-MFA
+  first-admin activation testability.
 
 ### P3
 
@@ -174,3 +178,5 @@ Separate concise shared context from longer rationale if needed.
 - Chose generated one-time bootstrap token via trusted local operator channel,
   with hash-only storage, single-use expiry, rate limiting, audit, and MFA
   enrollment before active first-admin access.
+- WAVE-001 bundle worktree cleanup is deferred until reconciliation/audit
+  completes.

@@ -50,7 +50,7 @@
     {
       "id": "TICKET-001-feasibility-security-design",
       "path": "TICKET-001-feasibility-security-design/ticket.md",
-      "status": "review",
+      "status": "done",
       "taskIds": [
         "TASK-001-admin-surface-inventory",
         "TASK-002-threat-model-bootstrap",
@@ -138,7 +138,7 @@
   "waves": [
     {
       "id": "WAVE-001",
-      "status": "in_progress",
+      "status": "ready_for_reconciliation",
       "strategy": {
         "profile": "full",
         "executionMode": "bundled",
@@ -178,12 +178,12 @@
           ],
           "branch": "codex/task/WAVE-001-admin-feasibility-gate",
           "worktree": "/Users/ivo.toby/workspace/postgram/.worktrees/WAVE-001-admin-feasibility-gate",
-          "worktreeStatus": "verified",
+          "worktreeStatus": "cleanup_deferred",
           "workerThreadId": "019f3215-2eb6-75f2-81f0-bf527e73258b",
           "workerNickname": "Singer",
           "reviewThreadId": "019f322c-02e7-7590-8b8e-ebdd1e9c52ac",
-          "currentGate": "merge_ready",
-          "branchFreshness": "current_at_merge_start",
+          "currentGate": "merged",
+          "branchFreshness": "current_at_merge",
           "pr": "https://github.com/ivo-toby/postgram/pull/78",
           "latestCommit": "4ef5792860fed0544db45a0eb6a635cd4423f393",
           "blockingFeedback": [],
@@ -192,9 +192,10 @@
             "commands": [
               "git diff --check origin/codex/epic/admin-configuration-frontend...HEAD",
               "node -e JSON.parse(orchestration.json)",
-              "gh pr view 78"
+              "gh pr view 78",
+              "git merge --no-ff codex/task/WAVE-001-admin-feasibility-gate"
             ],
-            "evidence": "Singer verification passed; controller verified PR #78 head 4ef5792, clean merge state, orchestration JSON parse, diff whitespace, and Lorentz follow-up REVIEW_PASS."
+            "evidence": "Singer verification passed; controller verified PR #78 head 4ef5792, clean merge state, orchestration JSON parse, diff whitespace, Lorentz follow-up REVIEW_PASS, and local merge commit 1f11365."
           },
           "verifiedAt": "2026-07-05T11:36:08Z",
           "dispatchedAt": "2026-07-05T11:41:41Z",
@@ -240,7 +241,11 @@
           },
           "reviewResult": "REVIEW_PASS",
           "reviewedAt": "2026-07-05T12:25:33Z",
-          "mergeReadyAt": "2026-07-05T12:25:33Z"
+          "mergeReadyAt": "2026-07-05T12:25:33Z",
+          "mergedAt": "2026-07-05T12:25:33Z",
+          "mergeCommit": "1f11365",
+          "cleanupState": "cleanup_deferred",
+          "sharedContextReconciliation": "queued_for_wdd-reconcile-wave"
         }
       ]
     },
@@ -532,8 +537,8 @@
     {
       "id": "TASK-001-admin-surface-inventory",
       "ticket": "TICKET-001-feasibility-security-design",
-      "path": "TICKET-001-feasibility-security-design/review/TASK-001-admin-surface-inventory.md",
-      "status": "review",
+      "path": "TICKET-001-feasibility-security-design/done/TASK-001-admin-surface-inventory.md",
+      "status": "done",
       "dependsOn": [],
       "conflictDomains": [
         "src/cli/admin/pgm-admin.ts",
@@ -546,33 +551,38 @@
       "workerThreadId": "019f3215-2eb6-75f2-81f0-bf527e73258b",
       "reviewThreadId": "019f322c-02e7-7590-8b8e-ebdd1e9c52ac",
       "workerWorktree": "/Users/ivo.toby/workspace/postgram/.worktrees/WAVE-001-admin-feasibility-gate",
-      "worktreeStatus": "verified",
+      "worktreeStatus": "cleanup_deferred",
       "pr": "https://github.com/ivo-toby/postgram/pull/78",
       "latestCommit": "4ef5792860fed0544db45a0eb6a635cd4423f393",
-      "branchFreshness": "current_at_merge_start",
+      "branchFreshness": "current_at_merge",
       "blockingFeedback": [],
       "verification": {
         "result": "passed",
         "commands": [
           "git diff --check origin/codex/epic/admin-configuration-frontend...HEAD",
           "node -e JSON.parse(orchestration.json)",
-          "gh pr view 78"
+          "gh pr view 78",
+          "git merge --no-ff codex/task/WAVE-001-admin-feasibility-gate"
         ],
-        "evidence": "Singer verification passed; controller verified PR #78 head 4ef5792, clean merge state, orchestration JSON parse, diff whitespace, and Lorentz follow-up REVIEW_PASS."
+        "evidence": "Singer verification passed; controller verified PR #78 head 4ef5792, clean merge state, orchestration JSON parse, diff whitespace, Lorentz follow-up REVIEW_PASS, and local merge commit 1f11365."
       },
-      "currentGate": "merge_ready",
+      "currentGate": "merged",
       "workerNickname": "Singer",
       "reviewNickname": "Lorentz",
       "feedback": {
         "p3": []
       },
-      "reviewResult": "REVIEW_PASS"
+      "reviewResult": "REVIEW_PASS",
+      "mergedAt": "2026-07-05T12:25:33Z",
+      "mergeCommit": "1f11365",
+      "cleanupState": "cleanup_deferred",
+      "sharedContextReconciliation": "queued_for_wdd-reconcile-wave"
     },
     {
       "id": "TASK-002-threat-model-bootstrap",
       "ticket": "TICKET-001-feasibility-security-design",
-      "path": "TICKET-001-feasibility-security-design/review/TASK-002-threat-model-bootstrap.md",
-      "status": "review",
+      "path": "TICKET-001-feasibility-security-design/done/TASK-002-threat-model-bootstrap.md",
+      "status": "done",
       "dependsOn": [],
       "conflictDomains": [
         "shared-context/resources/security-model.md",
@@ -585,33 +595,38 @@
       "workerThreadId": "019f3215-2eb6-75f2-81f0-bf527e73258b",
       "reviewThreadId": "019f322c-02e7-7590-8b8e-ebdd1e9c52ac",
       "workerWorktree": "/Users/ivo.toby/workspace/postgram/.worktrees/WAVE-001-admin-feasibility-gate",
-      "worktreeStatus": "verified",
+      "worktreeStatus": "cleanup_deferred",
       "pr": "https://github.com/ivo-toby/postgram/pull/78",
       "latestCommit": "4ef5792860fed0544db45a0eb6a635cd4423f393",
-      "branchFreshness": "current_at_merge_start",
+      "branchFreshness": "current_at_merge",
       "blockingFeedback": [],
       "verification": {
         "result": "passed",
         "commands": [
           "git diff --check origin/codex/epic/admin-configuration-frontend...HEAD",
           "node -e JSON.parse(orchestration.json)",
-          "gh pr view 78"
+          "gh pr view 78",
+          "git merge --no-ff codex/task/WAVE-001-admin-feasibility-gate"
         ],
-        "evidence": "Singer verification passed; controller verified PR #78 head 4ef5792, clean merge state, orchestration JSON parse, diff whitespace, and Lorentz follow-up REVIEW_PASS."
+        "evidence": "Singer verification passed; controller verified PR #78 head 4ef5792, clean merge state, orchestration JSON parse, diff whitespace, Lorentz follow-up REVIEW_PASS, and local merge commit 1f11365."
       },
-      "currentGate": "merge_ready",
+      "currentGate": "merged",
       "workerNickname": "Singer",
       "reviewNickname": "Lorentz",
       "feedback": {
         "p3": []
       },
-      "reviewResult": "REVIEW_PASS"
+      "reviewResult": "REVIEW_PASS",
+      "mergedAt": "2026-07-05T12:25:33Z",
+      "mergeCommit": "1f11365",
+      "cleanupState": "cleanup_deferred",
+      "sharedContextReconciliation": "queued_for_wdd-reconcile-wave"
     },
     {
       "id": "TASK-003-runtime-config-feasibility",
       "ticket": "TICKET-001-feasibility-security-design",
-      "path": "TICKET-001-feasibility-security-design/review/TASK-003-runtime-config-feasibility.md",
-      "status": "review",
+      "path": "TICKET-001-feasibility-security-design/done/TASK-003-runtime-config-feasibility.md",
+      "status": "done",
       "dependsOn": [],
       "conflictDomains": [
         "src/config.ts",
@@ -625,21 +640,22 @@
       "workerThreadId": "019f3215-2eb6-75f2-81f0-bf527e73258b",
       "reviewThreadId": "019f322c-02e7-7590-8b8e-ebdd1e9c52ac",
       "workerWorktree": "/Users/ivo.toby/workspace/postgram/.worktrees/WAVE-001-admin-feasibility-gate",
-      "worktreeStatus": "verified",
+      "worktreeStatus": "cleanup_deferred",
       "pr": "https://github.com/ivo-toby/postgram/pull/78",
       "latestCommit": "4ef5792860fed0544db45a0eb6a635cd4423f393",
-      "branchFreshness": "current_at_merge_start",
+      "branchFreshness": "current_at_merge",
       "blockingFeedback": [],
       "verification": {
         "result": "passed",
         "commands": [
           "git diff --check origin/codex/epic/admin-configuration-frontend...HEAD",
           "node -e JSON.parse(orchestration.json)",
-          "gh pr view 78"
+          "gh pr view 78",
+          "git merge --no-ff codex/task/WAVE-001-admin-feasibility-gate"
         ],
-        "evidence": "Singer verification passed; controller verified PR #78 head 4ef5792, clean merge state, orchestration JSON parse, diff whitespace, and Lorentz follow-up REVIEW_PASS."
+        "evidence": "Singer verification passed; controller verified PR #78 head 4ef5792, clean merge state, orchestration JSON parse, diff whitespace, Lorentz follow-up REVIEW_PASS, and local merge commit 1f11365."
       },
-      "currentGate": "merge_ready",
+      "currentGate": "merged",
       "workerNickname": "Singer",
       "reviewNickname": "Lorentz",
       "feedback": {
@@ -657,7 +673,11 @@
           }
         ]
       },
-      "reviewResult": "REVIEW_PASS"
+      "reviewResult": "REVIEW_PASS",
+      "mergedAt": "2026-07-05T12:25:33Z",
+      "mergeCommit": "1f11365",
+      "cleanupState": "cleanup_deferred",
+      "sharedContextReconciliation": "queued_for_wdd-reconcile-wave"
     },
     {
       "id": "TASK-004-admin-auth-persistence",
@@ -1215,7 +1235,7 @@
     "lastCheckedAt": "2026-07-05T12:25:33Z",
     "nextCheckDueAt": "2026-07-05T12:30:33Z",
     "schedulerRef": "postgram-admin-wave-001-wdd-heartbeat",
-    "fallbackPrompt": "Run wdd-reconcile-wave for EPIC-admin-configuration-frontend WAVE-001. The WAVE-001 bundle PR #78 passed review after fix commit 4ef5792 and is being merged into the epic branch; inspect controller-state.md and orchestration.json, verify merged task/shared-context state, reconcile WAVE-001 decisions, and stop before starting WAVE-002."
+    "fallbackPrompt": "Run wdd-reconcile-wave for EPIC-admin-configuration-frontend WAVE-001. The WAVE-001 bundle PR #78 passed review after fix commit 4ef5792 and was merged locally into the epic branch in 1f11365; inspect controller-state.md and orchestration.json, verify merged task/shared-context state, reconcile WAVE-001 decisions, and stop before starting WAVE-002."
   },
   "sharedContext": {
     "index": "shared-context/index.md",
@@ -1255,12 +1275,12 @@
         ],
         "branch": "codex/task/WAVE-001-admin-feasibility-gate",
         "worktree": "/Users/ivo.toby/workspace/postgram/.worktrees/WAVE-001-admin-feasibility-gate",
-        "worktreeStatus": "verified",
+        "worktreeStatus": "cleanup_deferred",
         "workerThreadId": "019f3215-2eb6-75f2-81f0-bf527e73258b",
         "workerNickname": "Singer",
         "reviewThreadId": "019f322c-02e7-7590-8b8e-ebdd1e9c52ac",
-        "currentGate": "merge_ready",
-        "branchFreshness": "current_at_merge_start",
+        "currentGate": "merged",
+        "branchFreshness": "current_at_merge",
         "pr": "https://github.com/ivo-toby/postgram/pull/78",
         "latestCommit": "4ef5792860fed0544db45a0eb6a635cd4423f393",
         "blockingFeedback": [],
@@ -1269,9 +1289,10 @@
           "commands": [
             "git diff --check origin/codex/epic/admin-configuration-frontend...HEAD",
             "node -e JSON.parse(orchestration.json)",
-            "gh pr view 78"
+            "gh pr view 78",
+            "git merge --no-ff codex/task/WAVE-001-admin-feasibility-gate"
           ],
-          "evidence": "Singer verification passed; controller verified PR #78 head 4ef5792, clean merge state, orchestration JSON parse, diff whitespace, and Lorentz follow-up REVIEW_PASS."
+          "evidence": "Singer verification passed; controller verified PR #78 head 4ef5792, clean merge state, orchestration JSON parse, diff whitespace, Lorentz follow-up REVIEW_PASS, and local merge commit 1f11365."
         },
         "verifiedAt": "2026-07-05T11:36:08Z",
         "dispatchedAt": "2026-07-05T11:41:41Z",
@@ -1317,7 +1338,11 @@
         },
         "reviewResult": "REVIEW_PASS",
         "reviewedAt": "2026-07-05T12:25:33Z",
-        "mergeReadyAt": "2026-07-05T12:25:33Z"
+        "mergeReadyAt": "2026-07-05T12:25:33Z",
+        "mergedAt": "2026-07-05T12:25:33Z",
+        "mergeCommit": "1f11365",
+        "cleanupState": "cleanup_deferred",
+        "sharedContextReconciliation": "queued_for_wdd-reconcile-wave"
       }
     ]
   },
@@ -1337,13 +1362,13 @@
       "WAVE-001": "confirmed_by_ivo_2026-07-05"
     },
     "workerWorktrees": {
-      "WAVE-001-admin-feasibility-gate": "verified"
+      "WAVE-001-admin-feasibility-gate": "cleanup_deferred"
     },
     "workerDispatch": {
-      "WAVE-001-admin-feasibility-gate": "merge_ready"
+      "WAVE-001-admin-feasibility-gate": "merged"
     },
     "waveCompletion": {
-      "WAVE-001": "merge_ready"
+      "WAVE-001": "ready_for_reconciliation"
     },
     "nextWave": {
       "id": "WAVE-002",
@@ -1356,7 +1381,7 @@
       "cadence": "FREQ=MINUTELY;INTERVAL=5",
       "lastCheckedAt": "2026-07-05T12:25:33Z",
       "nextCheckDueAt": "2026-07-05T12:30:33Z",
-      "fallbackPrompt": "Run wdd-reconcile-wave for EPIC-admin-configuration-frontend WAVE-001. The WAVE-001 bundle PR #78 passed review after fix commit 4ef5792 and is being merged into the epic branch; inspect controller-state.md and orchestration.json, verify merged task/shared-context state, reconcile WAVE-001 decisions, and stop before starting WAVE-002."
+      "fallbackPrompt": "Run wdd-reconcile-wave for EPIC-admin-configuration-frontend WAVE-001. The WAVE-001 bundle PR #78 passed review after fix commit 4ef5792 and was merged locally into the epic branch in 1f11365; inspect controller-state.md and orchestration.json, verify merged task/shared-context state, reconcile WAVE-001 decisions, and stop before starting WAVE-002."
     },
     "review": {
       "WAVE-001-admin-feasibility-gate": {
@@ -1408,7 +1433,18 @@
       }
     },
     "branchFreshness": {
-      "WAVE-001-admin-feasibility-gate": "current_at_merge_start"
+      "WAVE-001-admin-feasibility-gate": "current_at_merge"
+    },
+    "merge": {
+      "WAVE-001-admin-feasibility-gate": {
+        "status": "merged",
+        "commit": "1f11365",
+        "mergedAt": "2026-07-05T12:25:33Z",
+        "cleanupState": "cleanup_deferred"
+      }
+    },
+    "sharedContextReconciliation": {
+      "WAVE-001": "queued_for_wdd-reconcile-wave"
     }
   }
 }

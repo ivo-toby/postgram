@@ -6,7 +6,7 @@ ticket: TICKET-001-feasibility-security-design
 wave: WAVE-001
 slug: runtime-config-feasibility
 title: Runtime Config Feasibility
-status: review
+status: done
 depends_on: []
 conflict_domains:
   - .wdd/epics/EPIC-admin-configuration-frontend/shared-context/**
@@ -15,12 +15,12 @@ assigned_model_class: planning
 review_model_class: review
 branch: codex/task/WAVE-001-admin-feasibility-gate
 worker_worktree: /Users/ivo.toby/workspace/postgram/.worktrees/WAVE-001-admin-feasibility-gate
-worktree_status: verified
+worktree_status: cleanup_deferred
 pr: https://github.com/ivo-toby/postgram/pull/78
 worker_thread_id: 019f3215-2eb6-75f2-81f0-bf527e73258b
-review_thread_id: null
-current_gate: ready_for_review
-branch_freshness: current
+review_thread_id: 019f322c-02e7-7590-8b8e-ebdd1e9c52ac
+current_gate: merged
+branch_freshness: current_at_merge
 verification:
   - git diff --check
 ---
@@ -29,7 +29,7 @@ verification:
 
 ## Status
 
-review
+done
 
 ## Parent Ticket
 
@@ -149,6 +149,8 @@ Condense repeated setting notes into a table.
 ## Verification Evidence
 
 - 2026-07-05: `git diff --check` passed.
+- 2026-07-05: Lorentz follow-up review returned `REVIEW_PASS`.
+- 2026-07-05: Merged into the epic branch in `1f11365`.
 
 ## Review Feedback
 
@@ -162,7 +164,8 @@ Condense repeated setting notes into a table.
 
 ### P3
 
-- None.
+- Addressed: TASK-010 and shared validation now explicitly require provider
+  URL/egress/SSRF safety coverage.
 
 ## Completion Notes
 
@@ -174,3 +177,5 @@ Condense repeated setting notes into a table.
   write-only secret strategy, and save/validate/apply behavior.
 - Recorded follow-on Docker/config drift for `LLM_REQUEST_TIMEOUT_MS` and
   extraction tuning settings before admin UI ownership.
+- WAVE-001 bundle worktree cleanup is deferred until reconciliation/audit
+  completes.

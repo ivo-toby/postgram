@@ -22,10 +22,10 @@ checkout.
 WAVE-001 is activated as a full-profile bundled feasibility/security gate.
 
 WAVE-001 review passed after Singer's fix commit on draft PR
-https://github.com/ivo-toby/postgram/pull/78.
+https://github.com/ivo-toby/postgram/pull/78, and the bundle was merged into
+the epic branch in `1f11365`.
 
-Next phase: finish merging the WAVE-001 bundle into the epic branch, then run
-`wdd-reconcile-wave`.
+Next phase: run `wdd-reconcile-wave` before starting WAVE-002.
 
 ## Wave Summary
 
@@ -49,7 +49,7 @@ Mode: codex_thread_heartbeat
 
 Cadence: adaptive, every 5 minutes until wave reconciliation starts
 
-Status: active for PR review routing
+Status: active until WAVE-001 reconciliation starts
 
 Last check: 2026-07-05T12:25:33Z
 
@@ -60,16 +60,11 @@ Scheduler reference: postgram-admin-wave-001-wdd-heartbeat
 Fallback prompt:
 
 ```text
-Resume WAVE-001 for EPIC-admin-configuration-frontend. Read
-.wdd/epics/EPIC-admin-configuration-frontend/orchestration.json and
-controller-state.md, inspect PR https://github.com/ivo-toby/postgram/pull/78,
-worker Singer (019f3215-2eb6-75f2-81f0-bf527e73258b), reviewer Lorentz
-(019f322c-02e7-7590-8b8e-ebdd1e9c52ac), and the assigned worktree
-/Users/ivo.toby/workspace/postgram/.worktrees/WAVE-001-admin-feasibility-gate.
-Update gates, branch freshness, verification, PR refs, review refs, feedback,
-and monitoring timestamps. Check Lorentz's follow-up review of Singer's fix
-commit `4ef5792`; if review passes, enforce branch freshness and prepare merge
-or reconciliation, otherwise route any remaining P1/P2 feedback.
+Run `wdd-reconcile-wave` for EPIC-admin-configuration-frontend WAVE-001. The
+WAVE-001 bundle PR #78 passed review after fix commit `4ef5792` and was merged
+locally into the epic branch in `1f11365`; inspect controller-state.md and
+orchestration.json, verify merged task/shared-context state, reconcile WAVE-001
+decisions, and stop before starting WAVE-002.
 ```
 
 ## Active Wave Strategy
@@ -89,9 +84,9 @@ or reconciliation, otherwise route any remaining P1/P2 feedback.
 
 | Task | Ticket | Branch | Worktree | Gate | Verification |
 |------|--------|--------|----------|------|--------------|
-| TASK-001-admin-surface-inventory | TICKET-001-feasibility-security-design | codex/task/WAVE-001-admin-feasibility-gate | verified | merge_ready | `git diff --check` passed; REVIEW_PASS |
-| TASK-002-threat-model-bootstrap | TICKET-001-feasibility-security-design | codex/task/WAVE-001-admin-feasibility-gate | verified | merge_ready | P2 bootstrap ownership feedback resolved; REVIEW_PASS |
-| TASK-003-runtime-config-feasibility | TICKET-001-feasibility-security-design | codex/task/WAVE-001-admin-feasibility-gate | verified | merge_ready | P3 provider URL/egress test feedback addressed; REVIEW_PASS |
+| TASK-001-admin-surface-inventory | TICKET-001-feasibility-security-design | codex/task/WAVE-001-admin-feasibility-gate | cleanup_deferred | merged | `git diff --check` passed; REVIEW_PASS; merged in `1f11365` |
+| TASK-002-threat-model-bootstrap | TICKET-001-feasibility-security-design | codex/task/WAVE-001-admin-feasibility-gate | cleanup_deferred | merged | P2 bootstrap ownership feedback resolved; REVIEW_PASS; merged in `1f11365` |
+| TASK-003-runtime-config-feasibility | TICKET-001-feasibility-security-design | codex/task/WAVE-001-admin-feasibility-gate | cleanup_deferred | merged | P3 provider URL/egress test feedback addressed; REVIEW_PASS; merged in `1f11365` |
 | TASK-004-admin-auth-persistence | TICKET-002-admin-auth-foundation | codex/task/TASK-004-admin-auth-persistence | not_created | planned | `npm test -- tests/integration/admin-auth-service.test.ts`; `npm run typecheck` |
 | TASK-005-admin-session-routes | TICKET-002-admin-auth-foundation | codex/task/TASK-005-admin-session-routes | not_created | planned | `npm test -- tests/contract/admin-auth-routes.test.ts`; `npm run typecheck` |
 | TASK-006-admin-mfa-step-up | TICKET-002-admin-auth-foundation | codex/task/TASK-006-admin-mfa-step-up | not_created | planned | `npm test -- tests/contract/admin-mfa-routes.test.ts`; `npm test -- tests/integration/admin-auth-service.test.ts`; `npm run typecheck` |
@@ -118,15 +113,15 @@ or reconciliation, otherwise route any remaining P1/P2 feedback.
 - WAVE-001 bundle worktree:
   `/Users/ivo.toby/workspace/postgram/.worktrees/WAVE-001-admin-feasibility-gate`.
 - WAVE-001 draft PR: https://github.com/ivo-toby/postgram/pull/78.
-- Worker worktrees: WAVE-001 bundle verified.
+- Worker worktrees: WAVE-001 bundle cleanup deferred until reconciliation/audit
+  completes.
 - Worker: Singer (`019f3215-2eb6-75f2-81f0-bf527e73258b`).
 - Reviewer: Lorentz (`019f322c-02e7-7590-8b8e-ebdd1e9c52ac`).
 - Worker rule: one isolated worktree per repository-writing task before
   dispatch.
 - Controller checkout rule: workers must not switch branches in the controller
   checkout.
-- Branch freshness: PR branch was clean against pushed epic branch at review
-  start; recheck before merge.
+- Branch freshness: current at merge.
 
 ## WAVE-001 Active State
 
@@ -141,8 +136,8 @@ or reconciliation, otherwise route any remaining P1/P2 feedback.
 - Bundle worktree verification: passed at `fadb158`; follow-up verification
   state is being synced before dispatch.
 - Worker dispatch: Singer pushed review fixes in `4ef5792`; Lorentz follow-up
-  review returned `REVIEW_PASS`.
-- Current gate: `merge_ready`.
+  review returned `REVIEW_PASS`; the bundle was merged in `1f11365`.
+- Current gate: `merged`, ready for WAVE-001 reconciliation.
 - Monitoring: Codex heartbeat
   `postgram-admin-wave-001-wdd-heartbeat` remains active every 5 minutes until
   WAVE-001 reconciliation starts.
@@ -168,6 +163,9 @@ or reconciliation, otherwise route any remaining P1/P2 feedback.
 - Planning artifact syntax check: passed with `git diff --check`.
 - WAVE-001 worker verification: passed with `git diff --check`.
 - `orchestration.json` parse and dependency-wave consistency check: passed.
+- Follow-up review: Lorentz returned `REVIEW_PASS`.
+- Merge verification: PR branch was current at merge; WAVE-001 bundle merged
+  into the epic branch in `1f11365`.
 - Product code tests: not run; this turn planned WDD artifacts only.
 
 ## Event Log
@@ -198,12 +196,16 @@ or reconciliation, otherwise route any remaining P1/P2 feedback.
   Lorentz follow-up review.
 - 2026-07-05T12:25:33Z: Lorentz follow-up review returned `REVIEW_PASS` with
   no remaining findings.
+- 2026-07-05T12:25:33Z: Merged WAVE-001 bundle branch
+  `codex/task/WAVE-001-admin-feasibility-gate` into the epic branch in
+  `1f11365`; moved TASK-001, TASK-002, and TASK-003 to done with cleanup
+  deferred until reconciliation/audit.
 
 ## Next Action
 
 Controller next tick:
 
 ```text
-Finish the WAVE-001 merge into the epic branch, then run `wdd-reconcile-wave`
-for EPIC-admin-configuration-frontend WAVE-001.
+Run `wdd-reconcile-wave` for EPIC-admin-configuration-frontend WAVE-001, then
+stop before starting WAVE-002.
 ```

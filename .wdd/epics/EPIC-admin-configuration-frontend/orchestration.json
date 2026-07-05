@@ -312,13 +312,13 @@
           ],
           "branch": "codex/task/TASK-004-admin-auth-persistence",
           "worktree": "/Users/ivo.toby/workspace/postgram/.worktrees/TASK-004-admin-auth-persistence",
-          "worktreeStatus": "pending_creation",
-          "workerThreadId": null,
-          "workerNickname": null,
+          "worktreeStatus": "verified",
+          "workerThreadId": "019f329b-24ff-7ec3-93dd-d854e4681fd2",
+          "workerNickname": "Parfit",
           "reviewThreadId": null,
           "reviewNickname": null,
-          "currentGate": "worktree_pending",
-          "branchFreshness": "pending",
+          "currentGate": "no_pr",
+          "branchFreshness": "current_at_dispatch",
           "pr": null,
           "latestCommit": null,
           "blockingFeedback": [],
@@ -332,7 +332,8 @@
           },
           "activatedAt": "2026-07-05T12:50:00Z",
           "cleanupState": "not_started",
-          "sharedContextReconciliation": "not_started"
+          "sharedContextReconciliation": "not_started",
+          "dispatchedAt": "2026-07-05T12:50:00Z"
         }
       ]
     },
@@ -781,13 +782,13 @@
       "assignedModel": "implementationComplex",
       "reviewModel": "review",
       "branch": "codex/task/TASK-004-admin-auth-persistence",
-      "workerThreadId": null,
+      "workerThreadId": "019f329b-24ff-7ec3-93dd-d854e4681fd2",
       "reviewThreadId": null,
       "workerWorktree": "/Users/ivo.toby/workspace/postgram/.worktrees/TASK-004-admin-auth-persistence",
-      "worktreeStatus": "pending_creation",
+      "worktreeStatus": "verified",
       "pr": null,
       "latestCommit": null,
-      "branchFreshness": "pending",
+      "branchFreshness": "current_at_dispatch",
       "blockingFeedback": [],
       "verification": {
         "result": "not_run",
@@ -797,11 +798,12 @@
         ],
         "evidence": null
       },
-      "currentGate": "worktree_pending",
-      "workerNickname": null,
+      "currentGate": "no_pr",
+      "workerNickname": "Parfit",
       "reviewNickname": null,
       "cleanupState": "not_started",
-      "sharedContextReconciliation": "not_started"
+      "sharedContextReconciliation": "not_started",
+      "dispatchedAt": "2026-07-05T12:50:00Z"
     },
     {
       "id": "TASK-005-admin-session-routes",
@@ -1319,11 +1321,11 @@
   "monitoring": {
     "mode": "pending_codex_thread_heartbeat",
     "cadence": "FREQ=MINUTELY;INTERVAL=15",
-    "status": "pending_until_worker_dispatch",
+    "status": "pending_scheduler_creation",
     "lastCheckedAt": "2026-07-05T12:50:00Z",
     "nextCheckDueAt": "2026-07-05T13:05:00Z",
     "schedulerRef": null,
-    "fallbackPrompt": "Run subagent-pr-orchestration for EPIC-admin-configuration-frontend WAVE-002. Read orchestration.json and controller-state.md, inspect TASK-004 worker/worktree, update gates, PR refs, verification, feedback, branch freshness, and stop when WAVE-002 is ready for wdd-reconcile-wave."
+    "fallbackPrompt": "Run subagent-pr-orchestration for EPIC-admin-configuration-frontend WAVE-002. Start in /Users/ivo.toby/workspace/postgram on branch codex/epic/admin-configuration-frontend. Read orchestration.json and controller-state.md, inspect worker Parfit (019f329b-24ff-7ec3-93dd-d854e4681fd2) and worktree /Users/ivo.toby/workspace/postgram/.worktrees/TASK-004-admin-auth-persistence on branch codex/task/TASK-004-admin-auth-persistence for TASK-004-admin-auth-persistence. Update gates, PR/patch refs, verification, feedback, branch freshness, and stop when WAVE-002 is merged/blocked/cancelled or ready for wdd-reconcile-wave."
   },
   "sharedContext": {
     "index": "shared-context/index.md",
@@ -1359,13 +1361,13 @@
         ],
         "branch": "codex/task/TASK-004-admin-auth-persistence",
         "worktree": "/Users/ivo.toby/workspace/postgram/.worktrees/TASK-004-admin-auth-persistence",
-        "worktreeStatus": "pending_creation",
-        "workerThreadId": null,
-        "workerNickname": null,
+        "worktreeStatus": "verified",
+        "workerThreadId": "019f329b-24ff-7ec3-93dd-d854e4681fd2",
+        "workerNickname": "Parfit",
         "reviewThreadId": null,
         "reviewNickname": null,
-        "currentGate": "worktree_pending",
-        "branchFreshness": "pending",
+        "currentGate": "no_pr",
+        "branchFreshness": "current_at_dispatch",
         "pr": null,
         "latestCommit": null,
         "blockingFeedback": [],
@@ -1379,7 +1381,8 @@
         },
         "activatedAt": "2026-07-05T12:50:00Z",
         "cleanupState": "not_started",
-        "sharedContextReconciliation": "not_started"
+        "sharedContextReconciliation": "not_started",
+        "dispatchedAt": "2026-07-05T12:50:00Z"
       }
     ]
   },
@@ -1403,11 +1406,11 @@
     },
     "workerWorktrees": {
       "WAVE-001-admin-feasibility-gate": "cleaned_up",
-      "WAVE-002-admin-auth-persistence": "pending_creation"
+      "WAVE-002-admin-auth-persistence": "verified"
     },
     "workerDispatch": {
       "WAVE-001-admin-feasibility-gate": "reconciled",
-      "WAVE-002-admin-auth-persistence": "worktree_pending"
+      "WAVE-002-admin-auth-persistence": "no_pr"
     },
     "waveCompletion": {
       "WAVE-001": "done",
@@ -1420,11 +1423,11 @@
     "monitoring": {
       "mode": "pending_codex_thread_heartbeat",
       "cadence": "FREQ=MINUTELY;INTERVAL=15",
-      "status": "pending_until_worker_dispatch",
+      "status": "pending_scheduler_creation",
       "lastCheckedAt": "2026-07-05T12:50:00Z",
       "nextCheckDueAt": "2026-07-05T13:05:00Z",
       "schedulerRef": null,
-      "fallbackPrompt": "Run subagent-pr-orchestration for EPIC-admin-configuration-frontend WAVE-002. Read orchestration.json and controller-state.md, inspect TASK-004 worker/worktree, update gates, PR refs, verification, feedback, branch freshness, and stop when WAVE-002 is ready for wdd-reconcile-wave."
+      "fallbackPrompt": "Run subagent-pr-orchestration for EPIC-admin-configuration-frontend WAVE-002. Start in /Users/ivo.toby/workspace/postgram on branch codex/epic/admin-configuration-frontend. Read orchestration.json and controller-state.md, inspect worker Parfit (019f329b-24ff-7ec3-93dd-d854e4681fd2) and worktree /Users/ivo.toby/workspace/postgram/.worktrees/TASK-004-admin-auth-persistence on branch codex/task/TASK-004-admin-auth-persistence for TASK-004-admin-auth-persistence. Update gates, PR/patch refs, verification, feedback, branch freshness, and stop when WAVE-002 is merged/blocked/cancelled or ready for wdd-reconcile-wave."
     },
     "review": {
       "WAVE-001-admin-feasibility-gate": {
@@ -1484,7 +1487,7 @@
     },
     "branchFreshness": {
       "WAVE-001-admin-feasibility-gate": "current_at_merge",
-      "WAVE-002-admin-auth-persistence": "pending"
+      "WAVE-002-admin-auth-persistence": "current_at_dispatch"
     },
     "merge": {
       "WAVE-001-admin-feasibility-gate": {
@@ -1520,6 +1523,14 @@
       "WAVE-002-admin-auth-persistence": {
         "status": "not_started",
         "worktree": "/Users/ivo.toby/workspace/postgram/.worktrees/TASK-004-admin-auth-persistence"
+      }
+    },
+    "worker": {
+      "WAVE-002-admin-auth-persistence": {
+        "status": "dispatched",
+        "workerThreadId": "019f329b-24ff-7ec3-93dd-d854e4681fd2",
+        "workerNickname": "Parfit",
+        "dispatchedAt": "2026-07-05T12:50:00Z"
       }
     }
   },

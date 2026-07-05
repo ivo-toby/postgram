@@ -49,7 +49,7 @@ Mode: pending_codex_thread_heartbeat
 
 Cadence: adaptive, every 15 minutes while worker has no PR or patch
 
-Status: pending until worker dispatch
+Status: pending scheduler creation after worker dispatch
 
 Last check: 2026-07-05T12:50:00Z
 
@@ -92,7 +92,7 @@ freshness, and stop when WAVE-002 is ready for wdd-reconcile-wave.
 | TASK-001-admin-surface-inventory | TICKET-001-feasibility-security-design | codex/task/WAVE-001-admin-feasibility-gate | cleaned_up | reconciled | `git diff --check` passed; REVIEW_PASS; merged in `1f11365` |
 | TASK-002-threat-model-bootstrap | TICKET-001-feasibility-security-design | codex/task/WAVE-001-admin-feasibility-gate | cleaned_up | reconciled | P2 bootstrap ownership feedback resolved; REVIEW_PASS; merged in `1f11365` |
 | TASK-003-runtime-config-feasibility | TICKET-001-feasibility-security-design | codex/task/WAVE-001-admin-feasibility-gate | cleaned_up | reconciled | P3 provider URL/egress test feedback addressed; REVIEW_PASS; merged in `1f11365` |
-| TASK-004-admin-auth-persistence | TICKET-002-admin-auth-foundation | codex/task/TASK-004-admin-auth-persistence | pending_creation | worktree_pending | `npm test -- tests/integration/admin-auth-service.test.ts`; `npm run typecheck` |
+| TASK-004-admin-auth-persistence | TICKET-002-admin-auth-foundation | codex/task/TASK-004-admin-auth-persistence | verified | no_pr | Parfit dispatched; awaiting PR or patch; `npm test -- tests/integration/admin-auth-service.test.ts`; `npm run typecheck` |
 | TASK-005-admin-session-routes | TICKET-002-admin-auth-foundation | codex/task/TASK-005-admin-session-routes | not_created | planned | `npm test -- tests/contract/admin-auth-routes.test.ts`; `npm run typecheck` |
 | TASK-006-admin-mfa-step-up | TICKET-002-admin-auth-foundation | codex/task/TASK-006-admin-mfa-step-up | not_created | planned | `npm test -- tests/contract/admin-mfa-routes.test.ts`; `npm test -- tests/integration/admin-auth-service.test.ts`; `npm run typecheck` |
 | TASK-007-admin-api-shell-diagnostics | TICKET-003-admin-api-foundation | codex/task/TASK-007-admin-api-shell-diagnostics | not_created | planned | `npm test -- tests/contract/admin-api.test.ts`; `npm run typecheck` |
@@ -123,7 +123,7 @@ freshness, and stop when WAVE-002 is ready for wdd-reconcile-wave.
 - WAVE-002 bundle branch: `codex/task/TASK-004-admin-auth-persistence`.
 - WAVE-002 bundle worktree:
   `/Users/ivo.toby/workspace/postgram/.worktrees/TASK-004-admin-auth-persistence`.
-- WAVE-002 worker: pending dispatch.
+- WAVE-002 worker: Parfit (`019f329b-24ff-7ec3-93dd-d854e4681fd2`).
 - WAVE-002 reviewer: pending PR or patch.
 - Worker worktrees: WAVE-001 bundle worktree was clean and removed during
   reconciliation.
@@ -254,10 +254,12 @@ freshness, and stop when WAVE-002 is ready for wdd-reconcile-wave.
 - 2026-07-05T12:50:00Z: Synced WAVE-002 activation artifacts to the epic branch
   in `65d428c`; task branch/worktree creation must start from this commit or
   newer.
+- 2026-07-05T12:50:00Z: Created and verified task branch/worktree
+  `codex/task/TASK-004-admin-auth-persistence` at
+  `/Users/ivo.toby/workspace/postgram/.worktrees/TASK-004-admin-auth-persistence`
+  and dispatched worker Parfit (`019f329b-24ff-7ec3-93dd-d854e4681fd2`).
 
 ## Next Action
 
-Commit WAVE-002 activation artifacts, create/verify branch
-`codex/task/TASK-004-admin-auth-persistence` and worktree
-`/Users/ivo.toby/workspace/postgram/.worktrees/TASK-004-admin-auth-persistence`,
-then dispatch the worker and establish monitoring.
+Establish heartbeat monitoring for WAVE-002, then poll worker Parfit for a PR
+or patch.

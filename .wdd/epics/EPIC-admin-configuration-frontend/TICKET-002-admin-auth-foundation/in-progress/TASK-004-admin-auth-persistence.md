@@ -19,12 +19,12 @@ assigned_model_class: implementationComplex
 review_model_class: review
 branch: codex/task/TASK-004-admin-auth-persistence
 worker_worktree: /Users/ivo.toby/workspace/postgram/.worktrees/TASK-004-admin-auth-persistence
-worktree_status: pending_creation
+worktree_status: verified
 pr: null
-worker_thread_id: null
+worker_thread_id: 019f329b-24ff-7ec3-93dd-d854e4681fd2
 review_thread_id: null
-current_gate: worktree_pending
-branch_freshness: pending
+current_gate: no_pr
+branch_freshness: current_at_dispatch
 verification:
   - npm test -- tests/integration/admin-auth-service.test.ts
   - npm run typecheck
@@ -121,8 +121,8 @@ codex/task/TASK-004-admin-auth-persistence
 
 /Users/ivo.toby/workspace/postgram/.worktrees/TASK-004-admin-auth-persistence
 
-Assigned by WAVE-002 activation. The controller must create this isolated
-worktree from the synced epic branch before worker dispatch.
+Assigned by WAVE-002 activation. The controller created and verified this
+isolated worktree before dispatch.
 
 ## PR / Patch Reference
 

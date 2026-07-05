@@ -435,30 +435,35 @@
           ],
           "branch": "codex/task/TASK-005-admin-session-routes",
           "worktree": "/Users/ivo.toby/workspace/postgram/.worktrees/TASK-005-admin-session-routes",
-          "worktreeStatus": "active_uncommitted",
+          "worktreeStatus": "clean_pushed",
           "workerThreadId": "019f32d9-051d-7c40-8daf-2e05d9888901",
           "workerNickname": "Leibniz",
-          "reviewThreadId": null,
-          "reviewNickname": null,
-          "currentGate": "no_pr",
-          "branchFreshness": "stale_after_controller_checkpoint",
-          "pr": null,
-          "latestCommit": null,
+          "reviewThreadId": "019f322c-02e7-7590-8b8e-ebdd1e9c52ac",
+          "reviewNickname": "Lorentz",
+          "currentGate": "reviewing",
+          "branchFreshness": "current_at_pr_open",
+          "pr": "https://github.com/ivo-toby/postgram/pull/80",
+          "latestCommit": "01c59a9586c0311a48aa5c55ffd7784f2a3aaccc",
           "blockingFeedback": [],
           "verification": {
-            "result": "worker_reported_passed_uncommitted_needs_recheck",
+            "result": "passed_with_worker_concern",
             "commands": [
               "npm test -- tests/contract/admin-auth-routes.test.ts",
-              "npm run typecheck"
+              "npm run typecheck",
+              "npm test -- tests/unit/errors.test.ts tests/integration/admin-auth-service.test.ts tests/integration/auth-middleware.test.ts tests/contract/oauth-routes.test.ts tests/contract/mcp-oauth.test.ts tests/contract/rest-api.test.ts",
+              "npx eslint src/auth/admin-middleware.ts src/auth/admin-service.ts src/transport/admin.ts src/index.ts src/util/errors.ts tests/contract/admin-auth-routes.test.ts tests/integration/admin-auth-service.test.ts tests/unit/errors.test.ts",
+              "git diff --check"
             ],
-            "evidence": "Worker local uncommitted task file reports earlier RED/GREEN admin-auth route tests, typecheck, adjacent auth/transport tests, and git diff --check passed. Controller did not advance review because no commit, push, PR, patch, or final status exists; verification must be rerun or confirmed after newer uncommitted admin-service and admin-auth-service test changes."
+            "evidence": "Leibniz reported after rebase onto origin/codex/epic/admin-configuration-frontend at f2d48cd: npm test -- tests/contract/admin-auth-routes.test.ts passed (9 tests); npm run typecheck passed; adjacent errors/admin-auth-service/auth-middleware/oauth/mcp-oauth/rest-api suite passed (50 tests); touched-file ESLint passed; git diff --check passed; local Codex review gate found no blocking correctness, security, or maintainability issues. Concern: repo-wide npm run lint -- ... still reports unrelated existing baseline failures outside the TASK-005 diff; direct lint on touched files passed."
           },
           "activatedAt": "2026-07-05T15:10:39Z",
           "cleanupState": "not_started",
           "sharedContextReconciliation": "not_started",
           "dispatchedAt": "2026-07-05T15:15:57Z",
           "dispatchBaseCommit": "6e758524b2549d86519c25aed19f4d9617795edf",
-          "lastObservedAt": "2026-07-05T16:00:04Z"
+          "lastObservedAt": "2026-07-05T16:16:04Z",
+          "reviewRequestedAt": "2026-07-05T16:16:04Z",
+          "reviewSubmissionId": "019f3311-ae9d-79b1-84f3-ede0958df215"
         }
       ],
       "workerDispatchStartedAt": "2026-07-05T15:15:57Z"
@@ -938,8 +943,8 @@
     {
       "id": "TASK-005-admin-session-routes",
       "ticket": "TICKET-002-admin-auth-foundation",
-      "path": "TICKET-002-admin-auth-foundation/in-progress/TASK-005-admin-session-routes.md",
-      "status": "in-progress",
+      "path": "TICKET-002-admin-auth-foundation/review/TASK-005-admin-session-routes.md",
+      "status": "review",
       "dependsOn": [
         "TASK-004-admin-auth-persistence"
       ],
@@ -953,30 +958,35 @@
       "reviewModel": "review",
       "branch": "codex/task/TASK-005-admin-session-routes",
       "workerThreadId": "019f32d9-051d-7c40-8daf-2e05d9888901",
-      "reviewThreadId": null,
+      "reviewThreadId": "019f322c-02e7-7590-8b8e-ebdd1e9c52ac",
       "workerWorktree": "/Users/ivo.toby/workspace/postgram/.worktrees/TASK-005-admin-session-routes",
-      "worktreeStatus": "active_uncommitted",
-      "pr": null,
-      "latestCommit": null,
-      "branchFreshness": "stale_after_controller_checkpoint",
+      "worktreeStatus": "clean_pushed",
+      "pr": "https://github.com/ivo-toby/postgram/pull/80",
+      "latestCommit": "01c59a9586c0311a48aa5c55ffd7784f2a3aaccc",
+      "branchFreshness": "current_at_pr_open",
       "blockingFeedback": [],
       "verification": {
-        "result": "worker_reported_passed_uncommitted_needs_recheck",
+        "result": "passed_with_worker_concern",
         "commands": [
           "npm test -- tests/contract/admin-auth-routes.test.ts",
-          "npm run typecheck"
+          "npm run typecheck",
+          "npm test -- tests/unit/errors.test.ts tests/integration/admin-auth-service.test.ts tests/integration/auth-middleware.test.ts tests/contract/oauth-routes.test.ts tests/contract/mcp-oauth.test.ts tests/contract/rest-api.test.ts",
+          "npx eslint src/auth/admin-middleware.ts src/auth/admin-service.ts src/transport/admin.ts src/index.ts src/util/errors.ts tests/contract/admin-auth-routes.test.ts tests/integration/admin-auth-service.test.ts tests/unit/errors.test.ts",
+          "git diff --check"
         ],
-        "evidence": "Worker local uncommitted task file reports earlier RED/GREEN admin-auth route tests, typecheck, adjacent auth/transport tests, and git diff --check passed. Controller did not advance review because no commit, push, PR, patch, or final status exists; verification must be rerun or confirmed after newer uncommitted admin-service and admin-auth-service test changes."
+        "evidence": "Leibniz reported after rebase onto origin/codex/epic/admin-configuration-frontend at f2d48cd: npm test -- tests/contract/admin-auth-routes.test.ts passed (9 tests); npm run typecheck passed; adjacent errors/admin-auth-service/auth-middleware/oauth/mcp-oauth/rest-api suite passed (50 tests); touched-file ESLint passed; git diff --check passed; local Codex review gate found no blocking correctness, security, or maintainability issues. Concern: repo-wide npm run lint -- ... still reports unrelated existing baseline failures outside the TASK-005 diff; direct lint on touched files passed."
       },
-      "currentGate": "no_pr",
+      "currentGate": "reviewing",
       "cleanupState": "not_started",
       "sharedContextReconciliation": "not_started",
       "activatedAt": "2026-07-05T15:10:39Z",
       "workerNickname": "Leibniz",
-      "reviewNickname": null,
+      "reviewNickname": "Lorentz",
       "dispatchedAt": "2026-07-05T15:15:57Z",
       "dispatchBaseCommit": "6e758524b2549d86519c25aed19f4d9617795edf",
-      "lastObservedAt": "2026-07-05T16:00:04Z"
+      "lastObservedAt": "2026-07-05T16:16:04Z",
+      "reviewRequestedAt": "2026-07-05T16:16:04Z",
+      "reviewSubmissionId": "019f3311-ae9d-79b1-84f3-ede0958df215"
     },
     {
       "id": "TASK-006-admin-mfa-step-up",
@@ -1458,12 +1468,12 @@
   ],
   "monitoring": {
     "mode": "codex_thread_heartbeat",
-    "cadence": "15m",
-    "status": "active_no_pr_monitoring",
-    "lastCheckedAt": "2026-07-05T16:00:04Z",
-    "nextCheckDueAt": "2026-07-05T16:15:04Z",
+    "cadence": "5m",
+    "status": "active_review_monitoring",
+    "lastCheckedAt": "2026-07-05T16:16:04Z",
+    "nextCheckDueAt": "2026-07-05T16:21:04Z",
     "schedulerRef": "postgram-admin-wave-003-wdd-heartbeat",
-    "fallbackPrompt": "Run one bounded WDD controller heartbeat for /Users/ivo.toby/workspace/postgram, epic EPIC-admin-configuration-frontend, active wave WAVE-003. Use subagent-pr-orchestration, inspect worker Leibniz (019f32d9-051d-7c40-8daf-2e05d9888901) and worktree /Users/ivo.toby/workspace/postgram/.worktrees/TASK-005-admin-session-routes, update gates, and if a PR or patch exists move to review orchestration; otherwise keep no_pr and nudge missing commit/push/PR/final status only if needed."
+    "fallbackPrompt": "Run one bounded WDD controller heartbeat for /Users/ivo.toby/workspace/postgram, epic EPIC-admin-configuration-frontend, active wave WAVE-003. Use subagent-pr-orchestration, inspect PR #80, worker Leibniz (019f32d9-051d-7c40-8daf-2e05d9888901), reviewer Lorentz (019f322c-02e7-7590-8b8e-ebdd1e9c52ac), and worktree /Users/ivo.toby/workspace/postgram/.worktrees/TASK-005-admin-session-routes. Route P1/P2 feedback if review blocks; if review passes, enforce branch freshness before merge."
   },
   "sharedContext": {
     "index": "shared-context/index.md",
@@ -1499,30 +1509,35 @@
         ],
         "branch": "codex/task/TASK-005-admin-session-routes",
         "worktree": "/Users/ivo.toby/workspace/postgram/.worktrees/TASK-005-admin-session-routes",
-        "worktreeStatus": "active_uncommitted",
+        "worktreeStatus": "clean_pushed",
         "workerThreadId": "019f32d9-051d-7c40-8daf-2e05d9888901",
         "workerNickname": "Leibniz",
-        "reviewThreadId": null,
-        "reviewNickname": null,
-        "currentGate": "no_pr",
-        "branchFreshness": "stale_after_controller_checkpoint",
-        "pr": null,
-        "latestCommit": null,
+        "reviewThreadId": "019f322c-02e7-7590-8b8e-ebdd1e9c52ac",
+        "reviewNickname": "Lorentz",
+        "currentGate": "reviewing",
+        "branchFreshness": "current_at_pr_open",
+        "pr": "https://github.com/ivo-toby/postgram/pull/80",
+        "latestCommit": "01c59a9586c0311a48aa5c55ffd7784f2a3aaccc",
         "blockingFeedback": [],
         "verification": {
-          "result": "worker_reported_passed_uncommitted_needs_recheck",
+          "result": "passed_with_worker_concern",
           "commands": [
             "npm test -- tests/contract/admin-auth-routes.test.ts",
-            "npm run typecheck"
+            "npm run typecheck",
+            "npm test -- tests/unit/errors.test.ts tests/integration/admin-auth-service.test.ts tests/integration/auth-middleware.test.ts tests/contract/oauth-routes.test.ts tests/contract/mcp-oauth.test.ts tests/contract/rest-api.test.ts",
+            "npx eslint src/auth/admin-middleware.ts src/auth/admin-service.ts src/transport/admin.ts src/index.ts src/util/errors.ts tests/contract/admin-auth-routes.test.ts tests/integration/admin-auth-service.test.ts tests/unit/errors.test.ts",
+            "git diff --check"
           ],
-          "evidence": "Worker local uncommitted task file reports earlier RED/GREEN admin-auth route tests, typecheck, adjacent auth/transport tests, and git diff --check passed. Controller did not advance review because no commit, push, PR, patch, or final status exists; verification must be rerun or confirmed after newer uncommitted admin-service and admin-auth-service test changes."
+          "evidence": "Leibniz reported after rebase onto origin/codex/epic/admin-configuration-frontend at f2d48cd: npm test -- tests/contract/admin-auth-routes.test.ts passed (9 tests); npm run typecheck passed; adjacent errors/admin-auth-service/auth-middleware/oauth/mcp-oauth/rest-api suite passed (50 tests); touched-file ESLint passed; git diff --check passed; local Codex review gate found no blocking correctness, security, or maintainability issues. Concern: repo-wide npm run lint -- ... still reports unrelated existing baseline failures outside the TASK-005 diff; direct lint on touched files passed."
         },
         "activatedAt": "2026-07-05T15:10:39Z",
         "cleanupState": "not_started",
         "sharedContextReconciliation": "not_started",
         "dispatchedAt": "2026-07-05T15:15:57Z",
         "dispatchBaseCommit": "6e758524b2549d86519c25aed19f4d9617795edf",
-        "lastObservedAt": "2026-07-05T16:00:04Z"
+        "lastObservedAt": "2026-07-05T16:16:04Z",
+        "reviewRequestedAt": "2026-07-05T16:16:04Z",
+        "reviewSubmissionId": "019f3311-ae9d-79b1-84f3-ede0958df215"
       }
     ]
   },
@@ -1548,12 +1563,12 @@
     "workerWorktrees": {
       "WAVE-001-admin-feasibility-gate": "cleaned_up",
       "WAVE-002-admin-auth-persistence": "cleaned_up",
-      "WAVE-003-admin-session-routes": "active_uncommitted"
+      "WAVE-003-admin-session-routes": "clean_pushed"
     },
     "workerDispatch": {
       "WAVE-001-admin-feasibility-gate": "reconciled",
       "WAVE-002-admin-auth-persistence": "reconciled",
-      "WAVE-003-admin-session-routes": "no_pr"
+      "WAVE-003-admin-session-routes": "reviewing"
     },
     "waveCompletion": {
       "WAVE-001": "done",
@@ -1566,12 +1581,12 @@
     },
     "monitoring": {
       "mode": "codex_thread_heartbeat",
-      "cadence": "15m",
-      "status": "active_no_pr_monitoring",
-      "lastCheckedAt": "2026-07-05T16:00:04Z",
-      "nextCheckDueAt": "2026-07-05T16:15:04Z",
+      "cadence": "5m",
+      "status": "active_review_monitoring",
+      "lastCheckedAt": "2026-07-05T16:16:04Z",
+      "nextCheckDueAt": "2026-07-05T16:21:04Z",
       "schedulerRef": "postgram-admin-wave-003-wdd-heartbeat",
-      "fallbackPrompt": "Run one bounded WDD controller heartbeat for /Users/ivo.toby/workspace/postgram, epic EPIC-admin-configuration-frontend, active wave WAVE-003. Use subagent-pr-orchestration, inspect worker Leibniz (019f32d9-051d-7c40-8daf-2e05d9888901) and worktree /Users/ivo.toby/workspace/postgram/.worktrees/TASK-005-admin-session-routes, update gates, and if a PR or patch exists move to review orchestration; otherwise keep no_pr and nudge missing commit/push/PR/final status only if needed."
+      "fallbackPrompt": "Run one bounded WDD controller heartbeat for /Users/ivo.toby/workspace/postgram, epic EPIC-admin-configuration-frontend, active wave WAVE-003. Use subagent-pr-orchestration, inspect PR #80, worker Leibniz (019f32d9-051d-7c40-8daf-2e05d9888901), reviewer Lorentz (019f322c-02e7-7590-8b8e-ebdd1e9c52ac), and worktree /Users/ivo.toby/workspace/postgram/.worktrees/TASK-005-admin-session-routes. Route P1/P2 feedback if review blocks; if review passes, enforce branch freshness before merge."
     },
     "review": {
       "WAVE-001-admin-feasibility-gate": {
@@ -1634,17 +1649,20 @@
         "blockingFeedback": []
       },
       "WAVE-003-admin-session-routes": {
-        "status": "not_started",
+        "status": "in_progress",
         "result": null,
-        "pr": null,
-        "reviewThreadId": null,
+        "pr": "https://github.com/ivo-toby/postgram/pull/80",
+        "reviewThreadId": "019f322c-02e7-7590-8b8e-ebdd1e9c52ac",
+        "reviewNickname": "Lorentz",
+        "reviewSubmissionId": "019f3311-ae9d-79b1-84f3-ede0958df215",
+        "requestedAt": "2026-07-05T16:16:04Z",
         "blockingFeedback": []
       }
     },
     "branchFreshness": {
       "WAVE-001-admin-feasibility-gate": "current_at_merge",
       "WAVE-002-admin-auth-persistence": "current_at_merge",
-      "WAVE-003-admin-session-routes": "stale_after_controller_checkpoint"
+      "WAVE-003-admin-session-routes": "current_at_pr_open"
     },
     "merge": {
       "WAVE-001-admin-feasibility-gate": {
@@ -1692,6 +1710,18 @@
         "mergedAt": "2026-07-05T15:04:08Z",
         "remoteBasePushedAt": "2026-07-05T15:04:08Z",
         "closeoutCommit": "cac43dd"
+      },
+      "WAVE-003-admin-session-routes": {
+        "state": "OPEN",
+        "isDraft": true,
+        "url": "https://github.com/ivo-toby/postgram/pull/80",
+        "headRef": "codex/task/TASK-005-admin-session-routes",
+        "headSha": "01c59a9586c0311a48aa5c55ffd7784f2a3aaccc",
+        "baseRef": "codex/epic/admin-configuration-frontend",
+        "baseSha": "f2d48cdfd33b8e94fc14dafcd66a206f3fff7a72",
+        "mergeStateStatus": "CLEAN",
+        "createdAt": "2026-07-05T16:14:14Z",
+        "updatedAt": "2026-07-05T16:14:36Z"
       }
     },
     "cleanup": {
@@ -1710,7 +1740,7 @@
       "WAVE-003-admin-session-routes": {
         "status": "not_started",
         "worktree": "/Users/ivo.toby/workspace/postgram/.worktrees/TASK-005-admin-session-routes",
-        "reason": "Worker has active uncommitted changes."
+        "reason": "PR #80 is in review; keep worktree until merge or blocked closeout."
       }
     },
     "worker": {
@@ -1745,21 +1775,23 @@
         "reconciledAt": "2026-07-05T15:07:20Z"
       },
       "WAVE-003-admin-session-routes": {
-        "status": "running_no_pr_active_uncommitted",
+        "status": "done_with_concerns_pr_open",
         "workerThreadId": "019f32d9-051d-7c40-8daf-2e05d9888901",
         "workerNickname": "Leibniz",
+        "finalStatus": "DONE_WITH_CONCERNS",
+        "pr": "https://github.com/ivo-toby/postgram/pull/80",
+        "latestCommit": "01c59a9586c0311a48aa5c55ffd7784f2a3aaccc",
         "dispatchedAt": "2026-07-05T15:15:57Z",
-        "lastObservedAt": "2026-07-05T16:00:04Z",
+        "lastObservedAt": "2026-07-05T16:16:04Z",
         "lastObservation": {
-          "checkedAt": "2026-07-05T16:00:04Z",
-          "workerStatus": "running",
-          "pr": null,
+          "checkedAt": "2026-07-05T16:16:04Z",
+          "workerStatus": "DONE_WITH_CONCERNS",
+          "pr": "https://github.com/ivo-toby/postgram/pull/80",
           "patch": null,
-          "worktreeStatus": "active_uncommitted",
-          "branchHead": "79d1265cf3b7c147305eac04300bd0f9f8fe1dae",
-          "epicHead": "90d90f0e515a6dc540297ee6818e5bc201147a80",
-          "branchFreshness": "stale_after_controller_checkpoint",
-          "localTaskPath": "TICKET-002-admin-auth-foundation/review/TASK-005-admin-session-routes.md (uncommitted)",
+          "worktreeStatus": "clean_pushed",
+          "branchHead": "01c59a9586c0311a48aa5c55ffd7784f2a3aaccc",
+          "epicHead": "f2d48cdfd33b8e94fc14dafcd66a206f3fff7a72",
+          "branchFreshness": "current_at_pr_open",
           "observedFiles": [
             ".wdd/epics/EPIC-admin-configuration-frontend/TICKET-002-admin-auth-foundation/review/TASK-005-admin-session-routes.md",
             "src/auth/admin-middleware.ts",
@@ -1771,9 +1803,9 @@
             "tests/integration/admin-auth-service.test.ts",
             "tests/unit/errors.test.ts"
           ],
-          "verification": "Worker local uncommitted task file reports earlier RED/GREEN admin-auth route tests, typecheck, adjacent auth/transport tests, and git diff --check passed. Controller did not advance review because no commit, push, PR, patch, or final status exists; verification must be rerun or confirmed after newer uncommitted admin-service and admin-auth-service test changes.",
-          "nudgeSubmissionId": "019f3303-8f1f-75f1-835c-e724e142a8b8",
-          "note": "Controller observed continued uncommitted work, now also touching admin-service and admin-auth-service integration tests. No commit, push, PR, patch, or final worker status; exact missing deliverables and blocker/status request sent to Leibniz."
+          "verification": "Leibniz reported after rebase onto origin/codex/epic/admin-configuration-frontend at f2d48cd: npm test -- tests/contract/admin-auth-routes.test.ts passed (9 tests); npm run typecheck passed; adjacent errors/admin-auth-service/auth-middleware/oauth/mcp-oauth/rest-api suite passed (50 tests); touched-file ESLint passed; git diff --check passed; local Codex review gate found no blocking correctness, security, or maintainability issues. Concern: repo-wide npm run lint -- ... still reports unrelated existing baseline failures outside the TASK-005 diff; direct lint on touched files passed.",
+          "concern": "Repo-wide npm run lint -- ... still reports unrelated existing baseline lint failures outside the TASK-005 diff; touched-file ESLint passed.",
+          "note": "Draft PR #80 is open and mergeable; Lorentz review requested."
         },
         "cleanupState": "not_started"
       }
@@ -1798,11 +1830,13 @@
     "id": "WAVE-003",
     "activatedAt": "2026-07-05T15:10:39Z",
     "dispatchedAt": "2026-07-05T15:15:57Z",
-    "status": "no_pr",
+    "status": "reviewing",
     "workerThreadId": "019f32d9-051d-7c40-8daf-2e05d9888901",
     "workerNickname": "Leibniz",
-    "lastObservedAt": "2026-07-05T16:00:04Z",
-    "worktreeStatus": "active_uncommitted",
-    "branchFreshness": "stale_after_controller_checkpoint"
+    "lastObservedAt": "2026-07-05T16:16:04Z",
+    "worktreeStatus": "clean_pushed",
+    "branchFreshness": "current_at_pr_open",
+    "pr": "https://github.com/ivo-toby/postgram/pull/80",
+    "latestCommit": "01c59a9586c0311a48aa5c55ffd7784f2a3aaccc"
   }
 }

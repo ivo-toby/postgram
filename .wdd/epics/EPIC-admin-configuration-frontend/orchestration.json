@@ -6,7 +6,7 @@
     "targetBranch": "main",
     "epicBranch": "codex/epic/admin-configuration-frontend",
     "slug": "admin-configuration-frontend",
-    "status": "planned"
+    "status": "in_progress"
   },
   "configuration": {
     "storageMode": "local-markdown",
@@ -50,7 +50,7 @@
     {
       "id": "TICKET-001-feasibility-security-design",
       "path": "TICKET-001-feasibility-security-design/ticket.md",
-      "status": "todo",
+      "status": "in_progress",
       "taskIds": [
         "TASK-001-admin-surface-inventory",
         "TASK-002-threat-model-bootstrap",
@@ -138,14 +138,14 @@
   "waves": [
     {
       "id": "WAVE-001",
-      "status": "planned",
+      "status": "in_progress",
       "strategy": {
         "profile": "full",
         "executionMode": "bundled",
         "reviewMode": "risk_based",
         "monitoringMode": "adaptive",
         "recommendedBy": "wdd-plan-epic",
-        "confirmedBy": null,
+        "confirmedBy": "Ivo via Codex request on 2026-07-05",
         "requiresUserConfirmation": true,
         "confidence": "medium",
         "rationale": [
@@ -166,6 +166,35 @@
         "TASK-001-admin-surface-inventory",
         "TASK-002-threat-model-bootstrap",
         "TASK-003-runtime-config-feasibility"
+      ],
+      "activatedAt": "2026-07-05T11:36:08Z",
+      "bundles": [
+        {
+          "id": "WAVE-001-admin-feasibility-gate",
+          "tasks": [
+            "TASK-001-admin-surface-inventory",
+            "TASK-002-threat-model-bootstrap",
+            "TASK-003-runtime-config-feasibility"
+          ],
+          "branch": "codex/task/WAVE-001-admin-feasibility-gate",
+          "worktree": "/Users/ivo.toby/workspace/postgram/.worktrees/WAVE-001-admin-feasibility-gate",
+          "worktreeStatus": "pending_creation",
+          "workerThreadId": null,
+          "workerNickname": null,
+          "reviewThreadId": null,
+          "currentGate": "activation_pending_worktree",
+          "branchFreshness": "pending_creation",
+          "pr": null,
+          "latestCommit": null,
+          "blockingFeedback": [],
+          "verification": {
+            "result": "not_run",
+            "commands": [
+              "git diff --check"
+            ],
+            "evidence": null
+          }
+        }
       ]
     },
     {
@@ -456,8 +485,8 @@
     {
       "id": "TASK-001-admin-surface-inventory",
       "ticket": "TICKET-001-feasibility-security-design",
-      "path": "TICKET-001-feasibility-security-design/todo/TASK-001-admin-surface-inventory.md",
-      "status": "todo",
+      "path": "TICKET-001-feasibility-security-design/in-progress/TASK-001-admin-surface-inventory.md",
+      "status": "in_progress",
       "dependsOn": [],
       "conflictDomains": [
         "src/cli/admin/pgm-admin.ts",
@@ -466,14 +495,14 @@
       ],
       "assignedModel": "planning",
       "reviewModel": "review",
-      "branch": "codex/task/TASK-001-admin-surface-inventory",
+      "branch": "codex/task/WAVE-001-admin-feasibility-gate",
       "workerThreadId": null,
       "reviewThreadId": null,
-      "workerWorktree": null,
-      "worktreeStatus": "not_created",
+      "workerWorktree": "/Users/ivo.toby/workspace/postgram/.worktrees/WAVE-001-admin-feasibility-gate",
+      "worktreeStatus": "pending_creation",
       "pr": null,
       "latestCommit": null,
-      "branchFreshness": "not_started",
+      "branchFreshness": "pending_creation",
       "blockingFeedback": [],
       "verification": {
         "result": "not_run",
@@ -482,13 +511,13 @@
         ],
         "evidence": null
       },
-      "currentGate": "planned"
+      "currentGate": "activation_pending_worktree"
     },
     {
       "id": "TASK-002-threat-model-bootstrap",
       "ticket": "TICKET-001-feasibility-security-design",
-      "path": "TICKET-001-feasibility-security-design/todo/TASK-002-threat-model-bootstrap.md",
-      "status": "todo",
+      "path": "TICKET-001-feasibility-security-design/in-progress/TASK-002-threat-model-bootstrap.md",
+      "status": "in_progress",
       "dependsOn": [],
       "conflictDomains": [
         "shared-context/resources/security-model.md",
@@ -497,14 +526,14 @@
       ],
       "assignedModel": "planning",
       "reviewModel": "review",
-      "branch": "codex/task/TASK-002-threat-model-bootstrap",
+      "branch": "codex/task/WAVE-001-admin-feasibility-gate",
       "workerThreadId": null,
       "reviewThreadId": null,
-      "workerWorktree": null,
-      "worktreeStatus": "not_created",
+      "workerWorktree": "/Users/ivo.toby/workspace/postgram/.worktrees/WAVE-001-admin-feasibility-gate",
+      "worktreeStatus": "pending_creation",
       "pr": null,
       "latestCommit": null,
-      "branchFreshness": "not_started",
+      "branchFreshness": "pending_creation",
       "blockingFeedback": [],
       "verification": {
         "result": "not_run",
@@ -513,13 +542,13 @@
         ],
         "evidence": null
       },
-      "currentGate": "planned"
+      "currentGate": "activation_pending_worktree"
     },
     {
       "id": "TASK-003-runtime-config-feasibility",
       "ticket": "TICKET-001-feasibility-security-design",
-      "path": "TICKET-001-feasibility-security-design/todo/TASK-003-runtime-config-feasibility.md",
-      "status": "todo",
+      "path": "TICKET-001-feasibility-security-design/in-progress/TASK-003-runtime-config-feasibility.md",
+      "status": "in_progress",
       "dependsOn": [],
       "conflictDomains": [
         "src/config.ts",
@@ -529,14 +558,14 @@
       ],
       "assignedModel": "planning",
       "reviewModel": "review",
-      "branch": "codex/task/TASK-003-runtime-config-feasibility",
+      "branch": "codex/task/WAVE-001-admin-feasibility-gate",
       "workerThreadId": null,
       "reviewThreadId": null,
-      "workerWorktree": null,
-      "worktreeStatus": "not_created",
+      "workerWorktree": "/Users/ivo.toby/workspace/postgram/.worktrees/WAVE-001-admin-feasibility-gate",
+      "worktreeStatus": "pending_creation",
       "pr": null,
       "latestCommit": null,
-      "branchFreshness": "not_started",
+      "branchFreshness": "pending_creation",
       "blockingFeedback": [],
       "verification": {
         "result": "not_run",
@@ -545,7 +574,7 @@
         ],
         "evidence": null
       },
-      "currentGate": "planned"
+      "currentGate": "activation_pending_worktree"
     },
     {
       "id": "TASK-004-admin-auth-persistence",
@@ -1097,13 +1126,13 @@
     }
   ],
   "monitoring": {
-    "mode": "manual",
+    "mode": "pending_scheduler",
     "cadence": "adaptive",
-    "status": "not_started",
-    "lastCheck": null,
-    "nextCheckDue": null,
-    "schedulerReference": null,
-    "fallbackPrompt": "Start WAVE-001 for EPIC-admin-configuration-frontend only after user confirms the full bundled feasibility gate. Verify epic branch artifacts are synced before creating worker worktrees."
+    "status": "activation_pending_worktree",
+    "lastCheckedAt": "2026-07-05T11:36:08Z",
+    "nextCheckDueAt": null,
+    "schedulerRef": "pending",
+    "fallbackPrompt": "Resume WAVE-001 for EPIC-admin-configuration-frontend. Read .wdd/epics/EPIC-admin-configuration-frontend/orchestration.json and controller-state.md, inspect the active bundled worker reference when recorded, inspect the assigned worktree /Users/ivo.toby/workspace/postgram/.worktrees/WAVE-001-admin-feasibility-gate, update gates, branch freshness, verification, PR or patch refs, review refs, feedback, and monitoring timestamps, and stop when the bundle is ready for wdd-reconcile-wave."
   },
   "sharedContext": {
     "index": "shared-context/index.md",
@@ -1116,5 +1145,78 @@
       "shared-context/resources/migration-config-notes.md"
     ],
     "reconcileAfterEveryWave": true
+  },
+  "activeWave": {
+    "id": "WAVE-001",
+    "activatedAt": "2026-07-05T11:36:08Z",
+    "strategy": {
+      "profile": "full",
+      "executionMode": "bundled",
+      "reviewMode": "risk_based",
+      "monitoringMode": "adaptive",
+      "confirmedBy": "Ivo via Codex request on 2026-07-05"
+    },
+    "eligibleTasks": [
+      "TASK-001-admin-surface-inventory",
+      "TASK-002-threat-model-bootstrap",
+      "TASK-003-runtime-config-feasibility"
+    ],
+    "nonEligibleTasks": [],
+    "bundles": [
+      {
+        "id": "WAVE-001-admin-feasibility-gate",
+        "tasks": [
+          "TASK-001-admin-surface-inventory",
+          "TASK-002-threat-model-bootstrap",
+          "TASK-003-runtime-config-feasibility"
+        ],
+        "branch": "codex/task/WAVE-001-admin-feasibility-gate",
+        "worktree": "/Users/ivo.toby/workspace/postgram/.worktrees/WAVE-001-admin-feasibility-gate",
+        "worktreeStatus": "pending_creation",
+        "workerThreadId": null,
+        "workerNickname": null,
+        "reviewThreadId": null,
+        "currentGate": "activation_pending_worktree",
+        "branchFreshness": "pending_creation",
+        "pr": null,
+        "latestCommit": null,
+        "blockingFeedback": [],
+        "verification": {
+          "result": "not_run",
+          "commands": [
+            "git diff --check"
+          ],
+          "evidence": null
+        }
+      }
+    ]
+  },
+  "currentGates": {
+    "epicBranch": {
+      "status": "verified",
+      "branch": "codex/epic/admin-configuration-frontend",
+      "requiredBeforeWorkerDispatch": true,
+      "verifiedAt": "2026-07-05T11:36:08Z"
+    },
+    "activationArtifactsSynced": {
+      "status": "pending_commit_to_epic_branch",
+      "requiredBeforeTaskWorktrees": true
+    },
+    "waveStrategyConfirmation": {
+      "WAVE-001": "confirmed_by_ivo_2026-07-05"
+    },
+    "workerWorktrees": {
+      "WAVE-001-admin-feasibility-gate": "pending_creation"
+    },
+    "workerDispatch": {
+      "WAVE-001-admin-feasibility-gate": "not_started"
+    },
+    "waveCompletion": {
+      "WAVE-001": "in_progress"
+    },
+    "nextWave": {
+      "id": "WAVE-002",
+      "status": "blocked_until_wave_001_reconciled"
+    }
   }
 }

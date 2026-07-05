@@ -6,21 +6,21 @@ ticket: TICKET-001-feasibility-security-design
 wave: WAVE-001
 slug: admin-surface-inventory
 title: Admin Surface Inventory
-status: todo
+status: in_progress
 depends_on: []
 conflict_domains:
   - .wdd/epics/EPIC-admin-configuration-frontend/shared-context/**
   - docs/superpowers/specs/**
 assigned_model_class: planning
 review_model_class: review
-branch: codex/task/TASK-001-admin-surface-inventory
-worker_worktree: null
-worktree_status: unassigned
+branch: codex/task/WAVE-001-admin-feasibility-gate
+worker_worktree: /Users/ivo.toby/workspace/postgram/.worktrees/WAVE-001-admin-feasibility-gate
+worktree_status: pending_creation
 pr: null
 worker_thread_id: null
 review_thread_id: null
-current_gate: not_started
-branch_freshness: unknown
+current_gate: activation_pending_worktree
+branch_freshness: pending_creation
 verification:
   - git diff --check
 ---
@@ -29,7 +29,7 @@ verification:
 
 ## Status
 
-todo
+in_progress
 
 ## Parent Ticket
 
@@ -95,12 +95,14 @@ planning
 
 ## Branch
 
-codex/task/TASK-001-admin-surface-inventory
+codex/task/WAVE-001-admin-feasibility-gate
 
 ## Worker Worktree
 
-None assigned yet. The controller must create or verify an isolated worktree
-before dispatch.
+/Users/ivo.toby/workspace/postgram/.worktrees/WAVE-001-admin-feasibility-gate
+
+Assigned as part of bundled WAVE-001. The controller must create and verify this
+isolated worktree before dispatch.
 
 ## PR / Patch Reference
 

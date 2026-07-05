@@ -2,7 +2,7 @@
 id: EPIC-admin-configuration-frontend-VALIDATION
 kind: validation_checklist
 epic: EPIC-admin-configuration-frontend
-status: planned
+status: in_progress
 created_at: 2026-07-05
 updated_at: 2026-07-05
 ---
@@ -113,8 +113,10 @@ updated_at: 2026-07-05
 
 ## Planning Result
 
-Planning is ready. The recommended next step is to confirm and start WAVE-001:
+Planning is complete. WAVE-001 is activated as the bundled feasibility/security
+gate:
 
 ```text
-Confirm WAVE-001 full bundled feasibility gate for EPIC-admin-configuration-frontend.
+Run bundled WAVE-001 for EPIC-admin-configuration-frontend in
+/Users/ivo.toby/workspace/postgram/.worktrees/WAVE-001-admin-feasibility-gate.
 ```

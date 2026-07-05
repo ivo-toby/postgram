@@ -4,7 +4,7 @@ kind: epic
 type: feature
 slug: admin-configuration-frontend
 title: Safe Admin Configuration Frontend
-status: planned
+status: in_progress
 created_at: 2026-07-05
 updated_at: 2026-07-05
 target_branch: main

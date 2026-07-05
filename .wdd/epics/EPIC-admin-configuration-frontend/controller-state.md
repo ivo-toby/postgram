@@ -2,8 +2,8 @@
 id: EPIC-admin-configuration-frontend-CONTROLLER
 kind: controller_state
 epic: EPIC-admin-configuration-frontend
-active_wave: null
-status: planned
+active_wave: WAVE-001
+status: in_progress
 updated_at: 2026-07-05
 ---
 
@@ -19,16 +19,17 @@ checkout.
 
 ## Current Outcome
 
-Planning is complete.
+WAVE-001 is activated as a full-profile bundled feasibility/security gate.
 
-Next phase: start WAVE-001 with `wdd-start-wave` after user confirmation for
-the full-profile bundled feasibility gate.
+Next phase: create the bundled worker branch/worktree from the synced epic
+branch, dispatch one worker for TASK-001 through TASK-003, and monitor until the
+bundle is ready for review or reconciliation.
 
 ## Wave Summary
 
 | Wave | Tasks | Strategy | Status | Confirmation |
 |------|-------|----------|--------|--------------|
-| WAVE-001 | TASK-001, TASK-002, TASK-003 | full / bundled / risk_based / adaptive | planned | required |
+| WAVE-001 | TASK-001, TASK-002, TASK-003 | full / bundled / risk_based / adaptive | in_progress | confirmed by Ivo via Codex request on 2026-07-05 |
 | WAVE-002 | TASK-004 | full / bundled / risk_based / adaptive | planned | required |
 | WAVE-003 | TASK-005 | full / bundled / risk_based / adaptive | planned | required |
 | WAVE-004 | TASK-006, TASK-009 | full / hybrid / risk_based / adaptive | planned | required |
@@ -42,33 +43,51 @@ the full-profile bundled feasibility gate.
 
 ## Monitoring
 
-Mode: manual
+Mode: pending_scheduler
 
 Cadence: adaptive
 
-Status: not_started
+Status: activation_pending_worktree
 
-Last check: none
+Last check: 2026-07-05T11:36:08Z
 
 Next check due: none
 
-Scheduler reference: none
+Scheduler reference: pending
 
 Fallback prompt:
 
 ```text
-Start WAVE-001 for EPIC-admin-configuration-frontend only after user confirms
-the full bundled feasibility gate. Verify epic branch artifacts are synced
-before creating worker worktrees.
+Resume WAVE-001 for EPIC-admin-configuration-frontend. Read
+.wdd/epics/EPIC-admin-configuration-frontend/orchestration.json and
+controller-state.md, inspect the active bundled worker reference when recorded,
+inspect the assigned worktree
+/Users/ivo.toby/workspace/postgram/.worktrees/WAVE-001-admin-feasibility-gate,
+update gates, branch freshness, verification, PR or patch refs, review refs,
+feedback, and monitoring timestamps, and stop when the bundle is ready for
+wdd-reconcile-wave.
 ```
 
-## Planned Task Gates
+## Active Wave Strategy
+
+- Wave: WAVE-001
+- Profile: full
+- Execution mode: bundled
+- Review mode: risk_based
+- Monitoring mode: adaptive
+- Confirmation: Ivo via Codex request on 2026-07-05
+- Bundle: WAVE-001-admin-feasibility-gate
+- Bundle branch: `codex/task/WAVE-001-admin-feasibility-gate`
+- Bundle worktree:
+  `/Users/ivo.toby/workspace/postgram/.worktrees/WAVE-001-admin-feasibility-gate`
+
+## Task Gates
 
 | Task | Ticket | Branch | Worktree | Gate | Verification |
 |------|--------|--------|----------|------|--------------|
-| TASK-001-admin-surface-inventory | TICKET-001-feasibility-security-design | codex/task/TASK-001-admin-surface-inventory | not_created | planned | `git diff --check` |
-| TASK-002-threat-model-bootstrap | TICKET-001-feasibility-security-design | codex/task/TASK-002-threat-model-bootstrap | not_created | planned | `git diff --check` |
-| TASK-003-runtime-config-feasibility | TICKET-001-feasibility-security-design | codex/task/TASK-003-runtime-config-feasibility | not_created | planned | `git diff --check` |
+| TASK-001-admin-surface-inventory | TICKET-001-feasibility-security-design | codex/task/WAVE-001-admin-feasibility-gate | pending_creation | activation_pending_worktree | `git diff --check` |
+| TASK-002-threat-model-bootstrap | TICKET-001-feasibility-security-design | codex/task/WAVE-001-admin-feasibility-gate | pending_creation | activation_pending_worktree | `git diff --check` |
+| TASK-003-runtime-config-feasibility | TICKET-001-feasibility-security-design | codex/task/WAVE-001-admin-feasibility-gate | pending_creation | activation_pending_worktree | `git diff --check` |
 | TASK-004-admin-auth-persistence | TICKET-002-admin-auth-foundation | codex/task/TASK-004-admin-auth-persistence | not_created | planned | `npm test -- tests/integration/admin-auth-service.test.ts`; `npm run typecheck` |
 | TASK-005-admin-session-routes | TICKET-002-admin-auth-foundation | codex/task/TASK-005-admin-session-routes | not_created | planned | `npm test -- tests/contract/admin-auth-routes.test.ts`; `npm run typecheck` |
 | TASK-006-admin-mfa-step-up | TICKET-002-admin-auth-foundation | codex/task/TASK-006-admin-mfa-step-up | not_created | planned | `npm test -- tests/contract/admin-mfa-routes.test.ts`; `npm test -- tests/integration/admin-auth-service.test.ts`; `npm run typecheck` |
@@ -91,21 +110,26 @@ before creating worker worktrees.
 - Task branches: `codex/task/[task-id]-[task-slug]`.
 - Task PR target: epic branch.
 - Final PR target: `main`.
-- Worker worktrees: not created.
+- WAVE-001 bundle branch: `codex/task/WAVE-001-admin-feasibility-gate`.
+- WAVE-001 bundle worktree:
+  `/Users/ivo.toby/workspace/postgram/.worktrees/WAVE-001-admin-feasibility-gate`.
+- Worker worktrees: WAVE-001 bundle pending creation.
 - Worker rule: one isolated worktree per repository-writing task before
   dispatch.
 - Controller checkout rule: workers must not switch branches in the controller
   checkout.
-- Branch freshness: all tasks `not_started`.
+- Branch freshness: WAVE-001 bundle pending creation from synced epic branch.
 
-## WAVE-001 Readiness
+## WAVE-001 Active State
 
 - All WAVE-001 tasks have no task dependencies.
 - WAVE-001 is full-profile bundled because it is the feasibility/security gate.
-- User confirmation is required before activation because confidence is medium
-  and the risk is high.
+- User confirmation is recorded from Ivo's Codex request on 2026-07-05.
 - WAVE-001 stop condition requires shared-context reconciliation before
   implementation waves begin.
+- Non-eligible tasks: none.
+- Activation artifact sync: pending commit to epic branch before bundle worktree
+  creation.
 
 ## Shared Context Reconciliation Rules
 
@@ -126,11 +150,17 @@ before creating worker worktrees.
 - 2026-07-05: Epic created for safe admin configuration frontend.
 - 2026-07-05: Planning artifacts created for seven tickets, eighteen tasks,
   and eleven waves.
+- 2026-07-05T11:36:08Z: WAVE-001 activated by request. TASK-001, TASK-002,
+  and TASK-003 moved to in-progress as a single bundled feasibility/security
+  worker assignment.
 
 ## Next Action
 
-Ask Ivo to confirm WAVE-001:
+Create/verify the bundled WAVE-001 worktree from the synced epic branch, then
+dispatch one worker:
 
 ```text
-Confirm WAVE-001 full bundled feasibility gate for EPIC-admin-configuration-frontend.
+Run bundled WAVE-001 for EPIC-admin-configuration-frontend in
+/Users/ivo.toby/workspace/postgram/.worktrees/WAVE-001-admin-feasibility-gate
+on branch codex/task/WAVE-001-admin-feasibility-gate.
 ```

@@ -4,7 +4,7 @@ kind: ticket
 epic: EPIC-admin-configuration-frontend
 slug: feasibility-security-design
 title: Feasibility And Security Design
-status: planned
+status: in_progress
 task_count: 3
 depends_on: []
 conflict_domains:
@@ -48,9 +48,9 @@ trust.
 
 | Task | Status | Wave | Summary |
 |------|--------|------|---------|
-| TASK-001-admin-surface-inventory | todo | WAVE-001 | Classify `pgm-admin` command feasibility and web eligibility |
-| TASK-002-threat-model-bootstrap | todo | WAVE-001 | Threat model admin plane and choose bootstrap posture |
-| TASK-003-runtime-config-feasibility | todo | WAVE-001 | Decide runtime settings, secret, and apply/reload strategy |
+| TASK-001-admin-surface-inventory | in_progress | WAVE-001 | Classify `pgm-admin` command feasibility and web eligibility |
+| TASK-002-threat-model-bootstrap | in_progress | WAVE-001 | Threat model admin plane and choose bootstrap posture |
+| TASK-003-runtime-config-feasibility | in_progress | WAVE-001 | Decide runtime settings, secret, and apply/reload strategy |
 
 ## Dependencies
 

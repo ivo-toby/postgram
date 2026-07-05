@@ -2,7 +2,7 @@
 id: EPIC-admin-configuration-frontend-WAVES
 kind: wave_plan
 epic: EPIC-admin-configuration-frontend
-status: planned
+status: in_progress
 created_at: 2026-07-05
 updated_at: 2026-07-05
 ---
@@ -13,9 +13,9 @@ updated_at: 2026-07-05
 
 | Task | Ticket | Depends On | Conflict Domains | Status |
 |------|--------|------------|------------------|--------|
-| TASK-001-admin-surface-inventory | TICKET-001-feasibility-security-design | None | `src/cli/admin/pgm-admin.ts`, admin service boundaries, shared context | todo |
-| TASK-002-threat-model-bootstrap | TICKET-001-feasibility-security-design | None | admin auth architecture, Docker exposure model, shared context | todo |
-| TASK-003-runtime-config-feasibility | TICKET-001-feasibility-security-design | None | `src/config.ts`, `src/index.ts`, provider lifecycle, Docker docs | todo |
+| TASK-001-admin-surface-inventory | TICKET-001-feasibility-security-design | None | `src/cli/admin/pgm-admin.ts`, admin service boundaries, shared context | in_progress |
+| TASK-002-threat-model-bootstrap | TICKET-001-feasibility-security-design | None | admin auth architecture, Docker exposure model, shared context | in_progress |
+| TASK-003-runtime-config-feasibility | TICKET-001-feasibility-security-design | None | `src/config.ts`, `src/index.ts`, provider lifecycle, Docker docs | in_progress |
 | TASK-004-admin-auth-persistence | TICKET-002-admin-auth-foundation | TASK-001, TASK-002 | migrations, `src/auth/**`, admin auth services, integration tests | todo |
 | TASK-005-admin-session-routes | TICKET-002-admin-auth-foundation | TASK-004 | admin routes, cookies, CSRF, lockout, auth contract tests | todo |
 | TASK-006-admin-mfa-step-up | TICKET-002-admin-auth-foundation | TASK-004, TASK-005 | MFA tables, TOTP service, step-up middleware, sensitive action gates | todo |
@@ -74,7 +74,7 @@ updated_at: 2026-07-05
 
 ### WAVE-001
 
-Status: planned
+Status: in_progress
 
 Tasks:
 
@@ -90,7 +90,7 @@ Recommended strategy:
 - Monitoring mode: adaptive
 - Confidence: medium
 - Requires user confirmation: yes
-- Confirmed by: null
+- Confirmed by: Ivo via Codex request on 2026-07-05
 
 Rationale:
 

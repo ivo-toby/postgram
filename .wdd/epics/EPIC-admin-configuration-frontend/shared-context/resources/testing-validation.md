@@ -129,6 +129,38 @@ WAVE-001 specific gates for later waves:
 - TASK-017 must run a clean-volume Docker smoke for the no-normal-CLI setup
   claim.
 
+## WAVE-002 Verification Evidence
+
+TASK-004 merged in PR #79 with Lorentz `REVIEW_PASS` and no P1/P2 findings.
+
+Passed before merge:
+
+- `git diff --check origin/codex/epic/admin-configuration-frontend...HEAD`
+- `npm test -- tests/integration/admin-auth-service.test.ts` (11 tests)
+- `npm run typecheck`
+- `npx eslint src/auth/admin-service.ts tests/integration/admin-auth-service.test.ts tests/helpers/postgres.ts`
+- `npm test -- tests/integration/key-service.test.ts tests/integration/migration.test.ts tests/integration/auth-middleware.test.ts` (8 tests)
+
+Coverage added:
+
+- Admin user creation and password policy/hash behavior.
+- Admin session creation, lookup, expiry, invalidation, and race regressions
+  for revoked/disabled sessions during last-used updates.
+- Bootstrap token hash-only persistence, expiry, single-use consumption, failed
+  attempt tracking, and invalidation after first-admin creation.
+- Atomic first-admin creation that consumes a valid bootstrap token and leaves
+  the account `pending_mfa`/non-active.
+- Regression coverage that ordinary Postgram API keys are not admin
+  credentials.
+
+Carry-forward test expectations:
+
+- TASK-005 route tests should assert safe HTTP status/errors for missing,
+  invalid, expired, used, and rate-limited bootstrap tokens without exposing
+  token validity.
+- TASK-006 tests should assert the pending first admin cannot become active
+  except through verified MFA completion.
+
 ## Durable Memory
 
 ### Docker First-Run Must Be Tested, Not Assumed

@@ -100,6 +100,31 @@ as proof before broad refactors.
 - The current user UI API-key localStorage pattern is not reusable for admin
   sessions.
 
+## WAVE-002 Implemented Persistence Boundary
+
+PR #79 added the admin auth persistence layer and merged it in `0f96769`.
+
+Concrete backend surface:
+
+- `src/db/migrations/010_admin_auth.sql` creates `admin_users`,
+  `admin_sessions`, `admin_mfa_factors`, `admin_bootstrap_tokens`, and
+  `admin_auth_attempts`.
+- `src/auth/admin-service.ts` exports service functions for admin user
+  creation, password verification, session create/find/invalidate, bootstrap
+  token create/consume, and atomic first-admin setup through
+  `createFirstAdminWithBootstrapToken`.
+- The route layer should use these services rather than duplicating password,
+  session-token, bootstrap-token, or first-admin transaction logic.
+- No HTTP routes, UI, OIDC admin login, or TOTP verification were added in
+  WAVE-002; those remain owned by TASK-005/TASK-006.
+
+Route/API implication:
+
+- TASK-005 should add the dedicated admin transport and middleware around this
+  persistence service.
+- TASK-006 should add MFA/step-up behavior on top of the existing
+  `admin_mfa_factors` and `admin_sessions.mfa_verified_at` state.
+
 ## Open Architecture Questions
 
 - Can extraction provider settings be hot-reloaded safely in the first

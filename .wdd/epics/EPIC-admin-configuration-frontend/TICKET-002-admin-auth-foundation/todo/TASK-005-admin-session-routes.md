@@ -74,10 +74,12 @@ CSRF protection, and login lockout/rate-limit behavior.
 ### Local Context
 
 - `src/index.ts`
+- `src/auth/admin-service.ts`
 - `src/auth/middleware.ts`
 - `src/auth/bearer.ts`
 - `src/transport/rest.ts`
 - `src/transport/oauth.ts`
+- `src/db/migrations/010_admin_auth.sql`
 - `tests/contract/oauth-routes.test.ts`
 
 ### Shared Context References
@@ -146,9 +148,17 @@ Keep route parsing and cookie helpers focused and reusable for MFA routes.
 - Bootstrap setup routes must use the TASK-004 atomic persistence service; the
   route layer owns HTTP parsing, cookies/session behavior, CSRF semantics, and
   safe error mapping.
+- Use `createFirstAdminWithBootstrapToken`, `verifyAdminPassword`,
+  `createAdminSession`, `findAdminSession`, and `invalidateAdminSession` from
+  `src/auth/admin-service.ts` rather than reimplementing token/password logic.
 - If TASK-006 is not implemented yet, first-admin setup must leave the account
   pending/non-active and return a state that cannot be used as full admin
   access.
+- Route tests must prove admin routes reject ordinary Postgram API-key bearer
+  tokens and MCP OAuth bearer tokens even when those credentials are otherwise
+  valid for non-admin APIs.
+- Bootstrap/login error responses must not reveal username existence or whether
+  a guessed bootstrap token was missing, expired, used, or malformed.
 
 ## Durable Memory Notes To Consider
 

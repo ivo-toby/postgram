@@ -93,6 +93,29 @@ configuration, maintenance jobs, or Docker behavior.
   bootstrap ownership split, and TASK-010 must prove provider URL/egress/SSRF
   safety for admin-configured provider endpoints.
 
+### WAVE-002 Admin Auth Persistence
+
+- Status: merged and reconciled on 2026-07-05.
+- PR: https://github.com/ivo-toby/postgram/pull/79, merged at
+  2026-07-05T15:04:08Z.
+- Merge commit: `0f96769`; freshness merge on task branch: `16122c0`.
+- Review: Lorentz `REVIEW_PASS`, no P1/P2 findings.
+- Implemented persistence contract:
+  - `admin_users` with `pending_mfa`, `active`, and `disabled` status.
+  - `admin_sessions` with hash-only session tokens, expiry, revocation, MFA
+    completion timestamp, and last-used tracking.
+  - `admin_mfa_factors` for pending/verified/disabled TOTP factor state.
+  - `admin_bootstrap_tokens` with hash-only tokens, expiry, consumed/invalidated
+    state, attempt counters, and single-use semantics.
+  - `admin_auth_attempts` for login/bootstrap/MFA/step-up attempt history.
+- Carry-forward gates:
+  - TASK-005 must map route errors safely without leaking token or username
+    validity, issue/clear HttpOnly cookies, enforce CSRF on mutations, reject
+    ordinary API-key and MCP OAuth bearer auth on admin routes, and keep first
+    admin `pending_mfa` until TASK-006 completes activation.
+  - TASK-006 must use `admin_mfa_factors` and session MFA state to perform the
+    active first-admin transition only after verified MFA.
+
 ## Recent Durable Memory
 
 - Durable memory `1f10a9c4-432b-42a2-a5f0-32505100e756`: this full-profile

@@ -233,6 +233,41 @@ Migration-sensitive constraints:
 Each migration task should update test reset helpers if new tables affect
 integration tests.
 
+## WAVE-002 Admin Auth Migration
+
+PR #79 added `src/db/migrations/010_admin_auth.sql` and merged it in
+`0f96769`.
+
+Created tables:
+
+- `admin_users`: unique email, Argon2id password hash, `pending_mfa`/`active`/
+  `disabled` status, MFA-required flag, password-change timestamp, and update
+  trigger.
+- `admin_sessions`: admin-user foreign key, hash-only session token, optional
+  `mfa_verified_at`, expiry, revocation, and last-used tracking.
+- `admin_mfa_factors`: TOTP factor rows with pending/verified/disabled status,
+  encrypted-secret placeholder, recovery hashes, and verification/disabled
+  timestamps.
+- `admin_bootstrap_tokens`: hash-only bootstrap token, expiry, consumed and
+  invalidated timestamps, attempt counters, and last-attempt timestamp.
+- `admin_auth_attempts`: login/bootstrap/MFA/step-up attempt history with
+  optional admin-user attribution and JSON metadata.
+
+Reset helper updates:
+
+- `tests/helpers/postgres.ts` truncates the new admin tables before existing
+  auth/API-key tables so integration tests start from a clean auth state.
+
+Future migration reminders:
+
+- TASK-005 should not add route-only state to these tables unless the route
+  semantics require it and tests prove reset ordering.
+- TASK-006 owns TOTP secret handling and may need to formalize
+  `secret_ciphertext` encryption once the installation encryption-key work is
+  available.
+- TASK-009/TASK-014 may add settings/secrets/jobs tables; reconcile migration
+  ordering against the admin auth tables before dispatching those waves.
+
 ## Docker Notes
 
 The final claim is no normal CLI or manual env-file editing for supported

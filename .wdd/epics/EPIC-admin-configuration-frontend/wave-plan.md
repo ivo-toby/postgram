@@ -16,7 +16,7 @@ updated_at: 2026-07-05
 | TASK-001-admin-surface-inventory | TICKET-001-feasibility-security-design | None | `src/cli/admin/pgm-admin.ts`, admin service boundaries, shared context | done |
 | TASK-002-threat-model-bootstrap | TICKET-001-feasibility-security-design | None | admin auth architecture, Docker exposure model, shared context | done |
 | TASK-003-runtime-config-feasibility | TICKET-001-feasibility-security-design | None | `src/config.ts`, `src/index.ts`, provider lifecycle, Docker docs | done |
-| TASK-004-admin-auth-persistence | TICKET-002-admin-auth-foundation | TASK-001, TASK-002 | migrations, `src/auth/**`, admin auth services, integration tests | in_progress |
+| TASK-004-admin-auth-persistence | TICKET-002-admin-auth-foundation | TASK-001, TASK-002 | migrations, `src/auth/**`, admin auth services, integration tests | done |
 | TASK-005-admin-session-routes | TICKET-002-admin-auth-foundation | TASK-004 | admin routes, cookies, CSRF, lockout, auth contract tests | todo |
 | TASK-006-admin-mfa-step-up | TICKET-002-admin-auth-foundation | TASK-004, TASK-005 | MFA tables, TOTP service, step-up middleware, sensitive action gates | todo |
 | TASK-007-admin-api-shell-diagnostics | TICKET-003-admin-api-foundation | TASK-005 | admin transport, diagnostics routes, admin middleware | todo |
@@ -152,7 +152,7 @@ Drift notes:
 
 ### WAVE-002
 
-Status: in_progress
+Status: done
 
 Tasks:
 
@@ -185,6 +185,35 @@ Stop condition:
 - Admin auth persistence tests pass.
 - No ordinary API-key bearer path can be confused with admin identity.
 
+Completion evidence:
+
+- PR #79: merged by GitHub at 2026-07-05T15:04:08Z.
+- Task branch freshness merge: `16122c0`.
+- Epic merge commit: `0f96769`.
+- Closeout commit: `cac43dd`.
+- Review: Lorentz `REVIEW_PASS`, no P1/P2 findings.
+- Verification passed:
+  - `git diff --check origin/codex/epic/admin-configuration-frontend...HEAD`
+  - `npm test -- tests/integration/admin-auth-service.test.ts` (11 tests)
+  - `npm run typecheck`
+  - `npx eslint src/auth/admin-service.ts tests/integration/admin-auth-service.test.ts tests/helpers/postgres.ts`
+  - `npm test -- tests/integration/key-service.test.ts tests/integration/migration.test.ts tests/integration/auth-middleware.test.ts` (8 tests)
+
+Reconciled decisions:
+
+- Admin auth persistence lives in `src/auth/admin-service.ts` and should be
+  reused by route/MFA tasks instead of duplicating token/password logic.
+- Admin users begin in `pending_mfa`; active admin state is reserved for
+  TASK-006 after verified MFA completion.
+- Admin sessions and bootstrap tokens are hash-only, with expiry/revocation
+  state and safe single-use bootstrap semantics.
+
+Drift notes:
+
+- `admin_mfa_factors` exists as persistence scaffolding for TASK-006, but TOTP
+  secret encryption/verification remains future work.
+- `admin_auth_attempts` exists for later route lockout/rate-limit behavior.
+
 ### WAVE-003
 
 Status: planned
@@ -212,6 +241,7 @@ Rationale:
 Activation rule:
 
 - Activate after TASK-004 is done and reconciled.
+- Ready after WAVE-002 reconciliation on 2026-07-05.
 
 Stop condition:
 

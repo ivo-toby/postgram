@@ -203,6 +203,39 @@ Implementation ownership split:
   session MFA state, step-up helpers, and the testable transition proving the
   first admin is not active until MFA is verified.
 
+## WAVE-002 Reconciled Auth Persistence
+
+TASK-004 implemented the persistence side of the admin auth boundary in PR #79
+and merged it in `0f96769`.
+
+Persisted security state:
+
+- Admin users start as `pending_mfa`; ordinary creation cannot create active
+  non-MFA admins.
+- Admin sessions store hash-only high-entropy tokens with expiry, revocation,
+  optional `mfa_verified_at`, and last-used tracking.
+- Bootstrap tokens are hash-only, expiring, single-use, and record failed
+  attempts without storing plaintext token material.
+- First-admin creation locks/serializes the setup path, consumes the bootstrap
+  token, creates a non-active `pending_mfa` admin, and invalidates remaining
+  bootstrap tokens in one transaction.
+- MFA factors are represented as TOTP records with pending/verified/disabled
+  states; TASK-006 owns secret encryption, verification, and activation flow.
+- Admin auth attempts record login/bootstrap/MFA/step-up attempt history for
+  later lockout/rate-limit and audit behavior.
+
+Carry-forward security gates:
+
+- TASK-005 route handlers must not leak username or bootstrap token validity in
+  HTTP errors.
+- TASK-005 must reject ordinary Postgram API-key bearer auth and MCP OAuth
+  bearer tokens on all admin routes.
+- TASK-005 may create sessions, but a pending-MFA first admin must not receive
+  full admin authority until TASK-006 verifies MFA and performs activation.
+- TASK-006 must transition first-admin state from `pending_mfa` to `active`
+  only after verified MFA enrollment/challenge, and must keep TOTP secrets
+  write-only/redacted.
+
 ## OAuth/OIDC Boundary
 
 Existing OAuth/DCR is for native remote MCP connectors. It lets external clients

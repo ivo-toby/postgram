@@ -2,7 +2,7 @@
 id: EPIC-admin-configuration-frontend-CONTROLLER
 kind: controller_state
 epic: EPIC-admin-configuration-frontend
-active_wave: WAVE-002
+active_wave: none
 status: in_progress
 updated_at: 2026-07-05
 ---
@@ -19,19 +19,19 @@ checkout.
 
 ## Current Outcome
 
-WAVE-002 merged TASK-004-admin-auth-persistence and is ready for reconciliation.
+WAVE-002 is done and reconciled.
 
 WAVE-001 is done and reconciled. WAVE-002 starts TASK-004-admin-auth-persistence
 after Ivo confirmed the next wave on 2026-07-05.
 
-Next phase: run WAVE-002 reconciliation, then start WAVE-003.
+Next phase: start WAVE-003 for TASK-005-admin-session-routes.
 
 ## Wave Summary
 
 | Wave | Tasks | Strategy | Status | Confirmation |
 |------|-------|----------|--------|--------------|
 | WAVE-001 | TASK-001, TASK-002, TASK-003 | full / bundled / risk_based / adaptive | done | confirmed by Ivo via Codex request on 2026-07-05 |
-| WAVE-002 | TASK-004 | full / bundled / risk_based / adaptive | ready_for_reconciliation | confirmed by Ivo via Codex request on 2026-07-05 |
+| WAVE-002 | TASK-004 | full / bundled / risk_based / adaptive | done | confirmed by Ivo via Codex request on 2026-07-05 |
 | WAVE-003 | TASK-005 | full / bundled / risk_based / adaptive | planned | required |
 | WAVE-004 | TASK-006, TASK-009 | full / hybrid / risk_based / adaptive | planned | required |
 | WAVE-005 | TASK-007, TASK-010 | full / hybrid / risk_based / adaptive | planned | required |
@@ -46,26 +46,23 @@ Next phase: run WAVE-002 reconciliation, then start WAVE-003.
 
 Mode: codex_thread_heartbeat
 
-Cadence: adaptive, five-minute reconciliation handoff
+Cadence: inactive
 
-Status: ready for WAVE-002 reconciliation
+Status: stopped after WAVE-002 reconciliation
 
-Last check: 2026-07-05T15:01:13Z
+Last check: 2026-07-05T15:07:20Z
 
-Next check due: 2026-07-05T15:06:13Z
+Next check due: none until WAVE-003 starts
 
 Scheduler reference: postgram-admin-wave-002-wdd-heartbeat
 
 Fallback prompt:
 
 ```text
-Run wdd-reconcile-wave for EPIC-admin-configuration-frontend WAVE-002. Confirm
-TASK-004 is merged in `0f96769`, PR #79 state, task file in `done/`,
-verification and REVIEW_PASS evidence, cleanup status, and shared-context
-reconciliation before starting WAVE-003.
+WAVE-002 is reconciled and done. Next step is wdd-start-wave for WAVE-003.
 ```
 
-## Active Wave Strategy
+## Last Active Wave Strategy
 
 - Wave: WAVE-002
 - Profile: full
@@ -91,7 +88,7 @@ reconciliation before starting WAVE-003.
 | TASK-001-admin-surface-inventory | TICKET-001-feasibility-security-design | codex/task/WAVE-001-admin-feasibility-gate | cleaned_up | reconciled | `git diff --check` passed; REVIEW_PASS; merged in `1f11365` |
 | TASK-002-threat-model-bootstrap | TICKET-001-feasibility-security-design | codex/task/WAVE-001-admin-feasibility-gate | cleaned_up | reconciled | P2 bootstrap ownership feedback resolved; REVIEW_PASS; merged in `1f11365` |
 | TASK-003-runtime-config-feasibility | TICKET-001-feasibility-security-design | codex/task/WAVE-001-admin-feasibility-gate | cleaned_up | reconciled | P3 provider URL/egress test feedback addressed; REVIEW_PASS; merged in `1f11365` |
-| TASK-004-admin-auth-persistence | TICKET-002-admin-auth-foundation | codex/task/TASK-004-admin-auth-persistence | clean_pushed | merged | REVIEW_PASS; freshness verification passed; merged in `0f96769`; ready for reconciliation |
+| TASK-004-admin-auth-persistence | TICKET-002-admin-auth-foundation | codex/task/TASK-004-admin-auth-persistence | cleaned_up | reconciled | REVIEW_PASS; freshness verification passed; merged in `0f96769`; PR #79 merged; WAVE-002 reconciled |
 | TASK-005-admin-session-routes | TICKET-002-admin-auth-foundation | codex/task/TASK-005-admin-session-routes | not_created | planned | `npm test -- tests/contract/admin-auth-routes.test.ts`; `npm run typecheck` |
 | TASK-006-admin-mfa-step-up | TICKET-002-admin-auth-foundation | codex/task/TASK-006-admin-mfa-step-up | not_created | planned | `npm test -- tests/contract/admin-mfa-routes.test.ts`; `npm test -- tests/integration/admin-auth-service.test.ts`; `npm run typecheck` |
 | TASK-007-admin-api-shell-diagnostics | TICKET-003-admin-api-foundation | codex/task/TASK-007-admin-api-shell-diagnostics | not_created | planned | `npm test -- tests/contract/admin-api.test.ts`; `npm run typecheck` |
@@ -127,9 +124,11 @@ reconciliation before starting WAVE-003.
 - WAVE-002 reviewer: Lorentz (`019f322c-02e7-7590-8b8e-ebdd1e9c52ac`).
 - WAVE-002 latest observation: Lorentz returned `REVIEW_PASS`; the worker
   branch was refreshed with the epic branch at `16122c0`, verification passed,
-  and TASK-004 merged into the epic branch in `0f96769`.
+  TASK-004 merged into the epic branch in `0f96769`, PR #79 was marked merged
+  by GitHub, and the worktree was cleaned up.
 - Worker worktrees: WAVE-001 bundle worktree was clean and removed during
   reconciliation.
+- WAVE-002 worker worktree was clean and removed during reconciliation.
 - Worker: Singer (`019f3215-2eb6-75f2-81f0-bf527e73258b`).
 - Reviewer: Lorentz (`019f322c-02e7-7590-8b8e-ebdd1e9c52ac`).
 - Worker rule: one isolated worktree per repository-writing task before
@@ -195,10 +194,10 @@ reconciliation before starting WAVE-003.
 
 - TASK-004 dependencies TASK-001 and TASK-002 are done, reviewed, merged, and
   reconciled.
-- WAVE-002 is now active after Ivo requested the next wave.
-- WAVE-003 remains blocked until WAVE-002 is reconciled.
-- No WAVE-003 worktree, branch dispatch, worker, or review thread was created
-  during WAVE-002 activation.
+- WAVE-002 is done and reconciled.
+- WAVE-003 is ready to start after WAVE-002 reconciliation.
+- No WAVE-003 worktree, branch dispatch, worker, or review thread has been
+  created yet.
 
 ## Verification Status
 
@@ -223,6 +222,9 @@ reconciliation before starting WAVE-003.
   `npm test -- tests/integration/admin-auth-service.test.ts`,
   `npm run typecheck`, touched-file eslint, and adjacent key-service,
   migration, and auth-middleware integration tests; all passed.
+- WAVE-002 reconciliation verification: task file is in `done/`, shared context
+  is updated, worktree cleanup completed, PR #79 is `MERGED`, orchestration JSON
+  parses, and `git diff --check` passed.
 - Product code tests: not run; this turn planned WDD artifacts only.
 
 ## Event Log
@@ -297,7 +299,12 @@ reconciliation before starting WAVE-003.
   reran freshness verification, pushed the task branch, merged TASK-004 into
   the epic branch in `0f96769`, and moved the task file to `done/`. WAVE-002 is
   ready for reconciliation; next check due 2026-07-05T15:06:13Z.
+- 2026-07-05T15:04:08Z: Pushed WAVE-002 merge closeout commit `cac43dd` to
+  origin; GitHub marked PR #79 as merged.
+- 2026-07-05T15:07:20Z: Reconciled WAVE-002 shared-context decisions, updated
+  downstream TASK-005/TASK-006 handoff notes, cleaned up the TASK-004 worktree,
+  stopped WAVE-002 monitoring, and left WAVE-003 ready to start.
 
 ## Next Action
 
-Run WAVE-002 reconciliation, then start WAVE-003.
+Start WAVE-003 for TASK-005-admin-session-routes.

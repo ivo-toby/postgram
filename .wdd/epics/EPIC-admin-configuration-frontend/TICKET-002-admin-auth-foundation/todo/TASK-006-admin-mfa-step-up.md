@@ -76,6 +76,7 @@ active admin access.
 ### Local Context
 
 - `src/auth/admin-service.ts`
+- `src/db/migrations/010_admin_auth.sql`
 - `src/transport/admin.ts`
 - `tests/contract/admin-auth-routes.test.ts`
 - `tests/integration/admin-auth-service.test.ts`
@@ -146,6 +147,11 @@ Keep MFA helpers isolated from ordinary API-key auth.
 - TASK-004 owns bootstrap token persistence and pending first-admin state;
   TASK-005 owns route/session/CSRF behavior; this task owns the testable
   transition that a first admin is not active until MFA is verified.
+- Use the merged `admin_mfa_factors` table and `admin_sessions.mfa_verified_at`
+  state from TASK-004. Do not introduce a second MFA/session state model.
+- The first-admin activation path must update the `pending_mfa` admin to
+  `active` only after verified TOTP enrollment/challenge, and must not return
+  stored TOTP secrets after enrollment.
 
 ## Durable Memory Notes To Consider
 

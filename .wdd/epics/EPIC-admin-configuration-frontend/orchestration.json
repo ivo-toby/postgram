@@ -557,31 +557,37 @@
           ],
           "branch": "codex/task/TASK-006-admin-mfa-step-up",
           "worktree": "/Users/ivo.toby/workspace/postgram/.worktrees/TASK-006-admin-mfa-step-up",
-          "worktreeStatus": "active_uncommitted",
+          "worktreeStatus": "clean_pushed",
           "workerThreadId": "019f3333-4033-7463-9819-aa3dec286b4c",
           "workerNickname": "Tesla",
-          "reviewThreadId": null,
-          "reviewNickname": null,
-          "currentGate": "no_pr",
-          "branchFreshness": "current_with_epic_at_heartbeat",
-          "pr": null,
-          "latestCommit": "f9bbc0f",
+          "reviewThreadId": "019f322c-02e7-7590-8b8e-ebdd1e9c52ac",
+          "reviewNickname": "Lorentz",
+          "currentGate": "reviewing",
+          "branchFreshness": "current_with_epic_at_review_request",
+          "pr": "https://github.com/ivo-toby/postgram/pull/82",
+          "latestCommit": "3cfca6e9da0d1f5b675616e28546302a6fcad7f4",
           "blockingFeedback": [],
           "verification": {
-            "result": "not_run",
+            "result": "worker_reported_passed",
             "commands": [
               "npm test -- tests/contract/admin-mfa-routes.test.ts",
               "npm test -- tests/integration/admin-auth-service.test.ts",
-              "npm run typecheck"
+              "npm run typecheck",
+              "touched-file npx eslint",
+              "git diff --check",
+              "codex review --uncommitted"
             ],
-            "evidence": "Worker-owned verification not run yet; controller observed active uncommitted work and no PR/patch."
+            "evidence": "Tesla reported admin MFA contract tests passed (5 tests), admin auth service integration tests passed (14 tests), typecheck passed, touched-file ESLint passed, git diff --check passed, and Codex review found no introduced correctness/security issues after P2 fixes."
           },
           "activatedAt": "2026-07-05T16:47:34Z",
           "cleanupState": "not_started",
           "sharedContextReconciliation": "queued",
           "dispatchedAt": "2026-07-05T16:47:34Z",
           "dispatchBaseCommit": "f183a28fe3e6ef51bf672c2af495cf9128091fba",
-          "lastObservedAt": "2026-07-05T17:12:04Z"
+          "lastObservedAt": "2026-07-05T17:32:34Z",
+          "reviewRequestedAt": "2026-07-05T17:32:34Z",
+          "reviewSubmissionId": "019f3357-e7f4-7dd1-a1cf-afa9616d4a26",
+          "freshnessNote": "Task branch includes current epic head 5273ba7 at review request and GitHub mergeStateStatus was CLEAN. The controller checkpoint advances the epic branch, so freshness must be rechecked before merge."
         },
         {
           "id": "WAVE-004-settings-secret-store",
@@ -590,34 +596,44 @@
           ],
           "branch": "codex/task/TASK-009-settings-secret-store",
           "worktree": "/Users/ivo.toby/workspace/postgram/.worktrees/TASK-009-settings-secret-store",
-          "worktreeStatus": "active_uncommitted",
+          "worktreeStatus": "clean_pushed",
           "workerThreadId": "019f3333-4104-7b02-b1aa-1fce6978e410",
           "workerNickname": "Euclid",
-          "reviewThreadId": null,
-          "reviewNickname": null,
-          "currentGate": "no_pr",
-          "branchFreshness": "current_with_epic_at_heartbeat",
-          "pr": null,
-          "latestCommit": "f9bbc0f",
+          "reviewThreadId": "019f322c-02e7-7590-8b8e-ebdd1e9c52ac",
+          "reviewNickname": "Lorentz",
+          "currentGate": "reviewing",
+          "branchFreshness": "stale_needs_freshness_refresh",
+          "pr": "https://github.com/ivo-toby/postgram/pull/81",
+          "latestCommit": "b96ca9d5b0ff3445aa8a8231451998f86ce23e5c",
           "blockingFeedback": [],
           "verification": {
-            "result": "not_run",
+            "result": "worker_reported_passed",
             "commands": [
               "npm test -- tests/integration/admin-settings-service.test.ts",
-              "npm run typecheck"
+              "npm run typecheck",
+              "git diff --check",
+              "touched-file eslint",
+              "npm test -- tests/unit/config.test.ts",
+              "npm test -- tests/integration/migration.test.ts",
+              "npm test -- tests/integration/admin-auth-service.test.ts",
+              "codex review --uncommitted"
             ],
-            "evidence": "Worker-owned verification not run yet; controller observed active uncommitted work and no PR/patch."
+            "evidence": "Euclid reported admin settings service integration tests, typecheck, git diff --check, touched-file ESLint, config unit tests, migration integration tests, and admin auth service integration tests passed; follow-up Codex review found no blocking issues after fixing the P1 secret-bypass finding."
           },
           "activatedAt": "2026-07-05T16:47:34Z",
           "cleanupState": "not_started",
           "sharedContextReconciliation": "queued",
           "dispatchedAt": "2026-07-05T16:47:34Z",
           "dispatchBaseCommit": "f183a28fe3e6ef51bf672c2af495cf9128091fba",
-          "lastObservedAt": "2026-07-05T17:12:04Z"
+          "lastObservedAt": "2026-07-05T17:32:34Z",
+          "reviewRequestedAt": "2026-07-05T17:32:34Z",
+          "reviewSubmissionId": "019f3357-e7f4-7dd1-a1cf-afa9616d4a26",
+          "freshnessNote": "Task branch is one epic controller commit behind at review request (rev-list origin epic...HEAD = 1 2) and GitHub mergeStateStatus is DIRTY; refresh required after review and before merge. The controller checkpoint also advances the epic branch, so freshness must be rechecked before merge."
         }
       ],
       "activationCommit": "f183a28fe3e6ef51bf672c2af495cf9128091fba",
-      "dispatchState": "workers_dispatched"
+      "dispatchState": "reviewing",
+      "lastObservedAt": "2026-07-05T17:32:34Z"
     },
     {
       "id": "WAVE-005",
@@ -1143,23 +1159,26 @@
       "reviewModel": "review",
       "branch": "codex/task/TASK-006-admin-mfa-step-up",
       "workerThreadId": "019f3333-4033-7463-9819-aa3dec286b4c",
-      "reviewThreadId": null,
+      "reviewThreadId": "019f322c-02e7-7590-8b8e-ebdd1e9c52ac",
       "workerWorktree": "/Users/ivo.toby/workspace/postgram/.worktrees/TASK-006-admin-mfa-step-up",
-      "worktreeStatus": "active_uncommitted",
-      "pr": null,
-      "latestCommit": "f9bbc0f",
-      "branchFreshness": "current_with_epic_at_heartbeat",
+      "worktreeStatus": "clean_pushed",
+      "pr": "https://github.com/ivo-toby/postgram/pull/82",
+      "latestCommit": "3cfca6e9da0d1f5b675616e28546302a6fcad7f4",
+      "branchFreshness": "current_with_epic_at_review_request",
       "blockingFeedback": [],
       "verification": {
-        "result": "not_run",
+        "result": "worker_reported_passed",
         "commands": [
           "npm test -- tests/contract/admin-mfa-routes.test.ts",
           "npm test -- tests/integration/admin-auth-service.test.ts",
-          "npm run typecheck"
+          "npm run typecheck",
+          "touched-file npx eslint",
+          "git diff --check",
+          "codex review --uncommitted"
         ],
-        "evidence": "Worker-owned verification not run yet; controller observed active uncommitted work and no PR/patch."
+        "evidence": "Tesla reported admin MFA contract tests passed (5 tests), admin auth service integration tests passed (14 tests), typecheck passed, touched-file ESLint passed, git diff --check passed, and Codex review found no introduced correctness/security issues after P2 fixes."
       },
-      "currentGate": "no_pr",
+      "currentGate": "reviewing",
       "cleanupState": "not_started",
       "sharedContextReconciliation": "queued",
       "activatedAt": "2026-07-05T16:47:34Z",
@@ -1167,7 +1186,11 @@
       "workerNickname": "Tesla",
       "dispatchedAt": "2026-07-05T16:47:34Z",
       "dispatchBaseCommit": "f183a28fe3e6ef51bf672c2af495cf9128091fba",
-      "lastObservedAt": "2026-07-05T17:12:04Z"
+      "lastObservedAt": "2026-07-05T17:32:34Z",
+      "reviewNickname": "Lorentz",
+      "reviewRequestedAt": "2026-07-05T17:32:34Z",
+      "reviewSubmissionId": "019f3357-e7f4-7dd1-a1cf-afa9616d4a26",
+      "freshnessNote": "Task branch includes current epic head 5273ba7 at review request and GitHub mergeStateStatus was CLEAN. The controller checkpoint advances the epic branch, so freshness must be rechecked before merge."
     },
     {
       "id": "TASK-007-admin-api-shell-diagnostics",
@@ -1260,22 +1283,28 @@
       "reviewModel": "review",
       "branch": "codex/task/TASK-009-settings-secret-store",
       "workerThreadId": "019f3333-4104-7b02-b1aa-1fce6978e410",
-      "reviewThreadId": null,
+      "reviewThreadId": "019f322c-02e7-7590-8b8e-ebdd1e9c52ac",
       "workerWorktree": "/Users/ivo.toby/workspace/postgram/.worktrees/TASK-009-settings-secret-store",
-      "worktreeStatus": "active_uncommitted",
-      "pr": null,
-      "latestCommit": "f9bbc0f",
-      "branchFreshness": "current_with_epic_at_heartbeat",
+      "worktreeStatus": "clean_pushed",
+      "pr": "https://github.com/ivo-toby/postgram/pull/81",
+      "latestCommit": "b96ca9d5b0ff3445aa8a8231451998f86ce23e5c",
+      "branchFreshness": "stale_needs_freshness_refresh",
       "blockingFeedback": [],
       "verification": {
-        "result": "not_run",
+        "result": "worker_reported_passed",
         "commands": [
           "npm test -- tests/integration/admin-settings-service.test.ts",
-          "npm run typecheck"
+          "npm run typecheck",
+          "git diff --check",
+          "touched-file eslint",
+          "npm test -- tests/unit/config.test.ts",
+          "npm test -- tests/integration/migration.test.ts",
+          "npm test -- tests/integration/admin-auth-service.test.ts",
+          "codex review --uncommitted"
         ],
-        "evidence": "Worker-owned verification not run yet; controller observed active uncommitted work and no PR/patch."
+        "evidence": "Euclid reported admin settings service integration tests, typecheck, git diff --check, touched-file ESLint, config unit tests, migration integration tests, and admin auth service integration tests passed; follow-up Codex review found no blocking issues after fixing the P1 secret-bypass finding."
       },
-      "currentGate": "no_pr",
+      "currentGate": "reviewing",
       "cleanupState": "not_started",
       "sharedContextReconciliation": "queued",
       "activatedAt": "2026-07-05T16:47:34Z",
@@ -1283,7 +1312,11 @@
       "workerNickname": "Euclid",
       "dispatchedAt": "2026-07-05T16:47:34Z",
       "dispatchBaseCommit": "f183a28fe3e6ef51bf672c2af495cf9128091fba",
-      "lastObservedAt": "2026-07-05T17:12:04Z"
+      "lastObservedAt": "2026-07-05T17:32:34Z",
+      "reviewNickname": "Lorentz",
+      "reviewRequestedAt": "2026-07-05T17:32:34Z",
+      "reviewSubmissionId": "019f3357-e7f4-7dd1-a1cf-afa9616d4a26",
+      "freshnessNote": "Task branch is one epic controller commit behind at review request (rev-list origin epic...HEAD = 1 2) and GitHub mergeStateStatus is DIRTY; refresh required after review and before merge. The controller checkpoint also advances the epic branch, so freshness must be rechecked before merge."
     },
     {
       "id": "TASK-010-provider-config-apply",
@@ -1621,12 +1654,12 @@
   ],
   "monitoring": {
     "mode": "codex_thread_heartbeat",
-    "cadence": "15m",
+    "cadence": "5m",
     "status": "active",
-    "lastCheckedAt": "2026-07-05T17:12:04Z",
-    "nextCheckDueAt": "2026-07-05T17:27:04Z",
+    "lastCheckedAt": "2026-07-05T17:32:34Z",
+    "nextCheckDueAt": "2026-07-05T17:37:34Z",
     "schedulerRef": "postgram-admin-wave-004-start-heartbeat",
-    "fallbackPrompt": "Run one bounded WDD controller heartbeat for /Users/ivo.toby/workspace/postgram, epic EPIC-admin-configuration-frontend, active wave WAVE-004. Use the subagent-pr-orchestration skill. Start in /Users/ivo.toby/workspace/postgram on branch codex/epic/admin-configuration-frontend. Read .wdd/epics/EPIC-admin-configuration-frontend/orchestration.json and controller-state.md, then inspect worker Tesla (019f3333-4033-7463-9819-aa3dec286b4c) and assigned worktree /Users/ivo.toby/workspace/postgram/.worktrees/TASK-006-admin-mfa-step-up on branch codex/task/TASK-006-admin-mfa-step-up for bundle WAVE-004-admin-mfa-step-up / TASK-006-admin-mfa-step-up, and worker Euclid (019f3333-4104-7b02-b1aa-1fce6978e410) and assigned worktree /Users/ivo.toby/workspace/postgram/.worktrees/TASK-009-settings-secret-store on branch codex/task/TASK-009-settings-secret-store for bundle WAVE-004-settings-secret-store / TASK-009-settings-secret-store. Update gates, branch freshness, verification, PR or patch refs, reviewer refs, feedback, shared-context reconciliation status, and monitoring timestamps. If a worker has produced a PR or patch, move that bundle to review/reviewer orchestration; if no PR or patch exists, keep no_pr and nudge exact missing deliverables only if needed. Stop when WAVE-004 bundles are merged, blocked, cancelled, or ready for wdd-reconcile-wave. Do not start WAVE-005."
+    "fallbackPrompt": "Run one bounded WDD controller heartbeat for /Users/ivo.toby/workspace/postgram, epic EPIC-admin-configuration-frontend, active wave WAVE-004. Use the subagent-pr-orchestration skill. Start in /Users/ivo.toby/workspace/postgram on branch codex/epic/admin-configuration-frontend. Read .wdd/epics/EPIC-admin-configuration-frontend/orchestration.json and controller-state.md, then inspect draft PR #81 (WAVE-004-settings-secret-store / TASK-009) and draft PR #82 (WAVE-004-admin-mfa-step-up / TASK-006), reviewer Lorentz (019f322c-02e7-7590-8b8e-ebdd1e9c52ac), worker Tesla (019f3333-4033-7463-9819-aa3dec286b4c), worker Euclid (019f3333-4104-7b02-b1aa-1fce6978e410), and the assigned worktrees. Update gates, branch freshness, verification, PR refs, review refs, feedback, shared-context reconciliation status, and monitoring timestamps. If review reports P1/P2, route feedback to the owning worker or a fresh fix worker. If review passes, refresh stale task branches against codex/epic/admin-configuration-frontend, rerun required freshness verification, then merge or mark merge_ready according to policy. Stop when WAVE-004 bundles are merged, blocked, cancelled, or ready for wdd-reconcile-wave. Do not start WAVE-005."
   },
   "sharedContext": {
     "index": "shared-context/index.md",
@@ -1751,21 +1784,21 @@
       "WAVE-001-admin-feasibility-gate": "cleaned_up",
       "WAVE-002-admin-auth-persistence": "cleaned_up",
       "WAVE-003-admin-session-routes": "cleaned_up",
-      "WAVE-004-admin-mfa-step-up": "active_uncommitted",
-      "WAVE-004-settings-secret-store": "active_uncommitted"
+      "WAVE-004-admin-mfa-step-up": "clean_pushed",
+      "WAVE-004-settings-secret-store": "clean_pushed"
     },
     "workerDispatch": {
       "WAVE-001-admin-feasibility-gate": "reconciled",
       "WAVE-002-admin-auth-persistence": "reconciled",
       "WAVE-003-admin-session-routes": "reconciled",
-      "WAVE-004-admin-mfa-step-up": "no_pr",
-      "WAVE-004-settings-secret-store": "no_pr"
+      "WAVE-004-admin-mfa-step-up": "reviewing",
+      "WAVE-004-settings-secret-store": "reviewing"
     },
     "waveCompletion": {
       "WAVE-001": "done",
       "WAVE-002": "done",
       "WAVE-003": "done",
-      "WAVE-004": "in_progress"
+      "WAVE-004": "in_review"
     },
     "nextWave": {
       "id": "WAVE-005",
@@ -1773,12 +1806,12 @@
     },
     "monitoring": {
       "mode": "codex_thread_heartbeat",
-      "cadence": "15m",
+      "cadence": "5m",
       "status": "active",
-      "lastCheckedAt": "2026-07-05T17:12:04Z",
-      "nextCheckDueAt": "2026-07-05T17:27:04Z",
+      "lastCheckedAt": "2026-07-05T17:32:34Z",
+      "nextCheckDueAt": "2026-07-05T17:37:34Z",
       "schedulerRef": "postgram-admin-wave-004-start-heartbeat",
-      "fallbackPrompt": "Run one bounded WDD controller heartbeat for /Users/ivo.toby/workspace/postgram, epic EPIC-admin-configuration-frontend, active wave WAVE-004. Use the subagent-pr-orchestration skill. Start in /Users/ivo.toby/workspace/postgram on branch codex/epic/admin-configuration-frontend. Read .wdd/epics/EPIC-admin-configuration-frontend/orchestration.json and controller-state.md, then inspect worker Tesla (019f3333-4033-7463-9819-aa3dec286b4c) and assigned worktree /Users/ivo.toby/workspace/postgram/.worktrees/TASK-006-admin-mfa-step-up on branch codex/task/TASK-006-admin-mfa-step-up for bundle WAVE-004-admin-mfa-step-up / TASK-006-admin-mfa-step-up, and worker Euclid (019f3333-4104-7b02-b1aa-1fce6978e410) and assigned worktree /Users/ivo.toby/workspace/postgram/.worktrees/TASK-009-settings-secret-store on branch codex/task/TASK-009-settings-secret-store for bundle WAVE-004-settings-secret-store / TASK-009-settings-secret-store. Update gates, branch freshness, verification, PR or patch refs, reviewer refs, feedback, shared-context reconciliation status, and monitoring timestamps. If a worker has produced a PR or patch, move that bundle to review/reviewer orchestration; if no PR or patch exists, keep no_pr and nudge exact missing deliverables only if needed. Stop when WAVE-004 bundles are merged, blocked, cancelled, or ready for wdd-reconcile-wave. Do not start WAVE-005."
+      "fallbackPrompt": "Run one bounded WDD controller heartbeat for /Users/ivo.toby/workspace/postgram, epic EPIC-admin-configuration-frontend, active wave WAVE-004. Use the subagent-pr-orchestration skill. Start in /Users/ivo.toby/workspace/postgram on branch codex/epic/admin-configuration-frontend. Read .wdd/epics/EPIC-admin-configuration-frontend/orchestration.json and controller-state.md, then inspect draft PR #81 (WAVE-004-settings-secret-store / TASK-009) and draft PR #82 (WAVE-004-admin-mfa-step-up / TASK-006), reviewer Lorentz (019f322c-02e7-7590-8b8e-ebdd1e9c52ac), worker Tesla (019f3333-4033-7463-9819-aa3dec286b4c), worker Euclid (019f3333-4104-7b02-b1aa-1fce6978e410), and the assigned worktrees. Update gates, branch freshness, verification, PR refs, review refs, feedback, shared-context reconciliation status, and monitoring timestamps. If review reports P1/P2, route feedback to the owning worker or a fresh fix worker. If review passes, refresh stale task branches against codex/epic/admin-configuration-frontend, rerun required freshness verification, then merge or mark merge_ready according to policy. Stop when WAVE-004 bundles are merged, blocked, cancelled, or ready for wdd-reconcile-wave. Do not start WAVE-005."
     },
     "review": {
       "WAVE-001-admin-feasibility-gate": {
@@ -1848,14 +1881,42 @@
         "reviewNickname": "Lorentz",
         "reviewedAt": "2026-07-05T16:16:04Z",
         "blockingFeedback": []
+      },
+      "WAVE-004-admin-mfa-step-up": {
+        "status": "reviewing",
+        "result": null,
+        "pr": "https://github.com/ivo-toby/postgram/pull/82",
+        "latestCommit": "3cfca6e9da0d1f5b675616e28546302a6fcad7f4",
+        "reviewThreadId": "019f322c-02e7-7590-8b8e-ebdd1e9c52ac",
+        "reviewNickname": "Lorentz",
+        "reviewRequestedAt": "2026-07-05T17:32:34Z",
+        "reviewSubmissionId": "019f3357-e7f4-7dd1-a1cf-afa9616d4a26",
+        "workerThreadId": "019f3333-4033-7463-9819-aa3dec286b4c",
+        "workerNickname": "Tesla",
+        "blockingFeedback": [],
+        "freshnessNote": "Task branch includes current epic head 5273ba7 at review request and GitHub mergeStateStatus was CLEAN. The controller checkpoint advances the epic branch, so freshness must be rechecked before merge."
+      },
+      "WAVE-004-settings-secret-store": {
+        "status": "reviewing",
+        "result": null,
+        "pr": "https://github.com/ivo-toby/postgram/pull/81",
+        "latestCommit": "b96ca9d5b0ff3445aa8a8231451998f86ce23e5c",
+        "reviewThreadId": "019f322c-02e7-7590-8b8e-ebdd1e9c52ac",
+        "reviewNickname": "Lorentz",
+        "reviewRequestedAt": "2026-07-05T17:32:34Z",
+        "reviewSubmissionId": "019f3357-e7f4-7dd1-a1cf-afa9616d4a26",
+        "workerThreadId": "019f3333-4104-7b02-b1aa-1fce6978e410",
+        "workerNickname": "Euclid",
+        "blockingFeedback": [],
+        "freshnessNote": "Task branch is one epic controller commit behind at review request (rev-list origin epic...HEAD = 1 2) and GitHub mergeStateStatus is DIRTY; refresh required after review and before merge. The controller checkpoint also advances the epic branch, so freshness must be rechecked before merge."
       }
     },
     "branchFreshness": {
       "WAVE-001-admin-feasibility-gate": "current_at_merge",
       "WAVE-002-admin-auth-persistence": "current_at_merge",
       "WAVE-003-admin-session-routes": "current_at_merge",
-      "WAVE-004-admin-mfa-step-up": "current_with_epic_at_heartbeat",
-      "WAVE-004-settings-secret-store": "current_with_epic_at_heartbeat"
+      "WAVE-004-admin-mfa-step-up": "current_with_epic_at_review_request",
+      "WAVE-004-settings-secret-store": "stale_needs_freshness_refresh"
     },
     "merge": {
       "WAVE-001-admin-feasibility-gate": {
@@ -1933,18 +1994,30 @@
         "closeoutCommit": "ff338b1"
       },
       "WAVE-004-admin-mfa-step-up": {
-        "state": "NO_PR",
-        "url": null,
-        "checkedAt": "2026-07-05T17:12:04Z",
+        "state": "OPEN",
+        "isDraft": true,
+        "url": "https://github.com/ivo-toby/postgram/pull/82",
+        "number": 82,
+        "checkedAt": "2026-07-05T17:32:34Z",
         "headRef": "codex/task/TASK-006-admin-mfa-step-up",
-        "headSha": "f9bbc0f"
+        "headSha": "3cfca6e9da0d1f5b675616e28546302a6fcad7f4",
+        "baseRef": "codex/epic/admin-configuration-frontend",
+        "mergeStateStatus": "CLEAN",
+        "updatedAt": "2026-07-05T17:29:53Z",
+        "reviewDecision": null
       },
       "WAVE-004-settings-secret-store": {
-        "state": "NO_PR",
-        "url": null,
-        "checkedAt": "2026-07-05T17:12:04Z",
+        "state": "OPEN",
+        "isDraft": true,
+        "url": "https://github.com/ivo-toby/postgram/pull/81",
+        "number": 81,
+        "checkedAt": "2026-07-05T17:32:34Z",
         "headRef": "codex/task/TASK-009-settings-secret-store",
-        "headSha": "f9bbc0f"
+        "headSha": "b96ca9d5b0ff3445aa8a8231451998f86ce23e5c",
+        "baseRef": "codex/epic/admin-configuration-frontend",
+        "mergeStateStatus": "DIRTY",
+        "updatedAt": "2026-07-05T17:28:06Z",
+        "reviewDecision": null
       }
     },
     "cleanup": {
@@ -2034,44 +2107,56 @@
         "reconciliationSummary": "WAVE-003 reconciled the concrete /admin/api/* session route contract, pgm_admin_session cookie, X-CSRF-Token CSRF header, safe bootstrap/login errors, pending-MFA carry-forward gate, downstream TASK-006/TASK-007/TASK-009/TASK-011 task updates, and TASK-005 worktree cleanup. WAVE-004 is ready for wdd-start-wave; it was not started during reconciliation."
       },
       "WAVE-004-admin-mfa-step-up": {
-        "status": "running_no_pr",
+        "status": "done_pr_opened",
         "workerThreadId": "019f3333-4033-7463-9819-aa3dec286b4c",
         "workerNickname": "Tesla",
+        "finalStatus": "DONE",
+        "pr": "https://github.com/ivo-toby/postgram/pull/82",
+        "latestCommit": "3cfca6e9da0d1f5b675616e28546302a6fcad7f4",
         "dispatchedAt": "2026-07-05T16:47:34Z",
-        "lastObservedAt": "2026-07-05T17:12:04Z",
+        "lastObservedAt": "2026-07-05T17:32:34Z",
         "lastObservation": {
-          "checkedAt": "2026-07-05T17:12:04Z",
-          "workerStatus": "running",
-          "pr": null,
+          "checkedAt": "2026-07-05T17:32:34Z",
+          "workerStatus": "DONE",
+          "pr": "https://github.com/ivo-toby/postgram/pull/82",
           "patch": null,
-          "worktreeStatus": "active_uncommitted",
-          "branchHead": "f9bbc0f",
-          "branchFreshness": "current_with_epic_at_heartbeat",
+          "worktreeStatus": "clean_pushed",
+          "branchHead": "3cfca6e9da0d1f5b675616e28546302a6fcad7f4",
+          "branchFreshness": "current_with_epic_at_review_request",
+          "verification": "Tesla reported admin MFA contract tests passed (5 tests), admin auth service integration tests passed (14 tests), typecheck passed, touched-file ESLint passed, git diff --check passed, and Codex review found no introduced correctness/security issues after P2 fixes.",
           "observedFiles": [
+            "src/auth/admin-mfa-service.ts",
             "src/auth/admin-middleware.ts",
             "src/transport/admin.ts",
-            "src/auth/admin-mfa-service.ts",
             "tests/contract/admin-mfa-routes.test.ts",
-            "tests/integration/admin-auth-service.test.ts"
+            "tests/integration/admin-auth-service.test.ts",
+            ".wdd/epics/EPIC-admin-configuration-frontend/TICKET-002-admin-auth-foundation/review/TASK-006-admin-mfa-step-up.md"
           ],
-          "note": "Worker is still running with active uncommitted MFA route/service/test work; no PR or patch exists yet."
+          "reviewRequestedAt": "2026-07-05T17:32:34Z",
+          "reviewSubmissionId": "019f3357-e7f4-7dd1-a1cf-afa9616d4a26",
+          "reviewer": "Lorentz",
+          "note": "Tesla returned DONE, pushed branch head 3cfca6e9da0d1f5b675616e28546302a6fcad7f4, opened draft PR #82, and moved the task file to review in the task branch."
         },
         "cleanupState": "not_started"
       },
       "WAVE-004-settings-secret-store": {
-        "status": "running_no_pr",
+        "status": "done_pr_opened",
         "workerThreadId": "019f3333-4104-7b02-b1aa-1fce6978e410",
         "workerNickname": "Euclid",
+        "finalStatus": "DONE",
+        "pr": "https://github.com/ivo-toby/postgram/pull/81",
+        "latestCommit": "b96ca9d5b0ff3445aa8a8231451998f86ce23e5c",
         "dispatchedAt": "2026-07-05T16:47:34Z",
-        "lastObservedAt": "2026-07-05T17:12:04Z",
+        "lastObservedAt": "2026-07-05T17:32:34Z",
         "lastObservation": {
-          "checkedAt": "2026-07-05T17:12:04Z",
-          "workerStatus": "running",
-          "pr": null,
+          "checkedAt": "2026-07-05T17:32:34Z",
+          "workerStatus": "DONE",
+          "pr": "https://github.com/ivo-toby/postgram/pull/81",
           "patch": null,
-          "worktreeStatus": "active_uncommitted",
-          "branchHead": "f9bbc0f",
-          "branchFreshness": "current_with_epic_at_heartbeat",
+          "worktreeStatus": "clean_pushed",
+          "branchHead": "b96ca9d5b0ff3445aa8a8231451998f86ce23e5c",
+          "branchFreshness": "stale_needs_freshness_refresh",
+          "verification": "Euclid reported admin settings service integration tests, typecheck, git diff --check, touched-file ESLint, config unit tests, migration integration tests, and admin auth service integration tests passed; follow-up Codex review found no blocking issues after fixing the P1 secret-bypass finding.",
           "observedFiles": [
             ".env.example",
             "README.md",
@@ -2081,9 +2166,13 @@
             "src/services/admin-settings-service.ts",
             "tests/helpers/postgres.ts",
             "tests/unit/config.test.ts",
-            "tests/integration/admin-settings-service.test.ts"
+            "tests/integration/admin-settings-service.test.ts",
+            ".wdd/epics/EPIC-admin-configuration-frontend/TICKET-004-runtime-configuration/review/TASK-009-settings-secret-store.md"
           ],
-          "note": "Worker is still running with active uncommitted settings/secret-store migration/service/config/docs work; no PR or patch exists yet."
+          "reviewRequestedAt": "2026-07-05T17:32:34Z",
+          "reviewSubmissionId": "019f3357-e7f4-7dd1-a1cf-afa9616d4a26",
+          "reviewer": "Lorentz",
+          "note": "Euclid returned DONE, pushed branch head b96ca9d5b0ff3445aa8a8231451998f86ce23e5c, opened draft PR #81, and moved the task file to review in the task branch."
         },
         "cleanupState": "not_started"
       }
@@ -2120,12 +2209,34 @@
         ],
         "branch": "codex/task/TASK-006-admin-mfa-step-up",
         "worktree": "/Users/ivo.toby/workspace/postgram/.worktrees/TASK-006-admin-mfa-step-up",
-        "worktreeStatus": "active_uncommitted",
+        "worktreeStatus": "clean_pushed",
         "workerThreadId": "019f3333-4033-7463-9819-aa3dec286b4c",
         "workerNickname": "Tesla",
-        "currentGate": "no_pr",
-        "branchFreshness": "current_with_epic_at_heartbeat",
-        "latestCommit": "f9bbc0f"
+        "currentGate": "reviewing",
+        "branchFreshness": "current_with_epic_at_review_request",
+        "latestCommit": "3cfca6e9da0d1f5b675616e28546302a6fcad7f4",
+        "reviewThreadId": "019f322c-02e7-7590-8b8e-ebdd1e9c52ac",
+        "reviewNickname": "Lorentz",
+        "pr": "https://github.com/ivo-toby/postgram/pull/82",
+        "blockingFeedback": [],
+        "verification": {
+          "result": "worker_reported_passed",
+          "commands": [
+            "npm test -- tests/contract/admin-mfa-routes.test.ts",
+            "npm test -- tests/integration/admin-auth-service.test.ts",
+            "npm run typecheck",
+            "touched-file npx eslint",
+            "git diff --check",
+            "codex review --uncommitted"
+          ],
+          "evidence": "Tesla reported admin MFA contract tests passed (5 tests), admin auth service integration tests passed (14 tests), typecheck passed, touched-file ESLint passed, git diff --check passed, and Codex review found no introduced correctness/security issues after P2 fixes."
+        },
+        "cleanupState": "not_started",
+        "sharedContextReconciliation": "queued",
+        "lastObservedAt": "2026-07-05T17:32:34Z",
+        "reviewRequestedAt": "2026-07-05T17:32:34Z",
+        "reviewSubmissionId": "019f3357-e7f4-7dd1-a1cf-afa9616d4a26",
+        "freshnessNote": "Task branch includes current epic head 5273ba7 at review request and GitHub mergeStateStatus was CLEAN. The controller checkpoint advances the epic branch, so freshness must be rechecked before merge."
       },
       {
         "id": "WAVE-004-settings-secret-store",
@@ -2134,14 +2245,38 @@
         ],
         "branch": "codex/task/TASK-009-settings-secret-store",
         "worktree": "/Users/ivo.toby/workspace/postgram/.worktrees/TASK-009-settings-secret-store",
-        "worktreeStatus": "active_uncommitted",
+        "worktreeStatus": "clean_pushed",
         "workerThreadId": "019f3333-4104-7b02-b1aa-1fce6978e410",
         "workerNickname": "Euclid",
-        "currentGate": "no_pr",
-        "branchFreshness": "current_with_epic_at_heartbeat",
-        "latestCommit": "f9bbc0f"
+        "currentGate": "reviewing",
+        "branchFreshness": "stale_needs_freshness_refresh",
+        "latestCommit": "b96ca9d5b0ff3445aa8a8231451998f86ce23e5c",
+        "reviewThreadId": "019f322c-02e7-7590-8b8e-ebdd1e9c52ac",
+        "reviewNickname": "Lorentz",
+        "pr": "https://github.com/ivo-toby/postgram/pull/81",
+        "blockingFeedback": [],
+        "verification": {
+          "result": "worker_reported_passed",
+          "commands": [
+            "npm test -- tests/integration/admin-settings-service.test.ts",
+            "npm run typecheck",
+            "git diff --check",
+            "touched-file eslint",
+            "npm test -- tests/unit/config.test.ts",
+            "npm test -- tests/integration/migration.test.ts",
+            "npm test -- tests/integration/admin-auth-service.test.ts",
+            "codex review --uncommitted"
+          ],
+          "evidence": "Euclid reported admin settings service integration tests, typecheck, git diff --check, touched-file ESLint, config unit tests, migration integration tests, and admin auth service integration tests passed; follow-up Codex review found no blocking issues after fixing the P1 secret-bypass finding."
+        },
+        "cleanupState": "not_started",
+        "sharedContextReconciliation": "queued",
+        "lastObservedAt": "2026-07-05T17:32:34Z",
+        "reviewRequestedAt": "2026-07-05T17:32:34Z",
+        "reviewSubmissionId": "019f3357-e7f4-7dd1-a1cf-afa9616d4a26",
+        "freshnessNote": "Task branch is one epic controller commit behind at review request (rev-list origin epic...HEAD = 1 2) and GitHub mergeStateStatus is DIRTY; refresh required after review and before merge. The controller checkpoint also advances the epic branch, so freshness must be rechecked before merge."
       }
     ],
-    "lastObservedAt": "2026-07-05T17:12:04Z"
+    "lastObservedAt": "2026-07-05T17:32:34Z"
   }
 }

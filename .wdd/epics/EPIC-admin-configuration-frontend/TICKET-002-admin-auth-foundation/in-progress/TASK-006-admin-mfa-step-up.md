@@ -19,12 +19,12 @@ assigned_model_class: implementationComplex
 review_model_class: review
 branch: codex/task/TASK-006-admin-mfa-step-up
 worker_worktree: /Users/ivo.toby/workspace/postgram/.worktrees/TASK-006-admin-mfa-step-up
-worktree_status: active_uncommitted
-pr: null
+worktree_status: clean_pushed
+pr: https://github.com/ivo-toby/postgram/pull/82
 worker_thread_id: 019f3333-4033-7463-9819-aa3dec286b4c
-review_thread_id: null
-current_gate: no_pr
-branch_freshness: current_at_dispatch
+review_thread_id: 019f322c-02e7-7590-8b8e-ebdd1e9c52ac
+current_gate: reviewing
+branch_freshness: current_with_epic_at_review_request
 verification:
   - npm test -- tests/contract/admin-mfa-routes.test.ts
   - npm test -- tests/integration/admin-auth-service.test.ts
@@ -127,7 +127,11 @@ Verified and dispatched at 2026-07-05T16:47:34Z with worker Tesla
 
 ## PR / Patch Reference
 
-None yet.
+Draft PR #82: https://github.com/ivo-toby/postgram/pull/82
+
+Review requested from Lorentz (`019f322c-02e7-7590-8b8e-ebdd1e9c52ac`) at
+2026-07-05T17:32:34Z with submission
+`019f3357-e7f4-7dd1-a1cf-afa9616d4a26`.
 
 ## RED-GREEN TDD Plan
 
@@ -195,7 +199,15 @@ Keep MFA helpers isolated from ordinary API-key auth.
 
 ## Verification Evidence
 
-- Not run yet.
+- Tesla reported:
+  - `npm test -- tests/contract/admin-mfa-routes.test.ts` passed with 5 tests.
+  - `npm test -- tests/integration/admin-auth-service.test.ts` passed with 14
+    tests.
+  - `npm run typecheck` passed.
+  - touched-file `npx eslint ...` passed.
+  - `git diff --check` passed.
+  - Codex review found no introduced correctness/security issues after P2
+    fixes.
 
 ## Review Feedback
 
@@ -223,3 +235,8 @@ Keep MFA helpers isolated from ordinary API-key auth.
   `src/auth/admin-mfa-service.ts`, `tests/contract/admin-mfa-routes.test.ts`,
   and `tests/integration/admin-auth-service.test.ts`. No PR or patch exists
   yet; branch remains current with the epic branch at `f9bbc0f`.
+- 2026-07-05T17:32:34Z controller heartbeat observed Tesla `DONE`, draft PR
+  #82 open at `3cfca6e9da0d1f5b675616e28546302a6fcad7f4`, GitHub
+  `mergeStateStatus=CLEAN`, and the worktree clean/pushed. The worker branch
+  moved its task copy to `review/`; this epic-side task copy records the review
+  gate while the PR is open. Lorentz review is in progress.

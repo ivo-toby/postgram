@@ -24,8 +24,8 @@ WAVE-002 is activated as a full-profile bundled admin-auth-persistence wave.
 WAVE-001 is done and reconciled. WAVE-002 starts TASK-004-admin-auth-persistence
 after Ivo confirmed the next wave on 2026-07-05.
 
-Next phase: monitor Parfit until TASK-004 produces a PR or patch, then start
-the risk-based review gate.
+Next phase: monitor Lorentz's risk-based review of draft PR #79; route any
+P1/P2 feedback or, if review passes, enforce branch freshness before merge.
 
 ## Wave Summary
 
@@ -47,13 +47,13 @@ the risk-based review gate.
 
 Mode: codex_thread_heartbeat
 
-Cadence: adaptive, every 15 minutes while worker has no PR or patch
+Cadence: adaptive, every 5 minutes while PR #79 is under review
 
-Status: active no-PR monitoring
+Status: active review monitoring
 
-Last check: 2026-07-05T14:26:33Z
+Last check: 2026-07-05T14:49:40Z
 
-Next check due: 2026-07-05T14:41:33Z
+Next check due: 2026-07-05T14:54:40Z
 
 Scheduler reference: postgram-admin-wave-002-wdd-heartbeat
 
@@ -61,9 +61,9 @@ Fallback prompt:
 
 ```text
 Run subagent-pr-orchestration for EPIC-admin-configuration-frontend WAVE-002.
-Read orchestration.json and controller-state.md, inspect TASK-004
-worker/worktree, update gates, PR refs, verification, feedback, branch
-freshness, and stop when WAVE-002 is ready for wdd-reconcile-wave.
+Read orchestration.json and controller-state.md, inspect PR #79, Parfit,
+Lorentz, and the TASK-004 worktree, update review refs, verification, feedback,
+branch freshness, and stop when WAVE-002 is ready for wdd-reconcile-wave.
 ```
 
 ## Active Wave Strategy
@@ -92,7 +92,7 @@ freshness, and stop when WAVE-002 is ready for wdd-reconcile-wave.
 | TASK-001-admin-surface-inventory | TICKET-001-feasibility-security-design | codex/task/WAVE-001-admin-feasibility-gate | cleaned_up | reconciled | `git diff --check` passed; REVIEW_PASS; merged in `1f11365` |
 | TASK-002-threat-model-bootstrap | TICKET-001-feasibility-security-design | codex/task/WAVE-001-admin-feasibility-gate | cleaned_up | reconciled | P2 bootstrap ownership feedback resolved; REVIEW_PASS; merged in `1f11365` |
 | TASK-003-runtime-config-feasibility | TICKET-001-feasibility-security-design | codex/task/WAVE-001-admin-feasibility-gate | cleaned_up | reconciled | P3 provider URL/egress test feedback addressed; REVIEW_PASS; merged in `1f11365` |
-| TASK-004-admin-auth-persistence | TICKET-002-admin-auth-foundation | codex/task/TASK-004-admin-auth-persistence | active_uncommitted_changes | no_pr | Parfit running with uncommitted auth persistence work; awaiting PR or patch; `npm test -- tests/integration/admin-auth-service.test.ts`; `npm run typecheck` |
+| TASK-004-admin-auth-persistence | TICKET-002-admin-auth-foundation | codex/task/TASK-004-admin-auth-persistence | clean_pushed | reviewing | Draft PR #79 at `869f535`; Parfit reported required verification passed; Lorentz review requested |
 | TASK-005-admin-session-routes | TICKET-002-admin-auth-foundation | codex/task/TASK-005-admin-session-routes | not_created | planned | `npm test -- tests/contract/admin-auth-routes.test.ts`; `npm run typecheck` |
 | TASK-006-admin-mfa-step-up | TICKET-002-admin-auth-foundation | codex/task/TASK-006-admin-mfa-step-up | not_created | planned | `npm test -- tests/contract/admin-mfa-routes.test.ts`; `npm test -- tests/integration/admin-auth-service.test.ts`; `npm run typecheck` |
 | TASK-007-admin-api-shell-diagnostics | TICKET-003-admin-api-foundation | codex/task/TASK-007-admin-api-shell-diagnostics | not_created | planned | `npm test -- tests/contract/admin-api.test.ts`; `npm run typecheck` |
@@ -124,12 +124,11 @@ freshness, and stop when WAVE-002 is ready for wdd-reconcile-wave.
 - WAVE-002 bundle worktree:
   `/Users/ivo.toby/workspace/postgram/.worktrees/TASK-004-admin-auth-persistence`.
 - WAVE-002 worker: Parfit (`019f329b-24ff-7ec3-93dd-d854e4681fd2`).
-- WAVE-002 reviewer: pending PR or patch.
-- WAVE-002 latest observation: Parfit is still running, has no final status,
-  and the worktree contains uncommitted changes in
-  `src/auth/admin-service.ts`, `src/db/migrations/010_admin_auth.sql`,
-  `tests/integration/admin-auth-service.test.ts`, and
-  `tests/helpers/postgres.ts`.
+- WAVE-002 draft PR: https://github.com/ivo-toby/postgram/pull/79.
+- WAVE-002 reviewer: Lorentz (`019f322c-02e7-7590-8b8e-ebdd1e9c52ac`).
+- WAVE-002 latest observation: Parfit returned `DONE`; the worker branch is
+  clean and pushed at `869f535`, PR #79 is draft/open/clean, and TASK-004 is in
+  `review/`.
 - Worker worktrees: WAVE-001 bundle worktree was clean and removed during
   reconciliation.
 - Worker: Singer (`019f3215-2eb6-75f2-81f0-bf527e73258b`).
@@ -138,7 +137,9 @@ freshness, and stop when WAVE-002 is ready for wdd-reconcile-wave.
   dispatch.
 - Controller checkout rule: workers must not switch branches in the controller
   checkout.
-- Branch freshness: current at merge.
+- WAVE-002 branch freshness: PR #79 was clean against epic branch commit
+  `aaba530` at review start; recheck after controller monitoring commits and
+  before merge.
 
 ## WAVE-001 Reconciled State
 
@@ -214,8 +215,11 @@ freshness, and stop when WAVE-002 is ready for wdd-reconcile-wave.
   `git diff --check` passed.
 - WAVE-002 activation verification: activation artifacts committed, TASK-004
   branch/worktree verified, Parfit dispatched, and heartbeat monitoring active.
-- WAVE-002 worker verification: not run by controller; no PR or patch exists
-  yet.
+- WAVE-002 worker verification: Parfit reported
+  `npm test -- tests/integration/admin-auth-service.test.ts` passed with 11
+  tests, `npm run typecheck` passed, `git diff --check` passed, touched-file
+  eslint passed, and follow-up `codex review --uncommitted` found no actionable
+  correctness issues.
 - Product code tests: not run; this turn planned WDD artifacts only.
 
 ## Event Log
@@ -272,8 +276,20 @@ freshness, and stop when WAVE-002 is ready for wdd-reconcile-wave.
   Parfit had no final status and no PR or patch, but the worktree had active
   uncommitted implementation changes in the expected auth persistence files.
   Gate remains `no_pr`; next check due 2026-07-05T14:41:33Z.
+- 2026-07-05T14:43:03Z: Heartbeat inspected Parfit and the TASK-004 worktree.
+  Parfit had no final status. The worker branch is clean and pushed at
+  `89fed3a`, but no PR or patch exists and TASK-004 remains in `in-progress/`.
+  The controller nudged Parfit for the missing PR or patch, review task status,
+  verification evidence, and final status token
+  (`019f32be-9a55-7891-ae6e-628e96e45555`). Gate remains `no_pr`; next check
+  due 2026-07-05T14:58:03Z.
+- 2026-07-05T14:49:40Z: Parfit returned `DONE` with draft PR #79 at
+  `869f535`, moved TASK-004 to `review/`, and reported required verification
+  passed. The controller requested Lorentz review
+  (`019f32c1-426c-75f2-85e1-8a1d8ee14f99`), moved the gate to `reviewing`, and
+  updated the heartbeat to five-minute review monitoring; next check due
+  2026-07-05T14:54:40Z.
 
 ## Next Action
 
-Monitor worker Parfit for a PR or patch via
-`postgram-admin-wave-002-wdd-heartbeat`.
+Monitor Lorentz review for PR #79 via `postgram-admin-wave-002-wdd-heartbeat`.

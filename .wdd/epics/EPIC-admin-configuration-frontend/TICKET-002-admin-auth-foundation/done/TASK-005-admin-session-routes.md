@@ -6,7 +6,7 @@ ticket: TICKET-002-admin-auth-foundation
 wave: WAVE-003
 slug: admin-session-routes
 title: Admin Session Routes
-status: review
+status: done
 depends_on:
   - TASK-004-admin-auth-persistence
 conflict_domains:
@@ -18,12 +18,12 @@ assigned_model_class: implementationComplex
 review_model_class: review
 branch: codex/task/TASK-005-admin-session-routes
 worker_worktree: /Users/ivo.toby/workspace/postgram/.worktrees/TASK-005-admin-session-routes
-worktree_status: verified
+worktree_status: clean_pushed
 pr: https://github.com/ivo-toby/postgram/pull/80
 worker_thread_id: 019f32d9-051d-7c40-8daf-2e05d9888901
-review_thread_id: 019f3308-cc6a-7010-a13e-f1417397300a
-current_gate: pr_open
-branch_freshness: rebased_onto_origin_epic_f2d48cd
+review_thread_id: 019f322c-02e7-7590-8b8e-ebdd1e9c52ac
+current_gate: merged
+branch_freshness: current_at_merge
 verification:
   - npm test -- tests/contract/admin-auth-routes.test.ts
   - npm run typecheck
@@ -33,7 +33,7 @@ verification:
 
 ## Status
 
-review
+done
 
 ## Parent Ticket
 
@@ -209,6 +209,13 @@ Keep route parsing and cookie helpers focused and reusable for MFA routes.
   suite, touched-file ESLint, and `git diff --check` all passed again.
 - Repo-wide `npm run lint -- ...` still reports unrelated existing lint
   baseline failures outside the TASK-005 diff; direct touched-file lint passed.
+- Controller freshness verification after merging the latest epic branch into
+  the task branch at `e3dd76a` passed:
+  `git diff --check origin/codex/epic/admin-configuration-frontend...HEAD`,
+  `npm test -- tests/contract/admin-auth-routes.test.ts` (9 tests),
+  `npm run typecheck`, adjacent auth/transport regression suite (50 tests),
+  and touched-file ESLint.
+- Lorentz review returned `REVIEW_PASS` with no P1/P2 findings.
 
 ## Review Feedback
 
@@ -241,6 +248,7 @@ Keep route parsing and cookie helpers focused and reusable for MFA routes.
 - Worker Leibniz was dispatched at 2026-07-05T15:15:57Z. Draft PR
   https://github.com/ivo-toby/postgram/pull/80 is open against
   `codex/epic/admin-configuration-frontend`.
+- PR #80 was merged into the epic branch locally in merge commit `ecfe9ac`.
 - Worker Leibniz implemented dedicated admin session routes in
   `src/transport/admin.ts` and admin session/CSRF middleware in
   `src/auth/admin-middleware.ts`.

@@ -402,7 +402,7 @@
     },
     {
       "id": "WAVE-003",
-      "status": "in_progress",
+      "status": "ready_for_reconciliation",
       "strategy": {
         "profile": "full",
         "executionMode": "bundled",
@@ -440,34 +440,42 @@
           "workerNickname": "Leibniz",
           "reviewThreadId": "019f322c-02e7-7590-8b8e-ebdd1e9c52ac",
           "reviewNickname": "Lorentz",
-          "currentGate": "reviewing",
-          "branchFreshness": "stale_after_controller_review_checkpoint",
+          "currentGate": "merged",
+          "branchFreshness": "current_at_merge",
           "pr": "https://github.com/ivo-toby/postgram/pull/80",
-          "latestCommit": "01c59a9586c0311a48aa5c55ffd7784f2a3aaccc",
+          "latestCommit": "e3dd76a",
           "blockingFeedback": [],
           "verification": {
-            "result": "passed_with_worker_concern",
+            "result": "passed",
             "commands": [
+              "git diff --check origin/codex/epic/admin-configuration-frontend...HEAD",
               "npm test -- tests/contract/admin-auth-routes.test.ts",
               "npm run typecheck",
               "npm test -- tests/unit/errors.test.ts tests/integration/admin-auth-service.test.ts tests/integration/auth-middleware.test.ts tests/contract/oauth-routes.test.ts tests/contract/mcp-oauth.test.ts tests/contract/rest-api.test.ts",
               "npx eslint src/auth/admin-middleware.ts src/auth/admin-service.ts src/transport/admin.ts src/index.ts src/util/errors.ts tests/contract/admin-auth-routes.test.ts tests/integration/admin-auth-service.test.ts tests/unit/errors.test.ts",
-              "git diff --check"
+              "git merge --no-ff origin/codex/task/TASK-005-admin-session-routes"
             ],
-            "evidence": "Leibniz reported after rebase onto origin/codex/epic/admin-configuration-frontend at f2d48cd: npm test -- tests/contract/admin-auth-routes.test.ts passed (9 tests); npm run typecheck passed; adjacent errors/admin-auth-service/auth-middleware/oauth/mcp-oauth/rest-api suite passed (50 tests); touched-file ESLint passed; git diff --check passed; local Codex review gate found no blocking correctness, security, or maintainability issues. Concern: repo-wide npm run lint -- ... still reports unrelated existing baseline failures outside the TASK-005 diff; direct lint on touched files passed."
+            "evidence": "Lorentz REVIEW_PASS with no P1/P2. Controller merged latest epic into task branch in e3dd76a and reran freshness verification: git diff --check origin/codex/epic/admin-configuration-frontend...HEAD passed; npm test -- tests/contract/admin-auth-routes.test.ts passed (9 tests); npm run typecheck passed; adjacent auth/transport suite passed (50 tests); touched-file ESLint passed. PR #80 merged locally into epic branch in ecfe9ac."
           },
           "activatedAt": "2026-07-05T15:10:39Z",
-          "cleanupState": "not_started",
-          "sharedContextReconciliation": "not_started",
+          "cleanupState": "cleanup_deferred",
+          "sharedContextReconciliation": "queued",
           "dispatchedAt": "2026-07-05T15:15:57Z",
           "dispatchBaseCommit": "6e758524b2549d86519c25aed19f4d9617795edf",
           "lastObservedAt": "2026-07-05T16:16:04Z",
           "reviewRequestedAt": "2026-07-05T16:16:04Z",
           "reviewSubmissionId": "019f3311-ae9d-79b1-84f3-ede0958df215",
-          "freshnessNote": "PR #80 was current at PR open against f2d48cd. After controller review-state checkpoint b016bee, GitHub reports mergeStateStatus UNKNOWN; branch freshness must be enforced after review passes and before merge."
+          "freshnessNote": "PR #80 was current at PR open against f2d48cd. After controller review-state checkpoint b016bee, GitHub reports mergeStateStatus UNKNOWN; branch freshness must be enforced after review passes and before merge.",
+          "reviewResult": "REVIEW_PASS",
+          "reviewedAt": "2026-07-05T16:16:04Z",
+          "mergedAt": "2026-07-05T16:16:04Z",
+          "mergeCommit": "ecfe9ac146db0ec9d9902f336cb87aad556821c3",
+          "freshnessMergeCommit": "e3dd76a"
         }
       ],
-      "workerDispatchStartedAt": "2026-07-05T15:15:57Z"
+      "workerDispatchStartedAt": "2026-07-05T15:15:57Z",
+      "mergedAt": "2026-07-05T16:16:04Z",
+      "mergeCommit": "ecfe9ac146db0ec9d9902f336cb87aad556821c3"
     },
     {
       "id": "WAVE-004",
@@ -944,8 +952,8 @@
     {
       "id": "TASK-005-admin-session-routes",
       "ticket": "TICKET-002-admin-auth-foundation",
-      "path": "TICKET-002-admin-auth-foundation/review/TASK-005-admin-session-routes.md",
-      "status": "review",
+      "path": "TICKET-002-admin-auth-foundation/done/TASK-005-admin-session-routes.md",
+      "status": "done",
       "dependsOn": [
         "TASK-004-admin-auth-persistence"
       ],
@@ -963,23 +971,24 @@
       "workerWorktree": "/Users/ivo.toby/workspace/postgram/.worktrees/TASK-005-admin-session-routes",
       "worktreeStatus": "clean_pushed",
       "pr": "https://github.com/ivo-toby/postgram/pull/80",
-      "latestCommit": "01c59a9586c0311a48aa5c55ffd7784f2a3aaccc",
-      "branchFreshness": "stale_after_controller_review_checkpoint",
+      "latestCommit": "e3dd76a",
+      "branchFreshness": "current_at_merge",
       "blockingFeedback": [],
       "verification": {
-        "result": "passed_with_worker_concern",
+        "result": "passed",
         "commands": [
+          "git diff --check origin/codex/epic/admin-configuration-frontend...HEAD",
           "npm test -- tests/contract/admin-auth-routes.test.ts",
           "npm run typecheck",
           "npm test -- tests/unit/errors.test.ts tests/integration/admin-auth-service.test.ts tests/integration/auth-middleware.test.ts tests/contract/oauth-routes.test.ts tests/contract/mcp-oauth.test.ts tests/contract/rest-api.test.ts",
           "npx eslint src/auth/admin-middleware.ts src/auth/admin-service.ts src/transport/admin.ts src/index.ts src/util/errors.ts tests/contract/admin-auth-routes.test.ts tests/integration/admin-auth-service.test.ts tests/unit/errors.test.ts",
-          "git diff --check"
+          "git merge --no-ff origin/codex/task/TASK-005-admin-session-routes"
         ],
-        "evidence": "Leibniz reported after rebase onto origin/codex/epic/admin-configuration-frontend at f2d48cd: npm test -- tests/contract/admin-auth-routes.test.ts passed (9 tests); npm run typecheck passed; adjacent errors/admin-auth-service/auth-middleware/oauth/mcp-oauth/rest-api suite passed (50 tests); touched-file ESLint passed; git diff --check passed; local Codex review gate found no blocking correctness, security, or maintainability issues. Concern: repo-wide npm run lint -- ... still reports unrelated existing baseline failures outside the TASK-005 diff; direct lint on touched files passed."
+        "evidence": "Lorentz REVIEW_PASS with no P1/P2. Controller merged latest epic into task branch in e3dd76a and reran freshness verification: git diff --check origin/codex/epic/admin-configuration-frontend...HEAD passed; npm test -- tests/contract/admin-auth-routes.test.ts passed (9 tests); npm run typecheck passed; adjacent auth/transport suite passed (50 tests); touched-file ESLint passed. PR #80 merged locally into epic branch in ecfe9ac."
       },
-      "currentGate": "reviewing",
-      "cleanupState": "not_started",
-      "sharedContextReconciliation": "not_started",
+      "currentGate": "merged",
+      "cleanupState": "cleanup_deferred",
+      "sharedContextReconciliation": "queued",
       "activatedAt": "2026-07-05T15:10:39Z",
       "workerNickname": "Leibniz",
       "reviewNickname": "Lorentz",
@@ -988,7 +997,12 @@
       "lastObservedAt": "2026-07-05T16:16:04Z",
       "reviewRequestedAt": "2026-07-05T16:16:04Z",
       "reviewSubmissionId": "019f3311-ae9d-79b1-84f3-ede0958df215",
-      "freshnessNote": "PR #80 was current at PR open against f2d48cd. After controller review-state checkpoint b016bee, GitHub reports mergeStateStatus UNKNOWN; branch freshness must be enforced after review passes and before merge."
+      "freshnessNote": "PR #80 was current at PR open against f2d48cd. After controller review-state checkpoint b016bee, GitHub reports mergeStateStatus UNKNOWN; branch freshness must be enforced after review passes and before merge.",
+      "reviewResult": "REVIEW_PASS",
+      "reviewedAt": "2026-07-05T16:16:04Z",
+      "mergedAt": "2026-07-05T16:16:04Z",
+      "mergeCommit": "ecfe9ac146db0ec9d9902f336cb87aad556821c3",
+      "freshnessMergeCommit": "e3dd76a"
     },
     {
       "id": "TASK-006-admin-mfa-step-up",
@@ -1470,12 +1484,12 @@
   ],
   "monitoring": {
     "mode": "codex_thread_heartbeat",
-    "cadence": "5m",
-    "status": "active_review_monitoring",
+    "cadence": "manual_or_next_handoff",
+    "status": "ready_for_reconciliation",
     "lastCheckedAt": "2026-07-05T16:16:04Z",
-    "nextCheckDueAt": "2026-07-05T16:21:04Z",
+    "nextCheckDueAt": null,
     "schedulerRef": "postgram-admin-wave-003-wdd-heartbeat",
-    "fallbackPrompt": "Run one bounded WDD controller heartbeat for /Users/ivo.toby/workspace/postgram, epic EPIC-admin-configuration-frontend, active wave WAVE-003. Use subagent-pr-orchestration, inspect PR #80, worker Leibniz (019f32d9-051d-7c40-8daf-2e05d9888901), reviewer Lorentz (019f322c-02e7-7590-8b8e-ebdd1e9c52ac), and worktree /Users/ivo.toby/workspace/postgram/.worktrees/TASK-005-admin-session-routes. Route P1/P2 feedback if review blocks; if review passes, enforce branch freshness before merge."
+    "fallbackPrompt": "Run wdd-reconcile-wave for /Users/ivo.toby/workspace/postgram, epic EPIC-admin-configuration-frontend, wave WAVE-003. Confirm PR #80 and merge commit ecfe9ac, reconcile shared context, clean up worktree if safe, and do not start WAVE-004 until reconciliation completes."
   },
   "sharedContext": {
     "index": "shared-context/index.md",
@@ -1516,33 +1530,42 @@
         "workerNickname": "Leibniz",
         "reviewThreadId": "019f322c-02e7-7590-8b8e-ebdd1e9c52ac",
         "reviewNickname": "Lorentz",
-        "currentGate": "reviewing",
-        "branchFreshness": "stale_after_controller_review_checkpoint",
+        "currentGate": "merged",
+        "branchFreshness": "current_at_merge",
         "pr": "https://github.com/ivo-toby/postgram/pull/80",
-        "latestCommit": "01c59a9586c0311a48aa5c55ffd7784f2a3aaccc",
+        "latestCommit": "e3dd76a",
         "blockingFeedback": [],
         "verification": {
-          "result": "passed_with_worker_concern",
+          "result": "passed",
           "commands": [
+            "git diff --check origin/codex/epic/admin-configuration-frontend...HEAD",
             "npm test -- tests/contract/admin-auth-routes.test.ts",
             "npm run typecheck",
             "npm test -- tests/unit/errors.test.ts tests/integration/admin-auth-service.test.ts tests/integration/auth-middleware.test.ts tests/contract/oauth-routes.test.ts tests/contract/mcp-oauth.test.ts tests/contract/rest-api.test.ts",
             "npx eslint src/auth/admin-middleware.ts src/auth/admin-service.ts src/transport/admin.ts src/index.ts src/util/errors.ts tests/contract/admin-auth-routes.test.ts tests/integration/admin-auth-service.test.ts tests/unit/errors.test.ts",
-            "git diff --check"
+            "git merge --no-ff origin/codex/task/TASK-005-admin-session-routes"
           ],
-          "evidence": "Leibniz reported after rebase onto origin/codex/epic/admin-configuration-frontend at f2d48cd: npm test -- tests/contract/admin-auth-routes.test.ts passed (9 tests); npm run typecheck passed; adjacent errors/admin-auth-service/auth-middleware/oauth/mcp-oauth/rest-api suite passed (50 tests); touched-file ESLint passed; git diff --check passed; local Codex review gate found no blocking correctness, security, or maintainability issues. Concern: repo-wide npm run lint -- ... still reports unrelated existing baseline failures outside the TASK-005 diff; direct lint on touched files passed."
+          "evidence": "Lorentz REVIEW_PASS with no P1/P2. Controller merged latest epic into task branch in e3dd76a and reran freshness verification: git diff --check origin/codex/epic/admin-configuration-frontend...HEAD passed; npm test -- tests/contract/admin-auth-routes.test.ts passed (9 tests); npm run typecheck passed; adjacent auth/transport suite passed (50 tests); touched-file ESLint passed. PR #80 merged locally into epic branch in ecfe9ac."
         },
         "activatedAt": "2026-07-05T15:10:39Z",
-        "cleanupState": "not_started",
-        "sharedContextReconciliation": "not_started",
+        "cleanupState": "cleanup_deferred",
+        "sharedContextReconciliation": "queued",
         "dispatchedAt": "2026-07-05T15:15:57Z",
         "dispatchBaseCommit": "6e758524b2549d86519c25aed19f4d9617795edf",
         "lastObservedAt": "2026-07-05T16:16:04Z",
         "reviewRequestedAt": "2026-07-05T16:16:04Z",
         "reviewSubmissionId": "019f3311-ae9d-79b1-84f3-ede0958df215",
-        "freshnessNote": "PR #80 was current at PR open against f2d48cd. After controller review-state checkpoint b016bee, GitHub reports mergeStateStatus UNKNOWN; branch freshness must be enforced after review passes and before merge."
+        "freshnessNote": "PR #80 was current at PR open against f2d48cd. After controller review-state checkpoint b016bee, GitHub reports mergeStateStatus UNKNOWN; branch freshness must be enforced after review passes and before merge.",
+        "reviewResult": "REVIEW_PASS",
+        "reviewedAt": "2026-07-05T16:16:04Z",
+        "mergedAt": "2026-07-05T16:16:04Z",
+        "mergeCommit": "ecfe9ac146db0ec9d9902f336cb87aad556821c3",
+        "freshnessMergeCommit": "e3dd76a"
       }
-    ]
+    ],
+    "status": "ready_for_reconciliation",
+    "mergedAt": "2026-07-05T16:16:04Z",
+    "mergeCommit": "ecfe9ac146db0ec9d9902f336cb87aad556821c3"
   },
   "currentGates": {
     "epicBranch": {
@@ -1571,12 +1594,12 @@
     "workerDispatch": {
       "WAVE-001-admin-feasibility-gate": "reconciled",
       "WAVE-002-admin-auth-persistence": "reconciled",
-      "WAVE-003-admin-session-routes": "reviewing"
+      "WAVE-003-admin-session-routes": "merged"
     },
     "waveCompletion": {
       "WAVE-001": "done",
       "WAVE-002": "done",
-      "WAVE-003": "in_progress"
+      "WAVE-003": "ready_for_reconciliation"
     },
     "nextWave": {
       "id": "WAVE-004",
@@ -1584,12 +1607,12 @@
     },
     "monitoring": {
       "mode": "codex_thread_heartbeat",
-      "cadence": "5m",
-      "status": "active_review_monitoring",
+      "cadence": "manual_or_next_handoff",
+      "status": "ready_for_reconciliation",
       "lastCheckedAt": "2026-07-05T16:16:04Z",
-      "nextCheckDueAt": "2026-07-05T16:21:04Z",
+      "nextCheckDueAt": null,
       "schedulerRef": "postgram-admin-wave-003-wdd-heartbeat",
-      "fallbackPrompt": "Run one bounded WDD controller heartbeat for /Users/ivo.toby/workspace/postgram, epic EPIC-admin-configuration-frontend, active wave WAVE-003. Use subagent-pr-orchestration, inspect PR #80, worker Leibniz (019f32d9-051d-7c40-8daf-2e05d9888901), reviewer Lorentz (019f322c-02e7-7590-8b8e-ebdd1e9c52ac), and worktree /Users/ivo.toby/workspace/postgram/.worktrees/TASK-005-admin-session-routes. Route P1/P2 feedback if review blocks; if review passes, enforce branch freshness before merge."
+      "fallbackPrompt": "Run wdd-reconcile-wave for /Users/ivo.toby/workspace/postgram, epic EPIC-admin-configuration-frontend, wave WAVE-003. Confirm PR #80 and merge commit ecfe9ac, reconcile shared context, clean up worktree if safe, and do not start WAVE-004 until reconciliation completes."
     },
     "review": {
       "WAVE-001-admin-feasibility-gate": {
@@ -1652,20 +1675,19 @@
         "blockingFeedback": []
       },
       "WAVE-003-admin-session-routes": {
-        "status": "in_progress",
-        "result": null,
+        "status": "passed",
+        "result": "REVIEW_PASS",
         "pr": "https://github.com/ivo-toby/postgram/pull/80",
         "reviewThreadId": "019f322c-02e7-7590-8b8e-ebdd1e9c52ac",
         "reviewNickname": "Lorentz",
-        "reviewSubmissionId": "019f3311-ae9d-79b1-84f3-ede0958df215",
-        "requestedAt": "2026-07-05T16:16:04Z",
+        "reviewedAt": "2026-07-05T16:16:04Z",
         "blockingFeedback": []
       }
     },
     "branchFreshness": {
       "WAVE-001-admin-feasibility-gate": "current_at_merge",
       "WAVE-002-admin-auth-persistence": "current_at_merge",
-      "WAVE-003-admin-session-routes": "stale_after_controller_review_checkpoint"
+      "WAVE-003-admin-session-routes": "current_at_merge"
     },
     "merge": {
       "WAVE-001-admin-feasibility-gate": {
@@ -1689,12 +1711,20 @@
         "remotePrMergedAt": "2026-07-05T15:04:08Z",
         "closeoutCommit": "cac43dd",
         "reconciledAt": "2026-07-05T15:07:20Z"
+      },
+      "WAVE-003-admin-session-routes": {
+        "status": "merged_pending_reconciliation",
+        "commit": "ecfe9ac146db0ec9d9902f336cb87aad556821c3",
+        "taskBranchHead": "e3dd76a",
+        "workerHead": "01c59a9586c0311a48aa5c55ffd7784f2a3aaccc",
+        "mergedAt": "2026-07-05T16:16:04Z",
+        "cleanupState": "cleanup_deferred"
       }
     },
     "sharedContextReconciliation": {
       "WAVE-001": "completed",
       "WAVE-002": "completed",
-      "WAVE-003": "not_started"
+      "WAVE-003": "queued"
     },
     "prState": {
       "WAVE-001-admin-feasibility-gate": {
@@ -1719,15 +1749,10 @@
         "isDraft": true,
         "url": "https://github.com/ivo-toby/postgram/pull/80",
         "headRef": "codex/task/TASK-005-admin-session-routes",
-        "headSha": "01c59a9586c0311a48aa5c55ffd7784f2a3aaccc",
+        "headSha": "e3dd76a",
         "baseRef": "codex/epic/admin-configuration-frontend",
-        "baseSha": "f2d48cdfd33b8e94fc14dafcd66a206f3fff7a72",
-        "mergeStateStatus": "UNKNOWN",
-        "createdAt": "2026-07-05T16:14:14Z",
-        "updatedAt": "2026-07-05T16:14:36Z",
-        "baseShaAtPrOpen": "f2d48cdfd33b8e94fc14dafcd66a206f3fff7a72",
-        "latestObservedEpicSha": "b016bee69292cf620a2584d5e863d3f06fbd9ffc",
-        "freshnessNote": "PR #80 was current at PR open against f2d48cd. After controller review-state checkpoint b016bee, GitHub reports mergeStateStatus UNKNOWN; branch freshness must be enforced after review passes and before merge."
+        "localMergeCommit": "ecfe9ac146db0ec9d9902f336cb87aad556821c3",
+        "note": "Local epic branch contains task branch merge; remote PR state will be rechecked after push."
       }
     },
     "cleanup": {
@@ -1744,9 +1769,9 @@
         "evidence": "Worker worktree was clean; ran git worktree remove /Users/ivo.toby/workspace/postgram/.worktrees/TASK-004-admin-auth-persistence and git worktree prune during WAVE-002 reconciliation."
       },
       "WAVE-003-admin-session-routes": {
-        "status": "not_started",
+        "status": "cleanup_deferred",
         "worktree": "/Users/ivo.toby/workspace/postgram/.worktrees/TASK-005-admin-session-routes",
-        "reason": "PR #80 is in review; keep worktree until merge or blocked closeout."
+        "reason": "Defer task worktree cleanup to WAVE-003 reconciliation after push/PR remote-state confirmation."
       }
     },
     "worker": {
@@ -1781,40 +1806,28 @@
         "reconciledAt": "2026-07-05T15:07:20Z"
       },
       "WAVE-003-admin-session-routes": {
-        "status": "done_with_concerns_pr_open",
+        "status": "done_with_concerns_merged",
         "workerThreadId": "019f32d9-051d-7c40-8daf-2e05d9888901",
         "workerNickname": "Leibniz",
         "finalStatus": "DONE_WITH_CONCERNS",
         "pr": "https://github.com/ivo-toby/postgram/pull/80",
-        "latestCommit": "01c59a9586c0311a48aa5c55ffd7784f2a3aaccc",
+        "latestCommit": "e3dd76a",
         "dispatchedAt": "2026-07-05T15:15:57Z",
         "lastObservedAt": "2026-07-05T16:16:04Z",
         "lastObservation": {
           "checkedAt": "2026-07-05T16:16:04Z",
           "workerStatus": "DONE_WITH_CONCERNS",
+          "reviewStatus": "REVIEW_PASS",
           "pr": "https://github.com/ivo-toby/postgram/pull/80",
           "patch": null,
           "worktreeStatus": "clean_pushed",
-          "branchHead": "01c59a9586c0311a48aa5c55ffd7784f2a3aaccc",
-          "epicHead": "b016bee69292cf620a2584d5e863d3f06fbd9ffc",
-          "branchFreshness": "stale_after_controller_review_checkpoint",
-          "observedFiles": [
-            ".wdd/epics/EPIC-admin-configuration-frontend/TICKET-002-admin-auth-foundation/review/TASK-005-admin-session-routes.md",
-            "src/auth/admin-middleware.ts",
-            "src/auth/admin-service.ts",
-            "src/index.ts",
-            "src/transport/admin.ts",
-            "src/util/errors.ts",
-            "tests/contract/admin-auth-routes.test.ts",
-            "tests/integration/admin-auth-service.test.ts",
-            "tests/unit/errors.test.ts"
-          ],
-          "verification": "Leibniz reported after rebase onto origin/codex/epic/admin-configuration-frontend at f2d48cd: npm test -- tests/contract/admin-auth-routes.test.ts passed (9 tests); npm run typecheck passed; adjacent errors/admin-auth-service/auth-middleware/oauth/mcp-oauth/rest-api suite passed (50 tests); touched-file ESLint passed; git diff --check passed; local Codex review gate found no blocking correctness, security, or maintainability issues. Concern: repo-wide npm run lint -- ... still reports unrelated existing baseline failures outside the TASK-005 diff; direct lint on touched files passed.",
-          "concern": "Repo-wide npm run lint -- ... still reports unrelated existing baseline lint failures outside the TASK-005 diff; touched-file ESLint passed.",
-          "note": "Draft PR #80 is open and mergeable; Lorentz review requested.",
-          "freshnessNote": "PR #80 was current at PR open against f2d48cd. After controller review-state checkpoint b016bee, GitHub reports mergeStateStatus UNKNOWN; branch freshness must be enforced after review passes and before merge."
+          "branchHead": "e3dd76a",
+          "mergeCommit": "ecfe9ac146db0ec9d9902f336cb87aad556821c3",
+          "branchFreshness": "current_at_merge",
+          "verification": "Lorentz REVIEW_PASS with no P1/P2. Controller merged latest epic into task branch in e3dd76a and reran freshness verification: git diff --check origin/codex/epic/admin-configuration-frontend...HEAD passed; npm test -- tests/contract/admin-auth-routes.test.ts passed (9 tests); npm run typecheck passed; adjacent auth/transport suite passed (50 tests); touched-file ESLint passed. PR #80 merged locally into epic branch in ecfe9ac.",
+          "concern": "Repo-wide npm run lint -- ... still reports unrelated baseline failures; touched-file ESLint passed."
         },
-        "cleanupState": "not_started"
+        "cleanupState": "cleanup_deferred"
       }
     }
   },
@@ -1826,25 +1839,26 @@
     "nextWaveStatus": "ready_to_start"
   },
   "lastMergedWave": {
-    "id": "WAVE-002",
-    "mergedAt": "2026-07-05T15:01:13Z",
-    "status": "done",
-    "mergeCommit": "0f96769",
-    "nextStep": "wdd-start-wave WAVE-003",
-    "reconciledAt": "2026-07-05T15:07:20Z"
+    "id": "WAVE-003",
+    "bundle": "WAVE-003-admin-session-routes",
+    "mergeCommit": "ecfe9ac146db0ec9d9902f336cb87aad556821c3",
+    "mergedAt": "2026-07-05T16:16:04Z",
+    "status": "ready_for_reconciliation"
   },
   "lastStartedWave": {
     "id": "WAVE-003",
     "activatedAt": "2026-07-05T15:10:39Z",
     "dispatchedAt": "2026-07-05T15:15:57Z",
-    "status": "reviewing",
+    "status": "ready_for_reconciliation",
     "workerThreadId": "019f32d9-051d-7c40-8daf-2e05d9888901",
     "workerNickname": "Leibniz",
     "lastObservedAt": "2026-07-05T16:16:04Z",
     "worktreeStatus": "clean_pushed",
-    "branchFreshness": "stale_after_controller_review_checkpoint",
+    "branchFreshness": "current_at_merge",
     "pr": "https://github.com/ivo-toby/postgram/pull/80",
     "latestCommit": "01c59a9586c0311a48aa5c55ffd7784f2a3aaccc",
-    "freshnessNote": "PR #80 was current at PR open against f2d48cd. After controller review-state checkpoint b016bee, GitHub reports mergeStateStatus UNKNOWN; branch freshness must be enforced after review passes and before merge."
+    "freshnessNote": "PR #80 was current at PR open against f2d48cd. After controller review-state checkpoint b016bee, GitHub reports mergeStateStatus UNKNOWN; branch freshness must be enforced after review passes and before merge.",
+    "mergedAt": "2026-07-05T16:16:04Z",
+    "mergeCommit": "ecfe9ac146db0ec9d9902f336cb87aad556821c3"
   }
 }

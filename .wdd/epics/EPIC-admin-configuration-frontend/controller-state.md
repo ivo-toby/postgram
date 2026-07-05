@@ -19,14 +19,16 @@ checkout.
 
 ## Current Outcome
 
-WAVE-003 is active as a full-profile bundled admin-session-routes wave.
-Worker Leibniz opened draft PR #80 for TASK-005 and the gate is `reviewing`.
+WAVE-003 is merged and ready for reconciliation. Worker Leibniz opened draft
+PR #80 for TASK-005, Lorentz returned `REVIEW_PASS`, and the task branch was
+merged into the epic branch in `ecfe9ac`.
 
 WAVE-001 is done and reconciled. WAVE-002 starts TASK-004-admin-auth-persistence
 after Ivo confirmed the next wave on 2026-07-05.
 
-Next phase: monitor Lorentz's review of PR #80, then route P1/P2 feedback or
-enforce branch freshness before merge if review passes.
+Next phase: run `wdd-reconcile-wave` for WAVE-003, reconcile shared context,
+and clean up the TASK-005 worktree if safe. Do not start WAVE-004 before
+reconciliation completes.
 
 ## Wave Summary
 
@@ -34,7 +36,7 @@ enforce branch freshness before merge if review passes.
 |------|-------|----------|--------|--------------|
 | WAVE-001 | TASK-001, TASK-002, TASK-003 | full / bundled / risk_based / adaptive | done | confirmed by Ivo via Codex request on 2026-07-05 |
 | WAVE-002 | TASK-004 | full / bundled / risk_based / adaptive | done | confirmed by Ivo via Codex request on 2026-07-05 |
-| WAVE-003 | TASK-005 | full / bundled / risk_based / adaptive | in_progress | confirmed by Ivo via Codex sequential-waves request on 2026-07-05 |
+| WAVE-003 | TASK-005 | full / bundled / risk_based / adaptive | ready_for_reconciliation | confirmed by Ivo via Codex sequential-waves request on 2026-07-05 |
 | WAVE-004 | TASK-006, TASK-009 | full / hybrid / risk_based / adaptive | planned | required |
 | WAVE-005 | TASK-007, TASK-010 | full / hybrid / risk_based / adaptive | planned | required |
 | WAVE-006 | TASK-008, TASK-014 | full / hybrid / risk_based / adaptive | planned | required |
@@ -48,26 +50,23 @@ enforce branch freshness before merge if review passes.
 
 Mode: codex_thread_heartbeat
 
-Cadence: 5 minutes
+Cadence: handoff pending
 
-Status: active review monitoring
+Status: ready for WAVE-003 reconciliation
 
 Last check: 2026-07-05T16:16:04Z
 
-Next check due: 2026-07-05T16:21:04Z
+Next check due: none after this merge checkpoint
 
 Scheduler reference: `postgram-admin-wave-003-wdd-heartbeat`
 
 Fallback prompt:
 
 ```text
-Run one bounded WDD controller heartbeat for /Users/ivo.toby/workspace/postgram,
-epic EPIC-admin-configuration-frontend, active wave WAVE-003. Use
-subagent-pr-orchestration, inspect worker Leibniz
-(`019f32d9-051d-7c40-8daf-2e05d9888901`) and worktree
-/Users/ivo.toby/workspace/postgram/.worktrees/TASK-005-admin-session-routes.
-Route P1/P2 feedback if review blocks; if review passes, enforce branch
-freshness before merge.
+Run wdd-reconcile-wave for /Users/ivo.toby/workspace/postgram, epic
+EPIC-admin-configuration-frontend, wave WAVE-003. Confirm PR #80 and merge
+commit ecfe9ac, reconcile shared context, clean up the TASK-005 worktree if
+safe, and do not start WAVE-004 until reconciliation completes.
 ```
 
 ## Active Wave Strategy
@@ -97,7 +96,7 @@ freshness before merge.
 | TASK-002-threat-model-bootstrap | TICKET-001-feasibility-security-design | codex/task/WAVE-001-admin-feasibility-gate | cleaned_up | reconciled | P2 bootstrap ownership feedback resolved; REVIEW_PASS; merged in `1f11365` |
 | TASK-003-runtime-config-feasibility | TICKET-001-feasibility-security-design | codex/task/WAVE-001-admin-feasibility-gate | cleaned_up | reconciled | P3 provider URL/egress test feedback addressed; REVIEW_PASS; merged in `1f11365` |
 | TASK-004-admin-auth-persistence | TICKET-002-admin-auth-foundation | codex/task/TASK-004-admin-auth-persistence | cleaned_up | reconciled | REVIEW_PASS; freshness verification passed; merged in `0f96769`; PR #79 merged; WAVE-002 reconciled |
-| TASK-005-admin-session-routes | TICKET-002-admin-auth-foundation | codex/task/TASK-005-admin-session-routes | clean_pushed | reviewing | PR #80 open; worker verification passed with repo-wide lint baseline concern; Lorentz review requested |
+| TASK-005-admin-session-routes | TICKET-002-admin-auth-foundation | codex/task/TASK-005-admin-session-routes | clean_pushed | merged | REVIEW_PASS; freshness verification passed; merged in `ecfe9ac`; ready for WAVE-003 reconciliation |
 | TASK-006-admin-mfa-step-up | TICKET-002-admin-auth-foundation | codex/task/TASK-006-admin-mfa-step-up | not_created | planned | `npm test -- tests/contract/admin-mfa-routes.test.ts`; `npm test -- tests/integration/admin-auth-service.test.ts`; `npm run typecheck` |
 | TASK-007-admin-api-shell-diagnostics | TICKET-003-admin-api-foundation | codex/task/TASK-007-admin-api-shell-diagnostics | not_created | planned | `npm test -- tests/contract/admin-api.test.ts`; `npm run typecheck` |
 | TASK-008-admin-key-audit-stats-api | TICKET-003-admin-api-foundation | codex/task/TASK-008-admin-key-audit-stats-api | not_created | planned | `npm test -- tests/contract/admin-key-audit-stats.test.ts`; `npm test -- tests/integration/key-service.test.ts`; `npm run typecheck` |
@@ -153,6 +152,9 @@ freshness before merge.
 - WAVE-003 draft PR: https://github.com/ivo-toby/postgram/pull/80.
 - WAVE-003 reviewer: Lorentz (`019f322c-02e7-7590-8b8e-ebdd1e9c52ac`),
   review request submission `019f3311-ae9d-79b1-84f3-ede0958df215`.
+- WAVE-003 latest observation: Lorentz returned `REVIEW_PASS`; freshness merge
+  `e3dd76a` passed verification; PR #80 was merged locally into the epic branch
+  in `ecfe9ac`; worktree cleanup is deferred to WAVE-003 reconciliation.
 
 ## WAVE-001 Reconciled State
 
@@ -213,11 +215,9 @@ freshness before merge.
 - WAVE-002 is done and reconciled.
 - WAVE-003 is active after Ivo requested sequential wave execution.
 - WAVE-004 remains blocked until WAVE-003 is reconciled.
-- WAVE-003 has draft PR #80 open against epic base `f2d48cd`. Lorentz review
-  is in progress. After the controller review-state checkpoint `b016bee`,
-  GitHub reports PR merge state `UNKNOWN`, so branch freshness must be enforced
-  after review passes and before merge. WAVE-004 remains blocked until WAVE-003
-  is reviewed, merged, and reconciled.
+- WAVE-003 is merged and queued for reconciliation. WAVE-004 remains blocked
+  until WAVE-003 shared context is reconciled and the worktree cleanup gate is
+  handled.
 
 ## Verification Status
 
@@ -276,6 +276,13 @@ freshness before merge.
   passed, and `git diff --check` passed. Concern: repo-wide
   `npm run lint -- ...` still reports unrelated existing baseline failures
   outside the TASK-005 diff.
+- WAVE-003 review/freshness verification: Lorentz returned `REVIEW_PASS` with
+  no P1/P2 findings. After merging latest epic into the task branch in
+  `e3dd76a`, the controller reran `git diff --check
+  origin/codex/epic/admin-configuration-frontend...HEAD`, the admin route
+  contract suite (9 tests), `npm run typecheck`, the adjacent auth/transport
+  suite (50 tests), and touched-file ESLint; all passed. PR #80 was merged into
+  the epic branch locally in `ecfe9ac`.
 
 ## Event Log
 
@@ -399,9 +406,14 @@ freshness before merge.
   advanced the epic branch to `b016bee`, GitHub reports merge state `UNKNOWN`;
   branch freshness must be enforced after review and before merge. Next check
   due 2026-07-05T16:21:04Z.
+- 2026-07-05T16:16:04Z: Lorentz returned `REVIEW_PASS` for PR #80. The
+  controller merged the latest epic branch into the task branch in `e3dd76a`,
+  reran freshness verification, pushed the task branch, merged TASK-005 into
+  the epic branch in `ecfe9ac`, and moved the task file to `done/`. WAVE-003 is
+  ready for reconciliation; worktree cleanup is deferred to reconciliation.
 
 ## Next Action
 
-Monitor Lorentz's review of PR #80. If P1/P2 feedback appears, route it to
-Leibniz or a fresh fix worker; if review passes, enforce branch freshness
-against the epic branch before merge.
+Push the WAVE-003 merge closeout checkpoint, confirm GitHub PR #80 remote state,
+then run `wdd-reconcile-wave` for WAVE-003. Do not start WAVE-004 before
+reconciliation.

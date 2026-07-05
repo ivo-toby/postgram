@@ -6,7 +6,7 @@ ticket: TICKET-002-admin-auth-foundation
 wave: WAVE-004
 slug: admin-mfa-step-up
 title: Admin MFA And Step-Up
-status: in_progress
+status: review
 depends_on:
   - TASK-004-admin-auth-persistence
   - TASK-005-admin-session-routes
@@ -19,23 +19,25 @@ assigned_model_class: implementationComplex
 review_model_class: review
 branch: codex/task/TASK-006-admin-mfa-step-up
 worker_worktree: /Users/ivo.toby/workspace/postgram/.worktrees/TASK-006-admin-mfa-step-up
-worktree_status: active_uncommitted
-pr: null
+worktree_status: pr_open
+pr: https://github.com/ivo-toby/postgram/pull/82
 worker_thread_id: 019f3333-4033-7463-9819-aa3dec286b4c
-review_thread_id: null
-current_gate: no_pr
-branch_freshness: current_at_dispatch
+review_thread_id: 019f334d-2989-7921-af2a-8cf46c74bc42
+current_gate: review
+branch_freshness: current_with_epic_at_pr
 verification:
   - npm test -- tests/contract/admin-mfa-routes.test.ts
   - npm test -- tests/integration/admin-auth-service.test.ts
   - npm run typecheck
+  - npx eslint src/auth/admin-mfa-service.ts src/auth/admin-middleware.ts src/transport/admin.ts src/index.ts src/config.ts tests/contract/admin-mfa-routes.test.ts tests/integration/admin-auth-service.test.ts
+  - git diff --check
 ---
 
 # TASK-006-admin-mfa-step-up: Admin MFA And Step-Up
 
 ## Status
 
-in_progress
+review
 
 ## Parent Ticket
 
@@ -127,7 +129,10 @@ Verified and dispatched at 2026-07-05T16:47:34Z with worker Tesla
 
 ## PR / Patch Reference
 
-None yet.
+Draft PR: https://github.com/ivo-toby/postgram/pull/82
+
+Branch `codex/task/TASK-006-admin-mfa-step-up` targets
+`codex/epic/admin-configuration-frontend`.
 
 ## RED-GREEN TDD Plan
 
@@ -179,13 +184,13 @@ Keep MFA helpers isolated from ordinary API-key auth.
 
 ## Task-Level Definition of Done
 
-- [ ] MFA enrollment and challenge are covered.
-- [ ] First admin remains non-active/pending until MFA enrollment and
+- [x] MFA enrollment and challenge are covered.
+- [x] First admin remains non-active/pending until MFA enrollment and
       verification complete.
-- [ ] First admin becomes active only through the MFA completion path.
-- [ ] Sensitive action step-up helper exists and is tested.
-- [ ] API-key bearer tokens cannot bypass MFA/admin auth.
-- [ ] Secrets are redacted.
+- [x] First admin becomes active only through the MFA completion path.
+- [x] Sensitive action step-up helper exists and is tested.
+- [x] API-key bearer tokens cannot bypass MFA/admin auth.
+- [x] Secrets are redacted.
 
 ## Validation Steps
 
@@ -195,17 +200,46 @@ Keep MFA helpers isolated from ordinary API-key auth.
 
 ## Verification Evidence
 
-- Not run yet.
+- RED: `npm test -- tests/contract/admin-mfa-routes.test.ts` failed before
+  implementation with 5 route-level failures because MFA endpoints returned
+  404.
+- RED: `npm test -- tests/integration/admin-auth-service.test.ts` failed before
+  implementation because `src/auth/admin-mfa-service.ts` did not exist.
+- Review-fix RED: contract coverage proved premature `/admin/api/session/step-up`
+  returned 200 before the session had completed MFA; integration coverage
+  proved future-dated step-up timestamps were incorrectly fresh.
+- GREEN: `npm test -- tests/contract/admin-mfa-routes.test.ts` passed
+  (5 tests).
+- GREEN: `npm test -- tests/integration/admin-auth-service.test.ts` passed
+  (14 tests).
+- `npm run typecheck` passed.
+- Direct touched-file lint passed:
+  `npx eslint src/auth/admin-mfa-service.ts src/auth/admin-middleware.ts src/transport/admin.ts src/index.ts src/config.ts tests/contract/admin-mfa-routes.test.ts tests/integration/admin-auth-service.test.ts`.
+- `git diff --check` passed.
+- Codex review gate `codex review --uncommitted` initially reported P1/P2
+  findings for rolled-back failed-attempt audit rows, plaintext TOTP seed
+  storage, missing MFA/step-up audit rows, premature step-up access, and
+  future-dated step-up freshness. All P1/P2 findings were fixed.
+- Final Codex review gate reported no introduced correctness or security
+  issues in the changed files.
 
 ## Review Feedback
 
 ### P1
 
-- None.
+- Resolved: failed MFA attempts are now committed as `admin_auth_attempts` rows
+  instead of being rolled back with the failed verification transaction.
+- Resolved: TOTP seeds are now stored encrypted in `admin_mfa_factors` using
+  `ADMIN_MFA_SECRET_KEY`, and plaintext secrets are write-only after enrollment.
 
 ### P2
 
-- None.
+- Resolved: MFA enrollment, verification, challenge, and step-up success paths
+  now append audit rows without exposing TOTP secrets.
+- Resolved: `/admin/api/session/step-up` now requires an already MFA-verified
+  active admin session before using the separate step-up rate-limit bucket.
+- Resolved: step-up freshness rejects future-dated `mfa_verified_at`
+  timestamps.
 
 ### P3
 
@@ -223,3 +257,9 @@ Keep MFA helpers isolated from ordinary API-key auth.
   `src/auth/admin-mfa-service.ts`, `tests/contract/admin-mfa-routes.test.ts`,
   and `tests/integration/admin-auth-service.test.ts`. No PR or patch exists
   yet; branch remains current with the epic branch at `f9bbc0f`.
+- Implemented TOTP enrollment/verification/challenge/step-up routes on the
+  existing admin session and MFA tables, added encrypted TOTP seed storage, and
+  kept `pgm_admin_session` plus `X-CSRF-Token` as the admin mutation contract.
+- Merged the latest epic heartbeat commit into the task branch before opening
+  PR #82 so the draft PR targets the current
+  `codex/epic/admin-configuration-frontend` state.

@@ -370,6 +370,7 @@ Expected:
 | ----------------------------- | ----------- | ------- | ------------------------------------------------------------------------------------------------------------------------------ |
 | `DATABASE_URL`                | yes         |         | Full Postgres connection string                                                                                                |
 | `OPENAI_API_KEY`              | conditional |         | Required when `EMBEDDING_PROVIDER=openai` OR (`EXTRACTION_ENABLED=true` AND `EXTRACTION_PROVIDER=openai`). Optional otherwise. |
+| `ADMIN_SETTINGS_ENCRYPTION_KEY` | when saving admin-managed secrets |         | 32-byte base64url installation key used to encrypt DB-backed provider secrets. Keep outside database backups. Generate with `node -e "console.log(require('node:crypto').randomBytes(32).toString('base64url'))"`. |
 | `PORT`                        | no          | `3100`  | HTTP/MCP server port                                                                                                           |
 | `OAUTH_ENABLED`               | no          | `false` | Enable OAuth authorization-code, PKCE, and Dynamic Client Registration routes for native remote MCP connectors.                 |
 | `PUBLIC_BASE_URL`             | conditional |         | Public HTTPS origin for OAuth metadata and callback URLs. Required when `OAUTH_ENABLED=true`. Example: `https://postgram.example.com`. |

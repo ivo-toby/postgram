@@ -11,6 +11,7 @@ const configSchema = z
   .object({
     DATABASE_URL: z.string().min(1),
     OPENAI_API_KEY: optionalString,
+    ADMIN_SETTINGS_ENCRYPTION_KEY: optionalString,
     PORT: z.coerce.number().int().positive().default(3100),
     OAUTH_ENABLED: z
       .enum(['true', 'false'])

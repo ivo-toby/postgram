@@ -181,21 +181,23 @@
           "worktreeStatus": "verified",
           "workerThreadId": "019f3215-2eb6-75f2-81f0-bf527e73258b",
           "workerNickname": "Singer",
-          "reviewThreadId": null,
-          "currentGate": "no_pr",
-          "branchFreshness": "current",
-          "pr": null,
-          "latestCommit": null,
+          "reviewThreadId": "019f322c-02e7-7590-8b8e-ebdd1e9c52ac",
+          "currentGate": "reviewing",
+          "branchFreshness": "current_at_review_start",
+          "pr": "https://github.com/ivo-toby/postgram/pull/78",
+          "latestCommit": "7116541ad47938b90b3078f293afe016a804104d",
           "blockingFeedback": [],
           "verification": {
-            "result": "not_run",
+            "result": "passed",
             "commands": [
               "git diff --check"
             ],
-            "evidence": null
+            "evidence": "Worker reported git diff --check passed; controller verified PR #78 is open/draft, targets codex/epic/admin-configuration-frontend, and had clean merge state before review start."
           },
           "verifiedAt": "2026-07-05T11:36:08Z",
-          "dispatchedAt": "2026-07-05T11:41:41Z"
+          "dispatchedAt": "2026-07-05T11:41:41Z",
+          "reviewNickname": "Lorentz",
+          "reviewStartedAt": "2026-07-05T12:05:03Z"
         }
       ]
     },
@@ -499,22 +501,23 @@
       "reviewModel": "review",
       "branch": "codex/task/WAVE-001-admin-feasibility-gate",
       "workerThreadId": "019f3215-2eb6-75f2-81f0-bf527e73258b",
-      "reviewThreadId": null,
+      "reviewThreadId": "019f322c-02e7-7590-8b8e-ebdd1e9c52ac",
       "workerWorktree": "/Users/ivo.toby/workspace/postgram/.worktrees/WAVE-001-admin-feasibility-gate",
       "worktreeStatus": "verified",
-      "pr": null,
-      "latestCommit": null,
-      "branchFreshness": "current",
+      "pr": "https://github.com/ivo-toby/postgram/pull/78",
+      "latestCommit": "7116541ad47938b90b3078f293afe016a804104d",
+      "branchFreshness": "current_at_review_start",
       "blockingFeedback": [],
       "verification": {
-        "result": "not_run",
+        "result": "passed",
         "commands": [
           "git diff --check"
         ],
-        "evidence": null
+        "evidence": "Worker reported git diff --check passed for WAVE-001 shared-context and task artifact updates."
       },
-      "currentGate": "no_pr",
-      "workerNickname": "Singer"
+      "currentGate": "reviewing",
+      "workerNickname": "Singer",
+      "reviewNickname": "Lorentz"
     },
     {
       "id": "TASK-002-threat-model-bootstrap",
@@ -531,22 +534,23 @@
       "reviewModel": "review",
       "branch": "codex/task/WAVE-001-admin-feasibility-gate",
       "workerThreadId": "019f3215-2eb6-75f2-81f0-bf527e73258b",
-      "reviewThreadId": null,
+      "reviewThreadId": "019f322c-02e7-7590-8b8e-ebdd1e9c52ac",
       "workerWorktree": "/Users/ivo.toby/workspace/postgram/.worktrees/WAVE-001-admin-feasibility-gate",
       "worktreeStatus": "verified",
-      "pr": null,
-      "latestCommit": null,
-      "branchFreshness": "current",
+      "pr": "https://github.com/ivo-toby/postgram/pull/78",
+      "latestCommit": "7116541ad47938b90b3078f293afe016a804104d",
+      "branchFreshness": "current_at_review_start",
       "blockingFeedback": [],
       "verification": {
-        "result": "not_run",
+        "result": "passed",
         "commands": [
           "git diff --check"
         ],
-        "evidence": null
+        "evidence": "Worker reported git diff --check passed for WAVE-001 shared-context and task artifact updates."
       },
-      "currentGate": "no_pr",
-      "workerNickname": "Singer"
+      "currentGate": "reviewing",
+      "workerNickname": "Singer",
+      "reviewNickname": "Lorentz"
     },
     {
       "id": "TASK-003-runtime-config-feasibility",
@@ -564,22 +568,23 @@
       "reviewModel": "review",
       "branch": "codex/task/WAVE-001-admin-feasibility-gate",
       "workerThreadId": "019f3215-2eb6-75f2-81f0-bf527e73258b",
-      "reviewThreadId": null,
+      "reviewThreadId": "019f322c-02e7-7590-8b8e-ebdd1e9c52ac",
       "workerWorktree": "/Users/ivo.toby/workspace/postgram/.worktrees/WAVE-001-admin-feasibility-gate",
       "worktreeStatus": "verified",
-      "pr": null,
-      "latestCommit": null,
-      "branchFreshness": "current",
+      "pr": "https://github.com/ivo-toby/postgram/pull/78",
+      "latestCommit": "7116541ad47938b90b3078f293afe016a804104d",
+      "branchFreshness": "current_at_review_start",
       "blockingFeedback": [],
       "verification": {
-        "result": "not_run",
+        "result": "passed",
         "commands": [
           "git diff --check"
         ],
-        "evidence": null
+        "evidence": "Worker reported git diff --check passed for WAVE-001 shared-context and task artifact updates."
       },
-      "currentGate": "no_pr",
-      "workerNickname": "Singer"
+      "currentGate": "reviewing",
+      "workerNickname": "Singer",
+      "reviewNickname": "Lorentz"
     },
     {
       "id": "TASK-004-admin-auth-persistence",
@@ -1132,12 +1137,12 @@
   ],
   "monitoring": {
     "mode": "codex_thread_heartbeat",
-    "cadence": "FREQ=MINUTELY;INTERVAL=15",
+    "cadence": "FREQ=MINUTELY;INTERVAL=5",
     "status": "active",
-    "lastCheckedAt": "2026-07-05T11:41:41Z",
-    "nextCheckDueAt": "2026-07-05T11:56:41Z",
+    "lastCheckedAt": "2026-07-05T12:05:03Z",
+    "nextCheckDueAt": "2026-07-05T12:10:03Z",
     "schedulerRef": "postgram-admin-wave-001-wdd-heartbeat",
-    "fallbackPrompt": "Resume WAVE-001 for EPIC-admin-configuration-frontend. Read .wdd/epics/EPIC-admin-configuration-frontend/orchestration.json and controller-state.md, inspect active bundled worker Singer (019f3215-2eb6-75f2-81f0-bf527e73258b), inspect the assigned worktree /Users/ivo.toby/workspace/postgram/.worktrees/WAVE-001-admin-feasibility-gate, update gates, branch freshness, verification, PR or patch refs, review refs, feedback, and monitoring timestamps, and stop when the bundle is ready for wdd-reconcile-wave."
+    "fallbackPrompt": "Resume WAVE-001 for EPIC-admin-configuration-frontend. Read .wdd/epics/EPIC-admin-configuration-frontend/orchestration.json and controller-state.md, inspect PR https://github.com/ivo-toby/postgram/pull/78, worker Singer (019f3215-2eb6-75f2-81f0-bf527e73258b), reviewer Lorentz (019f322c-02e7-7590-8b8e-ebdd1e9c52ac), and the assigned worktree /Users/ivo.toby/workspace/postgram/.worktrees/WAVE-001-admin-feasibility-gate. Update gates, branch freshness, verification, PR refs, review refs, feedback, and monitoring timestamps. Route P1/P2 feedback if present; if review passes, enforce branch freshness before merge or merge-ready."
   },
   "sharedContext": {
     "index": "shared-context/index.md",
@@ -1180,11 +1185,11 @@
         "worktreeStatus": "verified",
         "workerThreadId": "019f3215-2eb6-75f2-81f0-bf527e73258b",
         "workerNickname": "Singer",
-        "reviewThreadId": null,
-        "currentGate": "no_pr",
-        "branchFreshness": "current",
-        "pr": null,
-        "latestCommit": null,
+        "reviewThreadId": "019f322c-02e7-7590-8b8e-ebdd1e9c52ac",
+        "currentGate": "reviewing",
+        "branchFreshness": "current_at_review_start",
+        "pr": "https://github.com/ivo-toby/postgram/pull/78",
+        "latestCommit": "7116541ad47938b90b3078f293afe016a804104d",
         "blockingFeedback": [],
         "verification": {
           "result": "not_run",
@@ -1194,7 +1199,9 @@
           "evidence": null
         },
         "verifiedAt": "2026-07-05T11:36:08Z",
-        "dispatchedAt": "2026-07-05T11:41:41Z"
+        "dispatchedAt": "2026-07-05T11:41:41Z",
+        "reviewNickname": "Lorentz",
+        "reviewStartedAt": "2026-07-05T12:05:03Z"
       }
     ]
   },
@@ -1217,7 +1224,7 @@
       "WAVE-001-admin-feasibility-gate": "verified"
     },
     "workerDispatch": {
-      "WAVE-001-admin-feasibility-gate": "no_pr"
+      "WAVE-001-admin-feasibility-gate": "reviewing"
     },
     "waveCompletion": {
       "WAVE-001": "in_progress"
@@ -1230,10 +1237,20 @@
       "mode": "codex_thread_heartbeat",
       "status": "active",
       "schedulerRef": "postgram-admin-wave-001-wdd-heartbeat",
-      "cadence": "FREQ=MINUTELY;INTERVAL=15",
-      "lastCheckedAt": "2026-07-05T11:41:41Z",
-      "nextCheckDueAt": "2026-07-05T11:56:41Z",
-      "fallbackPrompt": "Resume WAVE-001 for EPIC-admin-configuration-frontend. Read .wdd/epics/EPIC-admin-configuration-frontend/orchestration.json and controller-state.md, inspect active bundled worker Singer (019f3215-2eb6-75f2-81f0-bf527e73258b), inspect the assigned worktree /Users/ivo.toby/workspace/postgram/.worktrees/WAVE-001-admin-feasibility-gate, update gates, branch freshness, verification, PR or patch refs, review refs, feedback, and monitoring timestamps, and stop when the bundle is ready for wdd-reconcile-wave."
+      "cadence": "FREQ=MINUTELY;INTERVAL=5",
+      "lastCheckedAt": "2026-07-05T12:05:03Z",
+      "nextCheckDueAt": "2026-07-05T12:10:03Z",
+      "fallbackPrompt": "Resume WAVE-001 for EPIC-admin-configuration-frontend. Read .wdd/epics/EPIC-admin-configuration-frontend/orchestration.json and controller-state.md, inspect PR https://github.com/ivo-toby/postgram/pull/78, worker Singer (019f3215-2eb6-75f2-81f0-bf527e73258b), reviewer Lorentz (019f322c-02e7-7590-8b8e-ebdd1e9c52ac), and the assigned worktree /Users/ivo.toby/workspace/postgram/.worktrees/WAVE-001-admin-feasibility-gate. Update gates, branch freshness, verification, PR refs, review refs, feedback, and monitoring timestamps. Route P1/P2 feedback if present; if review passes, enforce branch freshness before merge or merge-ready."
+    },
+    "review": {
+      "WAVE-001-admin-feasibility-gate": {
+        "status": "reviewing",
+        "pr": "https://github.com/ivo-toby/postgram/pull/78",
+        "reviewThreadId": "019f322c-02e7-7590-8b8e-ebdd1e9c52ac",
+        "reviewNickname": "Lorentz",
+        "startedAt": "2026-07-05T12:05:03Z",
+        "blockingFeedback": []
+      }
     }
   }
 }

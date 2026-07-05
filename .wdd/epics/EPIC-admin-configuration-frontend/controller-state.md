@@ -21,8 +21,9 @@ checkout.
 
 WAVE-001 is activated as a full-profile bundled feasibility/security gate.
 
-Next phase: monitor worker Singer until the bundled WAVE-001 branch produces a
-PR or patch for review.
+Next phase: review draft PR https://github.com/ivo-toby/postgram/pull/78.
+Worker Singer produced the shared-context feasibility gate updates and reviewer
+Lorentz is checking the full-profile WAVE-001 bundle.
 
 ## Wave Summary
 
@@ -44,13 +45,13 @@ PR or patch for review.
 
 Mode: codex_thread_heartbeat
 
-Cadence: adaptive, every 15 minutes while no PR or patch exists
+Cadence: adaptive, every 5 minutes during review
 
 Status: active
 
-Last check: 2026-07-05T11:41:41Z
+Last check: 2026-07-05T12:05:03Z
 
-Next check due: 2026-07-05T11:56:41Z
+Next check due: 2026-07-05T12:10:03Z
 
 Scheduler reference: postgram-admin-wave-001-wdd-heartbeat
 
@@ -59,12 +60,13 @@ Fallback prompt:
 ```text
 Resume WAVE-001 for EPIC-admin-configuration-frontend. Read
 .wdd/epics/EPIC-admin-configuration-frontend/orchestration.json and
-controller-state.md, inspect active bundled worker Singer
-(019f3215-2eb6-75f2-81f0-bf527e73258b), inspect the assigned worktree
-/Users/ivo.toby/workspace/postgram/.worktrees/WAVE-001-admin-feasibility-gate,
-update gates, branch freshness, verification, PR or patch refs, review refs,
-feedback, and monitoring timestamps, and stop when the bundle is ready for
-wdd-reconcile-wave.
+controller-state.md, inspect PR https://github.com/ivo-toby/postgram/pull/78,
+worker Singer (019f3215-2eb6-75f2-81f0-bf527e73258b), reviewer Lorentz
+(019f322c-02e7-7590-8b8e-ebdd1e9c52ac), and the assigned worktree
+/Users/ivo.toby/workspace/postgram/.worktrees/WAVE-001-admin-feasibility-gate.
+Update gates, branch freshness, verification, PR refs, review refs, feedback,
+and monitoring timestamps. Route P1/P2 feedback if present; if review passes,
+enforce branch freshness before merge or merge-ready.
 ```
 
 ## Active Wave Strategy
@@ -84,9 +86,9 @@ wdd-reconcile-wave.
 
 | Task | Ticket | Branch | Worktree | Gate | Verification |
 |------|--------|--------|----------|------|--------------|
-| TASK-001-admin-surface-inventory | TICKET-001-feasibility-security-design | codex/task/WAVE-001-admin-feasibility-gate | verified | no_pr | `git diff --check` |
-| TASK-002-threat-model-bootstrap | TICKET-001-feasibility-security-design | codex/task/WAVE-001-admin-feasibility-gate | verified | no_pr | `git diff --check` |
-| TASK-003-runtime-config-feasibility | TICKET-001-feasibility-security-design | codex/task/WAVE-001-admin-feasibility-gate | verified | no_pr | `git diff --check` |
+| TASK-001-admin-surface-inventory | TICKET-001-feasibility-security-design | codex/task/WAVE-001-admin-feasibility-gate | verified | reviewing | `git diff --check` passed |
+| TASK-002-threat-model-bootstrap | TICKET-001-feasibility-security-design | codex/task/WAVE-001-admin-feasibility-gate | verified | reviewing | `git diff --check` passed |
+| TASK-003-runtime-config-feasibility | TICKET-001-feasibility-security-design | codex/task/WAVE-001-admin-feasibility-gate | verified | reviewing | `git diff --check` passed |
 | TASK-004-admin-auth-persistence | TICKET-002-admin-auth-foundation | codex/task/TASK-004-admin-auth-persistence | not_created | planned | `npm test -- tests/integration/admin-auth-service.test.ts`; `npm run typecheck` |
 | TASK-005-admin-session-routes | TICKET-002-admin-auth-foundation | codex/task/TASK-005-admin-session-routes | not_created | planned | `npm test -- tests/contract/admin-auth-routes.test.ts`; `npm run typecheck` |
 | TASK-006-admin-mfa-step-up | TICKET-002-admin-auth-foundation | codex/task/TASK-006-admin-mfa-step-up | not_created | planned | `npm test -- tests/contract/admin-mfa-routes.test.ts`; `npm test -- tests/integration/admin-auth-service.test.ts`; `npm run typecheck` |
@@ -112,13 +114,16 @@ wdd-reconcile-wave.
 - WAVE-001 bundle branch: `codex/task/WAVE-001-admin-feasibility-gate`.
 - WAVE-001 bundle worktree:
   `/Users/ivo.toby/workspace/postgram/.worktrees/WAVE-001-admin-feasibility-gate`.
+- WAVE-001 draft PR: https://github.com/ivo-toby/postgram/pull/78.
 - Worker worktrees: WAVE-001 bundle verified.
 - Worker: Singer (`019f3215-2eb6-75f2-81f0-bf527e73258b`).
+- Reviewer: Lorentz (`019f322c-02e7-7590-8b8e-ebdd1e9c52ac`).
 - Worker rule: one isolated worktree per repository-writing task before
   dispatch.
 - Controller checkout rule: workers must not switch branches in the controller
   checkout.
-- Branch freshness: WAVE-001 bundle current at creation from synced epic branch.
+- Branch freshness: PR branch was clean against pushed epic branch at review
+  start; recheck before merge.
 
 ## WAVE-001 Active State
 
@@ -132,10 +137,11 @@ wdd-reconcile-wave.
   branch/worktree creation.
 - Bundle worktree verification: passed at `fadb158`; follow-up verification
   state is being synced before dispatch.
-- Worker dispatch: Singer started for the WAVE-001 bundle; current gate is
-  `no_pr`.
+- Worker dispatch: Singer completed WAVE-001 shared-context feasibility updates;
+  current gate is `reviewing`.
 - Monitoring: Codex heartbeat
-  `postgram-admin-wave-001-wdd-heartbeat` is active every 15 minutes.
+  `postgram-admin-wave-001-wdd-heartbeat` is active every 5 minutes during
+  review.
 
 ## Shared Context Reconciliation Rules
 
@@ -165,11 +171,18 @@ wdd-reconcile-wave.
 - 2026-07-05T11:41:41Z: Dispatched WAVE-001 bundled worker Singer
   (`019f3215-2eb6-75f2-81f0-bf527e73258b`) and activated Codex heartbeat
   `postgram-admin-wave-001-wdd-heartbeat`.
+- 2026-07-05T12:05:03Z: Verified draft PR
+  https://github.com/ivo-toby/postgram/pull/78, pushed the epic activation base
+  to origin, started reviewer Lorentz
+  (`019f322c-02e7-7590-8b8e-ebdd1e9c52ac`), and updated heartbeat cadence to
+  five minutes for review monitoring.
 
 ## Next Action
 
 Heartbeat or controller next tick:
 
 ```text
-Run subagent-pr-orchestration for EPIC-admin-configuration-frontend WAVE-001.
+Review https://github.com/ivo-toby/postgram/pull/78 for
+EPIC-admin-configuration-frontend WAVE-001, then route feedback or prepare
+wdd-reconcile-wave after review gates are resolved.
 ```

@@ -18,9 +18,9 @@ assigned_model_class: implementationComplex
 review_model_class: review
 branch: codex/task/TASK-005-admin-session-routes
 worker_worktree: /Users/ivo.toby/workspace/postgram/.worktrees/TASK-005-admin-session-routes
-worktree_status: pending_creation
+worktree_status: verified
 pr: null
-worker_thread_id: null
+worker_thread_id: 019f32d9-051d-7c40-8daf-2e05d9888901
 review_thread_id: null
 current_gate: no_pr
 branch_freshness: current_at_dispatch
@@ -121,6 +121,10 @@ codex/task/TASK-005-admin-session-routes
 Assigned by WAVE-003 activation. The controller must create and verify this
 isolated worktree before dispatch.
 
+Verified and dispatched at 2026-07-05T15:15:57Z with worker Leibniz
+(`019f32d9-051d-7c40-8daf-2e05d9888901`) on branch
+`codex/task/TASK-005-admin-session-routes`.
+
 ## PR / Patch Reference
 
 None yet.
@@ -201,4 +205,5 @@ Keep route parsing and cookie helpers focused and reusable for MFA routes.
 
 ## Completion Notes
 
-- None yet.
+- Worker Leibniz was dispatched at 2026-07-05T15:15:57Z. Gate is `no_pr`
+  until a draft PR or patch reference exists.

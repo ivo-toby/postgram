@@ -435,12 +435,12 @@
           ],
           "branch": "codex/task/TASK-005-admin-session-routes",
           "worktree": "/Users/ivo.toby/workspace/postgram/.worktrees/TASK-005-admin-session-routes",
-          "worktreeStatus": "pending_creation",
-          "workerThreadId": null,
-          "workerNickname": null,
+          "worktreeStatus": "verified",
+          "workerThreadId": "019f32d9-051d-7c40-8daf-2e05d9888901",
+          "workerNickname": "Leibniz",
           "reviewThreadId": null,
           "reviewNickname": null,
-          "currentGate": "pending_dispatch",
+          "currentGate": "no_pr",
           "branchFreshness": "current_at_dispatch",
           "pr": null,
           "latestCommit": null,
@@ -455,9 +455,12 @@
           },
           "activatedAt": "2026-07-05T15:10:39Z",
           "cleanupState": "not_started",
-          "sharedContextReconciliation": "not_started"
+          "sharedContextReconciliation": "not_started",
+          "dispatchedAt": "2026-07-05T15:15:57Z",
+          "dispatchBaseCommit": "6e758524b2549d86519c25aed19f4d9617795edf"
         }
-      ]
+      ],
+      "workerDispatchStartedAt": "2026-07-05T15:15:57Z"
     },
     {
       "id": "WAVE-004",
@@ -948,10 +951,10 @@
       "assignedModel": "implementationComplex",
       "reviewModel": "review",
       "branch": "codex/task/TASK-005-admin-session-routes",
-      "workerThreadId": null,
+      "workerThreadId": "019f32d9-051d-7c40-8daf-2e05d9888901",
       "reviewThreadId": null,
       "workerWorktree": "/Users/ivo.toby/workspace/postgram/.worktrees/TASK-005-admin-session-routes",
-      "worktreeStatus": "pending_creation",
+      "worktreeStatus": "verified",
       "pr": null,
       "latestCommit": null,
       "branchFreshness": "current_at_dispatch",
@@ -964,12 +967,14 @@
         ],
         "evidence": null
       },
-      "currentGate": "pending_dispatch",
+      "currentGate": "no_pr",
       "cleanupState": "not_started",
       "sharedContextReconciliation": "not_started",
       "activatedAt": "2026-07-05T15:10:39Z",
-      "workerNickname": null,
-      "reviewNickname": null
+      "workerNickname": "Leibniz",
+      "reviewNickname": null,
+      "dispatchedAt": "2026-07-05T15:15:57Z",
+      "dispatchBaseCommit": "6e758524b2549d86519c25aed19f4d9617795edf"
     },
     {
       "id": "TASK-006-admin-mfa-step-up",
@@ -1450,13 +1455,13 @@
     }
   ],
   "monitoring": {
-    "mode": "pending",
-    "cadence": null,
-    "status": "pending_dispatch",
-    "lastCheckedAt": "2026-07-05T15:10:39Z",
-    "nextCheckDueAt": null,
-    "schedulerRef": null,
-    "fallbackPrompt": "WAVE-003 activation is synced but worker dispatch has not completed yet."
+    "mode": "codex_thread_heartbeat",
+    "cadence": "15m",
+    "status": "active_no_pr_monitoring",
+    "lastCheckedAt": "2026-07-05T15:15:57Z",
+    "nextCheckDueAt": "2026-07-05T15:30:57Z",
+    "schedulerRef": "postgram-admin-wave-003-wdd-heartbeat",
+    "fallbackPrompt": "Run one bounded WDD controller heartbeat for /Users/ivo.toby/workspace/postgram, epic EPIC-admin-configuration-frontend, active wave WAVE-003. Use subagent-pr-orchestration, inspect worker Leibniz (019f32d9-051d-7c40-8daf-2e05d9888901) and worktree /Users/ivo.toby/workspace/postgram/.worktrees/TASK-005-admin-session-routes, update gates, and stop when WAVE-003 is ready for reconciliation."
   },
   "sharedContext": {
     "index": "shared-context/index.md",
@@ -1492,12 +1497,12 @@
         ],
         "branch": "codex/task/TASK-005-admin-session-routes",
         "worktree": "/Users/ivo.toby/workspace/postgram/.worktrees/TASK-005-admin-session-routes",
-        "worktreeStatus": "pending_creation",
-        "workerThreadId": null,
-        "workerNickname": null,
+        "worktreeStatus": "verified",
+        "workerThreadId": "019f32d9-051d-7c40-8daf-2e05d9888901",
+        "workerNickname": "Leibniz",
         "reviewThreadId": null,
         "reviewNickname": null,
-        "currentGate": "pending_dispatch",
+        "currentGate": "no_pr",
         "branchFreshness": "current_at_dispatch",
         "pr": null,
         "latestCommit": null,
@@ -1512,7 +1517,9 @@
         },
         "activatedAt": "2026-07-05T15:10:39Z",
         "cleanupState": "not_started",
-        "sharedContextReconciliation": "not_started"
+        "sharedContextReconciliation": "not_started",
+        "dispatchedAt": "2026-07-05T15:15:57Z",
+        "dispatchBaseCommit": "6e758524b2549d86519c25aed19f4d9617795edf"
       }
     ]
   },
@@ -1525,10 +1532,10 @@
     },
     "activationArtifactsSynced": {
       "status": "synced_to_epic_branch",
-      "commit": "65d428c",
+      "commit": "6e75852",
       "requiredBeforeTaskWorktrees": true,
-      "wave": "WAVE-002",
-      "syncedAt": "2026-07-05T12:50:00Z"
+      "wave": "WAVE-003",
+      "syncedAt": "2026-07-05T15:10:39Z"
     },
     "waveStrategyConfirmation": {
       "WAVE-001": "confirmed_by_ivo_2026-07-05",
@@ -1538,12 +1545,12 @@
     "workerWorktrees": {
       "WAVE-001-admin-feasibility-gate": "cleaned_up",
       "WAVE-002-admin-auth-persistence": "cleaned_up",
-      "WAVE-003-admin-session-routes": "pending_creation"
+      "WAVE-003-admin-session-routes": "verified"
     },
     "workerDispatch": {
       "WAVE-001-admin-feasibility-gate": "reconciled",
       "WAVE-002-admin-auth-persistence": "reconciled",
-      "WAVE-003-admin-session-routes": "pending_dispatch"
+      "WAVE-003-admin-session-routes": "no_pr"
     },
     "waveCompletion": {
       "WAVE-001": "done",
@@ -1555,13 +1562,13 @@
       "status": "blocked_until_wave_003_reconciled"
     },
     "monitoring": {
-      "mode": "pending",
-      "cadence": null,
-      "status": "pending_dispatch",
-      "lastCheckedAt": "2026-07-05T15:10:39Z",
-      "nextCheckDueAt": null,
-      "schedulerRef": null,
-      "fallbackPrompt": "WAVE-003 activation is synced but worker dispatch has not completed yet."
+      "mode": "codex_thread_heartbeat",
+      "cadence": "15m",
+      "status": "active_no_pr_monitoring",
+      "lastCheckedAt": "2026-07-05T15:15:57Z",
+      "nextCheckDueAt": "2026-07-05T15:30:57Z",
+      "schedulerRef": "postgram-admin-wave-003-wdd-heartbeat",
+      "fallbackPrompt": "Run one bounded WDD controller heartbeat for /Users/ivo.toby/workspace/postgram, epic EPIC-admin-configuration-frontend, active wave WAVE-003. Use subagent-pr-orchestration, inspect worker Leibniz (019f32d9-051d-7c40-8daf-2e05d9888901) and worktree /Users/ivo.toby/workspace/postgram/.worktrees/TASK-005-admin-session-routes, update gates, and stop when WAVE-003 is ready for reconciliation."
     },
     "review": {
       "WAVE-001-admin-feasibility-gate": {
@@ -1662,7 +1669,8 @@
     },
     "sharedContextReconciliation": {
       "WAVE-001": "completed",
-      "WAVE-002": "completed"
+      "WAVE-002": "completed",
+      "WAVE-003": "not_started"
     },
     "prState": {
       "WAVE-001-admin-feasibility-gate": {
@@ -1733,10 +1741,21 @@
         "reconciledAt": "2026-07-05T15:07:20Z"
       },
       "WAVE-003-admin-session-routes": {
-        "status": "pending_dispatch",
-        "workerThreadId": null,
-        "workerNickname": null,
-        "lastObservedAt": "2026-07-05T15:10:39Z"
+        "status": "running_no_pr",
+        "workerThreadId": "019f32d9-051d-7c40-8daf-2e05d9888901",
+        "workerNickname": "Leibniz",
+        "dispatchedAt": "2026-07-05T15:15:57Z",
+        "lastObservedAt": "2026-07-05T15:15:57Z",
+        "lastObservation": {
+          "checkedAt": "2026-07-05T15:15:57Z",
+          "workerStatus": "running",
+          "pr": null,
+          "patch": null,
+          "worktreeStatus": "verified",
+          "branchHead": "6e758524b2549d86519c25aed19f4d9617795edf",
+          "note": "Worker dispatched for TASK-005; awaiting draft PR or patch."
+        },
+        "cleanupState": "not_started"
       }
     }
   },
@@ -1758,6 +1777,9 @@
   "lastStartedWave": {
     "id": "WAVE-003",
     "activatedAt": "2026-07-05T15:10:39Z",
-    "status": "pending_dispatch"
+    "dispatchedAt": "2026-07-05T15:15:57Z",
+    "status": "no_pr",
+    "workerThreadId": "019f32d9-051d-7c40-8daf-2e05d9888901",
+    "workerNickname": "Leibniz"
   }
 }

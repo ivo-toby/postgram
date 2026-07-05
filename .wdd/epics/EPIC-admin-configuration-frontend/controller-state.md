@@ -19,13 +19,14 @@ checkout.
 
 ## Current Outcome
 
-WAVE-003 is activated as a full-profile bundled admin-session-routes wave.
+WAVE-003 is active as a full-profile bundled admin-session-routes wave.
+Worker Leibniz is dispatched for TASK-005 and the gate is `no_pr`.
 
 WAVE-001 is done and reconciled. WAVE-002 starts TASK-004-admin-auth-persistence
 after Ivo confirmed the next wave on 2026-07-05.
 
-Next phase: create and verify the TASK-005 branch/worktree, dispatch the
-worker, and start no-PR monitoring.
+Next phase: monitor Leibniz for a draft PR or patch, then start review
+orchestration.
 
 ## Wave Summary
 
@@ -47,22 +48,25 @@ worker, and start no-PR monitoring.
 
 Mode: codex_thread_heartbeat
 
-Cadence: pending until worker dispatch
+Cadence: 15 minutes
 
-Status: pending WAVE-003 worker dispatch
+Status: active no-PR monitoring
 
-Last check: 2026-07-05T15:10:39Z
+Last check: 2026-07-05T15:15:57Z
 
-Next check due: none until worker dispatch completes
+Next check due: 2026-07-05T15:30:57Z
 
-Scheduler reference: pending WAVE-003 heartbeat
+Scheduler reference: `postgram-admin-wave-003-wdd-heartbeat`
 
 Fallback prompt:
 
 ```text
-WAVE-003 activation artifacts are synced but worker dispatch has not completed
-yet. Create and verify the TASK-005 branch/worktree, dispatch the worker, and
-activate heartbeat monitoring.
+Run one bounded WDD controller heartbeat for /Users/ivo.toby/workspace/postgram,
+epic EPIC-admin-configuration-frontend, active wave WAVE-003. Use
+subagent-pr-orchestration, inspect worker Leibniz
+(`019f32d9-051d-7c40-8daf-2e05d9888901`) and worktree
+/Users/ivo.toby/workspace/postgram/.worktrees/TASK-005-admin-session-routes,
+update gates, and stop when WAVE-003 is ready for reconciliation.
 ```
 
 ## Active Wave Strategy
@@ -92,7 +96,7 @@ activate heartbeat monitoring.
 | TASK-002-threat-model-bootstrap | TICKET-001-feasibility-security-design | codex/task/WAVE-001-admin-feasibility-gate | cleaned_up | reconciled | P2 bootstrap ownership feedback resolved; REVIEW_PASS; merged in `1f11365` |
 | TASK-003-runtime-config-feasibility | TICKET-001-feasibility-security-design | codex/task/WAVE-001-admin-feasibility-gate | cleaned_up | reconciled | P3 provider URL/egress test feedback addressed; REVIEW_PASS; merged in `1f11365` |
 | TASK-004-admin-auth-persistence | TICKET-002-admin-auth-foundation | codex/task/TASK-004-admin-auth-persistence | cleaned_up | reconciled | REVIEW_PASS; freshness verification passed; merged in `0f96769`; PR #79 merged; WAVE-002 reconciled |
-| TASK-005-admin-session-routes | TICKET-002-admin-auth-foundation | codex/task/TASK-005-admin-session-routes | pending_creation | pending_dispatch | `npm test -- tests/contract/admin-auth-routes.test.ts`; `npm run typecheck` |
+| TASK-005-admin-session-routes | TICKET-002-admin-auth-foundation | codex/task/TASK-005-admin-session-routes | verified | no_pr | `npm test -- tests/contract/admin-auth-routes.test.ts`; `npm run typecheck` |
 | TASK-006-admin-mfa-step-up | TICKET-002-admin-auth-foundation | codex/task/TASK-006-admin-mfa-step-up | not_created | planned | `npm test -- tests/contract/admin-mfa-routes.test.ts`; `npm test -- tests/integration/admin-auth-service.test.ts`; `npm run typecheck` |
 | TASK-007-admin-api-shell-diagnostics | TICKET-003-admin-api-foundation | codex/task/TASK-007-admin-api-shell-diagnostics | not_created | planned | `npm test -- tests/contract/admin-api.test.ts`; `npm run typecheck` |
 | TASK-008-admin-key-audit-stats-api | TICKET-003-admin-api-foundation | codex/task/TASK-008-admin-key-audit-stats-api | not_created | planned | `npm test -- tests/contract/admin-key-audit-stats.test.ts`; `npm test -- tests/integration/key-service.test.ts`; `npm run typecheck` |
@@ -143,7 +147,8 @@ activate heartbeat monitoring.
 - WAVE-003 bundle branch: `codex/task/TASK-005-admin-session-routes`.
 - WAVE-003 bundle worktree:
   `/Users/ivo.toby/workspace/postgram/.worktrees/TASK-005-admin-session-routes`.
-- WAVE-003 worker: pending dispatch.
+- WAVE-003 worker: Leibniz (`019f32d9-051d-7c40-8daf-2e05d9888901`),
+  dispatched at 2026-07-05T15:15:57Z.
 
 ## WAVE-001 Reconciled State
 
@@ -204,8 +209,8 @@ activate heartbeat monitoring.
 - WAVE-002 is done and reconciled.
 - WAVE-003 is active after Ivo requested sequential wave execution.
 - WAVE-004 remains blocked until WAVE-003 is reconciled.
-- No WAVE-003 worktree, branch dispatch, worker, or review thread has been
-  created yet at activation-artifact sync time.
+- WAVE-003 branch/worktree is verified and worker Leibniz is dispatched. No PR,
+  patch, or review thread exists yet.
 
 ## Verification Status
 
@@ -234,6 +239,10 @@ activate heartbeat monitoring.
   is updated, worktree cleanup completed, PR #79 is `MERGED`, orchestration JSON
   parses, and `git diff --check` passed.
 - Product code tests: not run; this turn planned WDD artifacts only.
+- WAVE-003 dispatch verification: task branch/worktree was created from
+  activation commit `6e75852`, contains the in-progress TASK-005 file and
+  current WDD state, `orchestration.json` parses, and heartbeat
+  `postgram-admin-wave-003-wdd-heartbeat` is active at 15-minute cadence.
 
 ## Event Log
 
@@ -315,8 +324,15 @@ activate heartbeat monitoring.
 - 2026-07-05T15:10:39Z: Ivo requested sequential wave execution. Activated
   WAVE-003 for TASK-005-admin-session-routes, moved TASK-005 to in-progress,
   and recorded the pending branch/worktree assignment.
+- 2026-07-05T15:15:57Z: Created and verified task branch/worktree
+  `codex/task/TASK-005-admin-session-routes` at
+  `/Users/ivo.toby/workspace/postgram/.worktrees/TASK-005-admin-session-routes`,
+  dispatched worker Leibniz (`019f32d9-051d-7c40-8daf-2e05d9888901`), deleted
+  stale WAVE-002 heartbeat `postgram-admin-wave-002-wdd-heartbeat`, and created
+  WAVE-003 heartbeat `postgram-admin-wave-003-wdd-heartbeat`.
 
 ## Next Action
 
-Create and verify the TASK-005 branch/worktree, then dispatch the WAVE-003
-worker.
+Monitor Leibniz for a draft PR or patch. If one appears, move WAVE-003 into
+review orchestration; otherwise keep `no_pr` and nudge only exact missing
+deliverables when needed.

@@ -243,6 +243,9 @@ Activation rule:
 - Activate after TASK-004 is done and reconciled.
 - Ready after WAVE-002 reconciliation on 2026-07-05.
 - Activated after Ivo requested sequential waves on 2026-07-05.
+- Branch/worktree verified and worker Leibniz
+  (`019f32d9-051d-7c40-8daf-2e05d9888901`) dispatched at
+  2026-07-05T15:15:57Z.
 
 Stop condition:
 

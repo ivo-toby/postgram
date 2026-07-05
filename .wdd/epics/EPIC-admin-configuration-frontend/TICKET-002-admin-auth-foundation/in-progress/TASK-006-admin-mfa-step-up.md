@@ -19,12 +19,12 @@ assigned_model_class: implementationComplex
 review_model_class: review
 branch: codex/task/TASK-006-admin-mfa-step-up
 worker_worktree: /Users/ivo.toby/workspace/postgram/.worktrees/TASK-006-admin-mfa-step-up
-worktree_status: clean_pushed
+worktree_status: clean_local_unpushed
 pr: https://github.com/ivo-toby/postgram/pull/82
 worker_thread_id: 019f3333-4033-7463-9819-aa3dec286b4c
 review_thread_id: 019f322c-02e7-7590-8b8e-ebdd1e9c52ac
 current_gate: needs_fixes
-branch_freshness: stale_needs_freshness_refresh
+branch_freshness: local_current_unpushed_requires_push
 verification:
   - npm test -- tests/contract/admin-mfa-routes.test.ts
   - npm test -- tests/integration/admin-auth-service.test.ts
@@ -260,3 +260,11 @@ Keep MFA helpers isolated from ordinary API-key auth.
 - 2026-07-05T17:48:34Z Lorentz returned `REVIEW_BLOCKED` for PR #82 with two
   P2 findings and one P3 suggestion. Controller routed the fixes to Tesla in
   submission `019f3366-7cfd-7ee1-b852-1d20abe022d8`; gate is `needs_fixes`.
+- 2026-07-05T17:59:04Z controller observed local clean TASK-006 fix commits
+  through `392313355f802679128daee2680bd01d016059df`, including
+  `7d3bfee fix: structure admin mfa audit actor`, and task evidence for the
+  P3 route-rate-limit regression. The branch is current with the epic branch
+  locally, but still ahead of origin and PR #82 remains at old head
+  `3cfca6e9da0d1f5b675616e28546302a6fcad7f4`. Controller nudged Tesla for the
+  missing push, PR update, and final status token in
+  `019f3371-0282-78d3-83fd-b9b8ba1aac24`.

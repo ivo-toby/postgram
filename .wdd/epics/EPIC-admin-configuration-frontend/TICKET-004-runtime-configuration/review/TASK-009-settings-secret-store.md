@@ -237,7 +237,10 @@ Keep generic setting storage separate from provider-specific validation.
 
 ### P2
 
-- `P2-secret-validation-metadata-redaction` routed to Euclid at
+- `P2-secret-validation-metadata-redaction` fix pushed by Euclid at
+  `e03421a7327555d8711a8c9fb68a8a8d10c1f39a`; controller verified and
+  requested Lorentz follow-up review at 2026-07-05T17:59:04Z
+  (`019f3371-9537-7962-925b-b69f1cea2fa6`). Originally routed at
   2026-07-05T17:48:34Z (`019f3366-7c9b-7b33-9d93-0009fa0ec291`): Lorentz
   found `saveRuntimeSecret` accepts arbitrary `validation.metadata` and
   redacted secret metadata reads return `mapValidation(row)` unchanged,
@@ -247,7 +250,7 @@ Keep generic setting storage separate from provider-specific validation.
   regression coverage.
 - `P2-branch-freshness-task-file-conflict` routed to Euclid at
   2026-07-05T17:48:34Z (`019f3366-7c9b-7b33-9d93-0009fa0ec291`): PR #81 was
-  not mergeable against the latest epic branch. Fixed by merging latest
+  not mergeable against the latest epic branch. Fixed by merging the latest
   `origin/codex/epic/admin-configuration-frontend` and resolving the WDD
   task-file-only conflict while preserving PR #81 evidence.
 - Resolved Lorentz `REVIEW_BLOCKED` finding: secret validation metadata no
@@ -321,4 +324,19 @@ Keep generic setting storage separate from provider-specific validation.
   notes plus worker fixed/verified evidence.
 - 2026-07-05T18:01Z worker reran required verification on the latest merged
   tree.
+- 2026-07-05T17:59:04Z controller observed PR #81 pushed at
+  `e03421a7327555d8711a8c9fb68a8a8d10c1f39a`. Controller verification passed:
+  `git diff --check origin/codex/epic/admin-configuration-frontend...HEAD`,
+  orchestration JSON parse, `npm test --
+  tests/integration/admin-settings-service.test.ts` with 8 tests, and
+  `npm run typecheck`. Follow-up review requested from Lorentz in
+  `019f3371-9537-7962-925b-b69f1cea2fa6`; gate was `followup_reviewing`.
+- 2026-07-05T18:07Z worker merged latest epic checkpoint `f2f4d2a`; only this
+  WDD task file conflicted, and the resolution preserved controller routing
+  notes plus worker fixed/verified evidence.
+- 2026-07-05T18:08Z worker reran required verification on the refreshed tree:
+  `npm test -- tests/integration/admin-settings-service.test.ts`,
+  `npm run typecheck`, `git diff --check`, and
+  `npx eslint src/services/admin-settings-service.ts
+  tests/integration/admin-settings-service.test.ts`.
 - Final gate: draft PR #81 ready for follow-up review.

@@ -21,9 +21,9 @@ checkout.
 
 WAVE-001 is activated as a full-profile bundled feasibility/security gate.
 
-Next phase: review the bundled WAVE-001 branch/PR. Worker Singer has produced
-the shared-context feasibility gate updates and moved the three bundled tasks to
-review.
+Next phase: review draft PR https://github.com/ivo-toby/postgram/pull/78.
+Worker Singer has produced the shared-context feasibility gate updates and
+moved the three bundled tasks to review.
 
 ## Wave Summary
 
@@ -113,6 +113,7 @@ wdd-reconcile-wave.
 - WAVE-001 bundle branch: `codex/task/WAVE-001-admin-feasibility-gate`.
 - WAVE-001 bundle worktree:
   `/Users/ivo.toby/workspace/postgram/.worktrees/WAVE-001-admin-feasibility-gate`.
+- WAVE-001 draft PR: https://github.com/ivo-toby/postgram/pull/78.
 - Worker worktrees: WAVE-001 bundle verified.
 - Worker: Singer (`019f3215-2eb6-75f2-81f0-bf527e73258b`).
 - Worker rule: one isolated worktree per repository-writing task before
@@ -136,7 +137,8 @@ wdd-reconcile-wave.
 - Worker dispatch: Singer completed WAVE-001 shared-context feasibility updates;
   current gate is `ready_for_review`.
 - Monitoring: Codex heartbeat `postgram-admin-wave-001-wdd-heartbeat` can
-  switch to review/PR monitoring once the draft PR exists.
+  switch to review/PR monitoring for draft PR
+  https://github.com/ivo-toby/postgram/pull/78.
 
 ## Shared Context Reconciliation Rules
 
@@ -171,12 +173,15 @@ wdd-reconcile-wave.
   context for admin command eligibility, bootstrap/security posture, and
   runtime config strategy, moved TASK-001/TASK-002/TASK-003 to review, and
   passed `git diff --check`.
+- 2026-07-05: Draft PR opened for WAVE-001:
+  https://github.com/ivo-toby/postgram/pull/78.
 
 ## Next Action
 
 Controller next tick:
 
 ```text
-Review the WAVE-001 branch/PR for EPIC-admin-configuration-frontend, then run
-wdd-reconcile-wave after review gates are resolved.
+Review https://github.com/ivo-toby/postgram/pull/78 for
+EPIC-admin-configuration-frontend WAVE-001, then run wdd-reconcile-wave after
+review gates are resolved.
 ```

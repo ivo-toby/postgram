@@ -16,7 +16,7 @@ review_model_class: review
 branch: codex/task/WAVE-001-admin-feasibility-gate
 worker_worktree: /Users/ivo.toby/workspace/postgram/.worktrees/WAVE-001-admin-feasibility-gate
 worktree_status: verified
-pr: null
+pr: https://github.com/ivo-toby/postgram/pull/78
 worker_thread_id: 019f3215-2eb6-75f2-81f0-bf527e73258b
 review_thread_id: null
 current_gate: ready_for_review
@@ -108,7 +108,7 @@ isolated worktree before dispatch.
 
 ## PR / Patch Reference
 
-None yet.
+https://github.com/ivo-toby/postgram/pull/78
 
 ## RED-GREEN TDD Plan
 

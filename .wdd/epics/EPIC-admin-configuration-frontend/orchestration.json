@@ -182,11 +182,32 @@
           "workerThreadId": "019f3215-2eb6-75f2-81f0-bf527e73258b",
           "workerNickname": "Singer",
           "reviewThreadId": "019f322c-02e7-7590-8b8e-ebdd1e9c52ac",
-          "currentGate": "reviewing",
+          "currentGate": "needs_fixes",
           "branchFreshness": "current_at_review_start",
           "pr": "https://github.com/ivo-toby/postgram/pull/78",
           "latestCommit": "7116541ad47938b90b3078f293afe016a804104d",
-          "blockingFeedback": [],
+          "blockingFeedback": [
+            {
+              "priority": "P2",
+              "id": "P2-bootstrap-ownership-task-gates",
+              "status": "routed",
+              "owner": "Singer",
+              "reviewer": "Lorentz",
+              "reviewThreadId": "019f322c-02e7-7590-8b8e-ebdd1e9c52ac",
+              "routedAt": "2026-07-05T12:13:33Z",
+              "summary": "Bootstrap takeover controls need explicit future-task ownership: hash-only token storage, expiry, single-use invalidation, atomic first-admin activation, route behavior, and MFA-before-active checks must be testable across TASK-004/TASK-005/TASK-006."
+            },
+            {
+              "priority": "P2",
+              "id": "P2-stale-worker-dispatch-gate",
+              "status": "routed",
+              "owner": "Singer",
+              "reviewer": "Lorentz",
+              "reviewThreadId": "019f322c-02e7-7590-8b8e-ebdd1e9c52ac",
+              "routedAt": "2026-07-05T12:13:33Z",
+              "summary": "PR branch orchestration currentGates.workerDispatch still says no_pr while the bundle has PR #78 and is ready for review/fixes."
+            }
+          ],
           "verification": {
             "result": "passed",
             "commands": [
@@ -197,7 +218,23 @@
           "verifiedAt": "2026-07-05T11:36:08Z",
           "dispatchedAt": "2026-07-05T11:41:41Z",
           "reviewNickname": "Lorentz",
-          "reviewStartedAt": "2026-07-05T12:05:03Z"
+          "reviewStartedAt": "2026-07-05T12:05:03Z",
+          "feedback": {
+            "p3": [
+              {
+                "priority": "P3",
+                "id": "P3-provider-url-egress-test-gate",
+                "status": "routed",
+                "owner": "Singer",
+                "reviewer": "Lorentz",
+                "reviewThreadId": "019f322c-02e7-7590-8b8e-ebdd1e9c52ac",
+                "routedAt": "2026-07-05T12:13:33Z",
+                "summary": "TASK-010/testing expectations should explicitly cover provider URL/egress or SSRF safety, not only generic connection tests."
+              }
+            ]
+          },
+          "feedbackRoutedAt": "2026-07-05T12:13:33Z",
+          "reviewResult": "REVIEW_BLOCKED"
         }
       ]
     },
@@ -507,7 +544,18 @@
       "pr": "https://github.com/ivo-toby/postgram/pull/78",
       "latestCommit": "7116541ad47938b90b3078f293afe016a804104d",
       "branchFreshness": "current_at_review_start",
-      "blockingFeedback": [],
+      "blockingFeedback": [
+        {
+          "priority": "P2",
+          "id": "P2-stale-worker-dispatch-gate",
+          "status": "routed",
+          "owner": "Singer",
+          "reviewer": "Lorentz",
+          "reviewThreadId": "019f322c-02e7-7590-8b8e-ebdd1e9c52ac",
+          "routedAt": "2026-07-05T12:13:33Z",
+          "summary": "PR branch orchestration currentGates.workerDispatch still says no_pr while the bundle has PR #78 and is ready for review/fixes."
+        }
+      ],
       "verification": {
         "result": "passed",
         "commands": [
@@ -515,9 +563,12 @@
         ],
         "evidence": "Worker reported git diff --check passed for WAVE-001 shared-context and task artifact updates."
       },
-      "currentGate": "reviewing",
+      "currentGate": "needs_fixes",
       "workerNickname": "Singer",
-      "reviewNickname": "Lorentz"
+      "reviewNickname": "Lorentz",
+      "feedback": {
+        "p3": []
+      }
     },
     {
       "id": "TASK-002-threat-model-bootstrap",
@@ -540,7 +591,28 @@
       "pr": "https://github.com/ivo-toby/postgram/pull/78",
       "latestCommit": "7116541ad47938b90b3078f293afe016a804104d",
       "branchFreshness": "current_at_review_start",
-      "blockingFeedback": [],
+      "blockingFeedback": [
+        {
+          "priority": "P2",
+          "id": "P2-bootstrap-ownership-task-gates",
+          "status": "routed",
+          "owner": "Singer",
+          "reviewer": "Lorentz",
+          "reviewThreadId": "019f322c-02e7-7590-8b8e-ebdd1e9c52ac",
+          "routedAt": "2026-07-05T12:13:33Z",
+          "summary": "Bootstrap takeover controls need explicit future-task ownership: hash-only token storage, expiry, single-use invalidation, atomic first-admin activation, route behavior, and MFA-before-active checks must be testable across TASK-004/TASK-005/TASK-006."
+        },
+        {
+          "priority": "P2",
+          "id": "P2-stale-worker-dispatch-gate",
+          "status": "routed",
+          "owner": "Singer",
+          "reviewer": "Lorentz",
+          "reviewThreadId": "019f322c-02e7-7590-8b8e-ebdd1e9c52ac",
+          "routedAt": "2026-07-05T12:13:33Z",
+          "summary": "PR branch orchestration currentGates.workerDispatch still says no_pr while the bundle has PR #78 and is ready for review/fixes."
+        }
+      ],
       "verification": {
         "result": "passed",
         "commands": [
@@ -548,9 +620,12 @@
         ],
         "evidence": "Worker reported git diff --check passed for WAVE-001 shared-context and task artifact updates."
       },
-      "currentGate": "reviewing",
+      "currentGate": "needs_fixes",
       "workerNickname": "Singer",
-      "reviewNickname": "Lorentz"
+      "reviewNickname": "Lorentz",
+      "feedback": {
+        "p3": []
+      }
     },
     {
       "id": "TASK-003-runtime-config-feasibility",
@@ -574,7 +649,18 @@
       "pr": "https://github.com/ivo-toby/postgram/pull/78",
       "latestCommit": "7116541ad47938b90b3078f293afe016a804104d",
       "branchFreshness": "current_at_review_start",
-      "blockingFeedback": [],
+      "blockingFeedback": [
+        {
+          "priority": "P2",
+          "id": "P2-stale-worker-dispatch-gate",
+          "status": "routed",
+          "owner": "Singer",
+          "reviewer": "Lorentz",
+          "reviewThreadId": "019f322c-02e7-7590-8b8e-ebdd1e9c52ac",
+          "routedAt": "2026-07-05T12:13:33Z",
+          "summary": "PR branch orchestration currentGates.workerDispatch still says no_pr while the bundle has PR #78 and is ready for review/fixes."
+        }
+      ],
       "verification": {
         "result": "passed",
         "commands": [
@@ -582,9 +668,23 @@
         ],
         "evidence": "Worker reported git diff --check passed for WAVE-001 shared-context and task artifact updates."
       },
-      "currentGate": "reviewing",
+      "currentGate": "needs_fixes",
       "workerNickname": "Singer",
-      "reviewNickname": "Lorentz"
+      "reviewNickname": "Lorentz",
+      "feedback": {
+        "p3": [
+          {
+            "priority": "P3",
+            "id": "P3-provider-url-egress-test-gate",
+            "status": "routed",
+            "owner": "Singer",
+            "reviewer": "Lorentz",
+            "reviewThreadId": "019f322c-02e7-7590-8b8e-ebdd1e9c52ac",
+            "routedAt": "2026-07-05T12:13:33Z",
+            "summary": "TASK-010/testing expectations should explicitly cover provider URL/egress or SSRF safety, not only generic connection tests."
+          }
+        ]
+      }
     },
     {
       "id": "TASK-004-admin-auth-persistence",
@@ -1139,10 +1239,10 @@
     "mode": "codex_thread_heartbeat",
     "cadence": "FREQ=MINUTELY;INTERVAL=5",
     "status": "active",
-    "lastCheckedAt": "2026-07-05T12:05:03Z",
-    "nextCheckDueAt": "2026-07-05T12:10:03Z",
+    "lastCheckedAt": "2026-07-05T12:13:33Z",
+    "nextCheckDueAt": "2026-07-05T12:18:33Z",
     "schedulerRef": "postgram-admin-wave-001-wdd-heartbeat",
-    "fallbackPrompt": "Resume WAVE-001 for EPIC-admin-configuration-frontend. Read .wdd/epics/EPIC-admin-configuration-frontend/orchestration.json and controller-state.md, inspect PR https://github.com/ivo-toby/postgram/pull/78, worker Singer (019f3215-2eb6-75f2-81f0-bf527e73258b), reviewer Lorentz (019f322c-02e7-7590-8b8e-ebdd1e9c52ac), and the assigned worktree /Users/ivo.toby/workspace/postgram/.worktrees/WAVE-001-admin-feasibility-gate. Update gates, branch freshness, verification, PR refs, review refs, feedback, and monitoring timestamps. Route P1/P2 feedback if present; if review passes, enforce branch freshness before merge or merge-ready."
+    "fallbackPrompt": "Resume WAVE-001 for EPIC-admin-configuration-frontend. Read .wdd/epics/EPIC-admin-configuration-frontend/orchestration.json and controller-state.md, inspect PR https://github.com/ivo-toby/postgram/pull/78, worker Singer (019f3215-2eb6-75f2-81f0-bf527e73258b), reviewer Lorentz (019f322c-02e7-7590-8b8e-ebdd1e9c52ac), and the assigned worktree /Users/ivo.toby/workspace/postgram/.worktrees/WAVE-001-admin-feasibility-gate. Check whether Singer has pushed fixes for Lorentz two P2 findings and one P3 suggestion; if fixes are present, rerun or request review, otherwise keep needs_fixes."
   },
   "sharedContext": {
     "index": "shared-context/index.md",
@@ -1186,11 +1286,32 @@
         "workerThreadId": "019f3215-2eb6-75f2-81f0-bf527e73258b",
         "workerNickname": "Singer",
         "reviewThreadId": "019f322c-02e7-7590-8b8e-ebdd1e9c52ac",
-        "currentGate": "reviewing",
+        "currentGate": "needs_fixes",
         "branchFreshness": "current_at_review_start",
         "pr": "https://github.com/ivo-toby/postgram/pull/78",
         "latestCommit": "7116541ad47938b90b3078f293afe016a804104d",
-        "blockingFeedback": [],
+        "blockingFeedback": [
+          {
+            "priority": "P2",
+            "id": "P2-bootstrap-ownership-task-gates",
+            "status": "routed",
+            "owner": "Singer",
+            "reviewer": "Lorentz",
+            "reviewThreadId": "019f322c-02e7-7590-8b8e-ebdd1e9c52ac",
+            "routedAt": "2026-07-05T12:13:33Z",
+            "summary": "Bootstrap takeover controls need explicit future-task ownership: hash-only token storage, expiry, single-use invalidation, atomic first-admin activation, route behavior, and MFA-before-active checks must be testable across TASK-004/TASK-005/TASK-006."
+          },
+          {
+            "priority": "P2",
+            "id": "P2-stale-worker-dispatch-gate",
+            "status": "routed",
+            "owner": "Singer",
+            "reviewer": "Lorentz",
+            "reviewThreadId": "019f322c-02e7-7590-8b8e-ebdd1e9c52ac",
+            "routedAt": "2026-07-05T12:13:33Z",
+            "summary": "PR branch orchestration currentGates.workerDispatch still says no_pr while the bundle has PR #78 and is ready for review/fixes."
+          }
+        ],
         "verification": {
           "result": "not_run",
           "commands": [
@@ -1201,7 +1322,23 @@
         "verifiedAt": "2026-07-05T11:36:08Z",
         "dispatchedAt": "2026-07-05T11:41:41Z",
         "reviewNickname": "Lorentz",
-        "reviewStartedAt": "2026-07-05T12:05:03Z"
+        "reviewStartedAt": "2026-07-05T12:05:03Z",
+        "feedback": {
+          "p3": [
+            {
+              "priority": "P3",
+              "id": "P3-provider-url-egress-test-gate",
+              "status": "routed",
+              "owner": "Singer",
+              "reviewer": "Lorentz",
+              "reviewThreadId": "019f322c-02e7-7590-8b8e-ebdd1e9c52ac",
+              "routedAt": "2026-07-05T12:13:33Z",
+              "summary": "TASK-010/testing expectations should explicitly cover provider URL/egress or SSRF safety, not only generic connection tests."
+            }
+          ]
+        },
+        "feedbackRoutedAt": "2026-07-05T12:13:33Z",
+        "reviewResult": "REVIEW_BLOCKED"
       }
     ]
   },
@@ -1224,7 +1361,7 @@
       "WAVE-001-admin-feasibility-gate": "verified"
     },
     "workerDispatch": {
-      "WAVE-001-admin-feasibility-gate": "reviewing"
+      "WAVE-001-admin-feasibility-gate": "needs_fixes"
     },
     "waveCompletion": {
       "WAVE-001": "in_progress"
@@ -1238,18 +1375,54 @@
       "status": "active",
       "schedulerRef": "postgram-admin-wave-001-wdd-heartbeat",
       "cadence": "FREQ=MINUTELY;INTERVAL=5",
-      "lastCheckedAt": "2026-07-05T12:05:03Z",
-      "nextCheckDueAt": "2026-07-05T12:10:03Z",
-      "fallbackPrompt": "Resume WAVE-001 for EPIC-admin-configuration-frontend. Read .wdd/epics/EPIC-admin-configuration-frontend/orchestration.json and controller-state.md, inspect PR https://github.com/ivo-toby/postgram/pull/78, worker Singer (019f3215-2eb6-75f2-81f0-bf527e73258b), reviewer Lorentz (019f322c-02e7-7590-8b8e-ebdd1e9c52ac), and the assigned worktree /Users/ivo.toby/workspace/postgram/.worktrees/WAVE-001-admin-feasibility-gate. Update gates, branch freshness, verification, PR refs, review refs, feedback, and monitoring timestamps. Route P1/P2 feedback if present; if review passes, enforce branch freshness before merge or merge-ready."
+      "lastCheckedAt": "2026-07-05T12:13:33Z",
+      "nextCheckDueAt": "2026-07-05T12:18:33Z",
+      "fallbackPrompt": "Resume WAVE-001 for EPIC-admin-configuration-frontend. Read .wdd/epics/EPIC-admin-configuration-frontend/orchestration.json and controller-state.md, inspect PR https://github.com/ivo-toby/postgram/pull/78, worker Singer (019f3215-2eb6-75f2-81f0-bf527e73258b), reviewer Lorentz (019f322c-02e7-7590-8b8e-ebdd1e9c52ac), and the assigned worktree /Users/ivo.toby/workspace/postgram/.worktrees/WAVE-001-admin-feasibility-gate. Check whether Singer has pushed fixes for Lorentz two P2 findings and one P3 suggestion; if fixes are present, rerun or request review, otherwise keep needs_fixes."
     },
     "review": {
       "WAVE-001-admin-feasibility-gate": {
-        "status": "reviewing",
+        "status": "needs_fixes",
+        "result": "REVIEW_BLOCKED",
         "pr": "https://github.com/ivo-toby/postgram/pull/78",
         "reviewThreadId": "019f322c-02e7-7590-8b8e-ebdd1e9c52ac",
         "reviewNickname": "Lorentz",
-        "startedAt": "2026-07-05T12:05:03Z",
-        "blockingFeedback": []
+        "workerThreadId": "019f3215-2eb6-75f2-81f0-bf527e73258b",
+        "workerNickname": "Singer",
+        "blockingFeedback": [
+          {
+            "priority": "P2",
+            "id": "P2-bootstrap-ownership-task-gates",
+            "status": "routed",
+            "owner": "Singer",
+            "reviewer": "Lorentz",
+            "reviewThreadId": "019f322c-02e7-7590-8b8e-ebdd1e9c52ac",
+            "routedAt": "2026-07-05T12:13:33Z",
+            "summary": "Bootstrap takeover controls need explicit future-task ownership: hash-only token storage, expiry, single-use invalidation, atomic first-admin activation, route behavior, and MFA-before-active checks must be testable across TASK-004/TASK-005/TASK-006."
+          },
+          {
+            "priority": "P2",
+            "id": "P2-stale-worker-dispatch-gate",
+            "status": "routed",
+            "owner": "Singer",
+            "reviewer": "Lorentz",
+            "reviewThreadId": "019f322c-02e7-7590-8b8e-ebdd1e9c52ac",
+            "routedAt": "2026-07-05T12:13:33Z",
+            "summary": "PR branch orchestration currentGates.workerDispatch still says no_pr while the bundle has PR #78 and is ready for review/fixes."
+          }
+        ],
+        "nonBlockingFeedback": [
+          {
+            "priority": "P3",
+            "id": "P3-provider-url-egress-test-gate",
+            "status": "routed",
+            "owner": "Singer",
+            "reviewer": "Lorentz",
+            "reviewThreadId": "019f322c-02e7-7590-8b8e-ebdd1e9c52ac",
+            "routedAt": "2026-07-05T12:13:33Z",
+            "summary": "TASK-010/testing expectations should explicitly cover provider URL/egress or SSRF safety, not only generic connection tests."
+          }
+        ],
+        "feedbackRoutedAt": "2026-07-05T12:13:33Z"
       }
     }
   }

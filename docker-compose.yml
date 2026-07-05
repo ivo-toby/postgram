@@ -21,6 +21,7 @@ services:
         condition: service_healthy
     environment:
       DATABASE_URL: postgres://postgram:${POSTGRES_PASSWORD}@postgres:5432/postgram
+      ADMIN_MFA_SECRET_KEY: ${ADMIN_MFA_SECRET_KEY:-}
       OPENAI_API_KEY: ${OPENAI_API_KEY:-}
       LOG_LEVEL: ${LOG_LEVEL:-info}
       PORT: ${PORT:-3100}

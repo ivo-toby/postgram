@@ -19,6 +19,7 @@ import {
 
 export const ADMIN_SESSION_COOKIE = 'pgm_admin_session';
 export const ADMIN_CSRF_HEADER = 'X-CSRF-Token';
+export const ADMIN_STEP_UP_TTL_MS = 10 * 60 * 1000;
 
 export type AdminRequestContext = {
   sessionToken: string;
@@ -33,6 +34,12 @@ type AdminVariables = {
 type AdminMiddlewareOptions = {
   pool: Pool;
   enforceCsrf?: boolean | undefined;
+};
+
+type ActiveAdminMiddlewareOptions = {
+  requireStepUp?: boolean | undefined;
+  stepUpTtlMs?: number | undefined;
+  now?: (() => Date) | undefined;
 };
 
 const UNSAFE_METHODS = new Set(['DELETE', 'PATCH', 'POST', 'PUT']);
@@ -124,6 +131,68 @@ export function createAdminSessionMiddleware({
           new AppError(ErrorCode.FORBIDDEN, 'Invalid CSRF token')
         );
       }
+    }
+
+    await next();
+  };
+}
+
+export function isAdminStepUpFresh(
+  mfaVerifiedAt: string | null,
+  input: {
+    now?: Date | undefined;
+    ttlMs?: number | undefined;
+  } = {}
+): boolean {
+  if (!mfaVerifiedAt) {
+    return false;
+  }
+
+  const verifiedAtMs = Date.parse(mfaVerifiedAt);
+  if (!Number.isFinite(verifiedAtMs)) {
+    return false;
+  }
+
+  const now = input.now ?? new Date();
+  const ttlMs = input.ttlMs ?? ADMIN_STEP_UP_TTL_MS;
+  const ageMs = now.getTime() - verifiedAtMs;
+  return ageMs >= 0 && ageMs <= ttlMs;
+}
+
+export function createActiveAdminMiddleware({
+  requireStepUp = false,
+  stepUpTtlMs = ADMIN_STEP_UP_TTL_MS,
+  now = () => new Date()
+}: ActiveAdminMiddlewareOptions = {}): MiddlewareHandler<{
+  Variables: AdminVariables;
+}> {
+  return async (c, next) => {
+    const admin = c.get('admin');
+    if (admin.user.status !== 'active' || !admin.user.mfaRequired) {
+      return errorResponse(
+        c,
+        new AppError(ErrorCode.FORBIDDEN, 'Active admin MFA is required')
+      );
+    }
+
+    if (!admin.session.mfaVerifiedAt) {
+      return errorResponse(
+        c,
+        new AppError(ErrorCode.FORBIDDEN, 'Admin MFA verification is required')
+      );
+    }
+
+    if (
+      requireStepUp &&
+      !isAdminStepUpFresh(admin.session.mfaVerifiedAt, {
+        now: now(),
+        ttlMs: stepUpTtlMs
+      })
+    ) {
+      return errorResponse(
+        c,
+        new AppError(ErrorCode.FORBIDDEN, 'Recent admin step-up is required')
+      );
     }
 
     await next();

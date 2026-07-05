@@ -337,6 +337,7 @@ Set:
 
 ```bash
 POSTGRES_PASSWORD=postgram
+ADMIN_MFA_SECRET_KEY=<32+ random characters>
 OPENAI_API_KEY=<your-openai-key>
 LOG_LEVEL=info
 PORT=3100
@@ -369,6 +370,7 @@ Expected:
 | Variable                      | Required    | Default | Description                                                                                                                    |
 | ----------------------------- | ----------- | ------- | ------------------------------------------------------------------------------------------------------------------------------ |
 | `DATABASE_URL`                | yes         |         | Full Postgres connection string                                                                                                |
+| `ADMIN_MFA_SECRET_KEY`        | admin setup |         | Stable 32+ character secret used to encrypt admin TOTP seeds. Required before completing admin MFA enrollment.                  |
 | `OPENAI_API_KEY`              | conditional |         | Required when `EMBEDDING_PROVIDER=openai` OR (`EXTRACTION_ENABLED=true` AND `EXTRACTION_PROVIDER=openai`). Optional otherwise. |
 | `PORT`                        | no          | `3100`  | HTTP/MCP server port                                                                                                           |
 | `OAUTH_ENABLED`               | no          | `false` | Enable OAuth authorization-code, PKCE, and Dynamic Client Registration routes for native remote MCP connectors.                 |

@@ -4,7 +4,7 @@ kind: ticket
 epic: EPIC-admin-configuration-frontend
 slug: admin-auth-foundation
 title: Admin Auth Foundation
-status: planned
+status: in-progress
 task_count: 3
 depends_on:
   - TASK-001-admin-surface-inventory
@@ -54,7 +54,7 @@ keys and MCP OAuth tokens.
 
 | Task | Status | Wave | Summary |
 |------|--------|------|---------|
-| TASK-004-admin-auth-persistence | todo | WAVE-002 | Add admin user/session/MFA persistence and core service tests |
+| TASK-004-admin-auth-persistence | in-progress | WAVE-002 | Add admin user/session/MFA persistence and core service tests |
 | TASK-005-admin-session-routes | todo | WAVE-003 | Add bootstrap/login/logout/session middleware, CSRF, and lockout |
 | TASK-006-admin-mfa-step-up | todo | WAVE-004 | Add TOTP MFA and step-up enforcement for sensitive actions |
 

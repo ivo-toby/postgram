@@ -2,7 +2,7 @@
 id: EPIC-admin-configuration-frontend-CONTROLLER
 kind: controller_state
 epic: EPIC-admin-configuration-frontend
-active_wave: null
+active_wave: WAVE-002
 status: in_progress
 updated_at: 2026-07-05
 ---
@@ -19,20 +19,20 @@ checkout.
 
 ## Current Outcome
 
-WAVE-001 is done and reconciled.
+WAVE-002 is activated as a full-profile bundled admin-auth-persistence wave.
 
-WAVE-001 review passed after Singer's fix commit on draft PR
-https://github.com/ivo-toby/postgram/pull/78, and the bundle was merged into
-the epic branch in `1f11365`.
+WAVE-001 is done and reconciled. WAVE-002 starts TASK-004-admin-auth-persistence
+after Ivo confirmed the next wave on 2026-07-05.
 
-Next phase: confirm and start WAVE-002 when ready.
+Next phase: sync activation artifacts to the epic branch, create the
+TASK-004 branch/worktree, then dispatch the worker.
 
 ## Wave Summary
 
 | Wave | Tasks | Strategy | Status | Confirmation |
 |------|-------|----------|--------|--------------|
 | WAVE-001 | TASK-001, TASK-002, TASK-003 | full / bundled / risk_based / adaptive | done | confirmed by Ivo via Codex request on 2026-07-05 |
-| WAVE-002 | TASK-004 | full / bundled / risk_based / adaptive | planned | required |
+| WAVE-002 | TASK-004 | full / bundled / risk_based / adaptive | in_progress | confirmed by Ivo via Codex request on 2026-07-05 |
 | WAVE-003 | TASK-005 | full / bundled / risk_based / adaptive | planned | required |
 | WAVE-004 | TASK-006, TASK-009 | full / hybrid / risk_based / adaptive | planned | required |
 | WAVE-005 | TASK-007, TASK-010 | full / hybrid / risk_based / adaptive | planned | required |
@@ -45,38 +45,45 @@ Next phase: confirm and start WAVE-002 when ready.
 
 ## Monitoring
 
-Mode: manual
+Mode: pending_codex_thread_heartbeat
 
-Cadence: stopped
+Cadence: adaptive, every 15 minutes while worker has no PR or patch
 
-Status: stopped_reconciled
+Status: pending until worker dispatch
 
-Last check: 2026-07-05T12:42:03Z
+Last check: 2026-07-05T12:50:00Z
 
-Next check due: None
+Next check due: 2026-07-05T13:05:00Z
 
-Scheduler reference: none:wave_reconciled
+Scheduler reference: pending
 
 Fallback prompt:
 
 ```text
-Run `wdd-start-wave` for EPIC-admin-configuration-frontend WAVE-002 only after
-user confirmation. Start from branch `codex/epic/admin-configuration-frontend`
-and read WAVE-001 reconciled decisions first.
+Run subagent-pr-orchestration for EPIC-admin-configuration-frontend WAVE-002.
+Read orchestration.json and controller-state.md, inspect TASK-004
+worker/worktree, update gates, PR refs, verification, feedback, branch
+freshness, and stop when WAVE-002 is ready for wdd-reconcile-wave.
 ```
 
-## Last Reconciled Wave Strategy
+## Active Wave Strategy
 
-- Wave: WAVE-001
+- Wave: WAVE-002
 - Profile: full
 - Execution mode: bundled
 - Review mode: risk_based
 - Monitoring mode: adaptive
 - Confirmation: Ivo via Codex request on 2026-07-05
-- Bundle: WAVE-001-admin-feasibility-gate
-- Bundle branch: `codex/task/WAVE-001-admin-feasibility-gate`
+- Bundle: WAVE-002-admin-auth-persistence
+- Bundle branch: `codex/task/TASK-004-admin-auth-persistence`
 - Bundle worktree:
-  `/Users/ivo.toby/workspace/postgram/.worktrees/WAVE-001-admin-feasibility-gate`
+  `/Users/ivo.toby/workspace/postgram/.worktrees/TASK-004-admin-auth-persistence`
+
+## Last Reconciled Wave
+
+- WAVE-001: done and reconciled at 2026-07-05T12:42:03Z.
+- PR #78: merged at 2026-07-05T12:39:56Z.
+- Worker worktree: cleaned up.
 
 ## Task Gates
 
@@ -85,7 +92,7 @@ and read WAVE-001 reconciled decisions first.
 | TASK-001-admin-surface-inventory | TICKET-001-feasibility-security-design | codex/task/WAVE-001-admin-feasibility-gate | cleaned_up | reconciled | `git diff --check` passed; REVIEW_PASS; merged in `1f11365` |
 | TASK-002-threat-model-bootstrap | TICKET-001-feasibility-security-design | codex/task/WAVE-001-admin-feasibility-gate | cleaned_up | reconciled | P2 bootstrap ownership feedback resolved; REVIEW_PASS; merged in `1f11365` |
 | TASK-003-runtime-config-feasibility | TICKET-001-feasibility-security-design | codex/task/WAVE-001-admin-feasibility-gate | cleaned_up | reconciled | P3 provider URL/egress test feedback addressed; REVIEW_PASS; merged in `1f11365` |
-| TASK-004-admin-auth-persistence | TICKET-002-admin-auth-foundation | codex/task/TASK-004-admin-auth-persistence | not_created | planned | `npm test -- tests/integration/admin-auth-service.test.ts`; `npm run typecheck` |
+| TASK-004-admin-auth-persistence | TICKET-002-admin-auth-foundation | codex/task/TASK-004-admin-auth-persistence | pending_creation | worktree_pending | `npm test -- tests/integration/admin-auth-service.test.ts`; `npm run typecheck` |
 | TASK-005-admin-session-routes | TICKET-002-admin-auth-foundation | codex/task/TASK-005-admin-session-routes | not_created | planned | `npm test -- tests/contract/admin-auth-routes.test.ts`; `npm run typecheck` |
 | TASK-006-admin-mfa-step-up | TICKET-002-admin-auth-foundation | codex/task/TASK-006-admin-mfa-step-up | not_created | planned | `npm test -- tests/contract/admin-mfa-routes.test.ts`; `npm test -- tests/integration/admin-auth-service.test.ts`; `npm run typecheck` |
 | TASK-007-admin-api-shell-diagnostics | TICKET-003-admin-api-foundation | codex/task/TASK-007-admin-api-shell-diagnostics | not_created | planned | `npm test -- tests/contract/admin-api.test.ts`; `npm run typecheck` |
@@ -113,6 +120,11 @@ and read WAVE-001 reconciled decisions first.
 - WAVE-001 draft PR: https://github.com/ivo-toby/postgram/pull/78.
 - WAVE-001 PR state: merged by GitHub after the epic branch push at
   2026-07-05T12:39:56Z.
+- WAVE-002 bundle branch: `codex/task/TASK-004-admin-auth-persistence`.
+- WAVE-002 bundle worktree:
+  `/Users/ivo.toby/workspace/postgram/.worktrees/TASK-004-admin-auth-persistence`.
+- WAVE-002 worker: pending dispatch.
+- WAVE-002 reviewer: pending PR or patch.
 - Worker worktrees: WAVE-001 bundle worktree was clean and removed during
   reconciliation.
 - Worker: Singer (`019f3215-2eb6-75f2-81f0-bf527e73258b`).
@@ -179,9 +191,10 @@ and read WAVE-001 reconciled decisions first.
 
 - TASK-004 dependencies TASK-001 and TASK-002 are done, reviewed, merged, and
   reconciled.
-- WAVE-002 remains unstarted and requires user confirmation.
-- No WAVE-002 worktree, branch dispatch, worker, or review thread was created
-  during WAVE-001 reconciliation.
+- WAVE-002 is now active after Ivo requested the next wave.
+- WAVE-003 remains blocked until WAVE-002 is reconciled.
+- No WAVE-003 worktree, branch dispatch, worker, or review thread was created
+  during WAVE-002 activation.
 
 ## Verification Status
 
@@ -194,6 +207,8 @@ and read WAVE-001 reconciled decisions first.
 - Reconciliation verification: task files are in `done/`, shared context is
   reconciled, worktree cleanup completed, `orchestration.json` parses, and
   `git diff --check` passed.
+- WAVE-002 activation verification pending: activation artifacts must be
+  committed before the TASK-004 branch/worktree is created.
 - Product code tests: not run; this turn planned WDD artifacts only.
 
 ## Event Log
@@ -233,8 +248,13 @@ and read WAVE-001 reconciled decisions first.
 - 2026-07-05T12:42:03Z: Reconciled WAVE-001 shared-context decisions, cleaned
   up the WAVE-001 bundle worktree, stopped monitoring, and left WAVE-002 ready
   for user confirmation.
+- 2026-07-05T12:50:00Z: Ivo confirmed the next wave. Activated WAVE-002 for
+  TASK-004-admin-auth-persistence and moved the task to in-progress with a
+  pending branch/worktree assignment.
 
 ## Next Action
 
-Confirm and run `wdd-start-wave` for WAVE-002 when ready. Do not start WAVE-002
-without user confirmation.
+Commit WAVE-002 activation artifacts, create/verify branch
+`codex/task/TASK-004-admin-auth-persistence` and worktree
+`/Users/ivo.toby/workspace/postgram/.worktrees/TASK-004-admin-auth-persistence`,
+then dispatch the worker and establish monitoring.

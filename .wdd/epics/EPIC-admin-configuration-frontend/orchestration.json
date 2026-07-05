@@ -60,7 +60,7 @@
     {
       "id": "TICKET-002-admin-auth-foundation",
       "path": "TICKET-002-admin-auth-foundation/ticket.md",
-      "status": "todo",
+      "status": "in-progress",
       "taskIds": [
         "TASK-004-admin-auth-persistence",
         "TASK-005-admin-session-routes",
@@ -279,14 +279,14 @@
     },
     {
       "id": "WAVE-002",
-      "status": "planned",
+      "status": "in_progress",
       "strategy": {
         "profile": "full",
         "executionMode": "bundled",
         "reviewMode": "risk_based",
         "monitoringMode": "adaptive",
         "recommendedBy": "wdd-plan-epic",
-        "confirmedBy": null,
+        "confirmedBy": "Ivo via Codex request on 2026-07-05",
         "requiresUserConfirmation": true,
         "confidence": "high",
         "rationale": [
@@ -302,6 +302,38 @@
       },
       "tasks": [
         "TASK-004-admin-auth-persistence"
+      ],
+      "activatedAt": "2026-07-05T12:50:00Z",
+      "bundles": [
+        {
+          "id": "WAVE-002-admin-auth-persistence",
+          "tasks": [
+            "TASK-004-admin-auth-persistence"
+          ],
+          "branch": "codex/task/TASK-004-admin-auth-persistence",
+          "worktree": "/Users/ivo.toby/workspace/postgram/.worktrees/TASK-004-admin-auth-persistence",
+          "worktreeStatus": "pending_creation",
+          "workerThreadId": null,
+          "workerNickname": null,
+          "reviewThreadId": null,
+          "reviewNickname": null,
+          "currentGate": "worktree_pending",
+          "branchFreshness": "pending",
+          "pr": null,
+          "latestCommit": null,
+          "blockingFeedback": [],
+          "verification": {
+            "result": "not_run",
+            "commands": [
+              "npm test -- tests/integration/admin-auth-service.test.ts",
+              "npm run typecheck"
+            ],
+            "evidence": null
+          },
+          "activatedAt": "2026-07-05T12:50:00Z",
+          "cleanupState": "not_started",
+          "sharedContextReconciliation": "not_started"
+        }
       ]
     },
     {
@@ -734,8 +766,8 @@
     {
       "id": "TASK-004-admin-auth-persistence",
       "ticket": "TICKET-002-admin-auth-foundation",
-      "path": "TICKET-002-admin-auth-foundation/todo/TASK-004-admin-auth-persistence.md",
-      "status": "todo",
+      "path": "TICKET-002-admin-auth-foundation/in-progress/TASK-004-admin-auth-persistence.md",
+      "status": "in-progress",
       "dependsOn": [
         "TASK-001-admin-surface-inventory",
         "TASK-002-threat-model-bootstrap"
@@ -751,11 +783,11 @@
       "branch": "codex/task/TASK-004-admin-auth-persistence",
       "workerThreadId": null,
       "reviewThreadId": null,
-      "workerWorktree": null,
-      "worktreeStatus": "not_created",
+      "workerWorktree": "/Users/ivo.toby/workspace/postgram/.worktrees/TASK-004-admin-auth-persistence",
+      "worktreeStatus": "pending_creation",
       "pr": null,
       "latestCommit": null,
-      "branchFreshness": "not_started",
+      "branchFreshness": "pending",
       "blockingFeedback": [],
       "verification": {
         "result": "not_run",
@@ -765,7 +797,11 @@
         ],
         "evidence": null
       },
-      "currentGate": "planned"
+      "currentGate": "worktree_pending",
+      "workerNickname": null,
+      "reviewNickname": null,
+      "cleanupState": "not_started",
+      "sharedContextReconciliation": "not_started"
     },
     {
       "id": "TASK-005-admin-session-routes",
@@ -1281,13 +1317,13 @@
     }
   ],
   "monitoring": {
-    "mode": "manual",
-    "cadence": "stopped",
-    "status": "stopped_reconciled",
-    "lastCheckedAt": "2026-07-05T12:42:03Z",
-    "nextCheckDueAt": null,
-    "schedulerRef": "none:wave_reconciled",
-    "fallbackPrompt": "Run wdd-start-wave for EPIC-admin-configuration-frontend WAVE-002 only after user confirmation. Start from branch codex/epic/admin-configuration-frontend and read WAVE-001 reconciled decisions first."
+    "mode": "pending_codex_thread_heartbeat",
+    "cadence": "FREQ=MINUTELY;INTERVAL=15",
+    "status": "pending_until_worker_dispatch",
+    "lastCheckedAt": "2026-07-05T12:50:00Z",
+    "nextCheckDueAt": "2026-07-05T13:05:00Z",
+    "schedulerRef": null,
+    "fallbackPrompt": "Run subagent-pr-orchestration for EPIC-admin-configuration-frontend WAVE-002. Read orchestration.json and controller-state.md, inspect TASK-004 worker/worktree, update gates, PR refs, verification, feedback, branch freshness, and stop when WAVE-002 is ready for wdd-reconcile-wave."
   },
   "sharedContext": {
     "index": "shared-context/index.md",
@@ -1301,7 +1337,52 @@
     ],
     "reconcileAfterEveryWave": true
   },
-  "activeWave": null,
+  "activeWave": {
+    "id": "WAVE-002",
+    "activatedAt": "2026-07-05T12:50:00Z",
+    "strategy": {
+      "profile": "full",
+      "executionMode": "bundled",
+      "reviewMode": "risk_based",
+      "monitoringMode": "adaptive",
+      "confirmedBy": "Ivo via Codex request on 2026-07-05"
+    },
+    "eligibleTasks": [
+      "TASK-004-admin-auth-persistence"
+    ],
+    "nonEligibleTasks": [],
+    "bundles": [
+      {
+        "id": "WAVE-002-admin-auth-persistence",
+        "tasks": [
+          "TASK-004-admin-auth-persistence"
+        ],
+        "branch": "codex/task/TASK-004-admin-auth-persistence",
+        "worktree": "/Users/ivo.toby/workspace/postgram/.worktrees/TASK-004-admin-auth-persistence",
+        "worktreeStatus": "pending_creation",
+        "workerThreadId": null,
+        "workerNickname": null,
+        "reviewThreadId": null,
+        "reviewNickname": null,
+        "currentGate": "worktree_pending",
+        "branchFreshness": "pending",
+        "pr": null,
+        "latestCommit": null,
+        "blockingFeedback": [],
+        "verification": {
+          "result": "not_run",
+          "commands": [
+            "npm test -- tests/integration/admin-auth-service.test.ts",
+            "npm run typecheck"
+          ],
+          "evidence": null
+        },
+        "activatedAt": "2026-07-05T12:50:00Z",
+        "cleanupState": "not_started",
+        "sharedContextReconciliation": "not_started"
+      }
+    ]
+  },
   "currentGates": {
     "epicBranch": {
       "status": "verified",
@@ -1315,31 +1396,33 @@
       "requiredBeforeTaskWorktrees": true
     },
     "waveStrategyConfirmation": {
-      "WAVE-001": "confirmed_by_ivo_2026-07-05"
+      "WAVE-001": "confirmed_by_ivo_2026-07-05",
+      "WAVE-002": "confirmed_by_ivo_2026-07-05"
     },
     "workerWorktrees": {
-      "WAVE-001-admin-feasibility-gate": "cleaned_up"
+      "WAVE-001-admin-feasibility-gate": "cleaned_up",
+      "WAVE-002-admin-auth-persistence": "pending_creation"
     },
     "workerDispatch": {
-      "WAVE-001-admin-feasibility-gate": "reconciled"
+      "WAVE-001-admin-feasibility-gate": "reconciled",
+      "WAVE-002-admin-auth-persistence": "worktree_pending"
     },
     "waveCompletion": {
-      "WAVE-001": "done"
+      "WAVE-001": "done",
+      "WAVE-002": "in_progress"
     },
     "nextWave": {
-      "id": "WAVE-002",
-      "status": "ready_for_confirmation",
-      "requiresUserConfirmation": true,
-      "activationSkill": "wdd-start-wave"
+      "id": "WAVE-003",
+      "status": "blocked_until_wave_002_reconciled"
     },
     "monitoring": {
-      "mode": "manual",
-      "cadence": "stopped",
-      "status": "stopped_reconciled",
-      "lastCheckedAt": "2026-07-05T12:42:03Z",
-      "nextCheckDueAt": null,
-      "schedulerRef": "none:wave_reconciled",
-      "fallbackPrompt": "Run wdd-start-wave for EPIC-admin-configuration-frontend WAVE-002 only after user confirmation. Start from branch codex/epic/admin-configuration-frontend and read WAVE-001 reconciled decisions first."
+      "mode": "pending_codex_thread_heartbeat",
+      "cadence": "FREQ=MINUTELY;INTERVAL=15",
+      "status": "pending_until_worker_dispatch",
+      "lastCheckedAt": "2026-07-05T12:50:00Z",
+      "nextCheckDueAt": "2026-07-05T13:05:00Z",
+      "schedulerRef": null,
+      "fallbackPrompt": "Run subagent-pr-orchestration for EPIC-admin-configuration-frontend WAVE-002. Read orchestration.json and controller-state.md, inspect TASK-004 worker/worktree, update gates, PR refs, verification, feedback, branch freshness, and stop when WAVE-002 is ready for wdd-reconcile-wave."
     },
     "review": {
       "WAVE-001-admin-feasibility-gate": {
@@ -1388,10 +1471,18 @@
           }
         ],
         "reviewedAt": "2026-07-05T12:25:33Z"
+      },
+      "WAVE-002-admin-auth-persistence": {
+        "status": "not_started",
+        "result": null,
+        "pr": null,
+        "reviewThreadId": null,
+        "blockingFeedback": []
       }
     },
     "branchFreshness": {
-      "WAVE-001-admin-feasibility-gate": "current_at_merge"
+      "WAVE-001-admin-feasibility-gate": "current_at_merge",
+      "WAVE-002-admin-auth-persistence": "pending"
     },
     "merge": {
       "WAVE-001-admin-feasibility-gate": {
@@ -1406,7 +1497,8 @@
       }
     },
     "sharedContextReconciliation": {
-      "WAVE-001": "completed"
+      "WAVE-001": "completed",
+      "WAVE-002": "not_started"
     },
     "prState": {
       "WAVE-001-admin-feasibility-gate": {
@@ -1422,6 +1514,10 @@
         "cleanedAt": "2026-07-05T12:42:03Z",
         "worktree": "/Users/ivo.toby/workspace/postgram/.worktrees/WAVE-001-admin-feasibility-gate",
         "evidence": "Clean worktree removed with git worktree remove; git worktree prune ran."
+      },
+      "WAVE-002-admin-auth-persistence": {
+        "status": "not_started",
+        "worktree": "/Users/ivo.toby/workspace/postgram/.worktrees/TASK-004-admin-auth-persistence"
       }
     }
   },

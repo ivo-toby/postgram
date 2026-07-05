@@ -6,7 +6,7 @@ ticket: TICKET-002-admin-auth-foundation
 wave: WAVE-002
 slug: admin-auth-persistence
 title: Admin Auth Persistence
-status: todo
+status: in-progress
 depends_on:
   - TASK-001-admin-surface-inventory
   - TASK-002-threat-model-bootstrap
@@ -18,13 +18,13 @@ conflict_domains:
 assigned_model_class: implementationComplex
 review_model_class: review
 branch: codex/task/TASK-004-admin-auth-persistence
-worker_worktree: null
-worktree_status: unassigned
+worker_worktree: /Users/ivo.toby/workspace/postgram/.worktrees/TASK-004-admin-auth-persistence
+worktree_status: pending_creation
 pr: null
 worker_thread_id: null
 review_thread_id: null
-current_gate: not_started
-branch_freshness: unknown
+current_gate: worktree_pending
+branch_freshness: pending
 verification:
   - npm test -- tests/integration/admin-auth-service.test.ts
   - npm run typecheck
@@ -34,7 +34,7 @@ verification:
 
 ## Status
 
-todo
+in-progress
 
 ## Parent Ticket
 
@@ -119,7 +119,10 @@ codex/task/TASK-004-admin-auth-persistence
 
 ## Worker Worktree
 
-None assigned yet.
+/Users/ivo.toby/workspace/postgram/.worktrees/TASK-004-admin-auth-persistence
+
+Assigned by WAVE-002 activation. The controller must create this isolated
+worktree from the synced epic branch before worker dispatch.
 
 ## PR / Patch Reference
 

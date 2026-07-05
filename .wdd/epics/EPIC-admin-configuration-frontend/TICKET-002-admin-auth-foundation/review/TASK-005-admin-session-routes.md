@@ -19,11 +19,11 @@ review_model_class: review
 branch: codex/task/TASK-005-admin-session-routes
 worker_worktree: /Users/ivo.toby/workspace/postgram/.worktrees/TASK-005-admin-session-routes
 worktree_status: verified
-pr: null
+pr: https://github.com/ivo-toby/postgram/pull/80
 worker_thread_id: 019f32d9-051d-7c40-8daf-2e05d9888901
 review_thread_id: 019f3308-cc6a-7010-a13e-f1417397300a
-current_gate: ready_for_pr
-branch_freshness: needs_refresh_against_epic
+current_gate: pr_open
+branch_freshness: rebased_onto_origin_epic_f2d48cd
 verification:
   - npm test -- tests/contract/admin-auth-routes.test.ts
   - npm run typecheck
@@ -127,8 +127,10 @@ Verified and dispatched at 2026-07-05T15:15:57Z with worker Leibniz
 
 ## PR / Patch Reference
 
-Pending draft PR creation from branch `codex/task/TASK-005-admin-session-routes`
-to `codex/epic/admin-configuration-frontend`.
+Draft PR: https://github.com/ivo-toby/postgram/pull/80
+
+Branch `codex/task/TASK-005-admin-session-routes` targets
+`codex/epic/admin-configuration-frontend`.
 
 ## RED-GREEN TDD Plan
 
@@ -202,6 +204,9 @@ Keep route parsing and cookie helpers focused and reusable for MFA routes.
 - `git diff --check` passed.
 - Codex review gate reported no blocking correctness, security, or
   maintainability issues after the P2 fixes below.
+- After rebase onto `origin/codex/epic/admin-configuration-frontend` at
+  `f2d48cd`, the required admin route suite, typecheck, adjacent regression
+  suite, touched-file ESLint, and `git diff --check` all passed again.
 - Repo-wide `npm run lint -- ...` still reports unrelated existing lint
   baseline failures outside the TASK-005 diff; direct touched-file lint passed.
 
@@ -233,8 +238,9 @@ Keep route parsing and cookie helpers focused and reusable for MFA routes.
 
 ## Completion Notes
 
-- Worker Leibniz was dispatched at 2026-07-05T15:15:57Z. Gate is `no_pr`
-  until a draft PR or patch reference exists.
+- Worker Leibniz was dispatched at 2026-07-05T15:15:57Z. Draft PR
+  https://github.com/ivo-toby/postgram/pull/80 is open against
+  `codex/epic/admin-configuration-frontend`.
 - Worker Leibniz implemented dedicated admin session routes in
   `src/transport/admin.ts` and admin session/CSRF middleware in
   `src/auth/admin-middleware.ts`.

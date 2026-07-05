@@ -1319,12 +1319,12 @@
     }
   ],
   "monitoring": {
-    "mode": "pending_codex_thread_heartbeat",
+    "mode": "codex_thread_heartbeat",
     "cadence": "FREQ=MINUTELY;INTERVAL=15",
-    "status": "pending_scheduler_creation",
+    "status": "active_no_pr_monitoring",
     "lastCheckedAt": "2026-07-05T12:50:00Z",
     "nextCheckDueAt": "2026-07-05T13:05:00Z",
-    "schedulerRef": null,
+    "schedulerRef": "postgram-admin-wave-002-wdd-heartbeat",
     "fallbackPrompt": "Run subagent-pr-orchestration for EPIC-admin-configuration-frontend WAVE-002. Start in /Users/ivo.toby/workspace/postgram on branch codex/epic/admin-configuration-frontend. Read orchestration.json and controller-state.md, inspect worker Parfit (019f329b-24ff-7ec3-93dd-d854e4681fd2) and worktree /Users/ivo.toby/workspace/postgram/.worktrees/TASK-004-admin-auth-persistence on branch codex/task/TASK-004-admin-auth-persistence for TASK-004-admin-auth-persistence. Update gates, PR/patch refs, verification, feedback, branch freshness, and stop when WAVE-002 is merged/blocked/cancelled or ready for wdd-reconcile-wave."
   },
   "sharedContext": {
@@ -1421,12 +1421,12 @@
       "status": "blocked_until_wave_002_reconciled"
     },
     "monitoring": {
-      "mode": "pending_codex_thread_heartbeat",
+      "mode": "codex_thread_heartbeat",
       "cadence": "FREQ=MINUTELY;INTERVAL=15",
-      "status": "pending_scheduler_creation",
+      "status": "active_no_pr_monitoring",
       "lastCheckedAt": "2026-07-05T12:50:00Z",
       "nextCheckDueAt": "2026-07-05T13:05:00Z",
-      "schedulerRef": null,
+      "schedulerRef": "postgram-admin-wave-002-wdd-heartbeat",
       "fallbackPrompt": "Run subagent-pr-orchestration for EPIC-admin-configuration-frontend WAVE-002. Start in /Users/ivo.toby/workspace/postgram on branch codex/epic/admin-configuration-frontend. Read orchestration.json and controller-state.md, inspect worker Parfit (019f329b-24ff-7ec3-93dd-d854e4681fd2) and worktree /Users/ivo.toby/workspace/postgram/.worktrees/TASK-004-admin-auth-persistence on branch codex/task/TASK-004-admin-auth-persistence for TASK-004-admin-auth-persistence. Update gates, PR/patch refs, verification, feedback, branch freshness, and stop when WAVE-002 is merged/blocked/cancelled or ready for wdd-reconcile-wave."
     },
     "review": {

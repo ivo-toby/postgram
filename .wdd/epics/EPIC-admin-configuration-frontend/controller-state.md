@@ -45,17 +45,17 @@ TASK-004 branch/worktree, then dispatch the worker.
 
 ## Monitoring
 
-Mode: pending_codex_thread_heartbeat
+Mode: codex_thread_heartbeat
 
 Cadence: adaptive, every 15 minutes while worker has no PR or patch
 
-Status: pending scheduler creation after worker dispatch
+Status: active no-PR monitoring
 
 Last check: 2026-07-05T12:50:00Z
 
 Next check due: 2026-07-05T13:05:00Z
 
-Scheduler reference: pending
+Scheduler reference: postgram-admin-wave-002-wdd-heartbeat
 
 Fallback prompt:
 
@@ -258,8 +258,11 @@ freshness, and stop when WAVE-002 is ready for wdd-reconcile-wave.
   `codex/task/TASK-004-admin-auth-persistence` at
   `/Users/ivo.toby/workspace/postgram/.worktrees/TASK-004-admin-auth-persistence`
   and dispatched worker Parfit (`019f329b-24ff-7ec3-93dd-d854e4681fd2`).
+- 2026-07-05T12:50:00Z: Created Codex heartbeat automation
+  `postgram-admin-wave-002-wdd-heartbeat` at 15-minute cadence for WAVE-002
+  monitoring while Parfit has no PR or patch.
 
 ## Next Action
 
-Establish heartbeat monitoring for WAVE-002, then poll worker Parfit for a PR
-or patch.
+Monitor worker Parfit for a PR or patch via
+`postgram-admin-wave-002-wdd-heartbeat`.

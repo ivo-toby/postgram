@@ -138,7 +138,7 @@
   "waves": [
     {
       "id": "WAVE-001",
-      "status": "ready_for_reconciliation",
+      "status": "done",
       "strategy": {
         "profile": "full",
         "executionMode": "bundled",
@@ -178,11 +178,11 @@
           ],
           "branch": "codex/task/WAVE-001-admin-feasibility-gate",
           "worktree": "/Users/ivo.toby/workspace/postgram/.worktrees/WAVE-001-admin-feasibility-gate",
-          "worktreeStatus": "cleanup_deferred",
+          "worktreeStatus": "cleaned_up",
           "workerThreadId": "019f3215-2eb6-75f2-81f0-bf527e73258b",
           "workerNickname": "Singer",
           "reviewThreadId": "019f322c-02e7-7590-8b8e-ebdd1e9c52ac",
-          "currentGate": "merged",
+          "currentGate": "reconciled",
           "branchFreshness": "current_at_merge",
           "pr": "https://github.com/ivo-toby/postgram/pull/78",
           "latestCommit": "4ef5792860fed0544db45a0eb6a635cd4423f393",
@@ -244,16 +244,38 @@
           "mergeReadyAt": "2026-07-05T12:25:33Z",
           "mergedAt": "2026-07-05T12:25:33Z",
           "mergeCommit": "1f11365",
-          "cleanupState": "cleanup_deferred",
-          "sharedContextReconciliation": "queued_for_wdd-reconcile-wave",
+          "cleanupState": "cleaned_up",
+          "sharedContextReconciliation": "completed",
           "prState": {
             "state": "MERGED",
             "mergedAt": "2026-07-05T12:39:56Z",
             "remoteBasePushedAt": "2026-07-05T12:39:56Z",
             "closeoutCommit": "5856d75"
-          }
+          },
+          "cleanupEvidence": "Worker worktree was clean; ran git worktree remove /Users/ivo.toby/workspace/postgram/.worktrees/WAVE-001-admin-feasibility-gate and git worktree prune during WAVE-001 reconciliation.",
+          "reconciledAt": "2026-07-05T12:42:03Z",
+          "reconciliationSummary": "WAVE-001 reconciled the admin surface inventory, bootstrap/security posture, runtime configuration/secret strategy, provider URL/egress safety gate, and future task ownership split. WAVE-002 is ready for user confirmation; no implementation wave was started."
         }
-      ]
+      ],
+      "reconciledAt": "2026-07-05T12:42:03Z",
+      "cleanupState": "cleaned_up",
+      "sharedContextReconciliation": "completed",
+      "completionEvidence": {
+        "workerFixCommit": "4ef5792860fed0544db45a0eb6a635cd4423f393",
+        "mergeCommit": "1f11365",
+        "closeoutCommit": "5856d75",
+        "remoteStateCommit": "bd1c1dc",
+        "pr": "https://github.com/ivo-toby/postgram/pull/78",
+        "prState": "MERGED",
+        "prMergedAt": "2026-07-05T12:39:56Z",
+        "reviewResult": "REVIEW_PASS",
+        "verification": [
+          "git diff --check",
+          "jq empty orchestration.json",
+          "gh pr view 78"
+        ]
+      },
+      "reconciliationSummary": "WAVE-001 reconciled the admin surface inventory, bootstrap/security posture, runtime configuration/secret strategy, provider URL/egress safety gate, and future task ownership split. WAVE-002 is ready for user confirmation; no implementation wave was started."
     },
     {
       "id": "WAVE-002",
@@ -557,7 +579,7 @@
       "workerThreadId": "019f3215-2eb6-75f2-81f0-bf527e73258b",
       "reviewThreadId": "019f322c-02e7-7590-8b8e-ebdd1e9c52ac",
       "workerWorktree": "/Users/ivo.toby/workspace/postgram/.worktrees/WAVE-001-admin-feasibility-gate",
-      "worktreeStatus": "cleanup_deferred",
+      "worktreeStatus": "cleaned_up",
       "pr": "https://github.com/ivo-toby/postgram/pull/78",
       "latestCommit": "4ef5792860fed0544db45a0eb6a635cd4423f393",
       "branchFreshness": "current_at_merge",
@@ -572,7 +594,7 @@
         ],
         "evidence": "Singer verification passed; controller verified PR #78 head 4ef5792, clean merge state, orchestration JSON parse, diff whitespace, Lorentz follow-up REVIEW_PASS, and local merge commit 1f11365."
       },
-      "currentGate": "merged",
+      "currentGate": "reconciled",
       "workerNickname": "Singer",
       "reviewNickname": "Lorentz",
       "feedback": {
@@ -581,14 +603,16 @@
       "reviewResult": "REVIEW_PASS",
       "mergedAt": "2026-07-05T12:25:33Z",
       "mergeCommit": "1f11365",
-      "cleanupState": "cleanup_deferred",
-      "sharedContextReconciliation": "queued_for_wdd-reconcile-wave",
+      "cleanupState": "cleaned_up",
+      "sharedContextReconciliation": "completed",
       "prState": {
         "state": "MERGED",
         "mergedAt": "2026-07-05T12:39:56Z",
         "remoteBasePushedAt": "2026-07-05T12:39:56Z",
         "closeoutCommit": "5856d75"
-      }
+      },
+      "cleanupEvidence": "Worker worktree was clean and removed during WAVE-001 reconciliation.",
+      "reconciledAt": "2026-07-05T12:42:03Z"
     },
     {
       "id": "TASK-002-threat-model-bootstrap",
@@ -607,7 +631,7 @@
       "workerThreadId": "019f3215-2eb6-75f2-81f0-bf527e73258b",
       "reviewThreadId": "019f322c-02e7-7590-8b8e-ebdd1e9c52ac",
       "workerWorktree": "/Users/ivo.toby/workspace/postgram/.worktrees/WAVE-001-admin-feasibility-gate",
-      "worktreeStatus": "cleanup_deferred",
+      "worktreeStatus": "cleaned_up",
       "pr": "https://github.com/ivo-toby/postgram/pull/78",
       "latestCommit": "4ef5792860fed0544db45a0eb6a635cd4423f393",
       "branchFreshness": "current_at_merge",
@@ -622,7 +646,7 @@
         ],
         "evidence": "Singer verification passed; controller verified PR #78 head 4ef5792, clean merge state, orchestration JSON parse, diff whitespace, Lorentz follow-up REVIEW_PASS, and local merge commit 1f11365."
       },
-      "currentGate": "merged",
+      "currentGate": "reconciled",
       "workerNickname": "Singer",
       "reviewNickname": "Lorentz",
       "feedback": {
@@ -631,14 +655,16 @@
       "reviewResult": "REVIEW_PASS",
       "mergedAt": "2026-07-05T12:25:33Z",
       "mergeCommit": "1f11365",
-      "cleanupState": "cleanup_deferred",
-      "sharedContextReconciliation": "queued_for_wdd-reconcile-wave",
+      "cleanupState": "cleaned_up",
+      "sharedContextReconciliation": "completed",
       "prState": {
         "state": "MERGED",
         "mergedAt": "2026-07-05T12:39:56Z",
         "remoteBasePushedAt": "2026-07-05T12:39:56Z",
         "closeoutCommit": "5856d75"
-      }
+      },
+      "cleanupEvidence": "Worker worktree was clean and removed during WAVE-001 reconciliation.",
+      "reconciledAt": "2026-07-05T12:42:03Z"
     },
     {
       "id": "TASK-003-runtime-config-feasibility",
@@ -658,7 +684,7 @@
       "workerThreadId": "019f3215-2eb6-75f2-81f0-bf527e73258b",
       "reviewThreadId": "019f322c-02e7-7590-8b8e-ebdd1e9c52ac",
       "workerWorktree": "/Users/ivo.toby/workspace/postgram/.worktrees/WAVE-001-admin-feasibility-gate",
-      "worktreeStatus": "cleanup_deferred",
+      "worktreeStatus": "cleaned_up",
       "pr": "https://github.com/ivo-toby/postgram/pull/78",
       "latestCommit": "4ef5792860fed0544db45a0eb6a635cd4423f393",
       "branchFreshness": "current_at_merge",
@@ -673,7 +699,7 @@
         ],
         "evidence": "Singer verification passed; controller verified PR #78 head 4ef5792, clean merge state, orchestration JSON parse, diff whitespace, Lorentz follow-up REVIEW_PASS, and local merge commit 1f11365."
       },
-      "currentGate": "merged",
+      "currentGate": "reconciled",
       "workerNickname": "Singer",
       "reviewNickname": "Lorentz",
       "feedback": {
@@ -694,14 +720,16 @@
       "reviewResult": "REVIEW_PASS",
       "mergedAt": "2026-07-05T12:25:33Z",
       "mergeCommit": "1f11365",
-      "cleanupState": "cleanup_deferred",
-      "sharedContextReconciliation": "queued_for_wdd-reconcile-wave",
+      "cleanupState": "cleaned_up",
+      "sharedContextReconciliation": "completed",
       "prState": {
         "state": "MERGED",
         "mergedAt": "2026-07-05T12:39:56Z",
         "remoteBasePushedAt": "2026-07-05T12:39:56Z",
         "closeoutCommit": "5856d75"
-      }
+      },
+      "cleanupEvidence": "Worker worktree was clean and removed during WAVE-001 reconciliation.",
+      "reconciledAt": "2026-07-05T12:42:03Z"
     },
     {
       "id": "TASK-004-admin-auth-persistence",
@@ -1253,13 +1281,13 @@
     }
   ],
   "monitoring": {
-    "mode": "codex_thread_heartbeat",
-    "cadence": "FREQ=MINUTELY;INTERVAL=5",
-    "status": "active_until_reconciliation",
-    "lastCheckedAt": "2026-07-05T12:25:33Z",
-    "nextCheckDueAt": "2026-07-05T12:30:33Z",
-    "schedulerRef": "postgram-admin-wave-001-wdd-heartbeat",
-    "fallbackPrompt": "Run wdd-reconcile-wave for EPIC-admin-configuration-frontend WAVE-001. The WAVE-001 bundle PR #78 passed review after fix commit 4ef5792 and was merged locally into the epic branch in 1f11365; inspect controller-state.md and orchestration.json, verify merged task/shared-context state, reconcile WAVE-001 decisions, and stop before starting WAVE-002."
+    "mode": "manual",
+    "cadence": "stopped",
+    "status": "stopped_reconciled",
+    "lastCheckedAt": "2026-07-05T12:42:03Z",
+    "nextCheckDueAt": null,
+    "schedulerRef": "none:wave_reconciled",
+    "fallbackPrompt": "Run wdd-start-wave for EPIC-admin-configuration-frontend WAVE-002 only after user confirmation. Start from branch codex/epic/admin-configuration-frontend and read WAVE-001 reconciled decisions first."
   },
   "sharedContext": {
     "index": "shared-context/index.md",
@@ -1273,109 +1301,7 @@
     ],
     "reconcileAfterEveryWave": true
   },
-  "activeWave": {
-    "id": "WAVE-001",
-    "activatedAt": "2026-07-05T11:36:08Z",
-    "strategy": {
-      "profile": "full",
-      "executionMode": "bundled",
-      "reviewMode": "risk_based",
-      "monitoringMode": "adaptive",
-      "confirmedBy": "Ivo via Codex request on 2026-07-05"
-    },
-    "eligibleTasks": [
-      "TASK-001-admin-surface-inventory",
-      "TASK-002-threat-model-bootstrap",
-      "TASK-003-runtime-config-feasibility"
-    ],
-    "nonEligibleTasks": [],
-    "bundles": [
-      {
-        "id": "WAVE-001-admin-feasibility-gate",
-        "tasks": [
-          "TASK-001-admin-surface-inventory",
-          "TASK-002-threat-model-bootstrap",
-          "TASK-003-runtime-config-feasibility"
-        ],
-        "branch": "codex/task/WAVE-001-admin-feasibility-gate",
-        "worktree": "/Users/ivo.toby/workspace/postgram/.worktrees/WAVE-001-admin-feasibility-gate",
-        "worktreeStatus": "cleanup_deferred",
-        "workerThreadId": "019f3215-2eb6-75f2-81f0-bf527e73258b",
-        "workerNickname": "Singer",
-        "reviewThreadId": "019f322c-02e7-7590-8b8e-ebdd1e9c52ac",
-        "currentGate": "merged",
-        "branchFreshness": "current_at_merge",
-        "pr": "https://github.com/ivo-toby/postgram/pull/78",
-        "latestCommit": "4ef5792860fed0544db45a0eb6a635cd4423f393",
-        "blockingFeedback": [],
-        "verification": {
-          "result": "passed",
-          "commands": [
-            "git diff --check origin/codex/epic/admin-configuration-frontend...HEAD",
-            "node -e JSON.parse(orchestration.json)",
-            "gh pr view 78",
-            "git merge --no-ff codex/task/WAVE-001-admin-feasibility-gate"
-          ],
-          "evidence": "Singer verification passed; controller verified PR #78 head 4ef5792, clean merge state, orchestration JSON parse, diff whitespace, Lorentz follow-up REVIEW_PASS, and local merge commit 1f11365."
-        },
-        "verifiedAt": "2026-07-05T11:36:08Z",
-        "dispatchedAt": "2026-07-05T11:41:41Z",
-        "reviewNickname": "Lorentz",
-        "feedback": {
-          "p2": [
-            {
-              "priority": "P2",
-              "id": "P2-bootstrap-ownership-task-gates",
-              "status": "resolved",
-              "owner": "Singer",
-              "reviewer": "Lorentz",
-              "reviewThreadId": "019f322c-02e7-7590-8b8e-ebdd1e9c52ac",
-              "resolvedAt": "2026-07-05T12:25:33Z",
-              "fixCommit": "4ef5792860fed0544db45a0eb6a635cd4423f393",
-              "summary": "TASK-004/TASK-005/TASK-006 now explicitly split bootstrap token persistence, route behavior, MFA completion, and pending-MFA first-admin activation testability."
-            },
-            {
-              "priority": "P2",
-              "id": "P2-stale-worker-dispatch-gate",
-              "status": "resolved",
-              "owner": "Singer",
-              "reviewer": "Lorentz",
-              "reviewThreadId": "019f322c-02e7-7590-8b8e-ebdd1e9c52ac",
-              "resolvedAt": "2026-07-05T12:25:33Z",
-              "fixCommit": "4ef5792860fed0544db45a0eb6a635cd4423f393",
-              "summary": "PR branch currentGates.workerDispatch is ready_for_review, not no_pr."
-            }
-          ],
-          "p3": [
-            {
-              "priority": "P3",
-              "id": "P3-provider-url-egress-test-gate",
-              "status": "addressed",
-              "owner": "Singer",
-              "reviewer": "Lorentz",
-              "reviewThreadId": "019f322c-02e7-7590-8b8e-ebdd1e9c52ac",
-              "resolvedAt": "2026-07-05T12:25:33Z",
-              "fixCommit": "4ef5792860fed0544db45a0eb6a635cd4423f393",
-              "summary": "TASK-010 and shared validation now explicitly require provider URL/egress/SSRF safety coverage."
-            }
-          ]
-        },
-        "reviewResult": "REVIEW_PASS",
-        "reviewedAt": "2026-07-05T12:25:33Z",
-        "mergeReadyAt": "2026-07-05T12:25:33Z",
-        "mergedAt": "2026-07-05T12:25:33Z",
-        "mergeCommit": "1f11365",
-        "cleanupState": "cleanup_deferred",
-        "sharedContextReconciliation": "queued_for_wdd-reconcile-wave",
-        "prState": {
-          "state": "MERGED",
-          "mergedAt": "2026-07-05T12:39:56Z",
-          "remoteBasePushedAt": "2026-07-05T12:39:56Z",
-          "closeoutCommit": "5856d75"
-        }
-      }
-    ]
-  },
+  "activeWave": null,
   "currentGates": {
     "epicBranch": {
       "status": "verified",
@@ -1392,26 +1318,28 @@
       "WAVE-001": "confirmed_by_ivo_2026-07-05"
     },
     "workerWorktrees": {
-      "WAVE-001-admin-feasibility-gate": "cleanup_deferred"
+      "WAVE-001-admin-feasibility-gate": "cleaned_up"
     },
     "workerDispatch": {
-      "WAVE-001-admin-feasibility-gate": "merged"
+      "WAVE-001-admin-feasibility-gate": "reconciled"
     },
     "waveCompletion": {
-      "WAVE-001": "ready_for_reconciliation"
+      "WAVE-001": "done"
     },
     "nextWave": {
       "id": "WAVE-002",
-      "status": "blocked_until_wave_001_reconciled"
+      "status": "ready_for_confirmation",
+      "requiresUserConfirmation": true,
+      "activationSkill": "wdd-start-wave"
     },
     "monitoring": {
-      "mode": "codex_thread_heartbeat",
-      "status": "active_until_reconciliation",
-      "schedulerRef": "postgram-admin-wave-001-wdd-heartbeat",
-      "cadence": "FREQ=MINUTELY;INTERVAL=5",
-      "lastCheckedAt": "2026-07-05T12:25:33Z",
-      "nextCheckDueAt": "2026-07-05T12:30:33Z",
-      "fallbackPrompt": "Run wdd-reconcile-wave for EPIC-admin-configuration-frontend WAVE-001. The WAVE-001 bundle PR #78 passed review after fix commit 4ef5792 and was merged locally into the epic branch in 1f11365; inspect controller-state.md and orchestration.json, verify merged task/shared-context state, reconcile WAVE-001 decisions, and stop before starting WAVE-002."
+      "mode": "manual",
+      "cadence": "stopped",
+      "status": "stopped_reconciled",
+      "lastCheckedAt": "2026-07-05T12:42:03Z",
+      "nextCheckDueAt": null,
+      "schedulerRef": "none:wave_reconciled",
+      "fallbackPrompt": "Run wdd-start-wave for EPIC-admin-configuration-frontend WAVE-002 only after user confirmation. Start from branch codex/epic/admin-configuration-frontend and read WAVE-001 reconciled decisions first."
     },
     "review": {
       "WAVE-001-admin-feasibility-gate": {
@@ -1467,17 +1395,18 @@
     },
     "merge": {
       "WAVE-001-admin-feasibility-gate": {
-        "status": "merged",
+        "status": "merged_and_reconciled",
         "commit": "1f11365",
         "mergedAt": "2026-07-05T12:25:33Z",
-        "cleanupState": "cleanup_deferred",
+        "cleanupState": "cleaned_up",
         "remotePrState": "MERGED",
         "remotePrMergedAt": "2026-07-05T12:39:56Z",
-        "closeoutCommit": "5856d75"
+        "closeoutCommit": "5856d75",
+        "reconciledAt": "2026-07-05T12:42:03Z"
       }
     },
     "sharedContextReconciliation": {
-      "WAVE-001": "queued_for_wdd-reconcile-wave"
+      "WAVE-001": "completed"
     },
     "prState": {
       "WAVE-001-admin-feasibility-gate": {
@@ -1486,6 +1415,21 @@
         "remoteBasePushedAt": "2026-07-05T12:39:56Z",
         "closeoutCommit": "5856d75"
       }
+    },
+    "cleanup": {
+      "WAVE-001-admin-feasibility-gate": {
+        "status": "cleaned_up",
+        "cleanedAt": "2026-07-05T12:42:03Z",
+        "worktree": "/Users/ivo.toby/workspace/postgram/.worktrees/WAVE-001-admin-feasibility-gate",
+        "evidence": "Clean worktree removed with git worktree remove; git worktree prune ran."
+      }
     }
+  },
+  "lastReconciledWave": {
+    "id": "WAVE-001",
+    "reconciledAt": "2026-07-05T12:42:03Z",
+    "status": "done",
+    "nextWave": "WAVE-002",
+    "nextWaveStatus": "ready_for_confirmation"
   }
 }

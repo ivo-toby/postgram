@@ -13,9 +13,9 @@ updated_at: 2026-07-05
 
 | Task | Ticket | Depends On | Conflict Domains | Status |
 |------|--------|------------|------------------|--------|
-| TASK-001-admin-surface-inventory | TICKET-001-feasibility-security-design | None | `src/cli/admin/pgm-admin.ts`, admin service boundaries, shared context | in_progress |
-| TASK-002-threat-model-bootstrap | TICKET-001-feasibility-security-design | None | admin auth architecture, Docker exposure model, shared context | in_progress |
-| TASK-003-runtime-config-feasibility | TICKET-001-feasibility-security-design | None | `src/config.ts`, `src/index.ts`, provider lifecycle, Docker docs | in_progress |
+| TASK-001-admin-surface-inventory | TICKET-001-feasibility-security-design | None | `src/cli/admin/pgm-admin.ts`, admin service boundaries, shared context | done |
+| TASK-002-threat-model-bootstrap | TICKET-001-feasibility-security-design | None | admin auth architecture, Docker exposure model, shared context | done |
+| TASK-003-runtime-config-feasibility | TICKET-001-feasibility-security-design | None | `src/config.ts`, `src/index.ts`, provider lifecycle, Docker docs | done |
 | TASK-004-admin-auth-persistence | TICKET-002-admin-auth-foundation | TASK-001, TASK-002 | migrations, `src/auth/**`, admin auth services, integration tests | todo |
 | TASK-005-admin-session-routes | TICKET-002-admin-auth-foundation | TASK-004 | admin routes, cookies, CSRF, lockout, auth contract tests | todo |
 | TASK-006-admin-mfa-step-up | TICKET-002-admin-auth-foundation | TASK-004, TASK-005 | MFA tables, TOTP service, step-up middleware, sensitive action gates | todo |
@@ -74,7 +74,7 @@ updated_at: 2026-07-05
 
 ### WAVE-001
 
-Status: in_progress
+Status: done
 
 Tasks:
 
@@ -113,6 +113,42 @@ Stop condition:
   updated with final findings.
 - The epic has an explicit go/no-go for bootstrap posture, secret storage, and
   runtime provider reload strategy.
+- Wave reconciliation completed on 2026-07-05.
+- WAVE-002 is ready for user confirmation; no implementation wave was started
+  during reconciliation.
+
+Completion evidence:
+
+- Worker fix commit: `4ef5792`.
+- Merge commit: `1f11365`.
+- Closeout commit: `5856d75`.
+- Remote PR-state commit: `bd1c1dc`.
+- PR #78: merged by GitHub at 2026-07-05T12:39:56Z.
+- Review: Lorentz `REVIEW_PASS`, no remaining P1/P2.
+- Verification passed:
+  - `git diff --check`
+  - `jq empty .wdd/epics/EPIC-admin-configuration-frontend/orchestration.json`
+  - `gh pr view 78`
+
+Reconciled decisions:
+
+- Go: implementation may proceed with a separate admin auth/session/MFA plane.
+- First-run bootstrap uses a generated one-time token from a trusted local
+  operator channel, stored hash-only, single-use, expiring, audited, and
+  completed only after MFA-backed first-admin activation.
+- Runtime settings use installation-wide DB-backed settings plus encrypted
+  write-only secrets, while one minimal installation encryption key may remain
+  outside the DB through env or Docker secret.
+- Provider applies use save/validate/apply states; embedding identity changes
+  are migration-sensitive and must use dry-run/apply job handling.
+
+Drift notes:
+
+- TASK-004 owns bootstrap token persistence and non-active/pending-MFA
+  first-admin state.
+- TASK-005 owns route/session/CSRF behavior and safe bootstrap HTTP semantics.
+- TASK-006 owns MFA completion and first-admin activation.
+- TASK-010 must include explicit provider URL/egress/SSRF safety tests.
 
 ### WAVE-002
 
@@ -141,6 +177,7 @@ Rationale:
 Activation rule:
 
 - Activate after WAVE-001 reconciliation confirms the bootstrap/auth design.
+- Ready for user confirmation after WAVE-001 reconciliation on 2026-07-05.
 
 Stop condition:
 

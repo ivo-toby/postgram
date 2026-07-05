@@ -45,7 +45,7 @@ updated_at: 2026-07-05
       monitoring mode, confidence, and rationale.
 - [x] Execution mode is `bundled`, `hybrid`, or `parallel`.
 - [x] Confirmation requirements are recorded when strategy requires them.
-- [x] WAVE-001 records user confirmation as required and pending.
+- [x] WAVE-001 recorded user confirmation, ran, and reconciled.
 - [x] High-risk auth, persistence, admin API, runtime config, maintenance, and
       Docker waves record user confirmation as required and pending.
 - [x] Active-wave tasks can run concurrently only when dependencies,
@@ -113,10 +113,10 @@ updated_at: 2026-07-05
 
 ## Planning Result
 
-Planning is complete. WAVE-001 is activated as the bundled feasibility/security
-gate:
+Planning is complete. WAVE-001 ran as the bundled feasibility/security gate and
+was reconciled on 2026-07-05:
 
 ```text
-Run bundled WAVE-001 for EPIC-admin-configuration-frontend in
-/Users/ivo.toby/workspace/postgram/.worktrees/WAVE-001-admin-feasibility-gate.
+Next step: confirm WAVE-002, then run wdd-start-wave for
+EPIC-admin-configuration-frontend WAVE-002.
 ```

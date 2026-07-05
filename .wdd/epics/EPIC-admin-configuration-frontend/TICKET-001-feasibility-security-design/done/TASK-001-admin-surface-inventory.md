@@ -15,11 +15,11 @@ assigned_model_class: planning
 review_model_class: review
 branch: codex/task/WAVE-001-admin-feasibility-gate
 worker_worktree: /Users/ivo.toby/workspace/postgram/.worktrees/WAVE-001-admin-feasibility-gate
-worktree_status: cleanup_deferred
+worktree_status: cleaned_up
 pr: https://github.com/ivo-toby/postgram/pull/78
 worker_thread_id: 019f3215-2eb6-75f2-81f0-bf527e73258b
 review_thread_id: 019f322c-02e7-7590-8b8e-ebdd1e9c52ac
-current_gate: merged
+current_gate: reconciled
 branch_freshness: current_at_merge
 verification:
   - git diff --check
@@ -152,6 +152,7 @@ if needed.
 - 2026-07-05: `git diff --check` passed.
 - 2026-07-05: Lorentz follow-up review returned `REVIEW_PASS`.
 - 2026-07-05: Merged into the epic branch in `1f11365`.
+- 2026-07-05: Worker worktree removed during WAVE-001 reconciliation.
 
 ## Review Feedback
 
@@ -177,5 +178,4 @@ if needed.
   and service extraction requirements.
 - Linked follow-on architecture, API contract, and validation implications in
   shared context.
-- WAVE-001 bundle worktree cleanup is deferred until reconciliation/audit
-  completes.
+- WAVE-001 bundle worktree was clean and removed during reconciliation.

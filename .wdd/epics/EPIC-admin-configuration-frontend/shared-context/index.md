@@ -75,7 +75,23 @@ configuration, maintenance jobs, or Docker behavior.
   docs in the same change.
 - The epic branch convention is `codex/epic/admin-configuration-frontend`.
 - Wave 1 is a bundled feasibility/security gate. Broad implementation should
-  not start until its decisions are reconciled into shared context.
+  start only after its reconciled decisions are read and the next wave is
+  explicitly confirmed.
+
+## Reconciliation History
+
+### WAVE-001 Feasibility And Security Gate
+
+- Status: done and reconciled on 2026-07-05.
+- PR: https://github.com/ivo-toby/postgram/pull/78, merged at
+  2026-07-05T12:39:56Z.
+- Go/no-go: go for implementation, with a separate admin auth/session/MFA plane
+  and no reuse of ordinary API-key bearer auth as admin identity.
+- First implementation wave: TASK-004-admin-auth-persistence is ready for user
+  confirmation as WAVE-002.
+- Required carry-forward gates: TASK-004/TASK-005/TASK-006 must preserve the
+  bootstrap ownership split, and TASK-010 must prove provider URL/egress/SSRF
+  safety for admin-configured provider endpoints.
 
 ## Recent Durable Memory
 

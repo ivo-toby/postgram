@@ -52,9 +52,9 @@ Cadence: 15 minutes
 
 Status: active no-PR monitoring
 
-Last check: 2026-07-05T15:15:57Z
+Last check: 2026-07-05T15:31:16Z
 
-Next check due: 2026-07-05T15:30:57Z
+Next check due: 2026-07-05T15:46:16Z
 
 Scheduler reference: `postgram-admin-wave-003-wdd-heartbeat`
 
@@ -66,7 +66,9 @@ epic EPIC-admin-configuration-frontend, active wave WAVE-003. Use
 subagent-pr-orchestration, inspect worker Leibniz
 (`019f32d9-051d-7c40-8daf-2e05d9888901`) and worktree
 /Users/ivo.toby/workspace/postgram/.worktrees/TASK-005-admin-session-routes,
-update gates, and stop when WAVE-003 is ready for reconciliation.
+update gates, and if a PR or patch exists move to review orchestration;
+otherwise keep `no_pr` and nudge missing commit/push/PR/final status only if
+needed.
 ```
 
 ## Active Wave Strategy
@@ -96,7 +98,7 @@ update gates, and stop when WAVE-003 is ready for reconciliation.
 | TASK-002-threat-model-bootstrap | TICKET-001-feasibility-security-design | codex/task/WAVE-001-admin-feasibility-gate | cleaned_up | reconciled | P2 bootstrap ownership feedback resolved; REVIEW_PASS; merged in `1f11365` |
 | TASK-003-runtime-config-feasibility | TICKET-001-feasibility-security-design | codex/task/WAVE-001-admin-feasibility-gate | cleaned_up | reconciled | P3 provider URL/egress test feedback addressed; REVIEW_PASS; merged in `1f11365` |
 | TASK-004-admin-auth-persistence | TICKET-002-admin-auth-foundation | codex/task/TASK-004-admin-auth-persistence | cleaned_up | reconciled | REVIEW_PASS; freshness verification passed; merged in `0f96769`; PR #79 merged; WAVE-002 reconciled |
-| TASK-005-admin-session-routes | TICKET-002-admin-auth-foundation | codex/task/TASK-005-admin-session-routes | verified | no_pr | `npm test -- tests/contract/admin-auth-routes.test.ts`; `npm run typecheck` |
+| TASK-005-admin-session-routes | TICKET-002-admin-auth-foundation | codex/task/TASK-005-admin-session-routes | active_uncommitted | no_pr | worker-reported uncommitted verification passed; waiting for commit, push, PR, and final status |
 | TASK-006-admin-mfa-step-up | TICKET-002-admin-auth-foundation | codex/task/TASK-006-admin-mfa-step-up | not_created | planned | `npm test -- tests/contract/admin-mfa-routes.test.ts`; `npm test -- tests/integration/admin-auth-service.test.ts`; `npm run typecheck` |
 | TASK-007-admin-api-shell-diagnostics | TICKET-003-admin-api-foundation | codex/task/TASK-007-admin-api-shell-diagnostics | not_created | planned | `npm test -- tests/contract/admin-api.test.ts`; `npm run typecheck` |
 | TASK-008-admin-key-audit-stats-api | TICKET-003-admin-api-foundation | codex/task/TASK-008-admin-key-audit-stats-api | not_created | planned | `npm test -- tests/contract/admin-key-audit-stats.test.ts`; `npm test -- tests/integration/key-service.test.ts`; `npm run typecheck` |
@@ -209,8 +211,9 @@ update gates, and stop when WAVE-003 is ready for reconciliation.
 - WAVE-002 is done and reconciled.
 - WAVE-003 is active after Ivo requested sequential wave execution.
 - WAVE-004 remains blocked until WAVE-003 is reconciled.
-- WAVE-003 branch/worktree is verified and worker Leibniz is dispatched. No PR,
-  patch, or review thread exists yet.
+- WAVE-003 branch/worktree has active uncommitted TASK-005 implementation
+  changes from worker Leibniz. No commit, push, PR, patch, final worker status,
+  or review thread exists yet.
 
 ## Verification Status
 
@@ -243,6 +246,13 @@ update gates, and stop when WAVE-003 is ready for reconciliation.
   activation commit `6e75852`, contains the in-progress TASK-005 file and
   current WDD state, `orchestration.json` parses, and heartbeat
   `postgram-admin-wave-003-wdd-heartbeat` is active at 15-minute cadence.
+- WAVE-003 worker-progress observation: Leibniz's local uncommitted task file
+  reports RED `npm test -- tests/contract/admin-auth-routes.test.ts` failed
+  before implementation, GREEN admin-auth route tests passed with 8 tests,
+  `npm run typecheck` passed, adjacent auth/transport contract and integration
+  tests passed with 36 tests, and `git diff --check` passed. Controller has not
+  advanced to review because there is no commit, push, PR, patch, or final
+  worker status yet.
 
 ## Event Log
 
@@ -330,9 +340,17 @@ update gates, and stop when WAVE-003 is ready for reconciliation.
   dispatched worker Leibniz (`019f32d9-051d-7c40-8daf-2e05d9888901`), deleted
   stale WAVE-002 heartbeat `postgram-admin-wave-002-wdd-heartbeat`, and created
   WAVE-003 heartbeat `postgram-admin-wave-003-wdd-heartbeat`.
+- 2026-07-05T15:31:16Z: Heartbeat inspected Leibniz and the TASK-005 worktree.
+  The worker has active uncommitted implementation changes in admin route,
+  middleware, error utility, index registration, contract test, and local task
+  review files. No PR exists and the task branch remains at `79d1265`, so the
+  gate stays `no_pr`. The controller nudged Leibniz for the missing commit,
+  push, draft PR, task PR reference, and final status token
+  (`019f32e7-fed1-7291-8563-3703792e793e`). Next check due
+  2026-07-05T15:46:16Z.
 
 ## Next Action
 
-Monitor Leibniz for a draft PR or patch. If one appears, move WAVE-003 into
-review orchestration; otherwise keep `no_pr` and nudge only exact missing
-deliverables when needed.
+Monitor Leibniz for a commit, push, and draft PR or patch. If one appears, move
+WAVE-003 into review orchestration; otherwise keep `no_pr` and nudge only exact
+missing deliverables when needed.

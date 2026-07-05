@@ -435,7 +435,7 @@
           ],
           "branch": "codex/task/TASK-005-admin-session-routes",
           "worktree": "/Users/ivo.toby/workspace/postgram/.worktrees/TASK-005-admin-session-routes",
-          "worktreeStatus": "verified",
+          "worktreeStatus": "active_uncommitted",
           "workerThreadId": "019f32d9-051d-7c40-8daf-2e05d9888901",
           "workerNickname": "Leibniz",
           "reviewThreadId": null,
@@ -446,18 +446,19 @@
           "latestCommit": null,
           "blockingFeedback": [],
           "verification": {
-            "result": "not_run",
+            "result": "worker_reported_passed_uncommitted",
             "commands": [
               "npm test -- tests/contract/admin-auth-routes.test.ts",
               "npm run typecheck"
             ],
-            "evidence": null
+            "evidence": "Worker local uncommitted task file reports RED admin-auth route tests failed before implementation, GREEN admin-auth route tests passed (8 tests), npm run typecheck passed, adjacent auth/transport contract and integration tests passed (36 tests), and git diff --check passed. Controller has not advanced review because no commit, push, PR, patch, or final worker status exists yet."
           },
           "activatedAt": "2026-07-05T15:10:39Z",
           "cleanupState": "not_started",
           "sharedContextReconciliation": "not_started",
           "dispatchedAt": "2026-07-05T15:15:57Z",
-          "dispatchBaseCommit": "6e758524b2549d86519c25aed19f4d9617795edf"
+          "dispatchBaseCommit": "6e758524b2549d86519c25aed19f4d9617795edf",
+          "lastObservedAt": "2026-07-05T15:31:16Z"
         }
       ],
       "workerDispatchStartedAt": "2026-07-05T15:15:57Z"
@@ -954,18 +955,18 @@
       "workerThreadId": "019f32d9-051d-7c40-8daf-2e05d9888901",
       "reviewThreadId": null,
       "workerWorktree": "/Users/ivo.toby/workspace/postgram/.worktrees/TASK-005-admin-session-routes",
-      "worktreeStatus": "verified",
+      "worktreeStatus": "active_uncommitted",
       "pr": null,
       "latestCommit": null,
       "branchFreshness": "current_at_dispatch",
       "blockingFeedback": [],
       "verification": {
-        "result": "not_run",
+        "result": "worker_reported_passed_uncommitted",
         "commands": [
           "npm test -- tests/contract/admin-auth-routes.test.ts",
           "npm run typecheck"
         ],
-        "evidence": null
+        "evidence": "Worker local uncommitted task file reports RED admin-auth route tests failed before implementation, GREEN admin-auth route tests passed (8 tests), npm run typecheck passed, adjacent auth/transport contract and integration tests passed (36 tests), and git diff --check passed. Controller has not advanced review because no commit, push, PR, patch, or final worker status exists yet."
       },
       "currentGate": "no_pr",
       "cleanupState": "not_started",
@@ -974,7 +975,8 @@
       "workerNickname": "Leibniz",
       "reviewNickname": null,
       "dispatchedAt": "2026-07-05T15:15:57Z",
-      "dispatchBaseCommit": "6e758524b2549d86519c25aed19f4d9617795edf"
+      "dispatchBaseCommit": "6e758524b2549d86519c25aed19f4d9617795edf",
+      "lastObservedAt": "2026-07-05T15:31:16Z"
     },
     {
       "id": "TASK-006-admin-mfa-step-up",
@@ -1458,10 +1460,10 @@
     "mode": "codex_thread_heartbeat",
     "cadence": "15m",
     "status": "active_no_pr_monitoring",
-    "lastCheckedAt": "2026-07-05T15:15:57Z",
-    "nextCheckDueAt": "2026-07-05T15:30:57Z",
+    "lastCheckedAt": "2026-07-05T15:31:16Z",
+    "nextCheckDueAt": "2026-07-05T15:46:16Z",
     "schedulerRef": "postgram-admin-wave-003-wdd-heartbeat",
-    "fallbackPrompt": "Run one bounded WDD controller heartbeat for /Users/ivo.toby/workspace/postgram, epic EPIC-admin-configuration-frontend, active wave WAVE-003. Use subagent-pr-orchestration, inspect worker Leibniz (019f32d9-051d-7c40-8daf-2e05d9888901) and worktree /Users/ivo.toby/workspace/postgram/.worktrees/TASK-005-admin-session-routes, update gates, and stop when WAVE-003 is ready for reconciliation."
+    "fallbackPrompt": "Run one bounded WDD controller heartbeat for /Users/ivo.toby/workspace/postgram, epic EPIC-admin-configuration-frontend, active wave WAVE-003. Use subagent-pr-orchestration, inspect worker Leibniz (019f32d9-051d-7c40-8daf-2e05d9888901) and worktree /Users/ivo.toby/workspace/postgram/.worktrees/TASK-005-admin-session-routes, update gates, and if a PR or patch exists move to review orchestration; otherwise keep no_pr and nudge missing commit/push/PR/final status only if needed."
   },
   "sharedContext": {
     "index": "shared-context/index.md",
@@ -1497,7 +1499,7 @@
         ],
         "branch": "codex/task/TASK-005-admin-session-routes",
         "worktree": "/Users/ivo.toby/workspace/postgram/.worktrees/TASK-005-admin-session-routes",
-        "worktreeStatus": "verified",
+        "worktreeStatus": "active_uncommitted",
         "workerThreadId": "019f32d9-051d-7c40-8daf-2e05d9888901",
         "workerNickname": "Leibniz",
         "reviewThreadId": null,
@@ -1508,18 +1510,19 @@
         "latestCommit": null,
         "blockingFeedback": [],
         "verification": {
-          "result": "not_run",
+          "result": "worker_reported_passed_uncommitted",
           "commands": [
             "npm test -- tests/contract/admin-auth-routes.test.ts",
             "npm run typecheck"
           ],
-          "evidence": null
+          "evidence": "Worker local uncommitted task file reports RED admin-auth route tests failed before implementation, GREEN admin-auth route tests passed (8 tests), npm run typecheck passed, adjacent auth/transport contract and integration tests passed (36 tests), and git diff --check passed. Controller has not advanced review because no commit, push, PR, patch, or final worker status exists yet."
         },
         "activatedAt": "2026-07-05T15:10:39Z",
         "cleanupState": "not_started",
         "sharedContextReconciliation": "not_started",
         "dispatchedAt": "2026-07-05T15:15:57Z",
-        "dispatchBaseCommit": "6e758524b2549d86519c25aed19f4d9617795edf"
+        "dispatchBaseCommit": "6e758524b2549d86519c25aed19f4d9617795edf",
+        "lastObservedAt": "2026-07-05T15:31:16Z"
       }
     ]
   },
@@ -1545,7 +1548,7 @@
     "workerWorktrees": {
       "WAVE-001-admin-feasibility-gate": "cleaned_up",
       "WAVE-002-admin-auth-persistence": "cleaned_up",
-      "WAVE-003-admin-session-routes": "verified"
+      "WAVE-003-admin-session-routes": "active_uncommitted"
     },
     "workerDispatch": {
       "WAVE-001-admin-feasibility-gate": "reconciled",
@@ -1565,10 +1568,10 @@
       "mode": "codex_thread_heartbeat",
       "cadence": "15m",
       "status": "active_no_pr_monitoring",
-      "lastCheckedAt": "2026-07-05T15:15:57Z",
-      "nextCheckDueAt": "2026-07-05T15:30:57Z",
+      "lastCheckedAt": "2026-07-05T15:31:16Z",
+      "nextCheckDueAt": "2026-07-05T15:46:16Z",
       "schedulerRef": "postgram-admin-wave-003-wdd-heartbeat",
-      "fallbackPrompt": "Run one bounded WDD controller heartbeat for /Users/ivo.toby/workspace/postgram, epic EPIC-admin-configuration-frontend, active wave WAVE-003. Use subagent-pr-orchestration, inspect worker Leibniz (019f32d9-051d-7c40-8daf-2e05d9888901) and worktree /Users/ivo.toby/workspace/postgram/.worktrees/TASK-005-admin-session-routes, update gates, and stop when WAVE-003 is ready for reconciliation."
+      "fallbackPrompt": "Run one bounded WDD controller heartbeat for /Users/ivo.toby/workspace/postgram, epic EPIC-admin-configuration-frontend, active wave WAVE-003. Use subagent-pr-orchestration, inspect worker Leibniz (019f32d9-051d-7c40-8daf-2e05d9888901) and worktree /Users/ivo.toby/workspace/postgram/.worktrees/TASK-005-admin-session-routes, update gates, and if a PR or patch exists move to review orchestration; otherwise keep no_pr and nudge missing commit/push/PR/final status only if needed."
     },
     "review": {
       "WAVE-001-admin-feasibility-gate": {
@@ -1706,7 +1709,8 @@
       },
       "WAVE-003-admin-session-routes": {
         "status": "not_started",
-        "worktree": "/Users/ivo.toby/workspace/postgram/.worktrees/TASK-005-admin-session-routes"
+        "worktree": "/Users/ivo.toby/workspace/postgram/.worktrees/TASK-005-admin-session-routes",
+        "reason": "Worker has active uncommitted changes."
       }
     },
     "worker": {
@@ -1741,19 +1745,30 @@
         "reconciledAt": "2026-07-05T15:07:20Z"
       },
       "WAVE-003-admin-session-routes": {
-        "status": "running_no_pr",
+        "status": "running_no_pr_active_uncommitted",
         "workerThreadId": "019f32d9-051d-7c40-8daf-2e05d9888901",
         "workerNickname": "Leibniz",
         "dispatchedAt": "2026-07-05T15:15:57Z",
-        "lastObservedAt": "2026-07-05T15:15:57Z",
+        "lastObservedAt": "2026-07-05T15:31:16Z",
         "lastObservation": {
-          "checkedAt": "2026-07-05T15:15:57Z",
+          "checkedAt": "2026-07-05T15:31:16Z",
           "workerStatus": "running",
           "pr": null,
           "patch": null,
-          "worktreeStatus": "verified",
-          "branchHead": "6e758524b2549d86519c25aed19f4d9617795edf",
-          "note": "Worker dispatched for TASK-005; awaiting draft PR or patch."
+          "worktreeStatus": "active_uncommitted",
+          "branchHead": "79d1265cf3b7c147305eac04300bd0f9f8fe1dae",
+          "localTaskPath": "TICKET-002-admin-auth-foundation/review/TASK-005-admin-session-routes.md (uncommitted)",
+          "observedFiles": [
+            ".wdd/epics/EPIC-admin-configuration-frontend/TICKET-002-admin-auth-foundation/review/TASK-005-admin-session-routes.md",
+            "src/auth/admin-middleware.ts",
+            "src/index.ts",
+            "src/transport/admin.ts",
+            "src/util/errors.ts",
+            "tests/contract/admin-auth-routes.test.ts"
+          ],
+          "verification": "Worker local uncommitted task file reports RED admin-auth route tests failed before implementation, GREEN admin-auth route tests passed (8 tests), npm run typecheck passed, adjacent auth/transport contract and integration tests passed (36 tests), and git diff --check passed. Controller has not advanced review because no commit, push, PR, patch, or final worker status exists yet.",
+          "nudgeSubmissionId": "019f32e7-fed1-7291-8563-3703792e793e",
+          "note": "Controller observed implementation files and a local move to review/ but no commit, push, PR, patch, or final worker status. Exact missing deliverables were nudged to Leibniz."
         },
         "cleanupState": "not_started"
       }
@@ -1780,6 +1795,8 @@
     "dispatchedAt": "2026-07-05T15:15:57Z",
     "status": "no_pr",
     "workerThreadId": "019f32d9-051d-7c40-8daf-2e05d9888901",
-    "workerNickname": "Leibniz"
+    "workerNickname": "Leibniz",
+    "lastObservedAt": "2026-07-05T15:31:16Z",
+    "worktreeStatus": "active_uncommitted"
   }
 }

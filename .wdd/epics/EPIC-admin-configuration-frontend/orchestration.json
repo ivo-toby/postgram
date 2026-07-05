@@ -557,20 +557,20 @@
           ],
           "branch": "codex/task/TASK-006-admin-mfa-step-up",
           "worktree": "/Users/ivo.toby/workspace/postgram/.worktrees/TASK-006-admin-mfa-step-up",
-          "worktreeStatus": "clean_local_unpushed",
+          "worktreeStatus": "clean_pushed",
           "workerThreadId": "019f3333-4033-7463-9819-aa3dec286b4c",
           "workerNickname": "Tesla",
           "reviewThreadId": "019f322c-02e7-7590-8b8e-ebdd1e9c52ac",
           "reviewNickname": "Lorentz",
-          "currentGate": "needs_fixes",
-          "branchFreshness": "local_current_unpushed_requires_push",
+          "currentGate": "followup_reviewing",
+          "branchFreshness": "stale_needs_freshness_refresh",
           "pr": "https://github.com/ivo-toby/postgram/pull/82",
           "latestCommit": "392313355f802679128daee2680bd01d016059df",
           "blockingFeedback": [
             {
               "priority": "P2",
               "id": "P2-mfa-audit-structured-admin-actor",
-              "status": "routed",
+              "status": "fix_pushed_followup_review_requested",
               "owner": "Tesla",
               "reviewer": "Lorentz",
               "reviewThreadId": "019f322c-02e7-7590-8b8e-ebdd1e9c52ac",
@@ -580,7 +580,7 @@
             {
               "priority": "P2",
               "id": "P2-branch-freshness-task-file-conflict",
-              "status": "routed",
+              "status": "fix_pushed_followup_review_requested",
               "owner": "Tesla",
               "reviewer": "Lorentz",
               "reviewThreadId": "019f322c-02e7-7590-8b8e-ebdd1e9c52ac",
@@ -589,31 +589,33 @@
             }
           ],
           "verification": {
-            "result": "worker_evidence_unpushed",
+            "result": "controller_verified_fix",
             "commands": [
+              "git diff --check origin/codex/epic/admin-configuration-frontend...HEAD",
+              "jq empty .wdd/epics/EPIC-admin-configuration-frontend/orchestration.json",
               "npm test -- tests/contract/admin-mfa-routes.test.ts",
               "npm test -- tests/integration/admin-auth-service.test.ts",
-              "npm run typecheck",
-              "touched-file eslint",
-              "git diff --check"
+              "npm run typecheck"
             ],
-            "evidence": "Task branch contains local clean unpushed fix commits through 3923133. Task evidence reports MFA route contract tests passed with 6 tests, admin-auth-service integration tests passed with 15 tests, typecheck passed, touched-file ESLint passed, and git diff --check passed after merging latest epic. PR #82 remote head has not updated yet."
+            "evidence": "Controller verified PR #82 pushed fix 3923133: diff check passed, orchestration JSON parsed, admin MFA route contract suite passed with 6 tests, admin-auth-service integration suite passed with 15 tests, and typecheck passed. Follow-up review requested from Lorentz in 019f3375-9922-7283-8c64-702aceaae82f."
           },
           "activatedAt": "2026-07-05T16:47:34Z",
           "cleanupState": "not_started",
           "sharedContextReconciliation": "queued",
           "dispatchedAt": "2026-07-05T16:47:34Z",
           "dispatchBaseCommit": "f183a28fe3e6ef51bf672c2af495cf9128091fba",
-          "lastObservedAt": "2026-07-05T17:59:04Z",
+          "lastObservedAt": "2026-07-05T18:05:13Z",
           "reviewRequestedAt": "2026-07-05T17:32:34Z",
           "reviewSubmissionId": "019f3357-e7f4-7dd1-a1cf-afa9616d4a26",
           "freshnessNote": "Post-controller-checkpoint freshness recheck required: after epic commit 0eb4472, PR #82 mergeStateStatus is UNKNOWN and the task branch is behind the epic branch (rev-list origin epic...HEAD = 1 3). Refresh against latest epic and rerun freshness verification before merge.",
-          "reviewResult": "REVIEW_BLOCKED",
-          "reviewedAt": "2026-07-05T17:48:34Z",
+          "reviewResult": "FOLLOWUP_REVIEW_REQUESTED",
+          "reviewedAt": "2026-07-05T18:05:13Z",
           "feedbackRoutedAt": "2026-07-05T17:48:34Z",
           "feedbackSubmissionId": "019f3366-7cfd-7ee1-b852-1d20abe022d8",
           "feedbackNudgedAt": "2026-07-05T17:59:04Z",
-          "feedbackNudgeSubmissionId": "019f3371-0282-78d3-83fd-b9b8ba1aac24"
+          "feedbackNudgeSubmissionId": "019f3371-0282-78d3-83fd-b9b8ba1aac24",
+          "followupReviewRequestedAt": "2026-07-05T18:05:13Z",
+          "followupReviewSubmissionId": "019f3375-9922-7283-8c64-702aceaae82f"
         },
         {
           "id": "WAVE-004-settings-secret-store",
@@ -627,32 +629,11 @@
           "workerNickname": "Euclid",
           "reviewThreadId": "019f322c-02e7-7590-8b8e-ebdd1e9c52ac",
           "reviewNickname": "Lorentz",
-          "currentGate": "followup_reviewing",
+          "currentGate": "review_passed_pending_freshness",
           "branchFreshness": "stale_needs_freshness_refresh",
           "pr": "https://github.com/ivo-toby/postgram/pull/81",
-          "latestCommit": "e03421a7327555d8711a8c9fb68a8a8d10c1f39a",
-          "blockingFeedback": [
-            {
-              "priority": "P2",
-              "id": "P2-secret-validation-metadata-redaction",
-              "status": "fix_pushed_followup_review_requested",
-              "owner": "Euclid",
-              "reviewer": "Lorentz",
-              "reviewThreadId": "019f322c-02e7-7590-8b8e-ebdd1e9c52ac",
-              "routedAt": "2026-07-05T17:48:34Z",
-              "summary": "saveRuntimeSecret accepts arbitrary validation.metadata and redacted secret metadata reads return mapValidation(row) unchanged, allowing plaintext/token/auth/provider response metadata to leak. Fix by schema-limiting/sanitizing secret validation metadata or not returning arbitrary metadata; add malicious metadata regression."
-            },
-            {
-              "priority": "P2",
-              "id": "P2-branch-freshness-task-file-conflict",
-              "status": "fix_pushed_followup_review_requested",
-              "owner": "Euclid",
-              "reviewer": "Lorentz",
-              "reviewThreadId": "019f322c-02e7-7590-8b8e-ebdd1e9c52ac",
-              "routedAt": "2026-07-05T17:48:34Z",
-              "summary": "PR #81 is not mergeable against the latest epic branch; reviewer says merge-tree conflicts are WDD task-file only and product code auto-merges. Refresh against latest epic branch after code fix and before merge."
-            }
-          ],
+          "latestCommit": "e83e70d762d500f2381e76039ad9776326b71030",
+          "blockingFeedback": [],
           "verification": {
             "result": "controller_verified_fix",
             "commands": [
@@ -668,21 +649,43 @@
           "sharedContextReconciliation": "queued",
           "dispatchedAt": "2026-07-05T16:47:34Z",
           "dispatchBaseCommit": "f183a28fe3e6ef51bf672c2af495cf9128091fba",
-          "lastObservedAt": "2026-07-05T17:59:04Z",
+          "lastObservedAt": "2026-07-05T18:05:13Z",
           "reviewRequestedAt": "2026-07-05T17:32:34Z",
           "reviewSubmissionId": "019f3357-e7f4-7dd1-a1cf-afa9616d4a26",
           "freshnessNote": "Post-controller-checkpoint freshness recheck required: PR #81 was DIRTY before the controller checkpoint and is now mergeStateStatus UNKNOWN after epic commit 0eb4472; the task branch is behind the epic branch (rev-list origin epic...HEAD = 2 2). Refresh against latest epic and rerun freshness verification before merge.",
-          "reviewResult": "FOLLOWUP_REVIEW_REQUESTED",
-          "reviewedAt": "2026-07-05T17:59:04Z",
+          "reviewResult": "REVIEW_PASS",
+          "reviewedAt": "2026-07-05T18:05:13Z",
           "feedbackRoutedAt": "2026-07-05T17:48:34Z",
           "feedbackSubmissionId": "019f3366-7c9b-7b33-9d93-0009fa0ec291",
           "followupReviewRequestedAt": "2026-07-05T17:59:04Z",
-          "followupReviewSubmissionId": "019f3371-9537-7962-925b-b69f1cea2fa6"
+          "followupReviewSubmissionId": "019f3371-9537-7962-925b-b69f1cea2fa6",
+          "reviewedHead": "e03421a7327555d8711a8c9fb68a8a8d10c1f39a",
+          "resolvedFeedback": [
+            {
+              "priority": "P2",
+              "id": "P2-secret-validation-metadata-redaction",
+              "status": "resolved",
+              "reviewer": "Lorentz",
+              "resolvedAt": "2026-07-05T18:05:13Z",
+              "fixCommit": "5d9f1bb",
+              "reviewHead": "e03421a7327555d8711a8c9fb68a8a8d10c1f39a",
+              "summary": "Secret validation metadata is normalized/redacted to empty metadata before persistence/readback and malicious metadata regression covers bearer/token/prefix leakage."
+            },
+            {
+              "priority": "P2",
+              "id": "P2-branch-freshness-task-file-conflict",
+              "status": "resolved_for_review_pair",
+              "reviewer": "Lorentz",
+              "resolvedAt": "2026-07-05T18:05:13Z",
+              "reviewHead": "e03421a7327555d8711a8c9fb68a8a8d10c1f39a",
+              "summary": "Lorentz found merge-tree clean for the reviewed base/head pair; final branch freshness still required before merge because controller artifacts advanced."
+            }
+          ]
         }
       ],
       "activationCommit": "f183a28fe3e6ef51bf672c2af495cf9128091fba",
-      "dispatchState": "mixed_followup_review_and_needs_fixes",
-      "lastObservedAt": "2026-07-05T17:59:04Z"
+      "dispatchState": "followup_reviewing",
+      "lastObservedAt": "2026-07-05T18:05:13Z"
     },
     {
       "id": "WAVE-005",
@@ -1210,15 +1213,15 @@
       "workerThreadId": "019f3333-4033-7463-9819-aa3dec286b4c",
       "reviewThreadId": "019f322c-02e7-7590-8b8e-ebdd1e9c52ac",
       "workerWorktree": "/Users/ivo.toby/workspace/postgram/.worktrees/TASK-006-admin-mfa-step-up",
-      "worktreeStatus": "clean_local_unpushed",
+      "worktreeStatus": "clean_pushed",
       "pr": "https://github.com/ivo-toby/postgram/pull/82",
       "latestCommit": "392313355f802679128daee2680bd01d016059df",
-      "branchFreshness": "local_current_unpushed_requires_push",
+      "branchFreshness": "stale_needs_freshness_refresh",
       "blockingFeedback": [
         {
           "priority": "P2",
           "id": "P2-mfa-audit-structured-admin-actor",
-          "status": "routed",
+          "status": "fix_pushed_followup_review_requested",
           "owner": "Tesla",
           "reviewer": "Lorentz",
           "reviewThreadId": "019f322c-02e7-7590-8b8e-ebdd1e9c52ac",
@@ -1228,7 +1231,7 @@
         {
           "priority": "P2",
           "id": "P2-branch-freshness-task-file-conflict",
-          "status": "routed",
+          "status": "fix_pushed_followup_review_requested",
           "owner": "Tesla",
           "reviewer": "Lorentz",
           "reviewThreadId": "019f322c-02e7-7590-8b8e-ebdd1e9c52ac",
@@ -1237,17 +1240,17 @@
         }
       ],
       "verification": {
-        "result": "worker_evidence_unpushed",
+        "result": "controller_verified_fix",
         "commands": [
+          "git diff --check origin/codex/epic/admin-configuration-frontend...HEAD",
+          "jq empty .wdd/epics/EPIC-admin-configuration-frontend/orchestration.json",
           "npm test -- tests/contract/admin-mfa-routes.test.ts",
           "npm test -- tests/integration/admin-auth-service.test.ts",
-          "npm run typecheck",
-          "touched-file eslint",
-          "git diff --check"
+          "npm run typecheck"
         ],
-        "evidence": "Task branch contains local clean unpushed fix commits through 3923133. Task evidence reports MFA route contract tests passed with 6 tests, admin-auth-service integration tests passed with 15 tests, typecheck passed, touched-file ESLint passed, and git diff --check passed after merging latest epic. PR #82 remote head has not updated yet."
+        "evidence": "Controller verified PR #82 pushed fix 3923133: diff check passed, orchestration JSON parsed, admin MFA route contract suite passed with 6 tests, admin-auth-service integration suite passed with 15 tests, and typecheck passed. Follow-up review requested from Lorentz in 019f3375-9922-7283-8c64-702aceaae82f."
       },
-      "currentGate": "needs_fixes",
+      "currentGate": "followup_reviewing",
       "cleanupState": "not_started",
       "sharedContextReconciliation": "queued",
       "activatedAt": "2026-07-05T16:47:34Z",
@@ -1255,17 +1258,19 @@
       "workerNickname": "Tesla",
       "dispatchedAt": "2026-07-05T16:47:34Z",
       "dispatchBaseCommit": "f183a28fe3e6ef51bf672c2af495cf9128091fba",
-      "lastObservedAt": "2026-07-05T17:59:04Z",
+      "lastObservedAt": "2026-07-05T18:05:13Z",
       "reviewNickname": "Lorentz",
       "reviewRequestedAt": "2026-07-05T17:32:34Z",
       "reviewSubmissionId": "019f3357-e7f4-7dd1-a1cf-afa9616d4a26",
       "freshnessNote": "Post-controller-checkpoint freshness recheck required: after epic commit 0eb4472, PR #82 mergeStateStatus is UNKNOWN and the task branch is behind the epic branch (rev-list origin epic...HEAD = 1 3). Refresh against latest epic and rerun freshness verification before merge.",
-      "reviewResult": "REVIEW_BLOCKED",
-      "reviewedAt": "2026-07-05T17:48:34Z",
+      "reviewResult": "FOLLOWUP_REVIEW_REQUESTED",
+      "reviewedAt": "2026-07-05T18:05:13Z",
       "feedbackRoutedAt": "2026-07-05T17:48:34Z",
       "feedbackSubmissionId": "019f3366-7cfd-7ee1-b852-1d20abe022d8",
       "feedbackNudgedAt": "2026-07-05T17:59:04Z",
-      "feedbackNudgeSubmissionId": "019f3371-0282-78d3-83fd-b9b8ba1aac24"
+      "feedbackNudgeSubmissionId": "019f3371-0282-78d3-83fd-b9b8ba1aac24",
+      "followupReviewRequestedAt": "2026-07-05T18:05:13Z",
+      "followupReviewSubmissionId": "019f3375-9922-7283-8c64-702aceaae82f"
     },
     {
       "id": "TASK-007-admin-api-shell-diagnostics",
@@ -1362,30 +1367,9 @@
       "workerWorktree": "/Users/ivo.toby/workspace/postgram/.worktrees/TASK-009-settings-secret-store",
       "worktreeStatus": "clean_pushed",
       "pr": "https://github.com/ivo-toby/postgram/pull/81",
-      "latestCommit": "e03421a7327555d8711a8c9fb68a8a8d10c1f39a",
+      "latestCommit": "e83e70d762d500f2381e76039ad9776326b71030",
       "branchFreshness": "stale_needs_freshness_refresh",
-      "blockingFeedback": [
-        {
-          "priority": "P2",
-          "id": "P2-secret-validation-metadata-redaction",
-          "status": "fix_pushed_followup_review_requested",
-          "owner": "Euclid",
-          "reviewer": "Lorentz",
-          "reviewThreadId": "019f322c-02e7-7590-8b8e-ebdd1e9c52ac",
-          "routedAt": "2026-07-05T17:48:34Z",
-          "summary": "saveRuntimeSecret accepts arbitrary validation.metadata and redacted secret metadata reads return mapValidation(row) unchanged, allowing plaintext/token/auth/provider response metadata to leak. Fix by schema-limiting/sanitizing secret validation metadata or not returning arbitrary metadata; add malicious metadata regression."
-        },
-        {
-          "priority": "P2",
-          "id": "P2-branch-freshness-task-file-conflict",
-          "status": "fix_pushed_followup_review_requested",
-          "owner": "Euclid",
-          "reviewer": "Lorentz",
-          "reviewThreadId": "019f322c-02e7-7590-8b8e-ebdd1e9c52ac",
-          "routedAt": "2026-07-05T17:48:34Z",
-          "summary": "PR #81 is not mergeable against the latest epic branch; reviewer says merge-tree conflicts are WDD task-file only and product code auto-merges. Refresh against latest epic branch after code fix and before merge."
-        }
-      ],
+      "blockingFeedback": [],
       "verification": {
         "result": "controller_verified_fix",
         "commands": [
@@ -1396,7 +1380,7 @@
         ],
         "evidence": "Controller verified PR #81 pushed fix e03421a: diff check passed, orchestration JSON parsed, admin-settings-service integration suite passed with 8 tests, and typecheck passed. Follow-up review requested from Lorentz in 019f3371-9537-7962-925b-b69f1cea2fa6."
       },
-      "currentGate": "followup_reviewing",
+      "currentGate": "review_passed_pending_freshness",
       "cleanupState": "not_started",
       "sharedContextReconciliation": "queued",
       "activatedAt": "2026-07-05T16:47:34Z",
@@ -1404,17 +1388,39 @@
       "workerNickname": "Euclid",
       "dispatchedAt": "2026-07-05T16:47:34Z",
       "dispatchBaseCommit": "f183a28fe3e6ef51bf672c2af495cf9128091fba",
-      "lastObservedAt": "2026-07-05T17:59:04Z",
+      "lastObservedAt": "2026-07-05T18:05:13Z",
       "reviewNickname": "Lorentz",
       "reviewRequestedAt": "2026-07-05T17:32:34Z",
       "reviewSubmissionId": "019f3357-e7f4-7dd1-a1cf-afa9616d4a26",
       "freshnessNote": "Post-controller-checkpoint freshness recheck required: PR #81 was DIRTY before the controller checkpoint and is now mergeStateStatus UNKNOWN after epic commit 0eb4472; the task branch is behind the epic branch (rev-list origin epic...HEAD = 2 2). Refresh against latest epic and rerun freshness verification before merge.",
-      "reviewResult": "FOLLOWUP_REVIEW_REQUESTED",
-      "reviewedAt": "2026-07-05T17:59:04Z",
+      "reviewResult": "REVIEW_PASS",
+      "reviewedAt": "2026-07-05T18:05:13Z",
       "feedbackRoutedAt": "2026-07-05T17:48:34Z",
       "feedbackSubmissionId": "019f3366-7c9b-7b33-9d93-0009fa0ec291",
       "followupReviewRequestedAt": "2026-07-05T17:59:04Z",
-      "followupReviewSubmissionId": "019f3371-9537-7962-925b-b69f1cea2fa6"
+      "followupReviewSubmissionId": "019f3371-9537-7962-925b-b69f1cea2fa6",
+      "reviewedHead": "e03421a7327555d8711a8c9fb68a8a8d10c1f39a",
+      "resolvedFeedback": [
+        {
+          "priority": "P2",
+          "id": "P2-secret-validation-metadata-redaction",
+          "status": "resolved",
+          "reviewer": "Lorentz",
+          "resolvedAt": "2026-07-05T18:05:13Z",
+          "fixCommit": "5d9f1bb",
+          "reviewHead": "e03421a7327555d8711a8c9fb68a8a8d10c1f39a",
+          "summary": "Secret validation metadata is normalized/redacted to empty metadata before persistence/readback and malicious metadata regression covers bearer/token/prefix leakage."
+        },
+        {
+          "priority": "P2",
+          "id": "P2-branch-freshness-task-file-conflict",
+          "status": "resolved_for_review_pair",
+          "reviewer": "Lorentz",
+          "resolvedAt": "2026-07-05T18:05:13Z",
+          "reviewHead": "e03421a7327555d8711a8c9fb68a8a8d10c1f39a",
+          "summary": "Lorentz found merge-tree clean for the reviewed base/head pair; final branch freshness still required before merge because controller artifacts advanced."
+        }
+      ]
     },
     {
       "id": "TASK-010-provider-config-apply",
@@ -1754,10 +1760,10 @@
     "mode": "codex_thread_heartbeat",
     "cadence": "5m",
     "status": "active",
-    "lastCheckedAt": "2026-07-05T17:59:04Z",
-    "nextCheckDueAt": "2026-07-05T18:04:04Z",
+    "lastCheckedAt": "2026-07-05T18:05:13Z",
+    "nextCheckDueAt": "2026-07-05T18:10:13Z",
     "schedulerRef": "postgram-admin-wave-004-start-heartbeat",
-    "fallbackPrompt": "Run one bounded WDD controller heartbeat for /Users/ivo.toby/workspace/postgram, epic EPIC-admin-configuration-frontend, active wave WAVE-004. Use the subagent-pr-orchestration skill. Start in /Users/ivo.toby/workspace/postgram on branch codex/epic/admin-configuration-frontend. Read .wdd/epics/EPIC-admin-configuration-frontend/orchestration.json and controller-state.md, then inspect Lorentz (019f322c-02e7-7590-8b8e-ebdd1e9c52ac) follow-up review for PR #81 / WAVE-004-settings-secret-store, worker Tesla (019f3333-4033-7463-9819-aa3dec286b4c) for PR #82 / WAVE-004-admin-mfa-step-up fix push/final status, worker Euclid (019f3333-4104-7b02-b1aa-1fce6978e410), draft PR #81, draft PR #82, and assigned worktrees. Current split state: PR #81 has pushed fix e03421a and controller verification passed; follow-up review requested in 019f3371-9537-7962-925b-b69f1cea2fa6. PR #82 has local fix commits through 3923133 and passing task evidence, but the task branch is still ahead of origin and PR #82 has not updated; Tesla was nudged in 019f3371-0282-78d3-83fd-b9b8ba1aac24 for push/final token. If PR #81 review passes and PR #82 pushes fixes, enforce branch freshness against codex/epic/admin-configuration-frontend, rerun required verification, and request follow-up review for PR #82. If PR #81 review blocks or PR #82 still lacks push/final status, keep the affected bundle in needs_fixes and nudge exact missing deliverables only if needed. Stop when WAVE-004 bundles are merged, blocked, cancelled, or ready for wdd-reconcile-wave. Do not start WAVE-005."
+    "fallbackPrompt": "Run one bounded WDD controller heartbeat for /Users/ivo.toby/workspace/postgram, epic EPIC-admin-configuration-frontend, active wave WAVE-004. Use the subagent-pr-orchestration skill. Start in /Users/ivo.toby/workspace/postgram on branch codex/epic/admin-configuration-frontend. Read .wdd/epics/EPIC-admin-configuration-frontend/orchestration.json and controller-state.md, then inspect Lorentz (019f322c-02e7-7590-8b8e-ebdd1e9c52ac) follow-up review for PR #82 / WAVE-004-admin-mfa-step-up, draft PR #81, draft PR #82, and assigned worktrees. Current split state: PR #81 follow-up review returned REVIEW_PASS for code fix at e03421a; PR #81 head is now e83e70d with WDD artifact-only changes and still needs final branch freshness before merge. PR #82 fix is pushed at 3923133, controller verification passed, and Lorentz follow-up review was requested in 019f3375-9922-7283-8c64-702aceaae82f. If PR #82 review passes, enforce branch freshness for both PRs against codex/epic/admin-configuration-frontend, rerun required verification, then merge or mark merge_ready according to policy. If PR #82 review blocks, route exact P1/P2 feedback. Stop when WAVE-004 bundles are merged, blocked, cancelled, or ready for wdd-reconcile-wave. Do not start WAVE-005."
   },
   "sharedContext": {
     "index": "shared-context/index.md",
@@ -1794,20 +1800,20 @@
         ],
         "branch": "codex/task/TASK-006-admin-mfa-step-up",
         "worktree": "/Users/ivo.toby/workspace/postgram/.worktrees/TASK-006-admin-mfa-step-up",
-        "worktreeStatus": "clean_local_unpushed",
+        "worktreeStatus": "clean_pushed",
         "workerThreadId": "019f3333-4033-7463-9819-aa3dec286b4c",
         "workerNickname": "Tesla",
         "reviewThreadId": "019f322c-02e7-7590-8b8e-ebdd1e9c52ac",
         "reviewNickname": "Lorentz",
-        "currentGate": "needs_fixes",
-        "branchFreshness": "local_current_unpushed_requires_push",
+        "currentGate": "followup_reviewing",
+        "branchFreshness": "stale_needs_freshness_refresh",
         "pr": "https://github.com/ivo-toby/postgram/pull/82",
         "latestCommit": "392313355f802679128daee2680bd01d016059df",
         "blockingFeedback": [
           {
             "priority": "P2",
             "id": "P2-mfa-audit-structured-admin-actor",
-            "status": "routed",
+            "status": "fix_pushed_followup_review_requested",
             "owner": "Tesla",
             "reviewer": "Lorentz",
             "reviewThreadId": "019f322c-02e7-7590-8b8e-ebdd1e9c52ac",
@@ -1817,7 +1823,7 @@
           {
             "priority": "P2",
             "id": "P2-branch-freshness-task-file-conflict",
-            "status": "routed",
+            "status": "fix_pushed_followup_review_requested",
             "owner": "Tesla",
             "reviewer": "Lorentz",
             "reviewThreadId": "019f322c-02e7-7590-8b8e-ebdd1e9c52ac",
@@ -1826,28 +1832,30 @@
           }
         ],
         "verification": {
-          "result": "worker_evidence_unpushed",
+          "result": "controller_verified_fix",
           "commands": [
+            "git diff --check origin/codex/epic/admin-configuration-frontend...HEAD",
+            "jq empty .wdd/epics/EPIC-admin-configuration-frontend/orchestration.json",
             "npm test -- tests/contract/admin-mfa-routes.test.ts",
             "npm test -- tests/integration/admin-auth-service.test.ts",
-            "npm run typecheck",
-            "touched-file eslint",
-            "git diff --check"
+            "npm run typecheck"
           ],
-          "evidence": "Task branch contains local clean unpushed fix commits through 3923133. Task evidence reports MFA route contract tests passed with 6 tests, admin-auth-service integration tests passed with 15 tests, typecheck passed, touched-file ESLint passed, and git diff --check passed after merging latest epic. PR #82 remote head has not updated yet."
+          "evidence": "Controller verified PR #82 pushed fix 3923133: diff check passed, orchestration JSON parsed, admin MFA route contract suite passed with 6 tests, admin-auth-service integration suite passed with 15 tests, and typecheck passed. Follow-up review requested from Lorentz in 019f3375-9922-7283-8c64-702aceaae82f."
         },
         "activatedAt": "2026-07-05T16:47:34Z",
         "cleanupState": "not_started",
         "sharedContextReconciliation": "queued",
         "dispatchedAt": "2026-07-05T16:47:34Z",
         "dispatchBaseCommit": "f183a28fe3e6ef51bf672c2af495cf9128091fba",
-        "lastObservedAt": "2026-07-05T17:59:04Z",
-        "reviewResult": "REVIEW_BLOCKED",
-        "reviewedAt": "2026-07-05T17:48:34Z",
+        "lastObservedAt": "2026-07-05T18:05:13Z",
+        "reviewResult": "FOLLOWUP_REVIEW_REQUESTED",
+        "reviewedAt": "2026-07-05T18:05:13Z",
         "feedbackRoutedAt": "2026-07-05T17:48:34Z",
         "feedbackSubmissionId": "019f3366-7cfd-7ee1-b852-1d20abe022d8",
         "feedbackNudgedAt": "2026-07-05T17:59:04Z",
-        "feedbackNudgeSubmissionId": "019f3371-0282-78d3-83fd-b9b8ba1aac24"
+        "feedbackNudgeSubmissionId": "019f3371-0282-78d3-83fd-b9b8ba1aac24",
+        "followupReviewRequestedAt": "2026-07-05T18:05:13Z",
+        "followupReviewSubmissionId": "019f3375-9922-7283-8c64-702aceaae82f"
       },
       {
         "id": "WAVE-004-settings-secret-store",
@@ -1861,32 +1869,11 @@
         "workerNickname": "Euclid",
         "reviewThreadId": "019f322c-02e7-7590-8b8e-ebdd1e9c52ac",
         "reviewNickname": "Lorentz",
-        "currentGate": "followup_reviewing",
+        "currentGate": "review_passed_pending_freshness",
         "branchFreshness": "stale_needs_freshness_refresh",
         "pr": "https://github.com/ivo-toby/postgram/pull/81",
-        "latestCommit": "e03421a7327555d8711a8c9fb68a8a8d10c1f39a",
-        "blockingFeedback": [
-          {
-            "priority": "P2",
-            "id": "P2-secret-validation-metadata-redaction",
-            "status": "fix_pushed_followup_review_requested",
-            "owner": "Euclid",
-            "reviewer": "Lorentz",
-            "reviewThreadId": "019f322c-02e7-7590-8b8e-ebdd1e9c52ac",
-            "routedAt": "2026-07-05T17:48:34Z",
-            "summary": "saveRuntimeSecret accepts arbitrary validation.metadata and redacted secret metadata reads return mapValidation(row) unchanged, allowing plaintext/token/auth/provider response metadata to leak. Fix by schema-limiting/sanitizing secret validation metadata or not returning arbitrary metadata; add malicious metadata regression."
-          },
-          {
-            "priority": "P2",
-            "id": "P2-branch-freshness-task-file-conflict",
-            "status": "fix_pushed_followup_review_requested",
-            "owner": "Euclid",
-            "reviewer": "Lorentz",
-            "reviewThreadId": "019f322c-02e7-7590-8b8e-ebdd1e9c52ac",
-            "routedAt": "2026-07-05T17:48:34Z",
-            "summary": "PR #81 is not mergeable against the latest epic branch; reviewer says merge-tree conflicts are WDD task-file only and product code auto-merges. Refresh against latest epic branch after code fix and before merge."
-          }
-        ],
+        "latestCommit": "e83e70d762d500f2381e76039ad9776326b71030",
+        "blockingFeedback": [],
         "verification": {
           "result": "controller_verified_fix",
           "commands": [
@@ -1902,20 +1889,42 @@
         "sharedContextReconciliation": "queued",
         "dispatchedAt": "2026-07-05T16:47:34Z",
         "dispatchBaseCommit": "f183a28fe3e6ef51bf672c2af495cf9128091fba",
-        "lastObservedAt": "2026-07-05T17:59:04Z",
-        "reviewResult": "FOLLOWUP_REVIEW_REQUESTED",
-        "reviewedAt": "2026-07-05T17:59:04Z",
+        "lastObservedAt": "2026-07-05T18:05:13Z",
+        "reviewResult": "REVIEW_PASS",
+        "reviewedAt": "2026-07-05T18:05:13Z",
         "feedbackRoutedAt": "2026-07-05T17:48:34Z",
         "feedbackSubmissionId": "019f3366-7c9b-7b33-9d93-0009fa0ec291",
         "followupReviewRequestedAt": "2026-07-05T17:59:04Z",
-        "followupReviewSubmissionId": "019f3371-9537-7962-925b-b69f1cea2fa6"
+        "followupReviewSubmissionId": "019f3371-9537-7962-925b-b69f1cea2fa6",
+        "reviewedHead": "e03421a7327555d8711a8c9fb68a8a8d10c1f39a",
+        "resolvedFeedback": [
+          {
+            "priority": "P2",
+            "id": "P2-secret-validation-metadata-redaction",
+            "status": "resolved",
+            "reviewer": "Lorentz",
+            "resolvedAt": "2026-07-05T18:05:13Z",
+            "fixCommit": "5d9f1bb",
+            "reviewHead": "e03421a7327555d8711a8c9fb68a8a8d10c1f39a",
+            "summary": "Secret validation metadata is normalized/redacted to empty metadata before persistence/readback and malicious metadata regression covers bearer/token/prefix leakage."
+          },
+          {
+            "priority": "P2",
+            "id": "P2-branch-freshness-task-file-conflict",
+            "status": "resolved_for_review_pair",
+            "reviewer": "Lorentz",
+            "resolvedAt": "2026-07-05T18:05:13Z",
+            "reviewHead": "e03421a7327555d8711a8c9fb68a8a8d10c1f39a",
+            "summary": "Lorentz found merge-tree clean for the reviewed base/head pair; final branch freshness still required before merge because controller artifacts advanced."
+          }
+        ]
       }
     ],
     "status": "in_progress",
     "dispatchedAt": "2026-07-05T16:47:34Z",
     "activationCommit": "f183a28fe3e6ef51bf672c2af495cf9128091fba",
-    "lastObservedAt": "2026-07-05T17:59:04Z",
-    "dispatchState": "mixed_followup_review_and_needs_fixes"
+    "lastObservedAt": "2026-07-05T18:05:13Z",
+    "dispatchState": "followup_reviewing"
   },
   "currentGates": {
     "epicBranch": {
@@ -1941,21 +1950,21 @@
       "WAVE-001-admin-feasibility-gate": "cleaned_up",
       "WAVE-002-admin-auth-persistence": "cleaned_up",
       "WAVE-003-admin-session-routes": "cleaned_up",
-      "WAVE-004-admin-mfa-step-up": "clean_local_unpushed",
+      "WAVE-004-admin-mfa-step-up": "clean_pushed",
       "WAVE-004-settings-secret-store": "clean_pushed"
     },
     "workerDispatch": {
       "WAVE-001-admin-feasibility-gate": "reconciled",
       "WAVE-002-admin-auth-persistence": "reconciled",
       "WAVE-003-admin-session-routes": "reconciled",
-      "WAVE-004-admin-mfa-step-up": "needs_fixes",
-      "WAVE-004-settings-secret-store": "followup_reviewing"
+      "WAVE-004-admin-mfa-step-up": "followup_reviewing",
+      "WAVE-004-settings-secret-store": "review_passed_pending_freshness"
     },
     "waveCompletion": {
       "WAVE-001": "done",
       "WAVE-002": "done",
       "WAVE-003": "done",
-      "WAVE-004": "needs_fixes"
+      "WAVE-004": "in_followup_review"
     },
     "nextWave": {
       "id": "WAVE-005",
@@ -1965,10 +1974,10 @@
       "mode": "codex_thread_heartbeat",
       "cadence": "5m",
       "status": "active",
-      "lastCheckedAt": "2026-07-05T17:59:04Z",
-      "nextCheckDueAt": "2026-07-05T18:04:04Z",
+      "lastCheckedAt": "2026-07-05T18:05:13Z",
+      "nextCheckDueAt": "2026-07-05T18:10:13Z",
       "schedulerRef": "postgram-admin-wave-004-start-heartbeat",
-      "fallbackPrompt": "Run one bounded WDD controller heartbeat for /Users/ivo.toby/workspace/postgram, epic EPIC-admin-configuration-frontend, active wave WAVE-004. Use the subagent-pr-orchestration skill. Start in /Users/ivo.toby/workspace/postgram on branch codex/epic/admin-configuration-frontend. Read .wdd/epics/EPIC-admin-configuration-frontend/orchestration.json and controller-state.md, then inspect Lorentz (019f322c-02e7-7590-8b8e-ebdd1e9c52ac) follow-up review for PR #81 / WAVE-004-settings-secret-store, worker Tesla (019f3333-4033-7463-9819-aa3dec286b4c) for PR #82 / WAVE-004-admin-mfa-step-up fix push/final status, worker Euclid (019f3333-4104-7b02-b1aa-1fce6978e410), draft PR #81, draft PR #82, and assigned worktrees. Current split state: PR #81 has pushed fix e03421a and controller verification passed; follow-up review requested in 019f3371-9537-7962-925b-b69f1cea2fa6. PR #82 has local fix commits through 3923133 and passing task evidence, but the task branch is still ahead of origin and PR #82 has not updated; Tesla was nudged in 019f3371-0282-78d3-83fd-b9b8ba1aac24 for push/final token. If PR #81 review passes and PR #82 pushes fixes, enforce branch freshness against codex/epic/admin-configuration-frontend, rerun required verification, and request follow-up review for PR #82. If PR #81 review blocks or PR #82 still lacks push/final status, keep the affected bundle in needs_fixes and nudge exact missing deliverables only if needed. Stop when WAVE-004 bundles are merged, blocked, cancelled, or ready for wdd-reconcile-wave. Do not start WAVE-005."
+      "fallbackPrompt": "Run one bounded WDD controller heartbeat for /Users/ivo.toby/workspace/postgram, epic EPIC-admin-configuration-frontend, active wave WAVE-004. Use the subagent-pr-orchestration skill. Start in /Users/ivo.toby/workspace/postgram on branch codex/epic/admin-configuration-frontend. Read .wdd/epics/EPIC-admin-configuration-frontend/orchestration.json and controller-state.md, then inspect Lorentz (019f322c-02e7-7590-8b8e-ebdd1e9c52ac) follow-up review for PR #82 / WAVE-004-admin-mfa-step-up, draft PR #81, draft PR #82, and assigned worktrees. Current split state: PR #81 follow-up review returned REVIEW_PASS for code fix at e03421a; PR #81 head is now e83e70d with WDD artifact-only changes and still needs final branch freshness before merge. PR #82 fix is pushed at 3923133, controller verification passed, and Lorentz follow-up review was requested in 019f3375-9922-7283-8c64-702aceaae82f. If PR #82 review passes, enforce branch freshness for both PRs against codex/epic/admin-configuration-frontend, rerun required verification, then merge or mark merge_ready according to policy. If PR #82 review blocks, route exact P1/P2 feedback. Stop when WAVE-004 bundles are merged, blocked, cancelled, or ready for wdd-reconcile-wave. Do not start WAVE-005."
     },
     "review": {
       "WAVE-001-admin-feasibility-gate": {
@@ -2040,8 +2049,8 @@
         "blockingFeedback": []
       },
       "WAVE-004-admin-mfa-step-up": {
-        "status": "blocked_fix_unpushed",
-        "result": "REVIEW_BLOCKED",
+        "status": "followup_reviewing",
+        "result": null,
         "pr": "https://github.com/ivo-toby/postgram/pull/82",
         "latestCommit": "392313355f802679128daee2680bd01d016059df",
         "reviewThreadId": "019f322c-02e7-7590-8b8e-ebdd1e9c52ac",
@@ -2054,7 +2063,7 @@
           {
             "priority": "P2",
             "id": "P2-mfa-audit-structured-admin-actor",
-            "status": "local_fix_unpushed",
+            "status": "fix_pushed_followup_review_requested",
             "owner": "Tesla",
             "reviewer": "Lorentz",
             "reviewThreadId": "019f322c-02e7-7590-8b8e-ebdd1e9c52ac",
@@ -2064,7 +2073,7 @@
           {
             "priority": "P2",
             "id": "P2-branch-freshness-task-file-conflict",
-            "status": "local_fix_unpushed",
+            "status": "fix_pushed_followup_review_requested",
             "owner": "Tesla",
             "reviewer": "Lorentz",
             "reviewThreadId": "019f322c-02e7-7590-8b8e-ebdd1e9c52ac",
@@ -2089,55 +2098,51 @@
         "feedbackRoutedAt": "2026-07-05T17:48:34Z",
         "feedbackSubmissionId": "019f3366-7cfd-7ee1-b852-1d20abe022d8",
         "feedbackNudgedAt": "2026-07-05T17:59:04Z",
-        "feedbackNudgeSubmissionId": "019f3371-0282-78d3-83fd-b9b8ba1aac24"
+        "feedbackNudgeSubmissionId": "019f3371-0282-78d3-83fd-b9b8ba1aac24",
+        "followupReviewRequestedAt": "2026-07-05T18:05:13Z",
+        "followupReviewSubmissionId": "019f3375-9922-7283-8c64-702aceaae82f"
       },
       "WAVE-004-settings-secret-store": {
-        "status": "followup_reviewing",
-        "result": null,
+        "status": "passed_pending_freshness",
+        "result": "REVIEW_PASS",
         "pr": "https://github.com/ivo-toby/postgram/pull/81",
-        "latestCommit": "e03421a7327555d8711a8c9fb68a8a8d10c1f39a",
+        "latestCommit": "e83e70d762d500f2381e76039ad9776326b71030",
         "reviewThreadId": "019f322c-02e7-7590-8b8e-ebdd1e9c52ac",
         "reviewNickname": "Lorentz",
         "reviewRequestedAt": "2026-07-05T17:32:34Z",
         "reviewSubmissionId": "019f3357-e7f4-7dd1-a1cf-afa9616d4a26",
         "workerThreadId": "019f3333-4104-7b02-b1aa-1fce6978e410",
         "workerNickname": "Euclid",
-        "blockingFeedback": [
-          {
-            "priority": "P2",
-            "id": "P2-secret-validation-metadata-redaction",
-            "status": "fix_pushed_followup_review_requested",
-            "owner": "Euclid",
-            "reviewer": "Lorentz",
-            "reviewThreadId": "019f322c-02e7-7590-8b8e-ebdd1e9c52ac",
-            "routedAt": "2026-07-05T17:48:34Z",
-            "summary": "saveRuntimeSecret accepts arbitrary validation.metadata and redacted secret metadata reads return mapValidation(row) unchanged, allowing plaintext/token/auth/provider response metadata to leak. Fix by schema-limiting/sanitizing secret validation metadata or not returning arbitrary metadata; add malicious metadata regression."
-          },
-          {
-            "priority": "P2",
-            "id": "P2-branch-freshness-task-file-conflict",
-            "status": "fix_pushed_followup_review_requested",
-            "owner": "Euclid",
-            "reviewer": "Lorentz",
-            "reviewThreadId": "019f322c-02e7-7590-8b8e-ebdd1e9c52ac",
-            "routedAt": "2026-07-05T17:48:34Z",
-            "summary": "PR #81 is not mergeable against the latest epic branch; reviewer says merge-tree conflicts are WDD task-file only and product code auto-merges. Refresh against latest epic branch after code fix and before merge."
-          }
-        ],
+        "blockingFeedback": [],
         "freshnessNote": "Post-controller-checkpoint freshness recheck required: PR #81 was DIRTY before the controller checkpoint and is now mergeStateStatus UNKNOWN after epic commit 0eb4472; the task branch is behind the epic branch (rev-list origin epic...HEAD = 2 2). Refresh against latest epic and rerun freshness verification before merge.",
-        "reviewedAt": "2026-07-05T17:48:34Z",
+        "reviewedAt": "2026-07-05T18:05:13Z",
         "nonBlockingFeedback": [],
         "feedbackRoutedAt": "2026-07-05T17:48:34Z",
         "feedbackSubmissionId": "019f3366-7c9b-7b33-9d93-0009fa0ec291",
         "followupReviewRequestedAt": "2026-07-05T17:59:04Z",
-        "followupReviewSubmissionId": "019f3371-9537-7962-925b-b69f1cea2fa6"
+        "followupReviewSubmissionId": "019f3371-9537-7962-925b-b69f1cea2fa6",
+        "reviewedHead": "e03421a7327555d8711a8c9fb68a8a8d10c1f39a",
+        "resolvedFeedback": [
+          {
+            "priority": "P2",
+            "id": "P2-secret-validation-metadata-redaction",
+            "status": "resolved",
+            "resolvedAt": "2026-07-05T18:05:13Z"
+          },
+          {
+            "priority": "P2",
+            "id": "P2-branch-freshness-task-file-conflict",
+            "status": "resolved_for_review_pair_final_freshness_pending",
+            "resolvedAt": "2026-07-05T18:05:13Z"
+          }
+        ]
       }
     },
     "branchFreshness": {
       "WAVE-001-admin-feasibility-gate": "current_at_merge",
       "WAVE-002-admin-auth-persistence": "current_at_merge",
       "WAVE-003-admin-session-routes": "current_at_merge",
-      "WAVE-004-admin-mfa-step-up": "local_current_unpushed_requires_push",
+      "WAVE-004-admin-mfa-step-up": "stale_needs_freshness_refresh",
       "WAVE-004-settings-secret-store": "stale_needs_freshness_refresh"
     },
     "merge": {
@@ -2220,13 +2225,13 @@
         "isDraft": true,
         "url": "https://github.com/ivo-toby/postgram/pull/82",
         "number": 82,
-        "checkedAt": "2026-07-05T17:59:04Z",
+        "checkedAt": "2026-07-05T18:05:13Z",
         "headRef": "codex/task/TASK-006-admin-mfa-step-up",
-        "headSha": "3cfca6e9da0d1f5b675616e28546302a6fcad7f4",
+        "headSha": "392313355f802679128daee2680bd01d016059df",
         "baseRef": "codex/epic/admin-configuration-frontend",
-        "mergeStateStatus": "DIRTY_REMOTE_STALE_LOCAL_FIX_UNPUSHED",
-        "updatedAt": "2026-07-05T17:29:53Z",
-        "reviewDecision": "REVIEW_BLOCKED",
+        "mergeStateStatus": "DIRTY_REQUIRES_FINAL_FRESHNESS",
+        "updatedAt": "2026-07-05T18:01:49Z",
+        "reviewDecision": "FOLLOWUP_REVIEW_REQUESTED",
         "localHeadSha": "392313355f802679128daee2680bd01d016059df"
       },
       "WAVE-004-settings-secret-store": {
@@ -2234,13 +2239,14 @@
         "isDraft": true,
         "url": "https://github.com/ivo-toby/postgram/pull/81",
         "number": 81,
-        "checkedAt": "2026-07-05T17:59:04Z",
+        "checkedAt": "2026-07-05T18:05:13Z",
         "headRef": "codex/task/TASK-009-settings-secret-store",
-        "headSha": "e03421a7327555d8711a8c9fb68a8a8d10c1f39a",
+        "headSha": "e83e70d762d500f2381e76039ad9776326b71030",
         "baseRef": "codex/epic/admin-configuration-frontend",
         "mergeStateStatus": "DIRTY_REQUIRES_FINAL_FRESHNESS",
-        "updatedAt": "2026-07-05T17:59:21Z",
-        "reviewDecision": "FOLLOWUP_REVIEW_REQUESTED"
+        "updatedAt": "2026-07-05T18:05:13Z",
+        "reviewDecision": "REVIEW_PASS",
+        "reviewedHead": "e03421a7327555d8711a8c9fb68a8a8d10c1f39a"
       }
     },
     "cleanup": {
@@ -2330,21 +2336,21 @@
         "reconciliationSummary": "WAVE-003 reconciled the concrete /admin/api/* session route contract, pgm_admin_session cookie, X-CSRF-Token CSRF header, safe bootstrap/login errors, pending-MFA carry-forward gate, downstream TASK-006/TASK-007/TASK-009/TASK-011 task updates, and TASK-005 worktree cleanup. WAVE-004 is ready for wdd-start-wave; it was not started during reconciliation."
       },
       "WAVE-004-admin-mfa-step-up": {
-        "status": "fix_local_unpushed_nudged",
+        "status": "fix_pushed_followup_review_requested",
         "workerThreadId": "019f3333-4033-7463-9819-aa3dec286b4c",
         "workerNickname": "Tesla",
         "finalStatus": "DONE",
         "pr": "https://github.com/ivo-toby/postgram/pull/82",
         "latestCommit": "392313355f802679128daee2680bd01d016059df",
         "dispatchedAt": "2026-07-05T16:47:34Z",
-        "lastObservedAt": "2026-07-05T17:59:04Z",
+        "lastObservedAt": "2026-07-05T18:05:13Z",
         "lastObservation": {
-          "checkedAt": "2026-07-05T17:59:04Z",
-          "workerStatus": "local_fix_unpushed_no_final_status_observed",
+          "checkedAt": "2026-07-05T18:05:13Z",
+          "workerStatus": "DONE",
           "pr": "https://github.com/ivo-toby/postgram/pull/82",
           "patch": null,
           "worktreeStatus": "clean_pushed",
-          "branchHead": "3cfca6e9da0d1f5b675616e28546302a6fcad7f4",
+          "branchHead": "392313355f802679128daee2680bd01d016059df",
           "branchFreshness": "stale_needs_freshness_refresh",
           "verification": "Tesla reported admin MFA contract tests passed (5 tests), admin auth service integration tests passed (14 tests), typecheck passed, touched-file ESLint passed, git diff --check passed, and Codex review found no introduced correctness/security issues after P2 fixes.",
           "observedFiles": [
@@ -2360,7 +2366,7 @@
           "reviewer": "Lorentz",
           "note": "Controller observed clean local fix commits ahead of origin; nudged Tesla for push, PR update, and final status token.",
           "freshnessNote": "Post-controller-checkpoint freshness recheck required: after epic commit 0eb4472, PR #82 mergeStateStatus is UNKNOWN and the task branch is behind the epic branch (rev-list origin epic...HEAD = 1 3). Refresh against latest epic and rerun freshness verification before merge.",
-          "reviewStatus": "REVIEW_BLOCKED",
+          "reviewStatus": "FOLLOWUP_REVIEW_REQUESTED",
           "feedbackRoutedAt": "2026-07-05T17:48:34Z",
           "feedbackSubmissionId": "019f3366-7cfd-7ee1-b852-1d20abe022d8",
           "blockingFeedback": [
@@ -2400,7 +2406,8 @@
           "remoteBranchHead": "3cfca6e9da0d1f5b675616e28546302a6fcad7f4",
           "localBranchHead": "392313355f802679128daee2680bd01d016059df",
           "feedbackNudgedAt": "2026-07-05T17:59:04Z",
-          "feedbackNudgeSubmissionId": "019f3371-0282-78d3-83fd-b9b8ba1aac24"
+          "feedbackNudgeSubmissionId": "019f3371-0282-78d3-83fd-b9b8ba1aac24",
+          "followupReviewSubmissionId": "019f3375-9922-7283-8c64-702aceaae82f"
         },
         "cleanupState": "not_started",
         "feedbackSubmissionId": "019f3366-7cfd-7ee1-b852-1d20abe022d8",
@@ -2429,21 +2436,21 @@
         "feedbackNudgeSubmissionId": "019f3371-0282-78d3-83fd-b9b8ba1aac24"
       },
       "WAVE-004-settings-secret-store": {
-        "status": "fix_pushed_followup_review_requested",
+        "status": "review_passed_pending_freshness",
         "workerThreadId": "019f3333-4104-7b02-b1aa-1fce6978e410",
         "workerNickname": "Euclid",
         "finalStatus": "DONE",
         "pr": "https://github.com/ivo-toby/postgram/pull/81",
-        "latestCommit": "e03421a7327555d8711a8c9fb68a8a8d10c1f39a",
+        "latestCommit": "e83e70d762d500f2381e76039ad9776326b71030",
         "dispatchedAt": "2026-07-05T16:47:34Z",
-        "lastObservedAt": "2026-07-05T17:59:04Z",
+        "lastObservedAt": "2026-07-05T18:05:13Z",
         "lastObservation": {
-          "checkedAt": "2026-07-05T17:59:04Z",
+          "checkedAt": "2026-07-05T18:05:13Z",
           "workerStatus": "fix_pushed_no_final_status_observed",
           "pr": "https://github.com/ivo-toby/postgram/pull/81",
           "patch": null,
           "worktreeStatus": "clean_pushed",
-          "branchHead": "e03421a7327555d8711a8c9fb68a8a8d10c1f39a",
+          "branchHead": "e83e70d762d500f2381e76039ad9776326b71030",
           "branchFreshness": "stale_needs_freshness_refresh",
           "verification": "Euclid reported admin settings service integration tests, typecheck, git diff --check, touched-file ESLint, config unit tests, migration integration tests, and admin auth service integration tests passed; follow-up Codex review found no blocking issues after fixing the P1 secret-bypass finding.",
           "observedFiles": [
@@ -2461,9 +2468,9 @@
           "reviewRequestedAt": "2026-07-05T17:32:34Z",
           "reviewSubmissionId": "019f3357-e7f4-7dd1-a1cf-afa9616d4a26",
           "reviewer": "Lorentz",
-          "note": "Euclid returned DONE, pushed branch head b96ca9d5b0ff3445aa8a8231451998f86ce23e5c, opened draft PR #81, and moved the task file to review in the task branch.",
+          "note": "Lorentz follow-up review passed PR #81 code fix; final branch freshness still required before merge.",
           "freshnessNote": "Post-controller-checkpoint freshness recheck required: PR #81 was DIRTY before the controller checkpoint and is now mergeStateStatus UNKNOWN after epic commit 0eb4472; the task branch is behind the epic branch (rev-list origin epic...HEAD = 2 2). Refresh against latest epic and rerun freshness verification before merge.",
-          "reviewStatus": "FOLLOWUP_REVIEW_REQUESTED",
+          "reviewStatus": "REVIEW_PASS",
           "feedbackRoutedAt": "2026-07-05T17:48:34Z",
           "feedbackSubmissionId": "019f3366-7c9b-7b33-9d93-0009fa0ec291",
           "blockingFeedback": [
@@ -2489,7 +2496,8 @@
             }
           ],
           "nonBlockingFeedback": [],
-          "followupReviewSubmissionId": "019f3371-9537-7962-925b-b69f1cea2fa6"
+          "followupReviewSubmissionId": "019f3371-9537-7962-925b-b69f1cea2fa6",
+          "reviewedHead": "e03421a7327555d8711a8c9fb68a8a8d10c1f39a"
         },
         "cleanupState": "not_started",
         "feedbackSubmissionId": "019f3366-7c9b-7b33-9d93-0009fa0ec291",
@@ -2550,11 +2558,11 @@
         ],
         "branch": "codex/task/TASK-006-admin-mfa-step-up",
         "worktree": "/Users/ivo.toby/workspace/postgram/.worktrees/TASK-006-admin-mfa-step-up",
-        "worktreeStatus": "clean_local_unpushed",
+        "worktreeStatus": "clean_pushed",
         "workerThreadId": "019f3333-4033-7463-9819-aa3dec286b4c",
         "workerNickname": "Tesla",
-        "currentGate": "needs_fixes",
-        "branchFreshness": "local_current_unpushed_requires_push",
+        "currentGate": "followup_reviewing",
+        "branchFreshness": "stale_needs_freshness_refresh",
         "latestCommit": "392313355f802679128daee2680bd01d016059df",
         "reviewThreadId": "019f322c-02e7-7590-8b8e-ebdd1e9c52ac",
         "reviewNickname": "Lorentz",
@@ -2563,7 +2571,7 @@
           {
             "priority": "P2",
             "id": "P2-mfa-audit-structured-admin-actor",
-            "status": "routed",
+            "status": "fix_pushed_followup_review_requested",
             "owner": "Tesla",
             "reviewer": "Lorentz",
             "reviewThreadId": "019f322c-02e7-7590-8b8e-ebdd1e9c52ac",
@@ -2573,7 +2581,7 @@
           {
             "priority": "P2",
             "id": "P2-branch-freshness-task-file-conflict",
-            "status": "routed",
+            "status": "fix_pushed_followup_review_requested",
             "owner": "Tesla",
             "reviewer": "Lorentz",
             "reviewThreadId": "019f322c-02e7-7590-8b8e-ebdd1e9c52ac",
@@ -2582,28 +2590,30 @@
           }
         ],
         "verification": {
-          "result": "worker_evidence_unpushed",
+          "result": "controller_verified_fix",
           "commands": [
+            "git diff --check origin/codex/epic/admin-configuration-frontend...HEAD",
+            "jq empty .wdd/epics/EPIC-admin-configuration-frontend/orchestration.json",
             "npm test -- tests/contract/admin-mfa-routes.test.ts",
             "npm test -- tests/integration/admin-auth-service.test.ts",
-            "npm run typecheck",
-            "touched-file eslint",
-            "git diff --check"
+            "npm run typecheck"
           ],
-          "evidence": "Task branch contains local clean unpushed fix commits through 3923133. Task evidence reports MFA route contract tests passed with 6 tests, admin-auth-service integration tests passed with 15 tests, typecheck passed, touched-file ESLint passed, and git diff --check passed after merging latest epic. PR #82 remote head has not updated yet."
+          "evidence": "Controller verified PR #82 pushed fix 3923133: diff check passed, orchestration JSON parsed, admin MFA route contract suite passed with 6 tests, admin-auth-service integration suite passed with 15 tests, and typecheck passed. Follow-up review requested from Lorentz in 019f3375-9922-7283-8c64-702aceaae82f."
         },
         "cleanupState": "not_started",
         "sharedContextReconciliation": "queued",
-        "lastObservedAt": "2026-07-05T17:59:04Z",
+        "lastObservedAt": "2026-07-05T18:05:13Z",
         "reviewRequestedAt": "2026-07-05T17:32:34Z",
         "reviewSubmissionId": "019f3357-e7f4-7dd1-a1cf-afa9616d4a26",
         "freshnessNote": "Post-controller-checkpoint freshness recheck required: after epic commit 0eb4472, PR #82 mergeStateStatus is UNKNOWN and the task branch is behind the epic branch (rev-list origin epic...HEAD = 1 3). Refresh against latest epic and rerun freshness verification before merge.",
-        "reviewResult": "REVIEW_BLOCKED",
-        "reviewedAt": "2026-07-05T17:48:34Z",
+        "reviewResult": "FOLLOWUP_REVIEW_REQUESTED",
+        "reviewedAt": "2026-07-05T18:05:13Z",
         "feedbackRoutedAt": "2026-07-05T17:48:34Z",
         "feedbackSubmissionId": "019f3366-7cfd-7ee1-b852-1d20abe022d8",
         "feedbackNudgedAt": "2026-07-05T17:59:04Z",
-        "feedbackNudgeSubmissionId": "019f3371-0282-78d3-83fd-b9b8ba1aac24"
+        "feedbackNudgeSubmissionId": "019f3371-0282-78d3-83fd-b9b8ba1aac24",
+        "followupReviewRequestedAt": "2026-07-05T18:05:13Z",
+        "followupReviewSubmissionId": "019f3375-9922-7283-8c64-702aceaae82f"
       },
       {
         "id": "WAVE-004-settings-secret-store",
@@ -2615,34 +2625,13 @@
         "worktreeStatus": "clean_pushed",
         "workerThreadId": "019f3333-4104-7b02-b1aa-1fce6978e410",
         "workerNickname": "Euclid",
-        "currentGate": "followup_reviewing",
+        "currentGate": "review_passed_pending_freshness",
         "branchFreshness": "stale_needs_freshness_refresh",
-        "latestCommit": "e03421a7327555d8711a8c9fb68a8a8d10c1f39a",
+        "latestCommit": "e83e70d762d500f2381e76039ad9776326b71030",
         "reviewThreadId": "019f322c-02e7-7590-8b8e-ebdd1e9c52ac",
         "reviewNickname": "Lorentz",
         "pr": "https://github.com/ivo-toby/postgram/pull/81",
-        "blockingFeedback": [
-          {
-            "priority": "P2",
-            "id": "P2-secret-validation-metadata-redaction",
-            "status": "fix_pushed_followup_review_requested",
-            "owner": "Euclid",
-            "reviewer": "Lorentz",
-            "reviewThreadId": "019f322c-02e7-7590-8b8e-ebdd1e9c52ac",
-            "routedAt": "2026-07-05T17:48:34Z",
-            "summary": "saveRuntimeSecret accepts arbitrary validation.metadata and redacted secret metadata reads return mapValidation(row) unchanged, allowing plaintext/token/auth/provider response metadata to leak. Fix by schema-limiting/sanitizing secret validation metadata or not returning arbitrary metadata; add malicious metadata regression."
-          },
-          {
-            "priority": "P2",
-            "id": "P2-branch-freshness-task-file-conflict",
-            "status": "fix_pushed_followup_review_requested",
-            "owner": "Euclid",
-            "reviewer": "Lorentz",
-            "reviewThreadId": "019f322c-02e7-7590-8b8e-ebdd1e9c52ac",
-            "routedAt": "2026-07-05T17:48:34Z",
-            "summary": "PR #81 is not mergeable against the latest epic branch; reviewer says merge-tree conflicts are WDD task-file only and product code auto-merges. Refresh against latest epic branch after code fix and before merge."
-          }
-        ],
+        "blockingFeedback": [],
         "verification": {
           "result": "controller_verified_fix",
           "commands": [
@@ -2655,19 +2644,41 @@
         },
         "cleanupState": "not_started",
         "sharedContextReconciliation": "queued",
-        "lastObservedAt": "2026-07-05T17:59:04Z",
+        "lastObservedAt": "2026-07-05T18:05:13Z",
         "reviewRequestedAt": "2026-07-05T17:32:34Z",
         "reviewSubmissionId": "019f3357-e7f4-7dd1-a1cf-afa9616d4a26",
         "freshnessNote": "Post-controller-checkpoint freshness recheck required: PR #81 was DIRTY before the controller checkpoint and is now mergeStateStatus UNKNOWN after epic commit 0eb4472; the task branch is behind the epic branch (rev-list origin epic...HEAD = 2 2). Refresh against latest epic and rerun freshness verification before merge.",
-        "reviewResult": "FOLLOWUP_REVIEW_REQUESTED",
-        "reviewedAt": "2026-07-05T17:59:04Z",
+        "reviewResult": "REVIEW_PASS",
+        "reviewedAt": "2026-07-05T18:05:13Z",
         "feedbackRoutedAt": "2026-07-05T17:48:34Z",
         "feedbackSubmissionId": "019f3366-7c9b-7b33-9d93-0009fa0ec291",
         "followupReviewRequestedAt": "2026-07-05T17:59:04Z",
-        "followupReviewSubmissionId": "019f3371-9537-7962-925b-b69f1cea2fa6"
+        "followupReviewSubmissionId": "019f3371-9537-7962-925b-b69f1cea2fa6",
+        "reviewedHead": "e03421a7327555d8711a8c9fb68a8a8d10c1f39a",
+        "resolvedFeedback": [
+          {
+            "priority": "P2",
+            "id": "P2-secret-validation-metadata-redaction",
+            "status": "resolved",
+            "reviewer": "Lorentz",
+            "resolvedAt": "2026-07-05T18:05:13Z",
+            "fixCommit": "5d9f1bb",
+            "reviewHead": "e03421a7327555d8711a8c9fb68a8a8d10c1f39a",
+            "summary": "Secret validation metadata is normalized/redacted to empty metadata before persistence/readback and malicious metadata regression covers bearer/token/prefix leakage."
+          },
+          {
+            "priority": "P2",
+            "id": "P2-branch-freshness-task-file-conflict",
+            "status": "resolved_for_review_pair",
+            "reviewer": "Lorentz",
+            "resolvedAt": "2026-07-05T18:05:13Z",
+            "reviewHead": "e03421a7327555d8711a8c9fb68a8a8d10c1f39a",
+            "summary": "Lorentz found merge-tree clean for the reviewed base/head pair; final branch freshness still required before merge because controller artifacts advanced."
+          }
+        ]
       }
     ],
-    "lastObservedAt": "2026-07-05T17:59:04Z",
-    "dispatchState": "mixed_followup_review_and_needs_fixes"
+    "lastObservedAt": "2026-07-05T18:05:13Z",
+    "dispatchState": "followup_reviewing"
   }
 }

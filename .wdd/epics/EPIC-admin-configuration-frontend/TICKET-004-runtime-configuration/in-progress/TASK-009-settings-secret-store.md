@@ -24,7 +24,7 @@ worktree_status: clean_pushed
 pr: https://github.com/ivo-toby/postgram/pull/81
 worker_thread_id: 019f3333-4104-7b02-b1aa-1fce6978e410
 review_thread_id: 019f322c-02e7-7590-8b8e-ebdd1e9c52ac
-current_gate: followup_reviewing
+current_gate: review_passed_pending_freshness
 branch_freshness: stale_needs_freshness_refresh
 verification:
   - npm test -- tests/integration/admin-settings-service.test.ts
@@ -198,7 +198,8 @@ Keep generic setting storage separate from provider-specific validation.
 - `P2-secret-validation-metadata-redaction` fix pushed by Euclid at
   `e03421a7327555d8711a8c9fb68a8a8d10c1f39a`; controller verified and
   requested Lorentz follow-up review at 2026-07-05T17:59:04Z
-  (`019f3371-9537-7962-925b-b69f1cea2fa6`). Originally routed at
+  (`019f3371-9537-7962-925b-b69f1cea2fa6`). Lorentz returned `REVIEW_PASS`;
+  final branch freshness is still required before merge. Originally routed at
   2026-07-05T17:48:34Z (`019f3366-7c9b-7b33-9d93-0009fa0ec291`): Lorentz
   found `saveRuntimeSecret` accepts arbitrary `validation.metadata` and
   redacted secret metadata reads return `mapValidation(row)` unchanged,
@@ -254,3 +255,7 @@ Keep generic setting storage separate from provider-specific validation.
   tests/integration/admin-settings-service.test.ts` with 8 tests, and
   `npm run typecheck`. Follow-up review requested from Lorentz in
   `019f3371-9537-7962-925b-b69f1cea2fa6`; gate is `followup_reviewing`.
+- 2026-07-05T18:05:13Z Lorentz returned `REVIEW_PASS` for the PR #81 follow-up
+  review at code head `e03421a7327555d8711a8c9fb68a8a8d10c1f39a`. PR #81 head
+  is now `e83e70d762d500f2381e76039ad9776326b71030` with WDD artifact-only
+  updates; final branch freshness remains required before merge.

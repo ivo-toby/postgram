@@ -237,6 +237,19 @@ Keep generic setting storage separate from provider-specific validation.
 
 ### P2
 
+- `P2-secret-validation-metadata-redaction` routed to Euclid at
+  2026-07-05T17:48:34Z (`019f3366-7c9b-7b33-9d93-0009fa0ec291`): Lorentz
+  found `saveRuntimeSecret` accepts arbitrary `validation.metadata` and
+  redacted secret metadata reads return `mapValidation(row)` unchanged,
+  allowing plaintext/token/auth/provider response metadata to leak. Fixed by
+  normalizing secret validation metadata to `{}` on save and defensively
+  returning `{}` from secret metadata read/list paths, with malicious metadata
+  regression coverage.
+- `P2-branch-freshness-task-file-conflict` routed to Euclid at
+  2026-07-05T17:48:34Z (`019f3366-7c9b-7b33-9d93-0009fa0ec291`): PR #81 was
+  not mergeable against the latest epic branch. Fixed by merging latest
+  `origin/codex/epic/admin-configuration-frontend` and resolving the WDD
+  task-file-only conflict while preserving PR #81 evidence.
 - Resolved Lorentz `REVIEW_BLOCKED` finding: secret validation metadata no
   longer persists or returns arbitrary caller-provided JSON. `saveRuntimeSecret`
   normalizes secret validation metadata to `{}`, and secret metadata read/list
@@ -294,12 +307,18 @@ Keep generic setting storage separate from provider-specific validation.
   (`rev-list origin/codex/epic/admin-configuration-frontend...HEAD` = `2 2`).
   Refresh against the latest epic branch and rerun freshness verification
   before merge.
+- 2026-07-05T17:48:34Z Lorentz returned `REVIEW_BLOCKED` for PR #81 with two
+  P2 findings. Controller routed the fixes to Euclid in submission
+  `019f3366-7c9b-7b33-9d93-0009fa0ec291`; gate is `needs_fixes`.
 - 2026-07-05T17:51Z worker fixed Lorentz P2 metadata feedback with RED/GREEN
   coverage. Secret validation metadata is now empty for storage and redacted
   reads/lists, including malicious authorization/token-prefix metadata.
-- 2026-07-05T17:52Z worker merged latest
-  `origin/codex/epic/admin-configuration-frontend`; only this WDD task file
-  conflicted, and the resolution preserved controller review notes plus worker
-  implementation/fix evidence.
-- 2026-07-05T17:54Z worker reran required verification on the merged tree.
+- 2026-07-05T17:52Z worker merged epic checkpoint `bf53080`; only this WDD
+  task file conflicted, and the resolution preserved controller review notes
+  plus worker implementation/fix evidence.
+- 2026-07-05T17:59Z worker merged latest epic checkpoint `d015a1f`; only this
+  WDD task file conflicted, and the resolution preserved controller routing
+  notes plus worker fixed/verified evidence.
+- 2026-07-05T18:01Z worker reran required verification on the latest merged
+  tree.
 - Final gate: draft PR #81 ready for follow-up review.

@@ -6,7 +6,7 @@ ticket: TICKET-002-admin-auth-foundation
 wave: WAVE-002
 slug: admin-auth-persistence
 title: Admin Auth Persistence
-status: review
+status: done
 depends_on:
   - TASK-001-admin-surface-inventory
   - TASK-002-threat-model-bootstrap
@@ -22,9 +22,9 @@ worker_worktree: /Users/ivo.toby/workspace/postgram/.worktrees/TASK-004-admin-au
 worktree_status: verified
 pr: https://github.com/ivo-toby/postgram/pull/79
 worker_thread_id: 019f329b-24ff-7ec3-93dd-d854e4681fd2
-review_thread_id: null
-current_gate: ready_for_review
-branch_freshness: pushed_after_handoff
+review_thread_id: 019f322c-02e7-7590-8b8e-ebdd1e9c52ac
+current_gate: merged
+branch_freshness: current_at_merge
 verification:
   - npm test -- tests/integration/admin-auth-service.test.ts
   - npm run typecheck
@@ -35,7 +35,7 @@ verification:
 
 ## Status
 
-review
+done
 
 ## Parent Ticket
 
@@ -187,6 +187,12 @@ Keep service APIs independent from HTTP and UI concerns.
 - 2026-07-05: `git diff --check` passed.
 - 2026-07-05: `npx eslint src/auth/admin-service.ts tests/integration/admin-auth-service.test.ts tests/helpers/postgres.ts`
   passed.
+- 2026-07-05: Branch freshness merge reran `git diff --check
+  origin/codex/epic/admin-configuration-frontend...HEAD`,
+  `npm test -- tests/integration/admin-auth-service.test.ts`, `npm run
+  typecheck`, touched-file eslint, and adjacent key-service/migration/
+  auth-middleware integration tests; all passed.
+- 2026-07-05: Lorentz returned `REVIEW_PASS` with no P1/P2 findings.
 - 2026-07-05: `codex review --uncommitted` initially found two P2 issues
   after earlier P2 race fixes; both were fixed and the follow-up review found
   no actionable correctness issues.
@@ -219,6 +225,7 @@ Keep service APIs independent from HTTP and UI concerns.
 
 ## Completion Notes
 
+- Merged into the epic branch in `0f96769` after freshness merge `16122c0`.
 - Added `010_admin_auth.sql` with admin users, sessions, MFA factors,
   bootstrap tokens, and auth-attempt persistence.
 - Added `src/auth/admin-service.ts` with Argon2id password hashing, session

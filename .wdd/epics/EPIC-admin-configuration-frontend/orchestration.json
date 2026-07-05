@@ -279,7 +279,7 @@
     },
     {
       "id": "WAVE-002",
-      "status": "in_progress",
+      "status": "ready_for_reconciliation",
       "strategy": {
         "profile": "full",
         "executionMode": "bundled",
@@ -317,50 +317,60 @@
           "workerNickname": "Parfit",
           "reviewThreadId": "019f322c-02e7-7590-8b8e-ebdd1e9c52ac",
           "reviewNickname": "Lorentz",
-          "currentGate": "reviewing",
-          "branchFreshness": "current_at_review_start_recheck_before_merge",
+          "currentGate": "merged",
+          "branchFreshness": "current_at_merge",
           "pr": "https://github.com/ivo-toby/postgram/pull/79",
-          "latestCommit": "869f535dbcb2227cd96c79abba086c2de1356a9d",
+          "latestCommit": "16122c057d647722ea878a41fd9456c1b6c943de",
           "blockingFeedback": [],
           "verification": {
-            "result": "passed_worker_reported",
+            "result": "passed",
             "commands": [
+              "git diff --check origin/codex/epic/admin-configuration-frontend...HEAD",
               "npm test -- tests/integration/admin-auth-service.test.ts",
               "npm run typecheck",
-              "git diff --check",
               "npx eslint src/auth/admin-service.ts tests/integration/admin-auth-service.test.ts tests/helpers/postgres.ts",
-              "codex review --uncommitted"
+              "npm test -- tests/integration/key-service.test.ts tests/integration/migration.test.ts tests/integration/auth-middleware.test.ts"
             ],
-            "evidence": "Parfit reported integration tests passed with 11 tests, typecheck passed, git diff --check passed, touched-file eslint passed, and follow-up codex review found no actionable correctness issues."
+            "evidence": "Lorentz returned REVIEW_PASS with no P1/P2 findings. After merging the latest epic branch into the task branch, controller reran diff-check, admin-auth integration tests (11 passed), typecheck, touched-file eslint, and adjacent key-service/migration/auth-middleware integration tests (8 passed); all passed. Task branch 16122c0 was merged into the epic branch in 0f96769."
           },
           "activatedAt": "2026-07-05T12:50:00Z",
-          "cleanupState": "not_started",
-          "sharedContextReconciliation": "not_started",
+          "cleanupState": "cleanup_deferred",
+          "sharedContextReconciliation": "queued",
           "dispatchedAt": "2026-07-05T12:50:00Z",
-          "lastObservedAt": "2026-07-05T14:49:40Z",
+          "lastObservedAt": "2026-07-05T15:01:13Z",
           "lastObservation": {
-            "checkedAt": "2026-07-05T14:49:40Z",
+            "checkedAt": "2026-07-05T15:01:13Z",
             "workerStatus": "DONE",
+            "reviewStatus": "REVIEW_PASS",
             "pr": "https://github.com/ivo-toby/postgram/pull/79",
             "patch": null,
             "worktreeStatus": "clean_pushed",
-            "branchHead": "869f535dbcb2227cd96c79abba086c2de1356a9d",
+            "branchHead": "16122c057d647722ea878a41fd9456c1b6c943de",
+            "mergeCommit": "0f96769987e389f6c406f42a425e12f7255c1788",
             "observedFiles": [
-              "tests/helpers/postgres.ts",
               "src/auth/admin-service.ts",
               "src/db/migrations/010_admin_auth.sql",
+              "tests/helpers/postgres.ts",
               "tests/integration/admin-auth-service.test.ts",
-              ".wdd/epics/EPIC-admin-configuration-frontend/TICKET-002-admin-auth-foundation/review/TASK-004-admin-auth-persistence.md"
+              ".wdd/epics/EPIC-admin-configuration-frontend/TICKET-002-admin-auth-foundation/done/TASK-004-admin-auth-persistence.md"
             ],
-            "nudgeSent": true,
-            "nudgeSubmissionId": "019f32be-9a55-7891-ae6e-628e96e45555",
             "reviewRequestedAt": "2026-07-05T14:49:40Z",
             "reviewSubmissionId": "019f32c1-426c-75f2-85e1-8a1d8ee14f99",
             "reviewer": "Lorentz",
-            "note": "Parfit returned DONE with draft PR #79 at 869f535 and worker-reported verification; controller moved the gate to reviewing and requested Lorentz review."
-          }
+            "note": "Lorentz returned REVIEW_PASS; branch freshness was enforced with merge commit 16122c0 and verification passed; controller merged TASK-004 into the epic branch in 0f96769 and queued WAVE-002 reconciliation."
+          },
+          "reviewResult": "REVIEW_PASS",
+          "reviewedAt": "2026-07-05T15:01:13Z",
+          "mergeReadyAt": "2026-07-05T15:01:13Z",
+          "mergedAt": "2026-07-05T15:01:13Z",
+          "mergeCommit": "0f96769"
         }
-      ]
+      ],
+      "reviewedAt": "2026-07-05T15:01:13Z",
+      "mergedAt": "2026-07-05T15:01:13Z",
+      "mergeCommit": "0f96769",
+      "cleanupState": "cleanup_deferred",
+      "sharedContextReconciliation": "queued"
     },
     {
       "id": "WAVE-003",
@@ -792,8 +802,8 @@
     {
       "id": "TASK-004-admin-auth-persistence",
       "ticket": "TICKET-002-admin-auth-foundation",
-      "path": "TICKET-002-admin-auth-foundation/review/TASK-004-admin-auth-persistence.md",
-      "status": "review",
+      "path": "TICKET-002-admin-auth-foundation/done/TASK-004-admin-auth-persistence.md",
+      "status": "done",
       "dependsOn": [
         "TASK-001-admin-surface-inventory",
         "TASK-002-threat-model-bootstrap"
@@ -812,48 +822,52 @@
       "workerWorktree": "/Users/ivo.toby/workspace/postgram/.worktrees/TASK-004-admin-auth-persistence",
       "worktreeStatus": "clean_pushed",
       "pr": "https://github.com/ivo-toby/postgram/pull/79",
-      "latestCommit": "869f535dbcb2227cd96c79abba086c2de1356a9d",
-      "branchFreshness": "current_at_review_start_recheck_before_merge",
+      "latestCommit": "16122c057d647722ea878a41fd9456c1b6c943de",
+      "branchFreshness": "current_at_merge",
       "blockingFeedback": [],
       "verification": {
-        "result": "passed_worker_reported",
+        "result": "passed",
         "commands": [
+          "git diff --check origin/codex/epic/admin-configuration-frontend...HEAD",
           "npm test -- tests/integration/admin-auth-service.test.ts",
           "npm run typecheck",
-          "git diff --check",
           "npx eslint src/auth/admin-service.ts tests/integration/admin-auth-service.test.ts tests/helpers/postgres.ts",
-          "codex review --uncommitted"
+          "npm test -- tests/integration/key-service.test.ts tests/integration/migration.test.ts tests/integration/auth-middleware.test.ts"
         ],
-        "evidence": "Parfit reported integration tests passed with 11 tests, typecheck passed, git diff --check passed, touched-file eslint passed, and follow-up codex review found no actionable correctness issues."
+        "evidence": "Lorentz returned REVIEW_PASS with no P1/P2 findings. After merging the latest epic branch into the task branch, controller reran diff-check, admin-auth integration tests (11 passed), typecheck, touched-file eslint, and adjacent key-service/migration/auth-middleware integration tests (8 passed); all passed. Task branch 16122c0 was merged into the epic branch in 0f96769."
       },
-      "currentGate": "reviewing",
+      "currentGate": "merged",
       "workerNickname": "Parfit",
       "reviewNickname": "Lorentz",
-      "cleanupState": "not_started",
-      "sharedContextReconciliation": "not_started",
+      "cleanupState": "cleanup_deferred",
+      "sharedContextReconciliation": "queued",
       "dispatchedAt": "2026-07-05T12:50:00Z",
-      "lastObservedAt": "2026-07-05T14:49:40Z",
+      "lastObservedAt": "2026-07-05T15:01:13Z",
       "lastObservation": {
-        "checkedAt": "2026-07-05T14:49:40Z",
+        "checkedAt": "2026-07-05T15:01:13Z",
         "workerStatus": "DONE",
+        "reviewStatus": "REVIEW_PASS",
         "pr": "https://github.com/ivo-toby/postgram/pull/79",
         "patch": null,
         "worktreeStatus": "clean_pushed",
-        "branchHead": "869f535dbcb2227cd96c79abba086c2de1356a9d",
+        "branchHead": "16122c057d647722ea878a41fd9456c1b6c943de",
+        "mergeCommit": "0f96769987e389f6c406f42a425e12f7255c1788",
         "observedFiles": [
-          "tests/helpers/postgres.ts",
           "src/auth/admin-service.ts",
           "src/db/migrations/010_admin_auth.sql",
+          "tests/helpers/postgres.ts",
           "tests/integration/admin-auth-service.test.ts",
-          ".wdd/epics/EPIC-admin-configuration-frontend/TICKET-002-admin-auth-foundation/review/TASK-004-admin-auth-persistence.md"
+          ".wdd/epics/EPIC-admin-configuration-frontend/TICKET-002-admin-auth-foundation/done/TASK-004-admin-auth-persistence.md"
         ],
-        "nudgeSent": true,
-        "nudgeSubmissionId": "019f32be-9a55-7891-ae6e-628e96e45555",
         "reviewRequestedAt": "2026-07-05T14:49:40Z",
         "reviewSubmissionId": "019f32c1-426c-75f2-85e1-8a1d8ee14f99",
         "reviewer": "Lorentz",
-        "note": "Parfit returned DONE with draft PR #79 at 869f535 and worker-reported verification; controller moved the gate to reviewing and requested Lorentz review."
-      }
+        "note": "Lorentz returned REVIEW_PASS; branch freshness was enforced with merge commit 16122c0 and verification passed; controller merged TASK-004 into the epic branch in 0f96769 and queued WAVE-002 reconciliation."
+      },
+      "reviewResult": "REVIEW_PASS",
+      "reviewedAt": "2026-07-05T15:01:13Z",
+      "mergedAt": "2026-07-05T15:01:13Z",
+      "mergeCommit": "0f96769"
     },
     {
       "id": "TASK-005-admin-session-routes",
@@ -1371,11 +1385,11 @@
   "monitoring": {
     "mode": "codex_thread_heartbeat",
     "cadence": "FREQ=MINUTELY;INTERVAL=5",
-    "status": "active_review_monitoring",
-    "lastCheckedAt": "2026-07-05T14:49:40Z",
-    "nextCheckDueAt": "2026-07-05T14:54:40Z",
+    "status": "ready_for_reconciliation",
+    "lastCheckedAt": "2026-07-05T15:01:13Z",
+    "nextCheckDueAt": "2026-07-05T15:06:13Z",
     "schedulerRef": "postgram-admin-wave-002-wdd-heartbeat",
-    "fallbackPrompt": "Run subagent-pr-orchestration for EPIC-admin-configuration-frontend WAVE-002. Start in /Users/ivo.toby/workspace/postgram on branch codex/epic/admin-configuration-frontend. Read orchestration.json and controller-state.md, inspect PR #79, worker Parfit (019f329b-24ff-7ec3-93dd-d854e4681fd2), reviewer Lorentz (019f322c-02e7-7590-8b8e-ebdd1e9c52ac), and worktree /Users/ivo.toby/workspace/postgram/.worktrees/TASK-004-admin-auth-persistence. Update gates, review refs, verification, feedback, branch freshness, and stop when WAVE-002 is merged/blocked/cancelled or ready for wdd-reconcile-wave."
+    "fallbackPrompt": "Run wdd-reconcile-wave for EPIC-admin-configuration-frontend WAVE-002. Start in /Users/ivo.toby/workspace/postgram on branch codex/epic/admin-configuration-frontend. Confirm TASK-004-admin-auth-persistence is merged into the epic branch in 0f96769, PR #79 state, task file in done, verification and REVIEW_PASS evidence, cleanup status, and shared-context reconciliation before starting WAVE-003."
   },
   "sharedContext": {
     "index": "shared-context/index.md",
@@ -1416,50 +1430,56 @@
         "workerNickname": "Parfit",
         "reviewThreadId": "019f322c-02e7-7590-8b8e-ebdd1e9c52ac",
         "reviewNickname": "Lorentz",
-        "currentGate": "reviewing",
-        "branchFreshness": "current_at_review_start_recheck_before_merge",
+        "currentGate": "merged",
+        "branchFreshness": "current_at_merge",
         "pr": "https://github.com/ivo-toby/postgram/pull/79",
-        "latestCommit": "869f535dbcb2227cd96c79abba086c2de1356a9d",
+        "latestCommit": "16122c057d647722ea878a41fd9456c1b6c943de",
         "blockingFeedback": [],
         "verification": {
-          "result": "passed_worker_reported",
+          "result": "passed",
           "commands": [
+            "git diff --check origin/codex/epic/admin-configuration-frontend...HEAD",
             "npm test -- tests/integration/admin-auth-service.test.ts",
             "npm run typecheck",
-            "git diff --check",
             "npx eslint src/auth/admin-service.ts tests/integration/admin-auth-service.test.ts tests/helpers/postgres.ts",
-            "codex review --uncommitted"
+            "npm test -- tests/integration/key-service.test.ts tests/integration/migration.test.ts tests/integration/auth-middleware.test.ts"
           ],
-          "evidence": "Parfit reported integration tests passed with 11 tests, typecheck passed, git diff --check passed, touched-file eslint passed, and follow-up codex review found no actionable correctness issues."
+          "evidence": "Lorentz returned REVIEW_PASS with no P1/P2 findings. After merging the latest epic branch into the task branch, controller reran diff-check, admin-auth integration tests (11 passed), typecheck, touched-file eslint, and adjacent key-service/migration/auth-middleware integration tests (8 passed); all passed. Task branch 16122c0 was merged into the epic branch in 0f96769."
         },
         "activatedAt": "2026-07-05T12:50:00Z",
-        "cleanupState": "not_started",
-        "sharedContextReconciliation": "not_started",
+        "cleanupState": "cleanup_deferred",
+        "sharedContextReconciliation": "queued",
         "dispatchedAt": "2026-07-05T12:50:00Z",
-        "lastObservedAt": "2026-07-05T14:49:40Z",
+        "lastObservedAt": "2026-07-05T15:01:13Z",
         "lastObservation": {
-          "checkedAt": "2026-07-05T14:49:40Z",
+          "checkedAt": "2026-07-05T15:01:13Z",
           "workerStatus": "DONE",
+          "reviewStatus": "REVIEW_PASS",
           "pr": "https://github.com/ivo-toby/postgram/pull/79",
           "patch": null,
           "worktreeStatus": "clean_pushed",
-          "branchHead": "869f535dbcb2227cd96c79abba086c2de1356a9d",
+          "branchHead": "16122c057d647722ea878a41fd9456c1b6c943de",
+          "mergeCommit": "0f96769987e389f6c406f42a425e12f7255c1788",
           "observedFiles": [
-            "tests/helpers/postgres.ts",
             "src/auth/admin-service.ts",
             "src/db/migrations/010_admin_auth.sql",
+            "tests/helpers/postgres.ts",
             "tests/integration/admin-auth-service.test.ts",
-            ".wdd/epics/EPIC-admin-configuration-frontend/TICKET-002-admin-auth-foundation/review/TASK-004-admin-auth-persistence.md"
+            ".wdd/epics/EPIC-admin-configuration-frontend/TICKET-002-admin-auth-foundation/done/TASK-004-admin-auth-persistence.md"
           ],
-          "nudgeSent": true,
-          "nudgeSubmissionId": "019f32be-9a55-7891-ae6e-628e96e45555",
           "reviewRequestedAt": "2026-07-05T14:49:40Z",
           "reviewSubmissionId": "019f32c1-426c-75f2-85e1-8a1d8ee14f99",
           "reviewer": "Lorentz",
-          "note": "Parfit returned DONE with draft PR #79 at 869f535 and worker-reported verification; controller moved the gate to reviewing and requested Lorentz review."
-        }
+          "note": "Lorentz returned REVIEW_PASS; branch freshness was enforced with merge commit 16122c0 and verification passed; controller merged TASK-004 into the epic branch in 0f96769 and queued WAVE-002 reconciliation."
+        },
+        "reviewResult": "REVIEW_PASS",
+        "reviewedAt": "2026-07-05T15:01:13Z",
+        "mergeReadyAt": "2026-07-05T15:01:13Z",
+        "mergedAt": "2026-07-05T15:01:13Z",
+        "mergeCommit": "0f96769"
       }
-    ]
+    ],
+    "status": "ready_for_reconciliation"
   },
   "currentGates": {
     "epicBranch": {
@@ -1485,11 +1505,11 @@
     },
     "workerDispatch": {
       "WAVE-001-admin-feasibility-gate": "reconciled",
-      "WAVE-002-admin-auth-persistence": "reviewing"
+      "WAVE-002-admin-auth-persistence": "merged"
     },
     "waveCompletion": {
       "WAVE-001": "done",
-      "WAVE-002": "in_progress"
+      "WAVE-002": "ready_for_reconciliation"
     },
     "nextWave": {
       "id": "WAVE-003",
@@ -1498,11 +1518,11 @@
     "monitoring": {
       "mode": "codex_thread_heartbeat",
       "cadence": "FREQ=MINUTELY;INTERVAL=5",
-      "status": "active_review_monitoring",
-      "lastCheckedAt": "2026-07-05T14:49:40Z",
-      "nextCheckDueAt": "2026-07-05T14:54:40Z",
+      "status": "ready_for_reconciliation",
+      "lastCheckedAt": "2026-07-05T15:01:13Z",
+      "nextCheckDueAt": "2026-07-05T15:06:13Z",
       "schedulerRef": "postgram-admin-wave-002-wdd-heartbeat",
-      "fallbackPrompt": "Run subagent-pr-orchestration for EPIC-admin-configuration-frontend WAVE-002. Start in /Users/ivo.toby/workspace/postgram on branch codex/epic/admin-configuration-frontend. Read orchestration.json and controller-state.md, inspect PR #79, worker Parfit (019f329b-24ff-7ec3-93dd-d854e4681fd2), reviewer Lorentz (019f322c-02e7-7590-8b8e-ebdd1e9c52ac), and worktree /Users/ivo.toby/workspace/postgram/.worktrees/TASK-004-admin-auth-persistence. Update gates, review refs, verification, feedback, branch freshness, and stop when WAVE-002 is merged/blocked/cancelled or ready for wdd-reconcile-wave."
+      "fallbackPrompt": "Run wdd-reconcile-wave for EPIC-admin-configuration-frontend WAVE-002. Start in /Users/ivo.toby/workspace/postgram on branch codex/epic/admin-configuration-frontend. Confirm TASK-004-admin-auth-persistence is merged into the epic branch in 0f96769, PR #79 state, task file in done, verification and REVIEW_PASS evidence, cleanup status, and shared-context reconciliation before starting WAVE-003."
     },
     "review": {
       "WAVE-001-admin-feasibility-gate": {
@@ -1553,22 +1573,21 @@
         "reviewedAt": "2026-07-05T12:25:33Z"
       },
       "WAVE-002-admin-auth-persistence": {
-        "status": "in_progress",
-        "result": null,
+        "status": "passed",
+        "result": "REVIEW_PASS",
         "pr": "https://github.com/ivo-toby/postgram/pull/79",
-        "latestCommit": "869f535dbcb2227cd96c79abba086c2de1356a9d",
+        "latestCommit": "16122c057d647722ea878a41fd9456c1b6c943de",
         "reviewThreadId": "019f322c-02e7-7590-8b8e-ebdd1e9c52ac",
         "reviewNickname": "Lorentz",
         "workerThreadId": "019f329b-24ff-7ec3-93dd-d854e4681fd2",
         "workerNickname": "Parfit",
-        "reviewRequestedAt": "2026-07-05T14:49:40Z",
-        "reviewSubmissionId": "019f32c1-426c-75f2-85e1-8a1d8ee14f99",
+        "reviewedAt": "2026-07-05T15:01:13Z",
         "blockingFeedback": []
       }
     },
     "branchFreshness": {
       "WAVE-001-admin-feasibility-gate": "current_at_merge",
-      "WAVE-002-admin-auth-persistence": "current_at_review_start_recheck_before_merge"
+      "WAVE-002-admin-auth-persistence": "current_at_merge"
     },
     "merge": {
       "WAVE-001-admin-feasibility-gate": {
@@ -1580,11 +1599,19 @@
         "remotePrMergedAt": "2026-07-05T12:39:56Z",
         "closeoutCommit": "5856d75",
         "reconciledAt": "2026-07-05T12:42:03Z"
+      },
+      "WAVE-002-admin-auth-persistence": {
+        "status": "merged_local_pending_push",
+        "commit": "0f96769",
+        "taskBranchHead": "16122c057d647722ea878a41fd9456c1b6c943de",
+        "freshnessMergeCommit": "16122c0",
+        "mergedAt": "2026-07-05T15:01:13Z",
+        "cleanupState": "cleanup_deferred"
       }
     },
     "sharedContextReconciliation": {
       "WAVE-001": "completed",
-      "WAVE-002": "not_started"
+      "WAVE-002": "queued"
     },
     "prState": {
       "WAVE-001-admin-feasibility-gate": {
@@ -1594,15 +1621,15 @@
         "closeoutCommit": "5856d75"
       },
       "WAVE-002-admin-auth-persistence": {
-        "state": "OPEN",
+        "state": "OPEN_PENDING_BASE_PUSH",
         "isDraft": true,
         "url": "https://github.com/ivo-toby/postgram/pull/79",
         "headRef": "codex/task/TASK-004-admin-auth-persistence",
-        "headSha": "869f535dbcb2227cd96c79abba086c2de1356a9d",
+        "headSha": "16122c057d647722ea878a41fd9456c1b6c943de",
         "baseRef": "codex/epic/admin-configuration-frontend",
-        "baseSha": "aaba5309482ffb0b4e135ab0d4e123b9f36e6c9a",
+        "baseShaAtReviewStart": "351c15b8b2ce85747f234f7413428fc55f081bf8",
         "mergeState": "CLEAN",
-        "updatedAt": "2026-07-05T14:47:28Z"
+        "updatedAt": "2026-07-05T14:59:52Z"
       }
     },
     "cleanup": {
@@ -1613,37 +1640,38 @@
         "evidence": "Clean worktree removed with git worktree remove; git worktree prune ran."
       },
       "WAVE-002-admin-auth-persistence": {
-        "status": "not_started",
-        "worktree": "/Users/ivo.toby/workspace/postgram/.worktrees/TASK-004-admin-auth-persistence"
+        "status": "cleanup_deferred",
+        "worktree": "/Users/ivo.toby/workspace/postgram/.worktrees/TASK-004-admin-auth-persistence",
+        "reason": "Retain worker worktree until WAVE-002 reconciliation confirms PR remote merge state and shared-context closeout."
       }
     },
     "worker": {
       "WAVE-002-admin-auth-persistence": {
-        "status": "done_pr_created_reviewing",
+        "status": "done_merged",
         "workerThreadId": "019f329b-24ff-7ec3-93dd-d854e4681fd2",
         "workerNickname": "Parfit",
         "dispatchedAt": "2026-07-05T12:50:00Z",
-        "lastObservedAt": "2026-07-05T14:49:40Z",
+        "lastObservedAt": "2026-07-05T15:01:13Z",
         "lastObservation": {
-          "checkedAt": "2026-07-05T14:49:40Z",
+          "checkedAt": "2026-07-05T15:01:13Z",
           "workerStatus": "DONE",
+          "reviewStatus": "REVIEW_PASS",
           "pr": "https://github.com/ivo-toby/postgram/pull/79",
           "patch": null,
           "worktreeStatus": "clean_pushed",
-          "branchHead": "869f535dbcb2227cd96c79abba086c2de1356a9d",
+          "branchHead": "16122c057d647722ea878a41fd9456c1b6c943de",
+          "mergeCommit": "0f96769987e389f6c406f42a425e12f7255c1788",
           "observedFiles": [
-            "tests/helpers/postgres.ts",
             "src/auth/admin-service.ts",
             "src/db/migrations/010_admin_auth.sql",
+            "tests/helpers/postgres.ts",
             "tests/integration/admin-auth-service.test.ts",
-            ".wdd/epics/EPIC-admin-configuration-frontend/TICKET-002-admin-auth-foundation/review/TASK-004-admin-auth-persistence.md"
+            ".wdd/epics/EPIC-admin-configuration-frontend/TICKET-002-admin-auth-foundation/done/TASK-004-admin-auth-persistence.md"
           ],
-          "nudgeSent": true,
-          "nudgeSubmissionId": "019f32be-9a55-7891-ae6e-628e96e45555",
           "reviewRequestedAt": "2026-07-05T14:49:40Z",
           "reviewSubmissionId": "019f32c1-426c-75f2-85e1-8a1d8ee14f99",
           "reviewer": "Lorentz",
-          "note": "Parfit returned DONE with draft PR #79 at 869f535 and worker-reported verification; controller moved the gate to reviewing and requested Lorentz review."
+          "note": "Lorentz returned REVIEW_PASS; branch freshness was enforced with merge commit 16122c0 and verification passed; controller merged TASK-004 into the epic branch in 0f96769 and queued WAVE-002 reconciliation."
         }
       }
     }
@@ -1654,5 +1682,12 @@
     "status": "done",
     "nextWave": "WAVE-002",
     "nextWaveStatus": "activated"
+  },
+  "lastMergedWave": {
+    "id": "WAVE-002",
+    "mergedAt": "2026-07-05T15:01:13Z",
+    "status": "ready_for_reconciliation",
+    "mergeCommit": "0f96769",
+    "nextStep": "wdd-reconcile-wave"
   }
 }

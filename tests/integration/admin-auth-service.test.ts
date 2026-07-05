@@ -19,6 +19,14 @@ import {
   invalidateAdminSession,
   verifyAdminPassword
 } from '../../src/auth/admin-service.js';
+import {
+  beginAdminTotpEnrollment,
+  generateTotpCode,
+  verifyAdminTotpChallenge,
+  verifyAdminTotpEnrollment,
+  verifyAdminTotpStepUp
+} from '../../src/auth/admin-mfa-service.js';
+import { isAdminStepUpFresh } from '../../src/auth/admin-middleware.js';
 import { createKey } from '../../src/auth/key-service.js';
 import { ErrorCode } from '../../src/util/errors.js';
 import {
@@ -26,6 +34,8 @@ import {
   resetTestDatabase,
   type TestDatabase
 } from '../helpers/postgres.js';
+
+const ADMIN_MFA_SECRET_KEY = 'test-admin-mfa-secret-key-32-bytes-minimum';
 
 describe('admin-auth-service', () => {
   let database: TestDatabase | undefined;
@@ -540,4 +550,385 @@ describe('admin-auth-service', () => {
     expect(firstAdmin.isErr()).toBe(true);
     expect(firstAdmin._unsafeUnwrapErr().code).toBe(ErrorCode.UNAUTHORIZED);
   }, 120_000);
+
+  it('verifies TOTP enrollment before activating the pending first admin session', async () => {
+    if (!database) {
+      throw new Error('test database not initialized');
+    }
+
+    const now = new Date('2026-07-05T10:00:00.000Z');
+    const bootstrap = (
+      await createBootstrapToken(database.pool, {
+        ttlMs: 10 * 60 * 1000,
+        now
+      })
+    )._unsafeUnwrap();
+    const firstAdmin = (
+      await createFirstAdminWithBootstrapToken(database.pool, {
+        bootstrapToken: bootstrap.plaintextToken,
+        email: 'mfa-first@example.com',
+        password: 'Correct-Horse-Battery-42!',
+        now
+      })
+    )._unsafeUnwrap();
+    const session = (
+      await createAdminSession(database.pool, {
+        adminUserId: firstAdmin.id,
+        ttlMs: 60 * 60 * 1000,
+        now
+      })
+    )._unsafeUnwrap();
+
+    const enrollment = await beginAdminTotpEnrollment(database.pool, {
+      adminUserId: firstAdmin.id,
+      accountName: firstAdmin.email,
+      issuer: 'Postgram',
+      secretKey: ADMIN_MFA_SECRET_KEY,
+      now
+    });
+    expect(enrollment.isOk()).toBe(true);
+    const pendingFactor = enrollment._unsafeUnwrap();
+    expect(pendingFactor.factor).toMatchObject({
+      type: 'totp',
+      status: 'pending'
+    });
+    expect(pendingFactor.factor).not.toHaveProperty('secretCiphertext');
+
+    const storedSecret = await database.pool.query<{
+      secret_ciphertext: string | null;
+    }>(
+      'SELECT secret_ciphertext FROM admin_mfa_factors WHERE id = $1',
+      [pendingFactor.factor.id]
+    );
+    expect(storedSecret.rows[0]?.secret_ciphertext).toMatch(/^totp:v1:/u);
+    expect(storedSecret.rows[0]?.secret_ciphertext).not.toContain(
+      pendingFactor.secret
+    );
+
+    const rejected = await verifyAdminTotpEnrollment(database.pool, {
+      adminUserId: firstAdmin.id,
+      sessionId: session.session.id,
+      factorId: pendingFactor.factor.id,
+      code: '000000',
+      secretKey: ADMIN_MFA_SECRET_KEY,
+      now
+    });
+    expect(rejected.isErr()).toBe(true);
+    expect(rejected._unsafeUnwrapErr().code).toBe(ErrorCode.UNAUTHORIZED);
+
+    const failedAttempts = await database.pool.query<{ count: string }>(
+      `
+        SELECT COUNT(*)::text AS count
+        FROM admin_auth_attempts
+        WHERE admin_user_id = $1
+          AND attempt_type = 'mfa'
+          AND succeeded = false
+      `,
+      [firstAdmin.id]
+    );
+    expect(failedAttempts.rows[0]?.count).toBe('1');
+
+    const afterRejected = await database.pool.query<{
+      user_status: string;
+      factor_status: string;
+      mfa_verified_at: Date | null;
+    }>(
+      `
+        SELECT
+          u.status AS user_status,
+          f.status AS factor_status,
+          s.mfa_verified_at
+        FROM admin_users u
+        JOIN admin_mfa_factors f ON f.admin_user_id = u.id
+        JOIN admin_sessions s ON s.admin_user_id = u.id
+        WHERE u.id = $1
+      `,
+      [firstAdmin.id]
+    );
+    expect(afterRejected.rows[0]).toMatchObject({
+      user_status: 'pending_mfa',
+      factor_status: 'pending',
+      mfa_verified_at: null
+    });
+
+    const verified = await verifyAdminTotpEnrollment(database.pool, {
+      adminUserId: firstAdmin.id,
+      sessionId: session.session.id,
+      factorId: pendingFactor.factor.id,
+      code: generateTotpCode(pendingFactor.secret, { now }),
+      secretKey: ADMIN_MFA_SECRET_KEY,
+      now
+    });
+    expect(verified.isOk()).toBe(true);
+    expect(verified._unsafeUnwrap()).toMatchObject({
+      user: {
+        status: 'active'
+      },
+      factor: {
+        status: 'verified'
+      },
+      session: {
+        mfaVerifiedAt: now.toISOString()
+      }
+    });
+
+    const stored = await database.pool.query<{
+      user_status: string;
+      factor_status: string;
+      mfa_verified_at: Date | null;
+    }>(
+      `
+        SELECT
+          u.status AS user_status,
+          f.status AS factor_status,
+          s.mfa_verified_at
+        FROM admin_users u
+        JOIN admin_mfa_factors f ON f.admin_user_id = u.id
+        JOIN admin_sessions s ON s.admin_user_id = u.id
+        WHERE u.id = $1
+      `,
+      [firstAdmin.id]
+    );
+    expect(stored.rows[0]).toMatchObject({
+      user_status: 'active',
+      factor_status: 'verified'
+    });
+    expect(stored.rows[0]?.mfa_verified_at?.toISOString()).toBe(
+      now.toISOString()
+    );
+  }, 120_000);
+
+  it('writes structured admin actor attribution for MFA audit rows when the audit schema supports it', async () => {
+    if (!database) {
+      throw new Error('test database not initialized');
+    }
+
+    await database.pool.query(`
+      ALTER TABLE audit_log
+      ADD COLUMN IF NOT EXISTS admin_user_id uuid REFERENCES admin_users(id) ON DELETE SET NULL
+    `);
+
+    const now = new Date('2026-07-05T10:00:00.000Z');
+    const user = (
+      await createAdminUser(database.pool, {
+        email: 'mfa-audit@example.com',
+        password: 'Correct-Horse-Battery-42!'
+      })
+    )._unsafeUnwrap();
+    const session = (
+      await createAdminSession(database.pool, {
+        adminUserId: user.id,
+        ttlMs: 60 * 60 * 1000,
+        now
+      })
+    )._unsafeUnwrap();
+    const enrollment = (
+      await beginAdminTotpEnrollment(database.pool, {
+        adminUserId: user.id,
+        accountName: user.email,
+        issuer: 'Postgram',
+        secretKey: ADMIN_MFA_SECRET_KEY,
+        now
+      })
+    )._unsafeUnwrap();
+
+    const verified = await verifyAdminTotpEnrollment(database.pool, {
+      adminUserId: user.id,
+      sessionId: session.session.id,
+      factorId: enrollment.factor.id,
+      code: generateTotpCode(enrollment.secret, { now }),
+      secretKey: ADMIN_MFA_SECRET_KEY,
+      now
+    });
+    expect(verified.isOk()).toBe(true);
+
+    const loginSession = (
+      await createAdminSession(database.pool, {
+        adminUserId: user.id,
+        ttlMs: 60 * 60 * 1000,
+        now
+      })
+    )._unsafeUnwrap();
+    const challenge = await verifyAdminTotpChallenge(database.pool, {
+      adminUserId: user.id,
+      sessionId: loginSession.session.id,
+      code: generateTotpCode(enrollment.secret, { now }),
+      secretKey: ADMIN_MFA_SECRET_KEY,
+      now
+    });
+    expect(challenge.isOk()).toBe(true);
+
+    const stepUp = await verifyAdminTotpStepUp(database.pool, {
+      adminUserId: user.id,
+      sessionId: loginSession.session.id,
+      code: generateTotpCode(enrollment.secret, { now }),
+      secretKey: ADMIN_MFA_SECRET_KEY,
+      now
+    });
+    expect(stepUp.isOk()).toBe(true);
+
+    const auditRows = await database.pool.query<{
+      operation: string;
+      admin_user_id: string | null;
+      details: Record<string, unknown>;
+    }>(
+      `
+        SELECT operation, admin_user_id, details
+        FROM audit_log
+        WHERE operation IN (
+          'admin.mfa.enroll',
+          'admin.mfa.verify',
+          'admin.mfa.challenge',
+          'admin.step_up'
+        )
+        ORDER BY operation ASC
+      `
+    );
+    expect(auditRows.rows.map((row) => row.operation).sort()).toEqual([
+      'admin.mfa.challenge',
+      'admin.mfa.enroll',
+      'admin.mfa.verify',
+      'admin.step_up'
+    ]);
+    expect(auditRows.rows.every((row) => row.admin_user_id === user.id)).toBe(
+      true
+    );
+    expect(
+      auditRows.rows.every((row) => row.details.adminUserId === user.id)
+    ).toBe(true);
+  }, 120_000);
+
+  it('challenges verified TOTP factors without accepting missing or invalid factors', async () => {
+    if (!database) {
+      throw new Error('test database not initialized');
+    }
+
+    const now = new Date('2026-07-05T10:00:00.000Z');
+    const user = (
+      await createAdminUser(database.pool, {
+        email: 'challenge@example.com',
+        password: 'Correct-Horse-Battery-42!'
+      })
+    )._unsafeUnwrap();
+    const session = (
+      await createAdminSession(database.pool, {
+        adminUserId: user.id,
+        ttlMs: 60 * 60 * 1000,
+        now
+      })
+    )._unsafeUnwrap();
+
+    const missingFactor = await verifyAdminTotpChallenge(database.pool, {
+      adminUserId: user.id,
+      sessionId: session.session.id,
+      code: '123456',
+      secretKey: ADMIN_MFA_SECRET_KEY,
+      now
+    });
+    expect(missingFactor.isErr()).toBe(true);
+    expect(missingFactor._unsafeUnwrapErr().code).toBe(ErrorCode.UNAUTHORIZED);
+
+    const afterMissingFactor = await database.pool.query<{ count: string }>(
+      `
+        SELECT COUNT(*)::text AS count
+        FROM admin_auth_attempts
+        WHERE admin_user_id = $1
+          AND attempt_type = 'mfa'
+          AND succeeded = false
+      `,
+      [user.id]
+    );
+    expect(afterMissingFactor.rows[0]?.count).toBe('1');
+
+    const enrollment = (
+      await beginAdminTotpEnrollment(database.pool, {
+        adminUserId: user.id,
+        accountName: user.email,
+        issuer: 'Postgram',
+        secretKey: ADMIN_MFA_SECRET_KEY,
+        now
+      })
+    )._unsafeUnwrap();
+    await verifyAdminTotpEnrollment(database.pool, {
+      adminUserId: user.id,
+      sessionId: session.session.id,
+      factorId: enrollment.factor.id,
+      code: generateTotpCode(enrollment.secret, { now }),
+      secretKey: ADMIN_MFA_SECRET_KEY,
+      now
+    });
+
+    const loginSession = (
+      await createAdminSession(database.pool, {
+        adminUserId: user.id,
+        ttlMs: 60 * 60 * 1000,
+        now
+      })
+    )._unsafeUnwrap();
+
+    const wrongCode = await verifyAdminTotpChallenge(database.pool, {
+      adminUserId: user.id,
+      sessionId: loginSession.session.id,
+      code: '000000',
+      secretKey: ADMIN_MFA_SECRET_KEY,
+      now
+    });
+    expect(wrongCode.isErr()).toBe(true);
+    expect(wrongCode._unsafeUnwrapErr().code).toBe(ErrorCode.UNAUTHORIZED);
+
+    const afterWrongCode = await database.pool.query<{ count: string }>(
+      `
+        SELECT COUNT(*)::text AS count
+        FROM admin_auth_attempts
+        WHERE admin_user_id = $1
+          AND attempt_type = 'mfa'
+          AND succeeded = false
+      `,
+      [user.id]
+    );
+    expect(afterWrongCode.rows[0]?.count).toBe('2');
+
+    const challenge = await verifyAdminTotpChallenge(database.pool, {
+      adminUserId: user.id,
+      sessionId: loginSession.session.id,
+      code: generateTotpCode(enrollment.secret, { now }),
+      secretKey: ADMIN_MFA_SECRET_KEY,
+      now
+    });
+    expect(challenge.isOk()).toBe(true);
+    expect(challenge._unsafeUnwrap().session.mfaVerifiedAt).toBe(
+      now.toISOString()
+    );
+  }, 120_000);
+
+  it('evaluates recent step-up freshness from the session MFA timestamp', () => {
+    const now = new Date('2026-07-05T10:00:00.000Z');
+    const ttlMs = 10 * 60 * 1000;
+
+    expect(isAdminStepUpFresh(null, { now, ttlMs })).toBe(false);
+    expect(
+      isAdminStepUpFresh('2026-07-05T09:51:00.001Z', {
+        now,
+        ttlMs
+      })
+    ).toBe(true);
+    expect(
+      isAdminStepUpFresh('2026-07-05T10:00:00.001Z', {
+        now,
+        ttlMs
+      })
+    ).toBe(false);
+    expect(
+      isAdminStepUpFresh('2026-07-05T09:49:59.999Z', {
+        now,
+        ttlMs
+      })
+    ).toBe(false);
+    expect(
+      isAdminStepUpFresh('not-a-date', {
+        now,
+        ttlMs
+      })
+    ).toBe(false);
+  });
 });

@@ -53,6 +53,7 @@ type AppOptions = {
         publicBaseUrl?: string | undefined;
       }
     | undefined;
+  adminMfaSecretKey?: string | undefined;
   getHealthStatus?: () => Promise<HealthStatus> | HealthStatus;
 };
 
@@ -161,7 +162,10 @@ export function createApp(
   if (options.pool) {
     registerAdminRoutes(
       app as unknown as Parameters<typeof registerAdminRoutes>[0],
-      options.pool
+      options.pool,
+      {
+        adminMfaSecretKey: options.adminMfaSecretKey
+      }
     );
 
     if (options.oauth?.enabled) {
@@ -361,6 +365,7 @@ export async function startServer(): Promise<{
     pool,
     embeddingService,
     extractionEnabled: config.EXTRACTION_ENABLED,
+    adminMfaSecretKey: config.ADMIN_MFA_SECRET_KEY,
     oauth: {
       enabled: config.OAUTH_ENABLED,
       publicBaseUrl: config.PUBLIC_BASE_URL

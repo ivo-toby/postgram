@@ -12,6 +12,14 @@ import {
   type AdminUserRecord
 } from '../auth/admin-service.js';
 import {
+  beginAdminTotpEnrollment,
+  verifyAdminTotpChallenge,
+  verifyAdminTotpEnrollment,
+  verifyAdminTotpStepUp,
+  type AdminMfaFactorRecord
+} from '../auth/admin-mfa-service.js';
+import {
+  ADMIN_STEP_UP_TTL_MS,
   ADMIN_SESSION_COOKIE,
   createAdminSessionMiddleware,
   issueAdminCsrfToken,
@@ -31,17 +39,22 @@ type AdminApp = Hono<{
   };
 }>;
 
+type AdminRouteOptions = {
+  adminMfaSecretKey?: string | undefined;
+};
+
 type BootstrapState =
   | 'configured'
   | 'locked'
   | 'misconfigured'
   | 'unbootstrapped';
 
-type RateLimitedAttemptType = 'bootstrap' | 'login';
+type RateLimitedAttemptType = 'bootstrap' | 'login' | 'mfa' | 'step_up';
 
 const SESSION_TTL_MS = 12 * 60 * 60 * 1000;
 const RATE_LIMIT_WINDOW_MS = 15 * 60 * 1000;
 const MAX_FAILED_ATTEMPTS = 5;
+const ADMIN_MFA_SECRET_KEY_MIN_LENGTH = 32;
 const LOCAL_INSECURE_COOKIE_HOSTS = new Set(['localhost', '127.0.0.1', '::1']);
 
 const bootstrapSetupSchema = z
@@ -57,6 +70,19 @@ const loginSchema = z
   .object({
     email: z.string().min(1),
     password: z.string().min(1)
+  })
+  .strict();
+
+const mfaVerifySchema = z
+  .object({
+    factorId: z.string().uuid(),
+    code: z.string().regex(/^\d{6}$/u)
+  })
+  .strict();
+
+const mfaChallengeSchema = z
+  .object({
+    code: z.string().regex(/^\d{6}$/u)
   })
   .strict();
 
@@ -96,6 +122,29 @@ function toSessionResponse(session: AdminRequestContext['session']) {
     id: session.id,
     expiresAt: session.expiresAt,
     mfaVerified: session.mfaVerifiedAt !== null
+  };
+}
+
+function toMfaFactorResponse(factor: AdminMfaFactorRecord) {
+  return {
+    id: factor.id,
+    type: factor.type,
+    status: factor.status,
+    createdAt: factor.createdAt,
+    verifiedAt: factor.verifiedAt
+  };
+}
+
+function toStepUpResponse(session: AdminRequestContext['session']) {
+  const verifiedAt = session.mfaVerifiedAt;
+  return {
+    fresh: verifiedAt !== null,
+    expiresAt:
+      verifiedAt === null
+        ? null
+        : new Date(
+            Date.parse(verifiedAt) + ADMIN_STEP_UP_TTL_MS
+          ).toISOString()
   };
 }
 
@@ -150,7 +199,11 @@ function rateLimitError(type: RateLimitedAttemptType): AppError {
     ErrorCode.RATE_LIMITED,
     type === 'bootstrap'
       ? 'Too many bootstrap attempts'
-      : 'Too many login attempts'
+      : type === 'login'
+        ? 'Too many login attempts'
+        : type === 'mfa'
+          ? 'Too many MFA attempts'
+          : 'Too many step-up attempts'
   );
 }
 
@@ -246,6 +299,29 @@ async function recordAdminAuthAttempt(
   );
 }
 
+function safeMfaError(): AppError {
+  return new AppError(ErrorCode.UNAUTHORIZED, 'Unable to verify MFA challenge');
+}
+
+function activeAdminMfaError(): AppError {
+  return new AppError(ErrorCode.FORBIDDEN, 'Active admin MFA is required');
+}
+
+function adminMfaVerificationError(): AppError {
+  return new AppError(ErrorCode.FORBIDDEN, 'Admin MFA verification is required');
+}
+
+function requireAdminMfaSecretKey(secretKey: string | undefined): string {
+  if (!secretKey || secretKey.trim().length < ADMIN_MFA_SECRET_KEY_MIN_LENGTH) {
+    throw new AppError(
+      ErrorCode.INTERNAL,
+      'Admin MFA secret key is not configured'
+    );
+  }
+
+  return secretKey;
+}
+
 function jsonError(c: Context, error: AppError, status?: ContentfulStatusCode) {
   return c.json(
     toErrorResponse(error),
@@ -253,7 +329,11 @@ function jsonError(c: Context, error: AppError, status?: ContentfulStatusCode) {
   );
 }
 
-export function registerAdminRoutes(app: AdminApp, pool: Pool): void {
+export function registerAdminRoutes(
+  app: AdminApp,
+  pool: Pool,
+  options: AdminRouteOptions = {}
+): void {
   app.get('/admin/api/bootstrap/status', async (c) => {
     setAdminNoStoreHeaders(c);
     try {
@@ -420,6 +500,178 @@ export function registerAdminRoutes(app: AdminApp, pool: Pool): void {
       setAdminNoStoreHeaders(c);
       return c.json({
         csrfToken: issueAdminCsrfToken(admin.sessionToken)
+      });
+    }
+  );
+
+  app.post(
+    '/admin/api/session/mfa/enroll',
+    createAdminSessionMiddleware({ pool }),
+    async (c) => {
+      const admin = c.get('admin');
+      setAdminNoStoreHeaders(c);
+
+      const enrollment = await beginAdminTotpEnrollment(pool, {
+        adminUserId: admin.user.id,
+        accountName: admin.user.email,
+        issuer: 'Postgram',
+        secretKey: requireAdminMfaSecretKey(options.adminMfaSecretKey)
+      });
+
+      if (enrollment.isErr()) {
+        throw enrollment.error;
+      }
+
+      return c.json(
+        {
+          factor: toMfaFactorResponse(enrollment.value.factor),
+          secret: enrollment.value.secret,
+          otpauthUrl: enrollment.value.otpauthUrl
+        },
+        201
+      );
+    }
+  );
+
+  app.post(
+    '/admin/api/session/mfa/verify',
+    createAdminSessionMiddleware({ pool }),
+    async (c) => {
+      const admin = c.get('admin');
+      setAdminNoStoreHeaders(c);
+      const now = new Date();
+      const body = parseJsonBody(mfaVerifySchema, await readJson(c));
+
+      if (
+        await isRateLimited(pool, {
+          attemptType: 'mfa',
+          identifier: admin.user.id,
+          now
+        })
+      ) {
+        throw rateLimitError('mfa');
+      }
+
+      const verified = await verifyAdminTotpEnrollment(pool, {
+        adminUserId: admin.user.id,
+        sessionId: admin.session.id,
+        factorId: body.factorId,
+        code: body.code,
+        secretKey: requireAdminMfaSecretKey(options.adminMfaSecretKey),
+        now
+      });
+
+      if (verified.isErr()) {
+        if (verified.error.code === ErrorCode.INTERNAL) {
+          throw verified.error;
+        }
+
+        throw safeMfaError();
+      }
+
+      return c.json({
+        user: toAdminUserResponse(verified.value.user),
+        session: toSessionResponse(verified.value.session),
+        factor: toMfaFactorResponse(verified.value.factor),
+        stepUp: toStepUpResponse(verified.value.session)
+      });
+    }
+  );
+
+  app.post(
+    '/admin/api/session/mfa/challenge',
+    createAdminSessionMiddleware({ pool }),
+    async (c) => {
+      const admin = c.get('admin');
+      setAdminNoStoreHeaders(c);
+      const now = new Date();
+      const body = parseJsonBody(mfaChallengeSchema, await readJson(c));
+
+      if (admin.user.status !== 'active' || !admin.user.mfaRequired) {
+        return jsonError(c, activeAdminMfaError());
+      }
+
+      if (
+        await isRateLimited(pool, {
+          attemptType: 'mfa',
+          identifier: admin.user.id,
+          now
+        })
+      ) {
+        throw rateLimitError('mfa');
+      }
+
+      const challenge = await verifyAdminTotpChallenge(pool, {
+        adminUserId: admin.user.id,
+        sessionId: admin.session.id,
+        code: body.code,
+        secretKey: requireAdminMfaSecretKey(options.adminMfaSecretKey),
+        now
+      });
+
+      if (challenge.isErr()) {
+        if (challenge.error.code === ErrorCode.INTERNAL) {
+          throw challenge.error;
+        }
+
+        throw safeMfaError();
+      }
+
+      return c.json({
+        user: toAdminUserResponse(challenge.value.user),
+        session: toSessionResponse(challenge.value.session),
+        stepUp: toStepUpResponse(challenge.value.session)
+      });
+    }
+  );
+
+  app.post(
+    '/admin/api/session/step-up',
+    createAdminSessionMiddleware({ pool }),
+    async (c) => {
+      const admin = c.get('admin');
+      setAdminNoStoreHeaders(c);
+      const now = new Date();
+      const body = parseJsonBody(mfaChallengeSchema, await readJson(c));
+
+      if (admin.user.status !== 'active' || !admin.user.mfaRequired) {
+        return jsonError(c, activeAdminMfaError());
+      }
+
+      if (!admin.session.mfaVerifiedAt) {
+        return jsonError(c, adminMfaVerificationError());
+      }
+
+      if (
+        await isRateLimited(pool, {
+          attemptType: 'step_up',
+          identifier: admin.user.id,
+          now
+        })
+      ) {
+        throw rateLimitError('step_up');
+      }
+
+      const stepUp = await verifyAdminTotpStepUp(pool, {
+        adminUserId: admin.user.id,
+        sessionId: admin.session.id,
+        code: body.code,
+        secretKey: requireAdminMfaSecretKey(options.adminMfaSecretKey),
+        now
+      });
+
+      if (stepUp.isErr()) {
+        if (stepUp.error.code === ErrorCode.INTERNAL) {
+          throw stepUp.error;
+        }
+
+        throw safeMfaError();
+      }
+
+      return c.json({
+        user: toAdminUserResponse(stepUp.value.user),
+        session: toSessionResponse(stepUp.value.session),
+        stepUp: toStepUpResponse(stepUp.value.session)
       });
     }
   );

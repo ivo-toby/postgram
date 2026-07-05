@@ -29,7 +29,15 @@ WAVE-003 is done and reconciled. PR #80 was merged by GitHub at
 2026-07-05T16:25:30Z, TASK-005 was merged into the epic branch in `ecfe9ac`,
 and the TASK-005 worktree was cleaned up.
 
-Next phase: monitor workers Tesla and Euclid for PRs or patches. Do not start
+Next phase: monitor Lorentz review for WAVE-004 PRs. Tesla returned `DONE`
+with draft PR #82 for TASK-006 at `3cfca6e`; Euclid returned `DONE` with draft
+PR #81 for TASK-009 at `b96ca9d`. Lorentz review was requested at
+2026-07-05T17:32:34Z under submission
+`019f3357-e7f4-7dd1-a1cf-afa9616d4a26`. PR #82 was clean against the epic
+branch at review request; PR #81 was dirty. After controller checkpoint
+`0eb4472` advanced the epic branch, GitHub reports both PRs as
+`mergeStateStatus=UNKNOWN`; both task branches require a fresh branch
+freshness refresh and verification before any merge decision. Do not start
 WAVE-005.
 
 ## Wave Summary
@@ -52,13 +60,13 @@ WAVE-005.
 
 Mode: codex_thread_heartbeat
 
-Cadence: 15 minutes
+Cadence: 5 minutes
 
 Status: active
 
-Last check: 2026-07-05T16:47:34Z
+Last check: 2026-07-05T17:32:34Z
 
-Next check due: 2026-07-05T17:02:34Z
+Next check due: 2026-07-05T17:37:34Z
 
 Scheduler reference: `postgram-admin-wave-004-start-heartbeat`
 
@@ -74,11 +82,12 @@ controller-state.md, then inspect workers Tesla
 WAVE-004-admin-mfa-step-up / TASK-006 and Euclid
 (019f3333-4104-7b02-b1aa-1fce6978e410) for
 WAVE-004-settings-secret-store / TASK-009, including their assigned worktrees.
-Update gates, branch freshness, verification, PR or patch refs, review refs,
-feedback, shared-context reconciliation status, and monitoring timestamps. If a
-worker has produced a PR or patch, move that bundle to review orchestration; if
-no PR or patch exists, keep no_pr and nudge exact missing deliverables only if
-needed. Stop when WAVE-004 bundles are merged, blocked, cancelled, or ready for
+Update gates, branch freshness, verification, PR refs, review refs, feedback,
+shared-context reconciliation status, and monitoring timestamps. If review
+reports P1/P2, route feedback to the owning worker or a fresh fix worker. If
+review passes, refresh stale task branches against the epic branch, rerun
+required freshness verification, then merge or mark merge_ready according to
+policy. Stop when WAVE-004 bundles are merged, blocked, cancelled, or ready for
 wdd-reconcile-wave. Do not start WAVE-005.
 ```
 
@@ -122,10 +131,10 @@ wdd-reconcile-wave. Do not start WAVE-005.
 | TASK-003-runtime-config-feasibility | TICKET-001-feasibility-security-design | codex/task/WAVE-001-admin-feasibility-gate | cleaned_up | reconciled | P3 provider URL/egress test feedback addressed; REVIEW_PASS; merged in `1f11365` |
 | TASK-004-admin-auth-persistence | TICKET-002-admin-auth-foundation | codex/task/TASK-004-admin-auth-persistence | cleaned_up | reconciled | REVIEW_PASS; freshness verification passed; merged in `0f96769`; PR #79 merged; WAVE-002 reconciled |
 | TASK-005-admin-session-routes | TICKET-002-admin-auth-foundation | codex/task/TASK-005-admin-session-routes | cleaned_up | reconciled | REVIEW_PASS; freshness verification passed; merged in `ecfe9ac`; PR #80 merged; WAVE-003 reconciled |
-| TASK-006-admin-mfa-step-up | TICKET-002-admin-auth-foundation | codex/task/TASK-006-admin-mfa-step-up | verified_dispatched | no_pr | worker Tesla dispatched; waiting for PR/patch; `npm test -- tests/contract/admin-mfa-routes.test.ts`; `npm test -- tests/integration/admin-auth-service.test.ts`; `npm run typecheck` |
+| TASK-006-admin-mfa-step-up | TICKET-002-admin-auth-foundation | codex/task/TASK-006-admin-mfa-step-up | clean_pushed | reviewing | Draft PR #82 at `3cfca6e`; Tesla reported MFA contract, admin-auth integration, typecheck, touched-file ESLint, `git diff --check`, and Codex review passed; post-controller-checkpoint branch freshness refresh required |
 | TASK-007-admin-api-shell-diagnostics | TICKET-003-admin-api-foundation | codex/task/TASK-007-admin-api-shell-diagnostics | not_created | planned | `npm test -- tests/contract/admin-api.test.ts`; `npm run typecheck` |
 | TASK-008-admin-key-audit-stats-api | TICKET-003-admin-api-foundation | codex/task/TASK-008-admin-key-audit-stats-api | not_created | planned | `npm test -- tests/contract/admin-key-audit-stats.test.ts`; `npm test -- tests/integration/key-service.test.ts`; `npm run typecheck` |
-| TASK-009-settings-secret-store | TICKET-004-runtime-configuration | codex/task/TASK-009-settings-secret-store | verified_dispatched | no_pr | worker Euclid dispatched; waiting for PR/patch; `npm test -- tests/integration/admin-settings-service.test.ts`; `npm run typecheck` |
+| TASK-009-settings-secret-store | TICKET-004-runtime-configuration | codex/task/TASK-009-settings-secret-store | clean_pushed | reviewing | Draft PR #81 at `b96ca9d`; Euclid reported settings, config, migration, admin-auth integration, typecheck, touched-file ESLint, `git diff --check`, and Codex review passed; branch is stale/dirty and needs freshness refresh before merge |
 | TASK-010-provider-config-apply | TICKET-004-runtime-configuration | codex/task/TASK-010-provider-config-apply | not_created | planned | `npm test -- tests/integration/admin-provider-config.test.ts`; `npm test -- tests/unit/config.test.ts`; `npm run typecheck` |
 | TASK-011-admin-auth-ui | TICKET-005-admin-frontend | codex/task/TASK-011-admin-auth-ui | not_created | planned | `npm --prefix ui run test -- --run src/components/AdminAuth.test.tsx`; `npm --prefix ui run typecheck` |
 | TASK-012-admin-ops-dashboard-ui | TICKET-005-admin-frontend | codex/task/TASK-012-admin-ops-dashboard-ui | not_created | planned | `npm --prefix ui run test -- --run src/components/AdminOps.test.tsx`; `npm --prefix ui run typecheck` |
@@ -189,6 +198,20 @@ wdd-reconcile-wave. Do not start WAVE-005.
   `/Users/ivo.toby/workspace/postgram/.worktrees/TASK-009-settings-secret-store`.
 - WAVE-004 task branches were created from activation commit `f183a28`, pushed
   to origin, verified, and dispatched to Tesla and Euclid.
+- WAVE-004 2026-07-05T17:12:04Z observation: Tesla and Euclid were both still
+  running. Neither worker had returned a final status or opened a PR/patch.
+  Both task branches were current with the epic branch at `f9bbc0f`, and both
+  worktrees contained active uncommitted implementation changes in expected
+  task-owned areas.
+- WAVE-004 2026-07-05T17:32:34Z observation: Tesla returned `DONE` with draft
+  PR #82 at `3cfca6e`; Euclid returned `DONE` with draft PR #81 at `b96ca9d`.
+  Both worktrees are clean and pushed. Lorentz review was requested for both
+  PRs under submission `019f3357-e7f4-7dd1-a1cf-afa9616d4a26`. PR #82 was
+  `mergeStateStatus=CLEAN` at review request; PR #81 was
+  `mergeStateStatus=DIRTY` and one epic controller commit behind (`rev-list` =
+  `1 2`). After controller checkpoint `0eb4472` advanced the epic branch,
+  GitHub reports both PRs as `mergeStateStatus=UNKNOWN`; both task branches
+  need freshness refresh and verification before merge.
 
 ## WAVE-001 Reconciled State
 
@@ -334,6 +357,19 @@ wdd-reconcile-wave. Do not start WAVE-005.
   state, both branches were pushed to origin, and workers Tesla/Euclid were
   dispatched. Product code tests are worker-owned and not run by the
   controller during activation.
+- WAVE-004 2026-07-05T17:12:04Z heartbeat verification: worker poll timed out
+  without final statuses; GitHub has no PRs for either task branch; both
+  branches are current with `origin/codex/epic/admin-configuration-frontend`;
+  no controller verification commands were run against uncommitted worker code.
+- WAVE-004 2026-07-05T17:32:34Z review-handoff verification: Tesla and Euclid
+  both returned `DONE`; draft PR #82 and draft PR #81 are open against
+  `codex/epic/admin-configuration-frontend`; both worktrees are clean and
+  pushed at their PR heads; GitHub initially reported PR #82
+  `mergeStateStatus=CLEAN` and PR #81 `mergeStateStatus=DIRTY`. After
+  controller checkpoint `0eb4472`, GitHub reports both PRs as
+  `mergeStateStatus=UNKNOWN`. Lorentz review was requested for both PRs.
+  Controller did not rerun product tests during this handoff and is relying on
+  worker-reported verification until review/freshness gates advance.
 
 ## Event Log
 
@@ -479,8 +515,25 @@ wdd-reconcile-wave. Do not start WAVE-005.
   verified WAVE-004 task branches/worktrees from that commit, pushed both task
   branches to origin, dispatched worker Tesla for TASK-006 and worker Euclid
   for TASK-009, and set WAVE-004 monitoring to 15-minute heartbeat cadence.
+- 2026-07-05T17:12:04Z: Heartbeat inspected workers Tesla and Euclid. Both are
+  still running with active uncommitted changes in their assigned worktrees. No
+  PR or patch exists for either branch, so both bundle gates remain `no_pr`.
+- 2026-07-05T17:32:34Z: Heartbeat inspected Tesla, Euclid, PR #81, PR #82, and
+  both assigned worktrees. Tesla returned `DONE`, opened draft PR #82 at
+  `3cfca6e`, and reported required verification passed. Euclid returned
+  `DONE`, opened draft PR #81 at `b96ca9d`, and reported required verification
+  passed. The controller requested Lorentz review for both PRs
+  (`019f3357-e7f4-7dd1-a1cf-afa9616d4a26`), moved both bundle gates to
+  `reviewing`, recorded PR #81 as stale/dirty pending branch freshness, and
+  updated monitoring to five-minute review cadence. After controller checkpoint
+  `0eb4472`, GitHub reports both PRs as `mergeStateStatus=UNKNOWN`; branch
+  freshness must be refreshed before merge.
 
 ## Next Action
 
-Run the next WAVE-004 controller heartbeat at 2026-07-05T17:02:34Z to inspect
-workers Tesla and Euclid for PRs or patches.
+Run the next WAVE-004 controller heartbeat at 2026-07-05T17:37:34Z to inspect
+Lorentz review for PR #81 and PR #82. If review reports P1/P2, route feedback
+to the owning worker or a fresh fix worker. If review passes, refresh any stale
+task branch against the latest epic branch, rerun required freshness
+verification, then merge or mark merge_ready according to policy. Do not start
+WAVE-005.

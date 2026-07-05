@@ -20,12 +20,12 @@ assigned_model_class: implementationComplex
 review_model_class: review
 branch: codex/task/TASK-009-settings-secret-store
 worker_worktree: /Users/ivo.toby/workspace/postgram/.worktrees/TASK-009-settings-secret-store
-worktree_status: verified
+worktree_status: clean_pushed
 pr: https://github.com/ivo-toby/postgram/pull/81
 worker_thread_id: 019f3333-4104-7b02-b1aa-1fce6978e410
-review_thread_id: 019f334b-60fb-7712-8406-458f8ac26762
-current_gate: review
-branch_freshness: current_at_pr
+review_thread_id: 019f322c-02e7-7590-8b8e-ebdd1e9c52ac
+current_gate: review_feedback_fixed
+branch_freshness: current_after_epic_merge
 verification:
   - npm test -- tests/integration/admin-settings-service.test.ts
   - npm run typecheck
@@ -127,7 +127,14 @@ Verified and dispatched at 2026-07-05T16:47:34Z with worker Euclid
 
 ## PR / Patch Reference
 
-Draft PR: https://github.com/ivo-toby/postgram/pull/81
+Draft PR #81: https://github.com/ivo-toby/postgram/pull/81
+
+Review requested from Lorentz (`019f322c-02e7-7590-8b8e-ebdd1e9c52ac`) at
+2026-07-05T17:32:34Z with submission
+`019f3357-e7f4-7dd1-a1cf-afa9616d4a26`.
+
+Lorentz returned `REVIEW_BLOCKED` with one P2 metadata-redaction finding and
+one P2 branch-freshness finding. Both are fixed on this branch.
 
 ## RED-GREEN TDD Plan
 
@@ -200,6 +207,25 @@ Keep generic setting storage separate from provider-specific validation.
   credential-shaped keys bypassing the encrypted secret store through generic
   settings persistence. Fixed before push.
 - Review: second `codex review --uncommitted` returned no blocking issues.
+- RED: Lorentz P2 regression `npm test --
+  tests/integration/admin-settings-service.test.ts` failed when malicious
+  secret validation metadata containing an authorization header, plaintext
+  token, and reusable token prefix was returned through redacted metadata.
+- GREEN: `npm test -- tests/integration/admin-settings-service.test.ts`
+  passed after secret validation metadata was normalized to `{}` on save and
+  redacted to `{}` on read.
+- Static: `npm run typecheck` passed after the P2 fix.
+- Static: `git diff --check` passed after the P2 fix.
+- Branch freshness: merged `origin/codex/epic/admin-configuration-frontend`
+  into `codex/task/TASK-009-settings-secret-store`; conflict was limited to
+  this WDD task file and preserved PR/review/fix evidence.
+- Final merged-tree verification:
+  - `npm test -- tests/integration/admin-settings-service.test.ts` passed:
+    1 test file, 8 tests.
+  - `npm run typecheck` passed.
+  - `git diff --check && git diff --cached --check` passed.
+  - `npx eslint src/services/admin-settings-service.ts
+    tests/integration/admin-settings-service.test.ts` passed.
 
 ## Review Feedback
 
@@ -211,7 +237,13 @@ Keep generic setting storage separate from provider-specific validation.
 
 ### P2
 
-- None.
+- Resolved Lorentz `REVIEW_BLOCKED` finding: secret validation metadata no
+  longer persists or returns arbitrary caller-provided JSON. `saveRuntimeSecret`
+  normalizes secret validation metadata to `{}`, and secret metadata read/list
+  paths defensively map validation metadata to `{}`.
+- Resolved Lorentz branch-freshness finding: merged latest
+  `origin/codex/epic/admin-configuration-frontend` into the task branch and
+  resolved the WDD task-file-only conflict while preserving PR #81 evidence.
 
 ### P3
 
@@ -238,4 +270,36 @@ Keep generic setting storage separate from provider-specific validation.
   tables.
 - Shared-context update needed: none. TASK-010 can consume this service for
   provider validation/apply behavior.
-- Final gate: draft PR #81 ready for review.
+- WAVE-004 activation started at 2026-07-05T16:47:34Z as the
+  settings/secret-store hybrid bundle. Branch/worktree creation is pending the
+  pushed activation artifact commit.
+- Controller verified the worktree and dispatched worker Euclid
+  (`019f3333-4104-7b02-b1aa-1fce6978e410`). No PR or patch exists yet.
+- 2026-07-05T17:12:04Z controller heartbeat observed active uncommitted work
+  in `.env.example`, `README.md`, `docker-compose.yml`, `src/config.ts`,
+  `src/db/migrations/011_admin_settings.sql`,
+  `src/services/admin-settings-service.ts`, `tests/helpers/postgres.ts`,
+  `tests/unit/config.test.ts`, and
+  `tests/integration/admin-settings-service.test.ts`. No PR or patch exists
+  yet; branch remains current with the epic branch at `f9bbc0f`.
+- 2026-07-05T17:32:34Z controller heartbeat observed Euclid `DONE`, draft PR
+  #81 open at `b96ca9d5b0ff3445aa8a8231451998f86ce23e5c`, and the worktree
+  clean/pushed. GitHub reports `mergeStateStatus=DIRTY`; the branch is one
+  epic controller commit behind (`rev-list origin/codex/epic/admin-configuration-frontend...HEAD`
+  = `1 2`) and needs a branch-freshness refresh after review and before merge.
+  The worker branch moved its task copy to `review/`; this epic-side task copy
+  records the review gate while the PR is open. Lorentz review is in progress.
+- After controller checkpoint `0eb4472` was pushed, GitHub reports PR #81
+  `mergeStateStatus=UNKNOWN` and the task branch is behind the epic branch
+  (`rev-list origin/codex/epic/admin-configuration-frontend...HEAD` = `2 2`).
+  Refresh against the latest epic branch and rerun freshness verification
+  before merge.
+- 2026-07-05T17:51Z worker fixed Lorentz P2 metadata feedback with RED/GREEN
+  coverage. Secret validation metadata is now empty for storage and redacted
+  reads/lists, including malicious authorization/token-prefix metadata.
+- 2026-07-05T17:52Z worker merged latest
+  `origin/codex/epic/admin-configuration-frontend`; only this WDD task file
+  conflicted, and the resolution preserved controller review notes plus worker
+  implementation/fix evidence.
+- 2026-07-05T17:54Z worker reran required verification on the merged tree.
+- Final gate: draft PR #81 ready for follow-up review.

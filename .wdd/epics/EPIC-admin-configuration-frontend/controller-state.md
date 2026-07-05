@@ -50,13 +50,13 @@ reconciliation completes.
 
 Mode: codex_thread_heartbeat
 
-Cadence: handoff pending
+Cadence: 5 minutes
 
-Status: ready for WAVE-003 reconciliation
+Status: reconciliation handoff active
 
-Last check: 2026-07-05T16:16:04Z
+Last check: 2026-07-05T16:25:30Z
 
-Next check due: none after this merge checkpoint
+Next check due: 2026-07-05T16:30:30Z
 
 Scheduler reference: `postgram-admin-wave-003-wdd-heartbeat`
 
@@ -65,8 +65,9 @@ Fallback prompt:
 ```text
 Run wdd-reconcile-wave for /Users/ivo.toby/workspace/postgram, epic
 EPIC-admin-configuration-frontend, wave WAVE-003. Confirm PR #80 and merge
-commit ecfe9ac, reconcile shared context, clean up the TASK-005 worktree if
-safe, and do not start WAVE-004 until reconciliation completes.
+commit ecfe9ac, closeout commit ff338b1, reconcile shared context, clean up
+the TASK-005 worktree if safe, and do not start WAVE-004 until reconciliation
+completes.
 ```
 
 ## Active Wave Strategy
@@ -154,7 +155,9 @@ safe, and do not start WAVE-004 until reconciliation completes.
   review request submission `019f3311-ae9d-79b1-84f3-ede0958df215`.
 - WAVE-003 latest observation: Lorentz returned `REVIEW_PASS`; freshness merge
   `e3dd76a` passed verification; PR #80 was merged locally into the epic branch
-  in `ecfe9ac`; worktree cleanup is deferred to WAVE-003 reconciliation.
+  in `ecfe9ac`; GitHub marked PR #80 as merged at 2026-07-05T16:25:30Z after
+  closeout commit `ff338b1` was pushed; worktree cleanup is deferred to
+  WAVE-003 reconciliation.
 
 ## WAVE-001 Reconciled State
 
@@ -411,9 +414,12 @@ safe, and do not start WAVE-004 until reconciliation completes.
   reran freshness verification, pushed the task branch, merged TASK-005 into
   the epic branch in `ecfe9ac`, and moved the task file to `done/`. WAVE-003 is
   ready for reconciliation; worktree cleanup is deferred to reconciliation.
+- 2026-07-05T16:25:30Z: Pushed WAVE-003 merge closeout commit `ff338b1` to
+  origin; GitHub marked PR #80 as `MERGED`. Heartbeat
+  `postgram-admin-wave-003-wdd-heartbeat` now hands off to
+  `wdd-reconcile-wave` for WAVE-003 reconciliation.
 
 ## Next Action
 
-Push the WAVE-003 merge closeout checkpoint, confirm GitHub PR #80 remote state,
-then run `wdd-reconcile-wave` for WAVE-003. Do not start WAVE-004 before
+Run `wdd-reconcile-wave` for WAVE-003. Do not start WAVE-004 before
 reconciliation.

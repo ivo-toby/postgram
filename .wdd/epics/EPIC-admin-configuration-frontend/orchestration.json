@@ -470,12 +470,18 @@
           "reviewedAt": "2026-07-05T16:16:04Z",
           "mergedAt": "2026-07-05T16:16:04Z",
           "mergeCommit": "ecfe9ac146db0ec9d9902f336cb87aad556821c3",
-          "freshnessMergeCommit": "e3dd76a"
+          "freshnessMergeCommit": "e3dd76a",
+          "remotePrState": "MERGED",
+          "remotePrMergedAt": "2026-07-05T16:25:30Z",
+          "closeoutCommit": "ff338b1"
         }
       ],
       "workerDispatchStartedAt": "2026-07-05T15:15:57Z",
       "mergedAt": "2026-07-05T16:16:04Z",
-      "mergeCommit": "ecfe9ac146db0ec9d9902f336cb87aad556821c3"
+      "mergeCommit": "ecfe9ac146db0ec9d9902f336cb87aad556821c3",
+      "remotePrState": "MERGED",
+      "remotePrMergedAt": "2026-07-05T16:25:30Z",
+      "closeoutCommit": "ff338b1"
     },
     {
       "id": "WAVE-004",
@@ -1484,12 +1490,12 @@
   ],
   "monitoring": {
     "mode": "codex_thread_heartbeat",
-    "cadence": "manual_or_next_handoff",
-    "status": "ready_for_reconciliation",
-    "lastCheckedAt": "2026-07-05T16:16:04Z",
-    "nextCheckDueAt": null,
+    "cadence": "5m",
+    "status": "reconciliation_handoff_active",
+    "lastCheckedAt": "2026-07-05T16:25:30Z",
+    "nextCheckDueAt": "2026-07-05T16:30:30Z",
     "schedulerRef": "postgram-admin-wave-003-wdd-heartbeat",
-    "fallbackPrompt": "Run wdd-reconcile-wave for /Users/ivo.toby/workspace/postgram, epic EPIC-admin-configuration-frontend, wave WAVE-003. Confirm PR #80 and merge commit ecfe9ac, reconcile shared context, clean up worktree if safe, and do not start WAVE-004 until reconciliation completes."
+    "fallbackPrompt": "Run wdd-reconcile-wave for /Users/ivo.toby/workspace/postgram, epic EPIC-admin-configuration-frontend, wave WAVE-003. Confirm PR #80 remote MERGED state, merge commit ecfe9ac, closeout commit ff338b1, reconcile shared context, clean up worktree if safe, and do not start WAVE-004 until reconciliation completes."
   },
   "sharedContext": {
     "index": "shared-context/index.md",
@@ -1607,12 +1613,12 @@
     },
     "monitoring": {
       "mode": "codex_thread_heartbeat",
-      "cadence": "manual_or_next_handoff",
-      "status": "ready_for_reconciliation",
-      "lastCheckedAt": "2026-07-05T16:16:04Z",
-      "nextCheckDueAt": null,
+      "cadence": "5m",
+      "status": "reconciliation_handoff_active",
+      "lastCheckedAt": "2026-07-05T16:25:30Z",
+      "nextCheckDueAt": "2026-07-05T16:30:30Z",
       "schedulerRef": "postgram-admin-wave-003-wdd-heartbeat",
-      "fallbackPrompt": "Run wdd-reconcile-wave for /Users/ivo.toby/workspace/postgram, epic EPIC-admin-configuration-frontend, wave WAVE-003. Confirm PR #80 and merge commit ecfe9ac, reconcile shared context, clean up worktree if safe, and do not start WAVE-004 until reconciliation completes."
+      "fallbackPrompt": "Run wdd-reconcile-wave for /Users/ivo.toby/workspace/postgram, epic EPIC-admin-configuration-frontend, wave WAVE-003. Confirm PR #80 remote MERGED state, merge commit ecfe9ac, closeout commit ff338b1, reconcile shared context, clean up worktree if safe, and do not start WAVE-004 until reconciliation completes."
     },
     "review": {
       "WAVE-001-admin-feasibility-gate": {
@@ -1713,12 +1719,15 @@
         "reconciledAt": "2026-07-05T15:07:20Z"
       },
       "WAVE-003-admin-session-routes": {
-        "status": "merged_pending_reconciliation",
+        "status": "merged_ready_for_reconciliation",
         "commit": "ecfe9ac146db0ec9d9902f336cb87aad556821c3",
         "taskBranchHead": "e3dd76a",
         "workerHead": "01c59a9586c0311a48aa5c55ffd7784f2a3aaccc",
         "mergedAt": "2026-07-05T16:16:04Z",
-        "cleanupState": "cleanup_deferred"
+        "cleanupState": "cleanup_deferred",
+        "remotePrState": "MERGED",
+        "remotePrMergedAt": "2026-07-05T16:25:30Z",
+        "closeoutCommit": "ff338b1"
       }
     },
     "sharedContextReconciliation": {
@@ -1745,14 +1754,17 @@
         "closeoutCommit": "cac43dd"
       },
       "WAVE-003-admin-session-routes": {
-        "state": "OPEN",
+        "state": "MERGED",
         "isDraft": true,
         "url": "https://github.com/ivo-toby/postgram/pull/80",
         "headRef": "codex/task/TASK-005-admin-session-routes",
-        "headSha": "e3dd76a",
+        "headSha": "e3dd76a7123711b097946979df8e68aaa09ff5f6",
         "baseRef": "codex/epic/admin-configuration-frontend",
+        "baseSha": "e841ac3d271c68e223acc9f285da2a8aaf9bd807",
         "localMergeCommit": "ecfe9ac146db0ec9d9902f336cb87aad556821c3",
-        "note": "Local epic branch contains task branch merge; remote PR state will be rechecked after push."
+        "mergedAt": "2026-07-05T16:25:30Z",
+        "remoteBasePushedAt": "2026-07-05T16:25:30Z",
+        "closeoutCommit": "ff338b1"
       }
     },
     "cleanup": {
@@ -1843,7 +1855,10 @@
     "bundle": "WAVE-003-admin-session-routes",
     "mergeCommit": "ecfe9ac146db0ec9d9902f336cb87aad556821c3",
     "mergedAt": "2026-07-05T16:16:04Z",
-    "status": "ready_for_reconciliation"
+    "status": "ready_for_reconciliation",
+    "remotePrState": "MERGED",
+    "remotePrMergedAt": "2026-07-05T16:25:30Z",
+    "closeoutCommit": "ff338b1"
   },
   "lastStartedWave": {
     "id": "WAVE-003",

@@ -29,14 +29,13 @@ WAVE-003 is done and reconciled. PR #80 was merged by GitHub at
 2026-07-05T16:25:30Z, TASK-005 was merged into the epic branch in `ecfe9ac`,
 and the TASK-005 worktree was cleaned up.
 
-Next phase: monitor worker fixes for WAVE-004 PRs. Lorentz returned
-`REVIEW_BLOCKED` at 2026-07-05T17:48:34Z. PR #81 has a P2 secret validation
-metadata redaction issue plus task-file-only branch freshness conflict; fixes
-were routed to Euclid in `019f3366-7c9b-7b33-9d93-0009fa0ec291`. PR #82 has a
-P2 MFA audit structured admin actor attribution issue, a task-file-only branch
-freshness conflict, and a P3 MFA route rate-limit regression suggestion; fixes
-were routed to Tesla in `019f3366-7cfd-7ee1-b852-1d20abe022d8`. Do not start
-WAVE-005.
+Next phase: monitor mixed WAVE-004 fix/review state. PR #81 has a pushed fix
+at `e03421a`, controller verification passed, and Lorentz follow-up review was
+requested in `019f3371-9537-7962-925b-b69f1cea2fa6`. PR #82 has local clean
+fix commits through `3923133`, but the branch has not been pushed and PR #82
+still points at old head `3cfca6e`; Tesla was nudged for the missing push,
+PR update, and final status token in
+`019f3371-0282-78d3-83fd-b9b8ba1aac24`. Do not start WAVE-005.
 
 ## Wave Summary
 
@@ -62,9 +61,9 @@ Cadence: 5 minutes
 
 Status: active
 
-Last check: 2026-07-05T17:48:34Z
+Last check: 2026-07-05T17:59:04Z
 
-Next check due: 2026-07-05T17:53:34Z
+Next check due: 2026-07-05T18:04:04Z
 
 Scheduler reference: `postgram-admin-wave-004-start-heartbeat`
 
@@ -81,11 +80,11 @@ WAVE-004-admin-mfa-step-up / TASK-006 and Euclid
 (019f3333-4104-7b02-b1aa-1fce6978e410) for
 WAVE-004-settings-secret-store / TASK-009, including their assigned worktrees.
 Update gates, branch freshness, verification, PR refs, review refs, feedback,
-shared-context reconciliation status, and monitoring timestamps. If workers
-push fixes, verify evidence and request follow-up review. If no fixes are
-present, keep `needs_fixes` and nudge exact missing deliverables only if
-needed. Stop when WAVE-004 bundles are merged, blocked, cancelled, or ready for
-wdd-reconcile-wave. Do not start WAVE-005.
+shared-context reconciliation status, and monitoring timestamps. Poll Lorentz
+follow-up review for PR #81 and Tesla for the missing PR #82 push/final status.
+If PR #82 is pushed, verify evidence and request follow-up review. If PR #81
+passes and PR #82 passes later, enforce branch freshness before merge. Do not
+start WAVE-005.
 ```
 
 ## Active Wave Strategy
@@ -128,10 +127,10 @@ wdd-reconcile-wave. Do not start WAVE-005.
 | TASK-003-runtime-config-feasibility | TICKET-001-feasibility-security-design | codex/task/WAVE-001-admin-feasibility-gate | cleaned_up | reconciled | P3 provider URL/egress test feedback addressed; REVIEW_PASS; merged in `1f11365` |
 | TASK-004-admin-auth-persistence | TICKET-002-admin-auth-foundation | codex/task/TASK-004-admin-auth-persistence | cleaned_up | reconciled | REVIEW_PASS; freshness verification passed; merged in `0f96769`; PR #79 merged; WAVE-002 reconciled |
 | TASK-005-admin-session-routes | TICKET-002-admin-auth-foundation | codex/task/TASK-005-admin-session-routes | cleaned_up | reconciled | REVIEW_PASS; freshness verification passed; merged in `ecfe9ac`; PR #80 merged; WAVE-003 reconciled |
-| TASK-006-admin-mfa-step-up | TICKET-002-admin-auth-foundation | codex/task/TASK-006-admin-mfa-step-up | clean_pushed | needs_fixes | Lorentz REVIEW_BLOCKED: P2 structured admin actor attribution for MFA audit rows, P2 task-file-only branch freshness conflict, P3 route rate-limit regression suggestion; routed to Tesla in `019f3366-7cfd-7ee1-b852-1d20abe022d8` |
+| TASK-006-admin-mfa-step-up | TICKET-002-admin-auth-foundation | codex/task/TASK-006-admin-mfa-step-up | clean_local_unpushed | needs_fixes | Local fix commits through `3923133` with task evidence for P2/P3 fixes, but PR #82 still points at old head `3cfca6e`; Tesla nudged for push/final token in `019f3371-0282-78d3-83fd-b9b8ba1aac24` |
 | TASK-007-admin-api-shell-diagnostics | TICKET-003-admin-api-foundation | codex/task/TASK-007-admin-api-shell-diagnostics | not_created | planned | `npm test -- tests/contract/admin-api.test.ts`; `npm run typecheck` |
 | TASK-008-admin-key-audit-stats-api | TICKET-003-admin-api-foundation | codex/task/TASK-008-admin-key-audit-stats-api | not_created | planned | `npm test -- tests/contract/admin-key-audit-stats.test.ts`; `npm test -- tests/integration/key-service.test.ts`; `npm run typecheck` |
-| TASK-009-settings-secret-store | TICKET-004-runtime-configuration | codex/task/TASK-009-settings-secret-store | clean_pushed | needs_fixes | Lorentz REVIEW_BLOCKED: P2 secret validation metadata redaction/sanitization, P2 task-file-only branch freshness conflict; routed to Euclid in `019f3366-7c9b-7b33-9d93-0009fa0ec291` |
+| TASK-009-settings-secret-store | TICKET-004-runtime-configuration | codex/task/TASK-009-settings-secret-store | clean_pushed | followup_reviewing | PR #81 fix pushed at `e03421a`; controller verified diff check, orchestration JSON, settings integration test (8 tests), and typecheck; Lorentz follow-up review requested in `019f3371-9537-7962-925b-b69f1cea2fa6` |
 | TASK-010-provider-config-apply | TICKET-004-runtime-configuration | codex/task/TASK-010-provider-config-apply | not_created | planned | `npm test -- tests/integration/admin-provider-config.test.ts`; `npm test -- tests/unit/config.test.ts`; `npm run typecheck` |
 | TASK-011-admin-auth-ui | TICKET-005-admin-frontend | codex/task/TASK-011-admin-auth-ui | not_created | planned | `npm --prefix ui run test -- --run src/components/AdminAuth.test.tsx`; `npm --prefix ui run typecheck` |
 | TASK-012-admin-ops-dashboard-ui | TICKET-005-admin-frontend | codex/task/TASK-012-admin-ops-dashboard-ui | not_created | planned | `npm --prefix ui run test -- --run src/components/AdminOps.test.tsx`; `npm --prefix ui run typecheck` |
@@ -216,6 +215,12 @@ wdd-reconcile-wave. Do not start WAVE-005.
   branch freshness/task-file conflict; plus a P3 direct MFA route rate-limit
   regression suggestion. Feedback was routed to Euclid and Tesla; both gates
   are `needs_fixes`.
+- WAVE-004 2026-07-05T17:59:04Z observation: PR #81 pushed fix head
+  `e03421a`, controller verification passed, and Lorentz follow-up review was
+  requested. TASK-006 has clean local fix commits through `3923133` and task
+  evidence reports the P2/P3 fixes passed verification, but PR #82 has not been
+  updated because the branch is still ahead of origin; Tesla was nudged for the
+  missing push and final status token.
 
 ## WAVE-001 Reconciled State
 
@@ -382,6 +387,15 @@ wdd-reconcile-wave. Do not start WAVE-005.
   `mergeable_state=dirty` and local `merge-tree` conflicts only in WDD task
   files for both PRs. Controller routed P2 feedback to Euclid and Tesla and
   did not rerun product tests during feedback routing.
+- WAVE-004 2026-07-05T17:59:04Z fix verification: PR #81 fix head `e03421a`
+  was pushed. Controller ran `git diff --check
+  origin/codex/epic/admin-configuration-frontend...HEAD`, parsed
+  orchestration JSON, ran `npm test --
+  tests/integration/admin-settings-service.test.ts` with 8 passing tests, and
+  ran `npm run typecheck`; all passed. Lorentz follow-up review was requested
+  for PR #81. TASK-006 has clean local fix commits through `3923133`, but PR
+  #82 remains at old remote head `3cfca6e`; controller did not review it
+  because the branch is not pushed.
 
 ## Event Log
 
@@ -549,11 +563,20 @@ wdd-reconcile-wave. Do not start WAVE-005.
   and P3 MFA route rate-limit regression feedback to Tesla
   (`019f3366-7cfd-7ee1-b852-1d20abe022d8`). Both gates are `needs_fixes`; next
   check due 2026-07-05T17:53:34Z.
+- 2026-07-05T17:59:04Z: Heartbeat observed PR #81 updated to `e03421a` with
+  the secret metadata redaction fix and branch refresh evidence. Controller
+  verified PR #81 and requested Lorentz follow-up review
+  (`019f3371-9537-7962-925b-b69f1cea2fa6`). TASK-006 has clean local fix
+  commits through `3923133`, but branch `codex/task/TASK-006-admin-mfa-step-up`
+  is still ahead of origin and PR #82 has not updated; controller nudged Tesla
+  for the missing push and final status
+  (`019f3371-0282-78d3-83fd-b9b8ba1aac24`). Next check due
+  2026-07-05T18:04:04Z.
 
 ## Next Action
 
-Run the next WAVE-004 controller heartbeat at 2026-07-05T17:53:34Z to inspect
-Euclid and Tesla for pushed fixes on PR #81 and PR #82. If fixes are present,
-verify evidence and request follow-up review. If no fixes are present, keep
-`needs_fixes` and nudge exact missing deliverables only if needed. Do not start
-WAVE-005.
+Run the next WAVE-004 controller heartbeat at 2026-07-05T18:04:04Z to inspect
+Lorentz follow-up review for PR #81 and Tesla for the PR #82 push/final status.
+If PR #82 has pushed, verify evidence and request follow-up review. If PR #81
+passes and PR #82 later passes, enforce branch freshness before merge. Do not
+start WAVE-005.

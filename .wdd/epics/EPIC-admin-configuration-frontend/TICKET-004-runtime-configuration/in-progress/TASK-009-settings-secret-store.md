@@ -24,7 +24,7 @@ worktree_status: clean_pushed
 pr: https://github.com/ivo-toby/postgram/pull/81
 worker_thread_id: 019f3333-4104-7b02-b1aa-1fce6978e410
 review_thread_id: 019f322c-02e7-7590-8b8e-ebdd1e9c52ac
-current_gate: needs_fixes
+current_gate: followup_reviewing
 branch_freshness: stale_needs_freshness_refresh
 verification:
   - npm test -- tests/integration/admin-settings-service.test.ts
@@ -195,14 +195,20 @@ Keep generic setting storage separate from provider-specific validation.
 
 ### P2
 
-- `P2-secret-validation-metadata-redaction` routed to Euclid at
+- `P2-secret-validation-metadata-redaction` fix pushed by Euclid at
+  `e03421a7327555d8711a8c9fb68a8a8d10c1f39a`; controller verified and
+  requested Lorentz follow-up review at 2026-07-05T17:59:04Z
+  (`019f3371-9537-7962-925b-b69f1cea2fa6`). Originally routed at
   2026-07-05T17:48:34Z (`019f3366-7c9b-7b33-9d93-0009fa0ec291`): Lorentz
   found `saveRuntimeSecret` accepts arbitrary `validation.metadata` and
   redacted secret metadata reads return `mapValidation(row)` unchanged,
   allowing plaintext/token/auth/provider response metadata to leak. Fix by
   schema-limiting/sanitizing secret validation metadata or not returning
   arbitrary metadata, with a malicious metadata regression.
-- `P2-branch-freshness-task-file-conflict` routed to Euclid at
+- `P2-branch-freshness-task-file-conflict` partially addressed by Euclid via
+  task-branch refresh at `e03421a7327555d8711a8c9fb68a8a8d10c1f39a`; final
+  freshness is still required before merge because the controller branch
+  advanced again. Originally routed at
   2026-07-05T17:48:34Z (`019f3366-7c9b-7b33-9d93-0009fa0ec291`): PR #81 is
   not mergeable against the latest epic branch. Reviewer says conflicts are
   WDD task-file only and product code auto-merges; refresh against latest epic
@@ -241,3 +247,10 @@ Keep generic setting storage separate from provider-specific validation.
 - 2026-07-05T17:48:34Z Lorentz returned `REVIEW_BLOCKED` for PR #81 with two
   P2 findings. Controller routed the fixes to Euclid in submission
   `019f3366-7c9b-7b33-9d93-0009fa0ec291`; gate is `needs_fixes`.
+- 2026-07-05T17:59:04Z controller observed PR #81 pushed at
+  `e03421a7327555d8711a8c9fb68a8a8d10c1f39a`. Controller verification passed:
+  `git diff --check origin/codex/epic/admin-configuration-frontend...HEAD`,
+  orchestration JSON parse, `npm test --
+  tests/integration/admin-settings-service.test.ts` with 8 tests, and
+  `npm run typecheck`. Follow-up review requested from Lorentz in
+  `019f3371-9537-7962-925b-b69f1cea2fa6`; gate is `followup_reviewing`.

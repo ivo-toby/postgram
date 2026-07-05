@@ -17,9 +17,9 @@ branch: codex/task/WAVE-001-admin-feasibility-gate
 worker_worktree: /Users/ivo.toby/workspace/postgram/.worktrees/WAVE-001-admin-feasibility-gate
 worktree_status: verified
 pr: null
-worker_thread_id: null
+worker_thread_id: 019f3215-2eb6-75f2-81f0-bf527e73258b
 review_thread_id: null
-current_gate: ready_for_dispatch
+current_gate: no_pr
 branch_freshness: current
 verification:
   - git diff --check

@@ -21,9 +21,8 @@ checkout.
 
 WAVE-001 is activated as a full-profile bundled feasibility/security gate.
 
-Next phase: create the bundled worker branch/worktree from the synced epic
-branch, dispatch one worker for TASK-001 through TASK-003, and monitor until the
-bundle is ready for review or reconciliation.
+Next phase: monitor worker Singer until the bundled WAVE-001 branch produces a
+PR or patch for review.
 
 ## Wave Summary
 
@@ -43,25 +42,25 @@ bundle is ready for review or reconciliation.
 
 ## Monitoring
 
-Mode: pending_scheduler
+Mode: codex_thread_heartbeat
 
-Cadence: adaptive
+Cadence: adaptive, every 15 minutes while no PR or patch exists
 
-Status: ready_for_dispatch
+Status: active
 
-Last check: 2026-07-05T11:36:08Z
+Last check: 2026-07-05T11:41:41Z
 
-Next check due: none
+Next check due: 2026-07-05T11:56:41Z
 
-Scheduler reference: pending
+Scheduler reference: postgram-admin-wave-001-wdd-heartbeat
 
 Fallback prompt:
 
 ```text
 Resume WAVE-001 for EPIC-admin-configuration-frontend. Read
 .wdd/epics/EPIC-admin-configuration-frontend/orchestration.json and
-controller-state.md, inspect the active bundled worker reference when recorded,
-inspect the assigned worktree
+controller-state.md, inspect active bundled worker Singer
+(019f3215-2eb6-75f2-81f0-bf527e73258b), inspect the assigned worktree
 /Users/ivo.toby/workspace/postgram/.worktrees/WAVE-001-admin-feasibility-gate,
 update gates, branch freshness, verification, PR or patch refs, review refs,
 feedback, and monitoring timestamps, and stop when the bundle is ready for
@@ -85,9 +84,9 @@ wdd-reconcile-wave.
 
 | Task | Ticket | Branch | Worktree | Gate | Verification |
 |------|--------|--------|----------|------|--------------|
-| TASK-001-admin-surface-inventory | TICKET-001-feasibility-security-design | codex/task/WAVE-001-admin-feasibility-gate | verified | ready_for_dispatch | `git diff --check` |
-| TASK-002-threat-model-bootstrap | TICKET-001-feasibility-security-design | codex/task/WAVE-001-admin-feasibility-gate | verified | ready_for_dispatch | `git diff --check` |
-| TASK-003-runtime-config-feasibility | TICKET-001-feasibility-security-design | codex/task/WAVE-001-admin-feasibility-gate | verified | ready_for_dispatch | `git diff --check` |
+| TASK-001-admin-surface-inventory | TICKET-001-feasibility-security-design | codex/task/WAVE-001-admin-feasibility-gate | verified | no_pr | `git diff --check` |
+| TASK-002-threat-model-bootstrap | TICKET-001-feasibility-security-design | codex/task/WAVE-001-admin-feasibility-gate | verified | no_pr | `git diff --check` |
+| TASK-003-runtime-config-feasibility | TICKET-001-feasibility-security-design | codex/task/WAVE-001-admin-feasibility-gate | verified | no_pr | `git diff --check` |
 | TASK-004-admin-auth-persistence | TICKET-002-admin-auth-foundation | codex/task/TASK-004-admin-auth-persistence | not_created | planned | `npm test -- tests/integration/admin-auth-service.test.ts`; `npm run typecheck` |
 | TASK-005-admin-session-routes | TICKET-002-admin-auth-foundation | codex/task/TASK-005-admin-session-routes | not_created | planned | `npm test -- tests/contract/admin-auth-routes.test.ts`; `npm run typecheck` |
 | TASK-006-admin-mfa-step-up | TICKET-002-admin-auth-foundation | codex/task/TASK-006-admin-mfa-step-up | not_created | planned | `npm test -- tests/contract/admin-mfa-routes.test.ts`; `npm test -- tests/integration/admin-auth-service.test.ts`; `npm run typecheck` |
@@ -114,6 +113,7 @@ wdd-reconcile-wave.
 - WAVE-001 bundle worktree:
   `/Users/ivo.toby/workspace/postgram/.worktrees/WAVE-001-admin-feasibility-gate`.
 - Worker worktrees: WAVE-001 bundle verified.
+- Worker: Singer (`019f3215-2eb6-75f2-81f0-bf527e73258b`).
 - Worker rule: one isolated worktree per repository-writing task before
   dispatch.
 - Controller checkout rule: workers must not switch branches in the controller
@@ -132,6 +132,10 @@ wdd-reconcile-wave.
   branch/worktree creation.
 - Bundle worktree verification: passed at `fadb158`; follow-up verification
   state is being synced before dispatch.
+- Worker dispatch: Singer started for the WAVE-001 bundle; current gate is
+  `no_pr`.
+- Monitoring: Codex heartbeat
+  `postgram-admin-wave-001-wdd-heartbeat` is active every 15 minutes.
 
 ## Shared Context Reconciliation Rules
 
@@ -158,14 +162,14 @@ wdd-reconcile-wave.
 - 2026-07-05T11:36:08Z: Created and verified bundle branch/worktree
   `codex/task/WAVE-001-admin-feasibility-gate` at
   `/Users/ivo.toby/workspace/postgram/.worktrees/WAVE-001-admin-feasibility-gate`.
+- 2026-07-05T11:41:41Z: Dispatched WAVE-001 bundled worker Singer
+  (`019f3215-2eb6-75f2-81f0-bf527e73258b`) and activated Codex heartbeat
+  `postgram-admin-wave-001-wdd-heartbeat`.
 
 ## Next Action
 
-Create/verify the bundled WAVE-001 worktree from the synced epic branch, then
-dispatch one worker:
+Heartbeat or controller next tick:
 
 ```text
-Run bundled WAVE-001 for EPIC-admin-configuration-frontend in
-/Users/ivo.toby/workspace/postgram/.worktrees/WAVE-001-admin-feasibility-gate
-on branch codex/task/WAVE-001-admin-feasibility-gate.
+Run subagent-pr-orchestration for EPIC-admin-configuration-frontend WAVE-001.
 ```

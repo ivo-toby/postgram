@@ -312,13 +312,13 @@
           ],
           "branch": "codex/task/TASK-004-admin-auth-persistence",
           "worktree": "/Users/ivo.toby/workspace/postgram/.worktrees/TASK-004-admin-auth-persistence",
-          "worktreeStatus": "verified",
+          "worktreeStatus": "active_uncommitted_changes",
           "workerThreadId": "019f329b-24ff-7ec3-93dd-d854e4681fd2",
           "workerNickname": "Parfit",
           "reviewThreadId": null,
           "reviewNickname": null,
           "currentGate": "no_pr",
-          "branchFreshness": "current_at_dispatch",
+          "branchFreshness": "current_at_dispatch_with_controller_monitoring_ahead",
           "pr": null,
           "latestCommit": null,
           "blockingFeedback": [],
@@ -333,7 +333,23 @@
           "activatedAt": "2026-07-05T12:50:00Z",
           "cleanupState": "not_started",
           "sharedContextReconciliation": "not_started",
-          "dispatchedAt": "2026-07-05T12:50:00Z"
+          "dispatchedAt": "2026-07-05T12:50:00Z",
+          "lastObservedAt": "2026-07-05T14:26:33Z",
+          "lastObservation": {
+            "checkedAt": "2026-07-05T14:26:33Z",
+            "workerStatus": "running_no_final_status",
+            "pr": null,
+            "patch": null,
+            "worktreeStatus": "active_uncommitted_changes",
+            "branchHead": "ff96f3f",
+            "observedFiles": [
+              "tests/helpers/postgres.ts",
+              "src/auth/admin-service.ts",
+              "src/db/migrations/010_admin_auth.sql",
+              "tests/integration/admin-auth-service.test.ts"
+            ],
+            "note": "Parfit has active uncommitted TASK-004 implementation work; no PR or patch exists yet."
+          }
         }
       ]
     },
@@ -785,10 +801,10 @@
       "workerThreadId": "019f329b-24ff-7ec3-93dd-d854e4681fd2",
       "reviewThreadId": null,
       "workerWorktree": "/Users/ivo.toby/workspace/postgram/.worktrees/TASK-004-admin-auth-persistence",
-      "worktreeStatus": "verified",
+      "worktreeStatus": "active_uncommitted_changes",
       "pr": null,
       "latestCommit": null,
-      "branchFreshness": "current_at_dispatch",
+      "branchFreshness": "current_at_dispatch_with_controller_monitoring_ahead",
       "blockingFeedback": [],
       "verification": {
         "result": "not_run",
@@ -803,7 +819,23 @@
       "reviewNickname": null,
       "cleanupState": "not_started",
       "sharedContextReconciliation": "not_started",
-      "dispatchedAt": "2026-07-05T12:50:00Z"
+      "dispatchedAt": "2026-07-05T12:50:00Z",
+      "lastObservedAt": "2026-07-05T14:26:33Z",
+      "lastObservation": {
+        "checkedAt": "2026-07-05T14:26:33Z",
+        "workerStatus": "running_no_final_status",
+        "pr": null,
+        "patch": null,
+        "worktreeStatus": "active_uncommitted_changes",
+        "branchHead": "ff96f3f",
+        "observedFiles": [
+          "tests/helpers/postgres.ts",
+          "src/auth/admin-service.ts",
+          "src/db/migrations/010_admin_auth.sql",
+          "tests/integration/admin-auth-service.test.ts"
+        ],
+        "note": "Parfit has active uncommitted TASK-004 implementation work; no PR or patch exists yet."
+      }
     },
     {
       "id": "TASK-005-admin-session-routes",
@@ -1322,8 +1354,8 @@
     "mode": "codex_thread_heartbeat",
     "cadence": "FREQ=MINUTELY;INTERVAL=15",
     "status": "active_no_pr_monitoring",
-    "lastCheckedAt": "2026-07-05T12:50:00Z",
-    "nextCheckDueAt": "2026-07-05T13:05:00Z",
+    "lastCheckedAt": "2026-07-05T14:26:33Z",
+    "nextCheckDueAt": "2026-07-05T14:41:33Z",
     "schedulerRef": "postgram-admin-wave-002-wdd-heartbeat",
     "fallbackPrompt": "Run subagent-pr-orchestration for EPIC-admin-configuration-frontend WAVE-002. Start in /Users/ivo.toby/workspace/postgram on branch codex/epic/admin-configuration-frontend. Read orchestration.json and controller-state.md, inspect worker Parfit (019f329b-24ff-7ec3-93dd-d854e4681fd2) and worktree /Users/ivo.toby/workspace/postgram/.worktrees/TASK-004-admin-auth-persistence on branch codex/task/TASK-004-admin-auth-persistence for TASK-004-admin-auth-persistence. Update gates, PR/patch refs, verification, feedback, branch freshness, and stop when WAVE-002 is merged/blocked/cancelled or ready for wdd-reconcile-wave."
   },
@@ -1361,13 +1393,13 @@
         ],
         "branch": "codex/task/TASK-004-admin-auth-persistence",
         "worktree": "/Users/ivo.toby/workspace/postgram/.worktrees/TASK-004-admin-auth-persistence",
-        "worktreeStatus": "verified",
+        "worktreeStatus": "active_uncommitted_changes",
         "workerThreadId": "019f329b-24ff-7ec3-93dd-d854e4681fd2",
         "workerNickname": "Parfit",
         "reviewThreadId": null,
         "reviewNickname": null,
         "currentGate": "no_pr",
-        "branchFreshness": "current_at_dispatch",
+        "branchFreshness": "current_at_dispatch_with_controller_monitoring_ahead",
         "pr": null,
         "latestCommit": null,
         "blockingFeedback": [],
@@ -1382,7 +1414,23 @@
         "activatedAt": "2026-07-05T12:50:00Z",
         "cleanupState": "not_started",
         "sharedContextReconciliation": "not_started",
-        "dispatchedAt": "2026-07-05T12:50:00Z"
+        "dispatchedAt": "2026-07-05T12:50:00Z",
+        "lastObservedAt": "2026-07-05T14:26:33Z",
+        "lastObservation": {
+          "checkedAt": "2026-07-05T14:26:33Z",
+          "workerStatus": "running_no_final_status",
+          "pr": null,
+          "patch": null,
+          "worktreeStatus": "active_uncommitted_changes",
+          "branchHead": "ff96f3f",
+          "observedFiles": [
+            "tests/helpers/postgres.ts",
+            "src/auth/admin-service.ts",
+            "src/db/migrations/010_admin_auth.sql",
+            "tests/integration/admin-auth-service.test.ts"
+          ],
+          "note": "Parfit has active uncommitted TASK-004 implementation work; no PR or patch exists yet."
+        }
       }
     ]
   },
@@ -1406,7 +1454,7 @@
     },
     "workerWorktrees": {
       "WAVE-001-admin-feasibility-gate": "cleaned_up",
-      "WAVE-002-admin-auth-persistence": "verified"
+      "WAVE-002-admin-auth-persistence": "active_uncommitted_changes"
     },
     "workerDispatch": {
       "WAVE-001-admin-feasibility-gate": "reconciled",
@@ -1424,8 +1472,8 @@
       "mode": "codex_thread_heartbeat",
       "cadence": "FREQ=MINUTELY;INTERVAL=15",
       "status": "active_no_pr_monitoring",
-      "lastCheckedAt": "2026-07-05T12:50:00Z",
-      "nextCheckDueAt": "2026-07-05T13:05:00Z",
+      "lastCheckedAt": "2026-07-05T14:26:33Z",
+      "nextCheckDueAt": "2026-07-05T14:41:33Z",
       "schedulerRef": "postgram-admin-wave-002-wdd-heartbeat",
       "fallbackPrompt": "Run subagent-pr-orchestration for EPIC-admin-configuration-frontend WAVE-002. Start in /Users/ivo.toby/workspace/postgram on branch codex/epic/admin-configuration-frontend. Read orchestration.json and controller-state.md, inspect worker Parfit (019f329b-24ff-7ec3-93dd-d854e4681fd2) and worktree /Users/ivo.toby/workspace/postgram/.worktrees/TASK-004-admin-auth-persistence on branch codex/task/TASK-004-admin-auth-persistence for TASK-004-admin-auth-persistence. Update gates, PR/patch refs, verification, feedback, branch freshness, and stop when WAVE-002 is merged/blocked/cancelled or ready for wdd-reconcile-wave."
     },
@@ -1487,7 +1535,7 @@
     },
     "branchFreshness": {
       "WAVE-001-admin-feasibility-gate": "current_at_merge",
-      "WAVE-002-admin-auth-persistence": "current_at_dispatch"
+      "WAVE-002-admin-auth-persistence": "current_at_dispatch_with_controller_monitoring_ahead"
     },
     "merge": {
       "WAVE-001-admin-feasibility-gate": {
@@ -1527,10 +1575,26 @@
     },
     "worker": {
       "WAVE-002-admin-auth-persistence": {
-        "status": "dispatched",
+        "status": "running_no_pr",
         "workerThreadId": "019f329b-24ff-7ec3-93dd-d854e4681fd2",
         "workerNickname": "Parfit",
-        "dispatchedAt": "2026-07-05T12:50:00Z"
+        "dispatchedAt": "2026-07-05T12:50:00Z",
+        "lastObservedAt": "2026-07-05T14:26:33Z",
+        "lastObservation": {
+          "checkedAt": "2026-07-05T14:26:33Z",
+          "workerStatus": "running_no_final_status",
+          "pr": null,
+          "patch": null,
+          "worktreeStatus": "active_uncommitted_changes",
+          "branchHead": "ff96f3f",
+          "observedFiles": [
+            "tests/helpers/postgres.ts",
+            "src/auth/admin-service.ts",
+            "src/db/migrations/010_admin_auth.sql",
+            "tests/integration/admin-auth-service.test.ts"
+          ],
+          "note": "Parfit has active uncommitted TASK-004 implementation work; no PR or patch exists yet."
+        }
       }
     }
   },

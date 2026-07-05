@@ -24,8 +24,8 @@ WAVE-002 is activated as a full-profile bundled admin-auth-persistence wave.
 WAVE-001 is done and reconciled. WAVE-002 starts TASK-004-admin-auth-persistence
 after Ivo confirmed the next wave on 2026-07-05.
 
-Next phase: sync activation artifacts to the epic branch, create the
-TASK-004 branch/worktree, then dispatch the worker.
+Next phase: monitor Parfit until TASK-004 produces a PR or patch, then start
+the risk-based review gate.
 
 ## Wave Summary
 
@@ -51,9 +51,9 @@ Cadence: adaptive, every 15 minutes while worker has no PR or patch
 
 Status: active no-PR monitoring
 
-Last check: 2026-07-05T12:50:00Z
+Last check: 2026-07-05T14:26:33Z
 
-Next check due: 2026-07-05T13:05:00Z
+Next check due: 2026-07-05T14:41:33Z
 
 Scheduler reference: postgram-admin-wave-002-wdd-heartbeat
 
@@ -92,7 +92,7 @@ freshness, and stop when WAVE-002 is ready for wdd-reconcile-wave.
 | TASK-001-admin-surface-inventory | TICKET-001-feasibility-security-design | codex/task/WAVE-001-admin-feasibility-gate | cleaned_up | reconciled | `git diff --check` passed; REVIEW_PASS; merged in `1f11365` |
 | TASK-002-threat-model-bootstrap | TICKET-001-feasibility-security-design | codex/task/WAVE-001-admin-feasibility-gate | cleaned_up | reconciled | P2 bootstrap ownership feedback resolved; REVIEW_PASS; merged in `1f11365` |
 | TASK-003-runtime-config-feasibility | TICKET-001-feasibility-security-design | codex/task/WAVE-001-admin-feasibility-gate | cleaned_up | reconciled | P3 provider URL/egress test feedback addressed; REVIEW_PASS; merged in `1f11365` |
-| TASK-004-admin-auth-persistence | TICKET-002-admin-auth-foundation | codex/task/TASK-004-admin-auth-persistence | verified | no_pr | Parfit dispatched; awaiting PR or patch; `npm test -- tests/integration/admin-auth-service.test.ts`; `npm run typecheck` |
+| TASK-004-admin-auth-persistence | TICKET-002-admin-auth-foundation | codex/task/TASK-004-admin-auth-persistence | active_uncommitted_changes | no_pr | Parfit running with uncommitted auth persistence work; awaiting PR or patch; `npm test -- tests/integration/admin-auth-service.test.ts`; `npm run typecheck` |
 | TASK-005-admin-session-routes | TICKET-002-admin-auth-foundation | codex/task/TASK-005-admin-session-routes | not_created | planned | `npm test -- tests/contract/admin-auth-routes.test.ts`; `npm run typecheck` |
 | TASK-006-admin-mfa-step-up | TICKET-002-admin-auth-foundation | codex/task/TASK-006-admin-mfa-step-up | not_created | planned | `npm test -- tests/contract/admin-mfa-routes.test.ts`; `npm test -- tests/integration/admin-auth-service.test.ts`; `npm run typecheck` |
 | TASK-007-admin-api-shell-diagnostics | TICKET-003-admin-api-foundation | codex/task/TASK-007-admin-api-shell-diagnostics | not_created | planned | `npm test -- tests/contract/admin-api.test.ts`; `npm run typecheck` |
@@ -125,6 +125,11 @@ freshness, and stop when WAVE-002 is ready for wdd-reconcile-wave.
   `/Users/ivo.toby/workspace/postgram/.worktrees/TASK-004-admin-auth-persistence`.
 - WAVE-002 worker: Parfit (`019f329b-24ff-7ec3-93dd-d854e4681fd2`).
 - WAVE-002 reviewer: pending PR or patch.
+- WAVE-002 latest observation: Parfit is still running, has no final status,
+  and the worktree contains uncommitted changes in
+  `src/auth/admin-service.ts`, `src/db/migrations/010_admin_auth.sql`,
+  `tests/integration/admin-auth-service.test.ts`, and
+  `tests/helpers/postgres.ts`.
 - Worker worktrees: WAVE-001 bundle worktree was clean and removed during
   reconciliation.
 - Worker: Singer (`019f3215-2eb6-75f2-81f0-bf527e73258b`).
@@ -209,6 +214,8 @@ freshness, and stop when WAVE-002 is ready for wdd-reconcile-wave.
   `git diff --check` passed.
 - WAVE-002 activation verification: activation artifacts committed, TASK-004
   branch/worktree verified, Parfit dispatched, and heartbeat monitoring active.
+- WAVE-002 worker verification: not run by controller; no PR or patch exists
+  yet.
 - Product code tests: not run; this turn planned WDD artifacts only.
 
 ## Event Log
@@ -261,6 +268,10 @@ freshness, and stop when WAVE-002 is ready for wdd-reconcile-wave.
 - 2026-07-05T12:50:00Z: Created Codex heartbeat automation
   `postgram-admin-wave-002-wdd-heartbeat` at 15-minute cadence for WAVE-002
   monitoring while Parfit has no PR or patch.
+- 2026-07-05T14:26:33Z: Heartbeat inspected Parfit and the TASK-004 worktree.
+  Parfit had no final status and no PR or patch, but the worktree had active
+  uncommitted implementation changes in the expected auth persistence files.
+  Gate remains `no_pr`; next check due 2026-07-05T14:41:33Z.
 
 ## Next Action
 

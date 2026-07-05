@@ -20,13 +20,13 @@ checkout.
 ## Current Outcome
 
 WAVE-003 is active as a full-profile bundled admin-session-routes wave.
-Worker Leibniz is dispatched for TASK-005 and the gate is `no_pr`.
+Worker Leibniz opened draft PR #80 for TASK-005 and the gate is `reviewing`.
 
 WAVE-001 is done and reconciled. WAVE-002 starts TASK-004-admin-auth-persistence
 after Ivo confirmed the next wave on 2026-07-05.
 
-Next phase: monitor Leibniz for a draft PR or patch, then start review
-orchestration.
+Next phase: monitor Lorentz's review of PR #80, then route P1/P2 feedback or
+enforce branch freshness before merge if review passes.
 
 ## Wave Summary
 
@@ -48,13 +48,13 @@ orchestration.
 
 Mode: codex_thread_heartbeat
 
-Cadence: 15 minutes
+Cadence: 5 minutes
 
-Status: active no-PR monitoring
+Status: active review monitoring
 
-Last check: 2026-07-05T16:00:04Z
+Last check: 2026-07-05T16:16:04Z
 
-Next check due: 2026-07-05T16:15:04Z
+Next check due: 2026-07-05T16:21:04Z
 
 Scheduler reference: `postgram-admin-wave-003-wdd-heartbeat`
 
@@ -65,10 +65,9 @@ Run one bounded WDD controller heartbeat for /Users/ivo.toby/workspace/postgram,
 epic EPIC-admin-configuration-frontend, active wave WAVE-003. Use
 subagent-pr-orchestration, inspect worker Leibniz
 (`019f32d9-051d-7c40-8daf-2e05d9888901`) and worktree
-/Users/ivo.toby/workspace/postgram/.worktrees/TASK-005-admin-session-routes,
-update gates, and if a PR or patch exists move to review orchestration;
-otherwise keep `no_pr` and nudge missing commit/push/PR/final status only if
-needed.
+/Users/ivo.toby/workspace/postgram/.worktrees/TASK-005-admin-session-routes.
+Route P1/P2 feedback if review blocks; if review passes, enforce branch
+freshness before merge.
 ```
 
 ## Active Wave Strategy
@@ -98,7 +97,7 @@ needed.
 | TASK-002-threat-model-bootstrap | TICKET-001-feasibility-security-design | codex/task/WAVE-001-admin-feasibility-gate | cleaned_up | reconciled | P2 bootstrap ownership feedback resolved; REVIEW_PASS; merged in `1f11365` |
 | TASK-003-runtime-config-feasibility | TICKET-001-feasibility-security-design | codex/task/WAVE-001-admin-feasibility-gate | cleaned_up | reconciled | P3 provider URL/egress test feedback addressed; REVIEW_PASS; merged in `1f11365` |
 | TASK-004-admin-auth-persistence | TICKET-002-admin-auth-foundation | codex/task/TASK-004-admin-auth-persistence | cleaned_up | reconciled | REVIEW_PASS; freshness verification passed; merged in `0f96769`; PR #79 merged; WAVE-002 reconciled |
-| TASK-005-admin-session-routes | TICKET-002-admin-auth-foundation | codex/task/TASK-005-admin-session-routes | active_uncommitted | no_pr | worker-reported uncommitted verification passed; waiting for commit, freshness refresh, push, PR, and final status |
+| TASK-005-admin-session-routes | TICKET-002-admin-auth-foundation | codex/task/TASK-005-admin-session-routes | clean_pushed | reviewing | PR #80 open; worker verification passed with repo-wide lint baseline concern; Lorentz review requested |
 | TASK-006-admin-mfa-step-up | TICKET-002-admin-auth-foundation | codex/task/TASK-006-admin-mfa-step-up | not_created | planned | `npm test -- tests/contract/admin-mfa-routes.test.ts`; `npm test -- tests/integration/admin-auth-service.test.ts`; `npm run typecheck` |
 | TASK-007-admin-api-shell-diagnostics | TICKET-003-admin-api-foundation | codex/task/TASK-007-admin-api-shell-diagnostics | not_created | planned | `npm test -- tests/contract/admin-api.test.ts`; `npm run typecheck` |
 | TASK-008-admin-key-audit-stats-api | TICKET-003-admin-api-foundation | codex/task/TASK-008-admin-key-audit-stats-api | not_created | planned | `npm test -- tests/contract/admin-key-audit-stats.test.ts`; `npm test -- tests/integration/key-service.test.ts`; `npm run typecheck` |
@@ -151,6 +150,9 @@ needed.
   `/Users/ivo.toby/workspace/postgram/.worktrees/TASK-005-admin-session-routes`.
 - WAVE-003 worker: Leibniz (`019f32d9-051d-7c40-8daf-2e05d9888901`),
   dispatched at 2026-07-05T15:15:57Z.
+- WAVE-003 draft PR: https://github.com/ivo-toby/postgram/pull/80.
+- WAVE-003 reviewer: Lorentz (`019f322c-02e7-7590-8b8e-ebdd1e9c52ac`),
+  review request submission `019f3311-ae9d-79b1-84f3-ede0958df215`.
 
 ## WAVE-001 Reconciled State
 
@@ -211,11 +213,11 @@ needed.
 - WAVE-002 is done and reconciled.
 - WAVE-003 is active after Ivo requested sequential wave execution.
 - WAVE-004 remains blocked until WAVE-003 is reconciled.
-- WAVE-003 branch/worktree has active uncommitted TASK-005 implementation
-  changes from worker Leibniz. No commit, push, PR, patch, final worker status,
-  or review thread exists yet. The task branch remains at `79d1265` while the
-  epic branch is at controller checkpoint `90d90f0`, so branch freshness must
-  be refreshed before PR/review or merge.
+- WAVE-003 has draft PR #80 open against epic base `f2d48cd`. Lorentz review
+  is in progress. After the controller review-state checkpoint `b016bee`,
+  GitHub reports PR merge state `UNKNOWN`, so branch freshness must be enforced
+  after review passes and before merge. WAVE-004 remains blocked until WAVE-003
+  is reviewed, merged, and reconciled.
 
 ## Verification Status
 
@@ -266,6 +268,14 @@ needed.
   `codex/task/TASK-005-admin-session-routes`, the task branch is still at
   `79d1265`, and the epic branch is at `90d90f0`. Worker-reported verification
   must be rerun or confirmed after these newer admin-service changes.
+- WAVE-003 PR #80 verification: Leibniz reported after rebasing onto
+  `origin/codex/epic/admin-configuration-frontend` at `f2d48cd` that
+  `npm test -- tests/contract/admin-auth-routes.test.ts` passed with 9 tests,
+  `npm run typecheck` passed, adjacent errors/admin-auth-service/auth-middleware
+  and OAuth/REST contract coverage passed with 50 tests, touched-file ESLint
+  passed, and `git diff --check` passed. Concern: repo-wide
+  `npm run lint -- ...` still reports unrelated existing baseline failures
+  outside the TASK-005 diff.
 
 ## Event Log
 
@@ -379,9 +389,19 @@ needed.
   `BLOCKED`/`NEEDS_CONTEXT` with the exact blocker
   (`019f3303-8f1f-75f1-835c-e724e142a8b8`). Next check due
   2026-07-05T16:15:04Z.
+- 2026-07-05T16:16:04Z: Leibniz returned `DONE_WITH_CONCERNS`, pushed branch
+  `codex/task/TASK-005-admin-session-routes` at
+  `01c59a9586c0311a48aa5c55ffd7784f2a3aaccc`, and opened draft PR #80 against
+  the epic branch. GitHub initially reported PR #80 open, draft, and mergeable
+  against base `f2d48cd`. The controller requested Lorentz review
+  (`019f3311-ae9d-79b1-84f3-ede0958df215`), moved the gate to `reviewing`, and
+  updated heartbeat cadence to 5 minutes. After the controller checkpoint
+  advanced the epic branch to `b016bee`, GitHub reports merge state `UNKNOWN`;
+  branch freshness must be enforced after review and before merge. Next check
+  due 2026-07-05T16:21:04Z.
 
 ## Next Action
 
-Monitor Leibniz for a commit, push, and draft PR or patch. If one appears, move
-WAVE-003 into review orchestration; otherwise keep `no_pr` and nudge only exact
-missing deliverables when needed.
+Monitor Lorentz's review of PR #80. If P1/P2 feedback appears, route it to
+Leibniz or a fresh fix worker; if review passes, enforce branch freshness
+against the epic branch before merge.

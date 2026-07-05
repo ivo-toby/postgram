@@ -21,7 +21,7 @@ checkout.
 
 WAVE-001 is activated as a full-profile bundled feasibility/security gate.
 
-Next phase: Singer is addressing Lorentz's WAVE-001 review feedback on draft PR
+Next phase: Lorentz is re-reviewing Singer's fixes on draft PR
 https://github.com/ivo-toby/postgram/pull/78.
 
 ## Wave Summary
@@ -44,13 +44,13 @@ https://github.com/ivo-toby/postgram/pull/78.
 
 Mode: codex_thread_heartbeat
 
-Cadence: adaptive, every 5 minutes during review fixes
+Cadence: adaptive, every 5 minutes during follow-up review
 
 Status: active
 
-Last check: 2026-07-05T12:13:33Z
+Last check: 2026-07-05T12:25:33Z
 
-Next check due: 2026-07-05T12:18:33Z
+Next check due: 2026-07-05T12:30:33Z
 
 Scheduler reference: postgram-admin-wave-001-wdd-heartbeat
 
@@ -64,9 +64,9 @@ worker Singer (019f3215-2eb6-75f2-81f0-bf527e73258b), reviewer Lorentz
 (019f322c-02e7-7590-8b8e-ebdd1e9c52ac), and the assigned worktree
 /Users/ivo.toby/workspace/postgram/.worktrees/WAVE-001-admin-feasibility-gate.
 Update gates, branch freshness, verification, PR refs, review refs, feedback,
-and monitoring timestamps. Check whether Singer has pushed fixes for Lorentz's
-two P2 findings and one P3 suggestion; if fixes are present, rerun or request
-review, otherwise keep `needs_fixes`.
+and monitoring timestamps. Check Lorentz's follow-up review of Singer's fix
+commit `4ef5792`; if review passes, enforce branch freshness and prepare merge
+or reconciliation, otherwise route any remaining P1/P2 feedback.
 ```
 
 ## Active Wave Strategy
@@ -86,9 +86,9 @@ review, otherwise keep `needs_fixes`.
 
 | Task | Ticket | Branch | Worktree | Gate | Verification |
 |------|--------|--------|----------|------|--------------|
-| TASK-001-admin-surface-inventory | TICKET-001-feasibility-security-design | codex/task/WAVE-001-admin-feasibility-gate | verified | needs_fixes | `git diff --check` passed |
-| TASK-002-threat-model-bootstrap | TICKET-001-feasibility-security-design | codex/task/WAVE-001-admin-feasibility-gate | verified | needs_fixes | `git diff --check` passed; P2 bootstrap ownership feedback routed |
-| TASK-003-runtime-config-feasibility | TICKET-001-feasibility-security-design | codex/task/WAVE-001-admin-feasibility-gate | verified | needs_fixes | `git diff --check` passed; P3 provider URL/egress test feedback routed |
+| TASK-001-admin-surface-inventory | TICKET-001-feasibility-security-design | codex/task/WAVE-001-admin-feasibility-gate | verified | reviewing | `git diff --check` passed |
+| TASK-002-threat-model-bootstrap | TICKET-001-feasibility-security-design | codex/task/WAVE-001-admin-feasibility-gate | verified | reviewing | Fix pushed for P2 bootstrap ownership feedback; follow-up review requested |
+| TASK-003-runtime-config-feasibility | TICKET-001-feasibility-security-design | codex/task/WAVE-001-admin-feasibility-gate | verified | reviewing | Fix pushed for P3 provider URL/egress test feedback; follow-up review requested |
 | TASK-004-admin-auth-persistence | TICKET-002-admin-auth-foundation | codex/task/TASK-004-admin-auth-persistence | not_created | planned | `npm test -- tests/integration/admin-auth-service.test.ts`; `npm run typecheck` |
 | TASK-005-admin-session-routes | TICKET-002-admin-auth-foundation | codex/task/TASK-005-admin-session-routes | not_created | planned | `npm test -- tests/contract/admin-auth-routes.test.ts`; `npm run typecheck` |
 | TASK-006-admin-mfa-step-up | TICKET-002-admin-auth-foundation | codex/task/TASK-006-admin-mfa-step-up | not_created | planned | `npm test -- tests/contract/admin-mfa-routes.test.ts`; `npm test -- tests/integration/admin-auth-service.test.ts`; `npm run typecheck` |
@@ -137,19 +137,19 @@ review, otherwise keep `needs_fixes`.
   branch/worktree creation.
 - Bundle worktree verification: passed at `fadb158`; follow-up verification
   state is being synced before dispatch.
-- Worker dispatch: Singer completed WAVE-001 shared-context feasibility updates;
-  current gate is `needs_fixes` after Lorentz review.
+- Worker dispatch: Singer pushed review fixes in `4ef5792`; current gate is
+  `reviewing` for Lorentz follow-up.
 - Monitoring: Codex heartbeat
   `postgram-admin-wave-001-wdd-heartbeat` is active every 5 minutes during
-  review fixes.
+  follow-up review.
 
 ## Open Review Feedback
 
 | Priority | Scope | Owner | Status | Summary |
 |----------|-------|-------|--------|---------|
-| P2 | Bootstrap ownership across TASK-004/TASK-005/TASK-006 | Singer | routed | Assign hash-only bootstrap token persistence, expiry, single-use invalidation, atomic first-admin activation, route behavior, and MFA-before-active checks to explicit future tasks and shared-context gates. |
-| P2 | WDD orchestration consistency | Singer | routed | Fix PR branch `currentGates.workerDispatch` so it no longer says `no_pr` while the bundle has PR #78 and is ready for review/fixes. |
-| P3 | Runtime provider URL safety | Singer | routed | Make TASK-010/testing expectations explicitly cover URL/egress or SSRF safety, not only generic provider connection tests. |
+| P2 | Bootstrap ownership across TASK-004/TASK-005/TASK-006 | Lorentz | pending_follow_up_review | Singer pushed fixes in `4ef5792`; waiting for reviewer confirmation. |
+| P2 | WDD orchestration consistency | Lorentz | pending_follow_up_review | Singer set PR branch `currentGates.workerDispatch` to `ready_for_review`; waiting for reviewer confirmation. |
+| P3 | Runtime provider URL safety | Lorentz | pending_follow_up_review | Singer added explicit URL/egress safety expectations for TASK-010; waiting for reviewer confirmation. |
 
 ## Shared Context Reconciliation Rules
 
@@ -187,12 +187,16 @@ review, otherwise keep `needs_fixes`.
 - 2026-07-05T12:13:33Z: Lorentz returned REVIEW_BLOCKED with two P2 findings
   and one P3 suggestion. Feedback was routed to Singer for same-branch fixes on
   PR #78.
+- 2026-07-05T12:25:33Z: Singer pushed fix commit `4ef5792` to PR #78. The
+  controller verified `git diff --check`, orchestration JSON parsing, PR clean
+  state, and `currentGates.workerDispatch = ready_for_review`, then requested
+  Lorentz follow-up review.
 
 ## Next Action
 
 Heartbeat or controller next tick:
 
 ```text
-Inspect Singer and PR #78 for fixes to Lorentz's routed feedback. If fixed,
-request or run follow-up review; otherwise keep `needs_fixes`.
+Poll Lorentz's follow-up review for PR #78. If it passes, enforce branch
+freshness and prepare merge/reconcile; otherwise route remaining P1/P2 feedback.
 ```

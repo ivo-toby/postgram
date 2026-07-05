@@ -6,7 +6,7 @@ ticket: TICKET-002-admin-auth-foundation
 wave: WAVE-003
 slug: admin-session-routes
 title: Admin Session Routes
-status: in-progress
+status: review
 depends_on:
   - TASK-004-admin-auth-persistence
 conflict_domains:
@@ -19,11 +19,11 @@ review_model_class: review
 branch: codex/task/TASK-005-admin-session-routes
 worker_worktree: /Users/ivo.toby/workspace/postgram/.worktrees/TASK-005-admin-session-routes
 worktree_status: verified
-pr: null
+pr: https://github.com/ivo-toby/postgram/pull/80
 worker_thread_id: 019f32d9-051d-7c40-8daf-2e05d9888901
-review_thread_id: null
-current_gate: no_pr
-branch_freshness: current_at_dispatch
+review_thread_id: 019f3308-cc6a-7010-a13e-f1417397300a
+current_gate: pr_open
+branch_freshness: rebased_onto_origin_epic_f2d48cd
 verification:
   - npm test -- tests/contract/admin-auth-routes.test.ts
   - npm run typecheck
@@ -33,7 +33,7 @@ verification:
 
 ## Status
 
-in-progress
+review
 
 ## Parent Ticket
 
@@ -127,7 +127,10 @@ Verified and dispatched at 2026-07-05T15:15:57Z with worker Leibniz
 
 ## PR / Patch Reference
 
-None yet.
+Draft PR: https://github.com/ivo-toby/postgram/pull/80
+
+Branch `codex/task/TASK-005-admin-session-routes` targets
+`codex/epic/admin-configuration-frontend`.
 
 ## RED-GREEN TDD Plan
 
@@ -173,12 +176,12 @@ Keep route parsing and cookie helpers focused and reusable for MFA routes.
 
 ## Task-Level Definition of Done
 
-- [ ] Admin session routes are covered.
-- [ ] Bootstrap status/setup routes are covered for valid, missing, invalid,
+- [x] Admin session routes are covered.
+- [x] Bootstrap status/setup routes are covered for valid, missing, invalid,
       expired, and already-used token states.
-- [ ] Admin middleware rejects ordinary API keys and OAuth tokens.
-- [ ] CSRF is enforced for mutations.
-- [ ] Lockout/rate-limit behavior is covered.
+- [x] Admin middleware rejects ordinary API keys and OAuth tokens.
+- [x] CSRF is enforced for mutations.
+- [x] Lockout/rate-limit behavior is covered.
 
 ## Validation Steps
 
@@ -187,7 +190,25 @@ Keep route parsing and cookie helpers focused and reusable for MFA routes.
 
 ## Verification Evidence
 
-- Not run yet.
+- RED: `npm test -- tests/contract/admin-auth-routes.test.ts` failed before
+  implementation with 8 failing tests, all due to missing `/admin/api/*` route
+  behavior returning 404.
+- GREEN: `npm test -- tests/contract/admin-auth-routes.test.ts` passed
+  (9 tests).
+- `npm run typecheck` passed.
+- Adjacent auth/transport regression coverage passed:
+  `npm test -- tests/unit/errors.test.ts tests/integration/admin-auth-service.test.ts tests/integration/auth-middleware.test.ts tests/contract/oauth-routes.test.ts tests/contract/mcp-oauth.test.ts tests/contract/rest-api.test.ts`
+  (50 tests).
+- Direct lint on touched files passed:
+  `npx eslint src/auth/admin-middleware.ts src/auth/admin-service.ts src/transport/admin.ts src/index.ts src/util/errors.ts tests/contract/admin-auth-routes.test.ts tests/integration/admin-auth-service.test.ts tests/unit/errors.test.ts`.
+- `git diff --check` passed.
+- Codex review gate reported no blocking correctness, security, or
+  maintainability issues after the P2 fixes below.
+- After rebase onto `origin/codex/epic/admin-configuration-frontend` at
+  `f2d48cd`, the required admin route suite, typecheck, adjacent regression
+  suite, touched-file ESLint, and `git diff --check` all passed again.
+- Repo-wide `npm run lint -- ...` still reports unrelated existing lint
+  baseline failures outside the TASK-005 diff; direct touched-file lint passed.
 
 ## Review Feedback
 
@@ -197,7 +218,19 @@ Keep route parsing and cookie helpers focused and reusable for MFA routes.
 
 ### P2
 
-- None.
+- Resolved: admin session/current and CSRF responses now use no-store headers,
+  and admin session cookies are Secure in HTTPS/proxy deployments while
+  remaining usable on local HTTP loopback hosts.
+- Resolved: bootstrap setup now uses generic failure mapping for missing,
+  invalid, expired, used, validation-failing, and rate-limited token attempts.
+- Resolved: login avoids missing-user timing enumeration by using a dummy Argon2
+  verify path in the TASK-004 admin password service.
+- Resolved: login lockout includes a global pre-verification failure budget so
+  rotating nonexistent identifiers cannot bypass the limiter.
+- Resolved: internal verifier errors are propagated as server errors and are not
+  recorded as credential failures.
+- Resolved: valid-token bootstrap validation failures are recorded so repeated
+  weak-password attempts cannot bypass bootstrap lockout.
 
 ### P3
 
@@ -205,5 +238,16 @@ Keep route parsing and cookie helpers focused and reusable for MFA routes.
 
 ## Completion Notes
 
-- Worker Leibniz was dispatched at 2026-07-05T15:15:57Z. Gate is `no_pr`
-  until a draft PR or patch reference exists.
+- Worker Leibniz was dispatched at 2026-07-05T15:15:57Z. Draft PR
+  https://github.com/ivo-toby/postgram/pull/80 is open against
+  `codex/epic/admin-configuration-frontend`.
+- Worker Leibniz implemented dedicated admin session routes in
+  `src/transport/admin.ts` and admin session/CSRF middleware in
+  `src/auth/admin-middleware.ts`.
+- Bootstrap setup uses TASK-004 `createFirstAdminWithBootstrapToken`; login and
+  session routes use `verifyAdminPassword`, `createAdminSession`,
+  `findAdminSession`, and `invalidateAdminSession`.
+- First-admin setup returns pending-MFA state and does not activate the admin;
+  TASK-006 still owns MFA activation.
+- Admin routes reject ordinary API-key and MCP OAuth bearer tokens because they
+  require the dedicated HttpOnly admin session cookie.

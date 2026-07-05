@@ -7,6 +7,7 @@ describe('toHttpStatus', () => {
     expect(toHttpStatus(ErrorCode.VALIDATION)).toBe(400);
     expect(toHttpStatus(ErrorCode.UNAUTHORIZED)).toBe(401);
     expect(toHttpStatus(ErrorCode.FORBIDDEN)).toBe(403);
+    expect(toHttpStatus(ErrorCode.RATE_LIMITED)).toBe(429);
     expect(toHttpStatus(ErrorCode.NOT_FOUND)).toBe(404);
     expect(toHttpStatus(ErrorCode.CONFLICT)).toBe(409);
     expect(toHttpStatus(ErrorCode.EMBEDDING_FAILED)).toBe(502);

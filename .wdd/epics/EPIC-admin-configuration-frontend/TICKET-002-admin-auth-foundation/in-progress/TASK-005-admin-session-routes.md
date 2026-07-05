@@ -6,7 +6,7 @@ ticket: TICKET-002-admin-auth-foundation
 wave: WAVE-003
 slug: admin-session-routes
 title: Admin Session Routes
-status: todo
+status: in-progress
 depends_on:
   - TASK-004-admin-auth-persistence
 conflict_domains:
@@ -17,13 +17,13 @@ conflict_domains:
 assigned_model_class: implementationComplex
 review_model_class: review
 branch: codex/task/TASK-005-admin-session-routes
-worker_worktree: null
-worktree_status: unassigned
+worker_worktree: /Users/ivo.toby/workspace/postgram/.worktrees/TASK-005-admin-session-routes
+worktree_status: pending_creation
 pr: null
 worker_thread_id: null
 review_thread_id: null
-current_gate: not_started
-branch_freshness: unknown
+current_gate: no_pr
+branch_freshness: current_at_dispatch
 verification:
   - npm test -- tests/contract/admin-auth-routes.test.ts
   - npm run typecheck
@@ -33,7 +33,7 @@ verification:
 
 ## Status
 
-todo
+in-progress
 
 ## Parent Ticket
 
@@ -116,7 +116,10 @@ codex/task/TASK-005-admin-session-routes
 
 ## Worker Worktree
 
-None assigned yet.
+/Users/ivo.toby/workspace/postgram/.worktrees/TASK-005-admin-session-routes
+
+Assigned by WAVE-003 activation. The controller must create and verify this
+isolated worktree before dispatch.
 
 ## PR / Patch Reference
 

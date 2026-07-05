@@ -2,7 +2,7 @@
 id: EPIC-admin-configuration-frontend-CONTROLLER
 kind: controller_state
 epic: EPIC-admin-configuration-frontend
-active_wave: none
+active_wave: WAVE-003
 status: in_progress
 updated_at: 2026-07-05
 ---
@@ -19,12 +19,13 @@ checkout.
 
 ## Current Outcome
 
-WAVE-002 is done and reconciled.
+WAVE-003 is activated as a full-profile bundled admin-session-routes wave.
 
 WAVE-001 is done and reconciled. WAVE-002 starts TASK-004-admin-auth-persistence
 after Ivo confirmed the next wave on 2026-07-05.
 
-Next phase: start WAVE-003 for TASK-005-admin-session-routes.
+Next phase: create and verify the TASK-005 branch/worktree, dispatch the
+worker, and start no-PR monitoring.
 
 ## Wave Summary
 
@@ -32,7 +33,7 @@ Next phase: start WAVE-003 for TASK-005-admin-session-routes.
 |------|-------|----------|--------|--------------|
 | WAVE-001 | TASK-001, TASK-002, TASK-003 | full / bundled / risk_based / adaptive | done | confirmed by Ivo via Codex request on 2026-07-05 |
 | WAVE-002 | TASK-004 | full / bundled / risk_based / adaptive | done | confirmed by Ivo via Codex request on 2026-07-05 |
-| WAVE-003 | TASK-005 | full / bundled / risk_based / adaptive | planned | required |
+| WAVE-003 | TASK-005 | full / bundled / risk_based / adaptive | in_progress | confirmed by Ivo via Codex sequential-waves request on 2026-07-05 |
 | WAVE-004 | TASK-006, TASK-009 | full / hybrid / risk_based / adaptive | planned | required |
 | WAVE-005 | TASK-007, TASK-010 | full / hybrid / risk_based / adaptive | planned | required |
 | WAVE-006 | TASK-008, TASK-014 | full / hybrid / risk_based / adaptive | planned | required |
@@ -46,34 +47,36 @@ Next phase: start WAVE-003 for TASK-005-admin-session-routes.
 
 Mode: codex_thread_heartbeat
 
-Cadence: inactive
+Cadence: pending until worker dispatch
 
-Status: stopped after WAVE-002 reconciliation
+Status: pending WAVE-003 worker dispatch
 
-Last check: 2026-07-05T15:07:20Z
+Last check: 2026-07-05T15:10:39Z
 
-Next check due: none until WAVE-003 starts
+Next check due: none until worker dispatch completes
 
-Scheduler reference: postgram-admin-wave-002-wdd-heartbeat
+Scheduler reference: pending WAVE-003 heartbeat
 
 Fallback prompt:
 
 ```text
-WAVE-002 is reconciled and done. Next step is wdd-start-wave for WAVE-003.
+WAVE-003 activation artifacts are synced but worker dispatch has not completed
+yet. Create and verify the TASK-005 branch/worktree, dispatch the worker, and
+activate heartbeat monitoring.
 ```
 
-## Last Active Wave Strategy
+## Active Wave Strategy
 
-- Wave: WAVE-002
+- Wave: WAVE-003
 - Profile: full
 - Execution mode: bundled
 - Review mode: risk_based
 - Monitoring mode: adaptive
-- Confirmation: Ivo via Codex request on 2026-07-05
-- Bundle: WAVE-002-admin-auth-persistence
-- Bundle branch: `codex/task/TASK-004-admin-auth-persistence`
+- Confirmation: Ivo via Codex sequential-waves request on 2026-07-05
+- Bundle: WAVE-003-admin-session-routes
+- Bundle branch: `codex/task/TASK-005-admin-session-routes`
 - Bundle worktree:
-  `/Users/ivo.toby/workspace/postgram/.worktrees/TASK-004-admin-auth-persistence`
+  `/Users/ivo.toby/workspace/postgram/.worktrees/TASK-005-admin-session-routes`
 
 ## Last Reconciled Wave
 
@@ -89,7 +92,7 @@ WAVE-002 is reconciled and done. Next step is wdd-start-wave for WAVE-003.
 | TASK-002-threat-model-bootstrap | TICKET-001-feasibility-security-design | codex/task/WAVE-001-admin-feasibility-gate | cleaned_up | reconciled | P2 bootstrap ownership feedback resolved; REVIEW_PASS; merged in `1f11365` |
 | TASK-003-runtime-config-feasibility | TICKET-001-feasibility-security-design | codex/task/WAVE-001-admin-feasibility-gate | cleaned_up | reconciled | P3 provider URL/egress test feedback addressed; REVIEW_PASS; merged in `1f11365` |
 | TASK-004-admin-auth-persistence | TICKET-002-admin-auth-foundation | codex/task/TASK-004-admin-auth-persistence | cleaned_up | reconciled | REVIEW_PASS; freshness verification passed; merged in `0f96769`; PR #79 merged; WAVE-002 reconciled |
-| TASK-005-admin-session-routes | TICKET-002-admin-auth-foundation | codex/task/TASK-005-admin-session-routes | not_created | planned | `npm test -- tests/contract/admin-auth-routes.test.ts`; `npm run typecheck` |
+| TASK-005-admin-session-routes | TICKET-002-admin-auth-foundation | codex/task/TASK-005-admin-session-routes | pending_creation | pending_dispatch | `npm test -- tests/contract/admin-auth-routes.test.ts`; `npm run typecheck` |
 | TASK-006-admin-mfa-step-up | TICKET-002-admin-auth-foundation | codex/task/TASK-006-admin-mfa-step-up | not_created | planned | `npm test -- tests/contract/admin-mfa-routes.test.ts`; `npm test -- tests/integration/admin-auth-service.test.ts`; `npm run typecheck` |
 | TASK-007-admin-api-shell-diagnostics | TICKET-003-admin-api-foundation | codex/task/TASK-007-admin-api-shell-diagnostics | not_created | planned | `npm test -- tests/contract/admin-api.test.ts`; `npm run typecheck` |
 | TASK-008-admin-key-audit-stats-api | TICKET-003-admin-api-foundation | codex/task/TASK-008-admin-key-audit-stats-api | not_created | planned | `npm test -- tests/contract/admin-key-audit-stats.test.ts`; `npm test -- tests/integration/key-service.test.ts`; `npm run typecheck` |
@@ -137,6 +140,10 @@ WAVE-002 is reconciled and done. Next step is wdd-start-wave for WAVE-003.
   checkout.
 - WAVE-002 branch freshness: current at merge after task branch freshness merge
   `16122c0`.
+- WAVE-003 bundle branch: `codex/task/TASK-005-admin-session-routes`.
+- WAVE-003 bundle worktree:
+  `/Users/ivo.toby/workspace/postgram/.worktrees/TASK-005-admin-session-routes`.
+- WAVE-003 worker: pending dispatch.
 
 ## WAVE-001 Reconciled State
 
@@ -195,9 +202,10 @@ WAVE-002 is reconciled and done. Next step is wdd-start-wave for WAVE-003.
 - TASK-004 dependencies TASK-001 and TASK-002 are done, reviewed, merged, and
   reconciled.
 - WAVE-002 is done and reconciled.
-- WAVE-003 is ready to start after WAVE-002 reconciliation.
+- WAVE-003 is active after Ivo requested sequential wave execution.
+- WAVE-004 remains blocked until WAVE-003 is reconciled.
 - No WAVE-003 worktree, branch dispatch, worker, or review thread has been
-  created yet.
+  created yet at activation-artifact sync time.
 
 ## Verification Status
 
@@ -304,7 +312,11 @@ WAVE-002 is reconciled and done. Next step is wdd-start-wave for WAVE-003.
 - 2026-07-05T15:07:20Z: Reconciled WAVE-002 shared-context decisions, updated
   downstream TASK-005/TASK-006 handoff notes, cleaned up the TASK-004 worktree,
   stopped WAVE-002 monitoring, and left WAVE-003 ready to start.
+- 2026-07-05T15:10:39Z: Ivo requested sequential wave execution. Activated
+  WAVE-003 for TASK-005-admin-session-routes, moved TASK-005 to in-progress,
+  and recorded the pending branch/worktree assignment.
 
 ## Next Action
 
-Start WAVE-003 for TASK-005-admin-session-routes.
+Create and verify the TASK-005 branch/worktree, then dispatch the WAVE-003
+worker.

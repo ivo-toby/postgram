@@ -402,14 +402,14 @@
     },
     {
       "id": "WAVE-003",
-      "status": "planned",
+      "status": "in_progress",
       "strategy": {
         "profile": "full",
         "executionMode": "bundled",
         "reviewMode": "risk_based",
         "monitoringMode": "adaptive",
         "recommendedBy": "wdd-plan-epic",
-        "confirmedBy": null,
+        "confirmedBy": "Ivo via Codex sequential-waves request on 2026-07-05",
         "requiresUserConfirmation": true,
         "confidence": "high",
         "rationale": [
@@ -425,6 +425,38 @@
       },
       "tasks": [
         "TASK-005-admin-session-routes"
+      ],
+      "activatedAt": "2026-07-05T15:10:39Z",
+      "bundles": [
+        {
+          "id": "WAVE-003-admin-session-routes",
+          "tasks": [
+            "TASK-005-admin-session-routes"
+          ],
+          "branch": "codex/task/TASK-005-admin-session-routes",
+          "worktree": "/Users/ivo.toby/workspace/postgram/.worktrees/TASK-005-admin-session-routes",
+          "worktreeStatus": "pending_creation",
+          "workerThreadId": null,
+          "workerNickname": null,
+          "reviewThreadId": null,
+          "reviewNickname": null,
+          "currentGate": "pending_dispatch",
+          "branchFreshness": "current_at_dispatch",
+          "pr": null,
+          "latestCommit": null,
+          "blockingFeedback": [],
+          "verification": {
+            "result": "not_run",
+            "commands": [
+              "npm test -- tests/contract/admin-auth-routes.test.ts",
+              "npm run typecheck"
+            ],
+            "evidence": null
+          },
+          "activatedAt": "2026-07-05T15:10:39Z",
+          "cleanupState": "not_started",
+          "sharedContextReconciliation": "not_started"
+        }
       ]
     },
     {
@@ -902,8 +934,8 @@
     {
       "id": "TASK-005-admin-session-routes",
       "ticket": "TICKET-002-admin-auth-foundation",
-      "path": "TICKET-002-admin-auth-foundation/todo/TASK-005-admin-session-routes.md",
-      "status": "todo",
+      "path": "TICKET-002-admin-auth-foundation/in-progress/TASK-005-admin-session-routes.md",
+      "status": "in-progress",
       "dependsOn": [
         "TASK-004-admin-auth-persistence"
       ],
@@ -918,11 +950,11 @@
       "branch": "codex/task/TASK-005-admin-session-routes",
       "workerThreadId": null,
       "reviewThreadId": null,
-      "workerWorktree": null,
-      "worktreeStatus": "not_created",
+      "workerWorktree": "/Users/ivo.toby/workspace/postgram/.worktrees/TASK-005-admin-session-routes",
+      "worktreeStatus": "pending_creation",
       "pr": null,
       "latestCommit": null,
-      "branchFreshness": "not_started",
+      "branchFreshness": "current_at_dispatch",
       "blockingFeedback": [],
       "verification": {
         "result": "not_run",
@@ -932,7 +964,12 @@
         ],
         "evidence": null
       },
-      "currentGate": "planned"
+      "currentGate": "pending_dispatch",
+      "cleanupState": "not_started",
+      "sharedContextReconciliation": "not_started",
+      "activatedAt": "2026-07-05T15:10:39Z",
+      "workerNickname": null,
+      "reviewNickname": null
     },
     {
       "id": "TASK-006-admin-mfa-step-up",
@@ -1413,13 +1450,13 @@
     }
   ],
   "monitoring": {
-    "mode": "inactive",
+    "mode": "pending",
     "cadence": null,
-    "status": "stopped_after_wave_002_reconciliation",
-    "lastCheckedAt": "2026-07-05T15:07:20Z",
+    "status": "pending_dispatch",
+    "lastCheckedAt": "2026-07-05T15:10:39Z",
     "nextCheckDueAt": null,
-    "schedulerRef": "postgram-admin-wave-002-wdd-heartbeat",
-    "fallbackPrompt": "WAVE-002 is reconciled and done. Next step is wdd-start-wave for WAVE-003."
+    "schedulerRef": null,
+    "fallbackPrompt": "WAVE-003 activation is synced but worker dispatch has not completed yet."
   },
   "sharedContext": {
     "index": "shared-context/index.md",
@@ -1434,92 +1471,50 @@
     "reconcileAfterEveryWave": true
   },
   "activeWave": {
-    "id": "WAVE-002",
-    "activatedAt": "2026-07-05T12:50:00Z",
+    "id": "WAVE-003",
+    "activatedAt": "2026-07-05T15:10:39Z",
     "strategy": {
       "profile": "full",
       "executionMode": "bundled",
       "reviewMode": "risk_based",
       "monitoringMode": "adaptive",
-      "confirmedBy": "Ivo via Codex request on 2026-07-05"
+      "confirmedBy": "Ivo via Codex sequential-waves request on 2026-07-05"
     },
     "eligibleTasks": [
-      "TASK-004-admin-auth-persistence"
+      "TASK-005-admin-session-routes"
     ],
     "nonEligibleTasks": [],
     "bundles": [
       {
-        "id": "WAVE-002-admin-auth-persistence",
+        "id": "WAVE-003-admin-session-routes",
         "tasks": [
-          "TASK-004-admin-auth-persistence"
+          "TASK-005-admin-session-routes"
         ],
-        "branch": "codex/task/TASK-004-admin-auth-persistence",
-        "worktree": "/Users/ivo.toby/workspace/postgram/.worktrees/TASK-004-admin-auth-persistence",
-        "worktreeStatus": "cleaned_up",
-        "workerThreadId": "019f329b-24ff-7ec3-93dd-d854e4681fd2",
-        "workerNickname": "Parfit",
-        "reviewThreadId": "019f322c-02e7-7590-8b8e-ebdd1e9c52ac",
-        "reviewNickname": "Lorentz",
-        "currentGate": "reconciled",
-        "branchFreshness": "current_at_merge",
-        "pr": "https://github.com/ivo-toby/postgram/pull/79",
-        "latestCommit": "16122c057d647722ea878a41fd9456c1b6c943de",
+        "branch": "codex/task/TASK-005-admin-session-routes",
+        "worktree": "/Users/ivo.toby/workspace/postgram/.worktrees/TASK-005-admin-session-routes",
+        "worktreeStatus": "pending_creation",
+        "workerThreadId": null,
+        "workerNickname": null,
+        "reviewThreadId": null,
+        "reviewNickname": null,
+        "currentGate": "pending_dispatch",
+        "branchFreshness": "current_at_dispatch",
+        "pr": null,
+        "latestCommit": null,
         "blockingFeedback": [],
         "verification": {
-          "result": "passed",
+          "result": "not_run",
           "commands": [
-            "git diff --check origin/codex/epic/admin-configuration-frontend...HEAD",
-            "npm test -- tests/integration/admin-auth-service.test.ts",
-            "npm run typecheck",
-            "npx eslint src/auth/admin-service.ts tests/integration/admin-auth-service.test.ts tests/helpers/postgres.ts",
-            "npm test -- tests/integration/key-service.test.ts tests/integration/migration.test.ts tests/integration/auth-middleware.test.ts"
+            "npm test -- tests/contract/admin-auth-routes.test.ts",
+            "npm run typecheck"
           ],
-          "evidence": "Lorentz returned REVIEW_PASS with no P1/P2 findings. After merging the latest epic branch into the task branch, controller reran diff-check, admin-auth integration tests (11 passed), typecheck, touched-file eslint, and adjacent key-service/migration/auth-middleware integration tests (8 passed); all passed. Task branch 16122c0 was merged into the epic branch in 0f96769."
+          "evidence": null
         },
-        "activatedAt": "2026-07-05T12:50:00Z",
-        "cleanupState": "cleaned_up",
-        "sharedContextReconciliation": "completed",
-        "dispatchedAt": "2026-07-05T12:50:00Z",
-        "lastObservedAt": "2026-07-05T15:01:13Z",
-        "lastObservation": {
-          "checkedAt": "2026-07-05T15:01:13Z",
-          "workerStatus": "DONE",
-          "reviewStatus": "REVIEW_PASS",
-          "pr": "https://github.com/ivo-toby/postgram/pull/79",
-          "patch": null,
-          "worktreeStatus": "clean_pushed",
-          "branchHead": "16122c057d647722ea878a41fd9456c1b6c943de",
-          "mergeCommit": "0f96769987e389f6c406f42a425e12f7255c1788",
-          "observedFiles": [
-            "src/auth/admin-service.ts",
-            "src/db/migrations/010_admin_auth.sql",
-            "tests/helpers/postgres.ts",
-            "tests/integration/admin-auth-service.test.ts",
-            ".wdd/epics/EPIC-admin-configuration-frontend/TICKET-002-admin-auth-foundation/done/TASK-004-admin-auth-persistence.md"
-          ],
-          "reviewRequestedAt": "2026-07-05T14:49:40Z",
-          "reviewSubmissionId": "019f32c1-426c-75f2-85e1-8a1d8ee14f99",
-          "reviewer": "Lorentz",
-          "note": "Lorentz returned REVIEW_PASS; branch freshness was enforced with merge commit 16122c0 and verification passed; controller merged TASK-004 into the epic branch in 0f96769 and queued WAVE-002 reconciliation."
-        },
-        "reviewResult": "REVIEW_PASS",
-        "reviewedAt": "2026-07-05T15:01:13Z",
-        "mergeReadyAt": "2026-07-05T15:01:13Z",
-        "mergedAt": "2026-07-05T15:01:13Z",
-        "mergeCommit": "0f96769",
-        "prState": {
-          "state": "MERGED",
-          "mergedAt": "2026-07-05T15:04:08Z",
-          "remoteBasePushedAt": "2026-07-05T15:04:08Z",
-          "closeoutCommit": "cac43dd"
-        },
-        "cleanupEvidence": "Worker worktree was clean; ran git worktree remove /Users/ivo.toby/workspace/postgram/.worktrees/TASK-004-admin-auth-persistence and git worktree prune during WAVE-002 reconciliation.",
-        "reconciledAt": "2026-07-05T15:07:20Z",
-        "reconciliationSummary": "WAVE-002 reconciled admin auth persistence tables and service APIs, hash-only bootstrap/session token posture, pending-MFA first-admin setup, verification evidence, and TASK-005/TASK-006 carry-forward route/MFA contracts. WAVE-003 is ready to start."
+        "activatedAt": "2026-07-05T15:10:39Z",
+        "cleanupState": "not_started",
+        "sharedContextReconciliation": "not_started"
       }
-    ],
-    "status": "done",
-    "reconciledAt": "2026-07-05T15:07:20Z"
+    ]
   },
   "currentGates": {
     "epicBranch": {
@@ -1537,32 +1532,36 @@
     },
     "waveStrategyConfirmation": {
       "WAVE-001": "confirmed_by_ivo_2026-07-05",
-      "WAVE-002": "confirmed_by_ivo_2026-07-05"
+      "WAVE-002": "confirmed_by_ivo_2026-07-05",
+      "WAVE-003": "confirmed_by_ivo_2026-07-05_sequential_waves"
     },
     "workerWorktrees": {
       "WAVE-001-admin-feasibility-gate": "cleaned_up",
-      "WAVE-002-admin-auth-persistence": "cleaned_up"
+      "WAVE-002-admin-auth-persistence": "cleaned_up",
+      "WAVE-003-admin-session-routes": "pending_creation"
     },
     "workerDispatch": {
       "WAVE-001-admin-feasibility-gate": "reconciled",
-      "WAVE-002-admin-auth-persistence": "reconciled"
+      "WAVE-002-admin-auth-persistence": "reconciled",
+      "WAVE-003-admin-session-routes": "pending_dispatch"
     },
     "waveCompletion": {
       "WAVE-001": "done",
-      "WAVE-002": "done"
+      "WAVE-002": "done",
+      "WAVE-003": "in_progress"
     },
     "nextWave": {
-      "id": "WAVE-003",
-      "status": "ready_to_start"
+      "id": "WAVE-004",
+      "status": "blocked_until_wave_003_reconciled"
     },
     "monitoring": {
-      "mode": "inactive",
+      "mode": "pending",
       "cadence": null,
-      "status": "stopped_after_wave_002_reconciliation",
-      "lastCheckedAt": "2026-07-05T15:07:20Z",
+      "status": "pending_dispatch",
+      "lastCheckedAt": "2026-07-05T15:10:39Z",
       "nextCheckDueAt": null,
-      "schedulerRef": "postgram-admin-wave-002-wdd-heartbeat",
-      "fallbackPrompt": "WAVE-002 is reconciled and done. Next step is wdd-start-wave for WAVE-003."
+      "schedulerRef": null,
+      "fallbackPrompt": "WAVE-003 activation is synced but worker dispatch has not completed yet."
     },
     "review": {
       "WAVE-001-admin-feasibility-gate": {
@@ -1623,11 +1622,19 @@
         "workerNickname": "Parfit",
         "reviewedAt": "2026-07-05T15:01:13Z",
         "blockingFeedback": []
+      },
+      "WAVE-003-admin-session-routes": {
+        "status": "not_started",
+        "result": null,
+        "pr": null,
+        "reviewThreadId": null,
+        "blockingFeedback": []
       }
     },
     "branchFreshness": {
       "WAVE-001-admin-feasibility-gate": "current_at_merge",
-      "WAVE-002-admin-auth-persistence": "current_at_merge"
+      "WAVE-002-admin-auth-persistence": "current_at_merge",
+      "WAVE-003-admin-session-routes": "current_at_dispatch"
     },
     "merge": {
       "WAVE-001-admin-feasibility-gate": {
@@ -1688,6 +1695,10 @@
         "cleanedAt": "2026-07-05T15:07:20Z",
         "worktree": "/Users/ivo.toby/workspace/postgram/.worktrees/TASK-004-admin-auth-persistence",
         "evidence": "Worker worktree was clean; ran git worktree remove /Users/ivo.toby/workspace/postgram/.worktrees/TASK-004-admin-auth-persistence and git worktree prune during WAVE-002 reconciliation."
+      },
+      "WAVE-003-admin-session-routes": {
+        "status": "not_started",
+        "worktree": "/Users/ivo.toby/workspace/postgram/.worktrees/TASK-005-admin-session-routes"
       }
     },
     "worker": {
@@ -1720,6 +1731,12 @@
         },
         "cleanupState": "cleaned_up",
         "reconciledAt": "2026-07-05T15:07:20Z"
+      },
+      "WAVE-003-admin-session-routes": {
+        "status": "pending_dispatch",
+        "workerThreadId": null,
+        "workerNickname": null,
+        "lastObservedAt": "2026-07-05T15:10:39Z"
       }
     }
   },
@@ -1737,5 +1754,10 @@
     "mergeCommit": "0f96769",
     "nextStep": "wdd-start-wave WAVE-003",
     "reconciledAt": "2026-07-05T15:07:20Z"
+  },
+  "lastStartedWave": {
+    "id": "WAVE-003",
+    "activatedAt": "2026-07-05T15:10:39Z",
+    "status": "pending_dispatch"
   }
 }

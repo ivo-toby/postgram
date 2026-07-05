@@ -17,7 +17,7 @@ updated_at: 2026-07-05
 | TASK-002-threat-model-bootstrap | TICKET-001-feasibility-security-design | None | admin auth architecture, Docker exposure model, shared context | done |
 | TASK-003-runtime-config-feasibility | TICKET-001-feasibility-security-design | None | `src/config.ts`, `src/index.ts`, provider lifecycle, Docker docs | done |
 | TASK-004-admin-auth-persistence | TICKET-002-admin-auth-foundation | TASK-001, TASK-002 | migrations, `src/auth/**`, admin auth services, integration tests | done |
-| TASK-005-admin-session-routes | TICKET-002-admin-auth-foundation | TASK-004 | admin routes, cookies, CSRF, lockout, auth contract tests | todo |
+| TASK-005-admin-session-routes | TICKET-002-admin-auth-foundation | TASK-004 | admin routes, cookies, CSRF, lockout, auth contract tests | in_progress |
 | TASK-006-admin-mfa-step-up | TICKET-002-admin-auth-foundation | TASK-004, TASK-005 | MFA tables, TOTP service, step-up middleware, sensitive action gates | todo |
 | TASK-007-admin-api-shell-diagnostics | TICKET-003-admin-api-foundation | TASK-005 | admin transport, diagnostics routes, admin middleware | todo |
 | TASK-008-admin-key-audit-stats-api | TICKET-003-admin-api-foundation | TASK-007 | key service, audit querying, stats service, admin API contracts | todo |
@@ -216,7 +216,7 @@ Drift notes:
 
 ### WAVE-003
 
-Status: planned
+Status: in_progress
 
 Tasks:
 
@@ -230,7 +230,7 @@ Recommended strategy:
 - Monitoring mode: adaptive
 - Confidence: high
 - Requires user confirmation: yes
-- Confirmed by: null
+- Confirmed by: Ivo via Codex sequential-waves request on 2026-07-05
 
 Rationale:
 
@@ -242,6 +242,7 @@ Activation rule:
 
 - Activate after TASK-004 is done and reconciled.
 - Ready after WAVE-002 reconciliation on 2026-07-05.
+- Activated after Ivo requested sequential waves on 2026-07-05.
 
 Stop condition:
 

@@ -19,18 +19,18 @@ checkout.
 
 ## Current Outcome
 
-WAVE-004 is activating after WAVE-003 reconciliation. The hybrid wave contains
-two independent bundles: TASK-006-admin-mfa-step-up and
-TASK-009-settings-secret-store. Activation artifacts are being synced to the
-epic branch before task branches/worktrees are created.
+WAVE-004 is active after WAVE-003 reconciliation. The hybrid wave contains two
+independent bundles: TASK-006-admin-mfa-step-up and
+TASK-009-settings-secret-store. Activation artifacts were pushed in `f183a28`;
+both task branches/worktrees were created from that commit, pushed to GitHub,
+verified, and dispatched.
 
 WAVE-003 is done and reconciled. PR #80 was merged by GitHub at
 2026-07-05T16:25:30Z, TASK-005 was merged into the epic branch in `ecfe9ac`,
 and the TASK-005 worktree was cleaned up.
 
-Next phase: push this activation state, create/verify the two WAVE-004
-worktrees from the pushed activation commit, then dispatch the workers. Do not
-start WAVE-005.
+Next phase: monitor workers Tesla and Euclid for PRs or patches. Do not start
+WAVE-005.
 
 ## Wave Summary
 
@@ -39,7 +39,7 @@ start WAVE-005.
 | WAVE-001 | TASK-001, TASK-002, TASK-003 | full / bundled / risk_based / adaptive | done | confirmed by Ivo via Codex request on 2026-07-05 |
 | WAVE-002 | TASK-004 | full / bundled / risk_based / adaptive | done | confirmed by Ivo via Codex request on 2026-07-05 |
 | WAVE-003 | TASK-005 | full / bundled / risk_based / adaptive | done | confirmed by Ivo via Codex sequential-waves request on 2026-07-05 |
-| WAVE-004 | TASK-006, TASK-009 | full / hybrid / risk_based / adaptive | activating | confirmed by Ivo via sequential-waves request on 2026-07-05 |
+| WAVE-004 | TASK-006, TASK-009 | full / hybrid / risk_based / adaptive | in_progress | confirmed by Ivo via sequential-waves request on 2026-07-05 |
 | WAVE-005 | TASK-007, TASK-010 | full / hybrid / risk_based / adaptive | planned | required |
 | WAVE-006 | TASK-008, TASK-014 | full / hybrid / risk_based / adaptive | planned | required |
 | WAVE-007 | TASK-011, TASK-015 | full / parallel / risk_based / adaptive | planned | required |
@@ -52,22 +52,34 @@ start WAVE-005.
 
 Mode: codex_thread_heartbeat
 
-Cadence: 5 minutes
+Cadence: 15 minutes
 
-Status: activation_in_progress
+Status: active
 
 Last check: 2026-07-05T16:47:34Z
 
-Next check due: after activation dispatch state is pushed.
+Next check due: 2026-07-05T17:02:34Z
 
 Scheduler reference: `postgram-admin-wave-004-start-heartbeat`
 
 Fallback prompt:
 
 ```text
-Continue WAVE-004 activation for EPIC-admin-configuration-frontend. Verify the
-activation commit is pushed, create/verify TASK-006 and TASK-009 worktrees from
-that commit, dispatch workers, push dispatch state, and do not start WAVE-005.
+Run one bounded WDD controller heartbeat for /Users/ivo.toby/workspace/postgram,
+epic EPIC-admin-configuration-frontend, active wave WAVE-004. Use the
+subagent-pr-orchestration skill. Start on branch
+codex/epic/admin-configuration-frontend. Read orchestration.json and
+controller-state.md, then inspect workers Tesla
+(019f3333-4033-7463-9819-aa3dec286b4c) for
+WAVE-004-admin-mfa-step-up / TASK-006 and Euclid
+(019f3333-4104-7b02-b1aa-1fce6978e410) for
+WAVE-004-settings-secret-store / TASK-009, including their assigned worktrees.
+Update gates, branch freshness, verification, PR or patch refs, review refs,
+feedback, shared-context reconciliation status, and monitoring timestamps. If a
+worker has produced a PR or patch, move that bundle to review orchestration; if
+no PR or patch exists, keep no_pr and nudge exact missing deliverables only if
+needed. Stop when WAVE-004 bundles are merged, blocked, cancelled, or ready for
+wdd-reconcile-wave. Do not start WAVE-005.
 ```
 
 ## Active Wave Strategy
@@ -82,10 +94,12 @@ that commit, dispatch workers, push dispatch state, and do not start WAVE-005.
 - Bundle branch: `codex/task/TASK-006-admin-mfa-step-up`
 - Bundle worktree:
   `/Users/ivo.toby/workspace/postgram/.worktrees/TASK-006-admin-mfa-step-up`
+- Worker: Tesla (`019f3333-4033-7463-9819-aa3dec286b4c`)
 - Bundle: WAVE-004-settings-secret-store
 - Bundle branch: `codex/task/TASK-009-settings-secret-store`
 - Bundle worktree:
   `/Users/ivo.toby/workspace/postgram/.worktrees/TASK-009-settings-secret-store`
+- Worker: Euclid (`019f3333-4104-7b02-b1aa-1fce6978e410`)
 
 ## Last Reconciled Wave
 
@@ -108,10 +122,10 @@ that commit, dispatch workers, push dispatch state, and do not start WAVE-005.
 | TASK-003-runtime-config-feasibility | TICKET-001-feasibility-security-design | codex/task/WAVE-001-admin-feasibility-gate | cleaned_up | reconciled | P3 provider URL/egress test feedback addressed; REVIEW_PASS; merged in `1f11365` |
 | TASK-004-admin-auth-persistence | TICKET-002-admin-auth-foundation | codex/task/TASK-004-admin-auth-persistence | cleaned_up | reconciled | REVIEW_PASS; freshness verification passed; merged in `0f96769`; PR #79 merged; WAVE-002 reconciled |
 | TASK-005-admin-session-routes | TICKET-002-admin-auth-foundation | codex/task/TASK-005-admin-session-routes | cleaned_up | reconciled | REVIEW_PASS; freshness verification passed; merged in `ecfe9ac`; PR #80 merged; WAVE-003 reconciled |
-| TASK-006-admin-mfa-step-up | TICKET-002-admin-auth-foundation | codex/task/TASK-006-admin-mfa-step-up | pending_creation | pending_worktree | `npm test -- tests/contract/admin-mfa-routes.test.ts`; `npm test -- tests/integration/admin-auth-service.test.ts`; `npm run typecheck` |
+| TASK-006-admin-mfa-step-up | TICKET-002-admin-auth-foundation | codex/task/TASK-006-admin-mfa-step-up | verified_dispatched | no_pr | worker Tesla dispatched; waiting for PR/patch; `npm test -- tests/contract/admin-mfa-routes.test.ts`; `npm test -- tests/integration/admin-auth-service.test.ts`; `npm run typecheck` |
 | TASK-007-admin-api-shell-diagnostics | TICKET-003-admin-api-foundation | codex/task/TASK-007-admin-api-shell-diagnostics | not_created | planned | `npm test -- tests/contract/admin-api.test.ts`; `npm run typecheck` |
 | TASK-008-admin-key-audit-stats-api | TICKET-003-admin-api-foundation | codex/task/TASK-008-admin-key-audit-stats-api | not_created | planned | `npm test -- tests/contract/admin-key-audit-stats.test.ts`; `npm test -- tests/integration/key-service.test.ts`; `npm run typecheck` |
-| TASK-009-settings-secret-store | TICKET-004-runtime-configuration | codex/task/TASK-009-settings-secret-store | pending_creation | pending_worktree | `npm test -- tests/integration/admin-settings-service.test.ts`; `npm run typecheck` |
+| TASK-009-settings-secret-store | TICKET-004-runtime-configuration | codex/task/TASK-009-settings-secret-store | verified_dispatched | no_pr | worker Euclid dispatched; waiting for PR/patch; `npm test -- tests/integration/admin-settings-service.test.ts`; `npm run typecheck` |
 | TASK-010-provider-config-apply | TICKET-004-runtime-configuration | codex/task/TASK-010-provider-config-apply | not_created | planned | `npm test -- tests/integration/admin-provider-config.test.ts`; `npm test -- tests/unit/config.test.ts`; `npm run typecheck` |
 | TASK-011-admin-auth-ui | TICKET-005-admin-frontend | codex/task/TASK-011-admin-auth-ui | not_created | planned | `npm --prefix ui run test -- --run src/components/AdminAuth.test.tsx`; `npm --prefix ui run typecheck` |
 | TASK-012-admin-ops-dashboard-ui | TICKET-005-admin-frontend | codex/task/TASK-012-admin-ops-dashboard-ui | not_created | planned | `npm --prefix ui run test -- --run src/components/AdminOps.test.tsx`; `npm --prefix ui run typecheck` |
@@ -173,6 +187,8 @@ that commit, dispatch workers, push dispatch state, and do not start WAVE-005.
   `/Users/ivo.toby/workspace/postgram/.worktrees/TASK-006-admin-mfa-step-up`
   and `codex/task/TASK-009-settings-secret-store` at
   `/Users/ivo.toby/workspace/postgram/.worktrees/TASK-009-settings-secret-store`.
+- WAVE-004 task branches were created from activation commit `f183a28`, pushed
+  to origin, verified, and dispatched to Tesla and Euclid.
 
 ## WAVE-001 Reconciled State
 
@@ -236,9 +252,8 @@ that commit, dispatch workers, push dispatch state, and do not start WAVE-005.
 - WAVE-004 is no longer blocked by WAVE-003.
 - WAVE-003 shared context is reconciled and the TASK-005 worktree cleanup gate
   is handled.
-- WAVE-004 activation is in progress. It must push activation artifacts, then
-  create/verify separate worktrees for TASK-006-admin-mfa-step-up and
-  TASK-009-settings-secret-store before dispatch.
+- WAVE-004 is active and under heartbeat monitoring. WAVE-005 remains blocked
+  until WAVE-004 is merged/closed and reconciled.
 
 ## Verification Status
 
@@ -313,6 +328,12 @@ that commit, dispatch workers, push dispatch state, and do not start WAVE-005.
   from PR #80 and local worktree state; TASK-006 and TASK-009 are moved to
   `in-progress/` with pending branch/worktree assignments. Worktree creation
   starts only after this activation state is pushed.
+- WAVE-004 dispatch verification: activation commit `f183a28` was pushed;
+  TASK-006 and TASK-009 task branches were created from `f183a28`, both
+  worktrees contain their task files plus current orchestration/controller
+  state, both branches were pushed to origin, and workers Tesla/Euclid were
+  dispatched. Product code tests are worker-owned and not run by the
+  controller during activation.
 
 ## Event Log
 
@@ -454,8 +475,12 @@ that commit, dispatch workers, push dispatch state, and do not start WAVE-005.
   task files to `in-progress/` and recorded pending branch/worktree
   assignments. Activation artifacts must be pushed before task worktrees are
   created.
+- 2026-07-05T16:47:34Z: Pushed activation commit `f183a28`, created and
+  verified WAVE-004 task branches/worktrees from that commit, pushed both task
+  branches to origin, dispatched worker Tesla for TASK-006 and worker Euclid
+  for TASK-009, and set WAVE-004 monitoring to 15-minute heartbeat cadence.
 
 ## Next Action
 
-Push the WAVE-004 activation artifact commit, create/verify both assigned
-worktrees from that commit, dispatch WAVE-004 workers, then update monitoring.
+Run the next WAVE-004 controller heartbeat at 2026-07-05T17:02:34Z to inspect
+workers Tesla and Euclid for PRs or patches.

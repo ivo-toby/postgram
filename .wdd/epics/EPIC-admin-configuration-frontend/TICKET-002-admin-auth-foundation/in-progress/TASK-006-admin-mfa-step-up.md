@@ -19,12 +19,12 @@ assigned_model_class: implementationComplex
 review_model_class: review
 branch: codex/task/TASK-006-admin-mfa-step-up
 worker_worktree: /Users/ivo.toby/workspace/postgram/.worktrees/TASK-006-admin-mfa-step-up
-worktree_status: pending_creation
+worktree_status: verified_dispatched
 pr: null
-worker_thread_id: null
+worker_thread_id: 019f3333-4033-7463-9819-aa3dec286b4c
 review_thread_id: null
-current_gate: pending_worktree
-branch_freshness: activation_base_pending
+current_gate: no_pr
+branch_freshness: current_at_dispatch
 verification:
   - npm test -- tests/contract/admin-mfa-routes.test.ts
   - npm test -- tests/integration/admin-auth-service.test.ts
@@ -121,6 +121,10 @@ codex/task/TASK-006-admin-mfa-step-up
 Assigned by WAVE-004 activation. The controller must create and verify this
 isolated worktree before dispatch.
 
+Verified and dispatched at 2026-07-05T16:47:34Z with worker Tesla
+(`019f3333-4033-7463-9819-aa3dec286b4c`) on branch
+`codex/task/TASK-006-admin-mfa-step-up`.
+
 ## PR / Patch Reference
 
 None yet.
@@ -212,3 +216,5 @@ Keep MFA helpers isolated from ordinary API-key auth.
 - WAVE-004 activation started at 2026-07-05T16:47:34Z as the MFA/step-up
   hybrid bundle. Branch/worktree creation is pending the pushed activation
   artifact commit.
+- Controller verified the worktree and dispatched worker Tesla
+  (`019f3333-4033-7463-9819-aa3dec286b4c`). No PR or patch exists yet.

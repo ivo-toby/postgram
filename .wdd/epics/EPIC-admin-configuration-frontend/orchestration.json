@@ -548,7 +548,7 @@
         "TASK-009-settings-secret-store"
       ],
       "activatedAt": "2026-07-05T16:47:34Z",
-      "workerDispatchStartedAt": null,
+      "workerDispatchStartedAt": "2026-07-05T16:47:34Z",
       "bundles": [
         {
           "id": "WAVE-004-admin-mfa-step-up",
@@ -557,24 +557,31 @@
           ],
           "branch": "codex/task/TASK-006-admin-mfa-step-up",
           "worktree": "/Users/ivo.toby/workspace/postgram/.worktrees/TASK-006-admin-mfa-step-up",
-          "worktreeStatus": "pending_creation",
-          "workerThreadId": null,
-          "workerNickname": null,
+          "worktreeStatus": "verified_dispatched",
+          "workerThreadId": "019f3333-4033-7463-9819-aa3dec286b4c",
+          "workerNickname": "Tesla",
           "reviewThreadId": null,
           "reviewNickname": null,
-          "currentGate": "pending_worktree",
-          "branchFreshness": "activation_base_pending",
+          "currentGate": "no_pr",
+          "branchFreshness": "current_at_dispatch",
           "pr": null,
-          "latestCommit": null,
+          "latestCommit": "f183a28",
           "blockingFeedback": [],
           "verification": {
             "result": "not_run",
-            "commands": [],
-            "evidence": null
+            "commands": [
+              "npm test -- tests/contract/admin-mfa-routes.test.ts",
+              "npm test -- tests/integration/admin-auth-service.test.ts",
+              "npm run typecheck"
+            ],
+            "evidence": "Worker-owned verification not run yet; controller verified branch/worktree creation from pushed activation commit f183a28."
           },
           "activatedAt": "2026-07-05T16:47:34Z",
           "cleanupState": "not_started",
-          "sharedContextReconciliation": "queued"
+          "sharedContextReconciliation": "queued",
+          "dispatchedAt": "2026-07-05T16:47:34Z",
+          "dispatchBaseCommit": "f183a28fe3e6ef51bf672c2af495cf9128091fba",
+          "lastObservedAt": "2026-07-05T16:47:34Z"
         },
         {
           "id": "WAVE-004-settings-secret-store",
@@ -583,26 +590,34 @@
           ],
           "branch": "codex/task/TASK-009-settings-secret-store",
           "worktree": "/Users/ivo.toby/workspace/postgram/.worktrees/TASK-009-settings-secret-store",
-          "worktreeStatus": "pending_creation",
-          "workerThreadId": null,
-          "workerNickname": null,
+          "worktreeStatus": "verified_dispatched",
+          "workerThreadId": "019f3333-4104-7b02-b1aa-1fce6978e410",
+          "workerNickname": "Euclid",
           "reviewThreadId": null,
           "reviewNickname": null,
-          "currentGate": "pending_worktree",
-          "branchFreshness": "activation_base_pending",
+          "currentGate": "no_pr",
+          "branchFreshness": "current_at_dispatch",
           "pr": null,
-          "latestCommit": null,
+          "latestCommit": "f183a28",
           "blockingFeedback": [],
           "verification": {
             "result": "not_run",
-            "commands": [],
-            "evidence": null
+            "commands": [
+              "npm test -- tests/integration/admin-settings-service.test.ts",
+              "npm run typecheck"
+            ],
+            "evidence": "Worker-owned verification not run yet; controller verified branch/worktree creation from pushed activation commit f183a28."
           },
           "activatedAt": "2026-07-05T16:47:34Z",
           "cleanupState": "not_started",
-          "sharedContextReconciliation": "queued"
+          "sharedContextReconciliation": "queued",
+          "dispatchedAt": "2026-07-05T16:47:34Z",
+          "dispatchBaseCommit": "f183a28fe3e6ef51bf672c2af495cf9128091fba",
+          "lastObservedAt": "2026-07-05T16:47:34Z"
         }
-      ]
+      ],
+      "activationCommit": "f183a28fe3e6ef51bf672c2af495cf9128091fba",
+      "dispatchState": "workers_dispatched"
     },
     {
       "id": "WAVE-005",
@@ -1127,13 +1142,13 @@
       "assignedModel": "implementationComplex",
       "reviewModel": "review",
       "branch": "codex/task/TASK-006-admin-mfa-step-up",
-      "workerThreadId": null,
+      "workerThreadId": "019f3333-4033-7463-9819-aa3dec286b4c",
       "reviewThreadId": null,
       "workerWorktree": "/Users/ivo.toby/workspace/postgram/.worktrees/TASK-006-admin-mfa-step-up",
-      "worktreeStatus": "pending_creation",
+      "worktreeStatus": "verified_dispatched",
       "pr": null,
-      "latestCommit": null,
-      "branchFreshness": "activation_base_pending",
+      "latestCommit": "f183a28",
+      "branchFreshness": "current_at_dispatch",
       "blockingFeedback": [],
       "verification": {
         "result": "not_run",
@@ -1142,13 +1157,17 @@
           "npm test -- tests/integration/admin-auth-service.test.ts",
           "npm run typecheck"
         ],
-        "evidence": null
+        "evidence": "Worker-owned verification not run yet; controller verified branch/worktree creation from pushed activation commit f183a28."
       },
-      "currentGate": "pending_worktree",
+      "currentGate": "no_pr",
       "cleanupState": "not_started",
       "sharedContextReconciliation": "queued",
       "activatedAt": "2026-07-05T16:47:34Z",
-      "bundle": "WAVE-004-admin-mfa-step-up"
+      "bundle": "WAVE-004-admin-mfa-step-up",
+      "workerNickname": "Tesla",
+      "dispatchedAt": "2026-07-05T16:47:34Z",
+      "dispatchBaseCommit": "f183a28fe3e6ef51bf672c2af495cf9128091fba",
+      "lastObservedAt": "2026-07-05T16:47:34Z"
     },
     {
       "id": "TASK-007-admin-api-shell-diagnostics",
@@ -1240,13 +1259,13 @@
       "assignedModel": "implementationComplex",
       "reviewModel": "review",
       "branch": "codex/task/TASK-009-settings-secret-store",
-      "workerThreadId": null,
+      "workerThreadId": "019f3333-4104-7b02-b1aa-1fce6978e410",
       "reviewThreadId": null,
       "workerWorktree": "/Users/ivo.toby/workspace/postgram/.worktrees/TASK-009-settings-secret-store",
-      "worktreeStatus": "pending_creation",
+      "worktreeStatus": "verified_dispatched",
       "pr": null,
-      "latestCommit": null,
-      "branchFreshness": "activation_base_pending",
+      "latestCommit": "f183a28",
+      "branchFreshness": "current_at_dispatch",
       "blockingFeedback": [],
       "verification": {
         "result": "not_run",
@@ -1254,13 +1273,17 @@
           "npm test -- tests/integration/admin-settings-service.test.ts",
           "npm run typecheck"
         ],
-        "evidence": null
+        "evidence": "Worker-owned verification not run yet; controller verified branch/worktree creation from pushed activation commit f183a28."
       },
-      "currentGate": "pending_worktree",
+      "currentGate": "no_pr",
       "cleanupState": "not_started",
       "sharedContextReconciliation": "queued",
       "activatedAt": "2026-07-05T16:47:34Z",
-      "bundle": "WAVE-004-settings-secret-store"
+      "bundle": "WAVE-004-settings-secret-store",
+      "workerNickname": "Euclid",
+      "dispatchedAt": "2026-07-05T16:47:34Z",
+      "dispatchBaseCommit": "f183a28fe3e6ef51bf672c2af495cf9128091fba",
+      "lastObservedAt": "2026-07-05T16:47:34Z"
     },
     {
       "id": "TASK-010-provider-config-apply",
@@ -1598,12 +1621,12 @@
   ],
   "monitoring": {
     "mode": "codex_thread_heartbeat",
-    "cadence": "5m",
-    "status": "activation_in_progress",
+    "cadence": "15m",
+    "status": "active",
     "lastCheckedAt": "2026-07-05T16:47:34Z",
-    "nextCheckDueAt": null,
+    "nextCheckDueAt": "2026-07-05T17:02:34Z",
     "schedulerRef": "postgram-admin-wave-004-start-heartbeat",
-    "fallbackPrompt": "Continue WAVE-004 activation for EPIC-admin-configuration-frontend. Verify the activation commit is pushed, create/verify TASK-006 and TASK-009 worktrees from that commit, dispatch workers, push dispatch state, and do not start WAVE-005."
+    "fallbackPrompt": "Run one bounded WDD controller heartbeat for /Users/ivo.toby/workspace/postgram, epic EPIC-admin-configuration-frontend, active wave WAVE-004. Use the subagent-pr-orchestration skill. Start on branch codex/epic/admin-configuration-frontend. Read orchestration.json and controller-state.md, then inspect workers Tesla (019f3333-4033-7463-9819-aa3dec286b4c) for WAVE-004-admin-mfa-step-up / TASK-006 and Euclid (019f3333-4104-7b02-b1aa-1fce6978e410) for WAVE-004-settings-secret-store / TASK-009, including their assigned worktrees. Update gates, branch freshness, verification, PR or patch refs, review refs, feedback, shared-context reconciliation status, and monitoring timestamps. If a worker has produced a PR or patch, move that bundle to review orchestration; if no PR or patch exists, keep no_pr and nudge exact missing deliverables only if needed. Stop when WAVE-004 bundles are merged, blocked, cancelled, or ready for wdd-reconcile-wave. Do not start WAVE-005."
   },
   "sharedContext": {
     "index": "shared-context/index.md",
@@ -1640,24 +1663,31 @@
         ],
         "branch": "codex/task/TASK-006-admin-mfa-step-up",
         "worktree": "/Users/ivo.toby/workspace/postgram/.worktrees/TASK-006-admin-mfa-step-up",
-        "worktreeStatus": "pending_creation",
-        "workerThreadId": null,
-        "workerNickname": null,
+        "worktreeStatus": "verified_dispatched",
+        "workerThreadId": "019f3333-4033-7463-9819-aa3dec286b4c",
+        "workerNickname": "Tesla",
         "reviewThreadId": null,
         "reviewNickname": null,
-        "currentGate": "pending_worktree",
-        "branchFreshness": "activation_base_pending",
+        "currentGate": "no_pr",
+        "branchFreshness": "current_at_dispatch",
         "pr": null,
-        "latestCommit": null,
+        "latestCommit": "f183a28",
         "blockingFeedback": [],
         "verification": {
           "result": "not_run",
-          "commands": [],
-          "evidence": null
+          "commands": [
+            "npm test -- tests/contract/admin-mfa-routes.test.ts",
+            "npm test -- tests/integration/admin-auth-service.test.ts",
+            "npm run typecheck"
+          ],
+          "evidence": "Worker-owned verification not run yet; controller verified branch/worktree creation from pushed activation commit f183a28."
         },
         "activatedAt": "2026-07-05T16:47:34Z",
         "cleanupState": "not_started",
-        "sharedContextReconciliation": "queued"
+        "sharedContextReconciliation": "queued",
+        "dispatchedAt": "2026-07-05T16:47:34Z",
+        "dispatchBaseCommit": "f183a28fe3e6ef51bf672c2af495cf9128091fba",
+        "lastObservedAt": "2026-07-05T16:47:34Z"
       },
       {
         "id": "WAVE-004-settings-secret-store",
@@ -1666,27 +1696,35 @@
         ],
         "branch": "codex/task/TASK-009-settings-secret-store",
         "worktree": "/Users/ivo.toby/workspace/postgram/.worktrees/TASK-009-settings-secret-store",
-        "worktreeStatus": "pending_creation",
-        "workerThreadId": null,
-        "workerNickname": null,
+        "worktreeStatus": "verified_dispatched",
+        "workerThreadId": "019f3333-4104-7b02-b1aa-1fce6978e410",
+        "workerNickname": "Euclid",
         "reviewThreadId": null,
         "reviewNickname": null,
-        "currentGate": "pending_worktree",
-        "branchFreshness": "activation_base_pending",
+        "currentGate": "no_pr",
+        "branchFreshness": "current_at_dispatch",
         "pr": null,
-        "latestCommit": null,
+        "latestCommit": "f183a28",
         "blockingFeedback": [],
         "verification": {
           "result": "not_run",
-          "commands": [],
-          "evidence": null
+          "commands": [
+            "npm test -- tests/integration/admin-settings-service.test.ts",
+            "npm run typecheck"
+          ],
+          "evidence": "Worker-owned verification not run yet; controller verified branch/worktree creation from pushed activation commit f183a28."
         },
         "activatedAt": "2026-07-05T16:47:34Z",
         "cleanupState": "not_started",
-        "sharedContextReconciliation": "queued"
+        "sharedContextReconciliation": "queued",
+        "dispatchedAt": "2026-07-05T16:47:34Z",
+        "dispatchBaseCommit": "f183a28fe3e6ef51bf672c2af495cf9128091fba",
+        "lastObservedAt": "2026-07-05T16:47:34Z"
       }
     ],
-    "status": "activating"
+    "status": "in_progress",
+    "dispatchedAt": "2026-07-05T16:47:34Z",
+    "activationCommit": "f183a28fe3e6ef51bf672c2af495cf9128091fba"
   },
   "currentGates": {
     "epicBranch": {
@@ -1696,11 +1734,11 @@
       "verifiedAt": "2026-07-05T11:36:08Z"
     },
     "activationArtifactsSynced": {
-      "status": "pending_epic_branch_commit",
-      "commit": null,
+      "status": "synced_to_epic_branch",
+      "commit": "f183a28",
       "requiredBeforeTaskWorktrees": true,
       "wave": "WAVE-004",
-      "syncedAt": null
+      "syncedAt": "2026-07-05T16:47:34Z"
     },
     "waveStrategyConfirmation": {
       "WAVE-001": "confirmed_by_ivo_2026-07-05",
@@ -1712,15 +1750,15 @@
       "WAVE-001-admin-feasibility-gate": "cleaned_up",
       "WAVE-002-admin-auth-persistence": "cleaned_up",
       "WAVE-003-admin-session-routes": "cleaned_up",
-      "WAVE-004-admin-mfa-step-up": "pending_creation",
-      "WAVE-004-settings-secret-store": "pending_creation"
+      "WAVE-004-admin-mfa-step-up": "verified_dispatched",
+      "WAVE-004-settings-secret-store": "verified_dispatched"
     },
     "workerDispatch": {
       "WAVE-001-admin-feasibility-gate": "reconciled",
       "WAVE-002-admin-auth-persistence": "reconciled",
       "WAVE-003-admin-session-routes": "reconciled",
-      "WAVE-004-admin-mfa-step-up": "pending_worktree",
-      "WAVE-004-settings-secret-store": "pending_worktree"
+      "WAVE-004-admin-mfa-step-up": "no_pr",
+      "WAVE-004-settings-secret-store": "no_pr"
     },
     "waveCompletion": {
       "WAVE-001": "done",
@@ -1734,12 +1772,12 @@
     },
     "monitoring": {
       "mode": "codex_thread_heartbeat",
-      "cadence": "5m",
-      "status": "activation_in_progress",
+      "cadence": "15m",
+      "status": "active",
       "lastCheckedAt": "2026-07-05T16:47:34Z",
-      "nextCheckDueAt": null,
+      "nextCheckDueAt": "2026-07-05T17:02:34Z",
       "schedulerRef": "postgram-admin-wave-004-start-heartbeat",
-      "fallbackPrompt": "Continue WAVE-004 activation for EPIC-admin-configuration-frontend. Verify the activation commit is pushed, create/verify TASK-006 and TASK-009 worktrees from that commit, dispatch workers, push dispatch state, and do not start WAVE-005."
+      "fallbackPrompt": "Run one bounded WDD controller heartbeat for /Users/ivo.toby/workspace/postgram, epic EPIC-admin-configuration-frontend, active wave WAVE-004. Use the subagent-pr-orchestration skill. Start on branch codex/epic/admin-configuration-frontend. Read orchestration.json and controller-state.md, then inspect workers Tesla (019f3333-4033-7463-9819-aa3dec286b4c) for WAVE-004-admin-mfa-step-up / TASK-006 and Euclid (019f3333-4104-7b02-b1aa-1fce6978e410) for WAVE-004-settings-secret-store / TASK-009, including their assigned worktrees. Update gates, branch freshness, verification, PR or patch refs, review refs, feedback, shared-context reconciliation status, and monitoring timestamps. If a worker has produced a PR or patch, move that bundle to review orchestration; if no PR or patch exists, keep no_pr and nudge exact missing deliverables only if needed. Stop when WAVE-004 bundles are merged, blocked, cancelled, or ready for wdd-reconcile-wave. Do not start WAVE-005."
     },
     "review": {
       "WAVE-001-admin-feasibility-gate": {
@@ -1815,8 +1853,8 @@
       "WAVE-001-admin-feasibility-gate": "current_at_merge",
       "WAVE-002-admin-auth-persistence": "current_at_merge",
       "WAVE-003-admin-session-routes": "current_at_merge",
-      "WAVE-004-admin-mfa-step-up": "activation_base_pending",
-      "WAVE-004-settings-secret-store": "activation_base_pending"
+      "WAVE-004-admin-mfa-step-up": "current_at_dispatch",
+      "WAVE-004-settings-secret-store": "current_at_dispatch"
     },
     "merge": {
       "WAVE-001-admin-feasibility-gate": {
@@ -1981,19 +2019,47 @@
         "reconciliationSummary": "WAVE-003 reconciled the concrete /admin/api/* session route contract, pgm_admin_session cookie, X-CSRF-Token CSRF header, safe bootstrap/login errors, pending-MFA carry-forward gate, downstream TASK-006/TASK-007/TASK-009/TASK-011 task updates, and TASK-005 worktree cleanup. WAVE-004 is ready for wdd-start-wave; it was not started during reconciliation."
       },
       "WAVE-004-admin-mfa-step-up": {
-        "status": "pending_worktree",
-        "workerThreadId": null,
-        "workerNickname": null,
-        "dispatchedAt": null,
+        "status": "dispatched_no_pr",
+        "workerThreadId": "019f3333-4033-7463-9819-aa3dec286b4c",
+        "workerNickname": "Tesla",
+        "dispatchedAt": "2026-07-05T16:47:34Z",
         "lastObservedAt": "2026-07-05T16:47:34Z",
+        "lastObservation": {
+          "checkedAt": "2026-07-05T16:47:34Z",
+          "workerStatus": "dispatched",
+          "pr": null,
+          "patch": null,
+          "worktreeStatus": "verified_dispatched",
+          "branchHead": "f183a28",
+          "observedFiles": [
+            ".wdd/epics/EPIC-admin-configuration-frontend/TICKET-002-admin-auth-foundation/in-progress/TASK-006-admin-mfa-step-up.md",
+            ".wdd/epics/EPIC-admin-configuration-frontend/orchestration.json",
+            ".wdd/epics/EPIC-admin-configuration-frontend/controller-state.md"
+          ],
+          "note": "Worker dispatched; waiting for PR or patch."
+        },
         "cleanupState": "not_started"
       },
       "WAVE-004-settings-secret-store": {
-        "status": "pending_worktree",
-        "workerThreadId": null,
-        "workerNickname": null,
-        "dispatchedAt": null,
+        "status": "dispatched_no_pr",
+        "workerThreadId": "019f3333-4104-7b02-b1aa-1fce6978e410",
+        "workerNickname": "Euclid",
+        "dispatchedAt": "2026-07-05T16:47:34Z",
         "lastObservedAt": "2026-07-05T16:47:34Z",
+        "lastObservation": {
+          "checkedAt": "2026-07-05T16:47:34Z",
+          "workerStatus": "dispatched",
+          "pr": null,
+          "patch": null,
+          "worktreeStatus": "verified_dispatched",
+          "branchHead": "f183a28",
+          "observedFiles": [
+            ".wdd/epics/EPIC-admin-configuration-frontend/TICKET-004-runtime-configuration/in-progress/TASK-009-settings-secret-store.md",
+            ".wdd/epics/EPIC-admin-configuration-frontend/orchestration.json",
+            ".wdd/epics/EPIC-admin-configuration-frontend/controller-state.md"
+          ],
+          "note": "Worker dispatched; waiting for PR or patch."
+        },
         "cleanupState": "not_started"
       }
     }
@@ -2018,7 +2084,9 @@
   "lastStartedWave": {
     "id": "WAVE-004",
     "activatedAt": "2026-07-05T16:47:34Z",
-    "status": "activating",
+    "dispatchedAt": "2026-07-05T16:47:34Z",
+    "status": "in_progress",
+    "activationCommit": "f183a28fe3e6ef51bf672c2af495cf9128091fba",
     "bundles": [
       {
         "id": "WAVE-004-admin-mfa-step-up",
@@ -2027,7 +2095,10 @@
         ],
         "branch": "codex/task/TASK-006-admin-mfa-step-up",
         "worktree": "/Users/ivo.toby/workspace/postgram/.worktrees/TASK-006-admin-mfa-step-up",
-        "worktreeStatus": "pending_creation"
+        "worktreeStatus": "verified_dispatched",
+        "workerThreadId": "019f3333-4033-7463-9819-aa3dec286b4c",
+        "workerNickname": "Tesla",
+        "currentGate": "no_pr"
       },
       {
         "id": "WAVE-004-settings-secret-store",
@@ -2036,7 +2107,10 @@
         ],
         "branch": "codex/task/TASK-009-settings-secret-store",
         "worktree": "/Users/ivo.toby/workspace/postgram/.worktrees/TASK-009-settings-secret-store",
-        "worktreeStatus": "pending_creation"
+        "worktreeStatus": "verified_dispatched",
+        "workerThreadId": "019f3333-4104-7b02-b1aa-1fce6978e410",
+        "workerNickname": "Euclid",
+        "currentGate": "no_pr"
       }
     ]
   }

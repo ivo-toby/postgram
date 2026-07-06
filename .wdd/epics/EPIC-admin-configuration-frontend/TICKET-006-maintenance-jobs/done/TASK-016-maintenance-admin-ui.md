@@ -6,7 +6,7 @@ ticket: TICKET-006-maintenance-jobs
 wave: WAVE-009
 slug: maintenance-admin-ui
 title: Maintenance Admin UI
-status: review
+status: done
 depends_on:
   - TASK-011-admin-auth-ui
   - TASK-012-admin-ops-dashboard-ui
@@ -20,12 +20,12 @@ assigned_model_class: implementationComplex
 review_model_class: review
 branch: codex/task/TASK-016-maintenance-admin-ui
 worker_worktree: /Users/ivo.toby/workspace/postgram/.worktrees/TASK-016-maintenance-admin-ui
-worktree_status: worker_review
+worktree_status: cleaned_up
 pr: https://github.com/ivo-toby/postgram/pull/91
 worker_thread_id: 019f3926-c2c5-7290-9c2f-9a4cca19e6ae
-review_thread_id: null
-current_gate: draft_pr_open
-branch_freshness: current_at_observation
+review_thread_id: 019f3954-7e17-7652-8673-c2304fd7c54a
+current_gate: merged
+branch_freshness: current_at_merge
 verification:
   - npm --prefix ui run test -- --run src/components/AdminMaintenance.test.tsx
   - npm --prefix ui run test -- --run src/components/AdminOps.test.tsx src/components/AdminConfig.test.tsx src/components/AdminAuth.test.tsx
@@ -36,7 +36,7 @@ verification:
 
 ## Status
 
-review
+done
 
 ## Parent Ticket
 
@@ -212,6 +212,17 @@ Share confirmation/progress components with config UI if useful.
   `ui` (125 tests).
 - 2026-07-06T21:19:39Z draft PR opened:
   https://github.com/ivo-toby/postgram/pull/91
+- 2026-07-06T21:35:02Z Hypatia review returned `REVIEW_PASS` with no P1/P2/P3.
+  Review verification passed: merge-tree, branch diff whitespace,
+  AdminMaintenance tests 9/9, AdminOps/AdminConfig/AdminAuth regressions 49/49,
+  and UI typecheck.
+- 2026-07-06T21:35:02Z controller refreshed the task branch against latest
+  `origin/codex/epic/admin-configuration-frontend`; final divergence was
+  `0 3`, merge-tree and diff whitespace passed, AdminMaintenance tests 9/9,
+  AdminOps/AdminConfig/AdminAuth regressions 49/49, and UI typecheck passed.
+- TASK-016 merged into the epic branch in `10b27384545cb450e6d3c5c10460af1bc22c5667`.
+  PR #91 was marked `MERGED` by GitHub at 2026-07-06T21:37:31Z, and the clean
+  pushed worktree was removed.
 
 ## Review Feedback
 

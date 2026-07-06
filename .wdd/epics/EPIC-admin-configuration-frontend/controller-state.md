@@ -3,7 +3,7 @@ id: EPIC-admin-configuration-frontend-CONTROLLER
 kind: controller_state
 epic: EPIC-admin-configuration-frontend
 active_wave: WAVE-009
-status: monitoring
+status: ready_for_reconciliation
 updated_at: 2026-07-06
 ---
 
@@ -91,22 +91,16 @@ operations shell, `AdminConfig` Config-tab integration, UI secret
 redaction/write-only controls, validation/apply warnings, and downstream
 TASK-016/TASK-017/TASK-018 handoffs. WAVE-009 is ready to start next.
 
-WAVE-009 is activating after WAVE-008 reconciliation checkpoint `ff2a873` was
-pushed. Its bundled task is TASK-016-maintenance-admin-ui. The task file moved
-to `in-progress/`, and the planned task branch/worktree are
-`codex/task/TASK-016-maintenance-admin-ui` and
-`/Users/ivo.toby/workspace/postgram/.worktrees/TASK-016-maintenance-admin-ui`.
-Activation checkpoint `b34d0eb` was pushed before branch/worktree creation.
-The TASK-016 branch and worktree were created from that checkpoint, pushed to
-origin, verified clean/current, and fast-forwarded to the worktree-state
-checkpoint `bf06360`. Singer
-(`019f3926-c2c5-7290-9c2f-9a4cca19e6ae`) returned `DONE` and opened draft PR
-#91 at https://github.com/ivo-toby/postgram/pull/91. Controller verification
-found PR #91 `CLEAN` and `MERGEABLE`, branch divergence `0 2`, clean
-merge-tree, and clean branch diff whitespace before this controller checkpoint.
-Hypatia (`019f3954-7e17-7652-8673-c2304fd7c54a`) is reviewing PR #91. Final
-branch freshness refresh is required before merge because this controller
-checkpoint advances the epic branch after PR creation.
+WAVE-009 is merged and ready for reconciliation. Its bundled task,
+TASK-016-maintenance-admin-ui, shipped in PR #91 after Singer returned `DONE`
+and Hypatia returned `REVIEW_PASS` with no P1/P2/P3. Controller refreshed the
+task branch against the latest epic checkpoint, reran required UI verification,
+merged TASK-016 into the epic branch in
+`10b27384545cb450e6d3c5c10460af1bc22c5667`, pushed the epic branch, and
+confirmed GitHub marked PR #91 `MERGED` at 2026-07-06T21:37:31Z. The task file
+is in `done/`, branch freshness is `current_at_merge`, blocking feedback is
+empty, shared-context reconciliation is queued, and the clean pushed worktree
+was removed.
 
 WAVE-004 is done and reconciled. PR #81/TASK-009 and PR #82/TASK-006 are
 merged, shared context is reconciled, and both WAVE-004 worktrees are cleaned
@@ -124,7 +118,7 @@ up.
 | WAVE-006 | TASK-008, TASK-014 | full / hybrid / risk_based / adaptive | done | confirmed by Ivo via finish-all-waves request on 2026-07-06 |
 | WAVE-007 | TASK-011, TASK-015 | full / parallel / risk_based / adaptive | done | confirmed by Ivo via finish-all-waves request on 2026-07-06 |
 | WAVE-008 | TASK-012, TASK-013 | full / hybrid / risk_based / adaptive | done | confirmed by Ivo via finish-all-waves request on 2026-07-06 |
-| WAVE-009 | TASK-016 | full / bundled / risk_based / adaptive | in_progress | confirmed by Ivo via finish-all-waves request on 2026-07-06 |
+| WAVE-009 | TASK-016 | full / bundled / risk_based / adaptive | ready_for_reconciliation | confirmed by Ivo via finish-all-waves request on 2026-07-06 |
 | WAVE-010 | TASK-017 | full / bundled / risk_based / adaptive | planned | required |
 | WAVE-011 | TASK-018 | full / bundled / risk_based / adaptive | planned | not required |
 
@@ -134,11 +128,11 @@ Mode: adaptive
 
 Cadence: 5m
 
-Status: wave_009_pr91_reviewing
+Status: wave_009_ready_for_reconciliation
 
-Last check: 2026-07-06T21:26:02Z
+Last check: 2026-07-06T21:35:02Z
 
-Next check due: 2026-07-06T21:31:02Z
+Next check due: 2026-07-06T21:40:02Z
 
 Scheduler reference: `postgram-admin-wave-005-wdd-heartbeat`
 
@@ -147,27 +141,25 @@ Scheduler name: `postgram-admin-wave-009-wdd-heartbeat`
 Fallback prompt:
 
 ```text
-Run one bounded WDD controller heartbeat for /Users/ivo.toby/workspace/postgram,
-epic EPIC-admin-configuration-frontend, active wave WAVE-009. Use the
-subagent-pr-orchestration skill. Start in /Users/ivo.toby/workspace/postgram on
-branch codex/epic/admin-configuration-frontend. Read
+Run one bounded WDD reconciliation handoff heartbeat for
+/Users/ivo.toby/workspace/postgram, epic
+EPIC-admin-configuration-frontend, active wave WAVE-009. Use the
+wdd-reconcile-wave skill. Start in /Users/ivo.toby/workspace/postgram on branch
+codex/epic/admin-configuration-frontend. Read
 .wdd/epics/EPIC-admin-configuration-frontend/orchestration.json and
-controller-state.md, then inspect draft PR #91
-(https://github.com/ivo-toby/postgram/pull/91), reviewer Hypatia
-(`019f3954-7e17-7652-8673-c2304fd7c54a`), worker Singer
-(`019f3926-c2c5-7290-9c2f-9a4cca19e6ae`), and assigned worktree
-/Users/ivo.toby/workspace/postgram/.worktrees/TASK-016-maintenance-admin-ui on
-branch codex/task/TASK-016-maintenance-admin-ui for bundle
-WAVE-009-maintenance-admin-ui / TASK-016-maintenance-admin-ui. Update gates,
-branch freshness, verification, PR refs, review refs, feedback,
-shared-context reconciliation status, and monitoring timestamps. If Hypatia
-reports P1/P2, route feedback to Singer or a fresh fix worker. If review
-passes, refresh stale task branch against codex/epic/admin-configuration-frontend,
-rerun required freshness verification, then merge or mark merge_ready according
-to policy. Stop when WAVE-009 is merged, blocked, cancelled, or ready for
-wdd-reconcile-wave. Do not start WAVE-010 until WAVE-009 is merged and
-reconciled. After WAVE-009 is reconciled, continue to WAVE-010 per Ivo
-finish-all-waves instruction and push to GitHub between tasks/waves.
+controller-state.md. Confirm WAVE-009 bundle WAVE-009-maintenance-admin-ui /
+TASK-016-maintenance-admin-ui is merged into the epic branch in merge commit
+10b27384545cb450e6d3c5c10460af1bc22c5667; PR #91 is MERGED at
+2026-07-06T21:37:31Z after Hypatia REVIEW_PASS, final task head
+1885b64d45cce5ab7d4148fa167a726842bd1011, and cleanup. Verify task file is in
+done/, currentGates.workerDispatch entry is merged, WAVE-009 waveCompletion is
+ready_for_reconciliation, branch freshness is current_at_merge, cleanup is
+cleaned_up, blocking feedback is empty, and shared-context reconciliation is
+queued. Run wdd-reconcile-wave for WAVE-009, reconcile maintenance admin UI
+decisions into shared context and downstream TASK-017/TASK-018, update
+orchestration.json and controller-state.md, push the reconciliation checkpoint,
+then continue to WAVE-010 per Ivo finish-all-waves instruction after
+reconciliation is pushed.
 ```
 
 ## Active Wave Strategy
@@ -179,8 +171,7 @@ finish-all-waves instruction and push to GitHub between tasks/waves.
 - WAVE-009 strategy: full / bundled / risk_based / adaptive.
 - WAVE-009 task: TASK-016-maintenance-admin-ui.
 - Confirmation: Ivo via Codex finish-all-waves request on 2026-07-06.
-- Current gate: PR #91 is under Hypatia review; final freshness refresh is
-  required before merge.
+- Current gate: TASK-016 is merged and WAVE-009 is ready for reconciliation.
 
 ## Last Reconciled Wave
 
@@ -233,7 +224,7 @@ finish-all-waves instruction and push to GitHub between tasks/waves.
 | TASK-013-admin-config-ui | TICKET-005-admin-frontend | codex/task/TASK-013-admin-config-ui | cleaned_up | reconciled | Schrodinger follow-up REVIEW_PASS; final freshness passed at task head `2efc58f`; post-merge AdminConfig/AdminOps/AdminAuth UI tests, UI typecheck, root typecheck, JSON parse, and diff-check passed; PR #90 merged at 2026-07-06T20:15:58Z in `9974b29`; worktree cleaned up; WAVE-008 shared context reconciled |
 | TASK-014-admin-job-foundation | TICKET-006-maintenance-jobs | codex/task/TASK-014-admin-job-foundation | cleaned_up | reconciled | Lorentz REVIEW_PASS; freshness current at task head `0e08630`; post-merge tests/typecheck/touched-file ESLint passed; merged locally into epic branch in `c5edbfc`; WAVE-006 reconciled and worktree cleaned up |
 | TASK-015-maintenance-admin-api | TICKET-006-maintenance-jobs | codex/task/TASK-015-maintenance-admin-api | cleaned_up | reconciled | Lorentz REVIEW_PASS; final freshness passed at task head `ea88af4`; post-merge contract tests 4/4, CLI integration 37/37, typecheck, scoped ESLint, JSON parse, and diff check passed; merged locally in `78f0f43`; PR #88 merged at 2026-07-06T17:02:28Z; shared context reconciled |
-| TASK-016-maintenance-admin-ui | TICKET-006-maintenance-jobs | codex/task/TASK-016-maintenance-admin-ui | clean_pushed | reviewing | Draft PR #91 opened at head `dc63619`; Hypatia (`019f3954-7e17-7652-8673-c2304fd7c54a`) reviewing; PR was CLEAN and branch divergence `0 2` before controller checkpoint; final freshness refresh required before merge |
+| TASK-016-maintenance-admin-ui | TICKET-006-maintenance-jobs | codex/task/TASK-016-maintenance-admin-ui | cleaned_up | merged | Hypatia REVIEW_PASS; final task head `1885b64`; freshness `0 3`; AdminMaintenance 9/9, AdminOps/AdminConfig/AdminAuth 49/49, UI typecheck passed; merged in `10b2738`; PR #91 MERGED at 2026-07-06T21:37:31Z |
 | TASK-017-docker-first-run-no-cli | TICKET-007-docker-e2e-validation | codex/task/TASK-017-docker-first-run-no-cli | not_created | planned | `docker compose config`; `npm run typecheck`; `npm --prefix ui run build` |
 | TASK-018-security-epic-validation | TICKET-007-docker-e2e-validation | codex/task/TASK-018-security-epic-validation | not_created | planned | broad backend, frontend, Docker, and smoke validation |
 
@@ -674,6 +665,11 @@ finish-all-waves instruction and push to GitHub between tasks/waves.
   and moved TASK-016 to `review/` on the task branch. Controller verified PR
   #91 is `CLEAN` and `MERGEABLE`, branch divergence was `0 2`, merge-tree and
   branch diff whitespace passed, and Hypatia was dispatched for review.
+- 2026-07-06T21:35:02Z heartbeat: Hypatia returned `REVIEW_PASS`; controller
+  refreshed the task branch, reran freshness verification and required UI
+  checks, merged TASK-016 into the epic branch in `10b2738`, confirmed PR #91
+  `MERGED`, moved the task to `done/`, removed the clean worktree, and queued
+  WAVE-009 for reconciliation.
 
 ## Verification Status
 
@@ -1746,8 +1742,16 @@ finish-all-waves instruction and push to GitHub between tasks/waves.
   (`019f3954-7e17-7652-8673-c2304fd7c54a`) was requested for review. Final
   branch freshness refresh is required before merge because this controller
   checkpoint advances the epic branch after PR creation.
+- 2026-07-06T21:35:02Z: Hypatia returned `REVIEW_PASS` with no P1/P2/P3.
+  Controller refreshed TASK-016 against the latest epic branch in task head
+  `1885b64`, verified final divergence `0 3`, clean merge-tree, clean branch
+  diff whitespace, AdminMaintenance tests 9/9, AdminOps/AdminConfig/AdminAuth
+  regressions 49/49, and UI typecheck. TASK-016 merged into the epic branch in
+  `10b2738`, post-merge verification passed, PR #91 was marked `MERGED` at
+  2026-07-06T21:37:31Z, and the clean pushed worktree was removed. WAVE-009 is
+  ready for reconciliation.
 
 ## Next Action
 
-Next action: poll Hypatia review for PR #91; route P1/P2 to Singer or refresh
-and merge if review passes.
+Next action: run `wdd-reconcile-wave` for WAVE-009, then continue to WAVE-010
+after reconciliation is pushed.

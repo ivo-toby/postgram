@@ -28,7 +28,7 @@ updated_at: 2026-07-06
 | TASK-013-admin-config-ui | TICKET-005-admin-frontend | TASK-010, TASK-011 | runtime config UI, secret redaction, provider validation UI | todo |
 | TASK-014-admin-job-foundation | TICKET-006-maintenance-jobs | TASK-006, TASK-009 | job tables, job service, audit integration, progress state | done |
 | TASK-015-maintenance-admin-api | TICKET-006-maintenance-jobs | TASK-008, TASK-010, TASK-014 | graph/memory/embedding services, dry-run/apply admin APIs, CLI regressions | done |
-| TASK-016-maintenance-admin-ui | TICKET-006-maintenance-jobs | TASK-011, TASK-015 | maintenance UI, confirmations, progress polling, admin API client | todo |
+| TASK-016-maintenance-admin-ui | TICKET-006-maintenance-jobs | TASK-011, TASK-015 | maintenance UI, confirmations, progress polling, admin API client | done |
 | TASK-017-docker-first-run-no-cli | TICKET-007-docker-e2e-validation | TASK-012, TASK-013, TASK-016 | Docker Compose, `.env.example`, README/deployment docs, smoke tests | todo |
 | TASK-018-security-epic-validation | TICKET-007-docker-e2e-validation | TASK-017 | security review, broad validation, final handoff artifacts | todo |
 
@@ -755,7 +755,7 @@ Stop condition:
 
 ### WAVE-009
 
-Status: in_progress
+Status: ready_for_reconciliation
 
 Tasks:
 
@@ -806,6 +806,10 @@ Progress:
   #91. Controller verified PR #91 was clean/current before the review
   checkpoint and requested Hypatia review; final branch freshness refresh is
   required before merge.
+- 2026-07-06T21:35:02Z heartbeat: Hypatia returned `REVIEW_PASS`; controller
+  refreshed TASK-016 to task head `1885b64`, verified freshness and required UI
+  checks, merged PR #91 into the epic branch in `10b2738`, cleaned up the
+  worktree, and queued WAVE-009 for reconciliation.
 
 Stop condition:
 

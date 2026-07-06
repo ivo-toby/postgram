@@ -1180,7 +1180,7 @@
     },
     {
       "id": "WAVE-009",
-      "status": "in_progress",
+      "status": "ready_for_reconciliation",
       "strategy": {
         "profile": "full",
         "executionMode": "bundled",
@@ -1205,7 +1205,9 @@
         "TASK-016-maintenance-admin-ui"
       ],
       "readyAt": "2026-07-06T20:18:32Z",
-      "activatedAt": "2026-07-06T20:30:02Z"
+      "activatedAt": "2026-07-06T20:30:02Z",
+      "mergedAt": "2026-07-06T21:35:02Z",
+      "completedAt": "2026-07-06T21:35:02Z"
     },
     {
       "id": "WAVE-010",
@@ -2384,8 +2386,8 @@
     {
       "id": "TASK-016-maintenance-admin-ui",
       "ticket": "TICKET-006-maintenance-jobs",
-      "path": "TICKET-006-maintenance-jobs/review/TASK-016-maintenance-admin-ui.md",
-      "status": "review",
+      "path": "TICKET-006-maintenance-jobs/done/TASK-016-maintenance-admin-ui.md",
+      "status": "done",
       "dependsOn": [
         "TASK-011-admin-auth-ui",
         "TASK-015-maintenance-admin-api",
@@ -2404,32 +2406,45 @@
       "workerThreadId": "019f3926-c2c5-7290-9c2f-9a4cca19e6ae",
       "reviewThreadId": "019f3954-7e17-7652-8673-c2304fd7c54a",
       "workerWorktree": "/Users/ivo.toby/workspace/postgram/.worktrees/TASK-016-maintenance-admin-ui",
-      "worktreeStatus": "clean_pushed",
+      "worktreeStatus": "cleaned_up",
       "pr": "https://github.com/ivo-toby/postgram/pull/91",
-      "latestCommit": "dc6361966b590824737770f946d0e2d97bf1ac31",
-      "branchFreshness": "refresh_required_after_controller_checkpoint",
+      "latestCommit": "1885b64d45cce5ab7d4148fa167a726842bd1011",
+      "branchFreshness": "current_at_merge",
       "blockingFeedback": [],
       "verification": {
-        "result": "draft_pr_open_review_requested",
-        "checkedAt": "2026-07-06T21:26:02Z",
+        "result": "review_passed_freshness_verified_merged_cleaned_up",
+        "checkedAt": "2026-07-06T21:35:02Z",
         "commands": [
-          "multi_agent_v1.wait_agent 019f3926-c2c5-7290-9c2f-9a4cca19e6ae observed DONE notification",
-          "gh pr view 91 --repo ivo-toby/postgram --json number,url,state,isDraft,headRefName,headRefOid,baseRefName,updatedAt,mergeStateStatus,reviewDecision,title,commits,files,labels,mergeable",
-          "git -C /Users/ivo.toby/workspace/postgram/.worktrees/TASK-016-maintenance-admin-ui status --short --branch",
+          "multi_agent_v1.wait_agent Hypatia returned REVIEW_PASS",
+          "git -C /Users/ivo.toby/workspace/postgram/.worktrees/TASK-016-maintenance-admin-ui merge --no-ff origin/codex/epic/admin-configuration-frontend -m \"chore: refresh task 016 after review pass\"",
           "git -C /Users/ivo.toby/workspace/postgram/.worktrees/TASK-016-maintenance-admin-ui rev-list --left-right --count origin/codex/epic/admin-configuration-frontend...HEAD",
-          "git -C /Users/ivo.toby/workspace/postgram/.worktrees/TASK-016-maintenance-admin-ui diff --check origin/codex/epic/admin-configuration-frontend...HEAD",
           "git -C /Users/ivo.toby/workspace/postgram/.worktrees/TASK-016-maintenance-admin-ui merge-tree --write-tree origin/codex/epic/admin-configuration-frontend HEAD",
-          "multi_agent_v1.spawn_agent reviewer for PR #91"
+          "git -C /Users/ivo.toby/workspace/postgram/.worktrees/TASK-016-maintenance-admin-ui diff --check origin/codex/epic/admin-configuration-frontend...HEAD",
+          "npm --prefix ui run test -- --run src/components/AdminMaintenance.test.tsx",
+          "npm --prefix ui run test -- --run src/components/AdminOps.test.tsx src/components/AdminConfig.test.tsx src/components/AdminAuth.test.tsx",
+          "npm --prefix ui run typecheck",
+          "git push origin codex/task/TASK-016-maintenance-admin-ui",
+          "git merge --no-ff origin/codex/task/TASK-016-maintenance-admin-ui -m \"merge: task 016 maintenance admin ui\"",
+          "git diff --check HEAD^..HEAD",
+          "jq empty .wdd/epics/EPIC-admin-configuration-frontend/orchestration.json",
+          "git push origin codex/epic/admin-configuration-frontend",
+          "gh pr view 91 --json number,url,state,mergedAt,headRefOid,mergeCommit,baseRefName,mergeStateStatus",
+          "git worktree remove /Users/ivo.toby/workspace/postgram/.worktrees/TASK-016-maintenance-admin-ui",
+          "git worktree prune --verbose"
         ],
-        "evidence": "Singer returned DONE and opened draft PR #91 at head dc6361966b590824737770f946d0e2d97bf1ac31. GitHub reports PR #91 OPEN/draft, base codex/epic/admin-configuration-frontend, mergeStateStatus CLEAN, mergeable MERGEABLE. The task worktree is clean and pushed, branch divergence against origin/codex/epic/admin-configuration-frontend was 0 2 before this controller checkpoint, diff whitespace passed, and merge-tree returned tree 119b510acf36aa66ca20c7755783f5c9d7d10c82. Hypatia was requested for review. This controller checkpoint advances the epic branch, so final branch freshness refresh is required before merge even if review passes."
+        "evidence": "Hypatia returned REVIEW_PASS with no P1/P2/P3. Controller refreshed TASK-016 against latest epic checkpoint c99ad98; final task branch divergence was 0 3, merge-tree returned 3377f9c2f689ffdf924804d3150170c953cec12f, branch diff whitespace passed, AdminMaintenance tests passed 9/9, AdminOps/AdminConfig/AdminAuth regressions passed 49/49, and UI typecheck passed. TASK-016 merged into the epic branch in 10b27384545cb450e6d3c5c10460af1bc22c5667. Post-merge AdminMaintenance tests 9/9, adjacent admin UI regressions 49/49, UI typecheck, orchestration JSON parse, and merge diff whitespace passed. GitHub marked PR #91 MERGED at 2026-07-06T21:37:31Z. The clean pushed TASK-016 worktree was removed and pruned."
       },
-      "currentGate": "reviewing",
+      "currentGate": "merged",
       "activatedAt": "2026-07-06T20:30:02Z",
       "bundle": "WAVE-009-maintenance-admin-ui",
-      "sharedContextReconciliation": "not_started",
-      "cleanupState": "not_started",
+      "sharedContextReconciliation": "queued",
+      "cleanupState": "cleaned_up",
       "workerNickname": "Singer",
-      "reviewNickname": "Hypatia"
+      "reviewNickname": "Hypatia",
+      "mergeCommit": "10b27384545cb450e6d3c5c10460af1bc22c5667",
+      "mergedAt": "2026-07-06T21:37:31Z",
+      "remotePrState": "MERGED",
+      "remotePrMergedAt": "2026-07-06T21:37:31Z"
     },
     {
       "id": "TASK-017-docker-first-run-no-cli",
@@ -2516,17 +2531,13 @@
   "monitoring": {
     "mode": "adaptive",
     "cadence": "5m",
-    "status": "wave_009_pr91_reviewing",
-    "lastCheckedAt": "2026-07-06T21:26:02Z",
-    "nextCheckDueAt": "2026-07-06T21:31:02Z",
+    "status": "wave_009_ready_for_reconciliation",
+    "lastCheckedAt": "2026-07-06T21:35:02Z",
+    "nextCheckDueAt": "2026-07-06T21:40:02Z",
     "schedulerRef": "postgram-admin-wave-005-wdd-heartbeat",
-    "schedulerName": "postgram-admin-wave-009-wdd-heartbeat",
-    "fallbackPrompt": "Run one bounded WDD controller heartbeat for /Users/ivo.toby/workspace/postgram, epic EPIC-admin-configuration-frontend, active wave WAVE-009. Use the subagent-pr-orchestration skill. Start in /Users/ivo.toby/workspace/postgram on branch codex/epic/admin-configuration-frontend. Read .wdd/epics/EPIC-admin-configuration-frontend/orchestration.json and controller-state.md, then inspect draft PR #91 (https://github.com/ivo-toby/postgram/pull/91), reviewer Hypatia (019f3954-7e17-7652-8673-c2304fd7c54a), worker Singer (019f3926-c2c5-7290-9c2f-9a4cca19e6ae), and assigned worktree /Users/ivo.toby/workspace/postgram/.worktrees/TASK-016-maintenance-admin-ui on branch codex/task/TASK-016-maintenance-admin-ui for bundle WAVE-009-maintenance-admin-ui / TASK-016-maintenance-admin-ui. Update gates, branch freshness, verification, PR refs, review refs, feedback, shared-context reconciliation status, and monitoring timestamps. If Hypatia reports P1/P2, route feedback to Singer or a fresh fix worker. If review passes, refresh stale task branch against codex/epic/admin-configuration-frontend, rerun required freshness verification, then merge or mark merge_ready according to policy. Stop when WAVE-009 is merged, blocked, cancelled, or ready for wdd-reconcile-wave. Do not start WAVE-010 until WAVE-009 is merged and reconciled. After WAVE-009 is reconciled, continue to WAVE-010 per Ivo finish-all-waves instruction and push to GitHub between tasks/waves.",
-    "workerThreadId": "019f3926-c2c5-7290-9c2f-9a4cca19e6ae",
-    "workerNickname": "Singer",
-    "reviewThreadId": "019f3954-7e17-7652-8673-c2304fd7c54a",
-    "reviewNickname": "Hypatia",
-    "verifiedAt": "2026-07-06T21:26:02Z",
+    "schedulerName": "postgram-admin-wave-009-reconcile-heartbeat",
+    "fallbackPrompt": "Run one bounded WDD reconciliation handoff heartbeat for /Users/ivo.toby/workspace/postgram, epic EPIC-admin-configuration-frontend, active wave WAVE-009. Use the wdd-reconcile-wave skill. Start in /Users/ivo.toby/workspace/postgram on branch codex/epic/admin-configuration-frontend. Read .wdd/epics/EPIC-admin-configuration-frontend/orchestration.json and controller-state.md. Confirm WAVE-009 bundle WAVE-009-maintenance-admin-ui / TASK-016-maintenance-admin-ui is merged into the epic branch in merge commit 10b27384545cb450e6d3c5c10460af1bc22c5667; PR #91 is MERGED at 2026-07-06T21:37:31Z after Hypatia REVIEW_PASS, final task head 1885b64d45cce5ab7d4148fa167a726842bd1011, and cleanup. Verify task file is in done/, currentGates.workerDispatch entry is merged, WAVE-009 waveCompletion is ready_for_reconciliation, branch freshness is current_at_merge, cleanup is cleaned_up, blocking feedback is empty, and shared-context reconciliation is queued. Run wdd-reconcile-wave for WAVE-009, reconcile maintenance admin UI decisions into shared context and downstream TASK-017/TASK-018, update orchestration.json and controller-state.md, push the reconciliation checkpoint, then continue to WAVE-010 per Ivo finish-all-waves instruction after reconciliation is pushed.",
+    "verifiedAt": "2026-07-06T21:35:02Z",
     "automationUpdateResult": "updated_in_app"
   },
   "sharedContext": {
@@ -2544,7 +2555,7 @@
   "activeWave": {
     "id": "WAVE-009",
     "activatedAt": "2026-07-06T20:30:02Z",
-    "status": "in_progress",
+    "status": "ready_for_reconciliation",
     "strategy": {
       "profile": "full",
       "executionMode": "bundled",
@@ -2564,34 +2575,43 @@
         ],
         "branch": "codex/task/TASK-016-maintenance-admin-ui",
         "worktree": "/Users/ivo.toby/workspace/postgram/.worktrees/TASK-016-maintenance-admin-ui",
-        "worktreeStatus": "clean_pushed",
+        "worktreeStatus": "cleaned_up",
         "workerThreadId": "019f3926-c2c5-7290-9c2f-9a4cca19e6ae",
         "workerNickname": "Singer",
         "reviewThreadId": "019f3954-7e17-7652-8673-c2304fd7c54a",
         "reviewNickname": "Hypatia",
-        "currentGate": "reviewing",
-        "branchFreshness": "refresh_required_after_controller_checkpoint",
+        "currentGate": "merged",
+        "branchFreshness": "current_at_merge",
         "pr": "https://github.com/ivo-toby/postgram/pull/91",
-        "latestCommit": "dc6361966b590824737770f946d0e2d97bf1ac31",
+        "latestCommit": "1885b64d45cce5ab7d4148fa167a726842bd1011",
         "blockingFeedback": [],
         "verification": {
-          "result": "draft_pr_open_review_requested",
-          "checkedAt": "2026-07-06T21:26:02Z",
+          "result": "review_passed_freshness_verified_merged_cleaned_up",
+          "checkedAt": "2026-07-06T21:35:02Z",
           "commands": [
-            "multi_agent_v1.wait_agent 019f3926-c2c5-7290-9c2f-9a4cca19e6ae observed DONE notification",
-            "gh pr view 91 --repo ivo-toby/postgram --json number,url,state,isDraft,headRefName,headRefOid,baseRefName,updatedAt,mergeStateStatus,reviewDecision,title,commits,files,labels,mergeable",
-            "git -C /Users/ivo.toby/workspace/postgram/.worktrees/TASK-016-maintenance-admin-ui status --short --branch",
+            "multi_agent_v1.wait_agent Hypatia returned REVIEW_PASS",
+            "git -C /Users/ivo.toby/workspace/postgram/.worktrees/TASK-016-maintenance-admin-ui merge --no-ff origin/codex/epic/admin-configuration-frontend -m \"chore: refresh task 016 after review pass\"",
             "git -C /Users/ivo.toby/workspace/postgram/.worktrees/TASK-016-maintenance-admin-ui rev-list --left-right --count origin/codex/epic/admin-configuration-frontend...HEAD",
-            "git -C /Users/ivo.toby/workspace/postgram/.worktrees/TASK-016-maintenance-admin-ui diff --check origin/codex/epic/admin-configuration-frontend...HEAD",
             "git -C /Users/ivo.toby/workspace/postgram/.worktrees/TASK-016-maintenance-admin-ui merge-tree --write-tree origin/codex/epic/admin-configuration-frontend HEAD",
-            "multi_agent_v1.spawn_agent reviewer for PR #91"
+            "git -C /Users/ivo.toby/workspace/postgram/.worktrees/TASK-016-maintenance-admin-ui diff --check origin/codex/epic/admin-configuration-frontend...HEAD",
+            "npm --prefix ui run test -- --run src/components/AdminMaintenance.test.tsx",
+            "npm --prefix ui run test -- --run src/components/AdminOps.test.tsx src/components/AdminConfig.test.tsx src/components/AdminAuth.test.tsx",
+            "npm --prefix ui run typecheck",
+            "git push origin codex/task/TASK-016-maintenance-admin-ui",
+            "git merge --no-ff origin/codex/task/TASK-016-maintenance-admin-ui -m \"merge: task 016 maintenance admin ui\"",
+            "git diff --check HEAD^..HEAD",
+            "jq empty .wdd/epics/EPIC-admin-configuration-frontend/orchestration.json",
+            "git push origin codex/epic/admin-configuration-frontend",
+            "gh pr view 91 --json number,url,state,mergedAt,headRefOid,mergeCommit,baseRefName,mergeStateStatus",
+            "git worktree remove /Users/ivo.toby/workspace/postgram/.worktrees/TASK-016-maintenance-admin-ui",
+            "git worktree prune --verbose"
           ],
-          "evidence": "Singer returned DONE and opened draft PR #91 at head dc6361966b590824737770f946d0e2d97bf1ac31. GitHub reports PR #91 OPEN/draft, base codex/epic/admin-configuration-frontend, mergeStateStatus CLEAN, mergeable MERGEABLE. The task worktree is clean and pushed, branch divergence against origin/codex/epic/admin-configuration-frontend was 0 2 before this controller checkpoint, diff whitespace passed, and merge-tree returned tree 119b510acf36aa66ca20c7755783f5c9d7d10c82. Hypatia was requested for review. This controller checkpoint advances the epic branch, so final branch freshness refresh is required before merge even if review passes."
+          "evidence": "Hypatia returned REVIEW_PASS with no P1/P2/P3. Controller refreshed TASK-016 against latest epic checkpoint c99ad98; final task branch divergence was 0 3, merge-tree returned 3377f9c2f689ffdf924804d3150170c953cec12f, branch diff whitespace passed, AdminMaintenance tests passed 9/9, AdminOps/AdminConfig/AdminAuth regressions passed 49/49, and UI typecheck passed. TASK-016 merged into the epic branch in 10b27384545cb450e6d3c5c10460af1bc22c5667. Post-merge AdminMaintenance tests 9/9, adjacent admin UI regressions 49/49, UI typecheck, orchestration JSON parse, and merge diff whitespace passed. GitHub marked PR #91 MERGED at 2026-07-06T21:37:31Z. The clean pushed TASK-016 worktree was removed and pruned."
         },
         "activatedAt": "2026-07-06T20:30:02Z",
-        "cleanupState": "not_started",
-        "sharedContextReconciliation": "not_started",
-        "lastObservedAt": "2026-07-06T21:26:02Z",
+        "cleanupState": "cleaned_up",
+        "sharedContextReconciliation": "queued",
+        "lastObservedAt": "2026-07-06T21:35:02Z",
         "branchPushedAt": "2026-07-06T20:30:02Z",
         "worktreeObservation": {
           "observedAt": "2026-07-06T21:26:02Z",
@@ -2611,14 +2631,22 @@
         },
         "dispatchedAt": "2026-07-06T20:30:02Z",
         "reviewRequestedAt": "2026-07-06T21:26:02Z",
-        "reviewSubmissionId": "019f3954-7e17-7652-8673-c2304fd7c54a"
+        "reviewSubmissionId": "019f3954-7e17-7652-8673-c2304fd7c54a",
+        "mergeCommit": "10b27384545cb450e6d3c5c10460af1bc22c5667",
+        "mergedAt": "2026-07-06T21:37:31Z",
+        "remotePrState": "MERGED",
+        "remotePrMergedAt": "2026-07-06T21:37:31Z",
+        "completedAt": "2026-07-06T21:35:02Z"
       }
     ],
-    "dispatchState": "reviewing",
+    "dispatchState": "merged",
     "activationCommit": "b34d0eb2a9efb0332b168abf9aa64c5033d248c4",
     "workerDispatchStartedAt": "2026-07-06T20:30:02Z",
     "dispatchedAt": "2026-07-06T20:30:02Z",
-    "lastObservedAt": "2026-07-06T21:26:02Z"
+    "lastObservedAt": "2026-07-06T21:35:02Z",
+    "completedAt": "2026-07-06T21:35:02Z",
+    "mergeCommit": "10b27384545cb450e6d3c5c10460af1bc22c5667",
+    "waveCompletion": "ready_for_reconciliation"
   },
   "currentGates": {
     "epicBranch": {
@@ -2660,7 +2688,7 @@
       "WAVE-007-maintenance-admin-api": "cleaned_up",
       "WAVE-008-admin-ops-dashboard-ui": "cleaned_up",
       "WAVE-008-admin-config-ui": "cleaned_up",
-      "WAVE-009-maintenance-admin-ui": "clean_pushed"
+      "WAVE-009-maintenance-admin-ui": "cleaned_up"
     },
     "workerDispatch": {
       "WAVE-001-admin-feasibility-gate": "reconciled",
@@ -2676,7 +2704,7 @@
       "WAVE-007-maintenance-admin-api": "reconciled",
       "WAVE-008-admin-ops-dashboard-ui": "reconciled",
       "WAVE-008-admin-config-ui": "reconciled",
-      "WAVE-009-maintenance-admin-ui": "reviewing"
+      "WAVE-009-maintenance-admin-ui": "merged"
     },
     "waveCompletion": {
       "WAVE-001": "done",
@@ -2687,7 +2715,7 @@
       "WAVE-006": "done",
       "WAVE-007": "done",
       "WAVE-008": "done",
-      "WAVE-009": "in_progress"
+      "WAVE-009": "ready_for_reconciliation"
     },
     "nextWave": {
       "id": "WAVE-010",
@@ -2696,16 +2724,12 @@
     "monitoring": {
       "mode": "adaptive",
       "cadence": "5m",
-      "status": "wave_009_pr91_reviewing",
-      "lastCheckedAt": "2026-07-06T21:26:02Z",
-      "nextCheckDueAt": "2026-07-06T21:31:02Z",
+      "status": "wave_009_ready_for_reconciliation",
+      "lastCheckedAt": "2026-07-06T21:35:02Z",
+      "nextCheckDueAt": "2026-07-06T21:40:02Z",
       "schedulerRef": "postgram-admin-wave-005-wdd-heartbeat",
-      "schedulerName": "postgram-admin-wave-009-wdd-heartbeat",
-      "fallbackPrompt": "Run one bounded WDD controller heartbeat for /Users/ivo.toby/workspace/postgram, epic EPIC-admin-configuration-frontend, active wave WAVE-009. Use the subagent-pr-orchestration skill. Start in /Users/ivo.toby/workspace/postgram on branch codex/epic/admin-configuration-frontend. Read .wdd/epics/EPIC-admin-configuration-frontend/orchestration.json and controller-state.md, then inspect draft PR #91 (https://github.com/ivo-toby/postgram/pull/91), reviewer Hypatia (019f3954-7e17-7652-8673-c2304fd7c54a), worker Singer (019f3926-c2c5-7290-9c2f-9a4cca19e6ae), and assigned worktree /Users/ivo.toby/workspace/postgram/.worktrees/TASK-016-maintenance-admin-ui on branch codex/task/TASK-016-maintenance-admin-ui for bundle WAVE-009-maintenance-admin-ui / TASK-016-maintenance-admin-ui. Update gates, branch freshness, verification, PR refs, review refs, feedback, shared-context reconciliation status, and monitoring timestamps. If Hypatia reports P1/P2, route feedback to Singer or a fresh fix worker. If review passes, refresh stale task branch against codex/epic/admin-configuration-frontend, rerun required freshness verification, then merge or mark merge_ready according to policy. Stop when WAVE-009 is merged, blocked, cancelled, or ready for wdd-reconcile-wave. Do not start WAVE-010 until WAVE-009 is merged and reconciled. After WAVE-009 is reconciled, continue to WAVE-010 per Ivo finish-all-waves instruction and push to GitHub between tasks/waves.",
-      "workerThreadId": "019f3926-c2c5-7290-9c2f-9a4cca19e6ae",
-      "workerNickname": "Singer",
-      "reviewThreadId": "019f3954-7e17-7652-8673-c2304fd7c54a",
-      "reviewNickname": "Hypatia",
+      "schedulerName": "postgram-admin-wave-009-reconcile-heartbeat",
+      "fallbackPrompt": "Run one bounded WDD reconciliation handoff heartbeat for /Users/ivo.toby/workspace/postgram, epic EPIC-admin-configuration-frontend, active wave WAVE-009. Use the wdd-reconcile-wave skill. Start in /Users/ivo.toby/workspace/postgram on branch codex/epic/admin-configuration-frontend. Read .wdd/epics/EPIC-admin-configuration-frontend/orchestration.json and controller-state.md. Confirm WAVE-009 bundle WAVE-009-maintenance-admin-ui / TASK-016-maintenance-admin-ui is merged into the epic branch in merge commit 10b27384545cb450e6d3c5c10460af1bc22c5667; PR #91 is MERGED at 2026-07-06T21:37:31Z after Hypatia REVIEW_PASS, final task head 1885b64d45cce5ab7d4148fa167a726842bd1011, and cleanup. Verify task file is in done/, currentGates.workerDispatch entry is merged, WAVE-009 waveCompletion is ready_for_reconciliation, branch freshness is current_at_merge, cleanup is cleaned_up, blocking feedback is empty, and shared-context reconciliation is queued. Run wdd-reconcile-wave for WAVE-009, reconcile maintenance admin UI decisions into shared context and downstream TASK-017/TASK-018, update orchestration.json and controller-state.md, push the reconciliation checkpoint, then continue to WAVE-010 per Ivo finish-all-waves instruction after reconciliation is pushed.",
       "automationUpdateResult": "updated_in_app"
     },
     "review": {
@@ -3061,12 +3085,15 @@
         "reviewPassedAt": "2026-07-06T20:09:32Z"
       },
       "WAVE-009-maintenance-admin-ui": {
-        "status": "reviewing",
+        "status": "passed",
+        "result": "REVIEW_PASS",
         "reviewThreadId": "019f3954-7e17-7652-8673-c2304fd7c54a",
         "reviewNickname": "Hypatia",
-        "requestedAt": "2026-07-06T21:26:02Z",
+        "reviewedAt": "2026-07-06T21:35:02Z",
         "pr": "https://github.com/ivo-toby/postgram/pull/91",
-        "headRefOid": "dc6361966b590824737770f946d0e2d97bf1ac31"
+        "headRefOid": "1885b64d45cce5ab7d4148fa167a726842bd1011",
+        "blockingFeedback": [],
+        "residualRisk": "Reviewer did not rerun full UI suite or backend maintenance contract suite; worker had full UI evidence and controller reran focused UI/client checks."
       }
     },
     "branchFreshness": {
@@ -3083,7 +3110,7 @@
       "WAVE-007-maintenance-admin-api": "current_at_merge",
       "WAVE-008-admin-ops-dashboard-ui": "current_at_merge",
       "WAVE-008-admin-config-ui": "current_at_merge",
-      "WAVE-009-maintenance-admin-ui": "refresh_required_after_controller_checkpoint"
+      "WAVE-009-maintenance-admin-ui": "current_at_merge"
     },
     "merge": {
       "WAVE-001-admin-feasibility-gate": {
@@ -3246,6 +3273,15 @@
         "taskHead": "2efc58f17b0990801e82ece4b705e439dbcda164",
         "remotePrState": "MERGED",
         "remoteMergedAt": "2026-07-06T20:15:58Z"
+      },
+      "WAVE-009-maintenance-admin-ui": {
+        "status": "merged",
+        "pr": "https://github.com/ivo-toby/postgram/pull/91",
+        "number": 91,
+        "headRefOid": "1885b64d45cce5ab7d4148fa167a726842bd1011",
+        "mergeCommit": "10b27384545cb450e6d3c5c10460af1bc22c5667",
+        "mergedAt": "2026-07-06T21:37:31Z",
+        "remoteConfirmedAt": "2026-07-06T21:37:31Z"
       }
     },
     "sharedContextReconciliation": {
@@ -3264,7 +3300,7 @@
       "WAVE-008-admin-config-ui": "completed",
       "WAVE-008": "completed",
       "WAVE-009-maintenance-admin-ui": "not_started",
-      "WAVE-009": "not_started"
+      "WAVE-009": "queued"
     },
     "prState": {
       "WAVE-001-admin-feasibility-gate": {
@@ -3486,7 +3522,7 @@
         "evidence": "Worker worktree was clean at task head 298804f17ae15956135149300558c26c55691e79; ran git worktree remove and git worktree prune."
       },
       "WAVE-008-admin-config-ui": "cleaned_up",
-      "WAVE-009-maintenance-admin-ui": "not_started"
+      "WAVE-009-maintenance-admin-ui": "cleaned_up"
     },
     "worker": {
       "WAVE-002-admin-auth-persistence": {
@@ -3882,7 +3918,7 @@
         "result": "DONE",
         "workerThreadId": "019f3926-c2c5-7290-9c2f-9a4cca19e6ae",
         "workerNickname": "Singer",
-        "completedAt": "2026-07-06T21:26:02Z",
+        "completedAt": "2026-07-06T21:21:22Z",
         "task": "TASK-016-maintenance-admin-ui",
         "pr": "https://github.com/ivo-toby/postgram/pull/91"
       }
@@ -4051,18 +4087,27 @@
         "evidence": "WAVE-008 reconciled after PR #89 and PR #90 were confirmed MERGED. Shared context records the AdminDashboard operations shell, AdminConfig Config-tab integration, shared adminApi UI contract, secret write-only/redaction controls, validation/apply warnings, and downstream TASK-016/TASK-017/TASK-018 handoffs. TASK-012 and TASK-013 worktrees were already cleaned up."
       },
       "WAVE-009-maintenance-admin-ui": {
-        "result": "draft_pr_open_review_requested",
-        "checkedAt": "2026-07-06T21:26:02Z",
+        "result": "review_passed_freshness_verified_merged_cleaned_up",
+        "checkedAt": "2026-07-06T21:35:02Z",
         "commands": [
-          "multi_agent_v1.wait_agent 019f3926-c2c5-7290-9c2f-9a4cca19e6ae observed DONE notification",
-          "gh pr view 91 --repo ivo-toby/postgram --json number,url,state,isDraft,headRefName,headRefOid,baseRefName,updatedAt,mergeStateStatus,reviewDecision,title,commits,files,labels,mergeable",
-          "git -C /Users/ivo.toby/workspace/postgram/.worktrees/TASK-016-maintenance-admin-ui status --short --branch",
+          "multi_agent_v1.wait_agent Hypatia returned REVIEW_PASS",
+          "git -C /Users/ivo.toby/workspace/postgram/.worktrees/TASK-016-maintenance-admin-ui merge --no-ff origin/codex/epic/admin-configuration-frontend -m \"chore: refresh task 016 after review pass\"",
           "git -C /Users/ivo.toby/workspace/postgram/.worktrees/TASK-016-maintenance-admin-ui rev-list --left-right --count origin/codex/epic/admin-configuration-frontend...HEAD",
-          "git -C /Users/ivo.toby/workspace/postgram/.worktrees/TASK-016-maintenance-admin-ui diff --check origin/codex/epic/admin-configuration-frontend...HEAD",
           "git -C /Users/ivo.toby/workspace/postgram/.worktrees/TASK-016-maintenance-admin-ui merge-tree --write-tree origin/codex/epic/admin-configuration-frontend HEAD",
-          "multi_agent_v1.spawn_agent reviewer for PR #91"
+          "git -C /Users/ivo.toby/workspace/postgram/.worktrees/TASK-016-maintenance-admin-ui diff --check origin/codex/epic/admin-configuration-frontend...HEAD",
+          "npm --prefix ui run test -- --run src/components/AdminMaintenance.test.tsx",
+          "npm --prefix ui run test -- --run src/components/AdminOps.test.tsx src/components/AdminConfig.test.tsx src/components/AdminAuth.test.tsx",
+          "npm --prefix ui run typecheck",
+          "git push origin codex/task/TASK-016-maintenance-admin-ui",
+          "git merge --no-ff origin/codex/task/TASK-016-maintenance-admin-ui -m \"merge: task 016 maintenance admin ui\"",
+          "git diff --check HEAD^..HEAD",
+          "jq empty .wdd/epics/EPIC-admin-configuration-frontend/orchestration.json",
+          "git push origin codex/epic/admin-configuration-frontend",
+          "gh pr view 91 --json number,url,state,mergedAt,headRefOid,mergeCommit,baseRefName,mergeStateStatus",
+          "git worktree remove /Users/ivo.toby/workspace/postgram/.worktrees/TASK-016-maintenance-admin-ui",
+          "git worktree prune --verbose"
         ],
-        "evidence": "Singer returned DONE and opened draft PR #91 at head dc6361966b590824737770f946d0e2d97bf1ac31. GitHub reports PR #91 OPEN/draft, base codex/epic/admin-configuration-frontend, mergeStateStatus CLEAN, mergeable MERGEABLE. The task worktree is clean and pushed, branch divergence against origin/codex/epic/admin-configuration-frontend was 0 2 before this controller checkpoint, diff whitespace passed, and merge-tree returned tree 119b510acf36aa66ca20c7755783f5c9d7d10c82. Hypatia was requested for review. This controller checkpoint advances the epic branch, so final branch freshness refresh is required before merge even if review passes."
+        "evidence": "Hypatia returned REVIEW_PASS with no P1/P2/P3. Controller refreshed TASK-016 against latest epic checkpoint c99ad98; final task branch divergence was 0 3, merge-tree returned 3377f9c2f689ffdf924804d3150170c953cec12f, branch diff whitespace passed, AdminMaintenance tests passed 9/9, AdminOps/AdminConfig/AdminAuth regressions passed 49/49, and UI typecheck passed. TASK-016 merged into the epic branch in 10b27384545cb450e6d3c5c10460af1bc22c5667. Post-merge AdminMaintenance tests 9/9, adjacent admin UI regressions 49/49, UI typecheck, orchestration JSON parse, and merge diff whitespace passed. GitHub marked PR #91 MERGED at 2026-07-06T21:37:31Z. The clean pushed TASK-016 worktree was removed and pruned."
       }
     },
     "feedback": {
@@ -4243,10 +4288,10 @@
       },
       "WAVE-009-maintenance-admin-ui": {
         "blocking": [],
-        "lastObservedAt": "2026-07-06T21:26:02Z",
+        "lastObservedAt": "2026-07-06T21:35:02Z",
         "workerThreadId": "019f3926-c2c5-7290-9c2f-9a4cca19e6ae",
         "workerNickname": "Singer",
-        "status": "reviewing",
+        "status": "merged",
         "nudge": "not_needed_pr_open",
         "reviewThreadId": "019f3954-7e17-7652-8673-c2304fd7c54a",
         "reviewNickname": "Hypatia"
@@ -4284,6 +4329,6 @@
     "sharedContext": "completed",
     "nextWave": "WAVE-009"
   },
-  "lastMergedWave": "WAVE-008",
+  "lastMergedWave": "WAVE-009",
   "lastStartedWave": "WAVE-009"
 }

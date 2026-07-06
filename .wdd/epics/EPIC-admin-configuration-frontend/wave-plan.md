@@ -699,6 +699,11 @@ Progress:
   heartbeat window, `git diff --check` passes, and no nudge was sent. TASK-013
   will need freshness refresh before review/merge because the epic branch is 14
   checkpoints ahead.
+- 2026-07-06T19:30:01Z controller poll: TASK-013 remains active with Parfit
+  and no PR or patch. The worktree has fresh AdminConfig edits from this
+  heartbeat window, `git diff --check` passes, and no nudge was sent. TASK-013
+  will need freshness refresh before review/merge because the epic branch is 15
+  checkpoints ahead at observation time.
 
 Stop condition:
 

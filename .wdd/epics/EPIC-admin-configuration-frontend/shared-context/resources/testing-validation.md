@@ -340,6 +340,68 @@ Carry-forward test expectations:
 - TASK-016 UI tests must cover job polling/progress/error states and must not
   depend on synchronous maintenance completion.
 
+## WAVE-007 Verification Evidence
+
+TASK-011 and TASK-015 merged after Lorentz `REVIEW_PASS` with no remaining
+P1/P2 findings.
+
+TASK-011 passed before merge after freshness refresh head `344bab8`:
+
+- `npm --prefix ui run test -- --run src/components/AdminAuth.test.tsx` (16
+  tests)
+- `npm --prefix ui run typecheck`
+- `git diff --check`
+- `git merge-tree --write-tree origin/codex/epic/admin-configuration-frontend HEAD`
+- `jq empty .wdd/epics/EPIC-admin-configuration-frontend/orchestration.json`
+
+Additional worker/review evidence for TASK-011:
+
+- `npm --prefix ui test` (83 tests)
+- `npm --prefix ui run build` passed with the existing Vite large-chunk warning
+- `codex review --uncommitted` found no discrete correctness, security, or
+  maintainability issues after the MFA-error handling fix
+
+TASK-015 passed before merge after final freshness head `ea88af4`:
+
+- `git diff --check origin/codex/epic/admin-configuration-frontend...HEAD`
+- `git merge-tree --write-tree origin/codex/epic/admin-configuration-frontend HEAD`
+- `npm test -- tests/contract/admin-maintenance-api.test.ts` (4 tests)
+- `npm test -- tests/integration/cli-admin.test.ts` (37 tests)
+- `npm run typecheck`
+- scoped ESLint for `src/cli/admin/pgm-admin.ts`,
+  `src/services/admin-job-service.ts`,
+  `src/services/admin-maintenance-service.ts`,
+  `src/transport/admin-maintenance.ts`, `src/transport/admin.ts`,
+  `tests/contract/admin-maintenance-api.test.ts`, and
+  `tests/integration/cli-admin.test.ts`
+- `jq empty .wdd/epics/EPIC-admin-configuration-frontend/orchestration.json`
+
+Coverage added:
+
+- Admin auth UI route protection, bootstrap/login/MFA/step-up/logout flows,
+  invalid MFA-code handling, and no localStorage persistence for admin session,
+  bootstrap, TOTP, provider secret, or bearer credential material.
+- Maintenance dry-run/apply route coverage for reextract, reembed, and
+  constrained edge pruning.
+- Preview-before-apply proof through fresh matching `previewJobId`, scoped
+  idempotency keys, step-up enforcement for apply, job-backed async execution,
+  queued cancellation handling, structured admin actor audit attribution, and
+  safe job result summaries.
+- CLI regressions for shared maintenance service extraction, including combined
+  `--type` and `--only-failed` behavior.
+
+Carry-forward test expectations:
+
+- TASK-012/TASK-013 should reuse the admin auth client and continue proving no
+  admin or secret material is persisted in browser storage.
+- TASK-012 should cover one-time API-key plaintext display and unrecoverable
+  post-create state.
+- TASK-013 should cover provider-config validation/apply warnings, redacted
+  secret display, blank secret inputs on load, and step-up prompts.
+- TASK-016 should cover dry-run preview gating, apply requiring recent step-up,
+  idempotent apply retry display, job polling/progress, cancellation/error
+  state, and safe result rendering.
+
 ## Durable Memory
 
 ### Docker First-Run Must Be Tested, Not Assumed

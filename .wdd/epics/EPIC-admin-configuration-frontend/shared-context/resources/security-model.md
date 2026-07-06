@@ -417,6 +417,49 @@ Carry-forward security gates:
   hidden provider response bodies or secret-derived metadata through progress
   views.
 
+## WAVE-007 Reconciled Auth UI And Maintenance Controls
+
+TASK-011 completed the first browser admin auth UI in PR #87.
+
+Implemented UI security controls:
+
+- The frontend admin client uses the HttpOnly admin session cookie with
+  same-origin credentials and keeps CSRF state in memory.
+- The admin UI does not write admin session tokens, bootstrap tokens, TOTP
+  seeds, provider secrets, or admin bearer credentials to localStorage.
+- Invalid MFA codes no longer clear protected admin session state as if the
+  session expired; regression coverage keeps operators in the MFA flow.
+- The protected admin shell waits for active MFA session state before exposing
+  admin navigation.
+
+TASK-015 completed the first concrete destructive-maintenance API in PR #88.
+
+Implemented maintenance controls:
+
+- Dry-run routes require active MFA and create admin jobs rather than blocking
+  request handlers.
+- Apply routes require active MFA, recent step-up, a scoped idempotency key,
+  and a fresh matching preview job before destructive work starts.
+- Reextract, reembed, and constrained edge-prune operations share typed service
+  logic with `pgm-admin`; the web server does not shell out to the CLI.
+- Web edge pruning is limited to the reviewed `llm-extraction` source.
+- Apply jobs run asynchronously with job progress/status; queued cancellation is
+  honored before execution starts, while already-started mutation results are
+  reported as committed summaries.
+- Job payloads and result summaries remain safe JSON and do not store provider
+  plaintext, ciphertext, token prefixes, auth headers, provider response
+  bodies, or arbitrary validation metadata.
+- Web admin mutations write structured `audit_log.admin_user_id` attribution.
+
+Carry-forward security gates:
+
+- TASK-012 and TASK-013 should extend the existing in-memory-CSRF admin client
+  and must not introduce localStorage persistence for admin or secret material.
+- TASK-012 must treat API-key plaintext as one-time display only.
+- TASK-013 must keep provider secret inputs write-only and blank on load.
+- TASK-016 must make preview-before-apply and step-up-before-apply explicit in
+  the UI, poll job status, and display only safe job summaries.
+
 ## OAuth/OIDC Boundary
 
 Existing OAuth/DCR is for native remote MCP connectors. It lets external clients

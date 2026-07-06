@@ -68,6 +68,7 @@ and result review flows.
 
 - `ui/src/components/admin/*`
 - `ui/src/lib/adminApi.ts`
+- `src/transport/admin-maintenance.ts`
 - `ui/src/components/CleanupBasketDrawer.tsx`
 - `ui/src/components/tasks/BulkActionBar.tsx`
 
@@ -129,6 +130,25 @@ Share confirmation/progress components with config UI if useful.
 
 - Keep dangerous actions visually distinct but not theatrical.
 - Preserve dense operational layout for repeated use.
+- Extend the WAVE-007 admin API client in `ui/src/lib/adminApi.ts`; do not add
+  a parallel admin auth store or localStorage-backed admin credential path.
+- Use the WAVE-007 maintenance API routes:
+  `/admin/api/maintenance/reextract/dry-run`,
+  `/admin/api/maintenance/reextract/apply`,
+  `/admin/api/maintenance/reembed/dry-run`,
+  `/admin/api/maintenance/reembed/apply`,
+  `/admin/api/maintenance/prune-edges/dry-run`, and
+  `/admin/api/maintenance/prune-edges/apply`.
+- Dry-run responses return `202` job objects. Apply requests must reference a
+  fresh matching `previewJobId`, include a scoped idempotency key, and require
+  the existing step-up flow.
+- Poll `/admin/api/jobs/:jobId` for progress and terminal state. Do not assume
+  maintenance operations complete synchronously in the apply response.
+- Render only safe job summaries. Do not surface provider bodies, auth headers,
+  token prefixes, ciphertext, arbitrary validation metadata, or hidden secret
+  material from job payloads/results.
+- Web edge-prune UI must keep the reviewed `llm-extraction` source constraint;
+  do not expose CLI's broader `any` source selector.
 
 ## Durable Memory Notes To Consider
 

@@ -1112,7 +1112,7 @@
     },
     {
       "id": "WAVE-007",
-      "status": "in_progress",
+      "status": "done",
       "strategy": {
         "profile": "full",
         "executionMode": "parallel",
@@ -1133,19 +1133,27 @@
         "TASK-011-admin-auth-ui",
         "TASK-015-maintenance-admin-api"
       ],
-      "activatedAt": "2026-07-06T14:08:16Z"
+      "activatedAt": "2026-07-06T14:08:16Z",
+      "completedAt": "2026-07-06T17:07:31Z",
+      "reconciledAt": "2026-07-06T17:07:31Z",
+      "reconciliationCommit": null,
+      "driftNotes": [
+        "Admin auth UI established ui/src/lib/adminApi.ts as the shared browser admin API client with same-origin cookies and in-memory CSRF.",
+        "Maintenance admin API established job-backed dry-run/apply routes for reextract, reembed, and constrained llm-extraction edge pruning.",
+        "WAVE-008 UI tasks should extend the reconciled admin API client and preserve no-localStorage secret/admin credential constraints."
+      ]
     },
     {
       "id": "WAVE-008",
-      "status": "planned",
+      "status": "ready_to_start",
       "strategy": {
         "profile": "full",
         "executionMode": "hybrid",
         "reviewMode": "risk_based",
         "monitoringMode": "adaptive",
         "recommendedBy": "wdd-plan-epic",
-        "confirmedBy": null,
-        "requiresUserConfirmation": true,
+        "confirmedBy": "Ivo via Codex finish-all-waves request on 2026-07-06",
+        "requiresUserConfirmation": false,
         "confidence": "medium",
         "rationale": [
           "Operations and configuration UI share layout and API client contracts.",
@@ -1164,7 +1172,8 @@
       "tasks": [
         "TASK-012-admin-ops-dashboard-ui",
         "TASK-013-admin-config-ui"
-      ]
+      ],
+      "readyAt": "2026-07-06T17:07:31Z"
     },
     {
       "id": "WAVE-009",
@@ -1996,16 +2005,17 @@
         ],
         "evidence": "Lorentz returned REVIEW_PASS for PR #87 with no P1/P2/P3 findings. Controller refreshed the TASK-011 branch against the latest epic branch (task head 344bab8ed51c76eb18ee6b8d2dbd020d70bec329), reran focused AdminAuth tests, UI typecheck, branch diff check, merge-tree, and orchestration JSON parse successfully, then merged TASK-011 locally into the epic branch in 4e77a6b5362160f854d36b4283157c658a9096e2. Post-merge AdminAuth tests and UI typecheck passed in the epic checkout after installing missing ui dependencies with npm --prefix ui ci; git diff --check HEAD^..HEAD and orchestration JSON parse passed. PR #87 remains pending remote MERGED confirmation until the epic branch push."
       },
-      "currentGate": "merged",
+      "currentGate": "reconciled",
       "workerNickname": "Meitner",
       "lastObservedAt": "2026-07-06T15:48:11Z",
-      "reviewNickname": "Lorentz"
+      "reviewNickname": "Lorentz",
+      "sharedContextReconciliation": "completed"
     },
     {
       "id": "TASK-012-admin-ops-dashboard-ui",
       "ticket": "TICKET-005-admin-frontend",
       "path": "TICKET-005-admin-frontend/todo/TASK-012-admin-ops-dashboard-ui.md",
-      "status": "todo",
+      "status": "ready_to_start",
       "dependsOn": [
         "TASK-008-admin-key-audit-stats-api",
         "TASK-011-admin-auth-ui"
@@ -2025,7 +2035,7 @@
       "worktreeStatus": "not_created",
       "pr": null,
       "latestCommit": null,
-      "branchFreshness": "not_started",
+      "branchFreshness": "unknown",
       "blockingFeedback": [],
       "verification": {
         "result": "not_run",
@@ -2035,13 +2045,13 @@
         ],
         "evidence": null
       },
-      "currentGate": "planned"
+      "currentGate": "not_started"
     },
     {
       "id": "TASK-013-admin-config-ui",
       "ticket": "TICKET-005-admin-frontend",
       "path": "TICKET-005-admin-frontend/todo/TASK-013-admin-config-ui.md",
-      "status": "todo",
+      "status": "ready_to_start",
       "dependsOn": [
         "TASK-010-provider-config-apply",
         "TASK-011-admin-auth-ui"
@@ -2061,7 +2071,7 @@
       "worktreeStatus": "not_created",
       "pr": null,
       "latestCommit": null,
-      "branchFreshness": "not_started",
+      "branchFreshness": "unknown",
       "blockingFeedback": [],
       "verification": {
         "result": "not_run",
@@ -2071,7 +2081,7 @@
         ],
         "evidence": null
       },
-      "currentGate": "planned"
+      "currentGate": "not_started"
     },
     {
       "id": "TASK-014-admin-job-foundation",
@@ -2215,7 +2225,7 @@
         ],
         "evidence": "Lorentz follow-up returned REVIEW_PASS with no findings. Final freshness was refreshed with controller checkpoint commit b97cc61, task branch head ea88af4185fc2ec2a968da882da43f2e84e28850 was current against origin/codex/epic/admin-configuration-frontend (0 4), branch diff whitespace and merge-tree passed, admin-maintenance API contract tests passed 4/4, CLI admin integration tests passed 37/37, typecheck passed, scoped ESLint passed, and TASK-015 merged into the epic branch in 78f0f43e3a79fe5211a57bffc0d0c3929951a5fb. PR #88 is MERGED at 2026-07-06T17:02:28Z and the clean pushed worktree was removed."
       },
-      "currentGate": "merged",
+      "currentGate": "reconciled",
       "workerNickname": "Helmholtz",
       "lastObservedAt": "2026-07-06T17:02:56Z",
       "reviewNickname": "Lorentz",
@@ -2241,7 +2251,7 @@
       ],
       "reviewPassedAt": "2026-07-06T16:58:48Z",
       "cleanupState": "cleaned_up",
-      "sharedContextReconciliation": "queued",
+      "sharedContextReconciliation": "completed",
       "mergedAt": "2026-07-06T17:02:28Z",
       "mergeCommit": "78f0f43e3a79fe5211a57bffc0d0c3929951a5fb",
       "prState": "MERGED"
@@ -2364,14 +2374,14 @@
     }
   ],
   "monitoring": {
-    "mode": "adaptive",
-    "cadence": "manual_handoff",
-    "status": "wave_007_ready_for_reconciliation",
-    "lastCheckedAt": "2026-07-06T17:06:05Z",
-    "nextCheckDueAt": "2026-07-06T17:11:05Z",
+    "mode": "inactive",
+    "cadence": "stopped",
+    "status": "wave_007_reconciled_ready_for_wave_008_start",
+    "lastCheckedAt": "2026-07-06T17:07:31Z",
+    "nextCheckDueAt": null,
     "schedulerRef": "postgram-admin-wave-005-wdd-heartbeat",
     "schedulerName": "postgram-admin-wave-007-reconcile-heartbeat",
-    "fallbackPrompt": "WAVE-007 is ready for wdd-reconcile-wave. Confirm TASK-011 PR #87 and TASK-015 PR #88 are MERGED, task files are in done, currentGates.workerDispatch entries are merged, branch freshness is current_at_merge, cleanup is cleaned_up, blocking feedback is empty, and shared-context reconciliation is queued. Run wdd-reconcile-wave for WAVE-007, then continue to WAVE-008 after reconciliation is pushed."
+    "fallbackPrompt": "WAVE-007 reconciliation is complete and pushed once this checkpoint lands. Start WAVE-008 with wdd-start-wave, then dispatch TASK-012-admin-ops-dashboard-ui and TASK-013-admin-config-ui per finish-all-waves instruction."
   },
   "sharedContext": {
     "index": "shared-context/index.md",
@@ -2385,170 +2395,7 @@
     ],
     "reconcileAfterEveryWave": true
   },
-  "activeWave": {
-    "id": "WAVE-007",
-    "activatedAt": "2026-07-06T14:08:16Z",
-    "status": "ready_for_reconciliation",
-    "strategy": {
-      "profile": "full",
-      "executionMode": "parallel",
-      "reviewMode": "risk_based",
-      "monitoringMode": "adaptive",
-      "confirmedBy": "Ivo via Codex finish-all-waves request on 2026-07-06"
-    },
-    "eligibleTasks": [
-      "TASK-011-admin-auth-ui",
-      "TASK-015-maintenance-admin-api"
-    ],
-    "nonEligibleTasks": [],
-    "bundles": [
-      {
-        "id": "WAVE-007-admin-auth-ui",
-        "tasks": [
-          "TASK-011-admin-auth-ui"
-        ],
-        "branch": "codex/task/TASK-011-admin-auth-ui",
-        "worktree": "/Users/ivo.toby/workspace/postgram/.worktrees/TASK-011-admin-auth-ui",
-        "worktreeStatus": "cleaned_up",
-        "workerThreadId": "019f37c5-29ec-7ec3-b6fd-6aba64df3dc9",
-        "workerNickname": "Meitner",
-        "reviewThreadId": "019f322c-02e7-7590-8b8e-ebdd1e9c52ac",
-        "reviewNickname": "Lorentz",
-        "currentGate": "merged",
-        "branchFreshness": "current_at_merge",
-        "pr": "https://github.com/ivo-toby/postgram/pull/87",
-        "latestCommit": "344bab8ed51c76eb18ee6b8d2dbd020d70bec329",
-        "blockingFeedback": [],
-        "verification": {
-          "result": "review_passed_freshness_verified_merged_cleaned_up",
-          "checkedAt": "2026-07-06T15:48:11Z",
-          "evidence": "Lorentz returned REVIEW_PASS for PR #87 with no P1/P2/P3 findings. Controller refreshed the TASK-011 branch against the latest epic branch (task head 344bab8ed51c76eb18ee6b8d2dbd020d70bec329), reran focused AdminAuth tests, UI typecheck, branch diff check, merge-tree, and orchestration JSON parse successfully, then merged TASK-011 locally into the epic branch in 4e77a6b5362160f854d36b4283157c658a9096e2. Post-merge AdminAuth tests and UI typecheck passed in the epic checkout after installing missing ui dependencies with npm --prefix ui ci; git diff --check HEAD^..HEAD and orchestration JSON parse passed. PR #87 remains pending remote MERGED confirmation until the epic branch push. Epic branch push marked PR #87 MERGED at 2026-07-06T15:48:11Z; the clean TASK-011 worktree was removed and pruned."
-        },
-        "activatedAt": "2026-07-06T14:08:16Z",
-        "cleanupState": "cleaned_up",
-        "sharedContextReconciliation": "queued",
-        "lastObservedAt": "2026-07-06T15:48:11Z",
-        "branchPushedAt": "2026-07-06T14:11:59Z",
-        "dispatchedAt": "2026-07-06T14:11:59Z",
-        "dispatchBaseCommit": "848b902c5f4829ff78529256c3a9181423c5a150",
-        "worktreeObservation": {
-          "observedAt": "2026-07-06T16:08:16Z",
-          "taskId": "TASK-011-admin-auth-ui",
-          "status": "merged_cleaned_up",
-          "workerStatus": "DONE",
-          "pr": "https://github.com/ivo-toby/postgram/pull/87",
-          "prState": "MERGED",
-          "prNumber": 87,
-          "prHead": "344bab8ed51c76eb18ee6b8d2dbd020d70bec329",
-          "mergeCommit": "4e77a6b5362160f854d36b4283157c658a9096e2",
-          "worktreeStatus": "cleaned_up",
-          "branchFreshness": "current_at_merge",
-          "reviewStatus": "REVIEW_PASS",
-          "reviewThreadId": "019f322c-02e7-7590-8b8e-ebdd1e9c52ac",
-          "reviewNickname": "Lorentz",
-          "coordinationNote": "TASK-011 is complete; no further PR monitoring required until WAVE-007 reconciliation."
-        },
-        "reviewRequestedAt": "2026-07-06T15:29:25Z",
-        "reviewSubmissionId": "019f380d-9441-76a3-a0dc-929a78941c69"
-      },
-      {
-        "id": "WAVE-007-maintenance-admin-api",
-        "tasks": [
-          "TASK-015-maintenance-admin-api"
-        ],
-        "branch": "codex/task/TASK-015-maintenance-admin-api",
-        "worktree": "/Users/ivo.toby/workspace/postgram/.worktrees/TASK-015-maintenance-admin-api",
-        "worktreeStatus": "cleaned_up",
-        "workerThreadId": "019f37c5-7084-7920-916a-7fd9ac7d8cb6",
-        "workerNickname": "Helmholtz",
-        "reviewThreadId": "019f322c-02e7-7590-8b8e-ebdd1e9c52ac",
-        "reviewNickname": "Lorentz",
-        "currentGate": "merged",
-        "branchFreshness": "current_at_merge",
-        "pr": "https://github.com/ivo-toby/postgram/pull/88",
-        "latestCommit": "ea88af4185fc2ec2a968da882da43f2e84e28850",
-        "blockingFeedback": [],
-        "verification": {
-          "result": "review_passed_freshness_verified_merged_cleaned_up",
-          "checkedAt": "2026-07-06T17:02:56Z",
-          "commands": [
-            "git merge --no-ff origin/codex/epic/admin-configuration-frontend -m chore: refresh task 015 after review checkpoint",
-            "git rev-list --left-right --count origin/codex/epic/admin-configuration-frontend...HEAD",
-            "git diff --check origin/codex/epic/admin-configuration-frontend...HEAD",
-            "git merge-tree --write-tree origin/codex/epic/admin-configuration-frontend HEAD",
-            "npm test -- tests/contract/admin-maintenance-api.test.ts",
-            "npm test -- tests/integration/cli-admin.test.ts",
-            "npm run typecheck",
-            "npx eslint src/cli/admin/pgm-admin.ts src/services/admin-job-service.ts src/services/admin-maintenance-service.ts src/transport/admin-maintenance.ts src/transport/admin.ts tests/contract/admin-maintenance-api.test.ts tests/integration/cli-admin.test.ts --quiet",
-            "git merge --no-ff origin/codex/task/TASK-015-maintenance-admin-api -m merge: task 015 maintenance admin api",
-            "git push origin codex/epic/admin-configuration-frontend",
-            "gh pr view 88 --json number,state,mergedAt,headRefOid,mergeCommit,url",
-            "git worktree remove /Users/ivo.toby/workspace/postgram/.worktrees/TASK-015-maintenance-admin-api",
-            "git worktree prune --verbose"
-          ],
-          "evidence": "Lorentz follow-up returned REVIEW_PASS with no findings. Final freshness was refreshed with controller checkpoint commit b97cc61, task branch head ea88af4185fc2ec2a968da882da43f2e84e28850 was current against origin/codex/epic/admin-configuration-frontend (0 4), branch diff whitespace and merge-tree passed, admin-maintenance API contract tests passed 4/4, CLI admin integration tests passed 37/37, typecheck passed, scoped ESLint passed, and TASK-015 merged into the epic branch in 78f0f43e3a79fe5211a57bffc0d0c3929951a5fb. PR #88 is MERGED at 2026-07-06T17:02:28Z and the clean pushed worktree was removed."
-        },
-        "activatedAt": "2026-07-06T14:08:16Z",
-        "cleanupState": "cleaned_up",
-        "sharedContextReconciliation": "queued",
-        "lastObservedAt": "2026-07-06T17:02:56Z",
-        "branchPushedAt": "2026-07-06T14:11:59Z",
-        "dispatchedAt": "2026-07-06T14:11:59Z",
-        "dispatchBaseCommit": "848b902c5f4829ff78529256c3a9181423c5a150",
-        "worktreeObservation": {
-          "observedAt": "2026-07-06T17:02:56Z",
-          "taskId": "TASK-015-maintenance-admin-api",
-          "status": "merged_cleaned_up",
-          "workerStatus": "DONE",
-          "pr": "https://github.com/ivo-toby/postgram/pull/88",
-          "prState": "MERGED",
-          "prNumber": 88,
-          "prHead": "ea88af4185fc2ec2a968da882da43f2e84e28850",
-          "mergeCommit": "78f0f43e3a79fe5211a57bffc0d0c3929951a5fb",
-          "mergedAt": "2026-07-06T17:02:28Z",
-          "worktreeStatus": "cleaned_up",
-          "branchFreshness": "current_at_merge",
-          "reviewStatus": "REVIEW_PASS",
-          "reviewThreadId": "019f322c-02e7-7590-8b8e-ebdd1e9c52ac",
-          "reviewNickname": "Lorentz",
-          "coordinationNote": "TASK-015 is complete; WAVE-007 is ready for wdd-reconcile-wave."
-        },
-        "reviewRequestedAt": "2026-07-06T16:36:00Z",
-        "reviewSubmissionId": "019f384a-790e-7d12-8bee-29d351519b3b",
-        "followupReviewRequestedAt": "2026-07-06T16:54:23Z",
-        "followupReviewSubmissionId": "019f3859-e887-7200-acde-34619e5018f4",
-        "resolvedFeedback": [
-          {
-            "priority": "P2",
-            "id": "P2-task015-branch-freshness-wdd-task-file-conflict",
-            "status": "resolved_review_passed",
-            "owner": "Helmholtz",
-            "workerThreadId": "019f37c5-7084-7920-916a-7fd9ac7d8cb6",
-            "reviewer": "Lorentz",
-            "reviewThreadId": "019f322c-02e7-7590-8b8e-ebdd1e9c52ac",
-            "routedAt": "2026-07-06T16:45:31Z",
-            "routedSubmissionId": "019f3852-f2bc-7651-a502-e31ae60ac612",
-            "fixedHead": "86c49664de429d0c41505dd169d6a1e3a45dd025",
-            "fixedAt": "2026-07-06T16:54:23Z",
-            "followupReviewSubmissionId": "019f3859-e887-7200-acde-34619e5018f4",
-            "resolvedAt": "2026-07-06T16:58:48Z",
-            "summary": "Helmholtz refreshed PR #88 against the epic branch and resolved the WDD TASK-015 review-file conflict. Controller verification passed and Lorentz follow-up returned REVIEW_PASS with no findings."
-          }
-        ],
-        "reviewPassedAt": "2026-07-06T16:58:48Z",
-        "reviewResult": "REVIEW_PASS",
-        "mergedAt": "2026-07-06T17:02:28Z",
-        "mergeCommit": "78f0f43e3a79fe5211a57bffc0d0c3929951a5fb",
-        "remotePrMergedAt": "2026-07-06T17:02:28Z",
-        "prState": "MERGED"
-      }
-    ],
-    "dispatchState": "dispatched",
-    "activationCommit": "848b902c5f4829ff78529256c3a9181423c5a150",
-    "workerDispatchStartedAt": "2026-07-06T14:11:59Z",
-    "dispatchedAt": "2026-07-06T14:11:59Z",
-    "lastObservedAt": "2026-07-06T17:02:56Z"
-  },
+  "activeWave": null,
   "currentGates": {
     "epicBranch": {
       "status": "verified",
@@ -2595,8 +2442,8 @@
       "WAVE-005-provider-config-apply": "reconciled",
       "WAVE-006-admin-key-audit-stats-api": "reconciled",
       "WAVE-006-admin-job-foundation": "reconciled",
-      "WAVE-007-admin-auth-ui": "merged",
-      "WAVE-007-maintenance-admin-api": "merged"
+      "WAVE-007-admin-auth-ui": "reconciled",
+      "WAVE-007-maintenance-admin-api": "reconciled"
     },
     "waveCompletion": {
       "WAVE-001": "done",
@@ -2605,21 +2452,21 @@
       "WAVE-004": "done",
       "WAVE-005": "done",
       "WAVE-006": "done",
-      "WAVE-007": "ready_for_reconciliation"
+      "WAVE-007": "done"
     },
     "nextWave": {
       "id": "WAVE-008",
-      "status": "planned"
+      "status": "ready_to_start"
     },
     "monitoring": {
-      "mode": "adaptive",
-      "cadence": "manual_handoff",
-      "status": "wave_007_ready_for_reconciliation",
-      "lastCheckedAt": "2026-07-06T17:06:05Z",
-      "nextCheckDueAt": "2026-07-06T17:11:05Z",
+      "mode": "inactive",
+      "cadence": "stopped",
+      "status": "wave_007_reconciled_ready_for_wave_008_start",
+      "lastCheckedAt": "2026-07-06T17:07:31Z",
+      "nextCheckDueAt": null,
       "schedulerRef": "postgram-admin-wave-005-wdd-heartbeat",
       "schedulerName": "postgram-admin-wave-007-reconcile-heartbeat",
-      "fallbackPrompt": "WAVE-007 is ready for wdd-reconcile-wave. Confirm TASK-011 PR #87 and TASK-015 PR #88 are MERGED, task files are in done, currentGates.workerDispatch entries are merged, branch freshness is current_at_merge, cleanup is cleaned_up, blocking feedback is empty, and shared-context reconciliation is queued. Run wdd-reconcile-wave for WAVE-007, then continue to WAVE-008 after reconciliation is pushed."
+      "fallbackPrompt": "WAVE-007 reconciliation is complete and pushed once this checkpoint lands. Start WAVE-008 with wdd-start-wave, then dispatch TASK-012-admin-ops-dashboard-ui and TASK-013-admin-config-ui per finish-all-waves instruction."
     },
     "review": {
       "WAVE-001-admin-feasibility-gate": {
@@ -3083,8 +2930,9 @@
       "WAVE-006": "reconciled",
       "WAVE-006-admin-key-audit-stats-api": "queued",
       "WAVE-006-admin-job-foundation": "queued",
-      "WAVE-007-admin-auth-ui": "queued",
-      "WAVE-007-maintenance-admin-api": "queued"
+      "WAVE-007-admin-auth-ui": "completed",
+      "WAVE-007-maintenance-admin-api": "completed",
+      "WAVE-007": "completed"
     },
     "prState": {
       "WAVE-001-admin-feasibility-gate": {
@@ -3858,35 +3706,31 @@
     }
   },
   "lastReconciledWave": {
-    "id": "WAVE-006",
-    "reconciledAt": "2026-07-06T13:57:55Z",
+    "id": "WAVE-007",
     "status": "done",
-    "nextWave": "WAVE-007",
-    "nextWaveStatus": "ready_to_start"
-  },
-  "lastMergedWave": {
-    "id": "WAVE-006",
-    "bundles": [
+    "reconciledAt": "2026-07-06T17:07:31Z",
+    "tasks": [
+      "TASK-011-admin-auth-ui",
+      "TASK-015-maintenance-admin-api"
+    ],
+    "prs": [
       {
-        "id": "WAVE-006-admin-key-audit-stats-api",
-        "mergeCommit": "13465ebb44db1f98183f47fbaa1c6d90e6a23c80",
-        "mergedAt": "2026-07-06T13:10:24Z",
-        "remotePrState": "MERGED",
-        "remotePrMergedAt": "2026-07-06T13:19:57Z",
-        "pr": "https://github.com/ivo-toby/postgram/pull/85"
+        "number": 87,
+        "url": "https://github.com/ivo-toby/postgram/pull/87",
+        "mergedAt": "2026-07-06T15:48:11Z",
+        "mergeCommit": "4e77a6b5362160f854d36b4283157c658a9096e2"
       },
       {
-        "id": "WAVE-006-admin-job-foundation",
-        "mergeCommit": "c5edbfca7114a2b8b523e4bdc1fa634fb51f4a6e",
-        "mergedAt": "2026-07-06T13:51:23Z",
-        "remotePrState": "MERGED",
-        "remotePrMergedAt": "2026-07-06T13:54:55Z",
-        "pr": "https://github.com/ivo-toby/postgram/pull/86"
+        "number": 88,
+        "url": "https://github.com/ivo-toby/postgram/pull/88",
+        "mergedAt": "2026-07-06T17:02:28Z",
+        "mergeCommit": "78f0f43e3a79fe5211a57bffc0d0c3929951a5fb"
       }
     ],
-    "status": "done",
-    "closeoutCommit": "9f98299"
+    "sharedContext": "completed",
+    "nextWave": "WAVE-008"
   },
+  "lastMergedWave": "WAVE-007",
   "lastStartedWave": {
     "id": "WAVE-007",
     "activatedAt": "2026-07-06T14:08:16Z",

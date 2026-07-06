@@ -128,6 +128,8 @@ maintenance UI if useful.
 
 ## Implementation Notes
 
+- Extend the WAVE-007 admin API client in `ui/src/lib/adminApi.ts`; do not add
+  a parallel admin auth store or localStorage-backed admin credential path.
 - Keep secret inputs intentionally blank unless the operator is replacing a
   value.
 - Present restart/reembed/maintenance implications before apply.
@@ -150,6 +152,9 @@ maintenance UI if useful.
 - Surface `restartRequired` and `reembedRequired` states from the API. Do not
   present embedding identity or dimension changes as a normal apply path when
   the API says reembedding is required.
+- Use the WAVE-007 step-up flow for secret write/update and provider apply.
+  Step-up state should be treated as recent-auth state, not as a new admin
+  password prompt.
 
 ## Durable Memory Notes To Consider
 

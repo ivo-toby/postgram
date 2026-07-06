@@ -68,6 +68,8 @@ queue, and read-only model status.
 
 ### Local Context
 
+- `ui/src/lib/adminApi.ts`
+- `ui/src/components/admin/AdminAuth.tsx`
 - `ui/src/lib/api.ts`
 - `ui/src/components/TasksPage.tsx`
 - `ui/src/components/StatusWidget.tsx`
@@ -133,6 +135,18 @@ duplication.
 
 - Keep text within compact controls and avoid marketing-style layout.
 - Key create/revoke should surface step-up requirement clearly.
+- Extend the WAVE-007 admin API client in `ui/src/lib/adminApi.ts`; do not add
+  a parallel admin auth store or localStorage-backed admin credential path.
+- Use the WAVE-006 route contracts: `/admin/api/keys`,
+  `/admin/api/keys/:id/revoke`, `/admin/api/audit`, `/admin/api/stats`,
+  `/admin/api/diagnostics/health`, `/diagnostics/queue`,
+  `/diagnostics/models`, and `/diagnostics/config-status`.
+- API-key plaintext is one-time display only after create. It must not be
+  recoverable from list/audit views or stored in localStorage.
+- Key create/revoke mutations require CSRF and recent step-up; use the existing
+  WAVE-007 step-up flow rather than prompting for another credential.
+- Audit/details UI must preserve server-side redaction and must not try to
+  reconstruct hidden secret values from details.
 
 ## Durable Memory Notes To Consider
 

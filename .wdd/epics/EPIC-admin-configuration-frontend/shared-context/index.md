@@ -78,6 +78,14 @@ configuration, maintenance jobs, or Docker behavior.
   authority checks for job creation, structured job audit events, and summary
   safety guards that reject secrets, ciphertext, token prefixes, arbitrary
   validation metadata, and provider response/body containers.
+- Admin auth UI is now implemented in the frontend with a cookie-session admin
+  API client, in-memory CSRF handling, bootstrap/login/MFA/step-up flows, a
+  protected admin shell, and tests proving admin session/bootstrap/TOTP/provider
+  secret material is not stored in localStorage.
+- Maintenance admin APIs are now implemented under
+  `/admin/api/maintenance/{reextract,reembed,prune-edges}/{dry-run,apply}`.
+  Dry-runs and applies create admin jobs, apply requires recent step-up plus
+  matching fresh preview evidence, and job summaries remain redacted safe JSON.
 
 ## Key Warnings
 
@@ -292,6 +300,52 @@ configuration, maintenance jobs, or Docker behavior.
     responses in job payloads/results.
   - TASK-016 must use job status polling rather than assuming maintenance
     operations complete synchronously.
+
+### WAVE-007 Admin Auth UI And Maintenance Admin API
+
+- Status: merged and reconciled on 2026-07-06.
+- PRs: https://github.com/ivo-toby/postgram/pull/87 and
+  https://github.com/ivo-toby/postgram/pull/88, merged at
+  2026-07-06T15:48:11Z and 2026-07-06T17:02:28Z.
+- Merge commits: `4e77a6b` for TASK-011 admin auth UI and `78f0f43` for
+  TASK-015 maintenance admin API.
+- Reviews: Lorentz `REVIEW_PASS`; TASK-015 required one P2 WDD task-file
+  freshness fix, resolved at task head `ea88af4`.
+- Implemented admin auth UI contract:
+  - `ui/src/lib/adminApi.ts` is the browser admin API client. It uses
+    same-origin credentials, keeps CSRF in memory, sends `X-CSRF-Token` on
+    unsafe methods, and does not store admin bearer/session credentials.
+  - `ui/src/components/admin/AdminAuth.tsx` implements bootstrap setup,
+    login, MFA enrollment/challenge, step-up, logout, and a protected admin
+    shell.
+  - Admin UI tests prove route protection, MFA-error handling, and no
+    localStorage persistence for admin session, bootstrap, TOTP, provider
+    secret, or bearer credential material.
+- Implemented maintenance API contract:
+  - `src/services/admin-maintenance-service.ts` owns reextract, reembed, and
+    constrained `llm-extraction` edge-prune preview/apply operations shared by
+    web admin and `pgm-admin`.
+  - `src/transport/admin-maintenance.ts` registers dry-run/apply routes for
+    reextract, reembed, and prune-edges under the existing admin route
+    boundary.
+  - Dry-runs require active MFA and return `202` job responses with safe
+    request metadata.
+  - Applies require active MFA, recent step-up, a scoped idempotency key, and a
+    fresh matching `previewJobId`. Retry with the same idempotency key returns
+    the existing matching job.
+  - Web edge pruning is intentionally constrained to the approved
+    `llm-extraction` source instead of CLI's broader `any` selector.
+- Carry-forward gates:
+  - TASK-012/TASK-013 should extend `ui/src/lib/adminApi.ts` rather than adding
+    another admin client or storing credentials outside the in-memory CSRF
+    helper.
+  - TASK-012 must keep one-time API-key plaintext display unrecoverable and not
+    put key material into localStorage.
+  - TASK-013 must keep provider secret fields write-only/blank on load and use
+    WAVE-005 provider-config warnings for restart/reembed impacts.
+  - TASK-016 must call the concrete maintenance dry-run/apply endpoints, require
+    preview-before-apply UI flow, prompt step-up before apply, poll
+    `/admin/api/jobs/:jobId`, and render only safe job summaries.
 
 ## Recent Durable Memory
 

@@ -27,7 +27,7 @@ updated_at: 2026-07-06
 | TASK-012-admin-ops-dashboard-ui | TICKET-005-admin-frontend | TASK-008, TASK-011 | API key UI, audit/stats/health pages, admin API client | todo |
 | TASK-013-admin-config-ui | TICKET-005-admin-frontend | TASK-010, TASK-011 | runtime config UI, secret redaction, provider validation UI | todo |
 | TASK-014-admin-job-foundation | TICKET-006-maintenance-jobs | TASK-006, TASK-009 | job tables, job service, audit integration, progress state | done |
-| TASK-015-maintenance-admin-api | TICKET-006-maintenance-jobs | TASK-008, TASK-010, TASK-014 | graph/memory/embedding services, dry-run/apply admin APIs, CLI regressions | in_progress |
+| TASK-015-maintenance-admin-api | TICKET-006-maintenance-jobs | TASK-008, TASK-010, TASK-014 | graph/memory/embedding services, dry-run/apply admin APIs, CLI regressions | done |
 | TASK-016-maintenance-admin-ui | TICKET-006-maintenance-jobs | TASK-011, TASK-015 | maintenance UI, confirmations, progress polling, admin API client | todo |
 | TASK-017-docker-first-run-no-cli | TICKET-007-docker-e2e-validation | TASK-012, TASK-013, TASK-016 | Docker Compose, `.env.example`, README/deployment docs, smoke tests | todo |
 | TASK-018-security-epic-validation | TICKET-007-docker-e2e-validation | TASK-017 | security review, broad validation, final handoff artifacts | todo |
@@ -534,7 +534,7 @@ Drift notes:
 
 ### WAVE-007
 
-Status: in_progress
+Status: done
 
 Tasks:
 
@@ -573,11 +573,50 @@ Progress:
 
 - TASK-011 passed Lorentz review, was refreshed against the epic branch, merged
   locally in `4e77a6b`, marked merged remotely as PR #87, and cleaned up.
-- TASK-015 remains active with no PR yet.
+- TASK-015 passed Lorentz follow-up review after a WDD task-file freshness fix,
+  was refreshed against the epic branch, merged locally in `78f0f43`, marked
+  merged remotely as PR #88, and cleaned up.
+
+Completion evidence:
+
+- PR #87: merged by GitHub at 2026-07-06T15:48:11Z.
+- PR #88: merged by GitHub at 2026-07-06T17:02:28Z.
+- Merge commits: `4e77a6b` for TASK-011 and `78f0f43` for TASK-015.
+- Reviews: Lorentz `REVIEW_PASS` for both tasks; TASK-015 P2 freshness blocker
+  resolved before merge.
+- Verification passed:
+  - `npm --prefix ui run test -- --run src/components/AdminAuth.test.tsx`
+  - `npm --prefix ui run typecheck`
+  - `npm test -- tests/contract/admin-maintenance-api.test.ts`
+  - `npm test -- tests/integration/cli-admin.test.ts`
+  - `npm run typecheck`
+  - scoped ESLint for maintenance touched files
+  - `git diff --check`
+  - `jq empty .wdd/epics/EPIC-admin-configuration-frontend/orchestration.json`
+
+Reconciled decisions:
+
+- The shared frontend admin API client lives in `ui/src/lib/adminApi.ts` and
+  owns same-origin cookie requests plus in-memory CSRF handling.
+- Admin auth UI now covers bootstrap, login, MFA enrollment/challenge, step-up,
+  logout, and protected shell behavior without localStorage admin credentials.
+- Maintenance admin APIs expose only typed dry-run/apply routes for reextract,
+  reembed, and constrained `llm-extraction` edge pruning.
+- Maintenance applies require recent step-up, scoped idempotency, and fresh
+  matching dry-run preview evidence; job status remains the progress contract.
+
+Drift notes:
+
+- TASK-012 and TASK-013 should extend the existing admin API client rather than
+  creating another auth/client boundary.
+- TASK-016 must consume the concrete maintenance route family, require
+  preview-before-apply in UI, prompt step-up before apply, and poll job status.
+- The first maintenance UI should not expose CLI-only broad edge pruning or
+  synchronous completion assumptions.
 
 ### WAVE-008
 
-Status: planned
+Status: ready_to_start
 
 Tasks:
 
@@ -591,8 +630,8 @@ Recommended strategy:
 - Review mode: risk_based
 - Monitoring mode: adaptive
 - Confidence: medium
-- Requires user confirmation: yes
-- Confirmed by: null
+- Requires user confirmation: no
+- Confirmed by: Ivo via Codex finish-all-waves request on 2026-07-06
 
 Rationale:
 
@@ -603,6 +642,7 @@ Rationale:
 Activation rule:
 
 - Activate after WAVE-007 reconciliation.
+- Ready after WAVE-007 reconciliation on 2026-07-06.
 
 Stop condition:
 

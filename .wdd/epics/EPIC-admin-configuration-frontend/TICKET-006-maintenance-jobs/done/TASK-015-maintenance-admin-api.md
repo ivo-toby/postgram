@@ -6,7 +6,7 @@ ticket: TICKET-006-maintenance-jobs
 wave: WAVE-007
 slug: maintenance-admin-api
 title: Maintenance Admin API
-status: review
+status: done
 depends_on:
   - TASK-008-admin-key-audit-stats-api
   - TASK-010-provider-config-apply
@@ -21,12 +21,12 @@ assigned_model_class: implementationComplex
 review_model_class: review
 branch: codex/task/TASK-015-maintenance-admin-api
 worker_worktree: /Users/ivo.toby/workspace/postgram/.worktrees/TASK-015-maintenance-admin-api
-worktree_status: draft_pr_open
+worktree_status: cleaned_up
 pr: https://github.com/ivo-toby/postgram/pull/88
 worker_thread_id: 019f37c5-7084-7920-916a-7fd9ac7d8cb6
 review_thread_id: 019f322c-02e7-7590-8b8e-ebdd1e9c52ac
-current_gate: reviewing
-branch_freshness: rebased_on_origin_epic_97f9d53
+current_gate: merged
+branch_freshness: current_at_merge
 verification:
   - npm test -- tests/contract/admin-maintenance-api.test.ts
   - npm test -- tests/integration/cli-admin.test.ts
@@ -37,7 +37,7 @@ verification:
 
 ## Status
 
-review
+done
 
 ## Parent Ticket
 
@@ -118,11 +118,11 @@ codex/task/TASK-015-maintenance-admin-api
 
 ## Worker Worktree
 
-Clean and pushed at `/Users/ivo.toby/workspace/postgram/.worktrees/TASK-015-maintenance-admin-api`.
+Cleaned up after PR #88 was confirmed merged.
 
 ## PR / Patch Reference
 
-Draft PR: https://github.com/ivo-toby/postgram/pull/88
+https://github.com/ivo-toby/postgram/pull/88
 
 Implementation head before WDD handoff commits: `faab7e0`
 (`feat(admin): add maintenance job APIs`).
@@ -281,6 +281,23 @@ Keep command-specific logic typed and bounded rather than generic.
   `in-progress/` task file staged for deletion and the `review/` TASK-015 file
   in conflict. PR #88 remains open/draft/`DIRTY` at head `4a3e99d`; no final
   fix status has returned yet.
+- 2026-07-06T16:54:23Z: Helmholtz returned `DONE` for the freshness fix and
+  pushed PR #88 to head `86c4966`. Controller verification passed: PR #88 was
+  open/draft/`CLEAN`, branch divergence was `0 3`, `git diff --check` passed,
+  merge-tree passed with tree `a96b5a5`, `admin-maintenance-api` contract tests
+  passed 4/4, `cli-admin` integration tests passed 37/37, and `npm run
+  typecheck` passed. Lorentz follow-up review was requested.
+- 2026-07-06T16:58:48Z: Lorentz follow-up review returned `REVIEW_PASS` at head
+  `86c4966` with no P1/P2/P3 findings. The previous WDD task-file freshness
+  blocker was resolved.
+- 2026-07-06T17:02:56Z: Controller pushed review-pass checkpoint `b97cc61`,
+  refreshed TASK-015 to task head `ea88af4`, and reran final freshness
+  verification. Branch divergence was `0 4`, branch diff whitespace passed,
+  merge-tree passed, `admin-maintenance-api` contract tests passed 4/4,
+  `cli-admin` integration tests passed 37/37, `npm run typecheck` passed,
+  scoped ESLint passed, and post-merge verification passed. TASK-015 merged
+  into the epic branch in `78f0f43`; GitHub marked PR #88 `MERGED` at
+  2026-07-06T17:02:28Z. The clean pushed worktree was removed and pruned.
 
 ## Review Feedback
 

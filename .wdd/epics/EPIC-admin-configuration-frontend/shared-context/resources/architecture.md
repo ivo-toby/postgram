@@ -272,6 +272,42 @@ Future architecture implications:
   identifiers and safe summaries only. Job payloads/results are not a secret
   storage or provider-response capture mechanism.
 
+## WAVE-007 Implemented Admin Auth UI And Maintenance Boundaries
+
+PR #87 added the first frontend admin auth shell:
+
+- `ui/src/lib/adminApi.ts` is now the shared browser admin API client. It owns
+  same-origin cookie requests, in-memory CSRF token handling, and typed auth/MFA
+  calls.
+- `ui/src/components/admin/AdminAuth.tsx` implements bootstrap setup, login,
+  MFA enrollment/challenge, step-up, logout, and protected admin shell behavior.
+- `ui/src/App.tsx` and `ui/src/components/TopBar.tsx` expose the admin entry
+  without reusing the existing API-key localStorage auth path.
+
+PR #88 added the first concrete admin maintenance service boundary:
+
+- `src/services/admin-maintenance-service.ts` extracts maintenance operations
+  from `pgm-admin` into shared typed service functions for reextract, reembed,
+  and constrained edge pruning.
+- `src/transport/admin-maintenance.ts` registers the maintenance route family
+  from the existing admin transport.
+- `src/services/admin-job-service.ts` gained helper behavior needed for
+  preview evidence, idempotent apply retries, progress, cancellation, and safe
+  terminal summaries.
+- `src/transport/admin.ts` wires maintenance routes additively beside
+  diagnostics, keys/audit/stats, jobs, and provider-config routes.
+
+Future architecture implications:
+
+- TASK-012/TASK-013 should extend `ui/src/lib/adminApi.ts` for dashboard and
+  config calls rather than creating a second admin client or auth store.
+- TASK-016 should build against the concrete
+  `/admin/api/maintenance/{operation}/{dry-run,apply}` route family and the
+  existing `/admin/api/jobs/:jobId` polling contract.
+- Future maintenance or migration operations should add typed operation modules
+  around shared services; they should not add CLI passthrough, raw SQL, or
+  synchronous long-running request handlers.
+
 ## Open Architecture Questions
 
 - Can extraction provider settings be hot-reloaded safely after the first

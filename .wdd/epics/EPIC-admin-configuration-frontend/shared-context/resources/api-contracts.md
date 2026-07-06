@@ -245,6 +245,51 @@ Job service contract for TASK-015 and later:
 - Job lifecycle events write structured audit rows with operation names such as
   `admin.jobs.create`, `admin.jobs.progress`, and `admin.jobs.succeed`.
 
+## WAVE-007 Implemented Auth UI And Maintenance Routes
+
+TASK-011 added the frontend admin auth client and protected shell in PR #87.
+
+Implemented UI client contract:
+
+- `ui/src/lib/adminApi.ts` is the shared frontend admin API client for current
+  and future admin UI pages.
+- The client uses `credentials: "same-origin"` with the HttpOnly
+  `pgm_admin_session` cookie; it must not introduce admin bearer headers.
+- The client stores CSRF only in memory, refreshes it through
+  `/admin/api/session/csrf`, and sends `X-CSRF-Token` for unsafe methods.
+- Auth UI flows cover bootstrap setup, login, MFA enrollment, MFA challenge,
+  step-up, current session, and logout against the existing
+  `/admin/api/bootstrap/*` and `/admin/api/session/*` contracts.
+
+TASK-015 added concrete maintenance admin routes in PR #88.
+
+Implemented maintenance endpoints:
+
+- `POST /admin/api/maintenance/reextract/dry-run`
+- `POST /admin/api/maintenance/reextract/apply`
+- `POST /admin/api/maintenance/reembed/dry-run`
+- `POST /admin/api/maintenance/reembed/apply`
+- `POST /admin/api/maintenance/prune-edges/dry-run`
+- `POST /admin/api/maintenance/prune-edges/apply`
+
+Maintenance route contract:
+
+- Dry-runs require active MFA and return `202` responses containing
+  `{ operation, dryRun: true, job, metadata }`.
+- Applies require active MFA, recent step-up, a scoped idempotency key, and a
+  fresh matching `previewJobId`; successful apply starts or reuses an admin
+  job and returns `202` with safe job metadata.
+- Reextract scopes support `all`, `type`, `id`, and `failed`, plus bounded
+  selectors such as `onlyFailed`, `limit`, `cleanEdges`, `includeAutoCreated`,
+  `noEdgesOnly`, and `showSkipped`.
+- Reembed scopes support `all`, `type`, `id`, and `failed`, plus
+  `onlyFailed`.
+- Web edge pruning is constrained to the approved `llm-extraction` source with
+  threshold and optional relation selectors; the broader CLI `any` source is
+  not web-exposed.
+- Job payloads/results use safe summaries only and continue to use
+  `/admin/api/jobs` and `/admin/api/jobs/:jobId` for progress/status.
+
 ## Response Shape
 
 Use the existing app error response style where practical:
@@ -300,7 +345,9 @@ attribution must not be hidden inside free-form details only.
 
 - Should the admin route namespace be served by the backend only, or should the
   UI have a separate `/admin` build route?
-- What job response model is needed for maintenance operations?
+- WAVE-007 established job-backed `202` maintenance responses for the first
+  maintenance operations; future migration or provider jobs may need additional
+  typed result shapes but should preserve the job/status model.
 
 ## WAVE-001 Contract Preferences
 

@@ -6,7 +6,7 @@ ticket: TICKET-005-admin-frontend
 wave: WAVE-007
 slug: admin-auth-ui
 title: Admin Auth UI
-status: review
+status: done
 depends_on:
   - TASK-006-admin-mfa-step-up
 conflict_domains:
@@ -18,12 +18,12 @@ assigned_model_class: implementationComplex
 review_model_class: review
 branch: codex/task/TASK-011-admin-auth-ui
 worker_worktree: /Users/ivo.toby/workspace/postgram/.worktrees/TASK-011-admin-auth-ui
-worktree_status: review_ready
+worktree_status: cleanup_deferred
 pr: https://github.com/ivo-toby/postgram/pull/87
 worker_thread_id: 019f37c5-29ec-7ec3-b6fd-6aba64df3dc9
-review_thread_id: 019f37ff-9d6c-7fb1-9d43-e6cbc78aa496
-current_gate: draft_pr_open
-branch_freshness: current_with_epic_after_fast_forward
+review_thread_id: 019f322c-02e7-7590-8b8e-ebdd1e9c52ac
+current_gate: merged
+branch_freshness: current_at_merge
 verification:
   - npm --prefix ui run test -- --run src/components/AdminAuth.test.tsx
   - npm --prefix ui run typecheck
@@ -33,7 +33,7 @@ verification:
 
 ## Status
 
-review
+done
 
 ## Parent Ticket
 
@@ -110,7 +110,8 @@ codex/task/TASK-011-admin-auth-ui
 
 ## Worker Worktree
 
-Active at `/Users/ivo.toby/workspace/postgram/.worktrees/TASK-011-admin-auth-ui`.
+Cleanup deferred at `/Users/ivo.toby/workspace/postgram/.worktrees/TASK-011-admin-auth-ui`
+until the epic branch push confirms PR #87 is merged.
 
 ## PR / Patch Reference
 
@@ -220,6 +221,15 @@ Keep admin auth UI separate from current API-key login.
 - 2026-07-06T15:23Z: Draft PR opened against
   `codex/epic/admin-configuration-frontend`:
   https://github.com/ivo-toby/postgram/pull/87.
+- 2026-07-06T15:38:25Z: Lorentz returned `REVIEW_PASS` for PR #87 with no
+  P1/P2/P3 findings. Review verified PR state OPEN/draft/CLEAN, branch
+  freshness, diff check, merge-tree, focused AdminAuth tests, UI typecheck, and
+  no localStorage persistence of admin bearer/session/bootstrap/TOTP/provider
+  secrets.
+- 2026-07-06T15:39Z: Controller refreshed the task branch against latest epic
+  branch, reran focused AdminAuth tests, UI typecheck, branch diff check,
+  merge-tree, and WDD orchestration JSON parse successfully, then merged
+  TASK-011 locally into the epic branch.
 
 ## Review Feedback
 

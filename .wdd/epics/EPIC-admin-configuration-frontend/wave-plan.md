@@ -23,7 +23,7 @@ updated_at: 2026-07-06
 | TASK-008-admin-key-audit-stats-api | TICKET-003-admin-api-foundation | TASK-007 | key service, audit querying, stats service, admin API contracts | done |
 | TASK-009-settings-secret-store | TICKET-004-runtime-configuration | TASK-003, TASK-005 | settings migrations, secret encryption, config service | done |
 | TASK-010-provider-config-apply | TICKET-004-runtime-configuration | TASK-009 | provider lifecycle, validation flows, config tests, worker reload semantics | done |
-| TASK-011-admin-auth-ui | TICKET-005-admin-frontend | TASK-006 | React auth shell, admin session client, MFA UI, UI routing | in_progress |
+| TASK-011-admin-auth-ui | TICKET-005-admin-frontend | TASK-006 | React auth shell, admin session client, MFA UI, UI routing | done |
 | TASK-012-admin-ops-dashboard-ui | TICKET-005-admin-frontend | TASK-008, TASK-011 | API key UI, audit/stats/health pages, admin API client | todo |
 | TASK-013-admin-config-ui | TICKET-005-admin-frontend | TASK-010, TASK-011 | runtime config UI, secret redaction, provider validation UI | todo |
 | TASK-014-admin-job-foundation | TICKET-006-maintenance-jobs | TASK-006, TASK-009 | job tables, job service, audit integration, progress state | done |
@@ -568,6 +568,13 @@ Stop condition:
 - Admin auth UI tests pass.
 - Maintenance API dry-run/apply tests and CLI regression tests pass.
 - Shared admin API client contracts are reconciled before later UI work.
+
+Progress:
+
+- TASK-011 passed Lorentz review, was refreshed against the epic branch, merged
+  locally in `4e77a6b`, and is awaiting epic branch push / PR #87 remote merge
+  confirmation before worktree cleanup.
+- TASK-015 remains active with no PR yet.
 
 ### WAVE-008
 

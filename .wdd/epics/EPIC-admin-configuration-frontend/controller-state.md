@@ -63,7 +63,12 @@ the WAVE-007 activation checkpoint was pushed in `848b902`. Its parallel tasks
 are TASK-011-admin-auth-ui and TASK-015-maintenance-admin-api. Task files are
 in `in-progress/`, dedicated task branches and worktrees were created and
 pushed at `848b902`, and workers Meitner and Helmholtz were dispatched at
-2026-07-06T14:11:59Z. Both bundles are at the `no_pr` monitoring gate.
+2026-07-06T14:11:59Z. TASK-011 shipped in PR #87, Lorentz returned
+`REVIEW_PASS`, the task branch was refreshed to `344bab8`, and TASK-011 merged
+locally into the epic branch in `4e77a6b`. PR #87 is awaiting epic branch push
+confirmation before worktree cleanup. TASK-015 remains active with no PR yet
+and no nudge is needed because Helmholtz's worktree still has current
+task-owned maintenance API changes.
 
 WAVE-004 is done and reconciled. PR #81/TASK-009 and PR #82/TASK-006 are
 merged, shared context is reconciled, and both WAVE-004 worktrees are cleaned
@@ -89,13 +94,13 @@ up.
 
 Mode: adaptive
 
-Cadence: 5m
+Cadence: 15m
 
-Status: wave_007_task011_review_requested_task015_active_no_pr
+Status: wave_007_task011_merged_pending_remote_task015_active_no_pr
 
-Last check: 2026-07-06T15:29:25Z
+Last check: 2026-07-06T15:38:25Z
 
-Next check due: 2026-07-06T15:34:25Z
+Next check due: 2026-07-06T15:53:25Z
 
 Scheduler reference: `postgram-admin-wave-005-wdd-heartbeat`
 
@@ -104,9 +109,10 @@ Scheduler name: `postgram-admin-wave-007-wdd-heartbeat`
 Fallback prompt:
 
 ```text
-WAVE-007 TASK-011 PR #87 is in Lorentz review; TASK-015 Helmholtz remains
-active with no PR yet. Poll review/worktrees, route any P1/P2 feedback, and
-move produced PRs to review orchestration.
+WAVE-007 TASK-011 is locally merged after Lorentz REVIEW_PASS and awaits epic
+branch push / PR #87 remote merge confirmation and cleanup; TASK-015 Helmholtz
+remains active with no PR yet. Confirm remote PR state, clean up TASK-011 if
+safe, then continue monitoring TASK-015.
 ```
 
 ## Active Wave Strategy
@@ -118,7 +124,8 @@ move produced PRs to review orchestration.
 - WAVE-007 strategy: full / parallel / risk_based / adaptive.
 - WAVE-007 tasks: TASK-011-admin-auth-ui and TASK-015-maintenance-admin-api.
 - Confirmation: Ivo via Codex finish-all-waves request on 2026-07-06.
-- Current gate: monitor WAVE-007 workers for PR or patch handoff.
+- Current gate: TASK-011 is locally merged pending remote PR confirmation and
+  cleanup; monitor TASK-015 for PR or patch handoff.
 
 ## Last Reconciled Wave
 
@@ -158,11 +165,11 @@ move produced PRs to review orchestration.
 | TASK-008-admin-key-audit-stats-api | TICKET-003-admin-api-foundation | codex/task/TASK-008-admin-key-audit-stats-api | cleaned_up | reconciled | REVIEW_PASS; freshness current at task head `281681b`; post-merge tests/typecheck/touched-file ESLint passed; merged locally into epic branch in `13465eb`; WAVE-006 reconciled |
 | TASK-009-settings-secret-store | TICKET-004-runtime-configuration | codex/task/TASK-009-settings-secret-store | cleaned_up | reconciled | PR #81 follow-up REVIEW_PASS, final branch freshness passed at `ca9c96f`, merged locally into epic branch in `b63ad08`; worktree cleaned up during WAVE-004 reconciliation |
 | TASK-010-provider-config-apply | TICKET-004-runtime-configuration | codex/task/TASK-010-provider-config-apply | cleaned_up | reconciled | REVIEW_PASS; final branch freshness passed at `515cfa5`; merged locally into epic branch in `f5efbc0`; PR #84 merged at 2026-07-06T11:31:10Z; WAVE-005 reconciled |
-| TASK-011-admin-auth-ui | TICKET-005-admin-frontend | codex/task/TASK-011-admin-auth-ui | clean_pushed | reviewing | Draft PR #87 opened at `18849e5`; Lorentz review requested in submission `019f380d-9441-76a3-a0dc-929a78941c69`; PR is CLEAN/current for review |
+| TASK-011-admin-auth-ui | TICKET-005-admin-frontend | codex/task/TASK-011-admin-auth-ui | cleanup_deferred | merged | Lorentz REVIEW_PASS; refreshed branch head `344bab8`; post-refresh AdminAuth tests/typecheck/diff/merge-tree/JQ passed; merged locally in `4e77a6b`; post-merge AdminAuth tests and UI typecheck passed after `npm --prefix ui ci`; PR #87 pending remote merge confirmation |
 | TASK-012-admin-ops-dashboard-ui | TICKET-005-admin-frontend | codex/task/TASK-012-admin-ops-dashboard-ui | not_created | planned | `npm --prefix ui run test -- --run src/components/AdminOps.test.tsx`; `npm --prefix ui run typecheck` |
 | TASK-013-admin-config-ui | TICKET-005-admin-frontend | codex/task/TASK-013-admin-config-ui | not_created | planned | `npm --prefix ui run test -- --run src/components/AdminConfig.test.tsx`; `npm --prefix ui run typecheck` |
 | TASK-014-admin-job-foundation | TICKET-006-maintenance-jobs | codex/task/TASK-014-admin-job-foundation | cleaned_up | reconciled | Lorentz REVIEW_PASS; freshness current at task head `0e08630`; post-merge tests/typecheck/touched-file ESLint passed; merged locally into epic branch in `c5edbfc`; WAVE-006 reconciled and worktree cleaned up |
-| TASK-015-maintenance-admin-api | TICKET-006-maintenance-jobs | codex/task/TASK-015-maintenance-admin-api | active_uncommitted | no_pr | Helmholtz running; active backend maintenance API changes observed at 2026-07-06T15:29:25Z; tracked `git diff --check` passed; branch freshness refresh required before review/merge |
+| TASK-015-maintenance-admin-api | TICKET-006-maintenance-jobs | codex/task/TASK-015-maintenance-admin-api | active_uncommitted | no_pr | Helmholtz still running; no PR at 2026-07-06T15:38:25Z; active backend maintenance API changes observed; tracked `git diff --check` passed; branch freshness refresh required before review/merge |
 | TASK-016-maintenance-admin-ui | TICKET-006-maintenance-jobs | codex/task/TASK-016-maintenance-admin-ui | not_created | planned | `npm --prefix ui run test -- --run src/components/AdminMaintenance.test.tsx`; `npm --prefix ui run typecheck` |
 | TASK-017-docker-first-run-no-cli | TICKET-007-docker-e2e-validation | codex/task/TASK-017-docker-first-run-no-cli | not_created | planned | `docker compose config`; `npm run typecheck`; `npm --prefix ui run build` |
 | TASK-018-security-epic-validation | TICKET-007-docker-e2e-validation | codex/task/TASK-018-security-epic-validation | not_created | planned | broad backend, frontend, Docker, and smoke validation |
@@ -1336,10 +1343,24 @@ move produced PRs to review orchestration.
   contract/integration test changes, tracked `git diff --check` passed, and no
   nudge was sent. Monitoring cadence increased to 5 minutes while TASK-011 is
   in review; next check due 2026-07-06T15:34:25Z.
+- 2026-07-06T15:38:25Z: Lorentz returned `REVIEW_PASS` for PR #87 with no
+  P1/P2/P3 findings. Controller refreshed the TASK-011 branch against latest
+  epic, producing head `344bab8`, reran focused AdminAuth tests, UI typecheck,
+  branch diff check, merge-tree, and WDD orchestration JSON parse successfully,
+  pushed the refreshed task branch, merged TASK-011 locally into the epic
+  branch in `4e77a6b`, moved the task file to `done/`, and reran post-merge
+  AdminAuth tests, UI typecheck, `git diff --check HEAD^..HEAD`, and JSON
+  parse successfully. The first post-merge UI test/typecheck attempt in the
+  controller checkout failed because `ui/node_modules` was missing; after
+  `npm --prefix ui ci`, the same gates passed. PR #87 and TASK-011 cleanup
+  remain pending until this closeout state is pushed and GitHub marks the PR
+  merged. Helmholtz remains running on TASK-015 with no PR; direct worker poll
+  timed out without final status, the worktree has active expected maintenance
+  API changes, and tracked `git diff --check` passed. Monitoring cadence
+  returned to 15 minutes while only TASK-015 is in no-PR worker-watch state.
 
 ## Next Action
 
-Next action: monitor WAVE-007 workers Meitner and Helmholtz. If either worker
-produces a PR or patch, move that bundle to review/reviewer orchestration; if
-no PR or patch exists, keep `no_pr` and nudge exact missing deliverables only
-if the worktree is inactive or stale.
+Next action: push the TASK-011 closeout state, confirm GitHub marks PR #87
+merged, clean up the TASK-011 worktree if it is still clean, then continue
+monitoring Helmholtz/TASK-015 for PR or patch handoff.

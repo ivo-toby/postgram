@@ -637,11 +637,13 @@ describe('admin provider config service', () => {
     const mockHttpsRequest = vi.fn(
       (
         _options: unknown,
-        callback: (response: Readable & {
-          headers: Record<string, string>;
-          statusCode: number;
-          statusMessage: string;
-        }) => void
+        callback: (
+          response: Readable & {
+            headers: Record<string, string>;
+            statusCode: number;
+            statusMessage: string;
+          }
+        ) => void
       ) => {
         return {
           setTimeout: vi.fn(),
@@ -657,7 +659,9 @@ describe('admin provider config service', () => {
             } else if (body instanceof ArrayBuffer) {
               sentBodies.push(Buffer.from(body).toString('utf8'));
             }
-            const response = Readable.from([Buffer.from(responseBody)]) as Readable & {
+            const response = Readable.from([
+              Buffer.from(responseBody)
+            ]) as Readable & {
               headers: Record<string, string>;
               statusCode: number;
               statusMessage: string;
@@ -707,15 +711,17 @@ describe('admin provider config service', () => {
 
     let fetchSignal: AbortSignal | undefined;
     let resolveFetch: ((response: Response) => void) | undefined;
-    const runtimeFetch = vi.fn((_input: RequestInfo | URL, init?: RequestInit) => {
-      fetchSignal = init?.signal ?? undefined;
-      return new Promise<Response>((resolve, reject) => {
-        resolveFetch = resolve;
-        fetchSignal?.addEventListener('abort', () => {
-          reject(new DOMException('Aborted', 'AbortError'));
+    const runtimeFetch = vi.fn(
+      (_input: RequestInfo | URL, init?: RequestInit) => {
+        fetchSignal = init?.signal ?? undefined;
+        return new Promise<Response>((resolve, reject) => {
+          resolveFetch = resolve;
+          fetchSignal?.addEventListener('abort', () => {
+            reject(new DOMException('Aborted', 'AbortError'));
+          });
         });
-      });
-    });
+      }
+    );
     vi.stubGlobal('fetch', runtimeFetch);
 
     try {
@@ -733,7 +739,9 @@ describe('admin provider config service', () => {
       await vi.advanceTimersByTimeAsync(10_500);
       expect(fetchSignal?.aborted ?? false).toBe(false);
 
-      resolveFetch?.(new Response(JSON.stringify({ ok: true }), { status: 200 }));
+      resolveFetch?.(
+        new Response(JSON.stringify({ ok: true }), { status: 200 })
+      );
       await expect(responsePromise).resolves.toMatchObject({ status: 200 });
     } finally {
       vi.stubGlobal('fetch', originalFetch);
@@ -1169,9 +1177,10 @@ describe('admin provider config service', () => {
       };
       return connect();
     }) as typeof pool.connect;
+    const connectSpy = vi.spyOn(pool, 'connect');
     // pg Pool.connect intentionally has callback and promise overloads here.
     // eslint-disable-next-line @typescript-eslint/no-misused-promises
-    const connectSpy = vi.spyOn(pool, 'connect').mockImplementation(connectMock);
+    connectSpy.mockImplementation(connectMock);
 
     try {
       const applied = await applyProviderConfiguration(database.pool, {
@@ -1859,9 +1868,8 @@ describe('admin provider config service', () => {
     });
 
     const fetchImpl = vi.fn((_input: string, init: RequestInit) => {
-      const authorization = (
-        init.headers as Record<string, string> | undefined
-      )?.Authorization;
+      const authorization = (init.headers as Record<string, string> | undefined)
+        ?.Authorization;
       return Promise.resolve(
         new Response(JSON.stringify({ models: [] }), {
           status: authorization === `Bearer ${SECRET_PLAINTEXT}` ? 200 : 401,
@@ -1894,8 +1902,7 @@ describe('admin provider config service', () => {
     expect(fetchImpl).toHaveBeenCalledTimes(2);
     expect(
       fetchImpl.mock.calls.map(
-        (call) =>
-          (call[1].headers as Record<string, string>).Authorization
+        (call) => (call[1].headers as Record<string, string>).Authorization
       )
     ).toEqual([
       `Bearer ${SECRET_PLAINTEXT}`,
@@ -1918,9 +1925,8 @@ describe('admin provider config service', () => {
     });
 
     const fetchImpl = vi.fn((_input: string, init: RequestInit) => {
-      const authorization = (
-        init.headers as Record<string, string> | undefined
-      )?.Authorization;
+      const authorization = (init.headers as Record<string, string> | undefined)
+        ?.Authorization;
       return Promise.resolve(
         new Response(JSON.stringify({ models: [] }), {
           status: authorization === `Bearer ${SECRET_PLAINTEXT}` ? 200 : 401,
@@ -2446,14 +2452,17 @@ describe('admin provider config service', () => {
       actorAdminUserId: actorId
     });
 
-    const appliedSecretRotation = await applyProviderConfiguration(database.pool, {
-      actorAdminUserId: actorId,
-      envConfig: env({
-        OPENAI_API_KEY: 'sk-env-active-openai'
-      }),
-      encryptionKey: key,
-      dnsLookup: publicDns()
-    });
+    const appliedSecretRotation = await applyProviderConfiguration(
+      database.pool,
+      {
+        actorAdminUserId: actorId,
+        envConfig: env({
+          OPENAI_API_KEY: 'sk-env-active-openai'
+        }),
+        encryptionKey: key,
+        dnsLookup: publicDns()
+      }
+    );
 
     expect(appliedSecretRotation.isOk()).toBe(true);
     expect(appliedSecretRotation._unsafeUnwrap()).toMatchObject({
@@ -2575,7 +2584,7 @@ describe('admin provider config routes', () => {
     const secretResponse = await app.request(
       '/admin/api/provider-config/secrets',
       {
-        method: 'POST',
+        method: 'PUT',
         headers: {
           Cookie: fresh.cookie,
           'Content-Type': 'application/json',

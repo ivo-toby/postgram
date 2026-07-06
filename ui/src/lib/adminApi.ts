@@ -49,6 +49,151 @@ export type AdminMfaEnrollmentResponse = {
   otpauthUrl: string;
 };
 
+export type AdminRuntimeValidationStatus =
+  | 'unvalidated'
+  | 'valid'
+  | 'invalid'
+  | 'error';
+
+export type AdminRuntimeSettingClassification =
+  | 'bootstrap_only'
+  | 'runtime_editable'
+  | 'restart_required'
+  | 'dangerous_migration';
+
+export type AdminJsonValue =
+  | string
+  | number
+  | boolean
+  | null
+  | AdminJsonValue[]
+  | { [key: string]: AdminJsonValue };
+
+export type AdminRuntimeValidationRecord = {
+  status: AdminRuntimeValidationStatus;
+  message: string | null;
+  metadata: { [key: string]: AdminJsonValue };
+  validatedAt: string | null;
+};
+
+export type AdminProviderConfigSettingKey =
+  | 'EXTRACTION_ENABLED'
+  | 'EXTRACTION_PROVIDER'
+  | 'EXTRACTION_MODEL'
+  | 'EXTRACTION_BASE_URL'
+  | 'OLLAMA_BASE_URL'
+  | 'EMBEDDING_PROVIDER'
+  | 'EMBEDDING_MODEL'
+  | 'EMBEDDING_DIMENSIONS'
+  | 'EMBEDDING_BASE_URL';
+
+export type AdminProviderSecretName =
+  | 'OPENAI_API_KEY'
+  | 'ANTHROPIC_API_KEY'
+  | 'OLLAMA_API_KEY'
+  | 'EXTRACTION_API_KEY'
+  | 'EMBEDDING_API_KEY';
+
+export type AdminRuntimeSettingSnapshot = {
+  key: AdminProviderConfigSettingKey;
+  value: AdminJsonValue | undefined;
+  source: 'database' | 'env' | 'unset';
+  classification: AdminRuntimeSettingClassification;
+  state: 'pending' | 'applied';
+  validation: AdminRuntimeValidationRecord;
+  restartRequired: boolean;
+  reembedRequired: boolean;
+  appliedAt: string | null;
+  updatedByAdminUserId: string | null;
+  updatedAt: string | null;
+};
+
+export type AdminRuntimeSecretMetadata = {
+  name: AdminProviderSecretName;
+  configured: true;
+  provider: string | null;
+  purpose: 'embedding' | 'extraction' | 'provider' | 'other';
+  algorithm: 'aes-256-gcm';
+  keyVersion: string;
+  validation: AdminRuntimeValidationRecord;
+  updatedByAdminUserId: string | null;
+  createdAt: string;
+  updatedAt: string;
+};
+
+export type AdminProviderConfiguration = {
+  settings: Record<AdminProviderConfigSettingKey, AdminRuntimeSettingSnapshot>;
+  secrets: Record<AdminProviderSecretName, AdminRuntimeSecretMetadata | null>;
+  restartRequired: boolean;
+  reembedRequired: boolean;
+  egressPolicy: {
+    id: 'provider-base-url-v1';
+    httpsRequiredForRemoteProviders: true;
+    redirects: 'blocked';
+    localProviderHttpHosts: string[];
+  };
+};
+
+export type AdminProviderConfigurationResponse = {
+  config: AdminProviderConfiguration;
+};
+
+export type AdminProviderSecretResponse = {
+  secret: AdminRuntimeSecretMetadata;
+};
+
+export type AdminProviderValidationResult = {
+  status: 'valid' | 'invalid' | 'error' | 'requires_reembedding';
+  restartRequired: boolean;
+  reembedRequired: boolean;
+  connectionTests: Partial<
+    Record<
+      AdminProviderConfigSettingKey,
+      {
+        status: AdminRuntimeValidationStatus;
+        message: string;
+        metadata: Record<string, AdminJsonValue>;
+      }
+    >
+  >;
+  runtime: {
+    constructible: boolean;
+    errors: Array<{
+      field: string;
+      message: string;
+    }>;
+  };
+  embedding: {
+    current: {
+      provider: string;
+      model: string;
+      dimensions: number;
+    } | null;
+    target: {
+      provider: string;
+      model: string;
+      dimensions: number;
+    } | null;
+  };
+};
+
+export type AdminProviderValidationResponse = {
+  validation: AdminProviderValidationResult;
+};
+
+export type AdminProviderApplyResponse = {
+  result: {
+    applied: true;
+    restartRequired: boolean;
+    reembedRequired: false;
+    reload: {
+      extraction: 'restart_required' | 'unchanged';
+      embedding: 'restart_required' | 'unchanged';
+    };
+    appliedSettings: AdminProviderConfigSettingKey[];
+  };
+};
+
 export type AdminScope = 'read' | 'write' | 'delete' | 'sync';
 export type AdminEntityType =
   | 'document'
@@ -289,6 +434,20 @@ type AdminApiClient = {
     offset?: number;
     status?: AdminJobStatus[];
   }) => Promise<AdminJobListResponse>;
+  getProviderConfig: () => Promise<AdminProviderConfigurationResponse>;
+  saveProviderConfig: (input: {
+    settings: Partial<
+      Record<AdminProviderConfigSettingKey, AdminJsonValue | undefined>
+    >;
+  }) => Promise<AdminProviderConfigurationResponse>;
+  saveProviderSecret: (input: {
+    name: AdminProviderSecretName;
+    plaintext: string;
+  }) => Promise<AdminProviderSecretResponse>;
+  validateProviderConfig: (input?: {
+    testConnections?: boolean;
+  }) => Promise<AdminProviderValidationResponse>;
+  applyProviderConfig: () => Promise<AdminProviderApplyResponse>;
 };
 
 function isUnsafeMethod(method: string): boolean {
@@ -496,6 +655,54 @@ export function createAdminApiClient(): AdminApiClient {
       if (input.status?.length) params.set('status', input.status.join(','));
       appendPagination(params, input, { limit: 20, offset: 0 });
       return request<AdminJobListResponse>(`/admin/api/jobs?${params}`);
+    },
+
+    getProviderConfig() {
+      return request<AdminProviderConfigurationResponse>(
+        '/admin/api/provider-config'
+      );
+    },
+
+    saveProviderConfig(input) {
+      return request<AdminProviderConfigurationResponse>(
+        '/admin/api/provider-config',
+        {
+          method: 'PUT',
+          body: input,
+        }
+      );
+    },
+
+    saveProviderSecret(input) {
+      return request<AdminProviderSecretResponse>(
+        '/admin/api/provider-config/secrets',
+        {
+          method: 'PUT',
+          body: input,
+        }
+      );
+    },
+
+    validateProviderConfig(input = {}) {
+      return request<AdminProviderValidationResponse>(
+        '/admin/api/provider-config/validate',
+        {
+          method: 'POST',
+          body: {
+            testConnections: input.testConnections ?? false,
+          },
+        }
+      );
+    },
+
+    applyProviderConfig() {
+      return request<AdminProviderApplyResponse>(
+        '/admin/api/provider-config/apply',
+        {
+          method: 'POST',
+          body: {},
+        }
+      );
     },
   };
 }

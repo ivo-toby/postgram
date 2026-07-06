@@ -14,6 +14,7 @@ import {
 } from '../../lib/adminApi.ts';
 import AdminApiKeys from './AdminApiKeys.tsx';
 import AdminAudit from './AdminAudit.tsx';
+import AdminConfig from './AdminConfig.tsx';
 
 type AdminDashboardProps = {
   api: AdminApiClient;
@@ -29,6 +30,8 @@ type ResourceState<T> = {
   error: string | null;
   loading: boolean;
 };
+
+type DashboardPanel = 'overview' | 'provider-config';
 
 function pendingResource<T>(): ResourceState<T> {
   return {
@@ -118,6 +121,30 @@ function InlineMetric({
       <p className="text-[11px] uppercase text-gray-500">{label}</p>
       <div className="mt-1 text-sm font-medium text-gray-100">{value}</div>
     </div>
+  );
+}
+
+function DashboardNavButton({
+  active,
+  children,
+  onClick,
+}: {
+  active: boolean;
+  children: ReactNode;
+  onClick: () => void;
+}) {
+  return (
+    <button
+      type="button"
+      onClick={onClick}
+      className={`rounded-md px-3 py-1.5 text-sm transition-colors ${
+        active
+          ? 'bg-gray-800 text-white'
+          : 'text-gray-400 hover:bg-gray-800/60 hover:text-white'
+      }`}
+    >
+      {children}
+    </button>
   );
 }
 
@@ -292,6 +319,7 @@ export default function AdminDashboard({
   stepUp,
   user,
 }: AdminDashboardProps) {
+  const [activePanel, setActivePanel] = useState<DashboardPanel>('overview');
   const [health, setHealth] = useState<ResourceState<AdminHealth>>(() => pendingResource());
   const [queue, setQueue] = useState<ResourceState<AdminQueueStatus>>(() => pendingResource());
   const [models, setModels] = useState<ResourceState<AdminEmbeddingModel[]>>(() => pendingResource());
@@ -357,21 +385,47 @@ export default function AdminDashboard({
         <InlineMetric label="Step-up" value={stepUpValue} />
       </div>
 
-      <div className="grid gap-3 xl:grid-cols-2">
-        <HealthPanel state={health} />
-        <QueuePanel state={queue} />
-        <StatsPanel state={stats} />
-        <ConfigStatusPanel state={configStatus} />
-        <ModelsPanel state={models} />
-        <JobsPanel state={jobs} />
-      </div>
+      <nav className="flex flex-wrap gap-2 border-b border-gray-800 pb-3">
+        <DashboardNavButton
+          active={activePanel === 'overview'}
+          onClick={() => setActivePanel('overview')}
+        >
+          Overview
+        </DashboardNavButton>
+        <DashboardNavButton
+          active={activePanel === 'provider-config'}
+          onClick={() => setActivePanel('provider-config')}
+        >
+          Config
+        </DashboardNavButton>
+      </nav>
 
-      <AdminApiKeys
-        api={api}
-        onAuthUpdate={onAuthUpdate}
-        onSessionExpired={onSessionExpired}
-      />
-      <AdminAudit api={api} onSessionExpired={onSessionExpired} />
+      {activePanel === 'provider-config' ? (
+        <AdminConfig
+          api={api}
+          initialStepUp={stepUp}
+          onAuthUpdate={onAuthUpdate}
+          onSessionExpired={onSessionExpired}
+        />
+      ) : (
+        <>
+          <div className="grid gap-3 xl:grid-cols-2">
+            <HealthPanel state={health} />
+            <QueuePanel state={queue} />
+            <StatsPanel state={stats} />
+            <ConfigStatusPanel state={configStatus} />
+            <ModelsPanel state={models} />
+            <JobsPanel state={jobs} />
+          </div>
+
+          <AdminApiKeys
+            api={api}
+            onAuthUpdate={onAuthUpdate}
+            onSessionExpired={onSessionExpired}
+          />
+          <AdminAudit api={api} onSessionExpired={onSessionExpired} />
+        </>
+      )}
     </section>
   );
 }

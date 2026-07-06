@@ -92,6 +92,26 @@ export function registerAdminProviderConfigRoutes(
   pool: Pool,
   options: AdminProviderConfigRouteOptions = {}
 ): void {
+  async function handleSaveSecret(
+    c: Context<{ Variables: { admin: AdminRequestContext } }>
+  ) {
+    setAdminNoStoreHeaders(c);
+    const admin = c.get('admin');
+    const body = parseJsonBody(saveSecretSchema, await readJson(c));
+    const secret = await saveProviderSecret(pool, {
+      name: body.name,
+      plaintext: body.plaintext,
+      encryptionKey: requireSettingsEncryptionKey(
+        options.adminSettingsEncryptionKey
+      ),
+      actorAdminUserId: admin.user.id
+    });
+    if (secret.isErr()) {
+      throw secret.error;
+    }
+    return c.json({ secret: secret.value });
+  }
+
   app.get(
     '/admin/api/provider-config',
     createAdminSessionMiddleware({ pool, enforceCsrf: false }),
@@ -132,23 +152,14 @@ export function registerAdminProviderConfigRoutes(
     '/admin/api/provider-config/secrets',
     createAdminSessionMiddleware({ pool }),
     createActiveAdminMiddleware({ requireStepUp: true }),
-    async (c) => {
-      setAdminNoStoreHeaders(c);
-      const admin = c.get('admin');
-      const body = parseJsonBody(saveSecretSchema, await readJson(c));
-      const secret = await saveProviderSecret(pool, {
-        name: body.name,
-        plaintext: body.plaintext,
-        encryptionKey: requireSettingsEncryptionKey(
-          options.adminSettingsEncryptionKey
-        ),
-        actorAdminUserId: admin.user.id
-      });
-      if (secret.isErr()) {
-        throw secret.error;
-      }
-      return c.json({ secret: secret.value });
-    }
+    handleSaveSecret
+  );
+
+  app.put(
+    '/admin/api/provider-config/secrets',
+    createAdminSessionMiddleware({ pool }),
+    createActiveAdminMiddleware({ requireStepUp: true }),
+    handleSaveSecret
   );
 
   app.post(

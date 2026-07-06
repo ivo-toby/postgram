@@ -22,10 +22,15 @@ worktree_status: clean_pushed
 pr: https://github.com/ivo-toby/postgram/pull/90
 worker_thread_id: 019f387a-3f1d-74a0-9949-5a318a43e494
 review_thread_id: 019f38ab-a97f-7462-84dc-5537e1efe934
-current_gate: needs_fixes
-branch_freshness: dirty_product_conflicts_needs_freshness_refresh
+current_gate: reviewing
+branch_freshness: current_for_followup_review
 verification:
+  - git rev-list --left-right --count origin/codex/epic/admin-configuration-frontend...HEAD
+  - git merge-tree --write-tree origin/codex/epic/admin-configuration-frontend HEAD
+  - git diff --check origin/codex/epic/admin-configuration-frontend...HEAD
   - npm --prefix ui run test -- --run src/components/AdminConfig.test.tsx
+  - npm --prefix ui run test -- --run src/components/AdminOps.test.tsx
+  - npm --prefix ui run test -- --run src/components/AdminAuth.test.tsx
   - npm --prefix ui run typecheck
   - npm run typecheck
   - npm test -- tests/integration/admin-provider-config.test.ts
@@ -38,9 +43,7 @@ verification:
 
 ## Status
 
-needs_fixes
-
-reviewing
+review
 
 ## Parent Ticket
 
@@ -284,9 +287,27 @@ maintenance UI if useful.
 - Worker PASS scoped prettier check plus `git diff --check`.
 - Worker PASS `codex review --uncommitted` after worker P1/P2 fixes.
 - Controller PASS `git diff --check origin/codex/epic/admin-configuration-frontend...HEAD`.
-- Controller BLOCKED freshness: PR #90 is `DIRTY`; merge-tree conflicts in
-  the TASK-013 review file, `AdminAuth` test/component, `AdminDashboard`, and
-  `adminApi`.
+- Follow-up PASS `git rev-list --left-right --count origin/codex/epic/admin-configuration-frontend...HEAD`
+  returned no base-only commits in final local verification.
+- Follow-up PASS `git merge-tree --write-tree origin/codex/epic/admin-configuration-frontend HEAD`
+  returned clean.
+- Follow-up PASS `git diff --check origin/codex/epic/admin-configuration-frontend...HEAD`.
+- Follow-up PASS: TASK-013 branch was refreshed against latest
+  `origin/codex/epic/admin-configuration-frontend`; product integration
+  conflicts were resolved by preserving the TASK-012 operations dashboard as
+  the default Overview and adding TASK-013 provider configuration as the Config
+  tab.
+- Follow-up PASS:
+  `npm --prefix ui run test -- --run src/components/AdminConfig.test.tsx`
+  (22 tests).
+- Follow-up PASS:
+  `npm --prefix ui run test -- --run src/components/AdminOps.test.tsx`
+  (11 tests).
+- Follow-up PASS:
+  `npm --prefix ui run test -- --run src/components/AdminAuth.test.tsx`
+  (16 tests).
+- Follow-up PASS `npm --prefix ui run typecheck`.
+- Follow-up PASS `npm run typecheck`.
 
 ## Review Feedback
 
@@ -294,13 +315,20 @@ maintenance UI if useful.
 
 - None.
 
+### Review Result
+
+- Schrodinger returned `REVIEW_BLOCKED` for submission
+  `019f38f7-8d65-74e3-8a30-5e4edc7c1b32` with one P2 freshness/product
+  integration blocker and no additional product/security P1/P2 findings.
+
 ### P2
 
-- P2 branch freshness/product integration: PR #90 is `DIRTY` at head
-  `fe1a454f545f815c35978e3c600fd101eae2893f` and merge-tree conflicts require
-  a refresh against the latest epic branch. The fix must preserve the TASK-012
-  operations dashboard panels while integrating `AdminConfig`. Routed to Parfit
-  in submission `019f38fd-830e-7743-889d-ab73a8729989`.
+- Fixed in follow-up: refresh TASK-013 against the latest epic branch, resolve
+  PR #90 `DIRTY` conflicts, and integrate `AdminConfig` into the TASK-012
+  `AdminDashboard` shell without dropping health, queue, stats, config status,
+  models, jobs, API keys, or audit panels.
+  Original blocker was routed to Parfit in submission
+  `019f38fd-830e-7743-889d-ab73a8729989`.
 - 2026-07-06T19:57:31Z follow-up: no new PR head yet; Parfit worktree is
   actively resolving the expected conflicts, so no duplicate nudge was sent.
 - 2026-07-06T20:06:22Z follow-up: resolved pending Schrodinger review at head
@@ -313,6 +341,7 @@ maintenance UI if useful.
 
 ## Completion Notes
 
-- PR #90 is ready for review but cannot merge until the dirty task branch is
-  refreshed against the epic branch and the TASK-012/AdminDashboard/AdminAuth
-  conflicts are resolved.
+- PR #90 follow-up refresh preserves the current epic branch's `AdminAuth`,
+  admin API client, and operations dashboard wiring. TASK-013 provider config
+  is available under the dashboard Config tab while the TASK-012 operations
+  overview remains the default panel.

@@ -22,10 +22,10 @@ branch: codex/task/TASK-017-docker-first-run-no-cli
 worker_worktree: /Users/ivo.toby/workspace/postgram/.worktrees/TASK-017-docker-first-run-no-cli
 worktree_status: clean_pushed
 pr: https://github.com/ivo-toby/postgram/pull/92
-worker_thread_id: null
-review_thread_id: null
-current_gate: ready_for_review
-branch_freshness: current
+worker_thread_id: 019f396f-3da8-7d11-94a0-3d84d26f490b
+review_thread_id: 019f398f-98c3-7350-be3f-1cb4af8aab75
+current_gate: review_passed_pending_freshness
+branch_freshness: refreshed_with_epic_checkpoint
 verification:
   - docker compose config
   - npm run typecheck
@@ -130,6 +130,18 @@ branch `codex/task/TASK-017-docker-first-run-no-cli` and the isolated worktree
 path above. At 2026-07-06T21:54:35Z the task branch/worktree were created from
 the pushed epic activation checkpoint, verified clean/current, and the task
 branch was pushed to GitHub.
+
+Controller review gate:
+
+- Dewey (`019f398f-98c3-7350-be3f-1cb4af8aab75`) returned `REVIEW_BLOCKED` for
+  reviewed head `6a0259701fbfba648d37472653a5760b3d0d1602` with two upgrade
+  blockers.
+- Bacon pushed fix head `48f7f67fc2400a87dd9adbdb175013ed09a5cac4` and
+  confirmed no unpushed work remained.
+- Dewey follow-up returned `REVIEW_PASS` for fix head
+  `48f7f67fc2400a87dd9adbdb175013ed09a5cac4` with no P1/P2/P3 findings.
+- This refresh merged the latest epic checkpoint so the WDD review file conflict
+  is resolved before final merge.
 
 ## RED-GREEN TDD Plan
 

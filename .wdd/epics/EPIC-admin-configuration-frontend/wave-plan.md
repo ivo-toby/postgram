@@ -29,7 +29,7 @@ updated_at: 2026-07-06
 | TASK-014-admin-job-foundation | TICKET-006-maintenance-jobs | TASK-006, TASK-009 | job tables, job service, audit integration, progress state | done |
 | TASK-015-maintenance-admin-api | TICKET-006-maintenance-jobs | TASK-008, TASK-010, TASK-014 | graph/memory/embedding services, dry-run/apply admin APIs, CLI regressions | done |
 | TASK-016-maintenance-admin-ui | TICKET-006-maintenance-jobs | TASK-011, TASK-015 | maintenance UI, confirmations, progress polling, admin API client | done |
-| TASK-017-docker-first-run-no-cli | TICKET-007-docker-e2e-validation | TASK-012, TASK-013, TASK-016 | Docker Compose, `.env.example`, README/deployment docs, smoke tests | in_progress |
+| TASK-017-docker-first-run-no-cli | TICKET-007-docker-e2e-validation | TASK-012, TASK-013, TASK-016 | Docker Compose, `.env.example`, README/deployment docs, smoke tests | review |
 | TASK-018-security-epic-validation | TICKET-007-docker-e2e-validation | TASK-017 | security review, broad validation, final handoff artifacts | todo |
 
 ## Dependency Grid
@@ -859,6 +859,15 @@ Progress:
   `codex/task/TASK-017-docker-first-run-no-cli` and worktree
   `/Users/ivo.toby/workspace/postgram/.worktrees/TASK-017-docker-first-run-no-cli`
   are assigned and pending creation from the pushed activation checkpoint.
+- 2026-07-06T21:54:35Z: branch/worktree were created from pushed activation
+  checkpoint `d43f7df`, verified current with divergence `0 0`, and pushed.
+- 2026-07-06T21:57:06Z: Bacon
+  (`019f396f-3da8-7d11-94a0-3d84d26f490b`) was dispatched; current gate is
+  `no_pr`.
+- 2026-07-06T22:14:02Z: Bacon remains active with uncommitted Docker/docs/
+  backend setup changes and smoke evidence files, no PR exists yet, and
+  `git diff --check` passes. Final branch freshness is required before
+  review/merge because the task branch is behind controller checkpoints.
 
 Stop condition:
 

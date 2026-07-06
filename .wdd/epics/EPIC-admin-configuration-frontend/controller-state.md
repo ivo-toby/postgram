@@ -113,11 +113,11 @@ Mode: adaptive
 
 Cadence: 5m
 
-Status: wave_008_task013_fix_in_progress_merge_conflicts
+Status: wave_008_task013_followup_review_pending
 
-Last check: 2026-07-06T19:57:31Z
+Last check: 2026-07-06T20:06:22Z
 
-Next check due: 2026-07-06T20:02:31Z
+Next check due: 2026-07-06T20:11:22Z
 
 Scheduler reference: `postgram-admin-wave-005-wdd-heartbeat`
 
@@ -128,26 +128,22 @@ Fallback prompt:
 ```text
 WAVE-008 is active. Read .wdd/epics/EPIC-admin-configuration-frontend/orchestration.json
 and controller-state.md. TASK-012 / PR #89 is MERGED and cleaned up. TASK-013 /
-PR #90 is OPEN draft and in needs_fixes after Schrodinger REVIEW_BLOCKED with
-one P2. Feedback was routed to Parfit in submission
-019f38fd-830e-7743-889d-ab73a8729989. Last observed at
-2026-07-06T19:57:31Z: PR #90 still has unchanged head
-fe1a454f545f815c35978e3c600fd101eae2893f and is DIRTY; Parfit did not return,
-but the assigned worktree
-/Users/ivo.toby/workspace/postgram/.worktrees/TASK-013-admin-config-ui is
-active in merge-conflict resolution with unmerged TASK-013 review metadata,
-AdminAuth test/component, AdminDashboard, and adminApi. MERGE_HEAD is
-deab942f8bf06df8ad252fa2248951f5055e703b while latest
-origin/codex/epic/admin-configuration-frontend is
-490117395e4e7553bb5ce1c458081e3f9f817e50, so final freshness against latest
-epic is still required after Parfit resolves conflicts. If Parfit pushed a fix,
-verify rev-list freshness, merge-tree cleanliness, diff-check,
-AdminConfig/AdminOps/AdminAuth UI tests, UI typecheck, and root typecheck, then
-request or follow up review. If no fix exists and the worktree is still active,
-keep needs_fixes and avoid duplicate nudges unless stale. Stop when WAVE-008
-bundles are merged, blocked, cancelled, or ready for wdd-reconcile-wave. After
-WAVE-008 is reconciled, continue to WAVE-009 per Ivo finish-all-waves
-instruction and push to GitHub between tasks/waves.
+PR #90 is OPEN draft at pushed head
+57799dd8a4a61c1292db20e7ef68ed407644dfe1 after Parfit fixed the P2
+branch-freshness/product-integration blocker. GitHub reports PR #90 CLEAN.
+Controller verification passed at 2026-07-06T20:06:22Z: rev-list
+origin/codex/epic/admin-configuration-frontend...HEAD = 0 7, merge-tree clean,
+diff-check clean, AdminConfig tests 22/22, AdminOps tests 11/11, AdminAuth
+tests 16/16, UI typecheck, and root typecheck. Follow-up review was requested
+from Schrodinger (019f38ab-a97f-7462-84dc-5537e1efe934) in submission
+019f3909-49a4-7902-bf82-5ea9a1c7468d and was still pending during the bounded
+wait. Poll review; if REVIEW_PASS, verify freshness still current against
+latest epic, merge PR #90/task branch into codex/epic/admin-configuration-frontend
+according to policy, update WDD artifacts, push, and hand off to
+wdd-reconcile-wave. If REVIEW_BLOCKED, route P1/P2 to Parfit or a fresh fix
+worker. Stop when WAVE-008 bundles are merged, blocked, cancelled, or ready for
+wdd-reconcile-wave. After WAVE-008 is reconciled, continue to WAVE-009 per Ivo
+finish-all-waves instruction and push to GitHub between tasks/waves.
 ```
 
 ## Active Wave Strategy
@@ -160,9 +156,8 @@ instruction and push to GitHub between tasks/waves.
 - WAVE-008 tasks: TASK-012-admin-ops-dashboard-ui and
   TASK-013-admin-config-ui.
 - Confirmation: Ivo via Codex finish-all-waves request on 2026-07-06.
-- Current gate: TASK-012 merged and cleaned up; TASK-013 needs fixes on PR #90
-  for the P2 branch-freshness/product integration blocker. Parfit is actively
-  resolving merge conflicts in the assigned worktree.
+- Current gate: TASK-012 merged and cleaned up; TASK-013 follow-up review
+  pending on PR #90 after Parfit's verified freshness/product integration fix.
 
 ## Last Reconciled Wave
 
@@ -208,7 +203,7 @@ instruction and push to GitHub between tasks/waves.
 | TASK-010-provider-config-apply | TICKET-004-runtime-configuration | codex/task/TASK-010-provider-config-apply | cleaned_up | reconciled | REVIEW_PASS; final branch freshness passed at `515cfa5`; merged locally into epic branch in `f5efbc0`; PR #84 merged at 2026-07-06T11:31:10Z; WAVE-005 reconciled |
 | TASK-011-admin-auth-ui | TICKET-005-admin-frontend | codex/task/TASK-011-admin-auth-ui | cleaned_up | reconciled | Lorentz REVIEW_PASS; refreshed branch head `344bab8`; post-refresh AdminAuth tests/typecheck/diff/merge-tree/JQ passed; merged locally in `4e77a6b`; PR #87 merged at 2026-07-06T15:48:11Z; shared context reconciled |
 | TASK-012-admin-ops-dashboard-ui | TICKET-005-admin-frontend | codex/task/TASK-012-admin-ops-dashboard-ui | cleaned_up | merged | PR #89 MERGED at 2026-07-06T18:54:38Z; Schrodinger REVIEW_PASS; final freshness passed at `298804f`; merged locally in `ef54876`; AdminOps/AdminAuth UI tests and typecheck passed |
-| TASK-013-admin-config-ui | TICKET-005-admin-frontend | codex/task/TASK-013-admin-config-ui | merge_conflict_resolution_in_progress | needs_fixes | PR #90 open/draft at `fe1a454`; Parfit worktree is active with unmerged TASK-013 WDD, AdminAuth, AdminDashboard, and adminApi conflicts; Schrodinger REVIEW_BLOCKED with one P2 branch-freshness/product integration blocker; feedback routed in `019f38fd-830e-7743-889d-ab73a8729989`; final freshness against epic head `4901173` still required |
+| TASK-013-admin-config-ui | TICKET-005-admin-frontend | codex/task/TASK-013-admin-config-ui | clean_pushed | reviewing | PR #90 open/draft and CLEAN at `57799dd`; Parfit resolved the P2 branch-freshness/product integration blocker; controller verification passed branch freshness `0 7`, merge-tree, diff-check, AdminConfig/AdminOps/AdminAuth UI tests, UI typecheck, and root typecheck; Schrodinger follow-up requested in `019f3909-49a4-7902-bf82-5ea9a1c7468d` |
 | TASK-014-admin-job-foundation | TICKET-006-maintenance-jobs | codex/task/TASK-014-admin-job-foundation | cleaned_up | reconciled | Lorentz REVIEW_PASS; freshness current at task head `0e08630`; post-merge tests/typecheck/touched-file ESLint passed; merged locally into epic branch in `c5edbfc`; WAVE-006 reconciled and worktree cleaned up |
 | TASK-015-maintenance-admin-api | TICKET-006-maintenance-jobs | codex/task/TASK-015-maintenance-admin-api | cleaned_up | reconciled | Lorentz REVIEW_PASS; final freshness passed at task head `ea88af4`; post-merge contract tests 4/4, CLI integration 37/37, typecheck, scoped ESLint, JSON parse, and diff check passed; merged locally in `78f0f43`; PR #88 merged at 2026-07-06T17:02:28Z; shared context reconciled |
 | TASK-016-maintenance-admin-ui | TICKET-006-maintenance-jobs | codex/task/TASK-016-maintenance-admin-ui | not_created | planned | `npm --prefix ui run test -- --run src/components/AdminMaintenance.test.tsx`; `npm --prefix ui run typecheck` |
@@ -1632,12 +1627,17 @@ instruction and push to GitHub between tasks/waves.
   AdminAuth test/component, AdminDashboard, and adminApi. The in-progress merge
   is against `deab942`, while latest epic is `4901173`, so final freshness is
   still required after conflicts are resolved. No duplicate nudge was sent.
+- 2026-07-06T20:06:22Z: Parfit pushed the PR #90 freshness fix to
+  `57799dd`; GitHub reports PR #90 `CLEAN`. Controller verification passed:
+  branch divergence `0 7`, merge-tree clean, diff-check clean, AdminConfig
+  tests 22/22, AdminOps tests 11/11, AdminAuth tests 16/16, UI typecheck, and
+  root typecheck. Follow-up review was requested from Schrodinger in submission
+  `019f3909-49a4-7902-bf82-5ea9a1c7468d`; no result returned during the
+  bounded wait.
 
 ## Next Action
 
-Next action: inspect Parfit and PR #90 for a pushed conflict-resolution fix. If
-Parfit pushed freshness/product integration changes, verify branch freshness
-against latest epic, merge-tree, diff-check, AdminConfig/AdminOps/AdminAuth UI
-tests, UI typecheck, and root typecheck, then request or follow follow-up
-review. If no fix exists and the worktree is still active, keep `needs_fixes`
-and avoid duplicate nudges unless stale.
+Next action: poll Schrodinger follow-up review for PR #90. If it passes, verify
+freshness still current against the latest epic branch and merge the task branch
+into `codex/epic/admin-configuration-frontend`. If it blocks, route P1/P2
+feedback to Parfit or a fresh fix worker.

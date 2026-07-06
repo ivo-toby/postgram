@@ -36,7 +36,8 @@ Feedback was routed to Goodall. Goodall refreshed and pushed PR #84 at
 follow-up review returned `REVIEW_PASS`. The controller performed the final
 freshness refresh, pushed task head `515cfa5`, merged TASK-010 locally into the
 epic branch in `f5efbc0`, and moved the task file to `done/`. WAVE-005 is ready
-for reconciliation.
+for reconciliation. GitHub marked PR #84 `MERGED` at 2026-07-06T11:31:10Z after
+closeout commit `4891bf1` was pushed.
 
 WAVE-004 is done and reconciled. PR #81/TASK-009 and PR #82/TASK-006 are
 merged, shared context is reconciled, and both WAVE-004 worktrees are cleaned
@@ -66,9 +67,9 @@ Cadence: 5 minutes
 
 Status: ready_for_reconciliation_wave_005
 
-Last check: 2026-07-06T11:28:08Z
+Last check: 2026-07-06T11:31:10Z
 
-Next check due: 2026-07-06T11:33:08Z
+Next check due: 2026-07-06T11:36:10Z
 
 Scheduler reference: `postgram-admin-wave-005-wdd-heartbeat`
 
@@ -82,14 +83,14 @@ active wave WAVE-005. Use the wdd-reconcile-wave skill. Start in
 codex/epic/admin-configuration-frontend. Read
 .wdd/epics/EPIC-admin-configuration-frontend/orchestration.json and
 controller-state.md. Confirm WAVE-005 bundles TASK-007-admin-api-shell-diagnostics
-and TASK-010-provider-config-apply are merged into the epic branch, task files
-are in done/, currentGates.workerDispatch entries are merged, WAVE-005
-waveCompletion is ready_for_reconciliation, branch freshness is
-current_at_merge, cleanup is cleanup_deferred, blocking feedback is empty, and
-shared-context reconciliation is queued. Run wdd-reconcile-wave for WAVE-005,
-reconcile admin API diagnostics and provider-config apply/runtime decisions
-into shared context and downstream tasks, update orchestration.json and
-controller-state.md, clean up WAVE-005 worktrees if safe, then continue to
+and TASK-010-provider-config-apply are merged into the epic branch, PR #83 and
+PR #84 are MERGED, task files are in done/, currentGates.workerDispatch entries
+are merged, WAVE-005 waveCompletion is ready_for_reconciliation, branch
+freshness is current_at_merge, cleanup is cleanup_deferred, blocking feedback
+is empty, and shared-context reconciliation is queued. Run wdd-reconcile-wave
+for WAVE-005, reconcile admin API diagnostics and provider-config apply/runtime
+decisions into shared context and downstream tasks, update orchestration.json
+and controller-state.md, clean up WAVE-005 worktrees if safe, then continue to
 WAVE-006 per Ivo finish-all-waves instruction after reconciliation is pushed.
 ```
 
@@ -141,7 +142,7 @@ WAVE-006 per Ivo finish-all-waves instruction after reconciliation is pushed.
 | TASK-007-admin-api-shell-diagnostics | TICKET-003-admin-api-foundation | codex/task/TASK-007-admin-api-shell-diagnostics | clean_pushed | merged | REVIEW_PASS; freshness verification passed at `f0e889e`; merged locally into epic branch in `16985ef`; cleanup deferred until WAVE-005 reconciliation |
 | TASK-008-admin-key-audit-stats-api | TICKET-003-admin-api-foundation | codex/task/TASK-008-admin-key-audit-stats-api | not_created | planned | `npm test -- tests/contract/admin-key-audit-stats.test.ts`; `npm test -- tests/integration/key-service.test.ts`; `npm run typecheck` |
 | TASK-009-settings-secret-store | TICKET-004-runtime-configuration | codex/task/TASK-009-settings-secret-store | cleaned_up | reconciled | PR #81 follow-up REVIEW_PASS, final branch freshness passed at `ca9c96f`, merged locally into epic branch in `b63ad08`; worktree cleaned up during WAVE-004 reconciliation |
-| TASK-010-provider-config-apply | TICKET-004-runtime-configuration | codex/task/TASK-010-provider-config-apply | clean_pushed | merged | REVIEW_PASS; final branch freshness passed at `515cfa5`; merged locally into epic branch in `f5efbc0`; cleanup deferred until WAVE-005 reconciliation |
+| TASK-010-provider-config-apply | TICKET-004-runtime-configuration | codex/task/TASK-010-provider-config-apply | clean_pushed | merged | REVIEW_PASS; final branch freshness passed at `515cfa5`; merged locally into epic branch in `f5efbc0`; PR #84 merged at 2026-07-06T11:31:10Z; cleanup deferred until WAVE-005 reconciliation |
 | TASK-011-admin-auth-ui | TICKET-005-admin-frontend | codex/task/TASK-011-admin-auth-ui | not_created | planned | `npm --prefix ui run test -- --run src/components/AdminAuth.test.tsx`; `npm --prefix ui run typecheck` |
 | TASK-012-admin-ops-dashboard-ui | TICKET-005-admin-frontend | codex/task/TASK-012-admin-ops-dashboard-ui | not_created | planned | `npm --prefix ui run test -- --run src/components/AdminOps.test.tsx`; `npm --prefix ui run typecheck` |
 | TASK-013-admin-config-ui | TICKET-005-admin-frontend | codex/task/TASK-013-admin-config-ui | not_created | planned | `npm --prefix ui run test -- --run src/components/AdminConfig.test.tsx`; `npm --prefix ui run typecheck` |
@@ -448,6 +449,10 @@ WAVE-006 per Ivo finish-all-waves instruction after reconciliation is pushed.
   merged TASK-010 locally into the epic branch in `f5efbc0`, and moved the
   task file to `done/`. WAVE-005 is ready for reconciliation; cleanup remains
   deferred and shared-context reconciliation is queued.
+- WAVE-005 2026-07-06T11:31:10Z observation: GitHub marked PR #84 `MERGED` at
+  2026-07-06T11:31:10Z after closeout commit `4891bf1` was pushed to
+  `codex/epic/admin-configuration-frontend`. The controller checkout is clean
+  and WAVE-005 remains ready for reconciliation.
 
 ## WAVE-001 Reconciled State
 
@@ -1109,10 +1114,13 @@ WAVE-006 per Ivo finish-all-waves instruction after reconciliation is pushed.
   API tests and typecheck passed, and TASK-010 merged locally into the epic
   branch in `f5efbc0`. WAVE-005 is ready for reconciliation; next check due
   2026-07-06T11:33:08Z.
+- 2026-07-06T11:31:10Z: GitHub marked PR #84 `MERGED` after closeout commit
+  `4891bf1` was pushed. WAVE-005 remains ready for reconciliation; next check
+  due 2026-07-06T11:36:10Z.
 
 ## Next Action
 
-Next WAVE-005 heartbeat is due at 2026-07-06T11:33:08Z. Run
+Next WAVE-005 heartbeat is due at 2026-07-06T11:36:10Z. Run
 `wdd-reconcile-wave` for WAVE-005, reconcile admin API diagnostics and
 provider-config apply/runtime decisions into shared context and downstream
 tasks, clean up WAVE-005 worktrees if safe, push reconciliation, then continue

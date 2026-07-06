@@ -804,13 +804,13 @@
           "sharedContextReconciliation": "queued",
           "dispatchedAt": "2026-07-06T05:56:19Z",
           "dispatchBaseCommit": "70df1c5f9324dd3f9ff424f199ee1b8896a2e410",
-          "lastObservedAt": "2026-07-06T11:23:20Z",
+          "lastObservedAt": "2026-07-06T11:31:10Z",
           "worktreeObservation": {
-            "observedAt": "2026-07-06T11:28:08Z",
+            "observedAt": "2026-07-06T11:31:10Z",
             "status": "merged_local_ready_for_reconciliation",
             "workerStatus": "DONE",
             "pr": "https://github.com/ivo-toby/postgram/pull/84",
-            "prState": "OPEN_DRAFT_PENDING_EPIC_PUSH",
+            "prState": "MERGED",
             "prMergeStateStatus": "CLEAN_BEFORE_LOCAL_MERGE",
             "prHead": "515cfa5a16b213f4fda78a0c536fb1806daf8b68",
             "workerThreadId": "019f35ff-a193-7ae0-a4b8-1ec53faabb74",
@@ -819,18 +819,20 @@
             "reviewerNickname": "Lorentz",
             "reviewResult": "REVIEW_PASS",
             "branchDivergence": "Final task branch divergence before merge was 0 5; local merge commit f5efbc0 merged TASK-010 into the epic branch.",
-            "note": "TASK-010 is locally merged into the epic branch. Cleanup is deferred until WAVE-005 reconciliation; shared context reconciliation remains queued."
+            "note": "TASK-010 is merged into the epic branch and GitHub marked PR #84 MERGED after closeout commit 4891bf1 was pushed. Cleanup is deferred until WAVE-005 reconciliation; shared context reconciliation remains queued.",
+            "remotePrMergedAt": "2026-07-06T11:31:10Z"
           },
           "reviewRequestedAt": "2026-07-06T11:07:00Z",
           "reviewStatus": "REVIEW_PASS",
           "workerFinalStatus": "DONE",
           "prState": {
-            "state": "OPEN",
+            "state": "MERGED",
             "isDraft": true,
-            "mergeStateStatus": "CLEAN",
+            "mergeStateStatus": "UNKNOWN",
             "headRefOid": "515cfa5a16b213f4fda78a0c536fb1806daf8b68",
             "baseRefOid": "4c2b38bc759cc9a30b66e564f1af70633285ad52",
-            "updatedAt": "2026-07-06T11:27:29Z"
+            "updatedAt": "2026-07-06T11:31:11Z",
+            "mergedAt": "2026-07-06T11:31:10Z"
           },
           "reviewResult": "REVIEW_PASS",
           "reviewedAt": "2026-07-06T11:28:08Z",
@@ -859,14 +861,17 @@
               "fixCommit": "515cfa5a16b213f4fda78a0c536fb1806daf8b68",
               "summary": "Goodall refreshed PR #84 through latest epic commit 4c2b38b, preserving TASK-007 diagnostics wiring and TASK-010 provider-config wiring. Lorentz follow-up returned REVIEW_PASS and controller final freshness verification passed before merge."
             }
-          ]
+          ],
+          "remotePrState": "MERGED",
+          "remotePrMergedAt": "2026-07-06T11:31:10Z",
+          "closeoutCommit": "4891bf1"
         }
       ],
       "activationCommit": "70df1c5f9324dd3f9ff424f199ee1b8896a2e410",
       "dispatchState": "dispatched",
-      "lastObservedAt": "2026-07-06T11:28:08Z",
+      "lastObservedAt": "2026-07-06T11:31:10Z",
       "dispatchedAt": "2026-07-06T05:56:19Z",
-      "completedAt": "2026-07-06T11:28:08Z"
+      "completedAt": "2026-07-06T11:31:10Z"
     },
     {
       "id": "WAVE-006",
@@ -1960,10 +1965,10 @@
     "mode": "codex_thread_heartbeat",
     "cadence": "5m",
     "status": "ready_for_reconciliation_wave_005",
-    "lastCheckedAt": "2026-07-06T11:28:08Z",
-    "nextCheckDueAt": "2026-07-06T11:33:08Z",
+    "lastCheckedAt": "2026-07-06T11:31:10Z",
+    "nextCheckDueAt": "2026-07-06T11:36:10Z",
     "schedulerRef": "postgram-admin-wave-005-wdd-heartbeat",
-    "fallbackPrompt": "Run one bounded WDD reconciliation handoff heartbeat for /Users/ivo.toby/workspace/postgram, epic EPIC-admin-configuration-frontend, active wave WAVE-005. Use the wdd-reconcile-wave skill. Start in /Users/ivo.toby/workspace/postgram on branch codex/epic/admin-configuration-frontend. Read .wdd/epics/EPIC-admin-configuration-frontend/orchestration.json and controller-state.md. Confirm WAVE-005 bundles TASK-007-admin-api-shell-diagnostics and TASK-010-provider-config-apply are merged into the epic branch, task files are in done/, currentGates.workerDispatch entries are merged, WAVE-005 waveCompletion is ready_for_reconciliation, branch freshness is current_at_merge, cleanup is cleanup_deferred, blocking feedback is empty, and shared-context reconciliation is queued. Run wdd-reconcile-wave for WAVE-005, reconcile admin API diagnostics and provider-config apply/runtime decisions into shared context and downstream tasks, update orchestration.json and controller-state.md, clean up WAVE-005 worktrees if safe, then continue to WAVE-006 per Ivo finish-all-waves instruction after reconciliation is pushed."
+    "fallbackPrompt": "Run one bounded WDD reconciliation handoff heartbeat for /Users/ivo.toby/workspace/postgram, epic EPIC-admin-configuration-frontend, active wave WAVE-005. Use the wdd-reconcile-wave skill. Start in /Users/ivo.toby/workspace/postgram on branch codex/epic/admin-configuration-frontend. Read .wdd/epics/EPIC-admin-configuration-frontend/orchestration.json and controller-state.md. Confirm WAVE-005 bundles TASK-007-admin-api-shell-diagnostics and TASK-010-provider-config-apply are merged into the epic branch, PR #83 and PR #84 are MERGED, task files are in done/, currentGates.workerDispatch entries are merged, WAVE-005 waveCompletion is ready_for_reconciliation, branch freshness is current_at_merge, cleanup is cleanup_deferred, blocking feedback is empty, and shared-context reconciliation is queued. Run wdd-reconcile-wave for WAVE-005, reconcile admin API diagnostics and provider-config apply/runtime decisions into shared context and downstream tasks, update orchestration.json and controller-state.md, clean up WAVE-005 worktrees if safe, then continue to WAVE-006 per Ivo finish-all-waves instruction after reconciliation is pushed."
   },
   "sharedContext": {
     "index": "shared-context/index.md",
@@ -2076,13 +2081,13 @@
         "sharedContextReconciliation": "queued",
         "dispatchedAt": "2026-07-06T05:56:19Z",
         "dispatchBaseCommit": "70df1c5f9324dd3f9ff424f199ee1b8896a2e410",
-        "lastObservedAt": "2026-07-06T11:23:20Z",
+        "lastObservedAt": "2026-07-06T11:31:10Z",
         "worktreeObservation": {
-          "observedAt": "2026-07-06T11:28:08Z",
+          "observedAt": "2026-07-06T11:31:10Z",
           "status": "merged_local_ready_for_reconciliation",
           "workerStatus": "DONE",
           "pr": "https://github.com/ivo-toby/postgram/pull/84",
-          "prState": "OPEN_DRAFT_PENDING_EPIC_PUSH",
+          "prState": "MERGED",
           "prMergeStateStatus": "CLEAN_BEFORE_LOCAL_MERGE",
           "prHead": "515cfa5a16b213f4fda78a0c536fb1806daf8b68",
           "workerThreadId": "019f35ff-a193-7ae0-a4b8-1ec53faabb74",
@@ -2091,18 +2096,20 @@
           "reviewerNickname": "Lorentz",
           "reviewResult": "REVIEW_PASS",
           "branchDivergence": "Final task branch divergence before merge was 0 5; local merge commit f5efbc0 merged TASK-010 into the epic branch.",
-          "note": "TASK-010 is locally merged into the epic branch. Cleanup is deferred until WAVE-005 reconciliation; shared context reconciliation remains queued."
+          "note": "TASK-010 is merged into the epic branch and GitHub marked PR #84 MERGED after closeout commit 4891bf1 was pushed. Cleanup is deferred until WAVE-005 reconciliation; shared context reconciliation remains queued.",
+          "remotePrMergedAt": "2026-07-06T11:31:10Z"
         },
         "reviewRequestedAt": "2026-07-06T11:07:00Z",
         "reviewStatus": "REVIEW_PASS",
         "workerFinalStatus": "DONE",
         "prState": {
-          "state": "OPEN",
+          "state": "MERGED",
           "isDraft": true,
-          "mergeStateStatus": "CLEAN",
+          "mergeStateStatus": "UNKNOWN",
           "headRefOid": "515cfa5a16b213f4fda78a0c536fb1806daf8b68",
           "baseRefOid": "4c2b38bc759cc9a30b66e564f1af70633285ad52",
-          "updatedAt": "2026-07-06T11:27:29Z"
+          "updatedAt": "2026-07-06T11:31:11Z",
+          "mergedAt": "2026-07-06T11:31:10Z"
         },
         "reviewResult": "REVIEW_PASS",
         "reviewedAt": "2026-07-06T11:28:08Z",
@@ -2131,15 +2138,18 @@
             "fixCommit": "515cfa5a16b213f4fda78a0c536fb1806daf8b68",
             "summary": "Goodall refreshed PR #84 through latest epic commit 4c2b38b, preserving TASK-007 diagnostics wiring and TASK-010 provider-config wiring. Lorentz follow-up returned REVIEW_PASS and controller final freshness verification passed before merge."
           }
-        ]
+        ],
+        "remotePrState": "MERGED",
+        "remotePrMergedAt": "2026-07-06T11:31:10Z",
+        "closeoutCommit": "4891bf1"
       }
     ],
     "status": "ready_for_reconciliation",
     "dispatchedAt": "2026-07-06T05:56:19Z",
     "activationCommit": "70df1c5f9324dd3f9ff424f199ee1b8896a2e410",
-    "lastObservedAt": "2026-07-06T11:28:08Z",
+    "lastObservedAt": "2026-07-06T11:31:10Z",
     "dispatchState": "dispatched",
-    "completedAt": "2026-07-06T11:28:08Z"
+    "completedAt": "2026-07-06T11:31:10Z"
   },
   "currentGates": {
     "epicBranch": {
@@ -2384,7 +2394,10 @@
           }
         ],
         "branchFreshness": "current_at_merge",
-        "note": "Lorentz follow-up review passed after Goodall freshness fix. TASK-010 was merged locally into the epic branch in f5efbc0."
+        "note": "Lorentz follow-up review passed after Goodall freshness fix. TASK-010 was merged locally into the epic branch in f5efbc0; GitHub marked PR #84 MERGED after closeout commit 4891bf1 was pushed.",
+        "remotePrState": "MERGED",
+        "remotePrMergedAt": "2026-07-06T11:31:10Z",
+        "closeoutCommit": "4891bf1"
       }
     },
     "branchFreshness": {

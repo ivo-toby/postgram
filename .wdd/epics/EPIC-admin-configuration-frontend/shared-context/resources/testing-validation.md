@@ -517,6 +517,68 @@ Carry-forward test expectations:
   idempotency, safe result rendering, and the `llm-extraction` edge-prune
   constraint.
 
+## WAVE-010 Verification Evidence
+
+TASK-017 merged after Dewey `REVIEW_PASS` with no remaining P1/P2/P3 findings.
+
+TASK-017 passed before merge after final freshness head `38bfe21`:
+
+- `git rev-list --left-right --count origin/codex/epic/admin-configuration-frontend...HEAD`
+  reported `0 4`.
+- `git merge-tree --write-tree origin/codex/epic/admin-configuration-frontend HEAD`
+  was clean.
+- `git diff --check origin/codex/epic/admin-configuration-frontend...HEAD`
+- `docker compose config`
+- `npm test -- tests/unit/docker-first-run.test.ts` (5 tests)
+- `npm test -- tests/integration/admin-auth-service.test.ts` (18 tests)
+- `npm run typecheck`
+- `npm --prefix ui run typecheck`
+- `npm --prefix ui run build` passed with the existing Vite chunk-size warning.
+
+Post-merge verification for merge commit `ce0bb83` passed:
+
+- `git diff --check HEAD^..HEAD`
+- `jq empty .wdd/epics/EPIC-admin-configuration-frontend/orchestration.json`
+- `docker compose config`
+- `npm test -- tests/unit/docker-first-run.test.ts` (5 tests)
+- `npm test -- tests/integration/admin-auth-service.test.ts` (18 tests)
+- `npm run typecheck`
+- `npm --prefix ui run typecheck`
+- `npm --prefix ui run build` with the existing chunk-size warning.
+
+Clean-volume Docker/browser smoke evidence:
+
+- `postgram-secrets` generated `postgres-password`, `admin-mfa-secret-key`, and
+  `admin-settings-encryption-key` in the persistent `postgram_secrets` volume.
+- API and UI health checks returned OK through the configured host ports.
+- Browser flow completed first admin setup, MFA enrollment, protected dashboard
+  access, API-key creation, Config tab provider secret entry, restart/reload
+  redaction checks, and one safe maintenance dry-run with job polling.
+- After restart, Config showed provider-secret configured metadata while the
+  replacement input was blank, the page did not contain the fake secret, and
+  browser local/session storage had no admin or secret material.
+- A direct database check found encrypted provider-secret ciphertext and did
+  not contain the fake plaintext secret.
+
+Review blockers fixed before merge:
+
+- Existing Compose installs with initialized `pgdata` and legacy
+  `POSTGRES_PASSWORD` are preserved by seeding the new `postgres-password`
+  secret from `POSTGRES_PASSWORD` when the secret file is absent.
+- Existing OpenAI-backed Compose installs are preserved because Compose leaves
+  `EMBEDDING_PROVIDER` blank and the entrypoint selects OpenAI when
+  `OPENAI_API_KEY` is present.
+
+Carry-forward test expectations:
+
+- TASK-018 must rerun or explicitly verify the clean-volume Docker config/smoke
+  evidence that supports the no-normal-CLI claim.
+- TASK-018 must include final regression checks for legacy `POSTGRES_PASSWORD`
+  upgrade preservation, OpenAI provider default preservation, strict
+  admin-settings key parsing/fail-closed behavior, Config secret redaction
+  after restart, browser storage non-persistence, and emergency `pgm-admin`
+  fallback wording.
+
 ## Durable Memory
 
 ### Docker First-Run Must Be Tested, Not Assumed

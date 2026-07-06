@@ -100,6 +100,13 @@ configuration, maintenance jobs, or Docker behavior.
   apply, and job polling; requires preview-before-apply, step-up, and scoped
   idempotency evidence; constrains edge pruning to `llm-extraction`; and
   renders only safe job summaries.
+- Docker first-run setup is now implemented for the supported no-normal-CLI
+  happy path. Compose generates and persists `postgres-password`,
+  `admin-mfa-secret-key`, and `admin-settings-encryption-key` in the
+  `postgram_secrets` volume; the app entrypoint loads those files, constructs
+  `DATABASE_URL` when absent, chooses `openai` for legacy `OPENAI_API_KEY`
+  installs or `ollama` for no-key clean boots, and fails closed before bind
+  when admin key material is missing or invalid.
 
 ## Key Warnings
 
@@ -128,6 +135,10 @@ configuration, maintenance jobs, or Docker behavior.
   can still expose setup. Loopback binding is not the admin security boundary.
 - Runtime configuration value changes must update Docker and deployment-facing
   docs in the same change.
+- Supported Docker setup no longer requires normal `pgm-admin` usage for
+  bootstrap, provider configuration, API-key creation, dashboard inspection, or
+  safe maintenance dry-runs. Emergency `pgm-admin` recovery remains a separate
+  fallback path.
 - The epic branch convention is `codex/epic/admin-configuration-frontend`.
 - Wave 1 is a bundled feasibility/security gate. Broad implementation should
   start only after its reconciled decisions are read and the next wave is
@@ -429,8 +440,43 @@ configuration, maintenance jobs, or Docker behavior.
     maintenance dry-run from the browser without normal `pgm-admin` use.
   - TASK-018 final validation must include maintenance UI checks for
     preview-before-apply, step-up, scoped idempotency, job polling, safe result
-    rendering, `llm-extraction` edge-prune constraint, and no browser storage
-    of admin/session/bootstrap/TOTP/provider secret/job secret material.
+  rendering, `llm-extraction` edge-prune constraint, and no browser storage
+  of admin/session/bootstrap/TOTP/provider secret/job secret material.
+
+### WAVE-010 Docker First Run No CLI
+
+- Status: merged and reconciled on 2026-07-06.
+- PR: https://github.com/ivo-toby/postgram/pull/92, merged at
+  2026-07-06T22:56:32Z.
+- Merge commit: `ce0bb83` for TASK-017 docker first-run/no-CLI.
+- Review: Dewey `REVIEW_PASS` after Bacon fixed upgrade blockers for existing
+  Compose `POSTGRES_PASSWORD`/pgdata installs and OpenAI-backed installs with
+  `OPENAI_API_KEY` but no explicit `EMBEDDING_PROVIDER`.
+- Implemented Docker setup contract:
+  - `postgram-secrets` initializes a persistent `postgram_secrets` volume with
+    `postgres-password`, `admin-mfa-secret-key`, and
+    `admin-settings-encryption-key`.
+  - Existing Compose installs preserve database access by seeding
+    `postgres-password` from legacy `POSTGRES_PASSWORD` when the secret file is
+    absent.
+  - The app entrypoint reads secret files, constructs `DATABASE_URL` when
+    needed, validates the admin MFA/settings encryption keys before server
+    bind, and keeps `ADMIN_SETTINGS_ENCRYPTION_KEY` in the strict 32-byte
+    base64url/base64 format required by the settings service.
+  - Compose leaves `EMBEDDING_PROVIDER` blank so the entrypoint preserves
+    OpenAI-backed installs when `OPENAI_API_KEY` exists and selects Ollama for
+    no-key clean boots.
+  - Startup creates one first-run bootstrap token when no active admin and no
+    usable token exist; the browser Admin UI completes setup, MFA, provider
+    secret entry, API-key creation, dashboard inspection, and a safe
+    maintenance dry-run without normal `pgm-admin` use.
+- Carry-forward gates:
+  - TASK-018 must treat the no-CLI claim as proven only for the documented
+    supported happy path and keep emergency `pgm-admin` as fallback.
+  - TASK-018 must explicitly recheck clean-volume Docker config/smoke evidence,
+    legacy `POSTGRES_PASSWORD` upgrade preservation, OpenAI provider default
+    preservation, admin key fail-closed behavior, Config-tab secret redaction
+    after restart, and browser storage non-persistence.
 
 ## Recent Durable Memory
 

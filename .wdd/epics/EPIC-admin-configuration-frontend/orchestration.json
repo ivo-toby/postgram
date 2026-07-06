@@ -1214,7 +1214,7 @@
     },
     {
       "id": "WAVE-010",
-      "status": "in_progress",
+      "status": "done",
       "strategy": {
         "profile": "full",
         "executionMode": "bundled",
@@ -1239,18 +1239,27 @@
         "TASK-017-docker-first-run-no-cli"
       ],
       "readyAt": "2026-07-06T21:42:32Z",
-      "activatedAt": "2026-07-06T21:51:22Z"
+      "activatedAt": "2026-07-06T21:51:22Z",
+      "reconciledAt": "2026-07-06T22:58:32Z",
+      "completedAt": "2026-07-06T22:58:32Z",
+      "outcome": {
+        "status": "reconciled",
+        "mergeCommit": "ce0bb83d6075d2644f253db490e43c0c41c20381",
+        "pr": "https://github.com/ivo-toby/postgram/pull/92",
+        "mergedAt": "2026-07-06T22:56:32Z",
+        "summary": "Docker first-run/no-normal-CLI path reconciled into shared context and TASK-018 final validation handoff."
+      }
     },
     {
       "id": "WAVE-011",
-      "status": "planned",
+      "status": "ready_to_start",
       "strategy": {
         "profile": "full",
         "executionMode": "bundled",
         "reviewMode": "risk_based",
         "monitoringMode": "adaptive",
         "recommendedBy": "wdd-plan-epic",
-        "confirmedBy": null,
+        "confirmedBy": "Ivo via Codex finish-all-waves request on 2026-07-06",
         "requiresUserConfirmation": false,
         "confidence": "high",
         "rationale": [
@@ -1266,7 +1275,8 @@
       },
       "tasks": [
         "TASK-018-security-epic-validation"
-      ]
+      ],
+      "readyAt": "2026-07-06T22:58:32Z"
     }
   ],
   "taskState": [
@@ -2483,7 +2493,7 @@
       "branchFreshness": "current_at_merge",
       "blockingFeedback": [],
       "verification": {
-        "result": "review_passed_freshness_verified_merged_pending_push",
+        "result": "review_passed_freshness_verified_merged_reconciled",
         "checkedAt": "2026-07-06T22:43:02Z",
         "commands": [
           "git merge --no-ff origin/codex/epic/admin-configuration-frontend -m \"chore: refresh task 017 after review pass\"",
@@ -2508,13 +2518,14 @@
           "npm --prefix ui run typecheck",
           "npm --prefix ui run build"
         ],
-        "evidence": "Dewey follow-up returned REVIEW_PASS at fix head 48f7f67 with no findings. TASK-017 was refreshed against epic checkpoint f366b6a in task-branch refresh commit 38bfe21912d4d4793564047327e5f9c0b9c31f1b; final divergence was 0 4, merge-tree clean, branch diff whitespace clean, docker compose config passed, docker-first-run unit tests passed 5/5, admin-auth-service integration tests passed 18/18, root typecheck passed, UI typecheck passed, and UI build passed with the existing chunk-size warning. PR #92 was CLEAN before merge. TASK-017 merged locally into the epic branch in ce0bb83d6075d2644f253db490e43c0c41c20381. Post-merge diff-check, orchestration JSON parse, docker compose config, docker-first-run unit tests 5/5, admin-auth-service integration tests 18/18, root typecheck, UI typecheck, and UI build passed."
+        "evidence": "Dewey follow-up returned REVIEW_PASS at fix head 48f7f67 with no findings. TASK-017 was refreshed against epic checkpoint f366b6a in task-branch refresh commit 38bfe21912d4d4793564047327e5f9c0b9c31f1b; final divergence was 0 4, merge-tree clean, branch diff whitespace clean, docker compose config passed, docker-first-run unit tests passed 5/5, admin-auth-service integration tests passed 18/18, root typecheck passed, UI typecheck passed, and UI build passed with the existing chunk-size warning. PR #92 was CLEAN before merge. TASK-017 merged locally into the epic branch in ce0bb83d6075d2644f253db490e43c0c41c20381. Post-merge diff-check, orchestration JSON parse, docker compose config, docker-first-run unit tests 5/5, admin-auth-service integration tests 18/18, root typecheck, UI typecheck, and UI build passed. Shared context and TASK-018 handoff reconciled at 2026-07-06T22:58:32Z.",
+        "reconciledAt": "2026-07-06T22:58:32Z"
       },
-      "currentGate": "merged",
+      "currentGate": "reconciled",
       "readyAt": "2026-07-06T21:42:32Z",
       "bundle": "WAVE-010-docker-first-run-no-cli",
       "activatedAt": "2026-07-06T21:51:22Z",
-      "sharedContextReconciliation": "queued",
+      "sharedContextReconciliation": "completed",
       "cleanupState": "cleaned_up",
       "branchPushedAt": "2026-07-06T21:54:35Z",
       "worktreeCreatedAt": "2026-07-06T21:54:35Z",
@@ -2546,7 +2557,8 @@
       "mergedAt": "2026-07-06T22:43:02Z",
       "prState": "MERGED",
       "remotePrState": "MERGED",
-      "remotePrMergedAt": "2026-07-06T22:56:32Z"
+      "remotePrMergedAt": "2026-07-06T22:56:32Z",
+      "reconciledAt": "2026-07-06T22:58:32Z"
     },
     {
       "id": "TASK-018-security-epic-validation",
@@ -2583,23 +2595,25 @@
           "npm --prefix ui run typecheck",
           "npm --prefix ui run test -- --run",
           "npm --prefix ui run build",
-          "docker compose config"
+          "docker compose config",
+          "git diff --check"
         ],
         "evidence": null
       },
-      "currentGate": "planned"
+      "currentGate": "ready_to_start",
+      "readyAt": "2026-07-06T22:58:32Z"
     }
   ],
   "monitoring": {
     "mode": "adaptive",
     "cadence": "5m",
-    "status": "wave_010_ready_for_reconciliation",
-    "lastCheckedAt": "2026-07-06T22:43:02Z",
-    "nextCheckDueAt": "2026-07-06T23:01:32Z",
+    "status": "wave_011_ready_to_start",
+    "lastCheckedAt": "2026-07-06T22:58:32Z",
+    "nextCheckDueAt": "2026-07-06T23:03:32Z",
     "schedulerRef": "postgram-admin-wave-005-wdd-heartbeat",
-    "schedulerName": "postgram-admin-wave-010-wdd-heartbeat",
-    "fallbackPrompt": "Run one bounded WDD reconciliation handoff heartbeat for /Users/ivo.toby/workspace/postgram, epic EPIC-admin-configuration-frontend, active wave WAVE-010. Use the wdd-reconcile-wave skill. Start in /Users/ivo.toby/workspace/postgram on branch codex/epic/admin-configuration-frontend. Read .wdd/epics/EPIC-admin-configuration-frontend/orchestration.json and controller-state.md. Confirm WAVE-010 bundle TASK-017-docker-first-run-no-cli is merged into the epic branch in merge commit ce0bb83d6075d2644f253db490e43c0c41c20381; PR #92 is MERGED at 2026-07-06T22:56:32Z after Dewey REVIEW_PASS; task file is in done/; currentGates.workerDispatch is merged; WAVE-010 waveCompletion is ready_for_reconciliation; branch freshness is current_at_merge; cleanup is cleaned_up; blocking feedback is empty; shared-context reconciliation is queued. Run wdd-reconcile-wave for WAVE-010, reconcile Docker first-run/no-CLI decisions into shared context and downstream TASK-018, update orchestration.json and controller-state.md, push the reconciliation checkpoint, then continue to WAVE-011 per Ivo's finish-all-waves instruction after reconciliation is pushed.",
-    "automationUpdateResult": "verified_in_app"
+    "schedulerName": "postgram-admin-wave-011-start-heartbeat",
+    "fallbackPrompt": "Run one bounded WDD start-wave heartbeat for /Users/ivo.toby/workspace/postgram, epic EPIC-admin-configuration-frontend, next wave WAVE-011. Use the wdd-start-wave skill. Start in /Users/ivo.toby/workspace/postgram on branch codex/epic/admin-configuration-frontend. Read .wdd/epics/EPIC-admin-configuration-frontend/orchestration.json and controller-state.md. Confirm WAVE-010 is done/reconciled and pushed, PR #92 is MERGED at 2026-07-06T22:56:32Z, activeWave is null, WAVE-011 is ready_to_start, and WAVE-011 task is TASK-018-security-epic-validation. Activate WAVE-011, update orchestration.json/controller-state.md/task files, create and verify the isolated worktree under /Users/ivo.toby/workspace/postgram/.worktrees for TASK-018-security-epic-validation on branch codex/task/TASK-018-security-epic-validation, push activation artifacts to GitHub before worker dispatch, then dispatch/monitor according to WDD policy. Stop after WAVE-011 activation/dispatch state is pushed and heartbeat monitoring is updated; after WAVE-011 is merged and reconciled, proceed to epic validation/final PR per Ivo's finish-all-waves instruction.",
+    "automationUpdateResult": "pending_update_after_reconciliation_push"
   },
   "sharedContext": {
     "index": "shared-context/index.md",
@@ -2613,111 +2627,7 @@
     ],
     "reconcileAfterEveryWave": true
   },
-  "activeWave": {
-    "id": "WAVE-010",
-    "activatedAt": "2026-07-06T21:51:22Z",
-    "status": "in_progress",
-    "strategy": {
-      "profile": "full",
-      "executionMode": "bundled",
-      "reviewMode": "risk_based",
-      "monitoringMode": "adaptive",
-      "confirmedBy": "Ivo via Codex finish-all-waves request on 2026-07-06"
-    },
-    "eligibleTasks": [
-      "TASK-017-docker-first-run-no-cli"
-    ],
-    "nonEligibleTasks": [],
-    "bundles": [
-      {
-        "id": "WAVE-010-docker-first-run-no-cli",
-        "tasks": [
-          "TASK-017-docker-first-run-no-cli"
-        ],
-        "branch": "codex/task/TASK-017-docker-first-run-no-cli",
-        "worktree": "/Users/ivo.toby/workspace/postgram/.worktrees/TASK-017-docker-first-run-no-cli",
-        "worktreeStatus": "cleaned_up",
-        "workerThreadId": "019f396f-3da8-7d11-94a0-3d84d26f490b",
-        "workerNickname": "Bacon",
-        "reviewThreadId": "019f398f-98c3-7350-be3f-1cb4af8aab75",
-        "reviewNickname": "Dewey",
-        "currentGate": "merged",
-        "branchFreshness": "current_at_merge",
-        "pr": "https://github.com/ivo-toby/postgram/pull/92",
-        "latestCommit": "38bfe21912d4d4793564047327e5f9c0b9c31f1b",
-        "blockingFeedback": [],
-        "verification": {
-          "result": "review_passed_freshness_verified_merged_pending_push",
-          "checkedAt": "2026-07-06T22:43:02Z",
-          "commands": [
-            "git merge --no-ff origin/codex/epic/admin-configuration-frontend -m \"chore: refresh task 017 after review pass\"",
-            "git rev-list --left-right --count origin/codex/epic/admin-configuration-frontend...HEAD",
-            "git merge-tree --write-tree origin/codex/epic/admin-configuration-frontend HEAD",
-            "git diff --check origin/codex/epic/admin-configuration-frontend...HEAD",
-            "docker compose config >/tmp/task017-final-compose.yml",
-            "npm test -- tests/unit/docker-first-run.test.ts",
-            "npm test -- tests/integration/admin-auth-service.test.ts",
-            "npm run typecheck",
-            "npm --prefix ui run typecheck",
-            "npm --prefix ui run build",
-            "git push origin codex/task/TASK-017-docker-first-run-no-cli",
-            "gh pr view 92 --json number,url,state,isDraft,headRefOid,baseRefOid,mergeStateStatus,reviewDecision,updatedAt",
-            "git merge --no-ff origin/codex/task/TASK-017-docker-first-run-no-cli -m \"merge: task 017 docker first run no cli\"",
-            "git diff --check HEAD^..HEAD",
-            "jq empty .wdd/epics/EPIC-admin-configuration-frontend/orchestration.json",
-            "docker compose config >/tmp/task017-postmerge-compose.yml",
-            "npm test -- tests/unit/docker-first-run.test.ts",
-            "npm test -- tests/integration/admin-auth-service.test.ts",
-            "npm run typecheck",
-            "npm --prefix ui run typecheck",
-            "npm --prefix ui run build"
-          ],
-          "evidence": "Dewey follow-up returned REVIEW_PASS at fix head 48f7f67 with no findings. TASK-017 was refreshed against epic checkpoint f366b6a in task-branch refresh commit 38bfe21912d4d4793564047327e5f9c0b9c31f1b; final divergence was 0 4, merge-tree clean, branch diff whitespace clean, docker compose config passed, docker-first-run unit tests passed 5/5, admin-auth-service integration tests passed 18/18, root typecheck passed, UI typecheck passed, and UI build passed with the existing chunk-size warning. PR #92 was CLEAN before merge. TASK-017 merged locally into the epic branch in ce0bb83d6075d2644f253db490e43c0c41c20381. Post-merge diff-check, orchestration JSON parse, docker compose config, docker-first-run unit tests 5/5, admin-auth-service integration tests 18/18, root typecheck, UI typecheck, and UI build passed."
-        },
-        "activatedAt": "2026-07-06T21:51:22Z",
-        "cleanupState": "cleaned_up",
-        "sharedContextReconciliation": "queued",
-        "lastObservedAt": "2026-07-06T22:56:32Z",
-        "branchPushedAt": "2026-07-06T21:54:35Z",
-        "worktreeCreatedAt": "2026-07-06T21:54:35Z",
-        "dispatchedAt": "2026-07-06T21:57:06Z",
-        "worktreeObservation": {
-          "observedAt": "2026-07-06T22:43:02Z",
-          "taskId": "TASK-017-docker-first-run-no-cli",
-          "status": "fix_pushed_followup_review_pending",
-          "worktreeStatus": "clean_pushed",
-          "workerThreadId": "019f396f-3da8-7d11-94a0-3d84d26f490b",
-          "workerNickname": "Bacon",
-          "reviewThreadId": "019f398f-98c3-7350-be3f-1cb4af8aab75",
-          "reviewNickname": "Dewey",
-          "branch": "codex/task/TASK-017-docker-first-run-no-cli",
-          "previousReviewedHead": "6a0259701fbfba648d37472653a5760b3d0d1602",
-          "latestCommit": "48f7f67fc2400a87dd9adbdb175013ed09a5cac4",
-          "branchFreshness": "dirty_wdd_review_file_conflict_final_refresh_required",
-          "branchDivergence": "origin/codex/epic/admin-configuration-frontend...HEAD = 4 3",
-          "prState": "open_draft_dirty",
-          "pr": "https://github.com/ivo-toby/postgram/pull/92",
-          "mergeTree": "conflict only in .wdd/epics/EPIC-admin-configuration-frontend/TICKET-007-docker-e2e-validation/review/TASK-017-docker-first-run-no-cli.md",
-          "diffCheck": "git diff --check passed in assigned worktree.",
-          "reviewState": "Dewey follow-up REVIEW_PASS; final freshness pending.",
-          "activityNote": "Dewey follow-up returned REVIEW_PASS for head 48f7f67fc2400a87dd9adbdb175013ed09a5cac4 with no P1/P2/P3. Reviewer verified prior P2 upgrade blockers are resolved and key-validation concern is resolved. Final branch freshness is still pending because merge-tree conflicts only in the WDD TASK-017 review file."
-        },
-        "mergeCommit": "ce0bb83d6075d2644f253db490e43c0c41c20381",
-        "prState": "MERGED",
-        "remotePrState": "MERGED",
-        "remotePrMergedAt": "2026-07-06T22:56:32Z"
-      }
-    ],
-    "dispatchState": "merged",
-    "activatedFromCommit": "8b7f6c38723d9ff27f95cf2aa2cb9ac639b98242",
-    "lastObservedAt": "2026-07-06T22:56:32Z",
-    "waveCompletion": "ready_for_reconciliation",
-    "activationCommit": "d43f7dff1a8e693d26d0efb51556de4ae2eb08e2",
-    "branchPushedAt": "2026-07-06T21:54:35Z",
-    "worktreeCreatedAt": "2026-07-06T21:54:35Z",
-    "workerDispatchStartedAt": "2026-07-06T21:57:06Z",
-    "dispatchedAt": "2026-07-06T21:57:06Z"
-  },
+  "activeWave": null,
   "currentGates": {
     "epicBranch": {
       "status": "verified",
@@ -2777,7 +2687,7 @@
       "WAVE-008-admin-ops-dashboard-ui": "reconciled",
       "WAVE-008-admin-config-ui": "reconciled",
       "WAVE-009-maintenance-admin-ui": "reconciled",
-      "WAVE-010-docker-first-run-no-cli": "merged"
+      "WAVE-010-docker-first-run-no-cli": "reconciled"
     },
     "waveCompletion": {
       "WAVE-001": "done",
@@ -2789,22 +2699,23 @@
       "WAVE-007": "done",
       "WAVE-008": "done",
       "WAVE-009": "done",
-      "WAVE-010": "ready_for_reconciliation"
+      "WAVE-010": "done"
     },
     "nextWave": {
       "id": "WAVE-011",
-      "status": "planned"
+      "status": "ready_to_start",
+      "readyAt": "2026-07-06T22:58:32Z"
     },
     "monitoring": {
       "mode": "adaptive",
       "cadence": "5m",
-      "status": "wave_010_ready_for_reconciliation",
-      "lastCheckedAt": "2026-07-06T22:43:02Z",
-      "nextCheckDueAt": "2026-07-06T23:01:32Z",
+      "status": "wave_011_ready_to_start",
+      "lastCheckedAt": "2026-07-06T22:58:32Z",
+      "nextCheckDueAt": "2026-07-06T23:03:32Z",
       "schedulerRef": "postgram-admin-wave-005-wdd-heartbeat",
-      "schedulerName": "postgram-admin-wave-010-wdd-heartbeat",
-      "fallbackPrompt": "Run one bounded WDD reconciliation handoff heartbeat for /Users/ivo.toby/workspace/postgram, epic EPIC-admin-configuration-frontend, active wave WAVE-010. Use the wdd-reconcile-wave skill. Start in /Users/ivo.toby/workspace/postgram on branch codex/epic/admin-configuration-frontend. Read .wdd/epics/EPIC-admin-configuration-frontend/orchestration.json and controller-state.md. Confirm WAVE-010 bundle TASK-017-docker-first-run-no-cli is merged into the epic branch in merge commit ce0bb83d6075d2644f253db490e43c0c41c20381; PR #92 is MERGED at 2026-07-06T22:56:32Z after Dewey REVIEW_PASS; task file is in done/; currentGates.workerDispatch is merged; WAVE-010 waveCompletion is ready_for_reconciliation; branch freshness is current_at_merge; cleanup is cleaned_up; blocking feedback is empty; shared-context reconciliation is queued. Run wdd-reconcile-wave for WAVE-010, reconcile Docker first-run/no-CLI decisions into shared context and downstream TASK-018, update orchestration.json and controller-state.md, push the reconciliation checkpoint, then continue to WAVE-011 per Ivo's finish-all-waves instruction after reconciliation is pushed.",
-      "automationUpdateResult": "verified_in_app"
+      "schedulerName": "postgram-admin-wave-011-start-heartbeat",
+      "fallbackPrompt": "Run one bounded WDD start-wave heartbeat for /Users/ivo.toby/workspace/postgram, epic EPIC-admin-configuration-frontend, next wave WAVE-011. Use the wdd-start-wave skill. Start in /Users/ivo.toby/workspace/postgram on branch codex/epic/admin-configuration-frontend. Read .wdd/epics/EPIC-admin-configuration-frontend/orchestration.json and controller-state.md. Confirm WAVE-010 is done/reconciled and pushed, PR #92 is MERGED at 2026-07-06T22:56:32Z, activeWave is null, WAVE-011 is ready_to_start, and WAVE-011 task is TASK-018-security-epic-validation. Activate WAVE-011, update orchestration.json/controller-state.md/task files, create and verify the isolated worktree under /Users/ivo.toby/workspace/postgram/.worktrees for TASK-018-security-epic-validation on branch codex/task/TASK-018-security-epic-validation, push activation artifacts to GitHub before worker dispatch, then dispatch/monitor according to WDD policy. Stop after WAVE-011 activation/dispatch state is pushed and heartbeat monitoring is updated; after WAVE-011 is merged and reconciled, proceed to epic validation/final PR per Ivo's finish-all-waves instruction.",
+      "automationUpdateResult": "pending_update_after_reconciliation_push"
     },
     "review": {
       "WAVE-001-admin-feasibility-gate": {
@@ -3170,7 +3081,7 @@
         "residualRisk": "Reviewer did not rerun full UI suite or backend maintenance contract suite; worker had full UI evidence and controller reran focused UI/client checks."
       },
       "WAVE-010-docker-first-run-no-cli": {
-        "status": "passed",
+        "status": "reconciled",
         "result": "REVIEW_PASS",
         "pr": "https://github.com/ivo-toby/postgram/pull/92",
         "latestCommit": "38bfe21912d4d4793564047327e5f9c0b9c31f1b",
@@ -3216,13 +3127,16 @@
           {
             "priority": "P3",
             "id": "P3-final-freshness-wdd-review-file-conflict",
-            "status": "pending_final_freshness",
+            "status": "resolved_by_final_refresh_and_merge",
             "reviewedHead": "48f7f67fc2400a87dd9adbdb175013ed09a5cac4",
-            "summary": "Final freshness remains pending; merge-tree conflict is limited to WDD TASK-017 review file."
+            "summary": "Final freshness remains pending; merge-tree conflict is limited to WDD TASK-017 review file.",
+            "resolvedAt": "2026-07-06T22:58:32Z"
           }
         ],
-        "freshnessNote": "Final branch freshness pending: PR #92 remains DIRTY due WDD review-file conflict only.",
-        "branchFreshness": "current_at_merge"
+        "freshnessNote": "Final branch freshness passed at task refresh head 38bfe21 before merge.",
+        "branchFreshness": "current_at_merge",
+        "sharedContextReconciliation": "completed",
+        "reconciledAt": "2026-07-06T22:58:32Z"
       }
     },
     "branchFreshness": {
@@ -3439,7 +3353,17 @@
       "WAVE-008": "completed",
       "WAVE-009-maintenance-admin-ui": "completed",
       "WAVE-009": "completed",
-      "WAVE-010-docker-first-run-no-cli": "queued",
+      "WAVE-010-docker-first-run-no-cli": {
+        "status": "completed",
+        "reconciledAt": "2026-07-06T22:58:32Z",
+        "updatedResources": [
+          "shared-context/index.md",
+          "shared-context/resources/migration-config-notes.md",
+          "shared-context/resources/security-model.md",
+          "shared-context/resources/testing-validation.md",
+          "TICKET-007-docker-e2e-validation/todo/TASK-018-security-epic-validation.md"
+        ]
+      },
       "WAVE-010": "not_started"
     },
     "prState": {
@@ -4272,8 +4196,8 @@
         "evidence": "WAVE-009 reconciled after PR #91 was confirmed MERGED. Shared context records the AdminMaintenance dashboard panel, maintenance dry-run/apply and job-polling client contract, preview-before-apply, recent step-up, scoped idempotency, safe job-summary rendering, llm-extraction edge-prune constraint, and TASK-017/TASK-018 Docker/security handoffs. TASK-016 worktree was already cleaned up."
       },
       "WAVE-010-docker-first-run-no-cli": {
-        "result": "review_passed_freshness_verified_merged_pending_push",
-        "checkedAt": "2026-07-06T22:43:02Z",
+        "result": "review_passed_freshness_verified_merged_reconciled",
+        "checkedAt": "2026-07-06T22:58:32Z",
         "commands": [
           "git merge --no-ff origin/codex/epic/admin-configuration-frontend -m \"chore: refresh task 017 after review pass\"",
           "git rev-list --left-right --count origin/codex/epic/admin-configuration-frontend...HEAD",
@@ -4297,7 +4221,8 @@
           "npm --prefix ui run typecheck",
           "npm --prefix ui run build"
         ],
-        "evidence": "Dewey follow-up returned REVIEW_PASS at fix head 48f7f67 with no findings. TASK-017 was refreshed against epic checkpoint f366b6a in task-branch refresh commit 38bfe21912d4d4793564047327e5f9c0b9c31f1b; final divergence was 0 4, merge-tree clean, branch diff whitespace clean, docker compose config passed, docker-first-run unit tests passed 5/5, admin-auth-service integration tests passed 18/18, root typecheck passed, UI typecheck passed, and UI build passed with the existing chunk-size warning. PR #92 was CLEAN before merge. TASK-017 merged locally into the epic branch in ce0bb83d6075d2644f253db490e43c0c41c20381. Post-merge diff-check, orchestration JSON parse, docker compose config, docker-first-run unit tests 5/5, admin-auth-service integration tests 18/18, root typecheck, UI typecheck, and UI build passed."
+        "evidence": "Dewey follow-up returned REVIEW_PASS at fix head 48f7f67 with no findings. TASK-017 was refreshed against epic checkpoint f366b6a in task-branch refresh commit 38bfe21912d4d4793564047327e5f9c0b9c31f1b; final divergence was 0 4, merge-tree clean, branch diff whitespace clean, docker compose config passed, docker-first-run unit tests passed 5/5, admin-auth-service integration tests passed 18/18, root typecheck passed, UI typecheck passed, and UI build passed with the existing chunk-size warning. PR #92 was CLEAN before merge. TASK-017 merged locally into the epic branch in ce0bb83d6075d2644f253db490e43c0c41c20381. Post-merge diff-check, orchestration JSON parse, docker compose config, docker-first-run unit tests 5/5, admin-auth-service integration tests 18/18, root typecheck, UI typecheck, and UI build passed. Shared context and TASK-018 handoff reconciled at 2026-07-06T22:58:32Z.",
+        "reconciledAt": "2026-07-06T22:58:32Z"
       }
     },
     "feedback": {
@@ -4495,24 +4420,25 @@
           {
             "priority": "P3",
             "id": "P3-final-freshness-wdd-review-file-conflict",
-            "status": "pending_final_freshness",
+            "status": "resolved_by_final_refresh_and_merge",
             "reviewedHead": "48f7f67fc2400a87dd9adbdb175013ed09a5cac4",
-            "summary": "Final freshness remains pending; merge-tree conflict is limited to WDD TASK-017 review file."
+            "summary": "Final freshness passed at task refresh head 38bfe21 before merge.",
+            "resolvedAt": "2026-07-06T22:58:32Z"
           }
         ],
-        "lastObservedAt": "2026-07-06T22:43:02Z",
+        "lastObservedAt": "2026-07-06T22:58:32Z",
         "workerThreadId": "019f396f-3da8-7d11-94a0-3d84d26f490b",
         "workerNickname": "Bacon",
         "reviewThreadId": "019f398f-98c3-7350-be3f-1cb4af8aab75",
         "reviewNickname": "Dewey",
-        "status": "resolved_review_passed_merged",
-        "nudge": "p2_feedback_routed_fix_already_pushed",
+        "status": "reconciled",
+        "nudge": "not_needed_reconciled",
         "routedAt": "2026-07-06T22:43:02Z",
         "feedbackSubmissionId": "019f399a-a02a-7651-9f0f-2175b4a56116",
         "fixedHead": "48f7f67fc2400a87dd9adbdb175013ed09a5cac4",
         "fixObservedAt": "2026-07-06T22:43:02Z",
         "followupReviewSubmissionId": "019f399a-c385-73e2-abba-fc7b0c7f0388",
-        "observation": "Dewey follow-up returned REVIEW_PASS for head 48f7f67fc2400a87dd9adbdb175013ed09a5cac4 with no P1/P2/P3. Reviewer verified prior P2 upgrade blockers are resolved and key-validation concern is resolved. Final branch freshness is still pending because merge-tree conflicts only in the WDD TASK-017 review file.",
+        "observation": "WAVE-010 reconciled after final freshness passed, PR #92 merged, and shared context/TASK-018 handoff were updated.",
         "resolved": [
           {
             "priority": "P2",
@@ -4555,23 +4481,23 @@
     }
   },
   "lastReconciledWave": {
-    "id": "WAVE-009",
+    "id": "WAVE-010",
     "status": "done",
-    "reconciledAt": "2026-07-06T21:42:32Z",
+    "reconciledAt": "2026-07-06T22:58:32Z",
     "tasks": [
-      "TASK-016-maintenance-admin-ui"
+      "TASK-017-docker-first-run-no-cli"
     ],
     "prs": [
       {
-        "number": 91,
-        "url": "https://github.com/ivo-toby/postgram/pull/91",
-        "mergedAt": "2026-07-06T21:37:31Z",
-        "mergeCommit": "10b27384545cb450e6d3c5c10460af1bc22c5667"
+        "number": 92,
+        "url": "https://github.com/ivo-toby/postgram/pull/92",
+        "mergedAt": "2026-07-06T22:56:32Z",
+        "mergeCommit": "ce0bb83d6075d2644f253db490e43c0c41c20381"
       }
     ],
     "sharedContext": "completed",
-    "nextWave": "WAVE-010"
+    "nextWave": "WAVE-011"
   },
-  "lastMergedWave": "WAVE-009",
+  "lastMergedWave": "WAVE-010",
   "lastStartedWave": "WAVE-010"
 }

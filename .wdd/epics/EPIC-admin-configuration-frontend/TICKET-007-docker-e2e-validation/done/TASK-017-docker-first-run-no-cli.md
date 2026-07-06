@@ -24,7 +24,7 @@ worktree_status: cleaned_up
 pr: https://github.com/ivo-toby/postgram/pull/92
 worker_thread_id: 019f396f-3da8-7d11-94a0-3d84d26f490b
 review_thread_id: 019f398f-98c3-7350-be3f-1cb4af8aab75
-current_gate: merged
+current_gate: reconciled
 branch_freshness: current_at_merge
 verification:
   - docker compose config

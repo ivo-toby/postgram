@@ -2,8 +2,8 @@
 id: EPIC-admin-configuration-frontend-CONTROLLER
 kind: controller_state
 epic: EPIC-admin-configuration-frontend
-active_wave: WAVE-010
-status: wave_010_merged_pending_push_reconciliation
+active_wave: null
+status: wave_010_reconciled_wave_011_ready_to_start
 updated_at: 2026-07-06
 ---
 
@@ -129,7 +129,10 @@ was refreshed against the latest epic checkpoint, final freshness verification
 passed, and TASK-017 merged locally into the epic branch in
 `ce0bb83d6075d2644f253db490e43c0c41c20381`. The epic push marked PR #92
 `MERGED` at 2026-07-06T22:56:32Z, the clean TASK-017 worktree was removed, and
-WAVE-010 is ready for reconciliation.
+WAVE-010 is now reconciled. Shared context records the Docker first-run
+secret-volume/entrypoint contract, no-normal-CLI browser happy path, legacy
+`POSTGRES_PASSWORD` upgrade preservation, OpenAI provider default preservation,
+and TASK-018 final validation gates. TASK-018 is ready to start as WAVE-011.
 
 WAVE-004 is done and reconciled. PR #81/TASK-009 and PR #82/TASK-006 are
 merged, shared context is reconciled, and both WAVE-004 worktrees are cleaned
@@ -148,8 +151,8 @@ up.
 | WAVE-007 | TASK-011, TASK-015 | full / parallel / risk_based / adaptive | done | confirmed by Ivo via finish-all-waves request on 2026-07-06 |
 | WAVE-008 | TASK-012, TASK-013 | full / hybrid / risk_based / adaptive | done | confirmed by Ivo via finish-all-waves request on 2026-07-06 |
 | WAVE-009 | TASK-016 | full / bundled / risk_based / adaptive | done | confirmed by Ivo via finish-all-waves request on 2026-07-06 |
-| WAVE-010 | TASK-017 | full / bundled / risk_based / adaptive | ready_for_reconciliation | confirmed by Ivo via finish-all-waves request on 2026-07-06 |
-| WAVE-011 | TASK-018 | full / bundled / risk_based / adaptive | planned | not required |
+| WAVE-010 | TASK-017 | full / bundled / risk_based / adaptive | done | confirmed by Ivo via finish-all-waves request on 2026-07-06 |
+| WAVE-011 | TASK-018 | full / bundled / risk_based / adaptive | ready_to_start | confirmed by Ivo via finish-all-waves request on 2026-07-06 |
 
 ## Monitoring
 
@@ -157,51 +160,49 @@ Mode: adaptive
 
 Cadence: 5m
 
-Status: wave_010_ready_for_reconciliation
+Status: wave_011_ready_to_start
 
-Last check: 2026-07-06T22:43:02Z
+Last check: 2026-07-06T22:58:32Z
 
-Next check due: 2026-07-06T23:01:32Z
+Next check due: 2026-07-06T23:03:32Z
 
 Scheduler reference: `postgram-admin-wave-005-wdd-heartbeat`
 
-Scheduler name: `postgram-admin-wave-010-wdd-heartbeat`
+Scheduler name: `postgram-admin-wave-011-start-heartbeat`
 
-Automation update: verified_in_app
+Automation update: pending_update_after_reconciliation_push
 
 Fallback prompt:
 
 ```text
-Run one bounded WDD reconciliation handoff heartbeat for
-/Users/ivo.toby/workspace/postgram, epic EPIC-admin-configuration-frontend,
-active wave WAVE-010. Use the wdd-reconcile-wave skill. Start in
-/Users/ivo.toby/workspace/postgram on branch
+Run one bounded WDD start-wave heartbeat for /Users/ivo.toby/workspace/postgram,
+epic EPIC-admin-configuration-frontend, next wave WAVE-011. Use the
+wdd-start-wave skill. Start in /Users/ivo.toby/workspace/postgram on branch
 codex/epic/admin-configuration-frontend. Read
 .wdd/epics/EPIC-admin-configuration-frontend/orchestration.json and
-controller-state.md. Confirm WAVE-010 bundle TASK-017-docker-first-run-no-cli
-is merged into the epic branch in merge commit
-ce0bb83d6075d2644f253db490e43c0c41c20381; PR #92 is MERGED at
-2026-07-06T22:56:32Z after Dewey REVIEW_PASS; task file is in done/;
-currentGates.workerDispatch is merged; WAVE-010 waveCompletion is
-ready_for_reconciliation; branch freshness is current_at_merge; cleanup is
-cleaned_up; blocking feedback is empty; shared-context reconciliation is
-queued. Run wdd-reconcile-wave for WAVE-010, reconcile Docker
-first-run/no-CLI decisions into shared context and downstream TASK-018, update
-orchestration.json and controller-state.md, push the reconciliation checkpoint,
-then continue to WAVE-011 per Ivo's finish-all-waves instruction after
-reconciliation is pushed.
+controller-state.md. Confirm WAVE-010 is done/reconciled and pushed, PR #92 is
+MERGED at 2026-07-06T22:56:32Z, activeWave is null, WAVE-011 is
+ready_to_start, and WAVE-011 task is TASK-018-security-epic-validation.
+Activate WAVE-011, update orchestration.json/controller-state.md/task files,
+create and verify the isolated worktree under
+/Users/ivo.toby/workspace/postgram/.worktrees for
+TASK-018-security-epic-validation on branch
+codex/task/TASK-018-security-epic-validation, push activation artifacts to
+GitHub before worker dispatch, then dispatch/monitor according to WDD policy.
+Stop after WAVE-011 activation/dispatch state is pushed and heartbeat
+monitoring is updated; after WAVE-011 is merged and reconciled, proceed to epic
+validation/final PR per Ivo's finish-all-waves instruction.
 ```
 
 ## Active Wave Strategy
 
-- Active wave: WAVE-010.
-- Last active wave: WAVE-009.
-- WAVE-009 outcome: done and reconciled.
-- WAVE-010 strategy: full / bundled / risk_based / adaptive.
-- WAVE-010 task: TASK-017-docker-first-run-no-cli.
+- Active wave: none.
+- Last active wave: WAVE-010.
+- WAVE-010 outcome: done and reconciled.
+- WAVE-011 strategy: full / bundled / risk_based / adaptive.
+- WAVE-011 task: TASK-018-security-epic-validation.
 - Confirmation: Ivo via Codex finish-all-waves request on 2026-07-06.
-- Current gate: TASK-017 is merged in `ce0bb83`, PR #92 is MERGED, cleanup is
-  complete, and WAVE-010 is ready for reconciliation.
+- Current gate: WAVE-011 is ready to start after WAVE-010 reconciliation.
 
 ## Last Reconciled Wave
 
@@ -237,6 +238,9 @@ reconciliation is pushed.
 - WAVE-009: done and reconciled at 2026-07-06T21:42:32Z.
 - PR #91: merged at 2026-07-06T21:37:31Z.
 - Worker worktree: cleaned up.
+- WAVE-010: done and reconciled at 2026-07-06T22:58:32Z.
+- PR #92: merged at 2026-07-06T22:56:32Z.
+- Worker worktree: cleaned up.
 
 ## Task Gates
 
@@ -258,8 +262,8 @@ reconciliation is pushed.
 | TASK-014-admin-job-foundation | TICKET-006-maintenance-jobs | codex/task/TASK-014-admin-job-foundation | cleaned_up | reconciled | Lorentz REVIEW_PASS; freshness current at task head `0e08630`; post-merge tests/typecheck/touched-file ESLint passed; merged locally into epic branch in `c5edbfc`; WAVE-006 reconciled and worktree cleaned up |
 | TASK-015-maintenance-admin-api | TICKET-006-maintenance-jobs | codex/task/TASK-015-maintenance-admin-api | cleaned_up | reconciled | Lorentz REVIEW_PASS; final freshness passed at task head `ea88af4`; post-merge contract tests 4/4, CLI integration 37/37, typecheck, scoped ESLint, JSON parse, and diff check passed; merged locally in `78f0f43`; PR #88 merged at 2026-07-06T17:02:28Z; shared context reconciled |
 | TASK-016-maintenance-admin-ui | TICKET-006-maintenance-jobs | codex/task/TASK-016-maintenance-admin-ui | cleaned_up | reconciled | Hypatia REVIEW_PASS; final task head `1885b64`; freshness `0 3`; AdminMaintenance 9/9, AdminOps/AdminConfig/AdminAuth 49/49, UI typecheck passed; merged in `10b2738`; PR #91 MERGED at 2026-07-06T21:37:31Z; WAVE-009 shared context reconciled |
-| TASK-017-docker-first-run-no-cli | TICKET-007-docker-e2e-validation | codex/task/TASK-017-docker-first-run-no-cli | cleaned_up | merged | Dewey REVIEW_PASS; final freshness passed at task head `38bfe21`; merged in `ce0bb83`; PR #92 MERGED at 2026-07-06T22:56:32Z; post-merge Docker/tests/typechecks/UI build passed; WAVE-010 ready for reconciliation |
-| TASK-018-security-epic-validation | TICKET-007-docker-e2e-validation | codex/task/TASK-018-security-epic-validation | not_created | planned | broad backend, frontend, Docker, and smoke validation |
+| TASK-017-docker-first-run-no-cli | TICKET-007-docker-e2e-validation | codex/task/TASK-017-docker-first-run-no-cli | cleaned_up | reconciled | Dewey REVIEW_PASS; final freshness passed at task head `38bfe21`; merged in `ce0bb83`; PR #92 MERGED at 2026-07-06T22:56:32Z; post-merge Docker/tests/typechecks/UI build passed; WAVE-010 reconciled |
+| TASK-018-security-epic-validation | TICKET-007-docker-e2e-validation | codex/task/TASK-018-security-epic-validation | not_created | ready_to_start | broad backend, frontend, Docker, and smoke validation with WAVE-010 Docker upgrade/no-CLI gates |
 
 ## Branch And Worktree State
 
@@ -1856,5 +1860,5 @@ reconciliation is pushed.
 
 ## Next Action
 
-Next action: run WAVE-010 reconciliation, then continue to WAVE-011 after the
-reconciliation checkpoint is pushed.
+Next action: push the WAVE-010 reconciliation checkpoint, then start WAVE-011
+and dispatch TASK-018-security-epic-validation from a fresh isolated worktree.

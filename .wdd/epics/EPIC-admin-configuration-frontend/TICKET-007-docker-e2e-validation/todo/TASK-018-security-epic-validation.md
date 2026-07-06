@@ -13,6 +13,9 @@ conflict_domains:
   - .wdd/epics/EPIC-admin-configuration-frontend/**
   - README.md
   - docs/**
+  - docker-compose.yml
+  - docker/**
+  - tests/**
 assigned_model_class: epicValidation
 review_model_class: review
 branch: codex/task/TASK-018-security-epic-validation
@@ -31,6 +34,7 @@ verification:
   - npm --prefix ui run typecheck
   - npm --prefix ui run test -- --run
   - npm --prefix ui run build
+  - docker compose config
   - git diff --check
 ---
 
@@ -93,6 +97,10 @@ handoff preparation.
 - `ui/src/components/admin/AdminConfig.tsx`
 - `ui/src/components/admin/AdminMaintenance.tsx`
 - `ui/src/lib/adminApi.ts`
+- `docker-compose.yml`
+- `docker/postgram-ensure-secrets.sh`
+- `docker/postgram-entrypoint.sh`
+- `tests/unit/docker-first-run.test.ts`
 
 ## Dependencies
 
@@ -161,6 +169,20 @@ Keep final artifacts concise and evidence-based.
   clean-volume browser smoke for bootstrap/login/MFA, Config tab redaction,
   API-key creation, dashboard status, and a safe maintenance dry-run without
   normal `pgm-admin` use.
+- Include the WAVE-010 Docker specifics: `postgram-secrets` persistent secret
+  generation for `postgres-password`, `admin-mfa-secret-key`, and
+  `admin-settings-encryption-key`; entrypoint loading before server bind;
+  strict `ADMIN_SETTINGS_ENCRYPTION_KEY` parsing; fail-closed startup when admin
+  key material is missing/invalid; and `DATABASE_URL` construction from the
+  Postgres secret when absent.
+- Recheck the WAVE-010 upgrade fixes: legacy Compose installs with initialized
+  `pgdata` and `POSTGRES_PASSWORD` must keep database access, and OpenAI-backed
+  installs with `OPENAI_API_KEY` but blank `EMBEDDING_PROVIDER` must keep the
+  OpenAI embedding provider instead of silently switching to Ollama.
+- Verify the no-normal-CLI claim remains scoped: browser Admin UI bootstrap,
+  MFA, provider secret entry, API-key creation, dashboard inspection, and safe
+  maintenance dry-run are the supported happy path; `pgm-admin` remains
+  documented only as emergency/advanced fallback.
 
 ## Durable Memory Notes To Consider
 
@@ -183,6 +205,9 @@ Keep final artifacts concise and evidence-based.
 - `npm --prefix ui run typecheck`
 - `npm --prefix ui run test -- --run`
 - `npm --prefix ui run build`
+- `docker compose config`
+- clean-volume Docker/browser smoke replay or explicit review of TASK-017
+  recorded smoke evidence
 - `git diff --check`
 
 ## Verification Evidence

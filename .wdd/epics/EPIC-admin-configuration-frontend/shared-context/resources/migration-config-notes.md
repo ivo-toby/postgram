@@ -386,6 +386,52 @@ Future migration/config reminders:
 - TASK-017 should include `admin_jobs`/`admin_job_events` in clean-volume Docker
   smoke expectations and backup/restore discussion for long-running operations.
 
+## WAVE-010 Docker First-Run Configuration Rules
+
+PR #92 added the supported Docker first-run/no-normal-CLI path.
+
+Docker secrets and entrypoint rules:
+
+- Compose now includes a `postgram-secrets` initializer backed by the persistent
+  `postgram_secrets` volume.
+- The initializer generates and preserves `postgres-password`,
+  `admin-mfa-secret-key`, and `admin-settings-encryption-key`.
+- Existing Compose installs that already have initialized Postgres data and a
+  legacy `POSTGRES_PASSWORD` preserve database access because
+  `postgres-password` is seeded from `POSTGRES_PASSWORD` when the secret file is
+  absent.
+- The app entrypoint loads those secret files before starting the server. It
+  constructs `DATABASE_URL` when absent and exports `ADMIN_MFA_SECRET_KEY` and
+  `ADMIN_SETTINGS_ENCRYPTION_KEY` from their files.
+- Missing or invalid admin MFA/settings key material fails closed before server
+  bind, rather than starting a setup page that cannot securely store MFA seeds
+  or provider secrets.
+- `ADMIN_SETTINGS_ENCRYPTION_KEY` remains strict: 32 bytes encoded as base64url
+  or `base64:` prefixed base64. This prevents Docker-generated values from
+  drifting away from the settings service parser.
+
+Provider defaults and upgrade rules:
+
+- Compose leaves `EMBEDDING_PROVIDER` blank.
+- The entrypoint selects `openai` when `OPENAI_API_KEY` is present, preserving
+  existing OpenAI-backed installs that did not explicitly set
+  `EMBEDDING_PROVIDER`.
+- The entrypoint selects `ollama` for clean no-key boots.
+- Provider secrets still move into encrypted DB-backed storage through the
+  Admin Config UI after bootstrap; they should not be copied into database
+  backups, browser storage, audit rows, or normal Docker docs as plaintext.
+
+No-normal-CLI scope:
+
+- The supported happy path is browser Admin UI bootstrap, MFA, provider
+  configuration, API-key creation, dashboard inspection, and safe maintenance
+  dry-runs after Docker startup.
+- Emergency `pgm-admin` commands remain fallback/advanced operator tooling, not
+  the normal setup path.
+- TASK-018 should validate both the clean-volume path and upgrade compatibility
+  for legacy `POSTGRES_PASSWORD`/OpenAI Compose installs before final epic
+  handoff.
+
 ## Docker Notes
 
 The final claim is no normal CLI or manual env-file editing for supported

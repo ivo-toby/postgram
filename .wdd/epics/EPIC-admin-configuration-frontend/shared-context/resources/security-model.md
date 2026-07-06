@@ -540,6 +540,42 @@ Carry-forward security gates:
   browser-storage non-persistence, and the `llm-extraction` edge-prune
   constraint.
 
+## WAVE-010 Reconciled Docker First-Run Security Controls
+
+TASK-017 completed the supported Docker first-run/no-normal-CLI path in PR #92.
+
+Implemented Docker/security controls:
+
+- Compose keeps backend/UI loopback defaults and still treats reverse-proxy
+  exposure as a deployment decision, not a security boundary.
+- A persistent `postgram_secrets` volume stores generated installation secrets
+  outside the database: `postgres-password`, `admin-mfa-secret-key`, and
+  `admin-settings-encryption-key`.
+- The app entrypoint loads required admin key material from secret files and
+  fails closed before binding if the keys are absent or invalid.
+- First-run bootstrap token generation remains server-side, hash-only after
+  generation, and displayed through the trusted operator log channel rather
+  than an unauthenticated HTTP response.
+- Browser smoke proved setup, MFA, dashboard access, API-key creation, Config
+  secret write/redaction after restart, and a safe maintenance dry-run/job poll
+  without normal `pgm-admin` usage.
+- The Admin Config tab kept provider secret inputs blank/write-only after
+  restart, and browser local/session storage remained empty for admin/session/
+  bootstrap/TOTP/provider secret material.
+- Existing Compose upgrades preserve database and embedding-provider behavior:
+  legacy `POSTGRES_PASSWORD` seeds the new Postgres secret when needed, and
+  `OPENAI_API_KEY` keeps implicit OpenAI provider selection when
+  `EMBEDDING_PROVIDER` is blank.
+
+Carry-forward security gates:
+
+- TASK-018 must keep the no-normal-CLI claim scoped to the supported happy path;
+  emergency `pgm-admin` recovery remains intentionally available.
+- TASK-018 must review Docker secret backup/restore and failure behavior,
+  legacy Compose upgrade behavior, provider default preservation, admin key
+  fail-closed behavior, and browser-storage non-persistence as final security
+  validation gates.
+
 ## OAuth/OIDC Boundary
 
 Existing OAuth/DCR is for native remote MCP connectors. It lets external clients

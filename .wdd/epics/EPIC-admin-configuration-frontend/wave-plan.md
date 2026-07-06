@@ -29,7 +29,7 @@ updated_at: 2026-07-06
 | TASK-014-admin-job-foundation | TICKET-006-maintenance-jobs | TASK-006, TASK-009 | job tables, job service, audit integration, progress state | done |
 | TASK-015-maintenance-admin-api | TICKET-006-maintenance-jobs | TASK-008, TASK-010, TASK-014 | graph/memory/embedding services, dry-run/apply admin APIs, CLI regressions | done |
 | TASK-016-maintenance-admin-ui | TICKET-006-maintenance-jobs | TASK-011, TASK-015 | maintenance UI, confirmations, progress polling, admin API client | done |
-| TASK-017-docker-first-run-no-cli | TICKET-007-docker-e2e-validation | TASK-012, TASK-013, TASK-016 | Docker Compose, `.env.example`, README/deployment docs, smoke tests | review |
+| TASK-017-docker-first-run-no-cli | TICKET-007-docker-e2e-validation | TASK-012, TASK-013, TASK-016 | Docker Compose, `.env.example`, README/deployment docs, smoke tests | done |
 | TASK-018-security-epic-validation | TICKET-007-docker-e2e-validation | TASK-017 | security review, broad validation, final handoff artifacts | todo |
 
 ## Dependency Grid
@@ -824,7 +824,7 @@ Stop condition:
 
 ### WAVE-010
 
-Status: in_progress
+Status: done
 
 Tasks:
 
@@ -853,31 +853,58 @@ Activation rule:
 - Activated at 2026-07-06T21:51:22Z after WAVE-009 reconciliation checkpoint
   `8b7f6c3` was pushed.
 
-Progress:
-
-- TASK-017-docker-first-run-no-cli moved to `in-progress/`; dedicated branch
-  `codex/task/TASK-017-docker-first-run-no-cli` and worktree
-  `/Users/ivo.toby/workspace/postgram/.worktrees/TASK-017-docker-first-run-no-cli`
-  are assigned and pending creation from the pushed activation checkpoint.
-- 2026-07-06T21:54:35Z: branch/worktree were created from pushed activation
-  checkpoint `d43f7df`, verified current with divergence `0 0`, and pushed.
-- 2026-07-06T21:57:06Z: Bacon
-  (`019f396f-3da8-7d11-94a0-3d84d26f490b`) was dispatched; current gate is
-  `no_pr`.
-- 2026-07-06T22:14:02Z: Bacon remains active with uncommitted Docker/docs/
-  backend setup changes and smoke evidence files, no PR exists yet, and
-  `git diff --check` passes. Final branch freshness is required before
-  review/merge because the task branch is behind controller checkpoints.
-
 Stop condition:
 
 - Docker Compose config validates.
 - UI build and typecheck pass.
 - First-run no-CLI smoke evidence is recorded in shared context.
+- Wave reconciliation completed on 2026-07-06.
+
+Completion evidence:
+
+- PR #92: merged by GitHub at 2026-07-06T22:56:32Z.
+- Review: Dewey `REVIEW_PASS`, no remaining P1/P2/P3 findings.
+- Worker fix head: `48f7f67`; final task refresh head: `38bfe21`.
+- Epic merge commit: `ce0bb83`.
+- Verification passed:
+  - `git rev-list --left-right --count origin/codex/epic/admin-configuration-frontend...HEAD` reported `0 4`.
+  - `git merge-tree --write-tree origin/codex/epic/admin-configuration-frontend HEAD`
+  - `git diff --check origin/codex/epic/admin-configuration-frontend...HEAD`
+  - `docker compose config`
+  - `npm test -- tests/unit/docker-first-run.test.ts` (5 tests)
+  - `npm test -- tests/integration/admin-auth-service.test.ts` (18 tests)
+  - `npm run typecheck`
+  - `npm --prefix ui run typecheck`
+  - `npm --prefix ui run build` with the existing Vite chunk-size warning.
+- Post-merge verification repeated `git diff --check HEAD^..HEAD`,
+  orchestration JSON parse, `docker compose config`, docker-first-run unit
+  tests, admin-auth-service integration tests, root typecheck, UI typecheck,
+  and UI build.
+
+Reconciled decisions:
+
+- Docker first-run now uses a persistent `postgram_secrets` volume for
+  generated Postgres/admin MFA/admin settings encryption key material.
+- The app entrypoint loads generated secret files, constructs `DATABASE_URL`
+  when absent, validates admin key material, and fails closed before server
+  bind when required key material is invalid.
+- Clean-volume browser setup can complete bootstrap, MFA, provider secret
+  entry/redaction, API-key creation, dashboard inspection, and safe maintenance
+  dry-run/job polling without normal `pgm-admin` usage.
+- Existing Compose upgrades preserve legacy `POSTGRES_PASSWORD` database access
+  and OpenAI-backed provider selection when `OPENAI_API_KEY` exists and
+  `EMBEDDING_PROVIDER` is blank.
+
+Drift notes:
+
+- TASK-018 must keep the no-normal-CLI claim scoped to the supported happy
+  path; emergency `pgm-admin` remains documented fallback.
+- TASK-018 must recheck the Docker smoke/upgrade/security assertions before
+  final epic validation and final PR preparation.
 
 ### WAVE-011
 
-Status: planned
+Status: ready_to_start
 
 Tasks:
 
@@ -901,6 +928,7 @@ Rationale:
 Activation rule:
 
 - Activate after WAVE-010 reconciliation.
+- Ready after WAVE-010 reconciliation on 2026-07-06.
 
 Stop condition:
 

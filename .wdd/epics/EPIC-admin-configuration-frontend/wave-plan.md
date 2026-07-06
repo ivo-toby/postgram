@@ -793,6 +793,9 @@ Progress:
 - Activation checkpoint `b34d0eb` was pushed to the epic branch. The TASK-016
   task branch/worktree were created from that checkpoint, pushed to origin, and
   verified clean/current with the in-progress task file and WDD state present.
+- Worktree-state checkpoint `bf06360` was pushed and fast-forwarded into the
+  task branch. Singer (`019f3926-c2c5-7290-9c2f-9a4cca19e6ae`) is dispatched;
+  current gate is `no_pr`.
 
 Stop condition:
 

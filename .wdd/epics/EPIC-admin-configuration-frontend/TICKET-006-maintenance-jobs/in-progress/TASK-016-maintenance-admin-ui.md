@@ -20,12 +20,12 @@ assigned_model_class: implementationComplex
 review_model_class: review
 branch: codex/task/TASK-016-maintenance-admin-ui
 worker_worktree: /Users/ivo.toby/workspace/postgram/.worktrees/TASK-016-maintenance-admin-ui
-worktree_status: pending_creation
+worktree_status: worker_active
 pr: null
-worker_thread_id: null
+worker_thread_id: 019f3926-c2c5-7290-9c2f-9a4cca19e6ae
 review_thread_id: null
-current_gate: pending_dispatch
-branch_freshness: pending_branch_creation
+current_gate: no_pr
+branch_freshness: current_at_dispatch
 verification:
   - npm --prefix ui run test -- --run src/components/AdminMaintenance.test.tsx
   - npm --prefix ui run test -- --run src/components/AdminOps.test.tsx src/components/AdminConfig.test.tsx src/components/AdminAuth.test.tsx
@@ -117,7 +117,9 @@ codex/task/TASK-016-maintenance-admin-ui
 
 ## PR / Patch Reference
 
-None yet.
+None yet. Singer (`019f3926-c2c5-7290-9c2f-9a4cca19e6ae`) was dispatched
+at 2026-07-06T20:30:02Z on branch
+`codex/task/TASK-016-maintenance-admin-ui`.
 
 ## RED-GREEN TDD Plan
 
@@ -187,7 +189,10 @@ Share confirmation/progress components with config UI if useful.
 
 ## Verification Evidence
 
-- Not run yet.
+- Controller dispatch verification: TASK-016 worktree and branch were clean,
+  pushed, and current with `origin/codex/epic/admin-configuration-frontend`
+  before worker dispatch; branch divergence was `0 0`.
+- Worker verification pending.
 
 ## Review Feedback
 

@@ -3,7 +3,7 @@ id: EPIC-admin-configuration-frontend-CONTROLLER
 kind: controller_state
 epic: EPIC-admin-configuration-frontend
 active_wave: WAVE-009
-status: activating
+status: monitoring
 updated_at: 2026-07-06
 ---
 
@@ -98,8 +98,10 @@ to `in-progress/`, and the planned task branch/worktree are
 `/Users/ivo.toby/workspace/postgram/.worktrees/TASK-016-maintenance-admin-ui`.
 Activation checkpoint `b34d0eb` was pushed before branch/worktree creation.
 The TASK-016 branch and worktree were created from that checkpoint, pushed to
-origin, and verified clean/current. Worker dispatch is pending the
-worktree-state checkpoint.
+origin, verified clean/current, and fast-forwarded to the worktree-state
+checkpoint `bf06360`. Singer
+(`019f3926-c2c5-7290-9c2f-9a4cca19e6ae`) is dispatched. No PR or patch exists
+yet, so the live gate is `no_pr`.
 
 WAVE-004 is done and reconciled. PR #81/TASK-009 and PR #82/TASK-006 are
 merged, shared context is reconciled, and both WAVE-004 worktrees are cleaned
@@ -125,9 +127,9 @@ up.
 
 Mode: adaptive
 
-Cadence: 5m
+Cadence: 15m
 
-Status: wave_009_worktree_verified_pending_dispatch
+Status: wave_009_worker_dispatched_no_pr
 
 Last check: 2026-07-06T20:30:02Z
 
@@ -145,7 +147,8 @@ epic EPIC-admin-configuration-frontend, active wave WAVE-009. Use the
 subagent-pr-orchestration skill. Start in /Users/ivo.toby/workspace/postgram on
 branch codex/epic/admin-configuration-frontend. Read
 .wdd/epics/EPIC-admin-configuration-frontend/orchestration.json and
-controller-state.md, then inspect worker THREAD_PENDING and assigned worktree
+controller-state.md, then inspect worker Singer
+(`019f3926-c2c5-7290-9c2f-9a4cca19e6ae`) and assigned worktree
 /Users/ivo.toby/workspace/postgram/.worktrees/TASK-016-maintenance-admin-ui on
 branch codex/task/TASK-016-maintenance-admin-ui for bundle
 WAVE-009-maintenance-admin-ui / TASK-016-maintenance-admin-ui. Update gates,
@@ -153,13 +156,14 @@ branch freshness, verification, PR or patch refs, reviewer refs, feedback,
 shared-context reconciliation status, and monitoring timestamps. If the worker
 has produced a PR or patch, move TASK-016 to review/reviewer orchestration; if
 no PR or patch exists, keep no_pr and nudge exact missing deliverables only if
-needed. If review reports P1/P2, route feedback to the owning worker or a fresh
+needed. If review reports P1/P2, route feedback to Singer or a fresh
 fix worker. If review passes, refresh stale task branch against
 codex/epic/admin-configuration-frontend, rerun required freshness verification,
 then merge or mark merge_ready according to policy. Stop when WAVE-009 is
-merged, blocked, cancelled, or ready for wdd-reconcile-wave. After WAVE-009 is
-reconciled, continue to WAVE-010 per Ivo finish-all-waves instruction and push
-to GitHub between tasks/waves.
+merged, blocked, cancelled, or ready for wdd-reconcile-wave. Do not start
+WAVE-010 until WAVE-009 is merged and reconciled. After WAVE-009 is reconciled,
+continue to WAVE-010 per Ivo finish-all-waves instruction and push to GitHub
+between tasks/waves.
 ```
 
 ## Active Wave Strategy
@@ -171,7 +175,7 @@ to GitHub between tasks/waves.
 - WAVE-009 strategy: full / bundled / risk_based / adaptive.
 - WAVE-009 task: TASK-016-maintenance-admin-ui.
 - Confirmation: Ivo via Codex finish-all-waves request on 2026-07-06.
-- Current gate: activation and worktree are verified; worker dispatch is next.
+- Current gate: worker Singer is dispatched; no PR or patch exists yet.
 
 ## Last Reconciled Wave
 
@@ -224,7 +228,7 @@ to GitHub between tasks/waves.
 | TASK-013-admin-config-ui | TICKET-005-admin-frontend | codex/task/TASK-013-admin-config-ui | cleaned_up | reconciled | Schrodinger follow-up REVIEW_PASS; final freshness passed at task head `2efc58f`; post-merge AdminConfig/AdminOps/AdminAuth UI tests, UI typecheck, root typecheck, JSON parse, and diff-check passed; PR #90 merged at 2026-07-06T20:15:58Z in `9974b29`; worktree cleaned up; WAVE-008 shared context reconciled |
 | TASK-014-admin-job-foundation | TICKET-006-maintenance-jobs | codex/task/TASK-014-admin-job-foundation | cleaned_up | reconciled | Lorentz REVIEW_PASS; freshness current at task head `0e08630`; post-merge tests/typecheck/touched-file ESLint passed; merged locally into epic branch in `c5edbfc`; WAVE-006 reconciled and worktree cleaned up |
 | TASK-015-maintenance-admin-api | TICKET-006-maintenance-jobs | codex/task/TASK-015-maintenance-admin-api | cleaned_up | reconciled | Lorentz REVIEW_PASS; final freshness passed at task head `ea88af4`; post-merge contract tests 4/4, CLI integration 37/37, typecheck, scoped ESLint, JSON parse, and diff check passed; merged locally in `78f0f43`; PR #88 merged at 2026-07-06T17:02:28Z; shared context reconciled |
-| TASK-016-maintenance-admin-ui | TICKET-006-maintenance-jobs | codex/task/TASK-016-maintenance-admin-ui | clean_pushed | pending_dispatch | `npm --prefix ui run test -- --run src/components/AdminMaintenance.test.tsx`; AdminOps/AdminConfig/AdminAuth regressions if dashboard/client changes; `npm --prefix ui run typecheck` |
+| TASK-016-maintenance-admin-ui | TICKET-006-maintenance-jobs | codex/task/TASK-016-maintenance-admin-ui | worker_active | no_pr | Singer (`019f3926-c2c5-7290-9c2f-9a4cca19e6ae`) dispatched; `npm --prefix ui run test -- --run src/components/AdminMaintenance.test.tsx`; AdminOps/AdminConfig/AdminAuth regressions if dashboard/client changes; `npm --prefix ui run typecheck` |
 | TASK-017-docker-first-run-no-cli | TICKET-007-docker-e2e-validation | codex/task/TASK-017-docker-first-run-no-cli | not_created | planned | `docker compose config`; `npm run typecheck`; `npm --prefix ui run build` |
 | TASK-018-security-epic-validation | TICKET-007-docker-e2e-validation | codex/task/TASK-018-security-epic-validation | not_created | planned | broad backend, frontend, Docker, and smoke validation |
 
@@ -650,6 +654,9 @@ to GitHub between tasks/waves.
   with branch `codex/task/TASK-016-maintenance-admin-ui` and worktree
   `/Users/ivo.toby/workspace/postgram/.worktrees/TASK-016-maintenance-admin-ui`
   verified clean and pushed from activation checkpoint `b34d0eb`.
+- WAVE-009 worker Singer (`019f3926-c2c5-7290-9c2f-9a4cca19e6ae`) is
+  dispatched on TASK-016. The bundle gate is `no_pr` until a PR or patch
+  appears.
 
 ## Verification Status
 
@@ -1698,7 +1705,11 @@ to GitHub between tasks/waves.
   from that checkpoint, pushed the task branch to origin, and verified the
   in-progress TASK-016 file plus orchestration/controller artifacts exist in
   the worker worktree. Branch divergence from the epic branch is `0 0`.
+- 2026-07-06T20:30:02Z: Dispatched Singer
+  (`019f3926-c2c5-7290-9c2f-9a4cca19e6ae`) to TASK-016 after the task branch
+  was fast-forwarded to checkpoint `bf06360` and verified current with the epic
+  branch. Monitoring is active at a 15-minute cadence with gate `no_pr`.
 
 ## Next Action
 
-Next action: dispatch the TASK-016 worker and update heartbeat monitoring.
+Next action: inspect Singer and the TASK-016 worktree for a PR or patch.

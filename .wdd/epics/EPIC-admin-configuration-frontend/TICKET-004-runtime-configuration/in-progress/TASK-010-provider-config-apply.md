@@ -21,12 +21,12 @@ assigned_model_class: implementationComplex
 review_model_class: review
 branch: codex/task/TASK-010-provider-config-apply
 worker_worktree: /Users/ivo.toby/workspace/postgram/.worktrees/TASK-010-provider-config-apply
-worktree_status: pending_creation
+worktree_status: clean_pushed
 pr: null
-worker_thread_id: null
+worker_thread_id: 019f35ff-a193-7ae0-a4b8-1ec53faabb74
 review_thread_id: null
-current_gate: not_started
-branch_freshness: unknown
+current_gate: no_pr
+branch_freshness: current_at_dispatch
 verification:
   - npm test -- tests/integration/admin-provider-config.test.ts
   - npm test -- tests/unit/config.test.ts
@@ -127,6 +127,10 @@ codex/task/TASK-010-provider-config-apply
 
 Assigned by WAVE-005 activation. The controller must create and verify this
 isolated worktree before dispatch.
+
+Verified and dispatched at 2026-07-06T05:56:19Z with worker Goodall
+(`019f35ff-a193-7ae0-a4b8-1ec53faabb74`) on branch
+`codex/task/TASK-010-provider-config-apply`.
 
 ## PR / Patch Reference
 

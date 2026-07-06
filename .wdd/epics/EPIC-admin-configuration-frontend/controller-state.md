@@ -22,9 +22,10 @@ checkout.
 WAVE-005 is active after Ivo confirmed that Codex should finish all remaining
 waves. The hybrid wave contains two independent bundles:
 TASK-007-admin-api-shell-diagnostics and TASK-010-provider-config-apply.
-Activation artifacts assign dedicated task branches and worktrees; these
-artifacts must be pushed before worktrees are created and workers are
-dispatched.
+Activation artifacts were pushed in `70df1c5`; both task branches/worktrees
+were created from that commit, pushed to GitHub, verified, and dispatched.
+Wegener owns TASK-007 and Goodall owns TASK-010. Both bundle gates are `no_pr`
+until the workers return a PR or patch.
 
 WAVE-004 is done and reconciled. PR #81/TASK-009 and PR #82/TASK-006 are
 merged, shared context is reconciled, and both WAVE-004 worktrees are cleaned
@@ -52,19 +53,24 @@ Mode: codex_thread_heartbeat
 
 Cadence: 5 minutes
 
-Status: pending_worker_dispatch
+Status: pending_heartbeat_creation
 
-Last check: 2026-07-06T05:51:49Z
+Last check: 2026-07-06T05:56:19Z
 
-Next check due: pending after worker dispatch
+Next check due: pending heartbeat creation
 
 Scheduler reference: pending
 
 Fallback prompt:
 
 ```text
-WAVE-005 activation is in progress. Create/verify task worktrees, dispatch
-TASK-007 and TASK-010 workers, then create heartbeat monitoring.
+Run one bounded WDD controller heartbeat for /Users/ivo.toby/workspace/postgram,
+epic EPIC-admin-configuration-frontend, active wave WAVE-005. Use
+subagent-pr-orchestration. Read orchestration.json and controller-state.md,
+inspect workers Wegener (019f35ff-5f3c-7cc0-aa6e-78941a3fd7fd) for TASK-007
+and Goodall (019f35ff-a193-7ae0-a4b8-1ec53faabb74) for TASK-010 plus assigned
+worktrees. Update gates, PR refs, verification, feedback, branch freshness,
+cleanup, and monitoring. Stop when WAVE-005 is ready for wdd-reconcile-wave.
 ```
 
 ## Active Wave Strategy
@@ -79,12 +85,12 @@ TASK-007 and TASK-010 workers, then create heartbeat monitoring.
 - Bundle branch: `codex/task/TASK-007-admin-api-shell-diagnostics`
 - Bundle worktree:
   `/Users/ivo.toby/workspace/postgram/.worktrees/TASK-007-admin-api-shell-diagnostics`
-- Worker: pending dispatch
+- Worker: Wegener (`019f35ff-5f3c-7cc0-aa6e-78941a3fd7fd`)
 - Bundle: WAVE-005-provider-config-apply
 - Bundle branch: `codex/task/TASK-010-provider-config-apply`
 - Bundle worktree:
   `/Users/ivo.toby/workspace/postgram/.worktrees/TASK-010-provider-config-apply`
-- Worker: pending dispatch
+- Worker: Goodall (`019f35ff-a193-7ae0-a4b8-1ec53faabb74`)
 
 ## Last Reconciled Wave
 
@@ -112,10 +118,10 @@ TASK-007 and TASK-010 workers, then create heartbeat monitoring.
 | TASK-004-admin-auth-persistence | TICKET-002-admin-auth-foundation | codex/task/TASK-004-admin-auth-persistence | cleaned_up | reconciled | REVIEW_PASS; freshness verification passed; merged in `0f96769`; PR #79 merged; WAVE-002 reconciled |
 | TASK-005-admin-session-routes | TICKET-002-admin-auth-foundation | codex/task/TASK-005-admin-session-routes | cleaned_up | reconciled | REVIEW_PASS; freshness verification passed; merged in `ecfe9ac`; PR #80 merged; WAVE-003 reconciled |
 | TASK-006-admin-mfa-step-up | TICKET-002-admin-auth-foundation | codex/task/TASK-006-admin-mfa-step-up | cleaned_up | reconciled | REVIEW_PASS; final branch freshness passed at `8c04680`; merged locally into epic branch in `6666508`; worktree cleaned up during WAVE-004 reconciliation |
-| TASK-007-admin-api-shell-diagnostics | TICKET-003-admin-api-foundation | codex/task/TASK-007-admin-api-shell-diagnostics | pending_creation | not_started | WAVE-005 activation assigned worktree; `npm test -- tests/contract/admin-api.test.ts`; `npm run typecheck` |
+| TASK-007-admin-api-shell-diagnostics | TICKET-003-admin-api-foundation | codex/task/TASK-007-admin-api-shell-diagnostics | clean_pushed | no_pr | Worker Wegener dispatched; `npm test -- tests/contract/admin-api.test.ts`; `npm run typecheck` |
 | TASK-008-admin-key-audit-stats-api | TICKET-003-admin-api-foundation | codex/task/TASK-008-admin-key-audit-stats-api | not_created | planned | `npm test -- tests/contract/admin-key-audit-stats.test.ts`; `npm test -- tests/integration/key-service.test.ts`; `npm run typecheck` |
 | TASK-009-settings-secret-store | TICKET-004-runtime-configuration | codex/task/TASK-009-settings-secret-store | cleaned_up | reconciled | PR #81 follow-up REVIEW_PASS, final branch freshness passed at `ca9c96f`, merged locally into epic branch in `b63ad08`; worktree cleaned up during WAVE-004 reconciliation |
-| TASK-010-provider-config-apply | TICKET-004-runtime-configuration | codex/task/TASK-010-provider-config-apply | pending_creation | not_started | WAVE-005 activation assigned worktree; `npm test -- tests/integration/admin-provider-config.test.ts`; `npm test -- tests/unit/config.test.ts`; `npm run typecheck` |
+| TASK-010-provider-config-apply | TICKET-004-runtime-configuration | codex/task/TASK-010-provider-config-apply | clean_pushed | no_pr | Worker Goodall dispatched; `npm test -- tests/integration/admin-provider-config.test.ts`; `npm test -- tests/unit/config.test.ts`; `npm run typecheck` |
 | TASK-011-admin-auth-ui | TICKET-005-admin-frontend | codex/task/TASK-011-admin-auth-ui | not_created | planned | `npm --prefix ui run test -- --run src/components/AdminAuth.test.tsx`; `npm --prefix ui run typecheck` |
 | TASK-012-admin-ops-dashboard-ui | TICKET-005-admin-frontend | codex/task/TASK-012-admin-ops-dashboard-ui | not_created | planned | `npm --prefix ui run test -- --run src/components/AdminOps.test.tsx`; `npm --prefix ui run typecheck` |
 | TASK-013-admin-config-ui | TICKET-005-admin-frontend | codex/task/TASK-013-admin-config-ui | not_created | planned | `npm --prefix ui run test -- --run src/components/AdminConfig.test.tsx`; `npm --prefix ui run typecheck` |
@@ -222,8 +228,8 @@ TASK-007 and TASK-010 workers, then create heartbeat monitoring.
   `/Users/ivo.toby/workspace/postgram/.worktrees/TASK-007-admin-api-shell-diagnostics`
   and `codex/task/TASK-010-provider-config-apply` at
   `/Users/ivo.toby/workspace/postgram/.worktrees/TASK-010-provider-config-apply`.
-- WAVE-005 activation artifacts must be committed and pushed to the epic branch
-  before creating these task worktrees.
+- WAVE-005 task branches were created from activation commit `70df1c5`, pushed
+  to origin, verified, and dispatched to Wegener and Goodall.
 
 ## WAVE-001 Reconciled State
 
@@ -300,7 +306,7 @@ TASK-007 and TASK-010 workers, then create heartbeat monitoring.
   gates are handled.
 - WAVE-005 is active. Eligible tasks are
   TASK-007-admin-api-shell-diagnostics and TASK-010-provider-config-apply, with
-  worktree creation and worker dispatch pending.
+  workers dispatched and PR/patch output pending.
 - WAVE-006 remains blocked until WAVE-005 is merged/closed and reconciled.
 
 ## Verification Status
@@ -439,9 +445,10 @@ TASK-007 and TASK-010 workers, then create heartbeat monitoring.
   context and downstream task briefs are updated, orchestration JSON parses,
   `git diff --check` passes, and the clean TASK-006/TASK-009 worktrees were
   removed.
-- WAVE-005 activation verification pending: activation artifacts must parse,
-  pass `git diff --check`, be pushed to the epic branch, then task branches and
-  isolated worktrees must be created from that pushed activation commit.
+- WAVE-005 activation verification: activation artifacts parse and pass
+  `git diff --check`; activation commit `70df1c5` is pushed; both task
+  branches/worktrees were created from `70df1c5`, contain the in-progress task
+  files and active orchestration state, and were pushed before worker dispatch.
 
 ## Event Log
 
@@ -650,9 +657,13 @@ TASK-007 and TASK-010 workers, then create heartbeat monitoring.
   TASK-010-provider-config-apply, moved both task files to `in-progress/`, and
   recorded pending branch/worktree assignments. Activation artifacts must be
   pushed before task branches/worktrees are created.
+- 2026-07-06T05:56:19Z: Pushed activation commit `70df1c5`, created and
+  verified WAVE-005 task branches/worktrees from that commit, pushed both task
+  branches to origin, dispatched worker Wegener for TASK-007 and worker Goodall
+  for TASK-010, and prepared heartbeat monitoring.
 
 ## Next Action
 
-Commit and push WAVE-005 activation artifacts, create/verify both assigned
-task branches and worktrees from the pushed activation commit, dispatch workers
-for TASK-007 and TASK-010, then create WAVE-005 heartbeat monitoring.
+Create WAVE-005 heartbeat monitoring. Next controller tick should inspect
+Wegener and Goodall, update PR/patch refs and gates, and keep both bundles at
+`no_pr` until workers return deliverables.

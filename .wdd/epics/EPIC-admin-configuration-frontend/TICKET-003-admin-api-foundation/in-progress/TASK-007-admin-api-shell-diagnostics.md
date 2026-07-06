@@ -18,12 +18,12 @@ assigned_model_class: implementationComplex
 review_model_class: review
 branch: codex/task/TASK-007-admin-api-shell-diagnostics
 worker_worktree: /Users/ivo.toby/workspace/postgram/.worktrees/TASK-007-admin-api-shell-diagnostics
-worktree_status: pending_creation
+worktree_status: clean_pushed
 pr: null
-worker_thread_id: null
+worker_thread_id: 019f35ff-5f3c-7cc0-aa6e-78941a3fd7fd
 review_thread_id: null
-current_gate: not_started
-branch_freshness: unknown
+current_gate: no_pr
+branch_freshness: current_at_dispatch
 verification:
   - npm test -- tests/contract/admin-api.test.ts
   - npm run typecheck
@@ -109,6 +109,10 @@ codex/task/TASK-007-admin-api-shell-diagnostics
 
 Assigned by WAVE-005 activation. The controller must create and verify this
 isolated worktree before dispatch.
+
+Verified and dispatched at 2026-07-06T05:56:19Z with worker Wegener
+(`019f35ff-5f3c-7cc0-aa6e-78941a3fd7fd`) on branch
+`codex/task/TASK-007-admin-api-shell-diagnostics`.
 
 ## PR / Patch Reference
 

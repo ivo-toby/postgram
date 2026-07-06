@@ -728,20 +728,23 @@
           ],
           "branch": "codex/task/TASK-007-admin-api-shell-diagnostics",
           "worktree": "/Users/ivo.toby/workspace/postgram/.worktrees/TASK-007-admin-api-shell-diagnostics",
-          "worktreeStatus": "pending_creation",
-          "workerThreadId": null,
-          "workerNickname": null,
+          "worktreeStatus": "clean_pushed",
+          "workerThreadId": "019f35ff-5f3c-7cc0-aa6e-78941a3fd7fd",
+          "workerNickname": "Wegener",
           "reviewThreadId": null,
           "reviewNickname": null,
-          "currentGate": "not_started",
-          "branchFreshness": "unknown",
+          "currentGate": "no_pr",
+          "branchFreshness": "current_at_dispatch",
           "pr": null,
-          "latestCommit": null,
+          "latestCommit": "70df1c5f9324dd3f9ff424f199ee1b8896a2e410",
           "blockingFeedback": [],
           "verification": null,
           "activatedAt": "2026-07-06T05:51:49Z",
           "cleanupState": "not_started",
-          "sharedContextReconciliation": "pending"
+          "sharedContextReconciliation": "pending",
+          "dispatchedAt": "2026-07-06T05:56:19Z",
+          "dispatchBaseCommit": "70df1c5f9324dd3f9ff424f199ee1b8896a2e410",
+          "lastObservedAt": "2026-07-06T05:56:19Z"
         },
         {
           "id": "WAVE-005-provider-config-apply",
@@ -750,25 +753,29 @@
           ],
           "branch": "codex/task/TASK-010-provider-config-apply",
           "worktree": "/Users/ivo.toby/workspace/postgram/.worktrees/TASK-010-provider-config-apply",
-          "worktreeStatus": "pending_creation",
-          "workerThreadId": null,
-          "workerNickname": null,
+          "worktreeStatus": "clean_pushed",
+          "workerThreadId": "019f35ff-a193-7ae0-a4b8-1ec53faabb74",
+          "workerNickname": "Goodall",
           "reviewThreadId": null,
           "reviewNickname": null,
-          "currentGate": "not_started",
-          "branchFreshness": "unknown",
+          "currentGate": "no_pr",
+          "branchFreshness": "current_at_dispatch",
           "pr": null,
-          "latestCommit": null,
+          "latestCommit": "70df1c5f9324dd3f9ff424f199ee1b8896a2e410",
           "blockingFeedback": [],
           "verification": null,
           "activatedAt": "2026-07-06T05:51:49Z",
           "cleanupState": "not_started",
-          "sharedContextReconciliation": "pending"
+          "sharedContextReconciliation": "pending",
+          "dispatchedAt": "2026-07-06T05:56:19Z",
+          "dispatchBaseCommit": "70df1c5f9324dd3f9ff424f199ee1b8896a2e410",
+          "lastObservedAt": "2026-07-06T05:56:19Z"
         }
       ],
-      "activationCommit": null,
-      "dispatchState": "pending_worktrees",
-      "lastObservedAt": "2026-07-06T05:51:49Z"
+      "activationCommit": "70df1c5f9324dd3f9ff424f199ee1b8896a2e410",
+      "dispatchState": "dispatched",
+      "lastObservedAt": "2026-07-06T05:56:19Z",
+      "dispatchedAt": "2026-07-06T05:56:19Z"
     },
     {
       "id": "WAVE-006",
@@ -1329,20 +1336,24 @@
       "assignedModel": "implementationComplex",
       "reviewModel": "review",
       "branch": "codex/task/TASK-007-admin-api-shell-diagnostics",
-      "workerThreadId": null,
+      "workerThreadId": "019f35ff-5f3c-7cc0-aa6e-78941a3fd7fd",
       "reviewThreadId": null,
       "workerWorktree": "/Users/ivo.toby/workspace/postgram/.worktrees/TASK-007-admin-api-shell-diagnostics",
-      "worktreeStatus": "pending_creation",
+      "worktreeStatus": "clean_pushed",
       "pr": null,
-      "latestCommit": null,
-      "branchFreshness": "unknown",
+      "latestCommit": "70df1c5f9324dd3f9ff424f199ee1b8896a2e410",
+      "branchFreshness": "current_at_dispatch",
       "blockingFeedback": [],
       "verification": null,
-      "currentGate": "not_started",
+      "currentGate": "no_pr",
       "cleanupState": "not_started",
       "sharedContextReconciliation": "pending",
       "activatedAt": "2026-07-06T05:51:49Z",
-      "bundle": "WAVE-005-admin-api-shell-diagnostics"
+      "bundle": "WAVE-005-admin-api-shell-diagnostics",
+      "workerNickname": "Wegener",
+      "dispatchedAt": "2026-07-06T05:56:19Z",
+      "dispatchBaseCommit": "70df1c5f9324dd3f9ff424f199ee1b8896a2e410",
+      "lastObservedAt": "2026-07-06T05:56:19Z"
     },
     {
       "id": "TASK-008-admin-key-audit-stats-api",
@@ -1484,20 +1495,24 @@
       "assignedModel": "implementationComplex",
       "reviewModel": "review",
       "branch": "codex/task/TASK-010-provider-config-apply",
-      "workerThreadId": null,
+      "workerThreadId": "019f35ff-a193-7ae0-a4b8-1ec53faabb74",
       "reviewThreadId": null,
       "workerWorktree": "/Users/ivo.toby/workspace/postgram/.worktrees/TASK-010-provider-config-apply",
-      "worktreeStatus": "pending_creation",
+      "worktreeStatus": "clean_pushed",
       "pr": null,
-      "latestCommit": null,
-      "branchFreshness": "unknown",
+      "latestCommit": "70df1c5f9324dd3f9ff424f199ee1b8896a2e410",
+      "branchFreshness": "current_at_dispatch",
       "blockingFeedback": [],
       "verification": null,
-      "currentGate": "not_started",
+      "currentGate": "no_pr",
       "cleanupState": "not_started",
       "sharedContextReconciliation": "pending",
       "activatedAt": "2026-07-06T05:51:49Z",
-      "bundle": "WAVE-005-provider-config-apply"
+      "bundle": "WAVE-005-provider-config-apply",
+      "workerNickname": "Goodall",
+      "dispatchedAt": "2026-07-06T05:56:19Z",
+      "dispatchBaseCommit": "70df1c5f9324dd3f9ff424f199ee1b8896a2e410",
+      "lastObservedAt": "2026-07-06T05:56:19Z"
     },
     {
       "id": "TASK-011-admin-auth-ui",
@@ -1800,11 +1815,11 @@
   "monitoring": {
     "mode": "pending",
     "cadence": "15m",
-    "status": "pending_worker_dispatch",
-    "lastCheckedAt": "2026-07-06T05:51:49Z",
+    "status": "pending_heartbeat_creation",
+    "lastCheckedAt": "2026-07-06T05:56:19Z",
     "nextCheckDueAt": null,
     "schedulerRef": null,
-    "fallbackPrompt": "WAVE-005 activation is in progress; create worktrees, dispatch TASK-007 and TASK-010 workers, then create heartbeat monitoring."
+    "fallbackPrompt": "Run one bounded WDD controller heartbeat for /Users/ivo.toby/workspace/postgram, epic EPIC-admin-configuration-frontend, active wave WAVE-005. Use subagent-pr-orchestration. Read orchestration.json and controller-state.md, inspect workers Wegener (019f35ff-5f3c-7cc0-aa6e-78941a3fd7fd) for TASK-007 and Goodall (019f35ff-a193-7ae0-a4b8-1ec53faabb74) for TASK-010 plus assigned worktrees. Update gates, PR refs, verification, feedback, branch freshness, cleanup, and monitoring. Stop when WAVE-005 is ready for wdd-reconcile-wave."
   },
   "sharedContext": {
     "index": "shared-context/index.md",
@@ -1841,20 +1856,23 @@
         ],
         "branch": "codex/task/TASK-007-admin-api-shell-diagnostics",
         "worktree": "/Users/ivo.toby/workspace/postgram/.worktrees/TASK-007-admin-api-shell-diagnostics",
-        "worktreeStatus": "pending_creation",
-        "workerThreadId": null,
-        "workerNickname": null,
+        "worktreeStatus": "clean_pushed",
+        "workerThreadId": "019f35ff-5f3c-7cc0-aa6e-78941a3fd7fd",
+        "workerNickname": "Wegener",
         "reviewThreadId": null,
         "reviewNickname": null,
-        "currentGate": "not_started",
-        "branchFreshness": "unknown",
+        "currentGate": "no_pr",
+        "branchFreshness": "current_at_dispatch",
         "pr": null,
-        "latestCommit": null,
+        "latestCommit": "70df1c5f9324dd3f9ff424f199ee1b8896a2e410",
         "blockingFeedback": [],
         "verification": null,
         "activatedAt": "2026-07-06T05:51:49Z",
         "cleanupState": "not_started",
-        "sharedContextReconciliation": "pending"
+        "sharedContextReconciliation": "pending",
+        "dispatchedAt": "2026-07-06T05:56:19Z",
+        "dispatchBaseCommit": "70df1c5f9324dd3f9ff424f199ee1b8896a2e410",
+        "lastObservedAt": "2026-07-06T05:56:19Z"
       },
       {
         "id": "WAVE-005-provider-config-apply",
@@ -1863,27 +1881,30 @@
         ],
         "branch": "codex/task/TASK-010-provider-config-apply",
         "worktree": "/Users/ivo.toby/workspace/postgram/.worktrees/TASK-010-provider-config-apply",
-        "worktreeStatus": "pending_creation",
-        "workerThreadId": null,
-        "workerNickname": null,
+        "worktreeStatus": "clean_pushed",
+        "workerThreadId": "019f35ff-a193-7ae0-a4b8-1ec53faabb74",
+        "workerNickname": "Goodall",
         "reviewThreadId": null,
         "reviewNickname": null,
-        "currentGate": "not_started",
-        "branchFreshness": "unknown",
+        "currentGate": "no_pr",
+        "branchFreshness": "current_at_dispatch",
         "pr": null,
-        "latestCommit": null,
+        "latestCommit": "70df1c5f9324dd3f9ff424f199ee1b8896a2e410",
         "blockingFeedback": [],
         "verification": null,
         "activatedAt": "2026-07-06T05:51:49Z",
         "cleanupState": "not_started",
-        "sharedContextReconciliation": "pending"
+        "sharedContextReconciliation": "pending",
+        "dispatchedAt": "2026-07-06T05:56:19Z",
+        "dispatchBaseCommit": "70df1c5f9324dd3f9ff424f199ee1b8896a2e410",
+        "lastObservedAt": "2026-07-06T05:56:19Z"
       }
     ],
     "status": "in_progress",
-    "dispatchedAt": null,
-    "activationCommit": null,
-    "lastObservedAt": "2026-07-06T05:51:49Z",
-    "dispatchState": "pending_worktrees"
+    "dispatchedAt": "2026-07-06T05:56:19Z",
+    "activationCommit": "70df1c5f9324dd3f9ff424f199ee1b8896a2e410",
+    "lastObservedAt": "2026-07-06T05:56:19Z",
+    "dispatchState": "dispatched"
   },
   "currentGates": {
     "epicBranch": {
@@ -1912,8 +1933,8 @@
       "WAVE-003-admin-session-routes": "cleaned_up",
       "WAVE-004-admin-mfa-step-up": "cleaned_up",
       "WAVE-004-settings-secret-store": "cleaned_up",
-      "WAVE-005-admin-api-shell-diagnostics": "pending_creation",
-      "WAVE-005-provider-config-apply": "pending_creation"
+      "WAVE-005-admin-api-shell-diagnostics": "clean_pushed",
+      "WAVE-005-provider-config-apply": "clean_pushed"
     },
     "workerDispatch": {
       "WAVE-001-admin-feasibility-gate": "reconciled",
@@ -1921,8 +1942,8 @@
       "WAVE-003-admin-session-routes": "reconciled",
       "WAVE-004-admin-mfa-step-up": "reconciled",
       "WAVE-004-settings-secret-store": "reconciled",
-      "WAVE-005-admin-api-shell-diagnostics": "not_started",
-      "WAVE-005-provider-config-apply": "not_started"
+      "WAVE-005-admin-api-shell-diagnostics": "no_pr",
+      "WAVE-005-provider-config-apply": "no_pr"
     },
     "waveCompletion": {
       "WAVE-001": "done",
@@ -1938,11 +1959,11 @@
     "monitoring": {
       "mode": "pending",
       "cadence": "15m",
-      "status": "pending_worker_dispatch",
-      "lastCheckedAt": "2026-07-06T05:51:49Z",
+      "status": "pending_heartbeat_creation",
+      "lastCheckedAt": "2026-07-06T05:56:19Z",
       "nextCheckDueAt": null,
       "schedulerRef": null,
-      "fallbackPrompt": "WAVE-005 activation is in progress; create worktrees, dispatch TASK-007 and TASK-010 workers, then create heartbeat monitoring."
+      "fallbackPrompt": "Run one bounded WDD controller heartbeat for /Users/ivo.toby/workspace/postgram, epic EPIC-admin-configuration-frontend, active wave WAVE-005. Use subagent-pr-orchestration. Read orchestration.json and controller-state.md, inspect workers Wegener (019f35ff-5f3c-7cc0-aa6e-78941a3fd7fd) for TASK-007 and Goodall (019f35ff-a193-7ae0-a4b8-1ec53faabb74) for TASK-010 plus assigned worktrees. Update gates, PR refs, verification, feedback, branch freshness, cleanup, and monitoring. Stop when WAVE-005 is ready for wdd-reconcile-wave."
     },
     "review": {
       "WAVE-001-admin-feasibility-gate": {
@@ -2087,7 +2108,9 @@
       "WAVE-002-admin-auth-persistence": "current_at_merge",
       "WAVE-003-admin-session-routes": "current_at_merge",
       "WAVE-004-admin-mfa-step-up": "current_at_merge",
-      "WAVE-004-settings-secret-store": "current_at_merge"
+      "WAVE-004-settings-secret-store": "current_at_merge",
+      "WAVE-005-admin-api-shell-diagnostics": "current_at_dispatch",
+      "WAVE-005-provider-config-apply": "current_at_dispatch"
     },
     "merge": {
       "WAVE-001-admin-feasibility-gate": {
@@ -2528,6 +2551,12 @@
       "WAVE-004": {
         "blocking": []
       }
+    },
+    "activationArtifact": {
+      "commit": "70df1c5",
+      "requiredBeforeTaskWorktrees": true,
+      "wave": "WAVE-005",
+      "syncedAt": "2026-07-06T05:55:00Z"
     }
   },
   "lastReconciledWave": {
@@ -2579,20 +2608,23 @@
         ],
         "branch": "codex/task/TASK-007-admin-api-shell-diagnostics",
         "worktree": "/Users/ivo.toby/workspace/postgram/.worktrees/TASK-007-admin-api-shell-diagnostics",
-        "worktreeStatus": "pending_creation",
-        "workerThreadId": null,
-        "workerNickname": null,
+        "worktreeStatus": "clean_pushed",
+        "workerThreadId": "019f35ff-5f3c-7cc0-aa6e-78941a3fd7fd",
+        "workerNickname": "Wegener",
         "reviewThreadId": null,
         "reviewNickname": null,
-        "currentGate": "not_started",
-        "branchFreshness": "unknown",
+        "currentGate": "no_pr",
+        "branchFreshness": "current_at_dispatch",
         "pr": null,
-        "latestCommit": null,
+        "latestCommit": "70df1c5f9324dd3f9ff424f199ee1b8896a2e410",
         "blockingFeedback": [],
         "verification": null,
         "activatedAt": "2026-07-06T05:51:49Z",
         "cleanupState": "not_started",
-        "sharedContextReconciliation": "pending"
+        "sharedContextReconciliation": "pending",
+        "dispatchedAt": "2026-07-06T05:56:19Z",
+        "dispatchBaseCommit": "70df1c5f9324dd3f9ff424f199ee1b8896a2e410",
+        "lastObservedAt": "2026-07-06T05:56:19Z"
       },
       {
         "id": "WAVE-005-provider-config-apply",
@@ -2601,23 +2633,27 @@
         ],
         "branch": "codex/task/TASK-010-provider-config-apply",
         "worktree": "/Users/ivo.toby/workspace/postgram/.worktrees/TASK-010-provider-config-apply",
-        "worktreeStatus": "pending_creation",
-        "workerThreadId": null,
-        "workerNickname": null,
+        "worktreeStatus": "clean_pushed",
+        "workerThreadId": "019f35ff-a193-7ae0-a4b8-1ec53faabb74",
+        "workerNickname": "Goodall",
         "reviewThreadId": null,
         "reviewNickname": null,
-        "currentGate": "not_started",
-        "branchFreshness": "unknown",
+        "currentGate": "no_pr",
+        "branchFreshness": "current_at_dispatch",
         "pr": null,
-        "latestCommit": null,
+        "latestCommit": "70df1c5f9324dd3f9ff424f199ee1b8896a2e410",
         "blockingFeedback": [],
         "verification": null,
         "activatedAt": "2026-07-06T05:51:49Z",
         "cleanupState": "not_started",
-        "sharedContextReconciliation": "pending"
+        "sharedContextReconciliation": "pending",
+        "dispatchedAt": "2026-07-06T05:56:19Z",
+        "dispatchBaseCommit": "70df1c5f9324dd3f9ff424f199ee1b8896a2e410",
+        "lastObservedAt": "2026-07-06T05:56:19Z"
       }
     ],
-    "activationCommit": null,
-    "dispatchState": "pending_worktrees"
+    "activationCommit": "70df1c5f9324dd3f9ff424f199ee1b8896a2e410",
+    "dispatchState": "dispatched",
+    "dispatchedAt": "2026-07-06T05:56:19Z"
   }
 }

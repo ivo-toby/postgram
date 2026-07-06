@@ -22,9 +22,9 @@ branch: codex/task/TASK-018-security-epic-validation
 worker_worktree: /Users/ivo.toby/workspace/postgram/.worktrees/TASK-018-security-epic-validation
 worktree_status: clean_pushed
 pr: null
-worker_thread_id: null
+worker_thread_id: 019f39b8-b83d-7350-b93e-c037b63ab845
 review_thread_id: null
-current_gate: dispatch_pending
+current_gate: no_pr
 branch_freshness: current_at_activation
 verification:
   - npm run typecheck

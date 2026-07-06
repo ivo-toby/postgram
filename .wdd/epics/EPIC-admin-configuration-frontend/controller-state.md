@@ -141,7 +141,9 @@ has moved to `in-progress/`; the controller assigned branch
 `/Users/ivo.toby/workspace/postgram/.worktrees/TASK-018-security-epic-validation`.
 Activation artifacts were pushed in `0ed8c61`; the TASK-018 task branch and
 worktree were created from that checkpoint, pushed to GitHub, and verified
-current with the epic branch. The bundle is pending worker dispatch.
+current with the epic branch. Ramanujan
+(`019f39b8-b83d-7350-b93e-c037b63ab845`) was dispatched to TASK-018 at
+2026-07-06T23:11:02Z. Current gate is `no_pr`.
 
 WAVE-004 is done and reconciled. PR #81/TASK-009 and PR #82/TASK-006 are
 merged, shared context is reconciled, and both WAVE-004 worktrees are cleaned
@@ -169,7 +171,7 @@ Mode: adaptive
 
 Cadence: 5m
 
-Status: wave_011_worktree_ready_pending_dispatch
+Status: wave_011_no_pr_worker_dispatched
 
 Last check: 2026-07-06T23:11:02Z
 
@@ -179,7 +181,7 @@ Scheduler reference: `postgram-admin-wave-005-wdd-heartbeat`
 
 Scheduler name: `postgram-admin-wave-011-wdd-heartbeat`
 
-Automation update: pending_update_after_worker_dispatch
+Automation update: verified_in_app
 
 Fallback prompt:
 
@@ -189,7 +191,8 @@ epic EPIC-admin-configuration-frontend, active wave WAVE-011. Use the
 subagent-pr-orchestration skill. Start in /Users/ivo.toby/workspace/postgram on
 branch codex/epic/admin-configuration-frontend. Read
 .wdd/epics/EPIC-admin-configuration-frontend/orchestration.json and
-controller-state.md, then inspect worker TBD and assigned worktree
+controller-state.md, then inspect worker Ramanujan
+(`019f39b8-b83d-7350-b93e-c037b63ab845`) and assigned worktree
 /Users/ivo.toby/workspace/postgram/.worktrees/TASK-018-security-epic-validation
 on branch codex/task/TASK-018-security-epic-validation for bundle
 WAVE-011-security-epic-validation / TASK-018-security-epic-validation. Update
@@ -214,8 +217,7 @@ finish-all-waves instruction.
 - WAVE-011 strategy: full / bundled / risk_based / adaptive.
 - WAVE-011 task: TASK-018-security-epic-validation.
 - Confirmation: Ivo via Codex finish-all-waves request on 2026-07-06.
-- Current gate: TASK-018 branch/worktree are clean, pushed, current with the
-  epic branch, and pending worker dispatch.
+- Current gate: Ramanujan is dispatched to TASK-018; no PR or patch exists yet.
 
 ## Last Reconciled Wave
 
@@ -276,7 +278,7 @@ finish-all-waves instruction.
 | TASK-015-maintenance-admin-api | TICKET-006-maintenance-jobs | codex/task/TASK-015-maintenance-admin-api | cleaned_up | reconciled | Lorentz REVIEW_PASS; final freshness passed at task head `ea88af4`; post-merge contract tests 4/4, CLI integration 37/37, typecheck, scoped ESLint, JSON parse, and diff check passed; merged locally in `78f0f43`; PR #88 merged at 2026-07-06T17:02:28Z; shared context reconciled |
 | TASK-016-maintenance-admin-ui | TICKET-006-maintenance-jobs | codex/task/TASK-016-maintenance-admin-ui | cleaned_up | reconciled | Hypatia REVIEW_PASS; final task head `1885b64`; freshness `0 3`; AdminMaintenance 9/9, AdminOps/AdminConfig/AdminAuth 49/49, UI typecheck passed; merged in `10b2738`; PR #91 MERGED at 2026-07-06T21:37:31Z; WAVE-009 shared context reconciled |
 | TASK-017-docker-first-run-no-cli | TICKET-007-docker-e2e-validation | codex/task/TASK-017-docker-first-run-no-cli | cleaned_up | reconciled | Dewey REVIEW_PASS; final freshness passed at task head `38bfe21`; merged in `ce0bb83`; PR #92 MERGED at 2026-07-06T22:56:32Z; post-merge Docker/tests/typechecks/UI build passed; WAVE-010 reconciled |
-| TASK-018-security-epic-validation | TICKET-007-docker-e2e-validation | codex/task/TASK-018-security-epic-validation | clean_pushed | dispatch_pending | broad backend, frontend, Docker, and smoke validation with WAVE-010 Docker upgrade/no-CLI gates |
+| TASK-018-security-epic-validation | TICKET-007-docker-e2e-validation | codex/task/TASK-018-security-epic-validation | clean_pushed | no_pr | Ramanujan dispatched; awaiting PR or patch with broad backend, frontend, Docker, and smoke validation |
 
 ## Branch And Worktree State
 
@@ -1889,8 +1891,12 @@ finish-all-waves instruction.
   from that checkpoint, pushed the task branch to origin, and verified the
   in-progress TASK-018 file plus orchestration/controller artifacts exist in
   the worker worktree. Branch divergence from the epic branch is `0 0`.
+- 2026-07-06T23:11:02Z: Dispatched Ramanujan
+  (`019f39b8-b83d-7350-b93e-c037b63ab845`) to TASK-018 after the task branch
+  was fast-forwarded to checkpoint `5b7f793` and verified current with the epic
+  branch. Monitoring is active at a 15-minute cadence with gate `no_pr`.
 
 ## Next Action
 
-Next action: dispatch the TASK-018 validation worker, then update monitoring
-with the worker reference and no-PR gate.
+Next action: monitor Ramanujan for a TASK-018 PR or patch; nudge only if the
+worktree becomes inactive or stale.

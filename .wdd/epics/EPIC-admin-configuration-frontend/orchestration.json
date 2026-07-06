@@ -2580,7 +2580,7 @@
       "assignedModel": "epicValidation",
       "reviewModel": "review",
       "branch": "codex/task/TASK-018-security-epic-validation",
-      "workerThreadId": null,
+      "workerThreadId": "019f39b8-b83d-7350-b93e-c037b63ab845",
       "reviewThreadId": null,
       "workerWorktree": "/Users/ivo.toby/workspace/postgram/.worktrees/TASK-018-security-epic-validation",
       "worktreeStatus": "clean_pushed",
@@ -2603,26 +2603,30 @@
         ],
         "evidence": null
       },
-      "currentGate": "dispatch_pending",
+      "currentGate": "no_pr",
       "readyAt": "2026-07-06T22:58:32Z",
       "bundle": "WAVE-011-security-epic-validation",
       "activatedAt": "2026-07-06T23:11:02Z",
       "cleanupState": "not_started",
       "sharedContextReconciliation": "not_started",
       "branchPushedAt": "2026-07-06T23:11:02Z",
-      "worktreeCreatedAt": "2026-07-06T23:11:02Z"
+      "worktreeCreatedAt": "2026-07-06T23:11:02Z",
+      "workerNickname": "Ramanujan",
+      "dispatchedAt": "2026-07-06T23:11:02Z",
+      "lastObservedAt": "2026-07-06T23:11:02Z"
     }
   ],
   "monitoring": {
     "mode": "adaptive",
     "cadence": "15m",
-    "status": "wave_011_worktree_ready_pending_dispatch",
+    "status": "wave_011_no_pr_worker_dispatched",
     "lastCheckedAt": "2026-07-06T23:11:02Z",
     "nextCheckDueAt": "2026-07-06T23:26:02Z",
     "schedulerRef": "postgram-admin-wave-005-wdd-heartbeat",
     "schedulerName": "postgram-admin-wave-011-wdd-heartbeat",
-    "fallbackPrompt": "Run one bounded WDD controller heartbeat for /Users/ivo.toby/workspace/postgram, epic EPIC-admin-configuration-frontend, active wave WAVE-011. Use the subagent-pr-orchestration skill. Start in /Users/ivo.toby/workspace/postgram on branch codex/epic/admin-configuration-frontend. Read .wdd/epics/EPIC-admin-configuration-frontend/orchestration.json and controller-state.md, then inspect worker TBD and assigned worktree /Users/ivo.toby/workspace/postgram/.worktrees/TASK-018-security-epic-validation on branch codex/task/TASK-018-security-epic-validation for bundle WAVE-011-security-epic-validation / TASK-018-security-epic-validation. Update gates, branch freshness, verification, PR or patch refs, reviewer refs, feedback, shared-context reconciliation status, and monitoring timestamps. If the worker has produced a PR or patch, move TASK-018 to review/reviewer orchestration; if no PR or patch exists, keep no_pr and nudge exact missing deliverables only if needed. If review reports P1/P2, route feedback to the worker or a fresh fix worker. If review passes, refresh stale task branch against codex/epic/admin-configuration-frontend, rerun required freshness verification, then merge or mark merge_ready according to policy. Stop when WAVE-011 is merged, blocked, cancelled, or ready for wdd-reconcile-wave. After WAVE-011 is reconciled, proceed to wdd-epic-validation and final PR per Ivo's finish-all-waves instruction.",
-    "automationUpdateResult": "pending_update_after_worker_dispatch"
+    "fallbackPrompt": "Run one bounded WDD controller heartbeat for /Users/ivo.toby/workspace/postgram, epic EPIC-admin-configuration-frontend, active wave WAVE-011. Use the subagent-pr-orchestration skill. Start in /Users/ivo.toby/workspace/postgram on branch codex/epic/admin-configuration-frontend. Read .wdd/epics/EPIC-admin-configuration-frontend/orchestration.json and controller-state.md, then inspect worker Ramanujan (019f39b8-b83d-7350-b93e-c037b63ab845) and assigned worktree /Users/ivo.toby/workspace/postgram/.worktrees/TASK-018-security-epic-validation on branch codex/task/TASK-018-security-epic-validation for bundle WAVE-011-security-epic-validation / TASK-018-security-epic-validation. Update gates, branch freshness, verification, PR or patch refs, reviewer refs, feedback, shared-context reconciliation status, and monitoring timestamps. If the worker has produced a PR or patch, move TASK-018 to review/reviewer orchestration; if no PR or patch exists, keep no_pr and nudge exact missing deliverables only if needed. If review reports P1/P2, route feedback to Ramanujan or a fresh fix worker. If review passes, refresh stale task branch against codex/epic/admin-configuration-frontend, rerun required freshness verification, then merge or mark merge_ready according to policy. Stop when WAVE-011 is merged, blocked, cancelled, or ready for wdd-reconcile-wave. After WAVE-011 is reconciled, proceed to wdd-epic-validation and final PR per Ivo's finish-all-waves instruction.",
+    "automationUpdateResult": "verified_in_app",
+    "updatedAt": "2026-07-06T23:11:02Z"
   },
   "sharedContext": {
     "index": "shared-context/index.md",
@@ -2660,11 +2664,11 @@
         "branch": "codex/task/TASK-018-security-epic-validation",
         "worktree": "/Users/ivo.toby/workspace/postgram/.worktrees/TASK-018-security-epic-validation",
         "worktreeStatus": "clean_pushed",
-        "workerThreadId": null,
-        "workerNickname": null,
+        "workerThreadId": "019f39b8-b83d-7350-b93e-c037b63ab845",
+        "workerNickname": "Ramanujan",
         "reviewThreadId": null,
         "reviewNickname": null,
-        "currentGate": "dispatch_pending",
+        "currentGate": "no_pr",
         "branchFreshness": "current_at_activation",
         "pr": null,
         "latestCommit": null,
@@ -2689,16 +2693,19 @@
         "sharedContextReconciliation": "not_started",
         "lastObservedAt": "2026-07-06T23:11:02Z",
         "branchPushedAt": "2026-07-06T23:11:02Z",
-        "worktreeCreatedAt": "2026-07-06T23:11:02Z"
+        "worktreeCreatedAt": "2026-07-06T23:11:02Z",
+        "dispatchedAt": "2026-07-06T23:11:02Z"
       }
     ],
-    "dispatchState": "worktree_ready_pending_dispatch",
+    "dispatchState": "dispatched",
     "activatedFromCommit": "202b422",
     "activationCommit": "0ed8c61af3cb272c54cbbb69a4fe8978f787a1e3",
     "lastObservedAt": "2026-07-06T23:11:02Z",
     "waveCompletion": "in_progress",
     "branchPushedAt": "2026-07-06T23:11:02Z",
-    "worktreeCreatedAt": "2026-07-06T23:11:02Z"
+    "worktreeCreatedAt": "2026-07-06T23:11:02Z",
+    "workerDispatchStartedAt": "2026-07-06T23:11:02Z",
+    "dispatchedAt": "2026-07-06T23:11:02Z"
   },
   "currentGates": {
     "epicBranch": {
@@ -2761,7 +2768,7 @@
       "WAVE-008-admin-config-ui": "reconciled",
       "WAVE-009-maintenance-admin-ui": "reconciled",
       "WAVE-010-docker-first-run-no-cli": "reconciled",
-      "WAVE-011-security-epic-validation": "dispatch_pending"
+      "WAVE-011-security-epic-validation": "no_pr"
     },
     "waveCompletion": {
       "WAVE-001": "done",
@@ -2783,13 +2790,14 @@
     "monitoring": {
       "mode": "adaptive",
       "cadence": "15m",
-      "status": "wave_011_worktree_ready_pending_dispatch",
+      "status": "wave_011_no_pr_worker_dispatched",
       "lastCheckedAt": "2026-07-06T23:11:02Z",
       "nextCheckDueAt": "2026-07-06T23:26:02Z",
       "schedulerRef": "postgram-admin-wave-005-wdd-heartbeat",
       "schedulerName": "postgram-admin-wave-011-wdd-heartbeat",
-      "fallbackPrompt": "Run one bounded WDD controller heartbeat for /Users/ivo.toby/workspace/postgram, epic EPIC-admin-configuration-frontend, active wave WAVE-011. Use the subagent-pr-orchestration skill. Start in /Users/ivo.toby/workspace/postgram on branch codex/epic/admin-configuration-frontend. Read .wdd/epics/EPIC-admin-configuration-frontend/orchestration.json and controller-state.md, then inspect worker TBD and assigned worktree /Users/ivo.toby/workspace/postgram/.worktrees/TASK-018-security-epic-validation on branch codex/task/TASK-018-security-epic-validation for bundle WAVE-011-security-epic-validation / TASK-018-security-epic-validation. Update gates, branch freshness, verification, PR or patch refs, reviewer refs, feedback, shared-context reconciliation status, and monitoring timestamps. If the worker has produced a PR or patch, move TASK-018 to review/reviewer orchestration; if no PR or patch exists, keep no_pr and nudge exact missing deliverables only if needed. If review reports P1/P2, route feedback to the worker or a fresh fix worker. If review passes, refresh stale task branch against codex/epic/admin-configuration-frontend, rerun required freshness verification, then merge or mark merge_ready according to policy. Stop when WAVE-011 is merged, blocked, cancelled, or ready for wdd-reconcile-wave. After WAVE-011 is reconciled, proceed to wdd-epic-validation and final PR per Ivo's finish-all-waves instruction.",
-      "automationUpdateResult": "pending_update_after_worker_dispatch"
+      "fallbackPrompt": "Run one bounded WDD controller heartbeat for /Users/ivo.toby/workspace/postgram, epic EPIC-admin-configuration-frontend, active wave WAVE-011. Use the subagent-pr-orchestration skill. Start in /Users/ivo.toby/workspace/postgram on branch codex/epic/admin-configuration-frontend. Read .wdd/epics/EPIC-admin-configuration-frontend/orchestration.json and controller-state.md, then inspect worker Ramanujan (019f39b8-b83d-7350-b93e-c037b63ab845) and assigned worktree /Users/ivo.toby/workspace/postgram/.worktrees/TASK-018-security-epic-validation on branch codex/task/TASK-018-security-epic-validation for bundle WAVE-011-security-epic-validation / TASK-018-security-epic-validation. Update gates, branch freshness, verification, PR or patch refs, reviewer refs, feedback, shared-context reconciliation status, and monitoring timestamps. If the worker has produced a PR or patch, move TASK-018 to review/reviewer orchestration; if no PR or patch exists, keep no_pr and nudge exact missing deliverables only if needed. If review reports P1/P2, route feedback to Ramanujan or a fresh fix worker. If review passes, refresh stale task branch against codex/epic/admin-configuration-frontend, rerun required freshness verification, then merge or mark merge_ready according to policy. Stop when WAVE-011 is merged, blocked, cancelled, or ready for wdd-reconcile-wave. After WAVE-011 is reconciled, proceed to wdd-epic-validation and final PR per Ivo's finish-all-waves instruction.",
+      "automationUpdateResult": "verified_in_app",
+      "updatedAt": "2026-07-06T23:11:02Z"
     },
     "review": {
       "WAVE-001-admin-feasibility-gate": {
@@ -3217,8 +3225,9 @@
         "pr": null,
         "latestCommit": null,
         "reviewThreadId": null,
-        "workerThreadId": null,
-        "blockingFeedback": []
+        "workerThreadId": "019f39b8-b83d-7350-b93e-c037b63ab845",
+        "blockingFeedback": [],
+        "workerNickname": "Ramanujan"
       }
     },
     "branchFreshness": {
@@ -4572,9 +4581,10 @@
       "WAVE-011-security-epic-validation": {
         "blocking": [],
         "lastObservedAt": "2026-07-06T23:11:02Z",
-        "status": "dispatch_pending",
-        "workerThreadId": null,
-        "nudge": "not_needed_dispatch_pending"
+        "status": "no_pr",
+        "workerThreadId": "019f39b8-b83d-7350-b93e-c037b63ab845",
+        "workerNickname": "Ramanujan",
+        "nudge": "not_needed_just_dispatched"
       }
     },
     "activationArtifact": {

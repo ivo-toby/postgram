@@ -677,6 +677,11 @@ Progress:
   for PR #89 with one P2 branch-freshness/WDD task-file conflict only;
   product/security review passed. Feedback was routed to Sagan for refresh and
   a non-blocking TASK-013 dashboard-shell integration note was routed to Parfit.
+- 2026-07-06T18:38:02Z controller poll: Sagan pushed TASK-012 fix attempt
+  `928ea35`, but controller verification still finds PR #89 stale against
+  current epic head `cb1c1ae` with the WDD task-file merge-tree conflict. The
+  freshness P2 remains open and was rerouted to Sagan. TASK-013 remains active
+  with no PR or patch.
 
 Stop condition:
 

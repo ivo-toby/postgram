@@ -2,7 +2,7 @@ import { randomBytes } from 'node:crypto';
 
 import argon2 from 'argon2';
 import { ResultAsync } from 'neverthrow';
-import type { Pool } from 'pg';
+import type { Pool, PoolClient } from 'pg';
 
 import type { ServiceResult } from '../types/common.js';
 import type { EntityType, Visibility } from '../types/entities.js';
@@ -47,6 +47,12 @@ function toAppError(
     return error;
   }
 
+  if (isPgErrorCode(error, '23505')) {
+    return new AppError(ErrorCode.CONFLICT, fallbackMessage, {
+      cause: 'unique_violation'
+    });
+  }
+
   if (error instanceof Error) {
     return new AppError(ErrorCode.INTERNAL, fallbackMessage, {
       cause: error.message
@@ -54,6 +60,15 @@ function toAppError(
   }
 
   return new AppError(ErrorCode.INTERNAL, fallbackMessage);
+}
+
+function isPgErrorCode(error: unknown, code: string): boolean {
+  return (
+    typeof error === 'object' &&
+    error !== null &&
+    'code' in error &&
+    (error as { code?: unknown }).code === code
+  );
 }
 
 function mapApiKeyRecord(row: ApiKeyRow): ApiKeyRecord {
@@ -128,7 +143,7 @@ export function checkVisibilityAccess(
 }
 
 export function createKey(
-  pool: Pool,
+  pool: Pool | PoolClient,
   input: CreateKeyInput
 ): ServiceResult<CreateKeyResult> {
   return ResultAsync.fromPromise(
@@ -214,7 +229,7 @@ export function validateKey(
 }
 
 export function revokeKey(
-  pool: Pool,
+  pool: Pool | PoolClient,
   apiKeyId: string
 ): ServiceResult<{ revoked: true }> {
   return ResultAsync.fromPromise(

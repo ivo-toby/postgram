@@ -34,6 +34,13 @@ import {
   listAdminEmbeddingModels
 } from '../services/admin-diagnostics-service.js';
 import {
+  createAdminApiKey,
+  listAdminApiKeys,
+  revokeAdminApiKey
+} from '../services/admin-key-service.js';
+import { queryAdminAudit } from '../services/admin-audit-service.js';
+import { getAdminStats } from '../services/admin-stats-service.js';
+import {
   AppError,
   ErrorCode,
   toErrorResponse,
@@ -68,6 +75,7 @@ const SESSION_TTL_MS = 12 * 60 * 60 * 1000;
 const RATE_LIMIT_WINDOW_MS = 15 * 60 * 1000;
 const MAX_FAILED_ATTEMPTS = 5;
 const ADMIN_MFA_SECRET_KEY_MIN_LENGTH = 32;
+const MAX_ADMIN_PAGE_OFFSET = 100_000;
 const LOCAL_INSECURE_COOKIE_HOSTS = new Set(['localhost', '127.0.0.1', '::1']);
 
 const bootstrapSetupSchema = z
@@ -99,6 +107,29 @@ const mfaChallengeSchema = z
   })
   .strict();
 
+const scopeSchema = z.enum(['read', 'write', 'delete', 'sync']);
+const entityTypeSchema = z.enum([
+  'memory',
+  'person',
+  'project',
+  'task',
+  'interaction',
+  'document'
+]);
+const visibilitySchema = z.enum(['personal', 'work', 'shared']);
+
+const createAdminApiKeySchema = z
+  .object({
+    name: z.string().trim().min(1).max(120),
+    clientId: z.string().trim().min(1).max(120).optional(),
+    scopes: z.array(scopeSchema).min(1).optional(),
+    allowedTypes: z.array(entityTypeSchema).min(1).nullable().optional(),
+    allowedVisibility: z.array(visibilitySchema).min(1).optional()
+  })
+  .strict();
+
+const emptyBodySchema = z.object({}).strict();
+
 function parseJsonBody<T>(schema: z.ZodSchema<T>, value: unknown): T {
   const parsed = schema.safeParse(value);
 
@@ -115,6 +146,19 @@ function parseJsonBody<T>(schema: z.ZodSchema<T>, value: unknown): T {
 async function readJson(c: Context): Promise<unknown> {
   try {
     return await c.req.json();
+  } catch {
+    throw new AppError(ErrorCode.VALIDATION, 'Expected JSON request body');
+  }
+}
+
+async function readOptionalJson(c: Context): Promise<unknown> {
+  const text = await c.req.text();
+  if (text.trim().length === 0) {
+    return {};
+  }
+
+  try {
+    return JSON.parse(text) as unknown;
   } catch {
     throw new AppError(ErrorCode.VALIDATION, 'Expected JSON request body');
   }
@@ -220,6 +264,86 @@ function rateLimitError(type: RateLimitedAttemptType): AppError {
 
 function normalizeIdentifier(value: string): string {
   return value.trim().toLowerCase();
+}
+
+function parseLimit(value: string | undefined, defaultValue: number): number {
+  if (value === undefined) {
+    return defaultValue;
+  }
+
+  if (!/^\d+$/u.test(value)) {
+    throw new AppError(ErrorCode.VALIDATION, 'Invalid limit');
+  }
+
+  const limit = Number.parseInt(value, 10);
+  if (limit < 1 || limit > 100) {
+    throw new AppError(ErrorCode.VALIDATION, 'Limit must be between 1 and 100');
+  }
+
+  return limit;
+}
+
+function parseOffset(value: string | undefined): number {
+  if (value === undefined) {
+    return 0;
+  }
+
+  if (!/^\d+$/u.test(value)) {
+    throw new AppError(ErrorCode.VALIDATION, 'Invalid offset');
+  }
+
+  const offset = Number.parseInt(value, 10);
+  if (
+    !Number.isSafeInteger(offset) ||
+    offset < 0 ||
+    offset > MAX_ADMIN_PAGE_OFFSET
+  ) {
+    throw new AppError(
+      ErrorCode.VALIDATION,
+      `Offset must be between 0 and ${MAX_ADMIN_PAGE_OFFSET}`
+    );
+  }
+
+  return offset;
+}
+
+function parseDateQuery(value: string | undefined, label: string): Date | undefined {
+  if (!value) {
+    return undefined;
+  }
+
+  const date = new Date(value);
+  if (!Number.isFinite(date.getTime())) {
+    throw new AppError(ErrorCode.VALIDATION, `Invalid ${label}`);
+  }
+
+  return date;
+}
+
+function parseCsvQuery(value: string | undefined): string[] | undefined {
+  const parts = value
+    ?.split(',')
+    .map((part) => part.trim())
+    .filter((part) => part.length > 0);
+
+  return parts?.length ? parts : undefined;
+}
+
+function parseUuid(value: string, label: string): string {
+  const parsed = z.string().uuid().safeParse(value);
+
+  if (!parsed.success) {
+    throw new AppError(ErrorCode.VALIDATION, `Invalid ${label}`);
+  }
+
+  return parsed.data;
+}
+
+function parseUuidQuery(
+  value: string | undefined,
+  label: string
+): string | undefined {
+  return value === undefined ? undefined : parseUuid(value, label);
 }
 
 async function getBootstrapState(pool: Pool): Promise<BootstrapState> {
@@ -767,6 +891,103 @@ export function registerAdminRoutes(
       return c.json({
         configStatus: await getAdminConfigStatusDiagnostics(pool)
       });
+    }
+  );
+
+  app.get(
+    '/admin/api/keys',
+    createAdminSessionMiddleware({ pool, enforceCsrf: false }),
+    createActiveAdminMiddleware(),
+    async (c) => {
+      setAdminNoStoreHeaders(c);
+      const admin = c.get('admin');
+      const keys = await listAdminApiKeys(pool, {
+        actorAdminUserId: admin.user.id,
+        limit: parseLimit(c.req.query('limit'), 50),
+        offset: parseOffset(c.req.query('offset'))
+      });
+
+      return c.json(keys);
+    }
+  );
+
+  app.post(
+    '/admin/api/keys',
+    createAdminSessionMiddleware({ pool }),
+    createActiveAdminMiddleware({ requireStepUp: true }),
+    async (c) => {
+      setAdminNoStoreHeaders(c);
+      const admin = c.get('admin');
+      const body = parseJsonBody(createAdminApiKeySchema, await readJson(c));
+      const created = await createAdminApiKey(pool, {
+        ...body,
+        actorAdminUserId: admin.user.id
+      });
+
+      return c.json(created, 201);
+    }
+  );
+
+  app.post(
+    '/admin/api/keys/:id/revoke',
+    createAdminSessionMiddleware({ pool }),
+    createActiveAdminMiddleware({ requireStepUp: true }),
+    async (c) => {
+      setAdminNoStoreHeaders(c);
+      parseJsonBody(emptyBodySchema, await readOptionalJson(c));
+      const id = parseUuid(c.req.param('id'), 'API key id');
+      const admin = c.get('admin');
+      const revoked = await revokeAdminApiKey(pool, {
+        id,
+        actorAdminUserId: admin.user.id
+      });
+
+      return c.json(revoked);
+    }
+  );
+
+  app.get(
+    '/admin/api/audit',
+    createAdminSessionMiddleware({ pool, enforceCsrf: false }),
+    createActiveAdminMiddleware(),
+    async (c) => {
+      setAdminNoStoreHeaders(c);
+      const admin = c.get('admin');
+      const audit = await queryAdminAudit(pool, {
+        actorAdminUserId: admin.user.id,
+        since: parseDateQuery(c.req.query('since'), 'since'),
+        until: parseDateQuery(c.req.query('until'), 'until'),
+        apiKeyId: parseUuidQuery(c.req.query('apiKeyId'), 'API key id'),
+        keyName: c.req.query('keyName') ?? c.req.query('key'),
+        adminUserId: parseUuidQuery(
+          c.req.query('adminUserId'),
+          'admin user id'
+        ),
+        operation: parseCsvQuery(c.req.query('operation')),
+        entityId: parseUuidQuery(
+          c.req.query('entityId') ?? c.req.query('entity'),
+          'entity id'
+        ),
+        limit: parseLimit(c.req.query('limit'), 50),
+        offset: parseOffset(c.req.query('offset'))
+      });
+
+      return c.json({ audit });
+    }
+  );
+
+  app.get(
+    '/admin/api/stats',
+    createAdminSessionMiddleware({ pool, enforceCsrf: false }),
+    createActiveAdminMiddleware(),
+    async (c) => {
+      setAdminNoStoreHeaders(c);
+      const admin = c.get('admin');
+      const stats = await getAdminStats(pool, {
+        actorAdminUserId: admin.user.id
+      });
+
+      return c.json({ stats });
     }
   );
 

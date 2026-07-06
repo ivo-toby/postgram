@@ -6,7 +6,7 @@ ticket: TICKET-006-maintenance-jobs
 wave: WAVE-006
 slug: admin-job-foundation
 title: Admin Job Foundation
-status: in_progress
+status: review
 depends_on:
   - TASK-006-admin-mfa-step-up
   - TASK-009-settings-secret-store
@@ -20,12 +20,12 @@ assigned_model_class: implementationComplex
 review_model_class: review
 branch: codex/task/TASK-014-admin-job-foundation
 worker_worktree: /Users/ivo.toby/workspace/postgram/.worktrees/TASK-014-admin-job-foundation
-worktree_status: active_uncommitted
-pr: null
+worktree_status: verified_pushed
+pr: https://github.com/ivo-toby/postgram/pull/86
 worker_thread_id: 019f3748-041f-7540-b336-12c285848008
 review_thread_id: null
-current_gate: no_pr
-branch_freshness: behind_epic_controller_checkpoints
+current_gate: ready_for_review
+branch_freshness: refreshed_against_origin_epic_after_review_feedback
 verification:
   - npm test -- tests/integration/admin-job-service.test.ts
   - npm run typecheck
@@ -35,7 +35,7 @@ verification:
 
 ## Status
 
-in_progress
+review
 
 ## Parent Ticket
 
@@ -159,7 +159,7 @@ worker appears active.
 
 ## PR / Patch Reference
 
-None yet.
+https://github.com/ivo-toby/postgram/pull/86
 
 ## RED-GREEN TDD Plan
 
@@ -204,10 +204,10 @@ creating an overbroad abstraction.
 
 ## Task-Level Definition of Done
 
-- [ ] Job model is persisted and covered.
-- [ ] Job status API exists.
-- [ ] Audit metadata records admin actor.
-- [ ] Long-running maintenance tasks have a target foundation.
+- [x] Job model is persisted and covered.
+- [x] Job status API exists.
+- [x] Audit metadata records admin actor.
+- [x] Long-running maintenance tasks have a target foundation.
 
 ## Validation Steps
 
@@ -216,7 +216,23 @@ creating an overbroad abstraction.
 
 ## Verification Evidence
 
-- Not run yet.
+- `npm test -- tests/integration/admin-job-service.test.ts` - PASS (5 tests)
+- `npm run typecheck` - PASS
+- `npm test -- tests/contract/admin-api.test.ts` - PASS (3 tests)
+- `npx eslint src/services/admin-job-service.ts src/transport/admin-jobs.ts tests/integration/admin-job-service.test.ts tests/helpers/postgres.ts src/transport/admin.ts` - PASS
+- `git diff --check` - PASS
+- `codex review --uncommitted` - PASS; no actionable P0/P1/P2 correctness issues found.
+- 2026-07-06 refresh after Lorentz `REVIEW_BLOCKED`: merged
+  `origin/codex/epic/admin-configuration-frontend`, resolved
+  `src/transport/admin.ts` additively to preserve diagnostics, TASK-008
+  `/admin/api/keys`, `/admin/api/audit`, `/admin/api/stats`, TASK-014
+  `registerAdminJobRoutes(app, pool);`, and provider-config route wiring.
+- 2026-07-06 refresh verification:
+  `git diff --check` - PASS;
+  `npm test -- tests/integration/admin-job-service.test.ts` - PASS (5 tests);
+  `npm test -- tests/contract/admin-api.test.ts` - PASS (3 tests);
+  `npm run typecheck` - PASS;
+  `npx eslint src/auth/key-service.ts src/services/admin-audit-service.ts src/services/admin-key-service.ts src/services/admin-stats-service.ts src/services/admin-job-service.ts src/transport/admin.ts src/transport/admin-jobs.ts tests/contract/admin-key-audit-stats.test.ts tests/integration/admin-job-service.test.ts tests/helpers/postgres.ts` - PASS.
 
 ## Review Feedback
 
@@ -226,7 +242,11 @@ creating an overbroad abstraction.
 
 ### P2
 
-- None.
+- Resolved 2026-07-06 Lorentz refresh blocker by reconciling the TASK-014
+  branch with `origin/codex/epic/admin-configuration-frontend`, preserving
+  TASK-008 admin key/audit/stats routes and TASK-014 job routes in
+  `src/transport/admin.ts`, and resolving the TASK-014 WDD task-file
+  move/content conflict.
 
 ### P3
 
@@ -234,4 +254,8 @@ creating an overbroad abstraction.
 
 ## Completion Notes
 
-- None yet.
+- Added `admin_jobs` and `admin_job_events` persistence for queued/running/cancel-requested/terminal lifecycle state, progress, requested scope, request summary, result summary, and idempotency.
+- Added `admin-job-service` helpers for create/read/list/start/progress/cancel/complete with structured admin actor audit events.
+- Added read-only `/admin/api/jobs` and `/admin/api/jobs/:jobId` status routes under active MFA, leaving existing admin transport behavior additive.
+- Enforced active MFA for job creation, recent step-up plus scoped idempotency for apply jobs, and summary safety guards that reject provider secrets, ciphertext, token prefixes, arbitrary validation metadata, and provider metadata/body containers.
+- Did not implement specific maintenance operations or UI.

@@ -731,20 +731,32 @@
           "worktreeStatus": "clean_pushed",
           "workerThreadId": "019f35ff-5f3c-7cc0-aa6e-78941a3fd7fd",
           "workerNickname": "Wegener",
-          "reviewThreadId": null,
-          "reviewNickname": null,
-          "currentGate": "no_pr",
-          "branchFreshness": "current_at_dispatch",
-          "pr": null,
-          "latestCommit": "70df1c5f9324dd3f9ff424f199ee1b8896a2e410",
+          "reviewThreadId": "019f322c-02e7-7590-8b8e-ebdd1e9c52ac",
+          "reviewNickname": "Lorentz",
+          "currentGate": "reviewing",
+          "branchFreshness": "current_at_review_request",
+          "pr": "https://github.com/ivo-toby/postgram/pull/83",
+          "latestCommit": "f1c19665f763481fe90786f93dc91efed40f0171",
           "blockingFeedback": [],
-          "verification": null,
+          "verification": {
+            "result": "worker_verified",
+            "commands": [
+              "npm test -- tests/contract/admin-api.test.ts",
+              "npm test -- tests/contract/admin-auth-routes.test.ts tests/contract/admin-mfa-routes.test.ts tests/contract/admin-api.test.ts",
+              "npm run typecheck",
+              "npx eslint src/index.ts src/transport/admin.ts src/services/admin-diagnostics-service.ts tests/contract/admin-api.test.ts",
+              "git diff --check"
+            ],
+            "evidence": "Wegener reported admin-api contract suite passed with 3 tests, adjacent admin auth/MFA/API contract suite passed with 18 tests, typecheck passed, touched-file eslint passed, and git diff --check passed."
+          },
           "activatedAt": "2026-07-06T05:51:49Z",
           "cleanupState": "not_started",
-          "sharedContextReconciliation": "pending",
+          "sharedContextReconciliation": "queued",
           "dispatchedAt": "2026-07-06T05:56:19Z",
           "dispatchBaseCommit": "70df1c5f9324dd3f9ff424f199ee1b8896a2e410",
-          "lastObservedAt": "2026-07-06T05:56:19Z"
+          "lastObservedAt": "2026-07-06T06:14:07Z",
+          "reviewRequestedAt": "2026-07-06T06:14:07Z",
+          "reviewSubmissionId": "019f3611-2a16-72d3-bd90-db911948d8c3"
         },
         {
           "id": "WAVE-005-provider-config-apply",
@@ -753,7 +765,7 @@
           ],
           "branch": "codex/task/TASK-010-provider-config-apply",
           "worktree": "/Users/ivo.toby/workspace/postgram/.worktrees/TASK-010-provider-config-apply",
-          "worktreeStatus": "clean_pushed",
+          "worktreeStatus": "active_uncommitted",
           "workerThreadId": "019f35ff-a193-7ae0-a4b8-1ec53faabb74",
           "workerNickname": "Goodall",
           "reviewThreadId": null,
@@ -769,12 +781,27 @@
           "sharedContextReconciliation": "pending",
           "dispatchedAt": "2026-07-06T05:56:19Z",
           "dispatchBaseCommit": "70df1c5f9324dd3f9ff424f199ee1b8896a2e410",
-          "lastObservedAt": "2026-07-06T05:56:19Z"
+          "lastObservedAt": "2026-07-06T06:14:07Z",
+          "worktreeObservation": {
+            "observedAt": "2026-07-06T06:14:07Z",
+            "status": "active_uncommitted_changes",
+            "files": [
+              "src/config.ts",
+              "src/index.ts",
+              "src/services/admin-settings-service.ts",
+              "src/transport/admin.ts",
+              "tests/unit/config.test.ts",
+              "src/services/admin-provider-config-service.ts",
+              "src/transport/admin-provider-config.ts",
+              "tests/integration/admin-provider-config.test.ts"
+            ],
+            "note": "Goodall has active TASK-010 implementation changes in the assigned worktree; no PR or patch yet, so no nudge sent this tick."
+          }
         }
       ],
       "activationCommit": "70df1c5f9324dd3f9ff424f199ee1b8896a2e410",
       "dispatchState": "dispatched",
-      "lastObservedAt": "2026-07-06T05:59:39Z",
+      "lastObservedAt": "2026-07-06T06:14:07Z",
       "dispatchedAt": "2026-07-06T05:56:19Z"
     },
     {
@@ -1322,8 +1349,8 @@
     {
       "id": "TASK-007-admin-api-shell-diagnostics",
       "ticket": "TICKET-003-admin-api-foundation",
-      "path": "TICKET-003-admin-api-foundation/in-progress/TASK-007-admin-api-shell-diagnostics.md",
-      "status": "in_progress",
+      "path": "TICKET-003-admin-api-foundation/review/TASK-007-admin-api-shell-diagnostics.md",
+      "status": "review",
       "dependsOn": [
         "TASK-005-admin-session-routes",
         "TASK-006-admin-mfa-step-up"
@@ -1337,23 +1364,36 @@
       "reviewModel": "review",
       "branch": "codex/task/TASK-007-admin-api-shell-diagnostics",
       "workerThreadId": "019f35ff-5f3c-7cc0-aa6e-78941a3fd7fd",
-      "reviewThreadId": null,
+      "reviewThreadId": "019f322c-02e7-7590-8b8e-ebdd1e9c52ac",
       "workerWorktree": "/Users/ivo.toby/workspace/postgram/.worktrees/TASK-007-admin-api-shell-diagnostics",
       "worktreeStatus": "clean_pushed",
-      "pr": null,
-      "latestCommit": "70df1c5f9324dd3f9ff424f199ee1b8896a2e410",
-      "branchFreshness": "current_at_dispatch",
+      "pr": "https://github.com/ivo-toby/postgram/pull/83",
+      "latestCommit": "f1c19665f763481fe90786f93dc91efed40f0171",
+      "branchFreshness": "current_at_review_request",
       "blockingFeedback": [],
-      "verification": null,
-      "currentGate": "no_pr",
+      "verification": {
+        "result": "worker_verified",
+        "commands": [
+          "npm test -- tests/contract/admin-api.test.ts",
+          "npm test -- tests/contract/admin-auth-routes.test.ts tests/contract/admin-mfa-routes.test.ts tests/contract/admin-api.test.ts",
+          "npm run typecheck",
+          "npx eslint src/index.ts src/transport/admin.ts src/services/admin-diagnostics-service.ts tests/contract/admin-api.test.ts",
+          "git diff --check"
+        ],
+        "evidence": "Wegener reported admin-api contract suite passed with 3 tests, adjacent admin auth/MFA/API contract suite passed with 18 tests, typecheck passed, touched-file eslint passed, and git diff --check passed."
+      },
+      "currentGate": "reviewing",
       "cleanupState": "not_started",
-      "sharedContextReconciliation": "pending",
+      "sharedContextReconciliation": "queued",
       "activatedAt": "2026-07-06T05:51:49Z",
       "bundle": "WAVE-005-admin-api-shell-diagnostics",
       "workerNickname": "Wegener",
       "dispatchedAt": "2026-07-06T05:56:19Z",
       "dispatchBaseCommit": "70df1c5f9324dd3f9ff424f199ee1b8896a2e410",
-      "lastObservedAt": "2026-07-06T05:56:19Z"
+      "lastObservedAt": "2026-07-06T06:14:07Z",
+      "reviewNickname": "Lorentz",
+      "reviewRequestedAt": "2026-07-06T06:14:07Z",
+      "reviewSubmissionId": "019f3611-2a16-72d3-bd90-db911948d8c3"
     },
     {
       "id": "TASK-008-admin-key-audit-stats-api",
@@ -1498,7 +1538,7 @@
       "workerThreadId": "019f35ff-a193-7ae0-a4b8-1ec53faabb74",
       "reviewThreadId": null,
       "workerWorktree": "/Users/ivo.toby/workspace/postgram/.worktrees/TASK-010-provider-config-apply",
-      "worktreeStatus": "clean_pushed",
+      "worktreeStatus": "active_uncommitted",
       "pr": null,
       "latestCommit": "70df1c5f9324dd3f9ff424f199ee1b8896a2e410",
       "branchFreshness": "current_at_dispatch",
@@ -1512,7 +1552,22 @@
       "workerNickname": "Goodall",
       "dispatchedAt": "2026-07-06T05:56:19Z",
       "dispatchBaseCommit": "70df1c5f9324dd3f9ff424f199ee1b8896a2e410",
-      "lastObservedAt": "2026-07-06T05:56:19Z"
+      "lastObservedAt": "2026-07-06T06:14:07Z",
+      "worktreeObservation": {
+        "observedAt": "2026-07-06T06:14:07Z",
+        "status": "active_uncommitted_changes",
+        "files": [
+          "src/config.ts",
+          "src/index.ts",
+          "src/services/admin-settings-service.ts",
+          "src/transport/admin.ts",
+          "tests/unit/config.test.ts",
+          "src/services/admin-provider-config-service.ts",
+          "src/transport/admin-provider-config.ts",
+          "tests/integration/admin-provider-config.test.ts"
+        ],
+        "note": "Goodall has active TASK-010 implementation changes in the assigned worktree; no PR or patch yet, so no nudge sent this tick."
+      }
     },
     {
       "id": "TASK-011-admin-auth-ui",
@@ -1814,12 +1869,12 @@
   ],
   "monitoring": {
     "mode": "codex_thread_heartbeat",
-    "cadence": "15m",
-    "status": "active",
-    "lastCheckedAt": "2026-07-06T05:59:39Z",
-    "nextCheckDueAt": "2026-07-06T06:14:39Z",
+    "cadence": "5m",
+    "status": "review_monitoring",
+    "lastCheckedAt": "2026-07-06T06:14:07Z",
+    "nextCheckDueAt": "2026-07-06T06:19:07Z",
     "schedulerRef": "postgram-admin-wave-005-wdd-heartbeat",
-    "fallbackPrompt": "Run one bounded WDD controller heartbeat for /Users/ivo.toby/workspace/postgram, epic EPIC-admin-configuration-frontend, active wave WAVE-005. Use subagent-pr-orchestration. Read orchestration.json and controller-state.md, inspect workers Wegener (019f35ff-5f3c-7cc0-aa6e-78941a3fd7fd) for TASK-007 and Goodall (019f35ff-a193-7ae0-a4b8-1ec53faabb74) for TASK-010 plus assigned worktrees. Update gates, PR refs, verification, feedback, branch freshness, cleanup, and monitoring. Stop when WAVE-005 is ready for wdd-reconcile-wave; after WAVE-005 reconciliation continue the next wave per Ivo finish-all-waves instruction."
+    "fallbackPrompt": "Run one bounded WDD controller heartbeat for /Users/ivo.toby/workspace/postgram, epic EPIC-admin-configuration-frontend, active wave WAVE-005. Use subagent-pr-orchestration. Read orchestration.json and controller-state.md; inspect PR #83/reviewer Lorentz for TASK-007, worker Goodall (019f35ff-a193-7ae0-a4b8-1ec53faabb74) and worktree /Users/ivo.toby/workspace/postgram/.worktrees/TASK-010-provider-config-apply for TASK-010. Update gates, verification, feedback, branch freshness, cleanup, and monitoring. If TASK-007 review passes, enforce branch freshness before merge. If TASK-010 has a PR, start review; if not, keep no_pr unless deliverables are stale. Stop when WAVE-005 is ready for wdd-reconcile-wave; after reconciliation continue the next wave per Ivo finish-all-waves instruction."
   },
   "sharedContext": {
     "index": "shared-context/index.md",
@@ -1859,20 +1914,32 @@
         "worktreeStatus": "clean_pushed",
         "workerThreadId": "019f35ff-5f3c-7cc0-aa6e-78941a3fd7fd",
         "workerNickname": "Wegener",
-        "reviewThreadId": null,
-        "reviewNickname": null,
-        "currentGate": "no_pr",
-        "branchFreshness": "current_at_dispatch",
-        "pr": null,
-        "latestCommit": "70df1c5f9324dd3f9ff424f199ee1b8896a2e410",
+        "reviewThreadId": "019f322c-02e7-7590-8b8e-ebdd1e9c52ac",
+        "reviewNickname": "Lorentz",
+        "currentGate": "reviewing",
+        "branchFreshness": "current_at_review_request",
+        "pr": "https://github.com/ivo-toby/postgram/pull/83",
+        "latestCommit": "f1c19665f763481fe90786f93dc91efed40f0171",
         "blockingFeedback": [],
-        "verification": null,
+        "verification": {
+          "result": "worker_verified",
+          "commands": [
+            "npm test -- tests/contract/admin-api.test.ts",
+            "npm test -- tests/contract/admin-auth-routes.test.ts tests/contract/admin-mfa-routes.test.ts tests/contract/admin-api.test.ts",
+            "npm run typecheck",
+            "npx eslint src/index.ts src/transport/admin.ts src/services/admin-diagnostics-service.ts tests/contract/admin-api.test.ts",
+            "git diff --check"
+          ],
+          "evidence": "Wegener reported admin-api contract suite passed with 3 tests, adjacent admin auth/MFA/API contract suite passed with 18 tests, typecheck passed, touched-file eslint passed, and git diff --check passed."
+        },
         "activatedAt": "2026-07-06T05:51:49Z",
         "cleanupState": "not_started",
-        "sharedContextReconciliation": "pending",
+        "sharedContextReconciliation": "queued",
         "dispatchedAt": "2026-07-06T05:56:19Z",
         "dispatchBaseCommit": "70df1c5f9324dd3f9ff424f199ee1b8896a2e410",
-        "lastObservedAt": "2026-07-06T05:56:19Z"
+        "lastObservedAt": "2026-07-06T06:14:07Z",
+        "reviewRequestedAt": "2026-07-06T06:14:07Z",
+        "reviewSubmissionId": "019f3611-2a16-72d3-bd90-db911948d8c3"
       },
       {
         "id": "WAVE-005-provider-config-apply",
@@ -1881,7 +1948,7 @@
         ],
         "branch": "codex/task/TASK-010-provider-config-apply",
         "worktree": "/Users/ivo.toby/workspace/postgram/.worktrees/TASK-010-provider-config-apply",
-        "worktreeStatus": "clean_pushed",
+        "worktreeStatus": "active_uncommitted",
         "workerThreadId": "019f35ff-a193-7ae0-a4b8-1ec53faabb74",
         "workerNickname": "Goodall",
         "reviewThreadId": null,
@@ -1897,13 +1964,28 @@
         "sharedContextReconciliation": "pending",
         "dispatchedAt": "2026-07-06T05:56:19Z",
         "dispatchBaseCommit": "70df1c5f9324dd3f9ff424f199ee1b8896a2e410",
-        "lastObservedAt": "2026-07-06T05:56:19Z"
+        "lastObservedAt": "2026-07-06T06:14:07Z",
+        "worktreeObservation": {
+          "observedAt": "2026-07-06T06:14:07Z",
+          "status": "active_uncommitted_changes",
+          "files": [
+            "src/config.ts",
+            "src/index.ts",
+            "src/services/admin-settings-service.ts",
+            "src/transport/admin.ts",
+            "tests/unit/config.test.ts",
+            "src/services/admin-provider-config-service.ts",
+            "src/transport/admin-provider-config.ts",
+            "tests/integration/admin-provider-config.test.ts"
+          ],
+          "note": "Goodall has active TASK-010 implementation changes in the assigned worktree; no PR or patch yet, so no nudge sent this tick."
+        }
       }
     ],
     "status": "in_progress",
     "dispatchedAt": "2026-07-06T05:56:19Z",
     "activationCommit": "70df1c5f9324dd3f9ff424f199ee1b8896a2e410",
-    "lastObservedAt": "2026-07-06T05:59:39Z",
+    "lastObservedAt": "2026-07-06T06:14:07Z",
     "dispatchState": "dispatched"
   },
   "currentGates": {
@@ -1934,7 +2016,7 @@
       "WAVE-004-admin-mfa-step-up": "cleaned_up",
       "WAVE-004-settings-secret-store": "cleaned_up",
       "WAVE-005-admin-api-shell-diagnostics": "clean_pushed",
-      "WAVE-005-provider-config-apply": "clean_pushed"
+      "WAVE-005-provider-config-apply": "active_uncommitted"
     },
     "workerDispatch": {
       "WAVE-001-admin-feasibility-gate": "reconciled",
@@ -1942,7 +2024,7 @@
       "WAVE-003-admin-session-routes": "reconciled",
       "WAVE-004-admin-mfa-step-up": "reconciled",
       "WAVE-004-settings-secret-store": "reconciled",
-      "WAVE-005-admin-api-shell-diagnostics": "no_pr",
+      "WAVE-005-admin-api-shell-diagnostics": "reviewing",
       "WAVE-005-provider-config-apply": "no_pr"
     },
     "waveCompletion": {
@@ -1958,12 +2040,12 @@
     },
     "monitoring": {
       "mode": "codex_thread_heartbeat",
-      "cadence": "15m",
-      "status": "active",
-      "lastCheckedAt": "2026-07-06T05:59:39Z",
-      "nextCheckDueAt": "2026-07-06T06:14:39Z",
+      "cadence": "5m",
+      "status": "review_monitoring",
+      "lastCheckedAt": "2026-07-06T06:14:07Z",
+      "nextCheckDueAt": "2026-07-06T06:19:07Z",
       "schedulerRef": "postgram-admin-wave-005-wdd-heartbeat",
-      "fallbackPrompt": "Run one bounded WDD controller heartbeat for /Users/ivo.toby/workspace/postgram, epic EPIC-admin-configuration-frontend, active wave WAVE-005. Use subagent-pr-orchestration. Read orchestration.json and controller-state.md, inspect workers Wegener (019f35ff-5f3c-7cc0-aa6e-78941a3fd7fd) for TASK-007 and Goodall (019f35ff-a193-7ae0-a4b8-1ec53faabb74) for TASK-010 plus assigned worktrees. Update gates, PR refs, verification, feedback, branch freshness, cleanup, and monitoring. Stop when WAVE-005 is ready for wdd-reconcile-wave; after WAVE-005 reconciliation continue the next wave per Ivo finish-all-waves instruction."
+      "fallbackPrompt": "Run one bounded WDD controller heartbeat for /Users/ivo.toby/workspace/postgram, epic EPIC-admin-configuration-frontend, active wave WAVE-005. Use subagent-pr-orchestration. Read orchestration.json and controller-state.md; inspect PR #83/reviewer Lorentz for TASK-007, worker Goodall (019f35ff-a193-7ae0-a4b8-1ec53faabb74) and worktree /Users/ivo.toby/workspace/postgram/.worktrees/TASK-010-provider-config-apply for TASK-010. Update gates, verification, feedback, branch freshness, cleanup, and monitoring. If TASK-007 review passes, enforce branch freshness before merge. If TASK-010 has a PR, start review; if not, keep no_pr unless deliverables are stale. Stop when WAVE-005 is ready for wdd-reconcile-wave; after reconciliation continue the next wave per Ivo finish-all-waves instruction."
     },
     "review": {
       "WAVE-001-admin-feasibility-gate": {
@@ -2101,6 +2183,18 @@
             "resolvedAt": "2026-07-05T18:05:13Z"
           }
         ]
+      },
+      "WAVE-005-admin-api-shell-diagnostics": {
+        "status": "requested",
+        "pr": "https://github.com/ivo-toby/postgram/pull/83",
+        "latestCommit": "f1c19665f763481fe90786f93dc91efed40f0171",
+        "reviewThreadId": "019f322c-02e7-7590-8b8e-ebdd1e9c52ac",
+        "reviewNickname": "Lorentz",
+        "workerThreadId": "019f35ff-5f3c-7cc0-aa6e-78941a3fd7fd",
+        "workerNickname": "Wegener",
+        "requestedAt": "2026-07-06T06:14:07Z",
+        "submissionId": "019f3611-2a16-72d3-bd90-db911948d8c3",
+        "blockingFeedback": []
       }
     },
     "branchFreshness": {
@@ -2109,7 +2203,7 @@
       "WAVE-003-admin-session-routes": "current_at_merge",
       "WAVE-004-admin-mfa-step-up": "current_at_merge",
       "WAVE-004-settings-secret-store": "current_at_merge",
-      "WAVE-005-admin-api-shell-diagnostics": "current_at_dispatch",
+      "WAVE-005-admin-api-shell-diagnostics": "current_at_review_request",
       "WAVE-005-provider-config-apply": "current_at_dispatch"
     },
     "merge": {
@@ -2183,7 +2277,7 @@
       "WAVE-002": "completed",
       "WAVE-003": "completed",
       "WAVE-004": "completed",
-      "WAVE-005": "pending"
+      "WAVE-005": "queued_for_task_007_pending_task_010"
     },
     "prState": {
       "WAVE-001-admin-feasibility-gate": {
@@ -2249,6 +2343,15 @@
         "localMergeCommit": "b63ad08619f3fb96606a7adc2fcd84118c106637",
         "mergedAt": "2026-07-05T18:13:59Z",
         "remoteBasePushedAt": "2026-07-05T18:13:59Z"
+      },
+      "WAVE-005-admin-api-shell-diagnostics": {
+        "pr": "https://github.com/ivo-toby/postgram/pull/83",
+        "state": "OPEN",
+        "isDraft": true,
+        "mergeStateStatus": "CLEAN",
+        "reviewDecision": "",
+        "headRefOid": "f1c19665f763481fe90786f93dc91efed40f0171",
+        "observedAt": "2026-07-06T06:14:07Z"
       }
     },
     "cleanup": {
@@ -2545,10 +2648,27 @@
         "result": "reconciliation_verified",
         "checkedAt": "2026-07-05T18:26:34Z",
         "evidence": "Task files in done; shared context and downstream task briefs reconciled; WAVE-004 worktrees cleaned up; final syntax verification is recorded in controller-state.md."
+      },
+      "WAVE-005-admin-api-shell-diagnostics": {
+        "result": "worker_verified",
+        "commands": [
+          "npm test -- tests/contract/admin-api.test.ts",
+          "npm test -- tests/contract/admin-auth-routes.test.ts tests/contract/admin-mfa-routes.test.ts tests/contract/admin-api.test.ts",
+          "npm run typecheck",
+          "npx eslint src/index.ts src/transport/admin.ts src/services/admin-diagnostics-service.ts tests/contract/admin-api.test.ts",
+          "git diff --check"
+        ],
+        "evidence": "Wegener reported admin-api contract suite passed with 3 tests, adjacent admin auth/MFA/API contract suite passed with 18 tests, typecheck passed, touched-file eslint passed, and git diff --check passed."
       }
     },
     "feedback": {
       "WAVE-004": {
+        "blocking": []
+      },
+      "WAVE-005-admin-api-shell-diagnostics": {
+        "blocking": []
+      },
+      "WAVE-005-provider-config-apply": {
         "blocking": []
       }
     },
@@ -2611,20 +2731,32 @@
         "worktreeStatus": "clean_pushed",
         "workerThreadId": "019f35ff-5f3c-7cc0-aa6e-78941a3fd7fd",
         "workerNickname": "Wegener",
-        "reviewThreadId": null,
-        "reviewNickname": null,
-        "currentGate": "no_pr",
-        "branchFreshness": "current_at_dispatch",
-        "pr": null,
-        "latestCommit": "70df1c5f9324dd3f9ff424f199ee1b8896a2e410",
+        "reviewThreadId": "019f322c-02e7-7590-8b8e-ebdd1e9c52ac",
+        "reviewNickname": "Lorentz",
+        "currentGate": "reviewing",
+        "branchFreshness": "current_at_review_request",
+        "pr": "https://github.com/ivo-toby/postgram/pull/83",
+        "latestCommit": "f1c19665f763481fe90786f93dc91efed40f0171",
         "blockingFeedback": [],
-        "verification": null,
+        "verification": {
+          "result": "worker_verified",
+          "commands": [
+            "npm test -- tests/contract/admin-api.test.ts",
+            "npm test -- tests/contract/admin-auth-routes.test.ts tests/contract/admin-mfa-routes.test.ts tests/contract/admin-api.test.ts",
+            "npm run typecheck",
+            "npx eslint src/index.ts src/transport/admin.ts src/services/admin-diagnostics-service.ts tests/contract/admin-api.test.ts",
+            "git diff --check"
+          ],
+          "evidence": "Wegener reported admin-api contract suite passed with 3 tests, adjacent admin auth/MFA/API contract suite passed with 18 tests, typecheck passed, touched-file eslint passed, and git diff --check passed."
+        },
         "activatedAt": "2026-07-06T05:51:49Z",
         "cleanupState": "not_started",
-        "sharedContextReconciliation": "pending",
+        "sharedContextReconciliation": "queued",
         "dispatchedAt": "2026-07-06T05:56:19Z",
         "dispatchBaseCommit": "70df1c5f9324dd3f9ff424f199ee1b8896a2e410",
-        "lastObservedAt": "2026-07-06T05:56:19Z"
+        "lastObservedAt": "2026-07-06T06:14:07Z",
+        "reviewRequestedAt": "2026-07-06T06:14:07Z",
+        "reviewSubmissionId": "019f3611-2a16-72d3-bd90-db911948d8c3"
       },
       {
         "id": "WAVE-005-provider-config-apply",
@@ -2633,7 +2765,7 @@
         ],
         "branch": "codex/task/TASK-010-provider-config-apply",
         "worktree": "/Users/ivo.toby/workspace/postgram/.worktrees/TASK-010-provider-config-apply",
-        "worktreeStatus": "clean_pushed",
+        "worktreeStatus": "active_uncommitted",
         "workerThreadId": "019f35ff-a193-7ae0-a4b8-1ec53faabb74",
         "workerNickname": "Goodall",
         "reviewThreadId": null,
@@ -2649,7 +2781,22 @@
         "sharedContextReconciliation": "pending",
         "dispatchedAt": "2026-07-06T05:56:19Z",
         "dispatchBaseCommit": "70df1c5f9324dd3f9ff424f199ee1b8896a2e410",
-        "lastObservedAt": "2026-07-06T05:56:19Z"
+        "lastObservedAt": "2026-07-06T06:14:07Z",
+        "worktreeObservation": {
+          "observedAt": "2026-07-06T06:14:07Z",
+          "status": "active_uncommitted_changes",
+          "files": [
+            "src/config.ts",
+            "src/index.ts",
+            "src/services/admin-settings-service.ts",
+            "src/transport/admin.ts",
+            "tests/unit/config.test.ts",
+            "src/services/admin-provider-config-service.ts",
+            "src/transport/admin-provider-config.ts",
+            "tests/integration/admin-provider-config.test.ts"
+          ],
+          "note": "Goodall has active TASK-010 implementation changes in the assigned worktree; no PR or patch yet, so no nudge sent this tick."
+        }
       }
     ],
     "activationCommit": "70df1c5f9324dd3f9ff424f199ee1b8896a2e410",

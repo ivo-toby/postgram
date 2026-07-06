@@ -6,7 +6,7 @@ ticket: TICKET-003-admin-api-foundation
 wave: WAVE-006
 slug: admin-key-audit-stats-api
 title: Admin Key Audit Stats API
-status: review
+status: done
 depends_on:
   - TASK-007-admin-api-shell-diagnostics
 conflict_domains:
@@ -19,12 +19,12 @@ assigned_model_class: implementationComplex
 review_model_class: review
 branch: codex/task/TASK-008-admin-key-audit-stats-api
 worker_worktree: /Users/ivo.toby/workspace/postgram/.worktrees/TASK-008-admin-key-audit-stats-api
-worktree_status: draft_pr_open
+worktree_status: cleanup_deferred
 pr: https://github.com/ivo-toby/postgram/pull/85
 worker_thread_id: 019f3748-036a-7422-9f84-ab790313375f
-review_thread_id: null
-current_gate: draft_pr_open
-branch_freshness: refreshed_on_epic_checkpoint_38a65d3
+review_thread_id: 019f322c-02e7-7590-8b8e-ebdd1e9c52ac
+current_gate: merged
+branch_freshness: current_at_merge
 verification:
   - npm test -- tests/contract/admin-key-audit-stats.test.ts
   - npm test -- tests/integration/key-service.test.ts
@@ -35,7 +35,7 @@ verification:
 
 ## Status
 
-review
+done
 
 ## Parent Ticket
 
@@ -155,6 +155,9 @@ is blocked.
 
 Draft PR: https://github.com/ivo-toby/postgram/pull/85
 
+Merged locally into the epic branch in `13465eb` after Lorentz returned
+`REVIEW_PASS`.
+
 ## RED-GREEN TDD Plan
 
 ### RED
@@ -216,6 +219,15 @@ Extract duplicated CLI logic into services only where it reduces drift.
 - PASS `npm run typecheck`.
 - PASS `npx eslint src/auth/key-service.ts src/transport/admin.ts src/services/admin-audit-service.ts src/services/admin-key-service.ts src/services/admin-stats-service.ts tests/contract/admin-key-audit-stats.test.ts --quiet`.
 - PASS `git diff --check`.
+- PASS post-merge `npm test -- tests/contract/admin-key-audit-stats.test.ts`
+  on the epic branch (10 tests).
+- PASS post-merge `npm test -- tests/integration/key-service.test.ts` on the
+  epic branch (3 tests).
+- PASS post-merge `npm run typecheck` on the epic branch.
+- PASS post-merge touched-file ESLint on the epic branch.
+- PASS post-merge `git diff --check HEAD^..HEAD`.
+- Lorentz review returned `REVIEW_PASS` with no P1/P2/P3 findings at PR head
+  `281681b8f6be6a30c6a4ec53f9b646154f85d8bc`.
 
 ## Review Feedback
 
@@ -253,3 +265,7 @@ Extract duplicated CLI logic into services only where it reduces drift.
   one-time create response.
 - Admin key/list/create/revoke/audit/stats service actions write structured
   `audit_log.admin_user_id` attribution.
+- Worker concern remains recorded as non-blocking: full `npm test` still fails
+  in the worker worktree on a pre-existing CLI subprocess
+  `node_modules/.bin/tsx ENOENT`; targeted TASK-008 gates and post-merge gates
+  passed.

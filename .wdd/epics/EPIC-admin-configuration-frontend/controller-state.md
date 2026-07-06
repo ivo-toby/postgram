@@ -38,9 +38,12 @@ TASK-008-admin-key-audit-stats-api and TASK-014-admin-job-foundation. Their
 task files have moved to `in-progress/` and the controller has recorded
 dedicated task branches and worktree paths. Both task branches and worktrees
 were created from pushed epic head `a41ffb4`, pushed to GitHub, and verified.
-Workers Maxwell and Anscombe were dispatched at 2026-07-06T11:49:24Z. Both
-bundles remain in no-PR monitoring with active uncommitted implementation work
-in their assigned worktrees.
+Workers Maxwell and Anscombe were dispatched at 2026-07-06T11:49:24Z.
+TASK-008 shipped in draft PR #85 after Maxwell returned `DONE_WITH_CONCERNS`;
+Lorentz returned `REVIEW_PASS` with no P1/P2/P3 findings, branch freshness was
+current, post-merge verification passed, and TASK-008 merged locally into the
+epic branch in `13465eb`. The TASK-008 worktree was clean and removed.
+TASK-014 remains active with no PR yet.
 
 WAVE-004 is done and reconciled. PR #81/TASK-009 and PR #82/TASK-006 are
 merged, shared context is reconciled, and both WAVE-004 worktrees are cleaned
@@ -68,11 +71,11 @@ Mode: codex_thread_heartbeat
 
 Cadence: 15 minutes
 
-Status: monitoring_wave_006_task008_review_file_no_pr_task014_active_no_pr
+Status: monitoring_wave_006_task008_merged_task014_active_no_pr
 
-Last check: 2026-07-06T12:55:24Z
+Last check: 2026-07-06T13:10:24Z
 
-Next check due: 2026-07-06T13:10:24Z
+Next check due: 2026-07-06T13:25:24Z
 
 Scheduler reference: `postgram-admin-wave-005-wdd-heartbeat`
 
@@ -117,7 +120,7 @@ if needed.
 - Activation commit: `e46eb9a10233fcbadf446cf81d13e8a60f7ab942`.
 - Worker: Maxwell (`019f3748-036a-7422-9f84-ab790313375f`).
 - Worker: Anscombe (`019f3748-041f-7540-b336-12c285848008`).
-- Current gate: no_pr for both bundles.
+- Current gate: TASK-008 merged; TASK-014 no_pr.
 
 ## Last Reconciled Wave
 
@@ -150,13 +153,13 @@ if needed.
 | TASK-005-admin-session-routes | TICKET-002-admin-auth-foundation | codex/task/TASK-005-admin-session-routes | cleaned_up | reconciled | REVIEW_PASS; freshness verification passed; merged in `ecfe9ac`; PR #80 merged; WAVE-003 reconciled |
 | TASK-006-admin-mfa-step-up | TICKET-002-admin-auth-foundation | codex/task/TASK-006-admin-mfa-step-up | cleaned_up | reconciled | REVIEW_PASS; final branch freshness passed at `8c04680`; merged locally into epic branch in `6666508`; worktree cleaned up during WAVE-004 reconciliation |
 | TASK-007-admin-api-shell-diagnostics | TICKET-003-admin-api-foundation | codex/task/TASK-007-admin-api-shell-diagnostics | cleaned_up | reconciled | REVIEW_PASS; freshness verification passed at `f0e889e`; merged locally into epic branch in `16985ef`; PR #83 merged; WAVE-005 reconciled |
-| TASK-008-admin-key-audit-stats-api | TICKET-003-admin-api-foundation | codex/task/TASK-008-admin-key-audit-stats-api | active_uncommitted | no_pr | Worker running; no PR; task file staged into `review/` in worker worktree; exact publish nudge sent; tracked `git diff --check` passed; branch is four controller checkpoints behind epic and needs freshness refresh before review or merge |
+| TASK-008-admin-key-audit-stats-api | TICKET-003-admin-api-foundation | codex/task/TASK-008-admin-key-audit-stats-api | cleaned_up | merged | REVIEW_PASS; freshness current at task head `281681b`; post-merge tests/typecheck/touched-file ESLint passed; merged locally into epic branch in `13465eb`; worktree cleaned up |
 | TASK-009-settings-secret-store | TICKET-004-runtime-configuration | codex/task/TASK-009-settings-secret-store | cleaned_up | reconciled | PR #81 follow-up REVIEW_PASS, final branch freshness passed at `ca9c96f`, merged locally into epic branch in `b63ad08`; worktree cleaned up during WAVE-004 reconciliation |
 | TASK-010-provider-config-apply | TICKET-004-runtime-configuration | codex/task/TASK-010-provider-config-apply | cleaned_up | reconciled | REVIEW_PASS; final branch freshness passed at `515cfa5`; merged locally into epic branch in `f5efbc0`; PR #84 merged at 2026-07-06T11:31:10Z; WAVE-005 reconciled |
 | TASK-011-admin-auth-ui | TICKET-005-admin-frontend | codex/task/TASK-011-admin-auth-ui | not_created | planned | `npm --prefix ui run test -- --run src/components/AdminAuth.test.tsx`; `npm --prefix ui run typecheck` |
 | TASK-012-admin-ops-dashboard-ui | TICKET-005-admin-frontend | codex/task/TASK-012-admin-ops-dashboard-ui | not_created | planned | `npm --prefix ui run test -- --run src/components/AdminOps.test.tsx`; `npm --prefix ui run typecheck` |
 | TASK-013-admin-config-ui | TICKET-005-admin-frontend | codex/task/TASK-013-admin-config-ui | not_created | planned | `npm --prefix ui run test -- --run src/components/AdminConfig.test.tsx`; `npm --prefix ui run typecheck` |
-| TASK-014-admin-job-foundation | TICKET-006-maintenance-jobs | codex/task/TASK-014-admin-job-foundation | active_uncommitted | no_pr | Worker running; no PR; recent expected activity; tracked `git diff --check` passed; branch is four controller checkpoints behind epic and needs freshness refresh before review or merge |
+| TASK-014-admin-job-foundation | TICKET-006-maintenance-jobs | codex/task/TASK-014-admin-job-foundation | active_uncommitted | no_pr | Worker running; no PR; recent expected activity; tracked `git diff --check` passed; branch is five controller checkpoints behind epic and needs freshness refresh before review or merge |
 | TASK-015-maintenance-admin-api | TICKET-006-maintenance-jobs | codex/task/TASK-015-maintenance-admin-api | not_created | planned | `npm test -- tests/contract/admin-maintenance-api.test.ts`; `npm test -- tests/integration/cli-admin.test.ts`; `npm run typecheck` |
 | TASK-016-maintenance-admin-ui | TICKET-006-maintenance-jobs | codex/task/TASK-016-maintenance-admin-ui | not_created | planned | `npm --prefix ui run test -- --run src/components/AdminMaintenance.test.tsx`; `npm --prefix ui run typecheck` |
 | TASK-017-docker-first-run-no-cli | TICKET-007-docker-e2e-validation | codex/task/TASK-017-docker-first-run-no-cli | not_created | planned | `docker compose config`; `npm run typecheck`; `npm --prefix ui run build` |
@@ -1202,11 +1205,21 @@ if needed.
   `node_modules/.vite/**` mtimes were ignored. Tracked diffs pass
   `git diff --check`; both task branches are four controller checkpoints behind
   the epic branch and must refresh before review or merge.
+- 2026-07-06T13:10:24Z: Maxwell returned `DONE_WITH_CONCERNS` with draft PR
+  #85. Controller verified PR #85 is open/draft/CLEAN, current with the epic
+  branch for review (`0 2`), and at head `281681b`. Lorentz reviewed PR #85
+  and returned `REVIEW_PASS` with no P1/P2/P3 findings. Controller merged
+  TASK-008 locally into the epic branch in `13465eb`, reran post-merge
+  TASK-008 verification (`admin-key-audit-stats` contract tests,
+  `key-service` integration tests, typecheck, touched-file ESLint, and
+  `git diff --check HEAD^..HEAD`), moved TASK-008 to `done/`, and removed the
+  clean pushed TASK-008 worktree. Anscombe remains active on TASK-014 with no
+  PR yet; tracked `git diff --check` passed and the task branch is five
+  controller checkpoints behind the epic branch.
 
 ## Next Action
 
-Next heartbeat is due at 2026-07-06T13:10:24Z. Inspect Maxwell and Anscombe,
-advance any PR or patch to review, or keep no_pr if Anscombe is still actively
-working. If TASK-008 still has the task file staged into `review/` with no PR
-or patch, nudge only the missing publication deliverable again or mark manual
-fallback if the worker is no longer responsive.
+Next heartbeat is due at 2026-07-06T13:25:24Z. Verify the pushed remote state
+for PR #85 after the closeout push, then inspect Anscombe and TASK-014. If
+TASK-014 has a PR or patch, move it to review; otherwise keep no_pr and nudge
+only exact missing deliverables if the worktree is inactive or stale.

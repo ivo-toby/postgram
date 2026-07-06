@@ -29,7 +29,7 @@ updated_at: 2026-07-06
 | TASK-014-admin-job-foundation | TICKET-006-maintenance-jobs | TASK-006, TASK-009 | job tables, job service, audit integration, progress state | done |
 | TASK-015-maintenance-admin-api | TICKET-006-maintenance-jobs | TASK-008, TASK-010, TASK-014 | graph/memory/embedding services, dry-run/apply admin APIs, CLI regressions | done |
 | TASK-016-maintenance-admin-ui | TICKET-006-maintenance-jobs | TASK-011, TASK-015 | maintenance UI, confirmations, progress polling, admin API client | done |
-| TASK-017-docker-first-run-no-cli | TICKET-007-docker-e2e-validation | TASK-012, TASK-013, TASK-016 | Docker Compose, `.env.example`, README/deployment docs, smoke tests | todo |
+| TASK-017-docker-first-run-no-cli | TICKET-007-docker-e2e-validation | TASK-012, TASK-013, TASK-016 | Docker Compose, `.env.example`, README/deployment docs, smoke tests | in_progress |
 | TASK-018-security-epic-validation | TICKET-007-docker-e2e-validation | TASK-017 | security review, broad validation, final handoff artifacts | todo |
 
 ## Dependency Grid
@@ -824,7 +824,7 @@ Stop condition:
 
 ### WAVE-010
 
-Status: ready_to_start
+Status: in_progress
 
 Tasks:
 
@@ -850,6 +850,15 @@ Activation rule:
 
 - Activate after WAVE-009 reconciliation.
 - Ready after WAVE-009 reconciliation on 2026-07-06.
+- Activated at 2026-07-06T21:51:22Z after WAVE-009 reconciliation checkpoint
+  `8b7f6c3` was pushed.
+
+Progress:
+
+- TASK-017-docker-first-run-no-cli moved to `in-progress/`; dedicated branch
+  `codex/task/TASK-017-docker-first-run-no-cli` and worktree
+  `/Users/ivo.toby/workspace/postgram/.worktrees/TASK-017-docker-first-run-no-cli`
+  are assigned and pending creation from the pushed activation checkpoint.
 
 Stop condition:
 

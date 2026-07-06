@@ -6,7 +6,7 @@ ticket: TICKET-007-docker-e2e-validation
 wave: WAVE-010
 slug: docker-first-run-no-cli
 title: Docker First Run No CLI
-status: todo
+status: in_progress
 depends_on:
   - TASK-012-admin-ops-dashboard-ui
   - TASK-013-admin-config-ui
@@ -19,13 +19,13 @@ conflict_domains:
 assigned_model_class: implementationComplex
 review_model_class: review
 branch: codex/task/TASK-017-docker-first-run-no-cli
-worker_worktree: null
-worktree_status: unassigned
+worker_worktree: /Users/ivo.toby/workspace/postgram/.worktrees/TASK-017-docker-first-run-no-cli
+worktree_status: pending_creation
 pr: null
 worker_thread_id: null
 review_thread_id: null
-current_gate: not_started
-branch_freshness: unknown
+current_gate: pending_worktree
+branch_freshness: not_started
 verification:
   - docker compose config
   - npm run typecheck
@@ -37,7 +37,7 @@ verification:
 
 ## Status
 
-todo
+in_progress
 
 ## Parent Ticket
 
@@ -119,11 +119,16 @@ codex/task/TASK-017-docker-first-run-no-cli
 
 ## Worker Worktree
 
-None assigned yet.
+/Users/ivo.toby/workspace/postgram/.worktrees/TASK-017-docker-first-run-no-cli
 
 ## PR / Patch Reference
 
 None yet.
+
+WAVE-010 activation recorded at 2026-07-06T21:51:22Z. The controller assigned
+branch `codex/task/TASK-017-docker-first-run-no-cli` and the isolated worktree
+path above; task branch/worktree creation and worker dispatch follow only after
+this activation checkpoint is pushed to the epic branch.
 
 ## RED-GREEN TDD Plan
 
@@ -192,7 +197,8 @@ Keep docs honest about emergency CLI fallback and public exposure risks.
 
 ## Verification Evidence
 
-- Not run yet.
+- Activation pending task branch/worktree creation from the pushed epic
+  checkpoint.
 
 ## Review Feedback
 

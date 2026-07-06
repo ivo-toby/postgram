@@ -1214,7 +1214,7 @@
     },
     {
       "id": "WAVE-010",
-      "status": "ready_to_start",
+      "status": "in_progress",
       "strategy": {
         "profile": "full",
         "executionMode": "bundled",
@@ -1238,7 +1238,8 @@
       "tasks": [
         "TASK-017-docker-first-run-no-cli"
       ],
-      "readyAt": "2026-07-06T21:42:32Z"
+      "readyAt": "2026-07-06T21:42:32Z",
+      "activatedAt": "2026-07-06T21:51:22Z"
     },
     {
       "id": "WAVE-011",
@@ -2456,8 +2457,8 @@
     {
       "id": "TASK-017-docker-first-run-no-cli",
       "ticket": "TICKET-007-docker-e2e-validation",
-      "path": "TICKET-007-docker-e2e-validation/todo/TASK-017-docker-first-run-no-cli.md",
-      "status": "todo",
+      "path": "TICKET-007-docker-e2e-validation/in-progress/TASK-017-docker-first-run-no-cli.md",
+      "status": "in_progress",
       "dependsOn": [
         "TASK-012-admin-ops-dashboard-ui",
         "TASK-013-admin-config-ui",
@@ -2475,24 +2476,29 @@
       "branch": "codex/task/TASK-017-docker-first-run-no-cli",
       "workerThreadId": null,
       "reviewThreadId": null,
-      "workerWorktree": null,
-      "worktreeStatus": "not_created",
+      "workerWorktree": "/Users/ivo.toby/workspace/postgram/.worktrees/TASK-017-docker-first-run-no-cli",
+      "worktreeStatus": "pending_creation",
       "pr": null,
       "latestCommit": null,
       "branchFreshness": "not_started",
       "blockingFeedback": [],
       "verification": {
-        "result": "not_run",
+        "result": "activation_pending_worktree_creation",
         "commands": [
           "docker compose config",
           "npm run typecheck",
           "npm --prefix ui run typecheck",
           "npm --prefix ui run build"
         ],
-        "evidence": null
+        "evidence": "WAVE-010 activation assigned branch and worktree. Task branch/worktree creation follows after activation checkpoint is pushed.",
+        "checkedAt": "2026-07-06T21:51:22Z"
       },
-      "currentGate": "ready_to_start",
-      "readyAt": "2026-07-06T21:42:32Z"
+      "currentGate": "pending_worktree",
+      "readyAt": "2026-07-06T21:42:32Z",
+      "bundle": "WAVE-010-docker-first-run-no-cli",
+      "activatedAt": "2026-07-06T21:51:22Z",
+      "sharedContextReconciliation": "not_started",
+      "cleanupState": "not_started"
     },
     {
       "id": "TASK-018-security-epic-validation",
@@ -2538,15 +2544,14 @@
   ],
   "monitoring": {
     "mode": "adaptive",
-    "cadence": "5m",
-    "status": "inactive_between_waves",
-    "lastCheckedAt": "2026-07-06T21:42:32Z",
-    "nextCheckDueAt": "2026-07-06T21:47:32Z",
+    "cadence": "15m",
+    "status": "wave_010_activation_pending_push",
+    "lastCheckedAt": "2026-07-06T21:51:22Z",
+    "nextCheckDueAt": "2026-07-06T22:06:22Z",
     "schedulerRef": "postgram-admin-wave-005-wdd-heartbeat",
-    "schedulerName": "postgram-admin-wave-010-start-heartbeat",
-    "fallbackPrompt": "Run one bounded WDD start-wave heartbeat for /Users/ivo.toby/workspace/postgram, epic EPIC-admin-configuration-frontend, next wave WAVE-010. Use the wdd-start-wave skill. Start in /Users/ivo.toby/workspace/postgram on branch codex/epic/admin-configuration-frontend. Read .wdd/epics/EPIC-admin-configuration-frontend/orchestration.json and controller-state.md. Confirm WAVE-009 is done/reconciled, PR #91 is MERGED, activeWave is null, WAVE-010 is ready_to_start, and WAVE-010 task is TASK-017-docker-first-run-no-cli. Activate WAVE-010, update orchestration.json/controller-state.md/task files, create and verify the isolated worktree under /Users/ivo.toby/workspace/postgram/.worktrees for TASK-017-docker-first-run-no-cli on branch codex/task/TASK-017-docker-first-run-no-cli, push activation artifacts to GitHub before worker dispatch, then dispatch/monitor according to WDD policy. After WAVE-010 is reconciled, continue to WAVE-011 per Ivo's finish-all-waves instruction and push to GitHub between tasks/waves.",
-    "verifiedAt": "2026-07-06T21:42:32Z",
-    "automationUpdateResult": "pending_update_after_push"
+    "schedulerName": "postgram-admin-wave-010-wdd-heartbeat",
+    "fallbackPrompt": "Run one bounded WDD controller heartbeat for /Users/ivo.toby/workspace/postgram, epic EPIC-admin-configuration-frontend, active wave WAVE-010. Use the subagent-pr-orchestration skill. Start in /Users/ivo.toby/workspace/postgram on branch codex/epic/admin-configuration-frontend. Read .wdd/epics/EPIC-admin-configuration-frontend/orchestration.json and controller-state.md, then inspect worker for bundle WAVE-010-docker-first-run-no-cli / TASK-017-docker-first-run-no-cli and assigned worktree /Users/ivo.toby/workspace/postgram/.worktrees/TASK-017-docker-first-run-no-cli on branch codex/task/TASK-017-docker-first-run-no-cli. Update gates, branch freshness, verification, PR or patch refs, reviewer refs, feedback, shared-context reconciliation status, and monitoring timestamps. If the worker has produced a PR or patch, move TASK-017 to review/reviewer orchestration; if no PR or patch exists, keep no_pr and nudge exact missing deliverables only if needed. If review reports P1/P2, route feedback to the worker or a fresh fix worker. If review passes, refresh stale task branch against codex/epic/admin-configuration-frontend, rerun required freshness verification, then merge or mark merge_ready according to policy. Stop when WAVE-010 is merged, blocked, cancelled, or ready for wdd-reconcile-wave. After WAVE-010 is reconciled, continue to WAVE-011 per Ivo's finish-all-waves instruction and push to GitHub between tasks/waves.",
+    "automationUpdateResult": "pending_update_after_dispatch"
   },
   "sharedContext": {
     "index": "shared-context/index.md",
@@ -2560,7 +2565,59 @@
     ],
     "reconcileAfterEveryWave": true
   },
-  "activeWave": null,
+  "activeWave": {
+    "id": "WAVE-010",
+    "activatedAt": "2026-07-06T21:51:22Z",
+    "status": "in_progress",
+    "strategy": {
+      "profile": "full",
+      "executionMode": "bundled",
+      "reviewMode": "risk_based",
+      "monitoringMode": "adaptive",
+      "confirmedBy": "Ivo via Codex finish-all-waves request on 2026-07-06"
+    },
+    "eligibleTasks": [
+      "TASK-017-docker-first-run-no-cli"
+    ],
+    "nonEligibleTasks": [],
+    "bundles": [
+      {
+        "id": "WAVE-010-docker-first-run-no-cli",
+        "tasks": [
+          "TASK-017-docker-first-run-no-cli"
+        ],
+        "branch": "codex/task/TASK-017-docker-first-run-no-cli",
+        "worktree": "/Users/ivo.toby/workspace/postgram/.worktrees/TASK-017-docker-first-run-no-cli",
+        "worktreeStatus": "pending_creation",
+        "workerThreadId": null,
+        "workerNickname": null,
+        "reviewThreadId": null,
+        "reviewNickname": null,
+        "currentGate": "pending_worktree",
+        "branchFreshness": "not_started",
+        "pr": null,
+        "latestCommit": null,
+        "blockingFeedback": [],
+        "verification": {
+          "result": "activation_pending_worktree_creation",
+          "checkedAt": "2026-07-06T21:51:22Z",
+          "commands": [
+            "git status --short --branch",
+            "git rev-list --left-right --count origin/codex/epic/admin-configuration-frontend...HEAD"
+          ],
+          "evidence": "Activation artifacts prepared on the epic branch before task branch/worktree creation."
+        },
+        "activatedAt": "2026-07-06T21:51:22Z",
+        "cleanupState": "not_started",
+        "sharedContextReconciliation": "not_started",
+        "lastObservedAt": "2026-07-06T21:51:22Z"
+      }
+    ],
+    "dispatchState": "activation_pending_push",
+    "activatedFromCommit": "8b7f6c38723d9ff27f95cf2aa2cb9ac639b98242",
+    "lastObservedAt": "2026-07-06T21:51:22Z",
+    "waveCompletion": "in_progress"
+  },
   "currentGates": {
     "epicBranch": {
       "status": "verified",
@@ -2569,12 +2626,10 @@
       "verifiedAt": "2026-07-05T11:36:08Z"
     },
     "activationArtifactsSynced": {
-      "status": "synced_to_epic_branch",
-      "commit": "b34d0eb2a9efb0332b168abf9aa64c5033d248c4",
+      "status": "pending_push",
       "requiredBeforeTaskWorktrees": true,
-      "wave": "WAVE-009",
-      "syncedAt": "2026-07-06T20:30:02Z",
-      "updatedAt": "2026-07-06T20:30:02Z"
+      "wave": "WAVE-010",
+      "updatedAt": "2026-07-06T21:51:22Z"
     },
     "waveStrategyConfirmation": {
       "WAVE-001": "confirmed_by_ivo_2026-07-05",
@@ -2602,7 +2657,8 @@
       "WAVE-007-maintenance-admin-api": "cleaned_up",
       "WAVE-008-admin-ops-dashboard-ui": "cleaned_up",
       "WAVE-008-admin-config-ui": "cleaned_up",
-      "WAVE-009-maintenance-admin-ui": "cleaned_up"
+      "WAVE-009-maintenance-admin-ui": "cleaned_up",
+      "WAVE-010-docker-first-run-no-cli": "pending_creation"
     },
     "workerDispatch": {
       "WAVE-001-admin-feasibility-gate": "reconciled",
@@ -2618,7 +2674,8 @@
       "WAVE-007-maintenance-admin-api": "reconciled",
       "WAVE-008-admin-ops-dashboard-ui": "reconciled",
       "WAVE-008-admin-config-ui": "reconciled",
-      "WAVE-009-maintenance-admin-ui": "reconciled"
+      "WAVE-009-maintenance-admin-ui": "reconciled",
+      "WAVE-010-docker-first-run-no-cli": "pending_worktree"
     },
     "waveCompletion": {
       "WAVE-001": "done",
@@ -2629,23 +2686,23 @@
       "WAVE-006": "done",
       "WAVE-007": "done",
       "WAVE-008": "done",
-      "WAVE-009": "done"
+      "WAVE-009": "done",
+      "WAVE-010": "in_progress"
     },
     "nextWave": {
-      "id": "WAVE-010",
-      "status": "ready_to_start"
+      "id": "WAVE-011",
+      "status": "planned"
     },
     "monitoring": {
       "mode": "adaptive",
-      "cadence": "5m",
-      "status": "inactive_between_waves",
-      "lastCheckedAt": "2026-07-06T21:42:32Z",
-      "nextCheckDueAt": "2026-07-06T21:47:32Z",
+      "cadence": "15m",
+      "status": "wave_010_activation_pending_push",
+      "lastCheckedAt": "2026-07-06T21:51:22Z",
+      "nextCheckDueAt": "2026-07-06T22:06:22Z",
       "schedulerRef": "postgram-admin-wave-005-wdd-heartbeat",
-      "schedulerName": "postgram-admin-wave-010-start-heartbeat",
-      "fallbackPrompt": "Run one bounded WDD start-wave heartbeat for /Users/ivo.toby/workspace/postgram, epic EPIC-admin-configuration-frontend, next wave WAVE-010. Use the wdd-start-wave skill. Start in /Users/ivo.toby/workspace/postgram on branch codex/epic/admin-configuration-frontend. Read .wdd/epics/EPIC-admin-configuration-frontend/orchestration.json and controller-state.md. Confirm WAVE-009 is done/reconciled, PR #91 is MERGED, activeWave is null, WAVE-010 is ready_to_start, and WAVE-010 task is TASK-017-docker-first-run-no-cli. Activate WAVE-010, update orchestration.json/controller-state.md/task files, create and verify the isolated worktree under /Users/ivo.toby/workspace/postgram/.worktrees for TASK-017-docker-first-run-no-cli on branch codex/task/TASK-017-docker-first-run-no-cli, push activation artifacts to GitHub before worker dispatch, then dispatch/monitor according to WDD policy. After WAVE-010 is reconciled, continue to WAVE-011 per Ivo's finish-all-waves instruction and push to GitHub between tasks/waves.",
-      "verifiedAt": "2026-07-06T21:42:32Z",
-      "automationUpdateResult": "pending_update_after_push"
+      "schedulerName": "postgram-admin-wave-010-wdd-heartbeat",
+      "fallbackPrompt": "Run one bounded WDD controller heartbeat for /Users/ivo.toby/workspace/postgram, epic EPIC-admin-configuration-frontend, active wave WAVE-010. Use the subagent-pr-orchestration skill. Start in /Users/ivo.toby/workspace/postgram on branch codex/epic/admin-configuration-frontend. Read .wdd/epics/EPIC-admin-configuration-frontend/orchestration.json and controller-state.md, then inspect worker for bundle WAVE-010-docker-first-run-no-cli / TASK-017-docker-first-run-no-cli and assigned worktree /Users/ivo.toby/workspace/postgram/.worktrees/TASK-017-docker-first-run-no-cli on branch codex/task/TASK-017-docker-first-run-no-cli. Update gates, branch freshness, verification, PR or patch refs, reviewer refs, feedback, shared-context reconciliation status, and monitoring timestamps. If the worker has produced a PR or patch, move TASK-017 to review/reviewer orchestration; if no PR or patch exists, keep no_pr and nudge exact missing deliverables only if needed. If review reports P1/P2, route feedback to the worker or a fresh fix worker. If review passes, refresh stale task branch against codex/epic/admin-configuration-frontend, rerun required freshness verification, then merge or mark merge_ready according to policy. Stop when WAVE-010 is merged, blocked, cancelled, or ready for wdd-reconcile-wave. After WAVE-010 is reconciled, continue to WAVE-011 per Ivo's finish-all-waves instruction and push to GitHub between tasks/waves.",
+      "automationUpdateResult": "pending_update_after_dispatch"
     },
     "review": {
       "WAVE-001-admin-feasibility-gate": {
@@ -3009,6 +3066,10 @@
         "headRefOid": "1885b64d45cce5ab7d4148fa167a726842bd1011",
         "blockingFeedback": [],
         "residualRisk": "Reviewer did not rerun full UI suite or backend maintenance contract suite; worker had full UI evidence and controller reran focused UI/client checks."
+      },
+      "WAVE-010-docker-first-run-no-cli": {
+        "status": "not_started",
+        "blockingFeedback": []
       }
     },
     "branchFreshness": {
@@ -3025,7 +3086,8 @@
       "WAVE-007-maintenance-admin-api": "current_at_merge",
       "WAVE-008-admin-ops-dashboard-ui": "current_at_merge",
       "WAVE-008-admin-config-ui": "current_at_merge",
-      "WAVE-009-maintenance-admin-ui": "current_at_merge"
+      "WAVE-009-maintenance-admin-ui": "current_at_merge",
+      "WAVE-010-docker-first-run-no-cli": "not_started"
     },
     "merge": {
       "WAVE-001-admin-feasibility-gate": {
@@ -3215,7 +3277,9 @@
       "WAVE-008-admin-config-ui": "completed",
       "WAVE-008": "completed",
       "WAVE-009-maintenance-admin-ui": "completed",
-      "WAVE-009": "completed"
+      "WAVE-009": "completed",
+      "WAVE-010-docker-first-run-no-cli": "not_started",
+      "WAVE-010": "not_started"
     },
     "prState": {
       "WAVE-001-admin-feasibility-gate": {
@@ -3437,7 +3501,8 @@
         "evidence": "Worker worktree was clean at task head 298804f17ae15956135149300558c26c55691e79; ran git worktree remove and git worktree prune."
       },
       "WAVE-008-admin-config-ui": "cleaned_up",
-      "WAVE-009-maintenance-admin-ui": "cleaned_up"
+      "WAVE-009-maintenance-admin-ui": "cleaned_up",
+      "WAVE-010-docker-first-run-no-cli": "not_started"
     },
     "worker": {
       "WAVE-002-admin-auth-persistence": {
@@ -4035,6 +4100,15 @@
           "git diff --check"
         ],
         "evidence": "WAVE-009 reconciled after PR #91 was confirmed MERGED. Shared context records the AdminMaintenance dashboard panel, maintenance dry-run/apply and job-polling client contract, preview-before-apply, recent step-up, scoped idempotency, safe job-summary rendering, llm-extraction edge-prune constraint, and TASK-017/TASK-018 Docker/security handoffs. TASK-016 worktree was already cleaned up."
+      },
+      "WAVE-010-docker-first-run-no-cli": {
+        "result": "activation_pending_worktree_creation",
+        "checkedAt": "2026-07-06T21:51:22Z",
+        "commands": [
+          "git status --short --branch",
+          "git rev-list --left-right --count origin/codex/epic/admin-configuration-frontend...HEAD"
+        ],
+        "evidence": "Activation artifacts prepared on the epic branch before task branch/worktree creation."
       }
     },
     "feedback": {
@@ -4225,13 +4299,15 @@
       },
       "WAVE-009": {
         "blocking": []
+      },
+      "WAVE-010-docker-first-run-no-cli": {
+        "blocking": []
       }
     },
     "activationArtifact": {
-      "commit": "b34d0eb2a9efb0332b168abf9aa64c5033d248c4",
       "requiredBeforeTaskWorktrees": true,
-      "wave": "WAVE-009",
-      "syncedAt": "2026-07-06T20:30:02Z"
+      "wave": "WAVE-010",
+      "updatedAt": "2026-07-06T21:51:22Z"
     }
   },
   "lastReconciledWave": {
@@ -4253,5 +4329,5 @@
     "nextWave": "WAVE-010"
   },
   "lastMergedWave": "WAVE-009",
-  "lastStartedWave": "WAVE-009"
+  "lastStartedWave": "WAVE-010"
 }

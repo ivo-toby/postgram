@@ -1984,11 +1984,11 @@
           "npm --prefix ui run test -- --run src/components/AdminAuth.test.tsx",
           "npm --prefix ui run typecheck"
         ],
-        "evidence": "Meitner remains RUNNING; no PR exists for codex/task/TASK-011-admin-auth-ui. Worktree has active uncommitted frontend auth changes in expected TASK-011 areas, including current-tick edits to App and AdminAuth tests. Tracked git diff --check passed; no staged files. No nudge required because worker appears active."
+        "evidence": "Meitner remains RUNNING; no PR exists for codex/task/TASK-011-admin-auth-ui. Worktree has active uncommitted frontend auth changes in expected TASK-011 areas, including current-tick edits to AdminAuth and AdminAuth tests. Tracked git diff --check passed; no staged files. No nudge required because worker appears active."
       },
       "currentGate": "no_pr",
       "workerNickname": "Meitner",
-      "lastObservedAt": "2026-07-06T14:59:25Z"
+      "lastObservedAt": "2026-07-06T15:14:25Z"
     },
     {
       "id": "TASK-012-admin-ops-dashboard-ui",
@@ -2191,11 +2191,11 @@
           "npm test -- tests/integration/cli-admin.test.ts",
           "npm run typecheck"
         ],
-        "evidence": "Helmholtz remains RUNNING; no PR exists for codex/task/TASK-015-maintenance-admin-api. Worktree has active uncommitted backend maintenance API changes in expected TASK-015 areas, including CLI regression updates, with recent service/transport/test activity. Tracked git diff --check passed; no staged files. No nudge required because worker appears active."
+        "evidence": "Helmholtz remains RUNNING; no PR exists for codex/task/TASK-015-maintenance-admin-api. Worktree has active uncommitted backend maintenance API changes in expected TASK-015 areas, with recent maintenance transport and contract-test activity. Tracked git diff --check passed; no staged files. No nudge required because worker appears active."
       },
       "currentGate": "no_pr",
       "workerNickname": "Helmholtz",
-      "lastObservedAt": "2026-07-06T14:59:25Z"
+      "lastObservedAt": "2026-07-06T15:14:25Z"
     },
     {
       "id": "TASK-016-maintenance-admin-ui",
@@ -2318,8 +2318,8 @@
     "mode": "adaptive",
     "cadence": "15m",
     "status": "wave_007_workers_active_no_pr",
-    "lastCheckedAt": "2026-07-06T14:59:25Z",
-    "nextCheckDueAt": "2026-07-06T15:14:25Z",
+    "lastCheckedAt": "2026-07-06T15:14:25Z",
+    "nextCheckDueAt": "2026-07-06T15:29:25Z",
     "schedulerRef": "postgram-admin-wave-005-wdd-heartbeat",
     "schedulerName": "postgram-admin-wave-007-wdd-heartbeat",
     "fallbackPrompt": "WAVE-007 workers Meitner (TASK-011) and Helmholtz (TASK-015) are active with no PR yet. Inspect worktrees and PRs, keep no_pr unless inactive/stale, and move any produced PR or patch to review orchestration."
@@ -2384,17 +2384,17 @@
             "git diff --check",
             "stat changed and untracked files for recent activity"
           ],
-          "evidence": "Meitner remains RUNNING; no PR exists for codex/task/TASK-011-admin-auth-ui. Worktree has active uncommitted frontend auth changes in expected TASK-011 areas, including current-tick edits to App and AdminAuth tests. Tracked git diff --check passed; no staged files. No nudge required because worker appears active."
+          "evidence": "Meitner remains RUNNING; no PR exists for codex/task/TASK-011-admin-auth-ui. Worktree has active uncommitted frontend auth changes in expected TASK-011 areas, including current-tick edits to AdminAuth and AdminAuth tests. Tracked git diff --check passed; no staged files. No nudge required because worker appears active."
         },
         "activatedAt": "2026-07-06T14:08:16Z",
         "cleanupState": "not_started",
         "sharedContextReconciliation": "not_started",
-        "lastObservedAt": "2026-07-06T14:59:25Z",
+        "lastObservedAt": "2026-07-06T15:14:25Z",
         "branchPushedAt": "2026-07-06T14:11:59Z",
         "dispatchedAt": "2026-07-06T14:11:59Z",
         "dispatchBaseCommit": "848b902c5f4829ff78529256c3a9181423c5a150",
         "worktreeObservation": {
-          "observedAt": "2026-07-06T14:59:25Z",
+          "observedAt": "2026-07-06T15:14:25Z",
           "taskId": "TASK-011-admin-auth-ui",
           "status": "active_uncommitted_no_pr",
           "workerStatus": "RUNNING",
@@ -2403,7 +2403,7 @@
           "prState": "none",
           "worktreeStatus": "active_uncommitted",
           "branchHead": "848b902c5f4829ff78529256c3a9181423c5a150",
-          "branchDivergence": "origin/codex/epic/admin-configuration-frontend...HEAD = 3 0; task branch is behind the epic branch by controller checkpoints and will need freshness refresh before review or merge.",
+          "branchDivergence": "origin/codex/epic/admin-configuration-frontend...HEAD = 4 0; task branch is behind the epic branch by controller checkpoints and will need freshness refresh before review or merge.",
           "branchFreshness": "behind_epic_controller_checkpoints",
           "files": [
             "ui/nginx.conf",
@@ -2420,7 +2420,6 @@
             "ui/src/lib/adminApi.ts"
           ],
           "recentFilesWithinHeartbeatWindow": [
-            "ui/src/App.tsx",
             "ui/src/components/AdminAuth.test.tsx",
             "ui/src/components/admin/AdminAuth.tsx"
           ],
@@ -2459,17 +2458,17 @@
             "git diff --check",
             "stat changed and untracked files for recent activity"
           ],
-          "evidence": "Helmholtz remains RUNNING; no PR exists for codex/task/TASK-015-maintenance-admin-api. Worktree has active uncommitted backend maintenance API changes in expected TASK-015 areas, including CLI regression updates, with recent service/transport/test activity. Tracked git diff --check passed; no staged files. No nudge required because worker appears active."
+          "evidence": "Helmholtz remains RUNNING; no PR exists for codex/task/TASK-015-maintenance-admin-api. Worktree has active uncommitted backend maintenance API changes in expected TASK-015 areas, with recent maintenance transport and contract-test activity. Tracked git diff --check passed; no staged files. No nudge required because worker appears active."
         },
         "activatedAt": "2026-07-06T14:08:16Z",
         "cleanupState": "not_started",
         "sharedContextReconciliation": "not_started",
-        "lastObservedAt": "2026-07-06T14:59:25Z",
+        "lastObservedAt": "2026-07-06T15:14:25Z",
         "branchPushedAt": "2026-07-06T14:11:59Z",
         "dispatchedAt": "2026-07-06T14:11:59Z",
         "dispatchBaseCommit": "848b902c5f4829ff78529256c3a9181423c5a150",
         "worktreeObservation": {
-          "observedAt": "2026-07-06T14:59:25Z",
+          "observedAt": "2026-07-06T15:14:25Z",
           "taskId": "TASK-015-maintenance-admin-api",
           "status": "active_uncommitted_no_pr",
           "workerStatus": "RUNNING",
@@ -2478,7 +2477,7 @@
           "prState": "none",
           "worktreeStatus": "active_uncommitted",
           "branchHead": "848b902c5f4829ff78529256c3a9181423c5a150",
-          "branchDivergence": "origin/codex/epic/admin-configuration-frontend...HEAD = 3 0; task branch is behind the epic branch by controller checkpoints and will need freshness refresh before review or merge.",
+          "branchDivergence": "origin/codex/epic/admin-configuration-frontend...HEAD = 4 0; task branch is behind the epic branch by controller checkpoints and will need freshness refresh before review or merge.",
           "branchFreshness": "behind_epic_controller_checkpoints",
           "files": [
             "src/cli/admin/pgm-admin.ts",
@@ -2494,11 +2493,8 @@
             "tests/contract/admin-maintenance-api.test.ts"
           ],
           "recentFilesWithinHeartbeatWindow": [
-            "src/cli/admin/pgm-admin.ts",
-            "src/services/admin-maintenance-service.ts",
             "src/transport/admin-maintenance.ts",
-            "tests/contract/admin-maintenance-api.test.ts",
-            "tests/integration/cli-admin.test.ts"
+            "tests/contract/admin-maintenance-api.test.ts"
           ],
           "diffCheck": "Tracked git diff --check passed; no staged files.",
           "coordinationNote": "No nudge required; worker has recent activity in expected task-owned files. Branch freshness refresh required before review or merge."
@@ -2509,7 +2505,7 @@
     "activationCommit": "848b902c5f4829ff78529256c3a9181423c5a150",
     "workerDispatchStartedAt": "2026-07-06T14:11:59Z",
     "dispatchedAt": "2026-07-06T14:11:59Z",
-    "lastObservedAt": "2026-07-06T14:59:25Z"
+    "lastObservedAt": "2026-07-06T15:14:25Z"
   },
   "currentGates": {
     "epicBranch": {
@@ -2577,8 +2573,8 @@
       "mode": "adaptive",
       "cadence": "15m",
       "status": "wave_007_workers_active_no_pr",
-      "lastCheckedAt": "2026-07-06T14:59:25Z",
-      "nextCheckDueAt": "2026-07-06T15:14:25Z",
+      "lastCheckedAt": "2026-07-06T15:14:25Z",
+      "nextCheckDueAt": "2026-07-06T15:29:25Z",
       "schedulerRef": "postgram-admin-wave-005-wdd-heartbeat",
       "schedulerName": "postgram-admin-wave-007-wdd-heartbeat",
       "fallbackPrompt": "WAVE-007 workers Meitner (TASK-011) and Helmholtz (TASK-015) are active with no PR yet. Inspect worktrees and PRs, keep no_pr unless inactive/stale, and move any produced PR or patch to review orchestration."
@@ -3575,13 +3571,13 @@
       },
       "WAVE-007-admin-auth-ui": {
         "result": "in_progress_observed_recent_activity_tracked_diff_check_passed",
-        "checkedAt": "2026-07-06T14:59:25Z",
-        "evidence": "Meitner remains RUNNING; no PR exists for codex/task/TASK-011-admin-auth-ui. Worktree has active uncommitted frontend auth changes in expected TASK-011 areas, including current-tick edits to App and AdminAuth tests. Tracked git diff --check passed; no staged files. No nudge required because worker appears active."
+        "checkedAt": "2026-07-06T15:14:25Z",
+        "evidence": "Meitner remains RUNNING; no PR exists for codex/task/TASK-011-admin-auth-ui. Worktree has active uncommitted frontend auth changes in expected TASK-011 areas, including current-tick edits to AdminAuth and AdminAuth tests. Tracked git diff --check passed; no staged files. No nudge required because worker appears active."
       },
       "WAVE-007-maintenance-admin-api": {
         "result": "in_progress_observed_recent_activity_tracked_diff_check_passed",
-        "checkedAt": "2026-07-06T14:59:25Z",
-        "evidence": "Helmholtz remains RUNNING; no PR exists for codex/task/TASK-015-maintenance-admin-api. Worktree has active uncommitted backend maintenance API changes in expected TASK-015 areas, including CLI regression updates, with recent service/transport/test activity. Tracked git diff --check passed; no staged files. No nudge required because worker appears active."
+        "checkedAt": "2026-07-06T15:14:25Z",
+        "evidence": "Helmholtz remains RUNNING; no PR exists for codex/task/TASK-015-maintenance-admin-api. Worktree has active uncommitted backend maintenance API changes in expected TASK-015 areas, with recent maintenance transport and contract-test activity. Tracked git diff --check passed; no staged files. No nudge required because worker appears active."
       }
     },
     "feedback": {
@@ -3734,17 +3730,17 @@
             "git diff --check",
             "stat changed and untracked files for recent activity"
           ],
-          "evidence": "Meitner remains RUNNING; no PR exists for codex/task/TASK-011-admin-auth-ui. Worktree has active uncommitted frontend auth changes in expected TASK-011 areas, including current-tick edits to App and AdminAuth tests. Tracked git diff --check passed; no staged files. No nudge required because worker appears active."
+          "evidence": "Meitner remains RUNNING; no PR exists for codex/task/TASK-011-admin-auth-ui. Worktree has active uncommitted frontend auth changes in expected TASK-011 areas, including current-tick edits to AdminAuth and AdminAuth tests. Tracked git diff --check passed; no staged files. No nudge required because worker appears active."
         },
         "activatedAt": "2026-07-06T14:08:16Z",
         "cleanupState": "not_started",
         "sharedContextReconciliation": "not_started",
-        "lastObservedAt": "2026-07-06T14:59:25Z",
+        "lastObservedAt": "2026-07-06T15:14:25Z",
         "branchPushedAt": "2026-07-06T14:11:59Z",
         "dispatchedAt": "2026-07-06T14:11:59Z",
         "dispatchBaseCommit": "848b902c5f4829ff78529256c3a9181423c5a150",
         "worktreeObservation": {
-          "observedAt": "2026-07-06T14:59:25Z",
+          "observedAt": "2026-07-06T15:14:25Z",
           "taskId": "TASK-011-admin-auth-ui",
           "status": "active_uncommitted_no_pr",
           "workerStatus": "RUNNING",
@@ -3753,7 +3749,7 @@
           "prState": "none",
           "worktreeStatus": "active_uncommitted",
           "branchHead": "848b902c5f4829ff78529256c3a9181423c5a150",
-          "branchDivergence": "origin/codex/epic/admin-configuration-frontend...HEAD = 3 0; task branch is behind the epic branch by controller checkpoints and will need freshness refresh before review or merge.",
+          "branchDivergence": "origin/codex/epic/admin-configuration-frontend...HEAD = 4 0; task branch is behind the epic branch by controller checkpoints and will need freshness refresh before review or merge.",
           "branchFreshness": "behind_epic_controller_checkpoints",
           "files": [
             "ui/nginx.conf",
@@ -3770,7 +3766,6 @@
             "ui/src/lib/adminApi.ts"
           ],
           "recentFilesWithinHeartbeatWindow": [
-            "ui/src/App.tsx",
             "ui/src/components/AdminAuth.test.tsx",
             "ui/src/components/admin/AdminAuth.tsx"
           ],
@@ -3809,17 +3804,17 @@
             "git diff --check",
             "stat changed and untracked files for recent activity"
           ],
-          "evidence": "Helmholtz remains RUNNING; no PR exists for codex/task/TASK-015-maintenance-admin-api. Worktree has active uncommitted backend maintenance API changes in expected TASK-015 areas, including CLI regression updates, with recent service/transport/test activity. Tracked git diff --check passed; no staged files. No nudge required because worker appears active."
+          "evidence": "Helmholtz remains RUNNING; no PR exists for codex/task/TASK-015-maintenance-admin-api. Worktree has active uncommitted backend maintenance API changes in expected TASK-015 areas, with recent maintenance transport and contract-test activity. Tracked git diff --check passed; no staged files. No nudge required because worker appears active."
         },
         "activatedAt": "2026-07-06T14:08:16Z",
         "cleanupState": "not_started",
         "sharedContextReconciliation": "not_started",
-        "lastObservedAt": "2026-07-06T14:59:25Z",
+        "lastObservedAt": "2026-07-06T15:14:25Z",
         "branchPushedAt": "2026-07-06T14:11:59Z",
         "dispatchedAt": "2026-07-06T14:11:59Z",
         "dispatchBaseCommit": "848b902c5f4829ff78529256c3a9181423c5a150",
         "worktreeObservation": {
-          "observedAt": "2026-07-06T14:59:25Z",
+          "observedAt": "2026-07-06T15:14:25Z",
           "taskId": "TASK-015-maintenance-admin-api",
           "status": "active_uncommitted_no_pr",
           "workerStatus": "RUNNING",
@@ -3828,7 +3823,7 @@
           "prState": "none",
           "worktreeStatus": "active_uncommitted",
           "branchHead": "848b902c5f4829ff78529256c3a9181423c5a150",
-          "branchDivergence": "origin/codex/epic/admin-configuration-frontend...HEAD = 3 0; task branch is behind the epic branch by controller checkpoints and will need freshness refresh before review or merge.",
+          "branchDivergence": "origin/codex/epic/admin-configuration-frontend...HEAD = 4 0; task branch is behind the epic branch by controller checkpoints and will need freshness refresh before review or merge.",
           "branchFreshness": "behind_epic_controller_checkpoints",
           "files": [
             "src/cli/admin/pgm-admin.ts",
@@ -3844,11 +3839,8 @@
             "tests/contract/admin-maintenance-api.test.ts"
           ],
           "recentFilesWithinHeartbeatWindow": [
-            "src/cli/admin/pgm-admin.ts",
-            "src/services/admin-maintenance-service.ts",
             "src/transport/admin-maintenance.ts",
-            "tests/contract/admin-maintenance-api.test.ts",
-            "tests/integration/cli-admin.test.ts"
+            "tests/contract/admin-maintenance-api.test.ts"
           ],
           "diffCheck": "Tracked git diff --check passed; no staged files.",
           "coordinationNote": "No nudge required; worker has recent activity in expected task-owned files. Branch freshness refresh required before review or merge."
@@ -3859,6 +3851,6 @@
     "activationCommit": "848b902c5f4829ff78529256c3a9181423c5a150",
     "workerDispatchStartedAt": "2026-07-06T14:11:59Z",
     "dispatchedAt": "2026-07-06T14:11:59Z",
-    "lastObservedAt": "2026-07-06T14:59:25Z"
+    "lastObservedAt": "2026-07-06T15:14:25Z"
   }
 }

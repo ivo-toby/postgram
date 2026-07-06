@@ -15,6 +15,7 @@ import {
   createAdminUser,
   createBootstrapToken,
   createFirstAdminWithBootstrapToken,
+  ensureFirstRunBootstrapToken,
   findAdminSession,
   invalidateAdminSession,
   verifyAdminPassword
@@ -393,6 +394,98 @@ describe('admin-auth-service', () => {
     );
     expect(expired.isErr()).toBe(true);
     expect(expired._unsafeUnwrapErr().code).toBe(ErrorCode.UNAUTHORIZED);
+  }, 120_000);
+
+  it('creates a first-run bootstrap token when no admin or usable token exists', async () => {
+    if (!database) {
+      throw new Error('test database not initialized');
+    }
+
+    const now = new Date('2026-07-06T20:00:00.000Z');
+    const ensured = await ensureFirstRunBootstrapToken(database.pool, {
+      ttlMs: 60 * 60 * 1000,
+      now
+    });
+
+    expect(ensured.isOk()).toBe(true);
+    const result = ensured._unsafeUnwrap();
+    expect(result.status).toBe('created');
+    if (result.status !== 'created') {
+      throw new Error('expected created bootstrap token');
+    }
+    expect(result.plaintextToken).toMatch(/^pgm-admin-bootstrap-/);
+    expect(result.token.expiresAt).toBe('2026-07-06T21:00:00.000Z');
+
+    const row = await database.pool.query<{ token_hash: string }>(
+      'SELECT token_hash FROM admin_bootstrap_tokens WHERE id = $1',
+      [result.token.id]
+    );
+    expect(row.rows[0]?.token_hash).not.toBe(result.plaintextToken);
+    expect(row.rows[0]?.token_hash).not.toContain(result.plaintextToken);
+  }, 120_000);
+
+  it('does not rotate an existing unexpired first-run bootstrap token', async () => {
+    if (!database) {
+      throw new Error('test database not initialized');
+    }
+
+    const now = new Date('2026-07-06T20:00:00.000Z');
+    const first = (
+      await ensureFirstRunBootstrapToken(database.pool, {
+        ttlMs: 60 * 60 * 1000,
+        now
+      })
+    )._unsafeUnwrap();
+
+    expect(first.status).toBe('created');
+    if (first.status !== 'created') {
+      throw new Error('expected created bootstrap token');
+    }
+
+    const second = await ensureFirstRunBootstrapToken(database.pool, {
+      ttlMs: 60 * 60 * 1000,
+      now: new Date('2026-07-06T20:05:00.000Z')
+    });
+
+    expect(second.isOk()).toBe(true);
+    const result = second._unsafeUnwrap();
+    expect(result).toMatchObject({
+      status: 'existing',
+      token: {
+        id: first.token.id,
+        expiresAt: '2026-07-06T21:00:00.000Z'
+      }
+    });
+    expect('plaintextToken' in result).toBe(false);
+
+    const count = await database.pool.query<{ count: string }>(
+      'SELECT COUNT(*)::text AS count FROM admin_bootstrap_tokens'
+    );
+    expect(count.rows[0]?.count).toBe('1');
+  }, 120_000);
+
+  it('does not create a first-run bootstrap token after admin setup has started', async () => {
+    if (!database) {
+      throw new Error('test database not initialized');
+    }
+
+    await createAdminUser(database.pool, {
+      email: 'configured@example.com',
+      password: 'Correct-Horse-Battery-42!'
+    });
+
+    const ensured = await ensureFirstRunBootstrapToken(database.pool, {
+      ttlMs: 60 * 60 * 1000,
+      now: new Date('2026-07-06T20:00:00.000Z')
+    });
+
+    expect(ensured.isOk()).toBe(true);
+    expect(ensured._unsafeUnwrap()).toEqual({ status: 'configured' });
+
+    const count = await database.pool.query<{ count: string }>(
+      'SELECT COUNT(*)::text AS count FROM admin_bootstrap_tokens'
+    );
+    expect(count.rows[0]?.count).toBe('0');
   }, 120_000);
 
   it('checks bootstrap tokens before hashing first-admin passwords', async () => {

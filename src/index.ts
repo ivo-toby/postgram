@@ -6,6 +6,7 @@ import type { ContentfulStatusCode } from 'hono/utils/http-status';
 import type { Pool } from 'pg';
 
 import { createAuthMiddleware } from './auth/middleware.js';
+import { ensureFirstRunBootstrapToken } from './auth/admin-service.js';
 import type { AuthContext } from './auth/types.js';
 import { loadConfig } from './config.js';
 import type { AppConfig } from './config.js';
@@ -68,6 +69,8 @@ type AppOptions = {
   providerConfigDnsLookup?: ProviderConfigDnsLookup | undefined;
   getHealthStatus?: () => Promise<HealthStatus> | HealthStatus;
 };
+
+const FIRST_RUN_BOOTSTRAP_TOKEN_TTL_MS = 24 * 60 * 60 * 1000;
 
 function getDefaultHealthStatus(): HealthStatus {
   return {
@@ -282,6 +285,28 @@ export async function startServer(): Promise<{
   const pool = createPool(config.DATABASE_URL);
 
   await runMigrations(pool);
+
+  const firstRunBootstrap = await ensureFirstRunBootstrapToken(pool, {
+    ttlMs: FIRST_RUN_BOOTSTRAP_TOKEN_TTL_MS
+  });
+  if (firstRunBootstrap.isErr()) {
+    throw firstRunBootstrap.error;
+  }
+  const bootstrapState = firstRunBootstrap.value;
+  if (bootstrapState.status === 'created') {
+    logger.warn(
+      {
+        bootstrapToken: bootstrapState.plaintextToken,
+        expiresAt: bootstrapState.token.expiresAt
+      },
+      'admin first-run bootstrap token generated; use the local operator logs to complete setup'
+    );
+  } else if (bootstrapState.status === 'existing') {
+    logger.info(
+      { expiresAt: bootstrapState.token.expiresAt },
+      'admin first-run bootstrap token already exists; plaintext is not recoverable'
+    );
+  }
 
   const runtimeConfigResult = await resolveRuntimeProviderConfig(pool, {
     envConfig: config,

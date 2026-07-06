@@ -24,8 +24,8 @@ worktree_status: clean_pushed
 pr: https://github.com/ivo-toby/postgram/pull/92
 worker_thread_id: 019f396f-3da8-7d11-94a0-3d84d26f490b
 review_thread_id: 019f398f-98c3-7350-be3f-1cb4af8aab75
-current_gate: reviewing
-branch_freshness: dirty_wdd_review_file_conflict_final_refresh_required
+current_gate: review_passed_pending_freshness
+branch_freshness: refreshed_with_epic_checkpoint
 verification:
   - docker compose config
   - npm run typecheck
@@ -131,13 +131,17 @@ path above. At 2026-07-06T21:54:35Z the task branch/worktree were created from
 the pushed epic activation checkpoint, verified clean/current, and the task
 branch was pushed to GitHub.
 
-At the 2026-07-06T22:29:02Z controller heartbeat, PR #92 existed at head
-`6a0259701fbfba648d37472653a5760b3d0d1602`, the assigned worktree was clean and
-pushed, and GitHub reported `DIRTY`. Controller merge-tree inspection found the
-only conflict in this WDD review task file, so final branch freshness is pending
-before merge. Review was requested from Dewey
-(`019f398f-98c3-7350-be3f-1cb4af8aab75`) and remained pending during the
-bounded heartbeat wait.
+Controller review gate:
+
+- Dewey (`019f398f-98c3-7350-be3f-1cb4af8aab75`) returned `REVIEW_BLOCKED` for
+  reviewed head `6a0259701fbfba648d37472653a5760b3d0d1602` with two upgrade
+  blockers.
+- Bacon pushed fix head `48f7f67fc2400a87dd9adbdb175013ed09a5cac4` and
+  confirmed no unpushed work remained.
+- Dewey follow-up returned `REVIEW_PASS` for fix head
+  `48f7f67fc2400a87dd9adbdb175013ed09a5cac4` with no P1/P2/P3 findings.
+- This refresh merged the latest epic checkpoint so the WDD review file conflict
+  is resolved before final merge.
 
 ## RED-GREEN TDD Plan
 
@@ -269,7 +273,9 @@ Keep docs honest about emergency CLI fallback and public exposure risks.
   - `playwright-cli requests` showed
     `POST /admin/api/maintenance/reextract/dry-run => 202` and two
     `GET /admin/api/jobs/f26886e9-77ff-4708-906e-d5865cfbd8d4 => 200` polls.
-- `npm test -- tests/unit/docker-first-run.test.ts`: passed, 3 tests.
+- `npm test -- tests/unit/docker-first-run.test.ts`: passed, 5 tests after
+  review fixes for legacy `POSTGRES_PASSWORD` seeding, dynamic Compose
+  embedding defaults, and strict settings-key format validation.
 - `npm test -- tests/integration/admin-auth-service.test.ts`: passed, 18 tests.
 - `npm run typecheck`: passed.
 - `npm --prefix ui run typecheck`: initially failed because local
@@ -281,56 +287,37 @@ Keep docs honest about emergency CLI fallback and public exposure risks.
 - `git diff --check`: passed.
 - `jq empty .wdd/epics/EPIC-admin-configuration-frontend/orchestration.json`:
   passed.
-- 2026-07-06T22:29:02Z controller heartbeat: PR #92 is open/draft at
-  `6a0259701fbfba648d37472653a5760b3d0d1602`; assigned worktree is clean and
-  pushed; `git diff --check` passes in the assigned worktree; branch divergence
-  from the latest epic is `3 2`; `git merge-tree` reports a WDD review-file
-  conflict only; Dewey review is pending.
-- 2026-07-06T22:43:02Z controller heartbeat: Dewey returned
-  `REVIEW_BLOCKED` for reviewed head
-  `6a0259701fbfba648d37472653a5760b3d0d1602` with two P2 upgrade blockers.
-  Bacon had already pushed fix head
-  `48f7f67fc2400a87dd9adbdb175013ed09a5cac4`; feedback was routed to Bacon in
-  submission `019f399a-a02a-7651-9f0f-2175b4a56116`, and Bacon confirmed
-  no unpushed work remains. Controller verification on the fix head passed:
-  `docker compose config`, `npm test -- tests/unit/docker-first-run.test.ts`
-  (5 tests), `npm test -- tests/integration/admin-auth-service.test.ts`
-  (18 tests), `npm run typecheck`, `npm --prefix ui run typecheck`, and
-  `git diff --check`. Dewey follow-up review was requested in submission
-  `019f399a-c385-73e2-abba-fc7b0c7f0388` and is pending.
-- 2026-07-06T22:43:02Z follow-up: Dewey returned `REVIEW_PASS` for fix head
-  `48f7f67fc2400a87dd9adbdb175013ed09a5cac4` with no P1/P2/P3. The prior
-  Docker upgrade blockers and settings-key validation concern are resolved.
-  Final branch freshness is still pending because merge-tree conflicts only in
-  this WDD review task file.
+- `codex review --base origin/codex/epic/admin-configuration-frontend`:
+  reported two P1 upgrade findings, both fixed in follow-up changes.
+- Post-review clean startup smoke:
+  `COMPOSE_PROJECT_NAME=pg-task017-reviewfix POSTGRAM_API_PORT=3217 UI_PORT=3317 LOG_LEVEL=info docker compose up -d --build`
+  passed from clean volumes. API and UI health returned OK, the entrypoint
+  chose Ollama for a no-key clean boot, and the bootstrap token log appeared.
+- Post-review `docker compose config` with an empty environment showed
+  `EMBEDDING_PROVIDER: ""` for the app entrypoint to resolve and
+  `POSTGRES_PASSWORD: ""` unless a legacy override is supplied.
 
 ## Review Feedback
 
 ### P1
 
-- None.
+- Fixed: new `postgram_secrets/postgres-password` could diverge from an
+  existing Docker install's old `${POSTGRES_PASSWORD}` while `pgdata` kept the
+  old role password. The init service now receives `POSTGRES_PASSWORD` and
+  seeds the secret file from it when present and the secret is absent.
+- Fixed: Compose's initial Ollama default would break existing OpenAI/chunked
+  installs by tripping embedding identity validation. Compose now passes
+  blank `EMBEDDING_PROVIDER`; the entrypoint selects `openai` when
+  `OPENAI_API_KEY` is present and `ollama` only when no provider/key override
+  is supplied.
 
 ### P2
 
-- Resolved by follow-up review:
-  `P2-docker-upgrade-postgres-password-preservation`. Existing Compose installs
-  with initialized `pgdata` and old `POSTGRES_PASSWORD` could lose DB access
-  when the new `postgram_secrets/postgres-password` file was generated
-  randomly. Bacon pushed fix head `48f7f67` to seed the new secret file from
-  legacy `POSTGRES_PASSWORD` when present; Dewey follow-up passed.
-- Resolved by follow-up review:
-  `P2-openai-compose-provider-upgrade-compatibility`. Existing Compose installs
-  with `OPENAI_API_KEY` but no explicit `EMBEDDING_PROVIDER` could silently
-  switch to Ollama. Bacon pushed fix head `48f7f67` so the entrypoint selects
-  OpenAI when `OPENAI_API_KEY` is present unless the operator explicitly sets a
-  provider; Dewey follow-up passed.
+- None.
 
 ### P3
 
-- Pending final freshness: PR #92 still needs branch refresh against the latest
-  epic checkpoint; merge-tree conflict is limited to this WDD review task file.
-- Resolved by follow-up review: Docker settings-key validation was tightened to
-  match the app validator more closely.
+- None.
 
 ## Completion Notes
 

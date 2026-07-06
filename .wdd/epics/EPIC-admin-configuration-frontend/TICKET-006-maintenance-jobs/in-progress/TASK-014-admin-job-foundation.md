@@ -140,6 +140,15 @@ and `tests/integration/admin-job-service.test.ts`. Tracked `git diff --check`
 passed. The task branch is three controller checkpoints behind the epic branch
 and must be refreshed before review or merge.
 
+Controller heartbeat at 2026-07-06T12:55:24Z observed Anscombe still running,
+no PR or patch, and active uncommitted TASK-014 work. Recent meaningful
+activity remains in `src/services/admin-job-service.ts` and
+`tests/integration/admin-job-service.test.ts`; generated `dist/**` and
+`node_modules/.vite/**` mtimes were ignored. Tracked `git diff --check`
+passed. The task branch is four controller checkpoints behind the epic branch
+and must be refreshed before review or merge. No nudge was sent because the
+worker appears active.
+
 ## PR / Patch Reference
 
 None yet.

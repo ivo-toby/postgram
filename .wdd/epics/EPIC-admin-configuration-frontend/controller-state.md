@@ -68,11 +68,11 @@ Mode: codex_thread_heartbeat
 
 Cadence: 15 minutes
 
-Status: monitoring_wave_006_workers_active_no_pr
+Status: monitoring_wave_006_task008_review_file_no_pr_task014_active_no_pr
 
-Last check: 2026-07-06T12:40:24Z
+Last check: 2026-07-06T12:55:24Z
 
-Next check due: 2026-07-06T12:55:24Z
+Next check due: 2026-07-06T13:10:24Z
 
 Scheduler reference: `postgram-admin-wave-005-wdd-heartbeat`
 
@@ -150,13 +150,13 @@ if needed.
 | TASK-005-admin-session-routes | TICKET-002-admin-auth-foundation | codex/task/TASK-005-admin-session-routes | cleaned_up | reconciled | REVIEW_PASS; freshness verification passed; merged in `ecfe9ac`; PR #80 merged; WAVE-003 reconciled |
 | TASK-006-admin-mfa-step-up | TICKET-002-admin-auth-foundation | codex/task/TASK-006-admin-mfa-step-up | cleaned_up | reconciled | REVIEW_PASS; final branch freshness passed at `8c04680`; merged locally into epic branch in `6666508`; worktree cleaned up during WAVE-004 reconciliation |
 | TASK-007-admin-api-shell-diagnostics | TICKET-003-admin-api-foundation | codex/task/TASK-007-admin-api-shell-diagnostics | cleaned_up | reconciled | REVIEW_PASS; freshness verification passed at `f0e889e`; merged locally into epic branch in `16985ef`; PR #83 merged; WAVE-005 reconciled |
-| TASK-008-admin-key-audit-stats-api | TICKET-003-admin-api-foundation | codex/task/TASK-008-admin-key-audit-stats-api | active_uncommitted | no_pr | Worker running; no PR; recent expected activity; tracked `git diff --check` passed; branch is three controller checkpoints behind epic and needs freshness refresh before review or merge |
+| TASK-008-admin-key-audit-stats-api | TICKET-003-admin-api-foundation | codex/task/TASK-008-admin-key-audit-stats-api | active_uncommitted | no_pr | Worker running; no PR; task file staged into `review/` in worker worktree; exact publish nudge sent; tracked `git diff --check` passed; branch is four controller checkpoints behind epic and needs freshness refresh before review or merge |
 | TASK-009-settings-secret-store | TICKET-004-runtime-configuration | codex/task/TASK-009-settings-secret-store | cleaned_up | reconciled | PR #81 follow-up REVIEW_PASS, final branch freshness passed at `ca9c96f`, merged locally into epic branch in `b63ad08`; worktree cleaned up during WAVE-004 reconciliation |
 | TASK-010-provider-config-apply | TICKET-004-runtime-configuration | codex/task/TASK-010-provider-config-apply | cleaned_up | reconciled | REVIEW_PASS; final branch freshness passed at `515cfa5`; merged locally into epic branch in `f5efbc0`; PR #84 merged at 2026-07-06T11:31:10Z; WAVE-005 reconciled |
 | TASK-011-admin-auth-ui | TICKET-005-admin-frontend | codex/task/TASK-011-admin-auth-ui | not_created | planned | `npm --prefix ui run test -- --run src/components/AdminAuth.test.tsx`; `npm --prefix ui run typecheck` |
 | TASK-012-admin-ops-dashboard-ui | TICKET-005-admin-frontend | codex/task/TASK-012-admin-ops-dashboard-ui | not_created | planned | `npm --prefix ui run test -- --run src/components/AdminOps.test.tsx`; `npm --prefix ui run typecheck` |
 | TASK-013-admin-config-ui | TICKET-005-admin-frontend | codex/task/TASK-013-admin-config-ui | not_created | planned | `npm --prefix ui run test -- --run src/components/AdminConfig.test.tsx`; `npm --prefix ui run typecheck` |
-| TASK-014-admin-job-foundation | TICKET-006-maintenance-jobs | codex/task/TASK-014-admin-job-foundation | active_uncommitted | no_pr | Worker running; no PR; recent expected activity; tracked `git diff --check` passed; branch is three controller checkpoints behind epic and needs freshness refresh before review or merge |
+| TASK-014-admin-job-foundation | TICKET-006-maintenance-jobs | codex/task/TASK-014-admin-job-foundation | active_uncommitted | no_pr | Worker running; no PR; recent expected activity; tracked `git diff --check` passed; branch is four controller checkpoints behind epic and needs freshness refresh before review or merge |
 | TASK-015-maintenance-admin-api | TICKET-006-maintenance-jobs | codex/task/TASK-015-maintenance-admin-api | not_created | planned | `npm test -- tests/contract/admin-maintenance-api.test.ts`; `npm test -- tests/integration/cli-admin.test.ts`; `npm run typecheck` |
 | TASK-016-maintenance-admin-ui | TICKET-006-maintenance-jobs | codex/task/TASK-016-maintenance-admin-ui | not_created | planned | `npm --prefix ui run test -- --run src/components/AdminMaintenance.test.tsx`; `npm --prefix ui run typecheck` |
 | TASK-017-docker-first-run-no-cli | TICKET-007-docker-e2e-validation | codex/task/TASK-017-docker-first-run-no-cli | not_created | planned | `docker compose config`; `npm run typecheck`; `npm --prefix ui run build` |
@@ -1192,9 +1192,21 @@ if needed.
   migration, job service, and job integration tests. Tracked diffs pass
   `git diff --check`; both task branches are three controller checkpoints
   behind the epic branch and must refresh before review or merge.
+- 2026-07-06T12:55:24Z: Heartbeat observed Maxwell still running with no PR or
+  patch, but TASK-008's task file is staged as moved into `review/` in the
+  worker worktree. The branch still has no task commit beyond dispatch base
+  `0d41c53`, so controller queued exact missing-deliverable nudge
+  `019f3781-76cc-7191-8d71-ad402f5aee47`: commit/push and open a PR against
+  the epic branch, or provide a patch reference. Anscombe remains active with
+  no PR yet and recent meaningful TASK-014 activity; generated `dist/**` and
+  `node_modules/.vite/**` mtimes were ignored. Tracked diffs pass
+  `git diff --check`; both task branches are four controller checkpoints behind
+  the epic branch and must refresh before review or merge.
 
 ## Next Action
 
-Next heartbeat is due at 2026-07-06T12:55:24Z. Inspect Maxwell and Anscombe,
-advance any PR or patch to review, or keep no_pr if they are still actively
-working.
+Next heartbeat is due at 2026-07-06T13:10:24Z. Inspect Maxwell and Anscombe,
+advance any PR or patch to review, or keep no_pr if Anscombe is still actively
+working. If TASK-008 still has the task file staged into `review/` with no PR
+or patch, nudge only the missing publication deliverable again or mark manual
+fallback if the worker is no longer responsive.

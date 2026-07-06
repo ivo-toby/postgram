@@ -141,6 +141,16 @@ Tracked `git diff --check` passed. The task branch is three controller
 checkpoints behind the epic branch and must be refreshed before review or
 merge.
 
+Controller heartbeat at 2026-07-06T12:55:24Z observed Maxwell still running,
+no PR or patch, and the assigned worktree has staged the TASK-008 task file as
+an `in-progress/` to `review/` move without publishing a branch commit or PR.
+Tracked `git diff --check` passed. The task branch is four controller
+checkpoints behind the epic branch and must be refreshed before review or
+merge. Controller queued exact missing-deliverable nudge
+`019f3781-76cc-7191-8d71-ad402f5aee47`: commit/push the TASK-008 work and
+open a PR against the epic branch, or provide a patch reference if PR creation
+is blocked.
+
 ## PR / Patch Reference
 
 None yet.

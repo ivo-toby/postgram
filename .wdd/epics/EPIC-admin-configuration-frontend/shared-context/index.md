@@ -67,6 +67,17 @@ configuration, maintenance jobs, or Docker behavior.
   write-only encrypted secrets, explicit validation/apply, SSRF-aware provider
   URL policy, recent step-up for secret writes/apply, and explicit
   restart/reembed impacts.
+- Admin API-key management, audit query, and stats are now implemented under
+  `/admin/api/keys`, `/admin/api/audit`, and `/admin/api/stats`, with active
+  MFA admin sessions, CSRF on mutations, recent step-up for key create/revoke,
+  one-time plaintext key display only on create, structured admin audit
+  attribution, and audit-detail redaction.
+- Admin job foundation is now implemented with `admin_jobs` and
+  `admin_job_events`, read-only `/admin/api/jobs` status routes, idempotent
+  apply-job creation semantics in the service layer, active-MFA/step-up
+  authority checks for job creation, structured job audit events, and summary
+  safety guards that reject secrets, ciphertext, token prefixes, arbitrary
+  validation metadata, and provider response/body containers.
 
 ## Key Warnings
 
@@ -81,6 +92,10 @@ configuration, maintenance jobs, or Docker behavior.
   obligations.
 - `LLM_REQUEST_TIMEOUT_MS` is documented/Docker-wired but currently read
   directly from `process.env`; formalize it before admin UI ownership.
+- Maintenance operations in TASK-015 must build on the WAVE-006 job service
+  instead of creating blocking HTTP maintenance requests. Apply jobs require a
+  scoped idempotency key and recent step-up; job payload/result summaries must
+  store only safe selectors and redacted summaries.
 
 ## Known Constraints
 
@@ -238,6 +253,45 @@ configuration, maintenance jobs, or Docker behavior.
     validation metadata in job payloads or results.
   - TASK-013 should consume provider-config route warnings and keep secret
     fields write-only and blank on load.
+
+### WAVE-006 Admin Key/Audit/Stats API And Job Foundation
+
+- Status: merged and reconciled on 2026-07-06.
+- PRs: https://github.com/ivo-toby/postgram/pull/85 and
+  https://github.com/ivo-toby/postgram/pull/86, merged at
+  2026-07-06T13:19:57Z and 2026-07-06T13:54:55Z.
+- Merge commits: `13465eb` for TASK-008 key/audit/stats and `c5edbfc` for
+  TASK-014 job foundation.
+- Reviews: Lorentz `REVIEW_PASS`; TASK-014 required one P2 freshness fix to
+  reconcile `src/transport/admin.ts` additively with TASK-008 routes.
+- Implemented admin key/audit/stats contract:
+  - `/admin/api/keys` supports list and create; create returns plaintext only
+    in the one-time response.
+  - `/admin/api/keys/:id/revoke` revokes an existing key.
+  - `/admin/api/audit` supports filtered, paginated audit queries with
+    redacted details and without self-observation pagination drift.
+  - `/admin/api/stats` returns safe aggregate counts and database size/uptime.
+  - Key create/revoke require CSRF and recent step-up; list/audit/stats require
+    active MFA.
+- Implemented admin job foundation:
+  - `admin_jobs` and `admin_job_events` persist queued/running/cancel-requested
+    and terminal states, progress, requested scope, request summaries, result
+    summaries, idempotency keys, and admin actor attribution.
+  - `src/services/admin-job-service.ts` owns create/read/list/start/progress,
+    cancel-request, and terminal completion helpers with audit events.
+  - `/admin/api/jobs` and `/admin/api/jobs/:jobId` expose read-only status
+    under active-MFA admin sessions.
+- Carry-forward gates:
+  - TASK-011 and TASK-012 must consume the admin session/CSRF model and the
+    WAVE-006 key/audit/stats response shapes without storing admin credentials
+    or plaintext API keys beyond the one-time display flow.
+  - TASK-015 must create concrete maintenance operations by using
+    `admin-job-service` for dry-run/apply lifecycle, idempotency, progress,
+    cancellation, result summaries, step-up, and audit. It must not store
+    provider secrets, ciphertext, token prefixes, auth headers, or raw provider
+    responses in job payloads/results.
+  - TASK-016 must use job status polling rather than assuming maintenance
+    operations complete synchronously.
 
 ## Recent Durable Memory
 

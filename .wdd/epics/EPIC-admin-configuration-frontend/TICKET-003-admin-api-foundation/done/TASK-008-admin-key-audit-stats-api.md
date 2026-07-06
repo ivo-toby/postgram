@@ -19,7 +19,7 @@ assigned_model_class: implementationComplex
 review_model_class: review
 branch: codex/task/TASK-008-admin-key-audit-stats-api
 worker_worktree: /Users/ivo.toby/workspace/postgram/.worktrees/TASK-008-admin-key-audit-stats-api
-worktree_status: cleanup_deferred
+worktree_status: cleaned_up
 pr: https://github.com/ivo-toby/postgram/pull/85
 worker_thread_id: 019f3748-036a-7422-9f84-ab790313375f
 review_thread_id: 019f322c-02e7-7590-8b8e-ebdd1e9c52ac

@@ -371,6 +371,52 @@ Carry-forward security gates:
   localStorage/browser persistence for secret material, and surface
   restart/reembed warnings from the provider-config API before apply.
 
+## WAVE-006 Reconciled Key/Audit/Stats And Job Controls
+
+TASK-008 and TASK-014 completed the admin key/audit/stats surface and generic
+job foundation in PR #85 and PR #86.
+
+Implemented key/audit/stats controls:
+
+- Key create/revoke require admin session, CSRF, active MFA, and recent
+  step-up.
+- Key list, audit, and stats require active MFA and reject ordinary API-key/MCP
+  OAuth bearer credentials.
+- Plaintext API keys are returned only in the create response. Key hashes,
+  reusable prefixes, and plaintext are not returned by list/audit/stats.
+- Key create/revoke and stats/audit actions write structured
+  `audit_log.admin_user_id` attribution.
+- Audit query details are redacted for common secret aliases and
+  secret-looking values; audit self-observation rows from the admin audit API
+  are excluded from paginated query results.
+
+Implemented job controls:
+
+- Job create requires active MFA; apply-mode job create requires recent step-up
+  and a scoped idempotency key.
+- Job status routes are read-only and require active MFA.
+- Job requested scopes, request summaries, progress messages, and result
+  summaries are validated as bounded safe JSON.
+- Job summary safety rejects plaintext/ciphertext/auth headers/token
+  prefixes/API keys/passwords, arbitrary validation metadata, provider
+  metadata/body containers, private keys, credentials, and sensitive string
+  patterns.
+- Job lifecycle writes `admin_job_events` plus structured audit rows with admin
+  actor attribution.
+
+Carry-forward security gates:
+
+- TASK-011/TASK-012 must not place admin session, CSRF token, bootstrap token,
+  TOTP secret, provider secret, or one-time API-key plaintext into localStorage.
+  One-time API-key display must be explicitly copy-once and unrecoverable.
+- TASK-015 must use `admin-job-service` for maintenance dry-run/apply lifecycle
+  and preserve its safe-summary/idempotency/step-up controls. Concrete
+  maintenance operations must add operation-specific dry-run/apply
+  confirmation, cancellation, and audit tests.
+- TASK-016 must treat job output as redacted summaries only and must not expose
+  hidden provider response bodies or secret-derived metadata through progress
+  views.
+
 ## OAuth/OIDC Boundary
 
 Existing OAuth/DCR is for native remote MCP connectors. It lets external clients

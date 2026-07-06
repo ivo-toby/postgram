@@ -351,6 +351,41 @@ Docker/config implication:
   `ADMIN_SETTINGS_ENCRYPTION_KEY` remains the installation key that TASK-017
   must document and smoke-test for the no-normal-CLI setup path.
 
+## WAVE-006 Admin Job Migration
+
+PR #86 added `src/db/migrations/013_admin_jobs.sql`.
+
+Schema changes:
+
+- `admin_jobs` stores operation, mode (`dry_run`/`apply`), lifecycle status,
+  idempotency key, request fingerprint, requested scope, request summary,
+  result summary, progress, admin actor references, and timestamps.
+- `admin_job_events` stores append-only lifecycle events with admin actor,
+  status transition, progress, and event/result summaries.
+- Apply-mode jobs require an idempotency key at the database and service layer.
+- Indexes support idempotency lookup, status/created ordering,
+  operation/created ordering, creator lookup, and job event history.
+
+Job persistence invariants:
+
+- Job payloads and result summaries are not a secret store. They may contain
+  safe setting keys or secret names as references, but must not contain
+  plaintext secrets, ciphertext, token prefixes, auth headers, arbitrary
+  validation metadata, provider metadata/body containers, or private keys.
+- `admin-job-service` validates bounded JSON depth, string length, safe key
+  names, safe reference formats, and sensitive string patterns before
+  persistence.
+- Job lifecycle writes both `admin_job_events` and `audit_log` entries with
+  structured admin actor attribution.
+
+Future migration/config reminders:
+
+- TASK-015 should add concrete maintenance-operation tables only when the
+  generic job scope/result summaries are insufficient; prefer referencing job
+  IDs and safe selectors over duplicating secret/config payloads.
+- TASK-017 should include `admin_jobs`/`admin_job_events` in clean-volume Docker
+  smoke expectations and backup/restore discussion for long-running operations.
+
 ## Docker Notes
 
 The final claim is no normal CLI or manual env-file editing for supported

@@ -293,6 +293,53 @@ Carry-forward test expectations:
 - TASK-013 UI tests should consume provider-config API warnings and prove secret
   inputs stay blank/write-only across load, validate, and apply flows.
 
+## WAVE-006 Verification Evidence
+
+TASK-008 and TASK-014 merged after Lorentz `REVIEW_PASS` with no remaining
+P1/P2 findings.
+
+TASK-008 passed before merge at task head `281681b`:
+
+- `npm test -- tests/contract/admin-key-audit-stats.test.ts` (10 tests)
+- `npm test -- tests/integration/key-service.test.ts` (3 tests)
+- `npm run typecheck`
+- touched-file ESLint for key/audit/stats/admin route files
+- `git diff --check`
+
+TASK-014 passed before merge after freshness fix head `0e08630`:
+
+- `git diff --check origin/codex/epic/admin-configuration-frontend...HEAD`
+- `git merge-tree --write-tree origin/codex/epic/admin-configuration-frontend HEAD`
+- `jq empty .wdd/epics/EPIC-admin-configuration-frontend/orchestration.json`
+- `npm test -- tests/integration/admin-job-service.test.ts` (5 tests)
+- `npm test -- tests/contract/admin-api.test.ts` (3 tests)
+- `npm run typecheck`
+- scoped ESLint for `src/services/admin-job-service.ts`,
+  `src/transport/admin-jobs.ts`, `src/transport/admin.ts`, and related tests
+
+Coverage added:
+
+- Key create/list/revoke, audit query, stats, step-up requirement for key
+  create/revoke, one-time plaintext create response, bearer rejection, audit
+  pagination without self-observation drift, malformed UUID/offset validation,
+  duplicate-key conflict handling, and audit detail redaction.
+- Job service lifecycle, idempotency, active-MFA and step-up authority checks,
+  progress/result summaries, cancellation request behavior, admin actor audit
+  events, and safety guards rejecting sensitive summary fields/values.
+- Job status route registration alongside diagnostics, key/audit/stats, and
+  provider-config routes without breaking the admin API shell.
+
+Carry-forward test expectations:
+
+- TASK-011/TASK-012 UI tests must cover cookie/CSRF admin API calls, key
+  one-time plaintext display, audit/stats rendering, bearer rejection handling,
+  and no localStorage persistence for admin or secret material.
+- TASK-015 must add concrete maintenance API tests for dry-run/apply,
+  idempotency, step-up, operation-specific confirmation, cancellation/status
+  polling, audit attribution, CLI regressions, and job summary redaction.
+- TASK-016 UI tests must cover job polling/progress/error states and must not
+  depend on synchronous maintenance completion.
+
 ## Durable Memory
 
 ### Docker First-Run Must Be Tested, Not Assumed

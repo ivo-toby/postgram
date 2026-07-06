@@ -20,13 +20,13 @@ updated_at: 2026-07-06
 | TASK-005-admin-session-routes | TICKET-002-admin-auth-foundation | TASK-004 | admin routes, cookies, CSRF, lockout, auth contract tests | done |
 | TASK-006-admin-mfa-step-up | TICKET-002-admin-auth-foundation | TASK-004, TASK-005 | MFA tables, TOTP service, step-up middleware, sensitive action gates | done |
 | TASK-007-admin-api-shell-diagnostics | TICKET-003-admin-api-foundation | TASK-005, TASK-006 | admin transport, diagnostics routes, admin middleware | done |
-| TASK-008-admin-key-audit-stats-api | TICKET-003-admin-api-foundation | TASK-007 | key service, audit querying, stats service, admin API contracts | in_progress |
+| TASK-008-admin-key-audit-stats-api | TICKET-003-admin-api-foundation | TASK-007 | key service, audit querying, stats service, admin API contracts | done |
 | TASK-009-settings-secret-store | TICKET-004-runtime-configuration | TASK-003, TASK-005 | settings migrations, secret encryption, config service | done |
 | TASK-010-provider-config-apply | TICKET-004-runtime-configuration | TASK-009 | provider lifecycle, validation flows, config tests, worker reload semantics | done |
 | TASK-011-admin-auth-ui | TICKET-005-admin-frontend | TASK-006 | React auth shell, admin session client, MFA UI, UI routing | todo |
 | TASK-012-admin-ops-dashboard-ui | TICKET-005-admin-frontend | TASK-008, TASK-011 | API key UI, audit/stats/health pages, admin API client | todo |
 | TASK-013-admin-config-ui | TICKET-005-admin-frontend | TASK-010, TASK-011 | runtime config UI, secret redaction, provider validation UI | todo |
-| TASK-014-admin-job-foundation | TICKET-006-maintenance-jobs | TASK-006, TASK-009 | job tables, job service, audit integration, progress state | in_progress |
+| TASK-014-admin-job-foundation | TICKET-006-maintenance-jobs | TASK-006, TASK-009 | job tables, job service, audit integration, progress state | done |
 | TASK-015-maintenance-admin-api | TICKET-006-maintenance-jobs | TASK-008, TASK-010, TASK-014 | graph/memory/embedding services, dry-run/apply admin APIs, CLI regressions | todo |
 | TASK-016-maintenance-admin-ui | TICKET-006-maintenance-jobs | TASK-011, TASK-015 | maintenance UI, confirmations, progress polling, admin API client | todo |
 | TASK-017-docker-first-run-no-cli | TICKET-007-docker-e2e-validation | TASK-012, TASK-013, TASK-016 | Docker Compose, `.env.example`, README/deployment docs, smoke tests | todo |
@@ -459,7 +459,7 @@ Drift notes:
 
 ### WAVE-006
 
-Status: in_progress
+Status: done
 
 Tasks:
 
@@ -494,6 +494,44 @@ Stop condition:
 - Job service persistence/progress tests pass.
 - Audit attribution covers admin actor and operation.
 
+Completion evidence:
+
+- PR #85: merged by GitHub at 2026-07-06T13:19:57Z.
+- PR #86: merged by GitHub at 2026-07-06T13:54:55Z.
+- Merge commits: `13465eb` for TASK-008 and `c5edbfc` for TASK-014.
+- Review: Lorentz `REVIEW_PASS` for both tasks; TASK-014 P2 route-conflict
+  freshness feedback resolved at task head `0e08630`.
+- Verification passed:
+  - `npm test -- tests/contract/admin-key-audit-stats.test.ts`
+  - `npm test -- tests/integration/key-service.test.ts`
+  - `npm test -- tests/integration/admin-job-service.test.ts`
+  - `npm test -- tests/contract/admin-api.test.ts`
+  - `npm run typecheck`
+  - scoped ESLint for touched admin key/audit/stats/job files
+  - `git diff --check`
+
+Reconciled decisions:
+
+- Admin API-key create/list/revoke, audit query, and stats now live in the
+  existing `/admin/api/*` browser-session namespace.
+- Key create/revoke require CSRF and recent step-up; plaintext API keys are
+  create-response-only.
+- Audit query and stats return redacted/safe data and write structured admin
+  actor audit entries.
+- Long-running/dangerous maintenance work must use `admin_jobs` and
+  `admin_job_events` for lifecycle, progress, idempotency, and audit instead
+  of blocking request handlers.
+
+Drift notes:
+
+- TASK-011 and TASK-012 should consume the concrete key/audit/stats admin API
+  shapes and preserve cookie/CSRF admin-session behavior.
+- TASK-015 must build concrete maintenance dry-run/apply routes on top of
+  `admin-job-service`, with operation-specific confirmation, step-up,
+  idempotency, cancellation/status, and CLI regression coverage.
+- TASK-016 must poll job status/progress rather than assume synchronous
+  maintenance completion.
+
 ### WAVE-007
 
 Status: planned
@@ -511,7 +549,7 @@ Recommended strategy:
 - Monitoring mode: adaptive
 - Confidence: medium
 - Requires user confirmation: yes
-- Confirmed by: null
+- Confirmed by: Ivo via Codex finish-all-waves request on 2026-07-06
 
 Rationale:
 

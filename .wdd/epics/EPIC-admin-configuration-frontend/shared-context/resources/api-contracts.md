@@ -197,6 +197,54 @@ Provider config response contract:
 - Pending edits do not supersede last-applied DB values until apply succeeds;
   env values remain fallback when no DB value is applied.
 
+## WAVE-006 Implemented Key/Audit/Stats And Job Routes
+
+TASK-008 added API-key management, audit query, and stats routes in PR #85.
+
+Implemented endpoints:
+
+- `GET /admin/api/keys` lists API-key metadata with pagination.
+- `POST /admin/api/keys` creates a Postgram API key and returns plaintext only
+  in the create response.
+- `POST /admin/api/keys/:id/revoke` revokes an API key and accepts an empty
+  request body.
+- `GET /admin/api/audit` returns filtered, paginated audit entries.
+- `GET /admin/api/stats` returns safe aggregate Postgram stats.
+
+Authorization and response contract:
+
+- Key create/revoke require admin session, CSRF, active MFA, and recent step-up.
+- Key list, audit, and stats require active MFA and reject ordinary bearer
+  credentials.
+- Key hashes, reusable prefixes, and plaintext keys are never returned after
+  creation.
+- Audit entries include structured `adminUserId`/`adminEmail` where present and
+  redact common secret aliases plus secret-looking values in details.
+- Audit query writes its own audit row but excludes admin audit API
+  self-observation rows from paginated query results to avoid pagination drift.
+
+TASK-014 added the admin job foundation in PR #86.
+
+Implemented endpoints:
+
+- `GET /admin/api/jobs` lists jobs with optional status filter and pagination.
+- `GET /admin/api/jobs/:jobId` returns one job.
+
+Job service contract for TASK-015 and later:
+
+- Job modes are `dry_run` and `apply`; apply jobs require a scoped idempotency
+  key.
+- Job statuses are `queued`, `running`, `cancel_requested`, `succeeded`,
+  `failed`, and `cancelled`.
+- Job create requires active MFA; apply-mode job create requires recent
+  step-up.
+- Job payloads and result summaries must be safe JSON only. They may reference
+  setting keys or secret names as identifiers, but must not store plaintext
+  secrets, ciphertext, auth headers, token prefixes, arbitrary validation
+  metadata, or provider response/body containers.
+- Job lifecycle events write structured audit rows with operation names such as
+  `admin.jobs.create`, `admin.jobs.progress`, and `admin.jobs.succeed`.
+
 ## Response Shape
 
 Use the existing app error response style where practical:

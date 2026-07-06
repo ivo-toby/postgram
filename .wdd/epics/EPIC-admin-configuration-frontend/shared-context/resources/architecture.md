@@ -233,6 +233,45 @@ Future architecture implications:
 - TASK-013 should consume the provider-config routes as the source of truth for
   redacted secret state, validation state, and apply warnings.
 
+## WAVE-006 Implemented Admin Key/Audit/Stats And Job Boundaries
+
+PR #85 added the privileged API-key/audit/stats admin surface:
+
+- `src/services/admin-key-service.ts` wraps existing API-key primitives for
+  admin list/create/revoke, keeps plaintext API keys one-time only, and writes
+  structured `audit_log.admin_user_id` attribution.
+- `src/services/admin-audit-service.ts` owns filtered audit queries and
+  redacts common secret aliases plus secret-looking values in details.
+- `src/services/admin-stats-service.ts` owns safe aggregate count, database
+  size, and uptime projection.
+- `src/transport/admin.ts` registers `/admin/api/keys`, `/admin/api/audit`, and
+  `/admin/api/stats` beside diagnostics/provider-config routes in the existing
+  admin namespace.
+
+PR #86 added the generic admin job foundation:
+
+- `src/db/migrations/013_admin_jobs.sql` creates `admin_jobs` and
+  `admin_job_events`.
+- `src/services/admin-job-service.ts` owns job create/read/list/start/progress,
+  cancel-request, terminal completion, idempotency, safe summary validation,
+  and audit events.
+- `src/transport/admin-jobs.ts` registers read-only `/admin/api/jobs` and
+  `/admin/api/jobs/:jobId` status routes under the existing active-MFA admin
+  boundary.
+- `src/transport/admin.ts` now wires diagnostics, key/audit/stats, jobs, and
+  provider-config routes additively.
+
+Future architecture implications:
+
+- TASK-011 and TASK-012 should build UI/API-client code against these concrete
+  route shapes rather than inventing a separate admin client boundary.
+- TASK-015 should implement maintenance operations as typed service functions
+  that create and drive `admin_jobs`; it should not run long maintenance work
+  synchronously in request handlers.
+- TASK-015 should reference provider/runtime state by safe setting or secret
+  identifiers and safe summaries only. Job payloads/results are not a secret
+  storage or provider-response capture mechanism.
+
 ## Open Architecture Questions
 
 - Can extraction provider settings be hot-reloaded safely after the first

@@ -20,7 +20,7 @@ assigned_model_class: implementationComplex
 review_model_class: review
 branch: codex/task/TASK-014-admin-job-foundation
 worker_worktree: /Users/ivo.toby/workspace/postgram/.worktrees/TASK-014-admin-job-foundation
-worktree_status: cleanup_deferred
+worktree_status: cleaned_up
 pr: https://github.com/ivo-toby/postgram/pull/86
 worker_thread_id: 019f3748-041f-7540-b336-12c285848008
 review_thread_id: 019f322c-02e7-7590-8b8e-ebdd1e9c52ac

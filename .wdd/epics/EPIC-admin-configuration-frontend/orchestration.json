@@ -774,7 +774,7 @@
       ],
       "activationCommit": "70df1c5f9324dd3f9ff424f199ee1b8896a2e410",
       "dispatchState": "dispatched",
-      "lastObservedAt": "2026-07-06T05:56:19Z",
+      "lastObservedAt": "2026-07-06T05:59:39Z",
       "dispatchedAt": "2026-07-06T05:56:19Z"
     },
     {
@@ -1813,13 +1813,13 @@
     }
   ],
   "monitoring": {
-    "mode": "pending",
+    "mode": "codex_thread_heartbeat",
     "cadence": "15m",
-    "status": "pending_heartbeat_creation",
-    "lastCheckedAt": "2026-07-06T05:56:19Z",
-    "nextCheckDueAt": null,
-    "schedulerRef": null,
-    "fallbackPrompt": "Run one bounded WDD controller heartbeat for /Users/ivo.toby/workspace/postgram, epic EPIC-admin-configuration-frontend, active wave WAVE-005. Use subagent-pr-orchestration. Read orchestration.json and controller-state.md, inspect workers Wegener (019f35ff-5f3c-7cc0-aa6e-78941a3fd7fd) for TASK-007 and Goodall (019f35ff-a193-7ae0-a4b8-1ec53faabb74) for TASK-010 plus assigned worktrees. Update gates, PR refs, verification, feedback, branch freshness, cleanup, and monitoring. Stop when WAVE-005 is ready for wdd-reconcile-wave."
+    "status": "active",
+    "lastCheckedAt": "2026-07-06T05:59:39Z",
+    "nextCheckDueAt": "2026-07-06T06:14:39Z",
+    "schedulerRef": "postgram-admin-wave-005-wdd-heartbeat",
+    "fallbackPrompt": "Run one bounded WDD controller heartbeat for /Users/ivo.toby/workspace/postgram, epic EPIC-admin-configuration-frontend, active wave WAVE-005. Use subagent-pr-orchestration. Read orchestration.json and controller-state.md, inspect workers Wegener (019f35ff-5f3c-7cc0-aa6e-78941a3fd7fd) for TASK-007 and Goodall (019f35ff-a193-7ae0-a4b8-1ec53faabb74) for TASK-010 plus assigned worktrees. Update gates, PR refs, verification, feedback, branch freshness, cleanup, and monitoring. Stop when WAVE-005 is ready for wdd-reconcile-wave; after WAVE-005 reconciliation continue the next wave per Ivo finish-all-waves instruction."
   },
   "sharedContext": {
     "index": "shared-context/index.md",
@@ -1903,7 +1903,7 @@
     "status": "in_progress",
     "dispatchedAt": "2026-07-06T05:56:19Z",
     "activationCommit": "70df1c5f9324dd3f9ff424f199ee1b8896a2e410",
-    "lastObservedAt": "2026-07-06T05:56:19Z",
+    "lastObservedAt": "2026-07-06T05:59:39Z",
     "dispatchState": "dispatched"
   },
   "currentGates": {
@@ -1957,13 +1957,13 @@
       "status": "blocked_until_wave_005_reconciled"
     },
     "monitoring": {
-      "mode": "pending",
+      "mode": "codex_thread_heartbeat",
       "cadence": "15m",
-      "status": "pending_heartbeat_creation",
-      "lastCheckedAt": "2026-07-06T05:56:19Z",
-      "nextCheckDueAt": null,
-      "schedulerRef": null,
-      "fallbackPrompt": "Run one bounded WDD controller heartbeat for /Users/ivo.toby/workspace/postgram, epic EPIC-admin-configuration-frontend, active wave WAVE-005. Use subagent-pr-orchestration. Read orchestration.json and controller-state.md, inspect workers Wegener (019f35ff-5f3c-7cc0-aa6e-78941a3fd7fd) for TASK-007 and Goodall (019f35ff-a193-7ae0-a4b8-1ec53faabb74) for TASK-010 plus assigned worktrees. Update gates, PR refs, verification, feedback, branch freshness, cleanup, and monitoring. Stop when WAVE-005 is ready for wdd-reconcile-wave."
+      "status": "active",
+      "lastCheckedAt": "2026-07-06T05:59:39Z",
+      "nextCheckDueAt": "2026-07-06T06:14:39Z",
+      "schedulerRef": "postgram-admin-wave-005-wdd-heartbeat",
+      "fallbackPrompt": "Run one bounded WDD controller heartbeat for /Users/ivo.toby/workspace/postgram, epic EPIC-admin-configuration-frontend, active wave WAVE-005. Use subagent-pr-orchestration. Read orchestration.json and controller-state.md, inspect workers Wegener (019f35ff-5f3c-7cc0-aa6e-78941a3fd7fd) for TASK-007 and Goodall (019f35ff-a193-7ae0-a4b8-1ec53faabb74) for TASK-010 plus assigned worktrees. Update gates, PR refs, verification, feedback, branch freshness, cleanup, and monitoring. Stop when WAVE-005 is ready for wdd-reconcile-wave; after WAVE-005 reconciliation continue the next wave per Ivo finish-all-waves instruction."
     },
     "review": {
       "WAVE-001-admin-feasibility-gate": {

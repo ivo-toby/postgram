@@ -53,13 +53,13 @@ Mode: codex_thread_heartbeat
 
 Cadence: 5 minutes
 
-Status: pending_heartbeat_creation
+Status: active
 
-Last check: 2026-07-06T05:56:19Z
+Last check: 2026-07-06T05:59:39Z
 
-Next check due: pending heartbeat creation
+Next check due: 2026-07-06T06:14:39Z
 
-Scheduler reference: pending
+Scheduler reference: `postgram-admin-wave-005-wdd-heartbeat`
 
 Fallback prompt:
 
@@ -71,6 +71,8 @@ inspect workers Wegener (019f35ff-5f3c-7cc0-aa6e-78941a3fd7fd) for TASK-007
 and Goodall (019f35ff-a193-7ae0-a4b8-1ec53faabb74) for TASK-010 plus assigned
 worktrees. Update gates, PR refs, verification, feedback, branch freshness,
 cleanup, and monitoring. Stop when WAVE-005 is ready for wdd-reconcile-wave.
+After WAVE-005 reconciliation, continue the next wave per Ivo's
+finish-all-waves instruction.
 ```
 
 ## Active Wave Strategy
@@ -661,9 +663,12 @@ cleanup, and monitoring. Stop when WAVE-005 is ready for wdd-reconcile-wave.
   verified WAVE-005 task branches/worktrees from that commit, pushed both task
   branches to origin, dispatched worker Wegener for TASK-007 and worker Goodall
   for TASK-010, and prepared heartbeat monitoring.
+- 2026-07-06T05:59:39Z: Created WAVE-005 heartbeat automation
+  `postgram-admin-wave-005-wdd-heartbeat` at 15-minute cadence while both
+  bundles are `no_pr`.
 
 ## Next Action
 
-Create WAVE-005 heartbeat monitoring. Next controller tick should inspect
-Wegener and Goodall, update PR/patch refs and gates, and keep both bundles at
-`no_pr` until workers return deliverables.
+Next WAVE-005 heartbeat is due at 2026-07-06T06:14:39Z. Inspect Wegener and
+Goodall, update PR/patch refs and gates, and keep both bundles at `no_pr`
+until workers return deliverables.

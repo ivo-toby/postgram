@@ -616,7 +616,7 @@ Drift notes:
 
 ### WAVE-008
 
-Status: in_progress
+Status: ready_for_reconciliation
 
 Tasks:
 
@@ -731,6 +731,14 @@ Progress:
   AdminOps tests 11/11, AdminAuth tests 16/16, UI typecheck, and root
   typecheck. Schrodinger follow-up review was requested in submission
   `019f3909-49a4-7902-bf82-5ea9a1c7468d`.
+- 2026-07-06T20:09:32Z controller merge: Schrodinger returned
+  `REVIEW_PASS` for PR #90 with no findings. Controller refreshed TASK-013 to
+  task head `2efc58f`, verified final freshness `0 8`, merge-tree and
+  diff-check, merged TASK-013 into the epic branch in `9974b29`, reran
+  AdminConfig/AdminOps/AdminAuth UI tests plus UI/root typecheck, moved the
+  task file to `done/`, and removed the clean TASK-013 worktree. WAVE-008 is
+  ready for reconciliation after the epic branch push confirms PR #90 as
+  merged.
 
 Stop condition:
 

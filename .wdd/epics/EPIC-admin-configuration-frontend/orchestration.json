@@ -968,7 +968,7 @@
             "workerStatus": "DONE_WITH_CONCERNS",
             "reviewStatus": "REVIEW_PASS",
             "pr": "https://github.com/ivo-toby/postgram/pull/85",
-            "prState": "OPEN_DRAFT_CLEAN_PENDING_EPIC_PUSH",
+            "prState": "MERGED",
             "prNumber": 85,
             "prHead": "281681b8f6be6a30c6a4ec53f9b646154f85d8bc",
             "reviewThreadId": "019f322c-02e7-7590-8b8e-ebdd1e9c52ac",
@@ -989,10 +989,14 @@
               "tests/contract/admin-key-audit-stats.test.ts"
             ],
             "verificationConcern": "Worker concern remains recorded as non-blocking: full npm test in worker worktree hit pre-existing CLI subprocess node_modules/.bin/tsx ENOENT; targeted and post-merge gates passed.",
-            "coordinationNote": "TASK-008 is merged locally and worktree cleaned up. Remote PR/base state should be verified after the closeout push."
+            "coordinationNote": "TASK-008 is merged, remote PR #85 is confirmed MERGED, and the worktree is cleaned up.",
+            "remotePrMergedAt": "2026-07-06T13:19:57Z"
           },
           "taskBranchHead": "281681b8f6be6a30c6a4ec53f9b646154f85d8bc",
-          "mergeCommit": "13465ebb44db1f98183f47fbaa1c6d90e6a23c80"
+          "mergeCommit": "13465ebb44db1f98183f47fbaa1c6d90e6a23c80",
+          "remotePrState": "MERGED",
+          "remotePrMergedAt": "2026-07-06T13:19:57Z",
+          "closeoutCommit": "371cfca"
         },
         {
           "id": "WAVE-006-admin-job-foundation",
@@ -1700,7 +1704,7 @@
         "workerStatus": "DONE_WITH_CONCERNS",
         "reviewStatus": "REVIEW_PASS",
         "pr": "https://github.com/ivo-toby/postgram/pull/85",
-        "prState": "OPEN_DRAFT_CLEAN_PENDING_EPIC_PUSH",
+        "prState": "MERGED",
         "prNumber": 85,
         "prHead": "281681b8f6be6a30c6a4ec53f9b646154f85d8bc",
         "reviewThreadId": "019f322c-02e7-7590-8b8e-ebdd1e9c52ac",
@@ -1721,11 +1725,15 @@
           "tests/contract/admin-key-audit-stats.test.ts"
         ],
         "verificationConcern": "Worker concern remains recorded as non-blocking: full npm test in worker worktree hit pre-existing CLI subprocess node_modules/.bin/tsx ENOENT; targeted and post-merge gates passed.",
-        "coordinationNote": "TASK-008 is merged locally and worktree cleaned up. Remote PR/base state should be verified after the closeout push."
+        "coordinationNote": "TASK-008 is merged, remote PR #85 is confirmed MERGED, and the worktree is cleaned up.",
+        "remotePrMergedAt": "2026-07-06T13:19:57Z"
       },
       "taskBranchHead": "281681b8f6be6a30c6a4ec53f9b646154f85d8bc",
       "reviewNickname": "Lorentz",
-      "mergeCommit": "13465ebb44db1f98183f47fbaa1c6d90e6a23c80"
+      "mergeCommit": "13465ebb44db1f98183f47fbaa1c6d90e6a23c80",
+      "remotePrState": "MERGED",
+      "remotePrMergedAt": "2026-07-06T13:19:57Z",
+      "closeoutCommit": "371cfca"
     },
     {
       "id": "TASK-009-settings-secret-store",
@@ -2246,7 +2254,7 @@
     "nextCheckDueAt": "2026-07-06T13:25:24Z",
     "schedulerRef": "postgram-admin-wave-005-wdd-heartbeat",
     "schedulerName": "postgram-admin-wave-006-wdd-heartbeat",
-    "fallbackPrompt": "Run one bounded WDD controller heartbeat for /Users/ivo.toby/workspace/postgram, epic EPIC-admin-configuration-frontend, active wave WAVE-006. Use the subagent-pr-orchestration skill. Start in /Users/ivo.toby/workspace/postgram on branch codex/epic/admin-configuration-frontend. Read .wdd/epics/EPIC-admin-configuration-frontend/orchestration.json and controller-state.md. TASK-008 / PR #85 has REVIEW_PASS, is merged locally into the epic branch, and its worktree is cleaned up; verify remote PR/base state after the last push. Inspect worker Anscombe (019f3748-041f-7540-b336-12c285848008) and assigned worktree /Users/ivo.toby/workspace/postgram/.worktrees/TASK-014-admin-job-foundation on branch codex/task/TASK-014-admin-job-foundation for bundle WAVE-006-admin-job-foundation / TASK-014-admin-job-foundation. Update gates, branch freshness, verification, PR or patch refs, reviewer refs, feedback, shared-context reconciliation status, and monitoring timestamps. If TASK-014 has produced a PR or patch, move it to review/reviewer orchestration; if no PR or patch exists, keep no_pr and nudge exact missing deliverables only if needed. If review reports P1/P2, route feedback to Anscombe or a fresh fix worker. If review passes, refresh stale task branch against codex/epic/admin-configuration-frontend, rerun required freshness verification, then merge or mark merge_ready according to policy. Stop when WAVE-006 bundles are merged, blocked, cancelled, or ready for wdd-reconcile-wave. After WAVE-006 is reconciled, continue to the next wave per Ivo's finish-all-waves instruction and push to GitHub between tasks/waves."
+    "fallbackPrompt": "Run one bounded WDD controller heartbeat for /Users/ivo.toby/workspace/postgram, epic EPIC-admin-configuration-frontend, active wave WAVE-006. Use the subagent-pr-orchestration skill. Start in /Users/ivo.toby/workspace/postgram on branch codex/epic/admin-configuration-frontend. Read .wdd/epics/EPIC-admin-configuration-frontend/orchestration.json and controller-state.md. TASK-008 / PR #85 is MERGED at 2026-07-06T13:19:57Z after REVIEW_PASS, local merge 13465eb, and TASK-008 worktree cleanup. Inspect worker Anscombe (019f3748-041f-7540-b336-12c285848008) and assigned worktree /Users/ivo.toby/workspace/postgram/.worktrees/TASK-014-admin-job-foundation on branch codex/task/TASK-014-admin-job-foundation for bundle WAVE-006-admin-job-foundation / TASK-014-admin-job-foundation. Update gates, branch freshness, verification, PR or patch refs, reviewer refs, feedback, shared-context reconciliation status, and monitoring timestamps. If TASK-014 has produced a PR or patch, move it to review/reviewer orchestration; if no PR or patch exists, keep no_pr and nudge exact missing deliverables only if needed. If review reports P1/P2, route feedback to Anscombe or a fresh fix worker. If review passes, refresh stale task branch against codex/epic/admin-configuration-frontend, rerun required freshness verification, then merge or mark merge_ready according to policy. Stop when WAVE-006 bundles are merged, blocked, cancelled, or ready for wdd-reconcile-wave. After WAVE-006 is reconciled, continue to the next wave per Ivo's finish-all-waves instruction and push to GitHub between tasks/waves."
   },
   "sharedContext": {
     "index": "shared-context/index.md",
@@ -2324,7 +2332,7 @@
           "workerStatus": "DONE_WITH_CONCERNS",
           "reviewStatus": "REVIEW_PASS",
           "pr": "https://github.com/ivo-toby/postgram/pull/85",
-          "prState": "OPEN_DRAFT_CLEAN_PENDING_EPIC_PUSH",
+          "prState": "MERGED",
           "prNumber": 85,
           "prHead": "281681b8f6be6a30c6a4ec53f9b646154f85d8bc",
           "reviewThreadId": "019f322c-02e7-7590-8b8e-ebdd1e9c52ac",
@@ -2345,10 +2353,14 @@
             "tests/contract/admin-key-audit-stats.test.ts"
           ],
           "verificationConcern": "Worker concern remains recorded as non-blocking: full npm test in worker worktree hit pre-existing CLI subprocess node_modules/.bin/tsx ENOENT; targeted and post-merge gates passed.",
-          "coordinationNote": "TASK-008 is merged locally and worktree cleaned up. Remote PR/base state should be verified after the closeout push."
+          "coordinationNote": "TASK-008 is merged, remote PR #85 is confirmed MERGED, and the worktree is cleaned up.",
+          "remotePrMergedAt": "2026-07-06T13:19:57Z"
         },
         "taskBranchHead": "281681b8f6be6a30c6a4ec53f9b646154f85d8bc",
-        "mergeCommit": "13465ebb44db1f98183f47fbaa1c6d90e6a23c80"
+        "mergeCommit": "13465ebb44db1f98183f47fbaa1c6d90e6a23c80",
+        "remotePrState": "MERGED",
+        "remotePrMergedAt": "2026-07-06T13:19:57Z",
+        "closeoutCommit": "371cfca"
       },
       {
         "id": "WAVE-006-admin-job-foundation",
@@ -2485,7 +2497,7 @@
       "nextCheckDueAt": "2026-07-06T13:25:24Z",
       "schedulerRef": "postgram-admin-wave-005-wdd-heartbeat",
       "schedulerName": "postgram-admin-wave-006-wdd-heartbeat",
-      "fallbackPrompt": "Run one bounded WDD controller heartbeat for /Users/ivo.toby/workspace/postgram, epic EPIC-admin-configuration-frontend, active wave WAVE-006. Use the subagent-pr-orchestration skill. Start in /Users/ivo.toby/workspace/postgram on branch codex/epic/admin-configuration-frontend. Read .wdd/epics/EPIC-admin-configuration-frontend/orchestration.json and controller-state.md. TASK-008 / PR #85 has REVIEW_PASS, is merged locally into the epic branch, and its worktree is cleaned up; verify remote PR/base state after the last push. Inspect worker Anscombe (019f3748-041f-7540-b336-12c285848008) and assigned worktree /Users/ivo.toby/workspace/postgram/.worktrees/TASK-014-admin-job-foundation on branch codex/task/TASK-014-admin-job-foundation for bundle WAVE-006-admin-job-foundation / TASK-014-admin-job-foundation. Update gates, branch freshness, verification, PR or patch refs, reviewer refs, feedback, shared-context reconciliation status, and monitoring timestamps. If TASK-014 has produced a PR or patch, move it to review/reviewer orchestration; if no PR or patch exists, keep no_pr and nudge exact missing deliverables only if needed. If review reports P1/P2, route feedback to Anscombe or a fresh fix worker. If review passes, refresh stale task branch against codex/epic/admin-configuration-frontend, rerun required freshness verification, then merge or mark merge_ready according to policy. Stop when WAVE-006 bundles are merged, blocked, cancelled, or ready for wdd-reconcile-wave. After WAVE-006 is reconciled, continue to the next wave per Ivo's finish-all-waves instruction and push to GitHub between tasks/waves."
+      "fallbackPrompt": "Run one bounded WDD controller heartbeat for /Users/ivo.toby/workspace/postgram, epic EPIC-admin-configuration-frontend, active wave WAVE-006. Use the subagent-pr-orchestration skill. Start in /Users/ivo.toby/workspace/postgram on branch codex/epic/admin-configuration-frontend. Read .wdd/epics/EPIC-admin-configuration-frontend/orchestration.json and controller-state.md. TASK-008 / PR #85 is MERGED at 2026-07-06T13:19:57Z after REVIEW_PASS, local merge 13465eb, and TASK-008 worktree cleanup. Inspect worker Anscombe (019f3748-041f-7540-b336-12c285848008) and assigned worktree /Users/ivo.toby/workspace/postgram/.worktrees/TASK-014-admin-job-foundation on branch codex/task/TASK-014-admin-job-foundation for bundle WAVE-006-admin-job-foundation / TASK-014-admin-job-foundation. Update gates, branch freshness, verification, PR or patch refs, reviewer refs, feedback, shared-context reconciliation status, and monitoring timestamps. If TASK-014 has produced a PR or patch, move it to review/reviewer orchestration; if no PR or patch exists, keep no_pr and nudge exact missing deliverables only if needed. If review reports P1/P2, route feedback to Anscombe or a fresh fix worker. If review passes, refresh stale task branch against codex/epic/admin-configuration-frontend, rerun required freshness verification, then merge or mark merge_ready according to policy. Stop when WAVE-006 bundles are merged, blocked, cancelled, or ready for wdd-reconcile-wave. After WAVE-006 is reconciled, continue to the next wave per Ivo's finish-all-waves instruction and push to GitHub between tasks/waves."
     },
     "review": {
       "WAVE-001-admin-feasibility-gate": {
@@ -2804,7 +2816,7 @@
         "reconciliationSummary": "WAVE-005 reconciled admin API diagnostics and provider-config apply/runtime decisions into shared context and downstream task briefs; TASK-007 and TASK-010 worktrees were clean, pushed, removed, and pruned."
       },
       "WAVE-006-admin-key-audit-stats-api": {
-        "status": "merged_locally_pending_push",
+        "status": "merged_remote_confirmed",
         "commit": "13465ebb44db1f98183f47fbaa1c6d90e6a23c80",
         "taskBranchHead": "281681b8f6be6a30c6a4ec53f9b646154f85d8bc",
         "mergedAt": "2026-07-06T13:10:24Z",
@@ -2812,7 +2824,11 @@
         "reviewResult": "REVIEW_PASS",
         "branchFreshness": "current_at_merge",
         "pr": "https://github.com/ivo-toby/postgram/pull/85",
-        "remotePrState": "OPEN_DRAFT_PENDING_EPIC_PUSH"
+        "remotePrState": "MERGED",
+        "remotePrMergedAt": "2026-07-06T13:19:57Z",
+        "remotePrUrl": "https://github.com/ivo-toby/postgram/pull/85",
+        "remoteBasePushedAt": "2026-07-06T13:19:57Z",
+        "closeoutCommit": "371cfca"
       }
     },
     "sharedContextReconciliation": {
@@ -2914,7 +2930,7 @@
         "remoteBasePushedAt": "2026-07-06T11:31:10Z",
         "closeoutCommit": "4891bf1"
       },
-      "WAVE-006-admin-key-audit-stats-api": "open_draft_clean_pending_epic_push",
+      "WAVE-006-admin-key-audit-stats-api": "merged",
       "WAVE-006-admin-job-foundation": "none"
     },
     "cleanup": {

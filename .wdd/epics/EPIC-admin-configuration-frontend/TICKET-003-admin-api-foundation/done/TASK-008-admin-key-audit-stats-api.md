@@ -156,7 +156,8 @@ is blocked.
 Draft PR: https://github.com/ivo-toby/postgram/pull/85
 
 Merged locally into the epic branch in `13465eb` after Lorentz returned
-`REVIEW_PASS`.
+`REVIEW_PASS`. GitHub marked PR #85 `MERGED` at
+2026-07-06T13:19:57Z after the epic branch push.
 
 ## RED-GREEN TDD Plan
 

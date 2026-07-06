@@ -42,7 +42,9 @@ Workers Maxwell and Anscombe were dispatched at 2026-07-06T11:49:24Z.
 TASK-008 shipped in draft PR #85 after Maxwell returned `DONE_WITH_CONCERNS`;
 Lorentz returned `REVIEW_PASS` with no P1/P2/P3 findings, branch freshness was
 current, post-merge verification passed, and TASK-008 merged locally into the
-epic branch in `13465eb`. The TASK-008 worktree was clean and removed.
+epic branch in `13465eb`. GitHub marked PR #85 `MERGED` at
+2026-07-06T13:19:57Z after the epic branch push. The TASK-008 worktree was
+clean and removed.
 TASK-014 remains active with no PR yet.
 
 WAVE-004 is done and reconciled. PR #81/TASK-009 and PR #82/TASK-006 are
@@ -1213,13 +1215,13 @@ if needed.
   TASK-008 verification (`admin-key-audit-stats` contract tests,
   `key-service` integration tests, typecheck, touched-file ESLint, and
   `git diff --check HEAD^..HEAD`), moved TASK-008 to `done/`, and removed the
-  clean pushed TASK-008 worktree. Anscombe remains active on TASK-014 with no
-  PR yet; tracked `git diff --check` passed and the task branch is five
-  controller checkpoints behind the epic branch.
+  clean pushed TASK-008 worktree. GitHub marked PR #85 `MERGED` at
+  2026-07-06T13:19:57Z after the epic branch push. Anscombe remains active on
+  TASK-014 with no PR yet; tracked `git diff --check` passed and the task
+  branch is five controller checkpoints behind the epic branch.
 
 ## Next Action
 
-Next heartbeat is due at 2026-07-06T13:25:24Z. Verify the pushed remote state
-for PR #85 after the closeout push, then inspect Anscombe and TASK-014. If
-TASK-014 has a PR or patch, move it to review; otherwise keep no_pr and nudge
-only exact missing deliverables if the worktree is inactive or stale.
+Next heartbeat is due at 2026-07-06T13:25:24Z. Inspect Anscombe and TASK-014.
+If TASK-014 has a PR or patch, move it to review; otherwise keep no_pr and
+nudge only exact missing deliverables if the worktree is inactive or stale.

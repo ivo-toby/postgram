@@ -6,7 +6,7 @@ ticket: TICKET-006-maintenance-jobs
 wave: WAVE-006
 slug: admin-job-foundation
 title: Admin Job Foundation
-status: todo
+status: in_progress
 depends_on:
   - TASK-006-admin-mfa-step-up
   - TASK-009-settings-secret-store
@@ -19,13 +19,13 @@ conflict_domains:
 assigned_model_class: implementationComplex
 review_model_class: review
 branch: codex/task/TASK-014-admin-job-foundation
-worker_worktree: null
-worktree_status: unassigned
+worker_worktree: /Users/ivo.toby/workspace/postgram/.worktrees/TASK-014-admin-job-foundation
+worktree_status: pending_creation
 pr: null
 worker_thread_id: null
 review_thread_id: null
-current_gate: not_started
-branch_freshness: unknown
+current_gate: pending_dispatch
+branch_freshness: pending_branch_creation
 verification:
   - npm test -- tests/integration/admin-job-service.test.ts
   - npm run typecheck
@@ -35,7 +35,7 @@ verification:
 
 ## Status
 
-todo
+in_progress
 
 ## Parent Ticket
 
@@ -110,7 +110,10 @@ codex/task/TASK-014-admin-job-foundation
 
 ## Worker Worktree
 
-None assigned yet.
+/Users/ivo.toby/workspace/postgram/.worktrees/TASK-014-admin-job-foundation
+
+Assigned by WAVE-006 activation. The controller must create and verify this
+isolated worktree from the pushed activation commit before dispatch.
 
 ## PR / Patch Reference
 

@@ -20,13 +20,13 @@ updated_at: 2026-07-06
 | TASK-005-admin-session-routes | TICKET-002-admin-auth-foundation | TASK-004 | admin routes, cookies, CSRF, lockout, auth contract tests | done |
 | TASK-006-admin-mfa-step-up | TICKET-002-admin-auth-foundation | TASK-004, TASK-005 | MFA tables, TOTP service, step-up middleware, sensitive action gates | done |
 | TASK-007-admin-api-shell-diagnostics | TICKET-003-admin-api-foundation | TASK-005, TASK-006 | admin transport, diagnostics routes, admin middleware | done |
-| TASK-008-admin-key-audit-stats-api | TICKET-003-admin-api-foundation | TASK-007 | key service, audit querying, stats service, admin API contracts | todo |
+| TASK-008-admin-key-audit-stats-api | TICKET-003-admin-api-foundation | TASK-007 | key service, audit querying, stats service, admin API contracts | in_progress |
 | TASK-009-settings-secret-store | TICKET-004-runtime-configuration | TASK-003, TASK-005 | settings migrations, secret encryption, config service | done |
 | TASK-010-provider-config-apply | TICKET-004-runtime-configuration | TASK-009 | provider lifecycle, validation flows, config tests, worker reload semantics | done |
 | TASK-011-admin-auth-ui | TICKET-005-admin-frontend | TASK-006 | React auth shell, admin session client, MFA UI, UI routing | todo |
 | TASK-012-admin-ops-dashboard-ui | TICKET-005-admin-frontend | TASK-008, TASK-011 | API key UI, audit/stats/health pages, admin API client | todo |
 | TASK-013-admin-config-ui | TICKET-005-admin-frontend | TASK-010, TASK-011 | runtime config UI, secret redaction, provider validation UI | todo |
-| TASK-014-admin-job-foundation | TICKET-006-maintenance-jobs | TASK-006, TASK-009 | job tables, job service, audit integration, progress state | todo |
+| TASK-014-admin-job-foundation | TICKET-006-maintenance-jobs | TASK-006, TASK-009 | job tables, job service, audit integration, progress state | in_progress |
 | TASK-015-maintenance-admin-api | TICKET-006-maintenance-jobs | TASK-008, TASK-010, TASK-014 | graph/memory/embedding services, dry-run/apply admin APIs, CLI regressions | todo |
 | TASK-016-maintenance-admin-ui | TICKET-006-maintenance-jobs | TASK-011, TASK-015 | maintenance UI, confirmations, progress polling, admin API client | todo |
 | TASK-017-docker-first-run-no-cli | TICKET-007-docker-e2e-validation | TASK-012, TASK-013, TASK-016 | Docker Compose, `.env.example`, README/deployment docs, smoke tests | todo |
@@ -459,7 +459,7 @@ Drift notes:
 
 ### WAVE-006
 
-Status: ready_to_start
+Status: in_progress
 
 Tasks:
 
@@ -485,6 +485,8 @@ Rationale:
 Activation rule:
 
 - Activate after WAVE-005 reconciliation.
+- Activated at 2026-07-06T11:39:24Z as two hybrid bundles:
+  TASK-008-admin-key-audit-stats-api and TASK-014-admin-job-foundation.
 
 Stop condition:
 

@@ -70,7 +70,7 @@
     {
       "id": "TICKET-003-admin-api-foundation",
       "path": "TICKET-003-admin-api-foundation/ticket.md",
-      "status": "todo",
+      "status": "in-progress",
       "taskIds": [
         "TASK-007-admin-api-shell-diagnostics",
         "TASK-008-admin-key-audit-stats-api"
@@ -98,7 +98,7 @@
     {
       "id": "TICKET-006-maintenance-jobs",
       "path": "TICKET-006-maintenance-jobs/ticket.md",
-      "status": "todo",
+      "status": "in-progress",
       "taskIds": [
         "TASK-014-admin-job-foundation",
         "TASK-015-maintenance-admin-api",
@@ -890,7 +890,7 @@
     },
     {
       "id": "WAVE-006",
-      "status": "ready_to_start",
+      "status": "in_progress",
       "strategy": {
         "profile": "full",
         "executionMode": "hybrid",
@@ -917,7 +917,73 @@
       "tasks": [
         "TASK-008-admin-key-audit-stats-api",
         "TASK-014-admin-job-foundation"
-      ]
+      ],
+      "activatedAt": "2026-07-06T11:39:24Z",
+      "workerDispatchStartedAt": null,
+      "bundles": [
+        {
+          "id": "WAVE-006-admin-key-audit-stats-api",
+          "tasks": [
+            "TASK-008-admin-key-audit-stats-api"
+          ],
+          "branch": "codex/task/TASK-008-admin-key-audit-stats-api",
+          "worktree": "/Users/ivo.toby/workspace/postgram/.worktrees/TASK-008-admin-key-audit-stats-api",
+          "worktreeStatus": "pending_creation",
+          "workerThreadId": null,
+          "workerNickname": null,
+          "reviewThreadId": null,
+          "reviewNickname": null,
+          "currentGate": "pending_dispatch",
+          "branchFreshness": "pending_branch_creation",
+          "pr": null,
+          "latestCommit": null,
+          "blockingFeedback": [],
+          "verification": {
+            "result": "not_run",
+            "commands": [
+              "npm test -- tests/contract/admin-key-audit-stats.test.ts",
+              "npm test -- tests/integration/key-service.test.ts",
+              "npm run typecheck"
+            ],
+            "evidence": null
+          },
+          "activatedAt": "2026-07-06T11:39:24Z",
+          "cleanupState": "not_started",
+          "sharedContextReconciliation": "queued"
+        },
+        {
+          "id": "WAVE-006-admin-job-foundation",
+          "tasks": [
+            "TASK-014-admin-job-foundation"
+          ],
+          "branch": "codex/task/TASK-014-admin-job-foundation",
+          "worktree": "/Users/ivo.toby/workspace/postgram/.worktrees/TASK-014-admin-job-foundation",
+          "worktreeStatus": "pending_creation",
+          "workerThreadId": null,
+          "workerNickname": null,
+          "reviewThreadId": null,
+          "reviewNickname": null,
+          "currentGate": "pending_dispatch",
+          "branchFreshness": "pending_branch_creation",
+          "pr": null,
+          "latestCommit": null,
+          "blockingFeedback": [],
+          "verification": {
+            "result": "not_run",
+            "commands": [
+              "npm test -- tests/integration/admin-job-service.test.ts",
+              "npm run typecheck"
+            ],
+            "evidence": null
+          },
+          "activatedAt": "2026-07-06T11:39:24Z",
+          "cleanupState": "not_started",
+          "sharedContextReconciliation": "queued"
+        }
+      ],
+      "activationCommit": "pending_activation_commit",
+      "dispatchState": "pending_worktree_creation",
+      "lastObservedAt": "2026-07-06T11:39:24Z"
     },
     {
       "id": "WAVE-007",
@@ -1501,8 +1567,8 @@
     {
       "id": "TASK-008-admin-key-audit-stats-api",
       "ticket": "TICKET-003-admin-api-foundation",
-      "path": "TICKET-003-admin-api-foundation/todo/TASK-008-admin-key-audit-stats-api.md",
-      "status": "todo",
+      "path": "TICKET-003-admin-api-foundation/in-progress/TASK-008-admin-key-audit-stats-api.md",
+      "status": "in_progress",
       "dependsOn": [
         "TASK-007-admin-api-shell-diagnostics"
       ],
@@ -1517,11 +1583,11 @@
       "branch": "codex/task/TASK-008-admin-key-audit-stats-api",
       "workerThreadId": null,
       "reviewThreadId": null,
-      "workerWorktree": null,
-      "worktreeStatus": "not_created",
+      "workerWorktree": "/Users/ivo.toby/workspace/postgram/.worktrees/TASK-008-admin-key-audit-stats-api",
+      "worktreeStatus": "pending_creation",
       "pr": null,
       "latestCommit": null,
-      "branchFreshness": "not_started",
+      "branchFreshness": "pending_branch_creation",
       "blockingFeedback": [],
       "verification": {
         "result": "not_run",
@@ -1532,7 +1598,11 @@
         ],
         "evidence": null
       },
-      "currentGate": "planned"
+      "currentGate": "pending_dispatch",
+      "activatedAt": "2026-07-06T11:39:24Z",
+      "bundle": "WAVE-006-admin-key-audit-stats-api",
+      "sharedContextReconciliation": "queued",
+      "cleanupState": "not_started"
     },
     {
       "id": "TASK-009-settings-secret-store",
@@ -1818,8 +1888,8 @@
     {
       "id": "TASK-014-admin-job-foundation",
       "ticket": "TICKET-006-maintenance-jobs",
-      "path": "TICKET-006-maintenance-jobs/todo/TASK-014-admin-job-foundation.md",
-      "status": "todo",
+      "path": "TICKET-006-maintenance-jobs/in-progress/TASK-014-admin-job-foundation.md",
+      "status": "in_progress",
       "dependsOn": [
         "TASK-006-admin-mfa-step-up",
         "TASK-009-settings-secret-store"
@@ -1835,11 +1905,11 @@
       "branch": "codex/task/TASK-014-admin-job-foundation",
       "workerThreadId": null,
       "reviewThreadId": null,
-      "workerWorktree": null,
-      "worktreeStatus": "not_created",
+      "workerWorktree": "/Users/ivo.toby/workspace/postgram/.worktrees/TASK-014-admin-job-foundation",
+      "worktreeStatus": "pending_creation",
       "pr": null,
       "latestCommit": null,
-      "branchFreshness": "not_started",
+      "branchFreshness": "pending_branch_creation",
       "blockingFeedback": [],
       "verification": {
         "result": "not_run",
@@ -1849,7 +1919,11 @@
         ],
         "evidence": null
       },
-      "currentGate": "planned"
+      "currentGate": "pending_dispatch",
+      "activatedAt": "2026-07-06T11:39:24Z",
+      "bundle": "WAVE-006-admin-job-foundation",
+      "sharedContextReconciliation": "queued",
+      "cleanupState": "not_started"
     },
     {
       "id": "TASK-015-maintenance-admin-api",
@@ -2007,13 +2081,13 @@
     }
   ],
   "monitoring": {
-    "mode": "codex_thread_heartbeat",
-    "cadence": "5m",
-    "status": "wave_005_reconciled_ready_for_wave_006",
-    "lastCheckedAt": "2026-07-06T11:34:24Z",
-    "nextCheckDueAt": "2026-07-06T11:39:24Z",
-    "schedulerRef": "postgram-admin-wave-005-wdd-heartbeat",
-    "fallbackPrompt": "Run one bounded WDD start-wave heartbeat for /Users/ivo.toby/workspace/postgram, epic EPIC-admin-configuration-frontend, next wave WAVE-006. Use the wdd-start-wave skill. Start in /Users/ivo.toby/workspace/postgram on branch codex/epic/admin-configuration-frontend. Confirm WAVE-005 is done/reconciled and pushed, then activate WAVE-006 for TASK-008-admin-key-audit-stats-api and TASK-014-admin-job-foundation, create isolated worktrees, push activation artifacts, and dispatch/monitor according to WDD policy."
+    "mode": "manual",
+    "cadence": "15m",
+    "status": "activating_wave_006_pending_worktrees",
+    "lastCheckedAt": "2026-07-06T11:39:24Z",
+    "nextCheckDueAt": "2026-07-06T11:54:24Z",
+    "schedulerRef": "manual_until_activation_dispatch_completes",
+    "fallbackPrompt": "Resume WAVE-006 activation for /Users/ivo.toby/workspace/postgram on codex/epic/admin-configuration-frontend. Read orchestration.json and controller-state.md, verify activation artifacts are pushed, create/verify task worktrees for TASK-008 and TASK-014 from the pushed epic branch, dispatch workers, and update monitoring."
   },
   "sharedContext": {
     "index": "shared-context/index.md",
@@ -2027,7 +2101,87 @@
     ],
     "reconcileAfterEveryWave": true
   },
-  "activeWave": null,
+  "activeWave": {
+    "id": "WAVE-006",
+    "activatedAt": "2026-07-06T11:39:24Z",
+    "status": "in_progress",
+    "strategy": {
+      "profile": "full",
+      "executionMode": "hybrid",
+      "reviewMode": "risk_based",
+      "monitoringMode": "adaptive",
+      "confirmedBy": "Ivo via Codex finish-all-waves request on 2026-07-06"
+    },
+    "eligibleTasks": [
+      "TASK-008-admin-key-audit-stats-api",
+      "TASK-014-admin-job-foundation"
+    ],
+    "nonEligibleTasks": [],
+    "bundles": [
+      {
+        "id": "WAVE-006-admin-key-audit-stats-api",
+        "tasks": [
+          "TASK-008-admin-key-audit-stats-api"
+        ],
+        "branch": "codex/task/TASK-008-admin-key-audit-stats-api",
+        "worktree": "/Users/ivo.toby/workspace/postgram/.worktrees/TASK-008-admin-key-audit-stats-api",
+        "worktreeStatus": "pending_creation",
+        "workerThreadId": null,
+        "workerNickname": null,
+        "reviewThreadId": null,
+        "reviewNickname": null,
+        "currentGate": "pending_dispatch",
+        "branchFreshness": "pending_branch_creation",
+        "pr": null,
+        "latestCommit": null,
+        "blockingFeedback": [],
+        "verification": {
+          "result": "not_run",
+          "commands": [
+            "npm test -- tests/contract/admin-key-audit-stats.test.ts",
+            "npm test -- tests/integration/key-service.test.ts",
+            "npm run typecheck"
+          ],
+          "evidence": null
+        },
+        "activatedAt": "2026-07-06T11:39:24Z",
+        "cleanupState": "not_started",
+        "sharedContextReconciliation": "queued"
+      },
+      {
+        "id": "WAVE-006-admin-job-foundation",
+        "tasks": [
+          "TASK-014-admin-job-foundation"
+        ],
+        "branch": "codex/task/TASK-014-admin-job-foundation",
+        "worktree": "/Users/ivo.toby/workspace/postgram/.worktrees/TASK-014-admin-job-foundation",
+        "worktreeStatus": "pending_creation",
+        "workerThreadId": null,
+        "workerNickname": null,
+        "reviewThreadId": null,
+        "reviewNickname": null,
+        "currentGate": "pending_dispatch",
+        "branchFreshness": "pending_branch_creation",
+        "pr": null,
+        "latestCommit": null,
+        "blockingFeedback": [],
+        "verification": {
+          "result": "not_run",
+          "commands": [
+            "npm test -- tests/integration/admin-job-service.test.ts",
+            "npm run typecheck"
+          ],
+          "evidence": null
+        },
+        "activatedAt": "2026-07-06T11:39:24Z",
+        "cleanupState": "not_started",
+        "sharedContextReconciliation": "queued"
+      }
+    ],
+    "dispatchState": "pending_worktree_creation",
+    "activationCommit": "pending_activation_commit",
+    "lastObservedAt": "2026-07-06T11:39:24Z"
+  },
   "currentGates": {
     "epicBranch": {
       "status": "verified",
@@ -2057,7 +2211,9 @@
       "WAVE-004-admin-mfa-step-up": "cleaned_up",
       "WAVE-004-settings-secret-store": "cleaned_up",
       "WAVE-005-admin-api-shell-diagnostics": "cleaned_up",
-      "WAVE-005-provider-config-apply": "cleaned_up"
+      "WAVE-005-provider-config-apply": "cleaned_up",
+      "WAVE-006-admin-key-audit-stats-api": "pending_creation",
+      "WAVE-006-admin-job-foundation": "pending_creation"
     },
     "workerDispatch": {
       "WAVE-001-admin-feasibility-gate": "reconciled",
@@ -2066,27 +2222,30 @@
       "WAVE-004-admin-mfa-step-up": "reconciled",
       "WAVE-004-settings-secret-store": "reconciled",
       "WAVE-005-admin-api-shell-diagnostics": "reconciled",
-      "WAVE-005-provider-config-apply": "reconciled"
+      "WAVE-005-provider-config-apply": "reconciled",
+      "WAVE-006-admin-key-audit-stats-api": "pending_dispatch",
+      "WAVE-006-admin-job-foundation": "pending_dispatch"
     },
     "waveCompletion": {
       "WAVE-001": "done",
       "WAVE-002": "done",
       "WAVE-003": "done",
       "WAVE-004": "done",
-      "WAVE-005": "done"
+      "WAVE-005": "done",
+      "WAVE-006": "in_progress"
     },
     "nextWave": {
-      "id": "WAVE-006",
-      "status": "ready_to_start"
+      "id": "WAVE-007",
+      "status": "blocked_until_wave_006_reconciled"
     },
     "monitoring": {
-      "mode": "codex_thread_heartbeat",
-      "cadence": "5m",
-      "status": "wave_005_reconciled_ready_for_wave_006",
-      "lastCheckedAt": "2026-07-06T11:34:24Z",
-      "nextCheckDueAt": "2026-07-06T11:39:24Z",
-      "schedulerRef": "postgram-admin-wave-005-wdd-heartbeat",
-      "fallbackPrompt": "Run one bounded WDD start-wave heartbeat for /Users/ivo.toby/workspace/postgram, epic EPIC-admin-configuration-frontend, next wave WAVE-006. Use the wdd-start-wave skill. Start in /Users/ivo.toby/workspace/postgram on branch codex/epic/admin-configuration-frontend. Confirm WAVE-005 is done/reconciled and pushed, then activate WAVE-006 for TASK-008-admin-key-audit-stats-api and TASK-014-admin-job-foundation, create isolated worktrees, push activation artifacts, and dispatch/monitor according to WDD policy."
+      "mode": "manual",
+      "cadence": "15m",
+      "status": "activating_wave_006_pending_worktrees",
+      "lastCheckedAt": "2026-07-06T11:39:24Z",
+      "nextCheckDueAt": "2026-07-06T11:54:24Z",
+      "schedulerRef": "manual_until_activation_dispatch_completes",
+      "fallbackPrompt": "Resume WAVE-006 activation for /Users/ivo.toby/workspace/postgram on codex/epic/admin-configuration-frontend. Read orchestration.json and controller-state.md, verify activation artifacts are pushed, create/verify task worktrees for TASK-008 and TASK-014 from the pushed epic branch, dispatch workers, and update monitoring."
     },
     "review": {
       "WAVE-001-admin-feasibility-gate": {
@@ -2285,7 +2444,9 @@
       "WAVE-004-admin-mfa-step-up": "current_at_merge",
       "WAVE-004-settings-secret-store": "current_at_merge",
       "WAVE-005-admin-api-shell-diagnostics": "current_at_merge",
-      "WAVE-005-provider-config-apply": "current_at_merge"
+      "WAVE-005-provider-config-apply": "current_at_merge",
+      "WAVE-006-admin-key-audit-stats-api": "pending_branch_creation",
+      "WAVE-006-admin-job-foundation": "pending_branch_creation"
     },
     "merge": {
       "WAVE-001-admin-feasibility-gate": {
@@ -2393,7 +2554,8 @@
       "WAVE-002": "completed",
       "WAVE-003": "completed",
       "WAVE-004": "completed",
-      "WAVE-005": "completed"
+      "WAVE-005": "completed",
+      "WAVE-006": "queued"
     },
     "prState": {
       "WAVE-001-admin-feasibility-gate": {
@@ -2833,6 +2995,23 @@
         "result": "reconciliation_verified",
         "checkedAt": "2026-07-06T11:34:24Z",
         "evidence": "Task files in done; shared context and downstream task briefs reconciled; WAVE-005 worktrees cleaned up; orchestration JSON and diff checks queued for final verification."
+      },
+      "WAVE-006-admin-key-audit-stats-api": {
+        "result": "not_run",
+        "commands": [
+          "npm test -- tests/contract/admin-key-audit-stats.test.ts",
+          "npm test -- tests/integration/key-service.test.ts",
+          "npm run typecheck"
+        ],
+        "evidence": null
+      },
+      "WAVE-006-admin-job-foundation": {
+        "result": "not_run",
+        "commands": [
+          "npm test -- tests/integration/admin-job-service.test.ts",
+          "npm run typecheck"
+        ],
+        "evidence": null
       }
     },
     "feedback": {
@@ -2847,13 +3026,19 @@
       },
       "WAVE-005": {
         "blocking": []
+      },
+      "WAVE-006-admin-key-audit-stats-api": {
+        "blocking": []
+      },
+      "WAVE-006-admin-job-foundation": {
+        "blocking": []
       }
     },
     "activationArtifact": {
-      "commit": "70df1c5",
+      "commit": "pending_activation_commit",
       "requiredBeforeTaskWorktrees": true,
-      "wave": "WAVE-005",
-      "syncedAt": "2026-07-06T05:55:00Z"
+      "wave": "WAVE-006",
+      "syncedAt": "2026-07-06T11:39:24Z"
     }
   },
   "lastReconciledWave": {
@@ -2887,9 +3072,9 @@
     "closeoutCommit": "4891bf1"
   },
   "lastStartedWave": {
-    "id": "WAVE-005",
-    "activatedAt": "2026-07-06T05:51:49Z",
-    "status": "done",
+    "id": "WAVE-006",
+    "activatedAt": "2026-07-06T11:39:24Z",
+    "status": "in_progress",
     "strategy": {
       "profile": "full",
       "executionMode": "hybrid",
@@ -2897,145 +3082,74 @@
       "monitoringMode": "adaptive",
       "confirmedBy": "Ivo via Codex finish-all-waves request on 2026-07-06"
     },
+    "eligibleTasks": [
+      "TASK-008-admin-key-audit-stats-api",
+      "TASK-014-admin-job-foundation"
+    ],
+    "nonEligibleTasks": [],
     "bundles": [
       {
-        "id": "WAVE-005-admin-api-shell-diagnostics",
+        "id": "WAVE-006-admin-key-audit-stats-api",
         "tasks": [
-          "TASK-007-admin-api-shell-diagnostics"
+          "TASK-008-admin-key-audit-stats-api"
         ],
-        "branch": "codex/task/TASK-007-admin-api-shell-diagnostics",
-        "worktree": "/Users/ivo.toby/workspace/postgram/.worktrees/TASK-007-admin-api-shell-diagnostics",
-        "worktreeStatus": "cleaned_up",
-        "workerThreadId": "019f35ff-5f3c-7cc0-aa6e-78941a3fd7fd",
-        "workerNickname": "Wegener",
-        "reviewThreadId": "019f322c-02e7-7590-8b8e-ebdd1e9c52ac",
-        "reviewNickname": "Lorentz",
-        "currentGate": "reconciled",
-        "branchFreshness": "current_at_merge",
-        "pr": "https://github.com/ivo-toby/postgram/pull/83",
-        "latestCommit": "f0e889ed286c00aaad121095f8499ba8bc26f8bd",
+        "branch": "codex/task/TASK-008-admin-key-audit-stats-api",
+        "worktree": "/Users/ivo.toby/workspace/postgram/.worktrees/TASK-008-admin-key-audit-stats-api",
+        "worktreeStatus": "pending_creation",
+        "workerThreadId": null,
+        "workerNickname": null,
+        "reviewThreadId": null,
+        "reviewNickname": null,
+        "currentGate": "pending_dispatch",
+        "branchFreshness": "pending_branch_creation",
+        "pr": null,
+        "latestCommit": null,
         "blockingFeedback": [],
         "verification": {
-          "result": "review_passed_freshness_verified_reconciled",
+          "result": "not_run",
           "commands": [
-            "npm test -- tests/contract/admin-api.test.ts",
-            "npm test -- tests/contract/admin-auth-routes.test.ts tests/contract/admin-mfa-routes.test.ts tests/contract/admin-api.test.ts",
-            "npm run typecheck",
-            "npx eslint src/index.ts src/transport/admin.ts src/services/admin-diagnostics-service.ts tests/contract/admin-api.test.ts",
-            "git diff --check",
-            "git diff --check --cached",
-            "jq empty .wdd/epics/EPIC-admin-configuration-frontend/orchestration.json"
-          ],
-          "evidence": "Wegener worker verification passed; Lorentz returned REVIEW_PASS with no P1/P2/P3; controller refreshed the task branch against origin/codex/epic/admin-configuration-frontend, resolved the WDD task-file metadata conflict only, reran admin-api contract tests (3 tests), typecheck, JSON parse, and diff checks, then merged locally in 16985ef. Epic checkout post-merge verification also passed: npm test -- tests/contract/admin-api.test.ts and npm run typecheck. WAVE-005 reconciliation completed on 2026-07-06 and the clean pushed worktree was removed."
-        },
-        "activatedAt": "2026-07-06T05:51:49Z",
-        "cleanupState": "cleaned_up",
-        "sharedContextReconciliation": "completed",
-        "dispatchedAt": "2026-07-06T05:56:19Z",
-        "dispatchBaseCommit": "70df1c5f9324dd3f9ff424f199ee1b8896a2e410",
-        "lastObservedAt": "2026-07-06T06:14:07Z",
-        "reviewRequestedAt": "2026-07-06T06:14:07Z",
-        "reviewSubmissionId": "019f3611-2a16-72d3-bd90-db911948d8c3",
-        "reconciledAt": "2026-07-06T11:34:24Z",
-        "cleanup": {
-          "status": "cleaned_up",
-          "cleanedAt": "2026-07-06T11:34:24Z",
-          "worktree": "/Users/ivo.toby/workspace/postgram/.worktrees/TASK-007-admin-api-shell-diagnostics",
-          "evidence": "Worker worktree was clean and pushed; ran git worktree remove /Users/ivo.toby/workspace/postgram/.worktrees/TASK-007-admin-api-shell-diagnostics and git worktree prune during WAVE-005 reconciliation."
-        },
-        "reviewResult": "REVIEW_PASS",
-        "remotePrState": "MERGED",
-        "remotePrMergedAt": "2026-07-06T06:27:29Z",
-        "localMergeCommit": "16985ef684213569ec6748065b390c9ab5e89b1a",
-        "mergedAt": "2026-07-06T06:24:15Z",
-        "taskBranchHead": "f0e889ed286c00aaad121095f8499ba8bc26f8bd",
-        "closeoutCommit": "bc21b4d"
-      },
-      {
-        "id": "WAVE-005-provider-config-apply",
-        "tasks": [
-          "TASK-010-provider-config-apply"
-        ],
-        "branch": "codex/task/TASK-010-provider-config-apply",
-        "worktree": "/Users/ivo.toby/workspace/postgram/.worktrees/TASK-010-provider-config-apply",
-        "worktreeStatus": "cleaned_up",
-        "workerThreadId": "019f35ff-a193-7ae0-a4b8-1ec53faabb74",
-        "workerNickname": "Goodall",
-        "reviewThreadId": "019f322c-02e7-7590-8b8e-ebdd1e9c52ac",
-        "reviewNickname": "Lorentz",
-        "currentGate": "reconciled",
-        "branchFreshness": "current_at_merge",
-        "pr": "https://github.com/ivo-toby/postgram/pull/84",
-        "latestCommit": "515cfa5a16b213f4fda78a0c536fb1806daf8b68",
-        "blockingFeedback": [],
-        "verification": {
-          "result": "review_passed_freshness_verified_merged_reconciled",
-          "commands": [
-            "git rev-list --left-right --count origin/codex/epic/admin-configuration-frontend...HEAD",
-            "git diff --check origin/codex/epic/admin-configuration-frontend...HEAD",
-            "git merge-tree --write-tree origin/codex/epic/admin-configuration-frontend HEAD",
-            "jq empty .wdd/epics/EPIC-admin-configuration-frontend/orchestration.json",
-            "npm test -- tests/integration/admin-provider-config.test.ts tests/contract/admin-api.test.ts",
+            "npm test -- tests/contract/admin-key-audit-stats.test.ts",
+            "npm test -- tests/integration/key-service.test.ts",
             "npm run typecheck"
           ],
-          "evidence": "Lorentz follow-up returned REVIEW_PASS with no findings. Controller merged latest epic checkpoint into the TASK-010 branch, verified final divergence 0 5, diff whitespace passed, merge-tree clean, orchestration JSON parsed, provider-config/admin-api tests passed (42 tests), typecheck passed, pushed task branch head 515cfa5, and merged TASK-010 locally into the epic branch in f5efbc0. WAVE-005 reconciliation completed on 2026-07-06 and the clean pushed worktree was removed."
+          "evidence": null
         },
-        "activatedAt": "2026-07-06T05:51:49Z",
-        "cleanupState": "cleaned_up",
-        "sharedContextReconciliation": "completed",
-        "dispatchedAt": "2026-07-06T05:56:19Z",
-        "dispatchBaseCommit": "70df1c5f9324dd3f9ff424f199ee1b8896a2e410",
-        "lastObservedAt": "2026-07-06T11:07:00Z",
-        "worktreeObservation": {
-          "observedAt": "2026-07-06T11:34:24Z",
-          "status": "merged_reconciled_cleaned_up",
-          "workerStatus": "DONE",
-          "pr": "https://github.com/ivo-toby/postgram/pull/84",
-          "prState": "MERGED",
-          "prHead": "515cfa5a16b213f4fda78a0c536fb1806daf8b68",
-          "workerThreadId": "019f35ff-a193-7ae0-a4b8-1ec53faabb74",
-          "workerNickname": "Goodall",
-          "reviewerThreadId": "019f322c-02e7-7590-8b8e-ebdd1e9c52ac",
-          "reviewerNickname": "Lorentz",
-          "reviewResult": "REVIEW_PASS",
-          "branchDivergence": "Final task branch divergence before merge was 0 5; local merge commit f5efbc0 merged TASK-010 into the epic branch.",
-          "note": "TASK-010 is merged into the epic branch, GitHub marked PR #84 MERGED, shared context is reconciled, and the clean pushed worktree was removed during WAVE-005 reconciliation.",
-          "remotePrMergedAt": "2026-07-06T11:31:10Z"
+        "activatedAt": "2026-07-06T11:39:24Z",
+        "cleanupState": "not_started",
+        "sharedContextReconciliation": "queued"
+      },
+      {
+        "id": "WAVE-006-admin-job-foundation",
+        "tasks": [
+          "TASK-014-admin-job-foundation"
+        ],
+        "branch": "codex/task/TASK-014-admin-job-foundation",
+        "worktree": "/Users/ivo.toby/workspace/postgram/.worktrees/TASK-014-admin-job-foundation",
+        "worktreeStatus": "pending_creation",
+        "workerThreadId": null,
+        "workerNickname": null,
+        "reviewThreadId": null,
+        "reviewNickname": null,
+        "currentGate": "pending_dispatch",
+        "branchFreshness": "pending_branch_creation",
+        "pr": null,
+        "latestCommit": null,
+        "blockingFeedback": [],
+        "verification": {
+          "result": "not_run",
+          "commands": [
+            "npm test -- tests/integration/admin-job-service.test.ts",
+            "npm run typecheck"
+          ],
+          "evidence": null
         },
-        "reviewRequestedAt": "2026-07-06T11:07:00Z",
-        "reviewStatus": "REVIEW_PASS",
-        "workerFinalStatus": "DONE",
-        "prState": {
-          "state": "MERGED",
-          "isDraft": true,
-          "mergeStateStatus": "UNKNOWN",
-          "headRefOid": "515cfa5a16b213f4fda78a0c536fb1806daf8b68",
-          "baseRefOid": "4c2b38bc759cc9a30b66e564f1af70633285ad52",
-          "updatedAt": "2026-07-06T11:31:11Z",
-          "mergedAt": "2026-07-06T11:31:10Z"
-        },
-        "reconciledAt": "2026-07-06T11:34:24Z",
-        "cleanup": {
-          "status": "cleaned_up",
-          "cleanedAt": "2026-07-06T11:34:24Z",
-          "worktree": "/Users/ivo.toby/workspace/postgram/.worktrees/TASK-010-provider-config-apply",
-          "evidence": "Worker worktree was clean and pushed; ran git worktree remove /Users/ivo.toby/workspace/postgram/.worktrees/TASK-010-provider-config-apply and git worktree prune during WAVE-005 reconciliation."
-        },
-        "reviewResult": "REVIEW_PASS",
-        "remotePrState": "MERGED",
-        "remotePrMergedAt": "2026-07-06T11:31:10Z",
-        "localMergeCommit": "f5efbc0eef0394abb22576221f50491eab86660a",
-        "mergedAt": "2026-07-06T11:28:08Z",
-        "taskBranchHead": "515cfa5a16b213f4fda78a0c536fb1806daf8b68",
-        "closeoutCommit": "4891bf1"
+        "activatedAt": "2026-07-06T11:39:24Z",
+        "cleanupState": "not_started",
+        "sharedContextReconciliation": "queued"
       }
     ],
-    "activationCommit": "70df1c5f9324dd3f9ff424f199ee1b8896a2e410",
-    "dispatchState": "reconciled",
-    "dispatchedAt": "2026-07-06T05:56:19Z",
-    "lastObservedAt": "2026-07-06T11:34:24Z",
-    "completedAt": "2026-07-06T11:31:10Z",
-    "reconciledAt": "2026-07-06T11:34:24Z",
-    "reconciliationSummary": "WAVE-005 reconciled admin API diagnostics and provider-config apply/runtime decisions into shared context and downstream task briefs; TASK-007 and TASK-010 worktrees were clean, pushed, removed, and pruned."
+    "dispatchState": "pending_worktree_creation",
+    "activationCommit": "pending_activation_commit",
+    "lastObservedAt": "2026-07-06T11:39:24Z"
   }
 }

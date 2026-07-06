@@ -6,7 +6,7 @@ ticket: TICKET-003-admin-api-foundation
 wave: WAVE-006
 slug: admin-key-audit-stats-api
 title: Admin Key Audit Stats API
-status: todo
+status: in_progress
 depends_on:
   - TASK-007-admin-api-shell-diagnostics
 conflict_domains:
@@ -18,13 +18,13 @@ conflict_domains:
 assigned_model_class: implementationComplex
 review_model_class: review
 branch: codex/task/TASK-008-admin-key-audit-stats-api
-worker_worktree: null
-worktree_status: unassigned
+worker_worktree: /Users/ivo.toby/workspace/postgram/.worktrees/TASK-008-admin-key-audit-stats-api
+worktree_status: pending_creation
 pr: null
 worker_thread_id: null
 review_thread_id: null
-current_gate: not_started
-branch_freshness: unknown
+current_gate: pending_dispatch
+branch_freshness: pending_branch_creation
 verification:
   - npm test -- tests/contract/admin-key-audit-stats.test.ts
   - npm test -- tests/integration/key-service.test.ts
@@ -35,7 +35,7 @@ verification:
 
 ## Status
 
-todo
+in_progress
 
 ## Parent Ticket
 
@@ -110,7 +110,10 @@ codex/task/TASK-008-admin-key-audit-stats-api
 
 ## Worker Worktree
 
-None assigned yet.
+/Users/ivo.toby/workspace/postgram/.worktrees/TASK-008-admin-key-audit-stats-api
+
+Assigned by WAVE-006 activation. The controller must create and verify this
+isolated worktree from the pushed activation commit before dispatch.
 
 ## PR / Patch Reference
 

@@ -2,7 +2,7 @@
 id: EPIC-admin-configuration-frontend-CONTROLLER
 kind: controller_state
 epic: EPIC-admin-configuration-frontend
-active_wave: null
+active_wave: WAVE-006
 status: in_progress
 updated_at: 2026-07-06
 ---
@@ -32,9 +32,12 @@ provider-config apply/runtime decisions, downstream task briefs carry the new
 constraints, and both WAVE-005 worktrees were clean, pushed, removed, and
 pruned.
 
-WAVE-006 is ready to start next with TASK-008-admin-key-audit-stats-api and
-TASK-014-admin-job-foundation. It remains inactive until the WAVE-005
-reconciliation commit is pushed and `wdd-start-wave` activates the next wave.
+WAVE-006 is active after the WAVE-005 reconciliation commit was pushed. The
+hybrid wave contains two independent bundles:
+TASK-008-admin-key-audit-stats-api and TASK-014-admin-job-foundation. Their
+task files have moved to `in-progress/` and the controller has recorded
+dedicated task branches and worktree paths. Worktree creation and worker
+dispatch are the next activation gates.
 
 WAVE-004 is done and reconciled. PR #81/TASK-009 and PR #82/TASK-006 are
 merged, shared context is reconciled, and both WAVE-004 worktrees are cleaned
@@ -49,7 +52,7 @@ up.
 | WAVE-003 | TASK-005 | full / bundled / risk_based / adaptive | done | confirmed by Ivo via Codex sequential-waves request on 2026-07-05 |
 | WAVE-004 | TASK-006, TASK-009 | full / hybrid / risk_based / adaptive | done | confirmed by Ivo via sequential-waves request on 2026-07-05 |
 | WAVE-005 | TASK-007, TASK-010 | full / hybrid / risk_based / adaptive | done | confirmed by Ivo via finish-all-waves request on 2026-07-06 |
-| WAVE-006 | TASK-008, TASK-014 | full / hybrid / risk_based / adaptive | ready_to_start | confirmed by Ivo via finish-all-waves request on 2026-07-06 |
+| WAVE-006 | TASK-008, TASK-014 | full / hybrid / risk_based / adaptive | in_progress | confirmed by Ivo via finish-all-waves request on 2026-07-06 |
 | WAVE-007 | TASK-011, TASK-015 | full / parallel / risk_based / adaptive | planned | required |
 | WAVE-008 | TASK-012, TASK-013 | full / hybrid / risk_based / adaptive | planned | required |
 | WAVE-009 | TASK-016 | full / bundled / risk_based / adaptive | planned | required |
@@ -62,40 +65,42 @@ Mode: codex_thread_heartbeat
 
 Cadence: 5 minutes
 
-Status: wave_005_reconciled_ready_for_wave_006
+Status: activating_wave_006_pending_worktrees
 
-Last check: 2026-07-06T11:34:24Z
+Last check: 2026-07-06T11:39:24Z
 
-Next check due: 2026-07-06T11:39:24Z
+Next check due: 2026-07-06T11:54:24Z
 
-Scheduler reference: `postgram-admin-wave-005-wdd-heartbeat`
+Scheduler reference: `manual_until_activation_dispatch_completes`
 
 Fallback prompt:
 
 ```text
-Run one bounded WDD start-wave heartbeat for
-/Users/ivo.toby/workspace/postgram, epic EPIC-admin-configuration-frontend,
-next wave WAVE-006. Use the wdd-start-wave skill. Start in
-/Users/ivo.toby/workspace/postgram on branch
-codex/epic/admin-configuration-frontend. Confirm WAVE-005 is done/reconciled
-and pushed, then activate WAVE-006 for TASK-008-admin-key-audit-stats-api and
-TASK-014-admin-job-foundation, create isolated worktrees, push activation
-artifacts, and dispatch/monitor according to WDD policy.
+Resume WAVE-006 activation for /Users/ivo.toby/workspace/postgram on
+codex/epic/admin-configuration-frontend. Read orchestration.json and
+controller-state.md, verify activation artifacts are pushed, create/verify task
+worktrees for TASK-008 and TASK-014 from the pushed epic branch, dispatch
+workers, and update monitoring.
 ```
 
 ## Active Wave Strategy
 
-- Active wave: none.
-- Next wave: WAVE-006.
+- Active wave: WAVE-006.
 - Profile: full.
 - Execution mode: hybrid.
 - Review mode: risk_based.
 - Monitoring mode: adaptive.
 - Confirmation: Ivo via Codex finish-all-waves request on 2026-07-06.
 - Bundle: WAVE-006-admin-key-audit-stats-api / TASK-008.
+- Bundle branch: `codex/task/TASK-008-admin-key-audit-stats-api`.
+- Bundle worktree:
+  `/Users/ivo.toby/workspace/postgram/.worktrees/TASK-008-admin-key-audit-stats-api`.
 - Bundle: WAVE-006-admin-job-foundation / TASK-014.
-- Start condition: WAVE-005 reconciliation commit is pushed, then run
-  `wdd-start-wave` and create fresh isolated worktrees before dispatch.
+- Bundle branch: `codex/task/TASK-014-admin-job-foundation`.
+- Bundle worktree:
+  `/Users/ivo.toby/workspace/postgram/.worktrees/TASK-014-admin-job-foundation`.
+- Current gate: activation artifacts pending commit/push; then create fresh
+  isolated worktrees before dispatch.
 
 ## Last Reconciled Wave
 
@@ -128,13 +133,13 @@ artifacts, and dispatch/monitor according to WDD policy.
 | TASK-005-admin-session-routes | TICKET-002-admin-auth-foundation | codex/task/TASK-005-admin-session-routes | cleaned_up | reconciled | REVIEW_PASS; freshness verification passed; merged in `ecfe9ac`; PR #80 merged; WAVE-003 reconciled |
 | TASK-006-admin-mfa-step-up | TICKET-002-admin-auth-foundation | codex/task/TASK-006-admin-mfa-step-up | cleaned_up | reconciled | REVIEW_PASS; final branch freshness passed at `8c04680`; merged locally into epic branch in `6666508`; worktree cleaned up during WAVE-004 reconciliation |
 | TASK-007-admin-api-shell-diagnostics | TICKET-003-admin-api-foundation | codex/task/TASK-007-admin-api-shell-diagnostics | cleaned_up | reconciled | REVIEW_PASS; freshness verification passed at `f0e889e`; merged locally into epic branch in `16985ef`; PR #83 merged; WAVE-005 reconciled |
-| TASK-008-admin-key-audit-stats-api | TICKET-003-admin-api-foundation | codex/task/TASK-008-admin-key-audit-stats-api | not_created | planned | `npm test -- tests/contract/admin-key-audit-stats.test.ts`; `npm test -- tests/integration/key-service.test.ts`; `npm run typecheck` |
+| TASK-008-admin-key-audit-stats-api | TICKET-003-admin-api-foundation | codex/task/TASK-008-admin-key-audit-stats-api | pending_creation | pending_dispatch | `npm test -- tests/contract/admin-key-audit-stats.test.ts`; `npm test -- tests/integration/key-service.test.ts`; `npm run typecheck` |
 | TASK-009-settings-secret-store | TICKET-004-runtime-configuration | codex/task/TASK-009-settings-secret-store | cleaned_up | reconciled | PR #81 follow-up REVIEW_PASS, final branch freshness passed at `ca9c96f`, merged locally into epic branch in `b63ad08`; worktree cleaned up during WAVE-004 reconciliation |
 | TASK-010-provider-config-apply | TICKET-004-runtime-configuration | codex/task/TASK-010-provider-config-apply | cleaned_up | reconciled | REVIEW_PASS; final branch freshness passed at `515cfa5`; merged locally into epic branch in `f5efbc0`; PR #84 merged at 2026-07-06T11:31:10Z; WAVE-005 reconciled |
 | TASK-011-admin-auth-ui | TICKET-005-admin-frontend | codex/task/TASK-011-admin-auth-ui | not_created | planned | `npm --prefix ui run test -- --run src/components/AdminAuth.test.tsx`; `npm --prefix ui run typecheck` |
 | TASK-012-admin-ops-dashboard-ui | TICKET-005-admin-frontend | codex/task/TASK-012-admin-ops-dashboard-ui | not_created | planned | `npm --prefix ui run test -- --run src/components/AdminOps.test.tsx`; `npm --prefix ui run typecheck` |
 | TASK-013-admin-config-ui | TICKET-005-admin-frontend | codex/task/TASK-013-admin-config-ui | not_created | planned | `npm --prefix ui run test -- --run src/components/AdminConfig.test.tsx`; `npm --prefix ui run typecheck` |
-| TASK-014-admin-job-foundation | TICKET-006-maintenance-jobs | codex/task/TASK-014-admin-job-foundation | not_created | planned | `npm test -- tests/integration/admin-job-service.test.ts`; `npm run typecheck` |
+| TASK-014-admin-job-foundation | TICKET-006-maintenance-jobs | codex/task/TASK-014-admin-job-foundation | pending_creation | pending_dispatch | `npm test -- tests/integration/admin-job-service.test.ts`; `npm run typecheck` |
 | TASK-015-maintenance-admin-api | TICKET-006-maintenance-jobs | codex/task/TASK-015-maintenance-admin-api | not_created | planned | `npm test -- tests/contract/admin-maintenance-api.test.ts`; `npm test -- tests/integration/cli-admin.test.ts`; `npm run typecheck` |
 | TASK-016-maintenance-admin-ui | TICKET-006-maintenance-jobs | codex/task/TASK-016-maintenance-admin-ui | not_created | planned | `npm --prefix ui run test -- --run src/components/AdminMaintenance.test.tsx`; `npm --prefix ui run typecheck` |
 | TASK-017-docker-first-run-no-cli | TICKET-007-docker-e2e-validation | codex/task/TASK-017-docker-first-run-no-cli | not_created | planned | `docker compose config`; `npm run typecheck`; `npm --prefix ui run build` |
@@ -530,9 +535,9 @@ artifacts, and dispatch/monitor according to WDD policy.
   gates are handled.
 - WAVE-005 is done and reconciled. PR #83 and PR #84 are merged, shared
   context is reconciled, and both WAVE-005 worktrees are cleaned up.
-- WAVE-006 is ready to start after the WAVE-005 reconciliation commit is pushed.
-  Eligible tasks are TASK-008-admin-key-audit-stats-api and
-  TASK-014-admin-job-foundation.
+- WAVE-006 is active. Eligible tasks are TASK-008-admin-key-audit-stats-api and
+  TASK-014-admin-job-foundation. Worktree creation and worker dispatch are
+  pending the activation artifact push.
 
 ## Verification Status
 
@@ -1134,10 +1139,14 @@ artifacts, and dispatch/monitor according to WDD policy.
   TASK-008/TASK-014/TASK-015/TASK-013 handoffs, cleaned up the TASK-007 and
   TASK-010 worktrees, and left WAVE-006 ready to start after the reconciliation
   commit is pushed.
+- 2026-07-06T11:39:24Z: Activated WAVE-006 as a hybrid wave with
+  TASK-008-admin-key-audit-stats-api and TASK-014-admin-job-foundation. Moved
+  both task files to `in-progress/` and recorded pending branch/worktree
+  assignments. Activation artifacts must be pushed before task worktrees are
+  created.
 
 ## Next Action
 
-Push the WAVE-005 reconciliation commit, then run `wdd-start-wave` for WAVE-006
-to activate TASK-008-admin-key-audit-stats-api and
-TASK-014-admin-job-foundation with fresh isolated worktrees and worker
-dispatch.
+Push the WAVE-006 activation artifact commit, create/verify the two task
+branches and isolated worktrees from the pushed epic branch, dispatch workers,
+and update monitoring to the active WAVE-006 heartbeat.

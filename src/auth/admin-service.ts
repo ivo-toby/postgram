@@ -78,6 +78,20 @@ export type CreateBootstrapTokenResult = {
   token: BootstrapTokenRecord;
 };
 
+export type EnsureFirstRunBootstrapTokenResult =
+  | {
+      status: 'created';
+      plaintextToken: string;
+      token: BootstrapTokenRecord;
+    }
+  | {
+      status: 'existing';
+      token: BootstrapTokenRecord;
+    }
+  | {
+      status: 'configured';
+    };
+
 export type CreateFirstAdminInput = {
   bootstrapToken: string;
   email: string;
@@ -593,6 +607,93 @@ export function createBootstrapToken(
       }
     })(),
     (error) => toAppError(error, 'Failed to create bootstrap token')
+  );
+}
+
+export function ensureFirstRunBootstrapToken(
+  pool: Pool,
+  input: CreateBootstrapTokenInput
+): ServiceResult<EnsureFirstRunBootstrapTokenResult> {
+  return ResultAsync.fromPromise(
+    (async () => {
+      requirePositiveTtl(input.ttlMs);
+
+      const now = input.now ?? new Date();
+      const expiresAt = new Date(now.getTime() + input.ttlMs);
+      const client = await pool.connect();
+
+      try {
+        await client.query('BEGIN');
+        await client.query(
+          'LOCK TABLE admin_users, admin_bootstrap_tokens IN SHARE ROW EXCLUSIVE MODE'
+        );
+
+        const adminCount = await client.query<{ count: string }>(
+          'SELECT COUNT(*)::text AS count FROM admin_users'
+        );
+        if (adminCount.rows[0]?.count !== '0') {
+          await client.query('COMMIT');
+          return { status: 'configured' };
+        }
+
+        const existing = await client.query<BootstrapTokenRow>(
+          `
+            SELECT *
+            FROM admin_bootstrap_tokens
+            WHERE consumed_at IS NULL
+              AND invalidated_at IS NULL
+              AND expires_at > $1
+            ORDER BY created_at ASC
+            LIMIT 1
+          `,
+          [now]
+        );
+        const existingRow = existing.rows[0];
+        if (existingRow) {
+          await client.query('COMMIT');
+          return {
+            status: 'existing',
+            token: mapBootstrapToken(existingRow)
+          };
+        }
+
+        const plaintextToken = generateToken('pgm-admin-bootstrap');
+        const tokenHash = hashToken('bootstrap', plaintextToken);
+        const inserted = await client.query<BootstrapTokenRow>(
+          `
+            INSERT INTO admin_bootstrap_tokens (
+              token_hash,
+              expires_at,
+              created_at
+            )
+            VALUES ($1, $2, $3)
+            RETURNING *
+          `,
+          [tokenHash, expiresAt, now]
+        );
+
+        const row = inserted.rows[0];
+        if (!row) {
+          throw new AppError(
+            ErrorCode.INTERNAL,
+            'Failed to create bootstrap token'
+          );
+        }
+
+        await client.query('COMMIT');
+        return {
+          status: 'created',
+          plaintextToken,
+          token: mapBootstrapToken(row)
+        };
+      } catch (error) {
+        await rollbackQuietly(client);
+        throw error;
+      } finally {
+        client.release();
+      }
+    })(),
+    (error) => toAppError(error, 'Failed to ensure bootstrap token')
   );
 }
 

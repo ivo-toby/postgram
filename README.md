@@ -311,11 +311,11 @@ tests/
 
 - Node.js 22+
 - Docker + Docker Compose
-- OpenAI API key (for embeddings)
 - `gpg` (for encrypted backups)
 
 Optional:
 
+- OpenAI API key (for OpenAI embeddings or extraction)
 - Anthropic API key (for LLM extraction)
 - Ollama (for local LLM extraction)
 
@@ -327,30 +327,34 @@ Optional:
 npm install
 ```
 
-### 2. Create environment file
-
-```bash
-cp .env.example .env
-```
-
-Set:
-
-```bash
-POSTGRES_PASSWORD=postgram
-ADMIN_MFA_SECRET_KEY=<32+ random characters>
-OPENAI_API_KEY=<your-openai-key>
-LOG_LEVEL=info
-PORT=3100
-```
-
-### 3. Start the stack
+### 2. Start Docker Compose
 
 ```bash
 docker compose up -d --build
 ```
 
-The default compose setup exposes only the app on `127.0.0.1:3100`. PostgreSQL
-stays on the internal Docker network.
+The default Compose path does not require manual `.env` edits. On first run it
+creates a persistent `postgram_secrets` Docker volume containing:
+
+- the Postgres password used by the app container
+- `ADMIN_MFA_SECRET_KEY` for encrypted admin TOTP seeds
+- `ADMIN_SETTINGS_ENCRYPTION_KEY` for DB-backed provider secrets
+
+The API binds to `127.0.0.1:3100` and the UI binds to `127.0.0.1:3000` by
+default. Use `POSTGRAM_API_PORT=<port>` or `UI_PORT=<port>` as shell overrides
+when running more than one local stack.
+
+### 3. Complete first admin setup
+
+Read the one-time bootstrap token from the trusted local operator channel:
+
+```bash
+docker compose logs mcp-server | grep 'admin first-run bootstrap token'
+```
+
+Then open `http://127.0.0.1:3000/admin`, create the first admin user, and
+complete MFA enrollment. The bootstrap token is stored hash-only in Postgres,
+expires after 24 hours, and is invalidated after the first admin is created.
 
 ### 4. Check health
 
@@ -363,17 +367,52 @@ Expected:
 - `status: "ok"`
 - `postgres: "connected"`
 
+### 5. Configure providers and create API keys
+
+Use the Admin dashboard in the browser for the supported happy path:
+
+- Config tab: save provider settings and write-only provider secrets.
+- Overview tab: create Postgram API keys, inspect health, queue, stats,
+  config/model/job status, and audit rows.
+- Maintenance tab: run safe dry-run previews and poll job status before any
+  destructive apply.
+
+Normal Docker setup and maintenance should not require `pgm-admin` after
+startup/bootstrap. The `pgm-admin` CLI remains documented below for emergency
+recovery, embedding migrations, raw SQL inspection, and advanced operator
+jobs.
+
+### Docker Secret Backup And Failure Behavior
+
+Back up the `postgram_secrets` Docker volume separately from database backups.
+Database backups contain encrypted provider secrets and encrypted TOTP factors;
+they do not contain the installation keys needed to decrypt them.
+
+Losing or replacing `ADMIN_MFA_SECRET_KEY` prevents existing TOTP factors from
+being verified. Losing or replacing `ADMIN_SETTINGS_ENCRYPTION_KEY` prevents
+stored provider secrets from being decrypted. With the wrong settings key,
+provider config reads remain redacted, provider apply/runtime secret use fails
+closed, and operators must restore the original key or re-save provider
+secrets after a deliberate rotation/recovery procedure.
+
+For Docker Compose, missing secret files are generated only on an empty
+`postgram_secrets` volume. Invalid persisted secret files fail container
+startup before the server binds. Optional env overrides still work, but keep
+those values outside database backups and browser storage.
+
 ## Environment Variables
 
 ### Server
 
 | Variable                      | Required    | Default | Description                                                                                                                    |
 | ----------------------------- | ----------- | ------- | ------------------------------------------------------------------------------------------------------------------------------ |
-| `DATABASE_URL`                | yes         |         | Full Postgres connection string                                                                                                |
-| `ADMIN_MFA_SECRET_KEY`        | admin setup |         | Stable 32+ character secret used to encrypt admin TOTP seeds. Required before completing admin MFA enrollment.                  |
+| `DATABASE_URL`                | non-Compose | Docker secret file + Postgres env | Full Postgres connection string. Compose constructs it from the generated Postgres password secret when unset.                 |
+| `ADMIN_MFA_SECRET_KEY`        | admin setup | Docker secret file | Stable 32+ character secret used to encrypt admin TOTP seeds. Compose generates and persists it in `postgram_secrets` when unset. |
 | `OPENAI_API_KEY`              | conditional |         | Required when `EMBEDDING_PROVIDER=openai` OR (`EXTRACTION_ENABLED=true` AND `EXTRACTION_PROVIDER=openai`). Optional otherwise. |
-| `ADMIN_SETTINGS_ENCRYPTION_KEY` | when saving admin-managed secrets |         | 32-byte base64url installation key used to encrypt DB-backed provider secrets. Keep outside database backups. Generate with `node -e "console.log(require('node:crypto').randomBytes(32).toString('base64url'))"`. |
+| `ADMIN_SETTINGS_ENCRYPTION_KEY` | when saving admin-managed secrets | Docker secret file | 32-byte base64url installation key used to encrypt DB-backed provider secrets. Compose generates and persists it in `postgram_secrets` when unset. Keep it outside database backups. |
 | `PORT`                        | no          | `3100`  | HTTP/MCP server port                                                                                                           |
+| `POSTGRAM_API_PORT`           | no          | `3100`  | Docker Compose host port for the API/backend. The container listen port stays `3100`.                                          |
+| `UI_PORT`                     | no          | `3000`  | Docker Compose host port for the UI.                                                                                           |
 | `OAUTH_ENABLED`               | no          | `false` | Enable OAuth authorization-code, PKCE, and Dynamic Client Registration routes for native remote MCP connectors.                 |
 | `PUBLIC_BASE_URL`             | conditional |         | Public HTTPS origin for OAuth metadata and callback URLs. Required when `OAUTH_ENABLED=true`. Example: `https://postgram.example.com`. |
 | `LOG_LEVEL`                   | no          | `info`  | pino log level                                                                                                                 |
@@ -383,7 +422,7 @@ Expected:
 
 | Variable               | Required             | Default                         | Description                                                                                                                     |
 | ---------------------- | -------------------- | ------------------------------- | ------------------------------------------------------------------------------------------------------------------------------- |
-| `EMBEDDING_PROVIDER`   | no                   | `openai`                        | `openai` or `ollama`                                                                                                            |
+| `EMBEDDING_PROVIDER`   | no                   | `openai` (`ollama` in Compose)  | `openai` or `ollama`. Docker Compose defaults to `ollama` so a clean local stack can boot before provider secrets are configured. |
 | `EMBEDDING_MODEL`      | no                   | per-provider                    | Defaults: `text-embedding-3-small` (openai, 1536 dims), `bge-m3` (ollama, 1024 dims)                                            |
 | `EMBEDDING_DIMENSIONS` | no                   | per-provider                    | Must match the active `embedding_models` row. Run `./bin/pgm-admin embeddings migrate --target-dimensions <N> --yes` to change. |
 | `EMBEDDING_BASE_URL`   | when provider=ollama | falls back to `OLLAMA_BASE_URL` | Embedding host. Independent from LLM-extraction host so embeddings and inference can target different machines.                 |
@@ -567,15 +606,9 @@ The server exposes:
 
 ## Authentication
 
-Create an API key (using the `bin/pgm` wrapper; see [Admin CLI](#admin-cli-pgm-admin) below for details):
-
-```bash
-./bin/pgm-admin key create \
-  --name local \
-  --scopes read,write,delete \
-  --visibility personal,work,shared \
-  --json
-```
+Create an API key from the Admin dashboard at `http://127.0.0.1:3000/admin`.
+The plaintext key is displayed once in the browser and cannot be recovered
+after dismissal or reload.
 
 Export it for CLI use:
 
@@ -800,7 +833,12 @@ pgm backup --encrypt --output /tmp/postgram-backups/
 
 ## Admin CLI (`pgm-admin`)
 
-The easy way — use the `bin/pgm` wrapper shipped in the repo. It runs
+The supported Docker happy path uses the browser Admin dashboard for bootstrap,
+provider configuration, API-key creation, status inspection, and safe
+maintenance dry-runs. `pgm-admin` remains available for emergency recovery,
+embedding migrations, raw SQL inspection, and advanced operator jobs.
+
+The easy CLI path uses the `bin/pgm` wrapper shipped in the repo. It runs
 `pgm-admin` via `docker exec` when the container is up, and falls back to
 `docker compose run --rm` when it isn't (useful for first-boot migrations
 or when the startup dimension gate is refusing to boot):

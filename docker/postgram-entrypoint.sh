@@ -1,0 +1,65 @@
+#!/bin/sh
+set -eu
+
+SECRETS_DIR="${POSTGRAM_SECRETS_DIR:-/run/postgram-secrets}"
+
+read_secret_file() {
+  file="$1"
+  if [ ! -s "$file" ]; then
+    echo "Missing required Docker secret file: $file" >&2
+    exit 78
+  fi
+
+  value=""
+  IFS= read -r value < "$file" || true
+  if [ -z "$value" ]; then
+    echo "Docker secret file is empty: $file" >&2
+    exit 78
+  fi
+  printf '%s' "$value"
+}
+
+validate_mfa_key() {
+  value="$1"
+  if [ "${#value}" -lt 32 ]; then
+    echo "ADMIN_MFA_SECRET_KEY must be at least 32 characters" >&2
+    exit 78
+  fi
+}
+
+validate_settings_key() {
+  value="$1"
+  ADMIN_SETTINGS_ENCRYPTION_KEY="$value" node <<'NODE'
+const value = process.env.ADMIN_SETTINGS_ENCRYPTION_KEY ?? '';
+const raw = value.startsWith('base64:') ? value.slice('base64:'.length) : value;
+const encoding = value.startsWith('base64:') ? 'base64' : 'base64url';
+const decoded = Buffer.from(raw, encoding);
+if (decoded.length !== 32) {
+  console.error('ADMIN_SETTINGS_ENCRYPTION_KEY must decode to 32 bytes');
+  process.exit(78);
+}
+NODE
+}
+
+if [ -z "${DATABASE_URL:-}" ]; then
+  postgres_password="$(read_secret_file "$SECRETS_DIR/postgres-password")"
+  postgres_user="${POSTGRES_USER:-postgram}"
+  postgres_db="${POSTGRES_DB:-postgram}"
+  postgres_host="${POSTGRES_HOST:-postgres}"
+  postgres_port="${POSTGRES_PORT:-5432}"
+  export DATABASE_URL="postgres://${postgres_user}:${postgres_password}@${postgres_host}:${postgres_port}/${postgres_db}"
+fi
+
+if [ -z "${ADMIN_MFA_SECRET_KEY:-}" ]; then
+  ADMIN_MFA_SECRET_KEY="$(read_secret_file "$SECRETS_DIR/admin-mfa-secret-key")"
+  export ADMIN_MFA_SECRET_KEY
+fi
+validate_mfa_key "$ADMIN_MFA_SECRET_KEY"
+
+if [ -z "${ADMIN_SETTINGS_ENCRYPTION_KEY:-}" ]; then
+  ADMIN_SETTINGS_ENCRYPTION_KEY="$(read_secret_file "$SECRETS_DIR/admin-settings-encryption-key")"
+  export ADMIN_SETTINGS_ENCRYPTION_KEY
+fi
+validate_settings_key "$ADMIN_SETTINGS_ENCRYPTION_KEY"
+
+exec "$@"

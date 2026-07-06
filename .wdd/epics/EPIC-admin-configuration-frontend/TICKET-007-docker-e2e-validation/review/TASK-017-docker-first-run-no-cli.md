@@ -6,7 +6,7 @@ ticket: TICKET-007-docker-e2e-validation
 wave: WAVE-010
 slug: docker-first-run-no-cli
 title: Docker First Run No CLI
-status: in_progress
+status: review
 depends_on:
   - TASK-012-admin-ops-dashboard-ui
   - TASK-013-admin-config-ui
@@ -20,11 +20,11 @@ assigned_model_class: implementationComplex
 review_model_class: review
 branch: codex/task/TASK-017-docker-first-run-no-cli
 worker_worktree: /Users/ivo.toby/workspace/postgram/.worktrees/TASK-017-docker-first-run-no-cli
-worktree_status: clean_pushed
+worktree_status: ready_for_review
 pr: null
 worker_thread_id: null
 review_thread_id: null
-current_gate: ready_for_dispatch
+current_gate: ready_for_review
 branch_freshness: current
 verification:
   - docker compose config
@@ -37,7 +37,7 @@ verification:
 
 ## Status
 
-in_progress
+review
 
 ## Parent Ticket
 
@@ -123,7 +123,7 @@ codex/task/TASK-017-docker-first-run-no-cli
 
 ## PR / Patch Reference
 
-None yet.
+Draft PR pending branch push.
 
 WAVE-010 activation recorded at 2026-07-06T21:51:22Z. The controller assigned
 branch `codex/task/TASK-017-docker-first-run-no-cli` and the isolated worktree
@@ -138,9 +138,27 @@ branch was pushed to GitHub.
 Document or script a clean-volume smoke path that currently fails or requires
 manual CLI/env edits.
 
+Evidence:
+
+- `npm test -- tests/unit/docker-first-run.test.ts` initially failed because
+  `docker/postgram-ensure-secrets.sh` and `docker/postgram-entrypoint.sh` did
+  not exist.
+- `npm test -- tests/integration/admin-auth-service.test.ts` initially failed
+  because `ensureFirstRunBootstrapToken` did not exist.
+- First Docker smoke with `PORT=3217 UI_PORT=3317` exposed a Compose bug: the
+  server listened on `3217` inside the container while the port mapping still
+  targeted `3100`. Fixed by adding `POSTGRAM_API_PORT` for host binding and
+  keeping container `PORT=3100`.
+
 ### GREEN
 
 Update Docker/docs and run the smoke path until the supported happy path works.
+
+Evidence:
+
+- `npm test -- tests/unit/docker-first-run.test.ts` passed: 3 tests.
+- `npm test -- tests/integration/admin-auth-service.test.ts` passed: 18 tests.
+- Clean-volume Docker smoke passed with fixed ports and browser admin flow.
 
 ### REFACTOR
 
@@ -183,10 +201,10 @@ Keep docs honest about emergency CLI fallback and public exposure risks.
 
 ## Task-Level Definition of Done
 
-- [ ] Clean Docker first-run path is verified.
-- [ ] Docs match the verified path.
-- [ ] Remaining env requirements are explicit.
-- [ ] No-CLI claim is scoped and truthful.
+- [x] Clean Docker first-run path is verified.
+- [x] Docs match the verified path.
+- [x] Remaining env requirements are explicit.
+- [x] No-CLI claim is scoped and truthful.
 
 ## Validation Steps
 
@@ -202,6 +220,59 @@ Keep docs honest about emergency CLI fallback and public exposure risks.
   epic checkpoint `d43f7df`, in-progress TASK-017 file present, orchestration
   activeWave present, branch divergence from epic was `0 0`, and the task
   branch was pushed to origin.
+- `docker compose config`: passed with
+  `COMPOSE_PROJECT_NAME=pg-task017-smoke POSTGRAM_API_PORT=3217 UI_PORT=3317`;
+  rendered config written to `/tmp/task017-docker-compose-config.yml`.
+- Clean-volume Docker smoke command set:
+  - `playwright-cli close-all || true`
+  - `COMPOSE_PROJECT_NAME=pg-task017-smoke POSTGRAM_API_PORT=3217 UI_PORT=3317 docker compose down -v --remove-orphans`
+  - `COMPOSE_PROJECT_NAME=pg-task017-smoke POSTGRAM_API_PORT=3217 UI_PORT=3317 LOG_LEVEL=info docker compose up -d --build`
+  - `curl -fsS http://127.0.0.1:3217/health`
+  - `curl -fsS http://127.0.0.1:3317/health`
+  - `COMPOSE_PROJECT_NAME=pg-task017-smoke POSTGRAM_API_PORT=3217 UI_PORT=3317 docker compose logs --no-color --tail=80 mcp-server postgram-secrets`
+- Clean-volume Docker smoke evidence:
+  - `postgram-secrets` generated `postgres-password`,
+    `admin-mfa-secret-key`, and `admin-settings-encryption-key` in the
+    persistent `postgram_secrets` volume.
+  - `mcp-server` generated one first-run token with prefix
+    `pgm-admin-bootstrap-...` and expiry `2026-07-07T22:16:30.343Z`.
+  - API health returned
+    `{"status":"ok","version":"0.1.0","postgres":"connected","embedding_model":"bge-m3"}`.
+  - UI health returned the same status payload through the frontend proxy.
+  - Browser smoke at `http://127.0.0.1:3317/admin` completed first admin
+    setup for `docker-smoke-final@example.com`, MFA enrollment, and protected
+    dashboard access.
+  - Overview showed Health, Queue, Stats, Config status, Models, Jobs, API
+    keys, and Audit surfaces.
+  - Admin UI created API key `docker-smoke-final-key` for client
+    `docker-smoke-final-client`; the one-time plaintext key was shown only in
+    the create result and the key table listed it as active.
+  - Config tab saved fake provider secret `sk-smoke-final-redaction-secret`.
+    After `docker compose restart mcp-server postgram-ui` and reload, Config
+    showed `OPENAI_API_KEY` as configured metadata, the replacement input was
+    blank, page snapshot did not contain the fake secret, and both
+    `playwright-cli localstorage-list` and `playwright-cli sessionstorage-list`
+    returned no items.
+  - Direct DB check returned `OPENAI_API_KEY|openai|provider|v1|0|t` for:
+    `SELECT name, provider, purpose, key_version, position('sk-smoke-final-redaction-secret' in ciphertext::text), octet_length(ciphertext) > 0 FROM admin_runtime_secrets WHERE name = 'OPENAI_API_KEY';`
+  - Maintenance tab ran re-extract memory dry-run job
+    `f26886e9-77ff-4708-906e-d5865cfbd8d4`, completed with `dryRun true`,
+    `wouldMark 0`, and `wouldDeleteEdges 0`.
+  - `playwright-cli requests` showed
+    `POST /admin/api/maintenance/reextract/dry-run => 202` and two
+    `GET /admin/api/jobs/f26886e9-77ff-4708-906e-d5865cfbd8d4 => 200` polls.
+- `npm test -- tests/unit/docker-first-run.test.ts`: passed, 3 tests.
+- `npm test -- tests/integration/admin-auth-service.test.ts`: passed, 18 tests.
+- `npm run typecheck`: passed.
+- `npm --prefix ui run typecheck`: initially failed because local
+  `ui/node_modules` was missing React/dependency packages; after
+  `npm --prefix ui ci`, passed.
+- `npm --prefix ui run build`: initially failed for the same missing local UI
+  dependencies; after `npm --prefix ui ci`, passed with the existing Vite
+  chunk-size warning.
+- `git diff --check`: passed.
+- `jq empty .wdd/epics/EPIC-admin-configuration-frontend/orchestration.json`:
+  passed.
 
 ## Review Feedback
 
@@ -219,4 +290,15 @@ Keep docs honest about emergency CLI fallback and public exposure risks.
 
 ## Completion Notes
 
-- None yet.
+- Implemented a Docker-first-run secret volume initializer for Postgres,
+  admin MFA, and admin settings encryption keys.
+- Added an image entrypoint that loads/validates those secret files and fails
+  closed before server bind when required key material is missing or invalid.
+- Added server-side first-run bootstrap token generation on startup when no
+  admin and no usable unexpired bootstrap token exist.
+- Documented the supported happy path as browser Admin UI bootstrap,
+  provider configuration, API-key creation, diagnostics, and safe maintenance
+  dry-runs, with `pgm-admin` scoped to emergency/advanced operator work.
+- Updated Docker/manual test docs to cover backup, restore, and failure
+  behavior for `ADMIN_MFA_SECRET_KEY` and
+  `ADMIN_SETTINGS_ENCRYPTION_KEY`.

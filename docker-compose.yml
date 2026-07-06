@@ -1,12 +1,28 @@
 services:
+  postgram-secrets:
+    image: node:22-alpine
+    command: ['sh', '/usr/local/bin/postgram-ensure-secrets']
+    environment:
+      POSTGRAM_SECRETS_DIR: /run/postgram-secrets
+      POSTGRAM_SECRET_UID: 1000
+      POSTGRAM_SECRET_GID: 1000
+    volumes:
+      - postgram_secrets:/run/postgram-secrets
+      - ./docker/postgram-ensure-secrets.sh:/usr/local/bin/postgram-ensure-secrets:ro
+    restart: 'no'
+
   postgres:
     image: pgvector/pgvector:pg17
+    depends_on:
+      postgram-secrets:
+        condition: service_completed_successfully
     environment:
       POSTGRES_DB: postgram
       POSTGRES_USER: postgram
-      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD}
+      POSTGRES_PASSWORD_FILE: /run/postgram-secrets/postgres-password
     volumes:
       - pgdata:/var/lib/postgresql/data
+      - postgram_secrets:/run/postgram-secrets:ro
     healthcheck:
       test: ['CMD-SHELL', 'pg_isready -U postgram']
       interval: 10s
@@ -17,20 +33,27 @@ services:
   mcp-server:
     build: .
     depends_on:
+      postgram-secrets:
+        condition: service_completed_successfully
       postgres:
         condition: service_healthy
     environment:
-      DATABASE_URL: postgres://postgram:${POSTGRES_PASSWORD}@postgres:5432/postgram
+      POSTGRAM_SECRETS_DIR: /run/postgram-secrets
+      POSTGRES_DB: postgram
+      POSTGRES_USER: postgram
+      POSTGRES_HOST: postgres
+      POSTGRES_PORT: 5432
+      DATABASE_URL: ${DATABASE_URL:-}
       ADMIN_MFA_SECRET_KEY: ${ADMIN_MFA_SECRET_KEY:-}
       OPENAI_API_KEY: ${OPENAI_API_KEY:-}
       ADMIN_SETTINGS_ENCRYPTION_KEY: ${ADMIN_SETTINGS_ENCRYPTION_KEY:-}
       LOG_LEVEL: ${LOG_LEVEL:-info}
-      PORT: ${PORT:-3100}
+      PORT: 3100
       # OAuth for native remote MCP connectors
       OAUTH_ENABLED: ${OAUTH_ENABLED:-false}
       PUBLIC_BASE_URL: ${PUBLIC_BASE_URL:-}
       # Embeddings
-      EMBEDDING_PROVIDER: ${EMBEDDING_PROVIDER:-openai}
+      EMBEDDING_PROVIDER: ${EMBEDDING_PROVIDER:-ollama}
       EMBEDDING_MODEL: ${EMBEDDING_MODEL:-}
       EMBEDDING_DIMENSIONS: ${EMBEDDING_DIMENSIONS:-}
       EMBEDDING_BASE_URL: ${EMBEDDING_BASE_URL:-}
@@ -47,26 +70,32 @@ services:
       EXTRACTION_AUTO_CREATE_MIN_CONFIDENCE: ${EXTRACTION_AUTO_CREATE_MIN_CONFIDENCE:-0.7}
       EXTRACTION_REASONING_EFFORT: ${EXTRACTION_REASONING_EFFORT:-}
       ANTHROPIC_API_KEY: ${ANTHROPIC_API_KEY:-}
-      OLLAMA_BASE_URL: ${OLLAMA_BASE_URL:-http://localhost:11434}
+      OLLAMA_BASE_URL: ${OLLAMA_BASE_URL:-http://host.docker.internal:11434}
       OLLAMA_API_KEY: ${OLLAMA_API_KEY:-}
       LLM_REQUEST_TIMEOUT_MS: ${LLM_REQUEST_TIMEOUT_MS:-}
       ENRICHMENT_POLL_INTERVAL_MS: ${ENRICHMENT_POLL_INTERVAL_MS:-1000}
       EXTRACTION_DEBUG_LOG: ${EXTRACTION_DEBUG_LOG:-false}
+    volumes:
+      - postgram_secrets:/run/postgram-secrets:ro
+    extra_hosts:
+      - 'host.docker.internal:host-gateway'
     ports:
       # Defaults to loopback-only on the host (safest). To expose on the LAN
       # for reachability from other machines, set PORT_BIND_HOST=0.0.0.0 in
       # your .env. Prefer running behind a reverse proxy (Caddy) with TLS for
       # anything beyond a trusted homelab.
-      - '${PORT_BIND_HOST:-127.0.0.1}:${PORT:-3101}:3100'
+      - '${PORT_BIND_HOST:-127.0.0.1}:${POSTGRAM_API_PORT:-3100}:3100'
     restart: unless-stopped
 
   postgram-ui:
     build: ./ui
     ports:
-      - '${UI_BIND_HOST:-127.0.0.1}:3000:3000'
+      - '${UI_BIND_HOST:-127.0.0.1}:${UI_PORT:-3000}:3000'
     depends_on:
-      - mcp-server
+      mcp-server:
+        condition: service_healthy
     restart: unless-stopped
 
 volumes:
   pgdata:
+  postgram_secrets:

@@ -6,7 +6,7 @@ ticket: TICKET-005-admin-frontend
 wave: WAVE-008
 slug: admin-ops-dashboard-ui
 title: Admin Ops Dashboard UI
-status: review
+status: done
 depends_on:
   - TASK-008-admin-key-audit-stats-api
   - TASK-011-admin-auth-ui
@@ -18,17 +18,19 @@ assigned_model_class: implementationComplex
 review_model_class: review
 branch: codex/task/TASK-012-admin-ops-dashboard-ui
 worker_worktree: /Users/ivo.toby/workspace/postgram/.worktrees/TASK-012-admin-ops-dashboard-ui
-worktree_status: clean_pushed
+worktree_status: cleaned_up
 pr: https://github.com/ivo-toby/postgram/pull/89
 worker_thread_id: 019f3879-c7a0-7851-b455-5fe3749adc2b
 review_thread_id: 019f38ab-a97f-7462-84dc-5537e1efe934
-current_gate: review
-branch_freshness: refreshed_against_latest_epic_required_checks_passed
+current_gate: merged
+branch_freshness: current_at_merge
 verification:
   - npm --prefix ui run test -- --run src/components/AdminOps.test.tsx
   - npm --prefix ui run test -- --run src/components/AdminAuth.test.tsx
   - npm --prefix ui run typecheck
   - git diff --check
+  - git merge-tree --write-tree origin/codex/epic/admin-configuration-frontend HEAD
+  - gh pr view 89 --json number,url,state,isDraft,mergedAt,headRefOid,mergeCommit
   - codex review --uncommitted
 ---
 
@@ -36,7 +38,7 @@ verification:
 
 ## Status
 
-review
+done
 
 ## Parent Ticket
 
@@ -162,6 +164,15 @@ second refresh showed divergence `1 3` and merge-tree still conflicted in this
 task file. The second refresh merge preserves TASK-012 PR/review metadata and
 controller freshness notes while merging current epic head `cb1c1ae`.
 
+Schrodinger returned `REVIEW_PASS` at 2026-07-06T18:48:29Z for PR #89 head
+`3933ff20aa3f4f45929efdef6ad1a51556fba845` with no P1/P2 findings. Controller
+then refreshed TASK-012 one final time against epic checkpoint `07e760b`,
+pushed task head `298804f17ae15956135149300558c26c55691e79`, verified final
+freshness, merged TASK-012 into the epic branch in
+`ef54876a27164d3a91ba60d32f9e23b71d9cdf38`, pushed the epic branch, confirmed
+GitHub marked PR #89 `MERGED` at 2026-07-06T18:54:38Z, and removed the clean
+TASK-012 worktree.
+
 ## PR / Patch Reference
 
 Draft PR #89: https://github.com/ivo-toby/postgram/pull/89
@@ -242,6 +253,16 @@ duplication.
   `npm --prefix ui run test -- --run src/components/AdminOps.test.tsx`,
   `npm --prefix ui run test -- --run src/components/AdminAuth.test.tsx`,
   `npm --prefix ui run typecheck`, and `git diff --check`.
+- Final freshness PASS after merging latest epic checkpoint `07e760b` into the
+  TASK-012 branch: divergence `0 5`, merge-tree clean, `git diff --check`
+  passed, AdminOps tests passed 11/11, AdminAuth tests passed 16/16, and
+  `npm --prefix ui run typecheck` passed.
+- Post-merge PASS in the epic checkout: AdminOps tests passed 11/11, AdminAuth
+  tests passed 16/16, UI typecheck passed, `git diff --check HEAD^..HEAD`
+  passed, and orchestration JSON parsed.
+- GitHub PR #89 is `MERGED` at 2026-07-06T18:54:38Z with merge commit
+  `ef54876a27164d3a91ba60d32f9e23b71d9cdf38`; the clean pushed TASK-012
+  worktree was removed.
 
 ## Review Feedback
 
@@ -268,6 +289,10 @@ duplication.
   still conflicted in this task file. Resolved by fetching immediately,
   merging current epic head, preserving TASK-012 review metadata and controller
   notes, and rerunning required freshness/UI/typecheck/diff checks.
+- Final freshness P2 state resolved: controller refreshed TASK-012 against epic
+  checkpoint `07e760b`, verified branch freshness and targeted UI checks,
+  merged the task into the epic branch, confirmed PR #89 `MERGED`, and cleaned
+  up the worktree.
 - Fixed: queue panel now surfaces extraction failures rather than only completed
   extraction counts.
 - Fixed: audit log now supports server pagination via `nextOffset` and a load
@@ -287,3 +312,5 @@ duplication.
   store, bearer header, localStorage credential path, provider config forms, or
   maintenance job mutation UI was added.
 - Latest implementation commit before task-file metadata update: `82008b9`.
+- Final task branch head before merge: `298804f17ae15956135149300558c26c55691e79`.
+- Epic merge commit: `ef54876a27164d3a91ba60d32f9e23b71d9cdf38`.

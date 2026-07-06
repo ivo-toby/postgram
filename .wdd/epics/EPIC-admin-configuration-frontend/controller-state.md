@@ -74,10 +74,13 @@ contract.
 
 WAVE-008 is active after WAVE-007 reconciliation was pushed in `27f4903`. Its
 hybrid bundles are TASK-012-admin-ops-dashboard-ui and
-TASK-013-admin-config-ui. TASK-012 has Schrodinger `REVIEW_PASS` for PR #89 at
-head `3933ff2` with no P1/P2 findings; final branch freshness refresh is still
-required before merge because the epic branch advanced after the reviewed head.
-TASK-013 remains active with Parfit and has no PR or patch yet.
+TASK-013-admin-config-ui. TASK-012 shipped in PR #89 after Schrodinger
+`REVIEW_PASS`; controller refreshed the task branch to
+`298804f17ae15956135149300558c26c55691e79`, verified final freshness and
+targeted UI checks, merged it into the epic branch in `ef54876`, pushed the
+epic branch, confirmed GitHub marked PR #89 `MERGED` at
+2026-07-06T18:54:38Z, and removed the clean TASK-012 worktree. TASK-013
+remains active with Parfit and has no PR or patch yet.
 
 WAVE-004 is done and reconciled. PR #81/TASK-009 and PR #82/TASK-006 are
 merged, shared context is reconciled, and both WAVE-004 worktrees are cleaned
@@ -103,13 +106,13 @@ up.
 
 Mode: adaptive
 
-Cadence: 5m
+Cadence: 15m
 
-Status: wave_008_task012_review_passed_final_freshness_pending_task013_active_no_pr
+Status: wave_008_task012_merged_cleaned_up_task013_active_no_pr
 
-Last check: 2026-07-06T18:48:29Z
+Last check: 2026-07-06T18:55:02Z
 
-Next check due: 2026-07-06T18:53:29Z
+Next check due: 2026-07-06T19:10:02Z
 
 Scheduler reference: `postgram-admin-wave-005-wdd-heartbeat`
 
@@ -119,20 +122,22 @@ Fallback prompt:
 
 ```text
 WAVE-008 is active. Read .wdd/epics/EPIC-admin-configuration-frontend/orchestration.json
-and controller-state.md, inspect PR #89 / TASK-012-admin-ops-dashboard-ui after
-Schrodinger REVIEW_PASS at head `3933ff2`, worker Sagan
-(019f3879-c7a0-7851-b455-5fe3749adc2b), worker Parfit
-(019f387a-3f1d-74a0-9949-5a318a43e494), and TASK-013-admin-config-ui worktree.
-TASK-012 review has passed with no P1/P2; refresh TASK-012 against the latest
-codex/epic/admin-configuration-frontend controller checkpoint, rerun required
-final freshness verification, then merge or mark merge_ready according to
-policy. If final freshness fails, route exact feedback to Sagan or a fresh fix
-worker. If TASK-013 has produced a PR or patch, move that bundle to
-review/reviewer orchestration; if no PR or patch exists, keep no_pr and nudge
-exact missing deliverables only if the worktree is inactive or stale. Stop when
-WAVE-008 bundles are merged, blocked, cancelled, or ready for wdd-reconcile-wave.
-After WAVE-008 is reconciled, continue to WAVE-009 per Ivo finish-all-waves
-instruction and push to GitHub between tasks/waves.
+and controller-state.md. TASK-012 / PR #89 is MERGED at
+2026-07-06T18:54:38Z in merge commit
+ef54876a27164d3a91ba60d32f9e23b71d9cdf38 and its clean pushed worktree was
+removed. Inspect worker Parfit (019f387a-3f1d-74a0-9949-5a318a43e494) and
+assigned worktree /Users/ivo.toby/workspace/postgram/.worktrees/TASK-013-admin-config-ui
+on branch codex/task/TASK-013-admin-config-ui for bundle
+WAVE-008-admin-config-ui / TASK-013-admin-config-ui. If TASK-013 has produced a
+PR or patch, move it to review/reviewer orchestration; if no PR or patch exists,
+keep no_pr and nudge exact missing deliverables only if the worktree is inactive
+or stale. If review reports P1/P2, route feedback to Parfit or a fresh fix
+worker. If review passes, refresh stale task branch against
+codex/epic/admin-configuration-frontend, rerun required freshness verification,
+then merge or mark merge_ready according to policy. Stop when WAVE-008 bundles
+are merged, blocked, cancelled, or ready for wdd-reconcile-wave. After WAVE-008
+is reconciled, continue to WAVE-009 per Ivo finish-all-waves instruction and
+push to GitHub between tasks/waves.
 ```
 
 ## Active Wave Strategy
@@ -145,8 +150,8 @@ instruction and push to GitHub between tasks/waves.
 - WAVE-008 tasks: TASK-012-admin-ops-dashboard-ui and
   TASK-013-admin-config-ui.
 - Confirmation: Ivo via Codex finish-all-waves request on 2026-07-06.
-- Current gate: TASK-012 review_passed_pending_final_freshness; TASK-013 no_pr
-  with active uncommitted work.
+- Current gate: TASK-012 merged and cleaned up; TASK-013 no_pr with active
+  uncommitted work.
 
 ## Last Reconciled Wave
 
@@ -191,8 +196,8 @@ instruction and push to GitHub between tasks/waves.
 | TASK-009-settings-secret-store | TICKET-004-runtime-configuration | codex/task/TASK-009-settings-secret-store | cleaned_up | reconciled | PR #81 follow-up REVIEW_PASS, final branch freshness passed at `ca9c96f`, merged locally into epic branch in `b63ad08`; worktree cleaned up during WAVE-004 reconciliation |
 | TASK-010-provider-config-apply | TICKET-004-runtime-configuration | codex/task/TASK-010-provider-config-apply | cleaned_up | reconciled | REVIEW_PASS; final branch freshness passed at `515cfa5`; merged locally into epic branch in `f5efbc0`; PR #84 merged at 2026-07-06T11:31:10Z; WAVE-005 reconciled |
 | TASK-011-admin-auth-ui | TICKET-005-admin-frontend | codex/task/TASK-011-admin-auth-ui | cleaned_up | reconciled | Lorentz REVIEW_PASS; refreshed branch head `344bab8`; post-refresh AdminAuth tests/typecheck/diff/merge-tree/JQ passed; merged locally in `4e77a6b`; PR #87 merged at 2026-07-06T15:48:11Z; shared context reconciled |
-| TASK-012-admin-ops-dashboard-ui | TICKET-005-admin-frontend | codex/task/TASK-012-admin-ops-dashboard-ui | clean_pushed | review_passed_pending_final_freshness | PR #89 open/draft at `3933ff2`; Schrodinger REVIEW_PASS; no P1/P2; final freshness required before merge |
-| TASK-013-admin-config-ui | TICKET-005-admin-frontend | codex/task/TASK-013-admin-config-ui | active_uncommitted | no_pr | Worker Parfit `019f387a-3f1d-74a0-9949-5a318a43e494`; tracked `git diff --check` passed; behind epic by six controller checkpoints; non-blocking TASK-012 shell integration note routed |
+| TASK-012-admin-ops-dashboard-ui | TICKET-005-admin-frontend | codex/task/TASK-012-admin-ops-dashboard-ui | cleaned_up | merged | PR #89 MERGED at 2026-07-06T18:54:38Z; Schrodinger REVIEW_PASS; final freshness passed at `298804f`; merged locally in `ef54876`; AdminOps/AdminAuth UI tests and typecheck passed |
+| TASK-013-admin-config-ui | TICKET-005-admin-frontend | codex/task/TASK-013-admin-config-ui | active_uncommitted | no_pr | Worker Parfit `019f387a-3f1d-74a0-9949-5a318a43e494`; tracked `git diff --check` passed; behind epic by 13 controller/TASK-012 merge checkpoints; non-blocking TASK-012 shell integration note routed |
 | TASK-014-admin-job-foundation | TICKET-006-maintenance-jobs | codex/task/TASK-014-admin-job-foundation | cleaned_up | reconciled | Lorentz REVIEW_PASS; freshness current at task head `0e08630`; post-merge tests/typecheck/touched-file ESLint passed; merged locally into epic branch in `c5edbfc`; WAVE-006 reconciled and worktree cleaned up |
 | TASK-015-maintenance-admin-api | TICKET-006-maintenance-jobs | codex/task/TASK-015-maintenance-admin-api | cleaned_up | reconciled | Lorentz REVIEW_PASS; final freshness passed at task head `ea88af4`; post-merge contract tests 4/4, CLI integration 37/37, typecheck, scoped ESLint, JSON parse, and diff check passed; merged locally in `78f0f43`; PR #88 merged at 2026-07-06T17:02:28Z; shared context reconciled |
 | TASK-016-maintenance-admin-ui | TICKET-006-maintenance-jobs | codex/task/TASK-016-maintenance-admin-ui | not_created | planned | `npm --prefix ui run test -- --run src/components/AdminMaintenance.test.tsx`; `npm --prefix ui run typecheck` |
@@ -1564,10 +1569,19 @@ instruction and push to GitHub between tasks/waves.
   freshness conflict is resolved for review purposes. The only remaining gate
   is final branch freshness against the latest epic checkpoint immediately
   before merge. P3 TASK-013 shell coordination remains non-blocking.
+- 2026-07-06T18:55:02Z: Controller refreshed TASK-012 against latest epic
+  checkpoint `07e760b`, pushed final task head `298804f`, verified divergence
+  `0 5`, merge-tree, branch diff whitespace, AdminOps tests, AdminAuth tests,
+  and UI typecheck, then merged PR #89 into the epic branch in `ef54876`.
+  After pushing the epic branch, GitHub marked PR #89 `MERGED` at
+  2026-07-06T18:54:38Z. The clean pushed TASK-012 worktree was removed and
+  pruned. TASK-013 remains active with no PR or patch; `git diff --check`
+  passes and its branch is behind the epic branch by 13 controller/TASK-012
+  merge checkpoints.
 
 ## Next Action
 
-Next action: refresh TASK-012 against the latest epic checkpoint, rerun final
-verification, and merge or mark merge_ready. Also monitor Parfit for TASK-013
-PR or patch output. If Parfit opens a PR or patch, move TASK-013 into review
-orchestration. Avoid duplicate nudges unless a worker becomes stale.
+Next action: monitor Parfit for TASK-013 PR or patch output. If Parfit opens a
+PR or patch, move TASK-013 into review orchestration. If there is still no PR,
+keep `no_pr` and avoid duplicate nudges unless the worktree becomes inactive or
+stale.

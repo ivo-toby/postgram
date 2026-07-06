@@ -688,6 +688,12 @@ Progress:
   before merge. TASK-013 remains active with no PR or patch.
 - 2026-07-06T18:48:29Z review result: Schrodinger returned `REVIEW_PASS` for
   PR #89 at `3933ff2`; final freshness remains required before merge.
+- 2026-07-06T18:55:02Z controller merge: TASK-012 was refreshed against the
+  latest epic checkpoint, pushed at final task head `298804f`, verified with
+  branch freshness, merge-tree, diff-check, AdminOps/AdminAuth UI tests, and UI
+  typecheck, then merged into the epic branch in `ef54876`. GitHub marked
+  PR #89 `MERGED` at 2026-07-06T18:54:38Z and the clean TASK-012 worktree was
+  removed. TASK-013 remains active with no PR or patch.
 
 Stop condition:
 

@@ -45,7 +45,10 @@ current, post-merge verification passed, and TASK-008 merged locally into the
 epic branch in `13465eb`. GitHub marked PR #85 `MERGED` at
 2026-07-06T13:19:57Z after the epic branch push. The TASK-008 worktree was
 clean and removed.
-TASK-014 remains active with no PR yet.
+TASK-014 shipped in draft PR #86 after Anscombe returned `DONE`. Lorentz
+review is requested, but PR #86 is currently `DIRTY`; merge-tree conflicts are
+in the TASK-014 review file and `src/transport/admin.ts`, so branch freshness
+must be repaired before merge.
 
 WAVE-004 is done and reconciled. PR #81/TASK-009 and PR #82/TASK-006 are
 merged, shared context is reconciled, and both WAVE-004 worktrees are cleaned
@@ -71,13 +74,13 @@ up.
 
 Mode: codex_thread_heartbeat
 
-Cadence: 15 minutes
+Cadence: 5 minutes
 
-Status: monitoring_wave_006_task008_merged_task014_active_no_pr
+Status: monitoring_wave_006_task014_reviewing_dirty
 
-Last check: 2026-07-06T13:10:24Z
+Last check: 2026-07-06T13:32:24Z
 
-Next check due: 2026-07-06T13:25:24Z
+Next check due: 2026-07-06T13:37:24Z
 
 Scheduler reference: `postgram-admin-wave-005-wdd-heartbeat`
 
@@ -122,7 +125,8 @@ if needed.
 - Activation commit: `e46eb9a10233fcbadf446cf81d13e8a60f7ab942`.
 - Worker: Maxwell (`019f3748-036a-7422-9f84-ab790313375f`).
 - Worker: Anscombe (`019f3748-041f-7540-b336-12c285848008`).
-- Current gate: TASK-008 merged; TASK-014 no_pr.
+- Current gate: TASK-008 merged; TASK-014 reviewing with stale/dirty branch
+  freshness.
 
 ## Last Reconciled Wave
 
@@ -161,7 +165,7 @@ if needed.
 | TASK-011-admin-auth-ui | TICKET-005-admin-frontend | codex/task/TASK-011-admin-auth-ui | not_created | planned | `npm --prefix ui run test -- --run src/components/AdminAuth.test.tsx`; `npm --prefix ui run typecheck` |
 | TASK-012-admin-ops-dashboard-ui | TICKET-005-admin-frontend | codex/task/TASK-012-admin-ops-dashboard-ui | not_created | planned | `npm --prefix ui run test -- --run src/components/AdminOps.test.tsx`; `npm --prefix ui run typecheck` |
 | TASK-013-admin-config-ui | TICKET-005-admin-frontend | codex/task/TASK-013-admin-config-ui | not_created | planned | `npm --prefix ui run test -- --run src/components/AdminConfig.test.tsx`; `npm --prefix ui run typecheck` |
-| TASK-014-admin-job-foundation | TICKET-006-maintenance-jobs | codex/task/TASK-014-admin-job-foundation | active_uncommitted | no_pr | Worker running; no PR; recent expected activity; tracked `git diff --check` passed; branch is five controller checkpoints behind epic and needs freshness refresh before review or merge |
+| TASK-014-admin-job-foundation | TICKET-006-maintenance-jobs | codex/task/TASK-014-admin-job-foundation | clean_pushed | reviewing | Draft PR #86 open; Lorentz review requested; worker verification passed; PR is `DIRTY` with merge-tree conflicts in TASK-014 review file and `src/transport/admin.ts`; freshness refresh required before merge |
 | TASK-015-maintenance-admin-api | TICKET-006-maintenance-jobs | codex/task/TASK-015-maintenance-admin-api | not_created | planned | `npm test -- tests/contract/admin-maintenance-api.test.ts`; `npm test -- tests/integration/cli-admin.test.ts`; `npm run typecheck` |
 | TASK-016-maintenance-admin-ui | TICKET-006-maintenance-jobs | codex/task/TASK-016-maintenance-admin-ui | not_created | planned | `npm --prefix ui run test -- --run src/components/AdminMaintenance.test.tsx`; `npm --prefix ui run typecheck` |
 | TASK-017-docker-first-run-no-cli | TICKET-007-docker-e2e-validation | codex/task/TASK-017-docker-first-run-no-cli | not_created | planned | `docker compose config`; `npm run typecheck`; `npm --prefix ui run build` |
@@ -1219,9 +1223,19 @@ if needed.
   2026-07-06T13:19:57Z after the epic branch push. Anscombe remains active on
   TASK-014 with no PR yet; tracked `git diff --check` passed and the task
   branch is five controller checkpoints behind the epic branch.
+- 2026-07-06T13:32:24Z: Anscombe returned `DONE` with draft PR #86 at head
+  `0fb47ac`. Controller verified the worktree is clean/pushed, worker
+  verification passed, and PR #86 is open/draft but `DIRTY` against the current
+  epic branch. Branch divergence is `10 2`; merge-tree reports conflicts in
+  `.wdd/epics/EPIC-admin-configuration-frontend/TICKET-006-maintenance-jobs/review/TASK-014-admin-job-foundation.md`
+  and `src/transport/admin.ts`. Lorentz review was requested with submission
+  `019f37a2-cb34-7181-bb6c-8f3ddfedd507`; no review result yet. Monitoring
+  cadence increased to 5 minutes while review/freshness gates are live.
 
 ## Next Action
 
-Next heartbeat is due at 2026-07-06T13:25:24Z. Inspect Anscombe and TASK-014.
-If TASK-014 has a PR or patch, move it to review; otherwise keep no_pr and
-nudge only exact missing deliverables if the worktree is inactive or stale.
+Next heartbeat is due at 2026-07-06T13:37:24Z. Inspect PR #86 and Lorentz's
+review result. If P1/P2 findings arrive, route them to Anscombe or a fresh fix
+worker. If review passes, refresh PR #86 against the latest epic branch,
+resolve the known `src/transport/admin.ts` and TASK-014 review-file conflicts,
+rerun required verification, and only then merge.

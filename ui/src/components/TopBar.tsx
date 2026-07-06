@@ -1,4 +1,4 @@
-export type Page = 'search' | 'graph' | 'projector' | 'tasks';
+export type Page = 'search' | 'graph' | 'projector' | 'tasks' | 'admin';
 
 type Props = {
   onLogout: () => void;
@@ -18,6 +18,7 @@ export default function TopBar({ onLogout, currentPage, onNavigate }: Props) {
         <TabButton active={currentPage === 'graph'} onClick={() => onNavigate('graph')}>Graph</TabButton>
         <TabButton active={currentPage === 'projector'} onClick={() => onNavigate('projector')}>Projector</TabButton>
         <TabButton active={currentPage === 'tasks'} onClick={() => onNavigate('tasks')}>Tasks</TabButton>
+        <TabButton active={currentPage === 'admin'} onClick={() => onNavigate('admin')}>Admin</TabButton>
       </nav>
       <div className="flex-1" />
       <button

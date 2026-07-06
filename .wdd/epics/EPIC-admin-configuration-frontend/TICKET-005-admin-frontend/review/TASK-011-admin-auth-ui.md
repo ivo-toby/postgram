@@ -6,7 +6,7 @@ ticket: TICKET-005-admin-frontend
 wave: WAVE-007
 slug: admin-auth-ui
 title: Admin Auth UI
-status: in_progress
+status: review
 depends_on:
   - TASK-006-admin-mfa-step-up
 conflict_domains:
@@ -18,12 +18,12 @@ assigned_model_class: implementationComplex
 review_model_class: review
 branch: codex/task/TASK-011-admin-auth-ui
 worker_worktree: /Users/ivo.toby/workspace/postgram/.worktrees/TASK-011-admin-auth-ui
-worktree_status: active_uncommitted
-pr: null
+worktree_status: review_ready
+pr: https://github.com/ivo-toby/postgram/pull/87
 worker_thread_id: 019f37c5-29ec-7ec3-b6fd-6aba64df3dc9
-review_thread_id: null
-current_gate: no_pr
-branch_freshness: behind_epic_controller_checkpoints
+review_thread_id: 019f37ff-9d6c-7fb1-9d43-e6cbc78aa496
+current_gate: draft_pr_open
+branch_freshness: current_with_epic_after_fast_forward
 verification:
   - npm --prefix ui run test -- --run src/components/AdminAuth.test.tsx
   - npm --prefix ui run typecheck
@@ -33,7 +33,7 @@ verification:
 
 ## Status
 
-in_progress
+review
 
 ## Parent Ticket
 
@@ -114,7 +114,7 @@ Active at `/Users/ivo.toby/workspace/postgram/.worktrees/TASK-011-admin-auth-ui`
 
 ## PR / Patch Reference
 
-None yet.
+https://github.com/ivo-toby/postgram/pull/87
 
 ## RED-GREEN TDD Plan
 
@@ -162,10 +162,10 @@ Keep admin auth UI separate from current API-key login.
 
 ## Task-Level Definition of Done
 
-- [ ] Admin auth UI works against the admin session API.
-- [ ] Route protection is covered.
-- [ ] No admin secret is stored in localStorage.
-- [ ] UI typecheck passes.
+- [x] Admin auth UI works against the admin session API.
+- [x] Route protection is covered.
+- [x] No admin secret is stored in localStorage.
+- [x] UI typecheck passes.
 
 ## Validation Steps
 
@@ -204,6 +204,22 @@ Keep admin auth UI separate from current API-key login.
   `ui/src/components/admin/AdminAuth.tsx`. Tracked `git diff --check` passed;
   the branch is four controller checkpoints behind the epic branch and must
   refresh before review or merge.
+- 2026-07-06T15:20Z: Worker refreshed branch with
+  `git fetch origin codex/epic/admin-configuration-frontend` and fast-forwarded
+  through epic checkpoint `ce93519`; `git rev-list --left-right --count
+  origin/codex/epic/admin-configuration-frontend...HEAD` returned `0 0`.
+- 2026-07-06T15:20Z: `npm --prefix ui run test -- --run
+  src/components/AdminAuth.test.tsx` passed with 16 tests.
+- 2026-07-06T15:20Z: `npm --prefix ui run typecheck` passed.
+- 2026-07-06T15:20Z: `git diff --check` passed.
+- 2026-07-06T15:20Z: `codex review --uncommitted` reported no discrete
+  correctness, security, or maintainability issues after the P2 MFA-error
+  handling fix. The reviewer also ran the full UI test suite (`npm --prefix ui
+  test`, 83 tests) and `npm --prefix ui run build`; build passed with the
+  existing Vite large-chunk warning.
+- 2026-07-06T15:23Z: Draft PR opened against
+  `codex/epic/admin-configuration-frontend`:
+  https://github.com/ivo-toby/postgram/pull/87.
 
 ## Review Feedback
 
@@ -213,7 +229,11 @@ Keep admin auth UI separate from current API-key login.
 
 ### P2
 
-- None.
+- Resolved: Final review found that invalid MFA codes and expired sessions both
+  use HTTP 401, so treating every 401 as an expired admin session bounced
+  operators out of the MFA flow. Fixed by only clearing protected auth state for
+  401 messages that identify an invalid or missing admin session, and by adding
+  regression coverage for invalid enrollment and challenge codes.
 
 ### P3
 
@@ -221,4 +241,15 @@ Keep admin auth UI separate from current API-key login.
 
 ## Completion Notes
 
-- None yet.
+- Added `ui/src/lib/adminApi.ts` as a cookie-session admin API client with
+  in-memory CSRF handling, same-origin credentials, and no admin bearer
+  authorization header.
+- Added dense, restrained admin auth UI for bootstrap, login, MFA enrollment,
+  MFA challenge, current-session hydration, logout, and a protected admin shell.
+- Integrated `/admin` routing so the admin flow bypasses regular API-key login
+  and regular bearer API polling; normal app navigation remains separate from
+  admin route history.
+- Added UI proxy wiring for `/admin/api` in Vite and nginx.
+- Added focused tests proving route protection, pending-MFA gating, CSRF use,
+  logout behavior, invalid MFA retry behavior, and no localStorage writes for
+  admin session/bootstrap/TOTP/provider-secret/admin-bearer material.

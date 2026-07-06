@@ -669,6 +669,14 @@ Progress:
 - 2026-07-06T18:17:01Z controller poll: both workers remain active with no PRs
   yet. Both tracked diffs pass `git diff --check`; both branches are behind
   the epic branch by three controller monitoring checkpoints.
+- 2026-07-06T18:24:15Z controller poll: Sagan completed TASK-012 and opened
+  draft PR #89 at head `b9a1043`; Schrodinger was assigned to review. PR #89 is
+  `DIRTY` against the epic branch and must refresh before merge. TASK-013
+  remains active with Parfit and no PR or patch yet.
+- 2026-07-06T18:28:44Z review result: Schrodinger returned `REVIEW_BLOCKED`
+  for PR #89 with one P2 branch-freshness/WDD task-file conflict only;
+  product/security review passed. Feedback was routed to Sagan for refresh and
+  a non-blocking TASK-013 dashboard-shell integration note was routed to Parfit.
 
 Stop condition:
 

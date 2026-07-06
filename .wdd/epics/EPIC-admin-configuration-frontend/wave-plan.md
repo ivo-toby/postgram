@@ -19,10 +19,10 @@ updated_at: 2026-07-05
 | TASK-004-admin-auth-persistence | TICKET-002-admin-auth-foundation | TASK-001, TASK-002 | migrations, `src/auth/**`, admin auth services, integration tests | done |
 | TASK-005-admin-session-routes | TICKET-002-admin-auth-foundation | TASK-004 | admin routes, cookies, CSRF, lockout, auth contract tests | done |
 | TASK-006-admin-mfa-step-up | TICKET-002-admin-auth-foundation | TASK-004, TASK-005 | MFA tables, TOTP service, step-up middleware, sensitive action gates | done |
-| TASK-007-admin-api-shell-diagnostics | TICKET-003-admin-api-foundation | TASK-005, TASK-006 | admin transport, diagnostics routes, admin middleware | todo |
+| TASK-007-admin-api-shell-diagnostics | TICKET-003-admin-api-foundation | TASK-005, TASK-006 | admin transport, diagnostics routes, admin middleware | in_progress |
 | TASK-008-admin-key-audit-stats-api | TICKET-003-admin-api-foundation | TASK-007 | key service, audit querying, stats service, admin API contracts | todo |
 | TASK-009-settings-secret-store | TICKET-004-runtime-configuration | TASK-003, TASK-005 | settings migrations, secret encryption, config service | done |
-| TASK-010-provider-config-apply | TICKET-004-runtime-configuration | TASK-009 | provider lifecycle, validation flows, config tests, worker reload semantics | todo |
+| TASK-010-provider-config-apply | TICKET-004-runtime-configuration | TASK-009 | provider lifecycle, validation flows, config tests, worker reload semantics | in_progress |
 | TASK-011-admin-auth-ui | TICKET-005-admin-frontend | TASK-006 | React auth shell, admin session client, MFA UI, UI routing | todo |
 | TASK-012-admin-ops-dashboard-ui | TICKET-005-admin-frontend | TASK-008, TASK-011 | API key UI, audit/stats/health pages, admin API client | todo |
 | TASK-013-admin-config-ui | TICKET-005-admin-frontend | TASK-010, TASK-011 | runtime config UI, secret redaction, provider validation UI | todo |
@@ -376,7 +376,7 @@ Drift notes:
 
 ### WAVE-005
 
-Status: ready_to_start
+Status: in_progress
 
 Tasks:
 
@@ -391,7 +391,7 @@ Recommended strategy:
 - Monitoring mode: adaptive
 - Confidence: medium
 - Requires user confirmation: yes
-- Confirmed by: null
+- Confirmed by: Ivo via Codex finish-all-waves request on 2026-07-06
 
 Rationale:
 
@@ -403,6 +403,8 @@ Rationale:
 Activation rule:
 
 - Activate after WAVE-004 reconciliation.
+- Activated at 2026-07-06T05:51:49Z as two hybrid bundles:
+  TASK-007-admin-api-shell-diagnostics and TASK-010-provider-config-apply.
 
 Stop condition:
 

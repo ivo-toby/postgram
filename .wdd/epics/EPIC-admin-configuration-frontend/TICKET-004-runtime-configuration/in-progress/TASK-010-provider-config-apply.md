@@ -6,7 +6,7 @@ ticket: TICKET-004-runtime-configuration
 wave: WAVE-005
 slug: provider-config-apply
 title: Provider Config Apply
-status: todo
+status: in_progress
 depends_on:
   - TASK-009-settings-secret-store
 conflict_domains:
@@ -20,8 +20,8 @@ conflict_domains:
 assigned_model_class: implementationComplex
 review_model_class: review
 branch: codex/task/TASK-010-provider-config-apply
-worker_worktree: null
-worktree_status: unassigned
+worker_worktree: /Users/ivo.toby/workspace/postgram/.worktrees/TASK-010-provider-config-apply
+worktree_status: pending_creation
 pr: null
 worker_thread_id: null
 review_thread_id: null
@@ -37,7 +37,7 @@ verification:
 
 ## Status
 
-todo
+in_progress
 
 ## Parent Ticket
 
@@ -123,7 +123,10 @@ codex/task/TASK-010-provider-config-apply
 
 ## Worker Worktree
 
-None assigned yet.
+/Users/ivo.toby/workspace/postgram/.worktrees/TASK-010-provider-config-apply
+
+Assigned by WAVE-005 activation. The controller must create and verify this
+isolated worktree before dispatch.
 
 ## PR / Patch Reference
 

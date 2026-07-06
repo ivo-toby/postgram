@@ -6,7 +6,7 @@ ticket: TICKET-003-admin-api-foundation
 wave: WAVE-005
 slug: admin-api-shell-diagnostics
 title: Admin API Shell And Diagnostics
-status: todo
+status: in_progress
 depends_on:
   - TASK-005-admin-session-routes
   - TASK-006-admin-mfa-step-up
@@ -17,8 +17,8 @@ conflict_domains:
 assigned_model_class: implementationComplex
 review_model_class: review
 branch: codex/task/TASK-007-admin-api-shell-diagnostics
-worker_worktree: null
-worktree_status: unassigned
+worker_worktree: /Users/ivo.toby/workspace/postgram/.worktrees/TASK-007-admin-api-shell-diagnostics
+worktree_status: pending_creation
 pr: null
 worker_thread_id: null
 review_thread_id: null
@@ -33,7 +33,7 @@ verification:
 
 ## Status
 
-todo
+in_progress
 
 ## Parent Ticket
 
@@ -105,7 +105,10 @@ codex/task/TASK-007-admin-api-shell-diagnostics
 
 ## Worker Worktree
 
-None assigned yet.
+/Users/ivo.toby/workspace/postgram/.worktrees/TASK-007-admin-api-shell-diagnostics
+
+Assigned by WAVE-005 activation. The controller must create and verify this
+isolated worktree before dispatch.
 
 ## PR / Patch Reference
 

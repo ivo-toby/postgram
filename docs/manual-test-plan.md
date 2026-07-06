@@ -57,6 +57,11 @@ Postgres password, `ADMIN_MFA_SECRET_KEY`, and
 `ADMIN_SETTINGS_ENCRYPTION_KEY`. No manual `.env` edit or normal `pgm-admin`
 command is required for the supported setup path.
 
+Upgrade note: if an existing Docker install already has `POSTGRES_PASSWORD` in
+`.env`, keep that value in place for the first upgraded start so the
+`postgram-secrets` init service seeds `postgram_secrets/postgres-password` from
+the existing database password.
+
 3. Wait for health:
 
 ```bash

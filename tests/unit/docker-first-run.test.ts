@@ -63,6 +63,32 @@ describe('Docker first-run scripts', () => {
     }
   });
 
+  it('seeds the Docker Postgres password secret from a legacy POSTGRES_PASSWORD override', () => {
+    const secretsDir = makeSecretDir();
+    try {
+      const result = runShellScript('docker/postgram-ensure-secrets.sh', [], {
+        POSTGRAM_SECRETS_DIR: secretsDir,
+        POSTGRES_PASSWORD: 'legacy-postgres-password'
+      });
+
+      expect(result.status).toBe(0);
+      expect(readFileSync(join(secretsDir, 'postgres-password'), 'utf8').trim()).toBe(
+        'legacy-postgres-password'
+      );
+
+      const second = runShellScript('docker/postgram-ensure-secrets.sh', [], {
+        POSTGRAM_SECRETS_DIR: secretsDir,
+        POSTGRES_PASSWORD: 'different-password'
+      });
+      expect(second.status).toBe(0);
+      expect(readFileSync(join(secretsDir, 'postgres-password'), 'utf8').trim()).toBe(
+        'legacy-postgres-password'
+      );
+    } finally {
+      rmSync(secretsDir, { recursive: true, force: true });
+    }
+  });
+
   it('loads Docker secrets into server env and constructs DATABASE_URL from the password file', () => {
     const secretsDir = makeSecretDir();
     try {
@@ -81,7 +107,7 @@ describe('Docker first-run scripts', () => {
         [
           process.execPath,
           '-e',
-          "process.stdout.write(JSON.stringify({DATABASE_URL:process.env.DATABASE_URL,ADMIN_MFA_SECRET_KEY:process.env.ADMIN_MFA_SECRET_KEY,ADMIN_SETTINGS_ENCRYPTION_KEY:process.env.ADMIN_SETTINGS_ENCRYPTION_KEY}))"
+          "process.stdout.write(JSON.stringify({DATABASE_URL:process.env.DATABASE_URL,ADMIN_MFA_SECRET_KEY:process.env.ADMIN_MFA_SECRET_KEY,ADMIN_SETTINGS_ENCRYPTION_KEY:process.env.ADMIN_SETTINGS_ENCRYPTION_KEY,EMBEDDING_PROVIDER:process.env.EMBEDDING_PROVIDER}))"
         ],
         {
           POSTGRAM_SECRETS_DIR: secretsDir
@@ -94,8 +120,38 @@ describe('Docker first-run scripts', () => {
           'postgres://postgram:stable-postgres-pass@postgres:5432/postgram',
         ADMIN_MFA_SECRET_KEY: 'stable-admin-mfa-secret-key-32-bytes',
         ADMIN_SETTINGS_ENCRYPTION_KEY:
-          '3ZowdtuLN12_15tV94qV3gMHnwv-gMZevpqvMjPDU5s'
+          '3ZowdtuLN12_15tV94qV3gMHnwv-gMZevpqvMjPDU5s',
+        EMBEDDING_PROVIDER: 'ollama'
       });
+    } finally {
+      rmSync(secretsDir, { recursive: true, force: true });
+    }
+  });
+
+  it('keeps the OpenAI embedding default when a legacy OPENAI_API_KEY override is present', () => {
+    const secretsDir = makeSecretDir();
+    try {
+      writeFileSync(join(secretsDir, 'postgres-password'), 'stable-postgres-pass\n');
+      writeFileSync(
+        join(secretsDir, 'admin-mfa-secret-key'),
+        'stable-admin-mfa-secret-key-32-bytes\n'
+      );
+      writeFileSync(
+        join(secretsDir, 'admin-settings-encryption-key'),
+        '3ZowdtuLN12_15tV94qV3gMHnwv-gMZevpqvMjPDU5s\n'
+      );
+
+      const result = runShellScript(
+        'docker/postgram-entrypoint.sh',
+        [process.execPath, '-e', "process.stdout.write(process.env.EMBEDDING_PROVIDER ?? '')"],
+        {
+          POSTGRAM_SECRETS_DIR: secretsDir,
+          OPENAI_API_KEY: 'sk-legacy'
+        }
+      );
+
+      expect(result.status).toBe(0);
+      expect(result.stdout).toBe('openai');
     } finally {
       rmSync(secretsDir, { recursive: true, force: true });
     }
@@ -111,7 +167,7 @@ describe('Docker first-run scripts', () => {
       );
       writeFileSync(
         join(secretsDir, 'admin-settings-encryption-key'),
-        'too-short\n'
+        '*******************************************\n'
       );
 
       const result = runShellScript(
@@ -124,7 +180,7 @@ describe('Docker first-run scripts', () => {
 
       expect(result.status).not.toBe(0);
       expect(result.stderr).toContain(
-        'ADMIN_SETTINGS_ENCRYPTION_KEY must decode to 32 bytes'
+        'ADMIN_SETTINGS_ENCRYPTION_KEY must be a 32-byte base64url value'
       );
     } finally {
       rmSync(secretsDir, { recursive: true, force: true });

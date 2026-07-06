@@ -33,6 +33,13 @@ validate_settings_key() {
 const value = process.env.ADMIN_SETTINGS_ENCRYPTION_KEY ?? '';
 const raw = value.startsWith('base64:') ? value.slice('base64:'.length) : value;
 const encoding = value.startsWith('base64:') ? 'base64' : 'base64url';
+const validFormat = value.startsWith('base64:')
+  ? /^[A-Za-z0-9+/]{43}=$/.test(raw)
+  : /^[A-Za-z0-9_-]{43}$/.test(raw);
+if (!validFormat) {
+  console.error('ADMIN_SETTINGS_ENCRYPTION_KEY must be a 32-byte base64url value');
+  process.exit(78);
+}
 const decoded = Buffer.from(raw, encoding);
 if (decoded.length !== 32) {
   console.error('ADMIN_SETTINGS_ENCRYPTION_KEY must decode to 32 bytes');
@@ -48,6 +55,14 @@ if [ -z "${DATABASE_URL:-}" ]; then
   postgres_host="${POSTGRES_HOST:-postgres}"
   postgres_port="${POSTGRES_PORT:-5432}"
   export DATABASE_URL="postgres://${postgres_user}:${postgres_password}@${postgres_host}:${postgres_port}/${postgres_db}"
+fi
+
+if [ -z "${EMBEDDING_PROVIDER:-}" ]; then
+  if [ -n "${OPENAI_API_KEY:-}" ]; then
+    export EMBEDDING_PROVIDER="openai"
+  else
+    export EMBEDDING_PROVIDER="ollama"
+  fi
 fi
 
 if [ -z "${ADMIN_MFA_SECRET_KEY:-}" ]; then

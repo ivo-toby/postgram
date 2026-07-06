@@ -6,6 +6,7 @@ services:
       POSTGRAM_SECRETS_DIR: /run/postgram-secrets
       POSTGRAM_SECRET_UID: 1000
       POSTGRAM_SECRET_GID: 1000
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:-}
     volumes:
       - postgram_secrets:/run/postgram-secrets
       - ./docker/postgram-ensure-secrets.sh:/usr/local/bin/postgram-ensure-secrets:ro
@@ -53,7 +54,7 @@ services:
       OAUTH_ENABLED: ${OAUTH_ENABLED:-false}
       PUBLIC_BASE_URL: ${PUBLIC_BASE_URL:-}
       # Embeddings
-      EMBEDDING_PROVIDER: ${EMBEDDING_PROVIDER:-ollama}
+      EMBEDDING_PROVIDER: ${EMBEDDING_PROVIDER:-}
       EMBEDDING_MODEL: ${EMBEDDING_MODEL:-}
       EMBEDDING_DIMENSIONS: ${EMBEDDING_DIMENSIONS:-}
       EMBEDDING_BASE_URL: ${EMBEDDING_BASE_URL:-}

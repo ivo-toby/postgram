@@ -25,7 +25,11 @@ ensure_secret_file() {
   file="$SECRETS_DIR/$name"
   if [ ! -s "$file" ]; then
     tmp="$file.tmp.$$"
-    generate_base64url_secret > "$tmp"
+    if [ "$name" = "postgres-password" ] && [ -n "${POSTGRES_PASSWORD:-}" ]; then
+      printf '%s' "$POSTGRES_PASSWORD" > "$tmp"
+    else
+      generate_base64url_secret > "$tmp"
+    fi
     printf '\n' >> "$tmp"
     chown "$SECRET_UID:$SECRET_GID" "$tmp" 2>/dev/null || true
     chmod 400 "$tmp"
@@ -51,6 +55,13 @@ validate_settings_key() {
 const value = process.env.ADMIN_SETTINGS_ENCRYPTION_KEY ?? '';
 const raw = value.startsWith('base64:') ? value.slice('base64:'.length) : value;
 const encoding = value.startsWith('base64:') ? 'base64' : 'base64url';
+const validFormat = value.startsWith('base64:')
+  ? /^[A-Za-z0-9+/]{43}=$/.test(raw)
+  : /^[A-Za-z0-9_-]{43}$/.test(raw);
+if (!validFormat) {
+  console.error('ADMIN_SETTINGS_ENCRYPTION_KEY must be a 32-byte base64url value');
+  process.exit(78);
+}
 const decoded = Buffer.from(raw, encoding);
 if (decoded.length !== 32) {
   console.error('ADMIN_SETTINGS_ENCRYPTION_KEY must decode to 32 bytes');

@@ -340,9 +340,19 @@ creates a persistent `postgram_secrets` Docker volume containing:
 - `ADMIN_MFA_SECRET_KEY` for encrypted admin TOTP seeds
 - `ADMIN_SETTINGS_ENCRYPTION_KEY` for DB-backed provider secrets
 
+If an existing Docker install already has `POSTGRES_PASSWORD` in `.env`, the
+first start after this change copies that legacy password into
+`postgram_secrets/postgres-password` instead of generating a different database
+password. Keep the old `.env` value in place for that first upgraded start.
+
 The API binds to `127.0.0.1:3100` and the UI binds to `127.0.0.1:3000` by
 default. Use `POSTGRAM_API_PORT=<port>` or `UI_PORT=<port>` as shell overrides
 when running more than one local stack.
+
+For embeddings, Compose preserves the OpenAI default when `OPENAI_API_KEY` is
+present. If no OpenAI key and no explicit `EMBEDDING_PROVIDER` are supplied, the
+container entrypoint chooses local Ollama embeddings so a clean stack can boot
+before provider secrets are configured.
 
 ### 3. Complete first admin setup
 
@@ -422,7 +432,7 @@ those values outside database backups and browser storage.
 
 | Variable               | Required             | Default                         | Description                                                                                                                     |
 | ---------------------- | -------------------- | ------------------------------- | ------------------------------------------------------------------------------------------------------------------------------- |
-| `EMBEDDING_PROVIDER`   | no                   | `openai` (`ollama` in Compose)  | `openai` or `ollama`. Docker Compose defaults to `ollama` so a clean local stack can boot before provider secrets are configured. |
+| `EMBEDDING_PROVIDER`   | no                   | `openai` (Compose auto-selects) | `openai` or `ollama`. Compose keeps OpenAI when `OPENAI_API_KEY` is present, otherwise chooses Ollama unless explicitly set. |
 | `EMBEDDING_MODEL`      | no                   | per-provider                    | Defaults: `text-embedding-3-small` (openai, 1536 dims), `bge-m3` (ollama, 1024 dims)                                            |
 | `EMBEDDING_DIMENSIONS` | no                   | per-provider                    | Must match the active `embedding_models` row. Run `./bin/pgm-admin embeddings migrate --target-dimensions <N> --yes` to change. |
 | `EMBEDDING_BASE_URL`   | when provider=ollama | falls back to `OLLAMA_BASE_URL` | Embedding host. Independent from LLM-extraction host so embeddings and inference can target different machines.                 |

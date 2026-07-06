@@ -261,7 +261,9 @@ Keep docs honest about emergency CLI fallback and public exposure risks.
   - `playwright-cli requests` showed
     `POST /admin/api/maintenance/reextract/dry-run => 202` and two
     `GET /admin/api/jobs/f26886e9-77ff-4708-906e-d5865cfbd8d4 => 200` polls.
-- `npm test -- tests/unit/docker-first-run.test.ts`: passed, 3 tests.
+- `npm test -- tests/unit/docker-first-run.test.ts`: passed, 5 tests after
+  review fixes for legacy `POSTGRES_PASSWORD` seeding, dynamic Compose
+  embedding defaults, and strict settings-key format validation.
 - `npm test -- tests/integration/admin-auth-service.test.ts`: passed, 18 tests.
 - `npm run typecheck`: passed.
 - `npm --prefix ui run typecheck`: initially failed because local
@@ -273,12 +275,29 @@ Keep docs honest about emergency CLI fallback and public exposure risks.
 - `git diff --check`: passed.
 - `jq empty .wdd/epics/EPIC-admin-configuration-frontend/orchestration.json`:
   passed.
+- `codex review --base origin/codex/epic/admin-configuration-frontend`:
+  reported two P1 upgrade findings, both fixed in follow-up changes.
+- Post-review clean startup smoke:
+  `COMPOSE_PROJECT_NAME=pg-task017-reviewfix POSTGRAM_API_PORT=3217 UI_PORT=3317 LOG_LEVEL=info docker compose up -d --build`
+  passed from clean volumes. API and UI health returned OK, the entrypoint
+  chose Ollama for a no-key clean boot, and the bootstrap token log appeared.
+- Post-review `docker compose config` with an empty environment showed
+  `EMBEDDING_PROVIDER: ""` for the app entrypoint to resolve and
+  `POSTGRES_PASSWORD: ""` unless a legacy override is supplied.
 
 ## Review Feedback
 
 ### P1
 
-- None.
+- Fixed: new `postgram_secrets/postgres-password` could diverge from an
+  existing Docker install's old `${POSTGRES_PASSWORD}` while `pgdata` kept the
+  old role password. The init service now receives `POSTGRES_PASSWORD` and
+  seeds the secret file from it when present and the secret is absent.
+- Fixed: Compose's initial Ollama default would break existing OpenAI/chunked
+  installs by tripping embedding identity validation. Compose now passes
+  blank `EMBEDDING_PROVIDER`; the entrypoint selects `openai` when
+  `OPENAI_API_KEY` is present and `ollama` only when no provider/key override
+  is supplied.
 
 ### P2
 
@@ -302,3 +321,6 @@ Keep docs honest about emergency CLI fallback and public exposure risks.
 - Updated Docker/manual test docs to cover backup, restore, and failure
   behavior for `ADMIN_MFA_SECRET_KEY` and
   `ADMIN_SETTINGS_ENCRYPTION_KEY`.
+- Preserved existing Docker upgrades by seeding the new Postgres secret from
+  legacy `POSTGRES_PASSWORD` and keeping OpenAI as the implicit provider when
+  a legacy `OPENAI_API_KEY` exists.

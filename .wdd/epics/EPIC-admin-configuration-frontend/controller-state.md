@@ -67,10 +67,10 @@ pushed at `848b902`, and workers Meitner and Helmholtz were dispatched at
 `REVIEW_PASS`, the task branch was refreshed to `344bab8`, TASK-011 merged
 locally into the epic branch in `4e77a6b`, GitHub marked PR #87 `MERGED` at
 2026-07-06T15:48:11Z after the epic branch push, and the clean TASK-011
-worktree was removed. TASK-015 now has clean local commit `faab7e0` in
-Helmholtz's worktree, but the branch is not pushed and no PR exists yet.
-Controller nudged Helmholtz for the exact missing handoff deliverables in
-submission `019f3847-8b09-7863-b57d-b14ba6490702`.
+worktree was removed. TASK-015 shipped in draft PR #88 after Helmholtz
+returned `DONE`; Lorentz review is requested. PR #88 is currently `DIRTY`
+because the task branch must refresh against the latest epic WDD controller
+state before merge.
 
 WAVE-004 is done and reconciled. PR #81/TASK-009 and PR #82/TASK-006 are
 merged, shared context is reconciled, and both WAVE-004 worktrees are cleaned
@@ -98,11 +98,11 @@ Mode: adaptive
 
 Cadence: 5m
 
-Status: wave_007_task015_clean_local_commit_no_pr_nudged
+Status: wave_007_task015_pr88_review_requested_dirty
 
-Last check: 2026-07-06T16:32:01Z
+Last check: 2026-07-06T16:36:00Z
 
-Next check due: 2026-07-06T16:37:01Z
+Next check due: 2026-07-06T16:41:00Z
 
 Scheduler reference: `postgram-admin-wave-005-wdd-heartbeat`
 
@@ -111,9 +111,9 @@ Scheduler name: `postgram-admin-wave-007-wdd-heartbeat`
 Fallback prompt:
 
 ```text
-WAVE-007 TASK-015 has clean local commit faab7e0 but no pushed branch or PR
-yet; Helmholtz was nudged to push/open PR or report BLOCKED/NEEDS_CONTEXT.
-Poll Helmholtz/worktree/GitHub and move to review when PR or patch exists.
+WAVE-007 TASK-015 PR #88 is open/draft/DIRTY and Lorentz review is requested.
+Poll review; route any P1/P2 to Helmholtz. Branch freshness conflict must be
+fixed before merge.
 ```
 
 ## Active Wave Strategy
@@ -170,7 +170,7 @@ Poll Helmholtz/worktree/GitHub and move to review when PR or patch exists.
 | TASK-012-admin-ops-dashboard-ui | TICKET-005-admin-frontend | codex/task/TASK-012-admin-ops-dashboard-ui | not_created | planned | `npm --prefix ui run test -- --run src/components/AdminOps.test.tsx`; `npm --prefix ui run typecheck` |
 | TASK-013-admin-config-ui | TICKET-005-admin-frontend | codex/task/TASK-013-admin-config-ui | not_created | planned | `npm --prefix ui run test -- --run src/components/AdminConfig.test.tsx`; `npm --prefix ui run typecheck` |
 | TASK-014-admin-job-foundation | TICKET-006-maintenance-jobs | codex/task/TASK-014-admin-job-foundation | cleaned_up | reconciled | Lorentz REVIEW_PASS; freshness current at task head `0e08630`; post-merge tests/typecheck/touched-file ESLint passed; merged locally into epic branch in `c5edbfc`; WAVE-006 reconciled and worktree cleaned up |
-| TASK-015-maintenance-admin-api | TICKET-006-maintenance-jobs | codex/task/TASK-015-maintenance-admin-api | clean_local_commit_unpushed | no_pr | Clean local commit `faab7e0`; no PR/patch and remote task branch still at `848b902`; branch was current with epic at inspection (`0 1`) but will need refresh after controller checkpoint; diff-check and merge-tree passed; nudge `019f3847-8b09-7863-b57d-b14ba6490702` sent for push/PR/final status |
+| TASK-015-maintenance-admin-api | TICKET-006-maintenance-jobs | codex/task/TASK-015-maintenance-admin-api | clean_pushed | reviewing | Draft PR #88 opened at `4a3e99d`; Helmholtz returned `DONE`; worker verification passed; PR is `DIRTY` with WDD task-file merge-tree conflict and branch divergence `1 3`; Lorentz review requested in submission `019f384a-790e-7d12-8bee-29d351519b3b` |
 | TASK-016-maintenance-admin-ui | TICKET-006-maintenance-jobs | codex/task/TASK-016-maintenance-admin-ui | not_created | planned | `npm --prefix ui run test -- --run src/components/AdminMaintenance.test.tsx`; `npm --prefix ui run typecheck` |
 | TASK-017-docker-first-run-no-cli | TICKET-007-docker-e2e-validation | codex/task/TASK-017-docker-first-run-no-cli | not_created | planned | `docker compose config`; `npm run typecheck`; `npm --prefix ui run build` |
 | TASK-018-security-epic-validation | TICKET-007-docker-e2e-validation | codex/task/TASK-018-security-epic-validation | not_created | planned | broad backend, frontend, Docker, and smoke validation |
@@ -1386,9 +1386,18 @@ Poll Helmholtz/worktree/GitHub and move to review when PR or patch exists.
   patch, and return `DONE`/`DONE_WITH_CONCERNS` with verification evidence, or
   report `NEEDS_CONTEXT`/`BLOCKED`. Monitoring cadence moved to 5 minutes while
   this handoff gap is live; next check due 2026-07-06T16:37:01Z.
+- 2026-07-06T16:36:00Z: Helmholtz returned `DONE` and opened draft PR #88 at
+  head `4a3e99d`. Worker verification passed: `admin-maintenance-api` contract
+  tests (4/4), `cli-admin` integration tests (37/37), `npm run typecheck`,
+  focused ESLint, `git diff --check`, and final `codex review --uncommitted`.
+  Controller verified PR #88 is open/draft and `DIRTY`; branch divergence is
+  `1 3`, branch diff whitespace check passed, and merge-tree reports a
+  conflict in the WDD TASK-015 review file. Lorentz review was requested in
+  submission `019f384a-790e-7d12-8bee-29d351519b3b`. Gate is `reviewing`;
+  branch freshness must be resolved before merge.
 
 ## Next Action
 
-Next action: poll Helmholtz/TASK-015 for the missing handoff. If PR or patch
-exists, start review orchestration; otherwise keep `no_pr` and avoid duplicate
-nudges unless the branch remains unpushed or the worker reports a blocker.
+Next action: poll Lorentz review for PR #88. If review reports P1/P2, route
+feedback to Helmholtz; if review passes, refresh the dirty task branch against
+the epic branch, rerun required verification, then merge or mark merge-ready.

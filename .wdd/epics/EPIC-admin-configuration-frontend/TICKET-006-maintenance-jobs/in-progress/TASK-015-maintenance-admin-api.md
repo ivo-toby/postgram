@@ -6,7 +6,7 @@ ticket: TICKET-006-maintenance-jobs
 wave: WAVE-007
 slug: maintenance-admin-api
 title: Maintenance Admin API
-status: in_progress
+status: review
 depends_on:
   - TASK-008-admin-key-audit-stats-api
   - TASK-010-provider-config-apply
@@ -21,12 +21,12 @@ assigned_model_class: implementationComplex
 review_model_class: review
 branch: codex/task/TASK-015-maintenance-admin-api
 worker_worktree: /Users/ivo.toby/workspace/postgram/.worktrees/TASK-015-maintenance-admin-api
-worktree_status: clean_local_commit_unpushed
-pr: null
+worktree_status: clean_pushed
+pr: https://github.com/ivo-toby/postgram/pull/88
 worker_thread_id: 019f37c5-7084-7920-916a-7fd9ac7d8cb6
-review_thread_id: null
-current_gate: no_pr
-branch_freshness: current_at_observation_refresh_required_after_controller_checkpoint
+review_thread_id: 019f322c-02e7-7590-8b8e-ebdd1e9c52ac
+current_gate: reviewing
+branch_freshness: stale_dirty_needs_freshness_refresh
 verification:
   - npm test -- tests/contract/admin-maintenance-api.test.ts
   - npm test -- tests/integration/cli-admin.test.ts
@@ -37,7 +37,7 @@ verification:
 
 ## Status
 
-in_progress
+review
 
 ## Parent Ticket
 
@@ -118,11 +118,11 @@ codex/task/TASK-015-maintenance-admin-api
 
 ## Worker Worktree
 
-Active at `/Users/ivo.toby/workspace/postgram/.worktrees/TASK-015-maintenance-admin-api`.
+Clean and pushed at `/Users/ivo.toby/workspace/postgram/.worktrees/TASK-015-maintenance-admin-api`.
 
 ## PR / Patch Reference
 
-None yet.
+https://github.com/ivo-toby/postgram/pull/88
 
 ## RED-GREEN TDD Plan
 
@@ -245,6 +245,15 @@ Keep command-specific logic typed and bounded rather than generic.
   `019f3847-8b09-7863-b57d-b14ba6490702` to move the task file to `review/`
   if complete, push the task branch, open a draft PR or provide a patch, and
   return a final status token with verification evidence.
+- 2026-07-06T16:36:00Z: Helmholtz returned `DONE` and opened draft PR #88 at
+  head `4a3e99dce019370137d9461f62201bc7a05fb7fd`. Worker-reported
+  verification passed: `admin-maintenance-api` contract tests (4/4),
+  `cli-admin` integration tests (37/37), `npm run typecheck`, focused ESLint,
+  `git diff --check`, and final `codex review --uncommitted`. Controller
+  observed PR #88 is open/draft/`DIRTY` with branch divergence `1 3` and a
+  merge-tree conflict in the WDD TASK-015 review file; branch freshness must be
+  fixed before merge. Lorentz review was requested in submission
+  `019f384a-790e-7d12-8bee-29d351519b3b`.
 
 ## Review Feedback
 

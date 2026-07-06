@@ -21,8 +21,8 @@ assigned_model_class: implementationComplex
 review_model_class: review
 branch: codex/task/TASK-010-provider-config-apply
 worker_worktree: /Users/ivo.toby/workspace/postgram/.worktrees/TASK-010-provider-config-apply
-worktree_status: ready_for_review
-pr: pending
+worktree_status: pushed
+pr: https://github.com/ivo-toby/postgram/pull/84
 worker_thread_id: 019f35ff-a193-7ae0-a4b8-1ec53faabb74
 review_thread_id: 019f3708-a5ce-7053-97df-8703bcfbb90c
 current_gate: review
@@ -134,7 +134,7 @@ Verified and dispatched at 2026-07-06T05:56:19Z with worker Goodall
 
 ## PR / Patch Reference
 
-Pending GitHub draft PR.
+https://github.com/ivo-toby/postgram/pull/84
 
 ## RED-GREEN TDD Plan
 

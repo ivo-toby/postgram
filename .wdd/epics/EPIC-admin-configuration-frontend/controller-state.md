@@ -33,7 +33,10 @@ freshness blocker: the stale branch now has product-code conflicts in
 `src/index.ts` and `src/transport/admin.ts`, plus the TASK-010 review file.
 Feedback was routed to Goodall. Goodall refreshed and pushed PR #84 at
 `fd440de`; controller freshness checks now pass, PR #84 is `CLEAN`, and Lorentz
-follow-up review is requested before merge.
+follow-up review returned `REVIEW_PASS`. The controller performed the final
+freshness refresh, pushed task head `515cfa5`, merged TASK-010 locally into the
+epic branch in `f5efbc0`, and moved the task file to `done/`. WAVE-005 is ready
+for reconciliation.
 
 WAVE-004 is done and reconciled. PR #81/TASK-009 and PR #82/TASK-006 are
 merged, shared context is reconciled, and both WAVE-004 worktrees are cleaned
@@ -47,7 +50,7 @@ up.
 | WAVE-002 | TASK-004 | full / bundled / risk_based / adaptive | done | confirmed by Ivo via Codex request on 2026-07-05 |
 | WAVE-003 | TASK-005 | full / bundled / risk_based / adaptive | done | confirmed by Ivo via Codex sequential-waves request on 2026-07-05 |
 | WAVE-004 | TASK-006, TASK-009 | full / hybrid / risk_based / adaptive | done | confirmed by Ivo via sequential-waves request on 2026-07-05 |
-| WAVE-005 | TASK-007, TASK-010 | full / hybrid / risk_based / adaptive | in_progress | confirmed by Ivo via finish-all-waves request on 2026-07-06 |
+| WAVE-005 | TASK-007, TASK-010 | full / hybrid / risk_based / adaptive | ready_for_reconciliation | confirmed by Ivo via finish-all-waves request on 2026-07-06 |
 | WAVE-006 | TASK-008, TASK-014 | full / hybrid / risk_based / adaptive | planned | required |
 | WAVE-007 | TASK-011, TASK-015 | full / parallel / risk_based / adaptive | planned | required |
 | WAVE-008 | TASK-012, TASK-013 | full / hybrid / risk_based / adaptive | planned | required |
@@ -61,32 +64,33 @@ Mode: codex_thread_heartbeat
 
 Cadence: 5 minutes
 
-Status: reviewing_task_010_followup
+Status: ready_for_reconciliation_wave_005
 
-Last check: 2026-07-06T11:23:20Z
+Last check: 2026-07-06T11:28:08Z
 
-Next check due: 2026-07-06T11:28:20Z
+Next check due: 2026-07-06T11:33:08Z
 
 Scheduler reference: `postgram-admin-wave-005-wdd-heartbeat`
 
 Fallback prompt:
 
 ```text
-Run one bounded WDD controller heartbeat for /Users/ivo.toby/workspace/postgram,
-epic EPIC-admin-configuration-frontend, active wave WAVE-005. Use the
-subagent-pr-orchestration skill. Start in /Users/ivo.toby/workspace/postgram on
-branch codex/epic/admin-configuration-frontend. Read
+Run one bounded WDD reconciliation handoff heartbeat for
+/Users/ivo.toby/workspace/postgram, epic EPIC-admin-configuration-frontend,
+active wave WAVE-005. Use the wdd-reconcile-wave skill. Start in
+/Users/ivo.toby/workspace/postgram on branch
+codex/epic/admin-configuration-frontend. Read
 .wdd/epics/EPIC-admin-configuration-frontend/orchestration.json and
-controller-state.md. TASK-007 / PR #83 is MERGED and pushed. PR #84 / TASK-010
-had a P2 freshness blocker; Goodall pushed fix head `fd440de` and controller
-verified PR #84 is CLEAN, rev-list is `0 4`, diff-check passes, and merge-tree
-is clean. Lorentz follow-up review was requested. Inspect Lorentz
-(019f322c-02e7-7590-8b8e-ebdd1e9c52ac), PR #84, Goodall, and the TASK-010
-worktree. If follow-up review passes, merge or mark merge_ready according to
-policy after final freshness verification. If review reports P1/P2, route
-feedback. Stop when WAVE-005 bundles are merged, blocked, cancelled, or ready
-for wdd-reconcile-wave. After WAVE-005 is reconciled, continue to the next wave
-per Ivo finish-all-waves instruction and push to GitHub between tasks/waves.
+controller-state.md. Confirm WAVE-005 bundles TASK-007-admin-api-shell-diagnostics
+and TASK-010-provider-config-apply are merged into the epic branch, task files
+are in done/, currentGates.workerDispatch entries are merged, WAVE-005
+waveCompletion is ready_for_reconciliation, branch freshness is
+current_at_merge, cleanup is cleanup_deferred, blocking feedback is empty, and
+shared-context reconciliation is queued. Run wdd-reconcile-wave for WAVE-005,
+reconcile admin API diagnostics and provider-config apply/runtime decisions
+into shared context and downstream tasks, update orchestration.json and
+controller-state.md, clean up WAVE-005 worktrees if safe, then continue to
+WAVE-006 per Ivo finish-all-waves instruction after reconciliation is pushed.
 ```
 
 ## Active Wave Strategy
@@ -137,7 +141,7 @@ per Ivo finish-all-waves instruction and push to GitHub between tasks/waves.
 | TASK-007-admin-api-shell-diagnostics | TICKET-003-admin-api-foundation | codex/task/TASK-007-admin-api-shell-diagnostics | clean_pushed | merged | REVIEW_PASS; freshness verification passed at `f0e889e`; merged locally into epic branch in `16985ef`; cleanup deferred until WAVE-005 reconciliation |
 | TASK-008-admin-key-audit-stats-api | TICKET-003-admin-api-foundation | codex/task/TASK-008-admin-key-audit-stats-api | not_created | planned | `npm test -- tests/contract/admin-key-audit-stats.test.ts`; `npm test -- tests/integration/key-service.test.ts`; `npm run typecheck` |
 | TASK-009-settings-secret-store | TICKET-004-runtime-configuration | codex/task/TASK-009-settings-secret-store | cleaned_up | reconciled | PR #81 follow-up REVIEW_PASS, final branch freshness passed at `ca9c96f`, merged locally into epic branch in `b63ad08`; worktree cleaned up during WAVE-004 reconciliation |
-| TASK-010-provider-config-apply | TICKET-004-runtime-configuration | codex/task/TASK-010-provider-config-apply | clean_pushed | reviewing | Goodall pushed freshness fix head `fd440de`; controller verified PR #84 is CLEAN, divergence `0 4`, diff-check passes, and merge-tree is clean; Lorentz follow-up review requested |
+| TASK-010-provider-config-apply | TICKET-004-runtime-configuration | codex/task/TASK-010-provider-config-apply | clean_pushed | merged | REVIEW_PASS; final branch freshness passed at `515cfa5`; merged locally into epic branch in `f5efbc0`; cleanup deferred until WAVE-005 reconciliation |
 | TASK-011-admin-auth-ui | TICKET-005-admin-frontend | codex/task/TASK-011-admin-auth-ui | not_created | planned | `npm --prefix ui run test -- --run src/components/AdminAuth.test.tsx`; `npm --prefix ui run typecheck` |
 | TASK-012-admin-ops-dashboard-ui | TICKET-005-admin-frontend | codex/task/TASK-012-admin-ops-dashboard-ui | not_created | planned | `npm --prefix ui run test -- --run src/components/AdminOps.test.tsx`; `npm --prefix ui run typecheck` |
 | TASK-013-admin-config-ui | TICKET-005-admin-frontend | codex/task/TASK-013-admin-config-ui | not_created | planned | `npm --prefix ui run test -- --run src/components/AdminConfig.test.tsx`; `npm --prefix ui run typecheck` |
@@ -436,6 +440,14 @@ per Ivo finish-all-waves instruction and push to GitHub between tasks/waves.
   admin-settings, admin auth/MFA/API contract, typecheck, and targeted ESLint
   checks passed on the refreshed head. Lorentz follow-up review was requested.
   Gate is `reviewing`; next check due 2026-07-06T11:28:20Z.
+- WAVE-005 2026-07-06T11:28:08Z observation: Lorentz follow-up returned
+  `REVIEW_PASS`. The controller merged the latest epic checkpoint into the
+  TASK-010 branch, verified final divergence `0 5`, `git diff --check`,
+  `git merge-tree`, and orchestration JSON, reran provider-config/admin API
+  focused tests (42 tests) and `npm run typecheck`, pushed task head `515cfa5`,
+  merged TASK-010 locally into the epic branch in `f5efbc0`, and moved the
+  task file to `done/`. WAVE-005 is ready for reconciliation; cleanup remains
+  deferred and shared-context reconciliation is queued.
 
 ## WAVE-001 Reconciled State
 
@@ -1092,10 +1104,16 @@ per Ivo finish-all-waves instruction and push to GitHub between tasks/waves.
   passes, merge-tree is clean, and the worktree is clean/pushed. Lorentz
   follow-up review was requested. Gate is now `reviewing`; next check due
   2026-07-06T11:28:20Z.
+- 2026-07-06T11:28:08Z: Lorentz follow-up returned `REVIEW_PASS`; final
+  freshness verification passed at task head `515cfa5`, provider-config/admin
+  API tests and typecheck passed, and TASK-010 merged locally into the epic
+  branch in `f5efbc0`. WAVE-005 is ready for reconciliation; next check due
+  2026-07-06T11:33:08Z.
 
 ## Next Action
 
-Next WAVE-005 heartbeat is due at 2026-07-06T11:28:20Z. Inspect Lorentz's
-follow-up review for PR #84. If it passes, run final freshness verification and
-merge or mark merge-ready according to policy. If it reports P1/P2, route the
-new feedback to Goodall or a fresh fix worker.
+Next WAVE-005 heartbeat is due at 2026-07-06T11:33:08Z. Run
+`wdd-reconcile-wave` for WAVE-005, reconcile admin API diagnostics and
+provider-config apply/runtime decisions into shared context and downstream
+tasks, clean up WAVE-005 worktrees if safe, push reconciliation, then continue
+to WAVE-006 per Ivo's finish-all-waves instruction.

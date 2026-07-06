@@ -21,7 +21,7 @@ review_model_class: review
 branch: codex/task/TASK-014-admin-job-foundation
 worker_worktree: /Users/ivo.toby/workspace/postgram/.worktrees/TASK-014-admin-job-foundation
 worktree_status: verified_pushed
-pr: pending draft PR
+pr: https://github.com/ivo-toby/postgram/pull/86
 worker_thread_id: null
 review_thread_id: null
 current_gate: ready_for_review
@@ -119,7 +119,7 @@ worktree contains the in-progress task file and orchestration state.
 
 ## PR / Patch Reference
 
-Pending draft PR creation.
+https://github.com/ivo-toby/postgram/pull/86
 
 ## RED-GREEN TDD Plan
 

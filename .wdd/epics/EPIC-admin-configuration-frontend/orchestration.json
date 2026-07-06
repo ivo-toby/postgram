@@ -1973,21 +1973,22 @@
       "workerThreadId": "019f37c5-29ec-7ec3-b6fd-6aba64df3dc9",
       "reviewThreadId": null,
       "workerWorktree": "/Users/ivo.toby/workspace/postgram/.worktrees/TASK-011-admin-auth-ui",
-      "worktreeStatus": "active_clean",
+      "worktreeStatus": "active_uncommitted",
       "pr": null,
       "latestCommit": "848b902c5f4829ff78529256c3a9181423c5a150",
-      "branchFreshness": "current_at_dispatch",
+      "branchFreshness": "behind_epic_controller_checkpoint",
       "blockingFeedback": [],
       "verification": {
-        "result": "branch_pushed_worker_dispatched",
+        "result": "in_progress_observed_recent_activity_tracked_diff_check_passed",
         "commands": [
           "npm --prefix ui run test -- --run src/components/AdminAuth.test.tsx",
           "npm --prefix ui run typecheck"
         ],
-        "evidence": "Task branch codex/task/TASK-011-admin-auth-ui and worktree /Users/ivo.toby/workspace/postgram/.worktrees/TASK-011-admin-auth-ui are clean/pushed at 848b902; worker Meitner (019f37c5-29ec-7ec3-b6fd-6aba64df3dc9) dispatched at 2026-07-06T14:11:59Z. Task implementation verification has not run yet."
+        "evidence": "Meitner remains RUNNING; no PR exists for codex/task/TASK-011-admin-auth-ui. Worktree has active uncommitted frontend auth changes in expected TASK-011 areas, with recent mtimes during this tick. Tracked git diff --check passed; no staged files. No nudge required because worker appears active."
       },
       "currentGate": "no_pr",
-      "workerNickname": "Meitner"
+      "workerNickname": "Meitner",
+      "lastObservedAt": "2026-07-06T14:29:25Z"
     },
     {
       "id": "TASK-012-admin-ops-dashboard-ui",
@@ -2178,22 +2179,23 @@
       "workerThreadId": "019f37c5-7084-7920-916a-7fd9ac7d8cb6",
       "reviewThreadId": null,
       "workerWorktree": "/Users/ivo.toby/workspace/postgram/.worktrees/TASK-015-maintenance-admin-api",
-      "worktreeStatus": "active_clean",
+      "worktreeStatus": "active_uncommitted",
       "pr": null,
       "latestCommit": "848b902c5f4829ff78529256c3a9181423c5a150",
-      "branchFreshness": "current_at_dispatch",
+      "branchFreshness": "behind_epic_controller_checkpoint",
       "blockingFeedback": [],
       "verification": {
-        "result": "branch_pushed_worker_dispatched",
+        "result": "in_progress_observed_recent_activity_tracked_diff_check_passed",
         "commands": [
           "npm test -- tests/contract/admin-maintenance-api.test.ts",
           "npm test -- tests/integration/cli-admin.test.ts",
           "npm run typecheck"
         ],
-        "evidence": "Task branch codex/task/TASK-015-maintenance-admin-api and worktree /Users/ivo.toby/workspace/postgram/.worktrees/TASK-015-maintenance-admin-api are clean/pushed at 848b902; worker Helmholtz (019f37c5-7084-7920-916a-7fd9ac7d8cb6) dispatched at 2026-07-06T14:11:59Z. Task implementation verification has not run yet."
+        "evidence": "Helmholtz remains RUNNING; no PR exists for codex/task/TASK-015-maintenance-admin-api. Worktree has active uncommitted backend maintenance API changes in expected TASK-015 areas, with tests modified at the current tick. Tracked git diff --check passed; no staged files. No nudge required because worker appears active."
       },
       "currentGate": "no_pr",
-      "workerNickname": "Helmholtz"
+      "workerNickname": "Helmholtz",
+      "lastObservedAt": "2026-07-06T14:29:25Z"
     },
     {
       "id": "TASK-016-maintenance-admin-ui",
@@ -2315,12 +2317,12 @@
   "monitoring": {
     "mode": "adaptive",
     "cadence": "15m",
-    "status": "wave_007_dispatched_monitoring_active",
-    "lastCheckedAt": "2026-07-06T14:11:59Z",
-    "nextCheckDueAt": "2026-07-06T14:26:59Z",
+    "status": "wave_007_workers_active_no_pr",
+    "lastCheckedAt": "2026-07-06T14:29:25Z",
+    "nextCheckDueAt": "2026-07-06T14:44:25Z",
     "schedulerRef": "postgram-admin-wave-005-wdd-heartbeat",
     "schedulerName": "postgram-admin-wave-007-wdd-heartbeat",
-    "fallbackPrompt": "WAVE-007 workers Meitner (TASK-011) and Helmholtz (TASK-015) are dispatched. Inspect worktrees and PRs, update gates, and move any produced PR or patch to review orchestration."
+    "fallbackPrompt": "WAVE-007 workers Meitner (TASK-011) and Helmholtz (TASK-015) are active with no PR yet. Inspect worktrees and PRs, keep no_pr unless inactive/stale, and move any produced PR or patch to review orchestration."
   },
   "sharedContext": {
     "index": "shared-context/index.md",
@@ -2358,44 +2360,75 @@
         ],
         "branch": "codex/task/TASK-011-admin-auth-ui",
         "worktree": "/Users/ivo.toby/workspace/postgram/.worktrees/TASK-011-admin-auth-ui",
-        "worktreeStatus": "active_clean",
+        "worktreeStatus": "active_uncommitted",
         "workerThreadId": "019f37c5-29ec-7ec3-b6fd-6aba64df3dc9",
         "workerNickname": "Meitner",
         "reviewThreadId": null,
         "reviewNickname": null,
         "currentGate": "no_pr",
-        "branchFreshness": "current_at_dispatch",
+        "branchFreshness": "behind_epic_controller_checkpoint",
         "pr": null,
         "latestCommit": "848b902c5f4829ff78529256c3a9181423c5a150",
         "blockingFeedback": [],
         "verification": {
-          "result": "branch_pushed_worker_dispatched",
+          "result": "in_progress_observed_recent_activity_tracked_diff_check_passed",
           "commands": [
+            "multi_agent_v1.wait_agent Meitner Helmholtz timeout 10000ms",
+            "gh pr list --base codex/epic/admin-configuration-frontend --head <task-branch> --json number,url,state,isDraft,title,headRefOid,updatedAt,mergeStateStatus",
             "git status --short --branch",
-            "git rev-parse --short HEAD",
+            "git rev-parse HEAD",
             "git rev-list --left-right --count origin/codex/epic/admin-configuration-frontend...HEAD",
-            "git push -u origin codex/task/TASK-011-admin-auth-ui"
+            "git diff --name-only",
+            "git diff --cached --name-only",
+            "git diff --check",
+            "stat changed and untracked files for recent activity"
           ],
-          "evidence": "Worktree /Users/ivo.toby/workspace/postgram/.worktrees/TASK-011-admin-auth-ui is clean at 848b902; remote branch codex/task/TASK-011-admin-auth-ui is pushed at the activation base with divergence 0 0. Worker Meitner (019f37c5-29ec-7ec3-b6fd-6aba64df3dc9) dispatched at 2026-07-06T14:11:59Z."
+          "evidence": "Meitner remains RUNNING; no PR exists for codex/task/TASK-011-admin-auth-ui. Worktree has active uncommitted frontend auth changes in expected TASK-011 areas, with recent mtimes during this tick. Tracked git diff --check passed; no staged files. No nudge required because worker appears active."
         },
         "activatedAt": "2026-07-06T14:08:16Z",
         "cleanupState": "not_started",
         "sharedContextReconciliation": "not_started",
-        "lastObservedAt": "2026-07-06T14:11:59Z",
+        "lastObservedAt": "2026-07-06T14:29:25Z",
         "branchPushedAt": "2026-07-06T14:11:59Z",
         "dispatchedAt": "2026-07-06T14:11:59Z",
         "dispatchBaseCommit": "848b902c5f4829ff78529256c3a9181423c5a150",
         "worktreeObservation": {
-          "observedAt": "2026-07-06T14:11:59Z",
+          "observedAt": "2026-07-06T14:29:25Z",
           "taskId": "TASK-011-admin-auth-ui",
-          "status": "worker_dispatched_no_pr",
+          "status": "active_uncommitted_no_pr",
           "workerStatus": "RUNNING",
+          "workerPoll": "timed_out_no_final_status",
           "pr": null,
           "prState": "none",
-          "worktreeStatus": "active_clean",
+          "worktreeStatus": "active_uncommitted",
           "branchHead": "848b902c5f4829ff78529256c3a9181423c5a150",
-          "branchFreshness": "current_at_dispatch",
-          "coordinationNote": "Initial dispatch complete; await PR or patch reference."
+          "branchDivergence": "origin/codex/epic/admin-configuration-frontend...HEAD = 1 0; task branch is behind the epic branch by the controller dispatch checkpoint and will need freshness refresh before review or merge.",
+          "branchFreshness": "behind_epic_controller_checkpoint",
+          "files": [
+            "ui/nginx.conf",
+            "ui/src/App.tsx",
+            "ui/src/components/TopBar.tsx",
+            "ui/vite.config.ts",
+            "ui/src/components/AdminAuth.test.tsx",
+            "ui/src/components/admin/AdminAuth.tsx",
+            "ui/src/lib/adminApi.ts"
+          ],
+          "untrackedFiles": [
+            "ui/src/components/AdminAuth.test.tsx",
+            "ui/src/components/admin/AdminAuth.tsx",
+            "ui/src/lib/adminApi.ts"
+          ],
+          "recentFilesWithinHeartbeatWindow": [
+            "ui/nginx.conf",
+            "ui/src/App.tsx",
+            "ui/src/components/AdminAuth.test.tsx",
+            "ui/src/components/TopBar.tsx",
+            "ui/src/components/admin/AdminAuth.tsx",
+            "ui/src/lib/adminApi.ts",
+            "ui/vite.config.ts"
+          ],
+          "diffCheck": "Tracked git diff --check passed; no staged files.",
+          "coordinationNote": "No nudge required; worker has recent activity in expected task-owned files. Branch freshness refresh required before review or merge."
         }
       },
       {
@@ -2405,44 +2438,71 @@
         ],
         "branch": "codex/task/TASK-015-maintenance-admin-api",
         "worktree": "/Users/ivo.toby/workspace/postgram/.worktrees/TASK-015-maintenance-admin-api",
-        "worktreeStatus": "active_clean",
+        "worktreeStatus": "active_uncommitted",
         "workerThreadId": "019f37c5-7084-7920-916a-7fd9ac7d8cb6",
         "workerNickname": "Helmholtz",
         "reviewThreadId": null,
         "reviewNickname": null,
         "currentGate": "no_pr",
-        "branchFreshness": "current_at_dispatch",
+        "branchFreshness": "behind_epic_controller_checkpoint",
         "pr": null,
         "latestCommit": "848b902c5f4829ff78529256c3a9181423c5a150",
         "blockingFeedback": [],
         "verification": {
-          "result": "branch_pushed_worker_dispatched",
+          "result": "in_progress_observed_recent_activity_tracked_diff_check_passed",
           "commands": [
+            "multi_agent_v1.wait_agent Meitner Helmholtz timeout 10000ms",
+            "gh pr list --base codex/epic/admin-configuration-frontend --head <task-branch> --json number,url,state,isDraft,title,headRefOid,updatedAt,mergeStateStatus",
             "git status --short --branch",
-            "git rev-parse --short HEAD",
+            "git rev-parse HEAD",
             "git rev-list --left-right --count origin/codex/epic/admin-configuration-frontend...HEAD",
-            "git push -u origin codex/task/TASK-015-maintenance-admin-api"
+            "git diff --name-only",
+            "git diff --cached --name-only",
+            "git diff --check",
+            "stat changed and untracked files for recent activity"
           ],
-          "evidence": "Worktree /Users/ivo.toby/workspace/postgram/.worktrees/TASK-015-maintenance-admin-api is clean at 848b902; remote branch codex/task/TASK-015-maintenance-admin-api is pushed at the activation base with divergence 0 0. Worker Helmholtz (019f37c5-7084-7920-916a-7fd9ac7d8cb6) dispatched at 2026-07-06T14:11:59Z."
+          "evidence": "Helmholtz remains RUNNING; no PR exists for codex/task/TASK-015-maintenance-admin-api. Worktree has active uncommitted backend maintenance API changes in expected TASK-015 areas, with tests modified at the current tick. Tracked git diff --check passed; no staged files. No nudge required because worker appears active."
         },
         "activatedAt": "2026-07-06T14:08:16Z",
         "cleanupState": "not_started",
         "sharedContextReconciliation": "not_started",
-        "lastObservedAt": "2026-07-06T14:11:59Z",
+        "lastObservedAt": "2026-07-06T14:29:25Z",
         "branchPushedAt": "2026-07-06T14:11:59Z",
         "dispatchedAt": "2026-07-06T14:11:59Z",
         "dispatchBaseCommit": "848b902c5f4829ff78529256c3a9181423c5a150",
         "worktreeObservation": {
-          "observedAt": "2026-07-06T14:11:59Z",
+          "observedAt": "2026-07-06T14:29:25Z",
           "taskId": "TASK-015-maintenance-admin-api",
-          "status": "worker_dispatched_no_pr",
+          "status": "active_uncommitted_no_pr",
           "workerStatus": "RUNNING",
+          "workerPoll": "timed_out_no_final_status",
           "pr": null,
           "prState": "none",
-          "worktreeStatus": "active_clean",
+          "worktreeStatus": "active_uncommitted",
           "branchHead": "848b902c5f4829ff78529256c3a9181423c5a150",
-          "branchFreshness": "current_at_dispatch",
-          "coordinationNote": "Initial dispatch complete; await PR or patch reference."
+          "branchDivergence": "origin/codex/epic/admin-configuration-frontend...HEAD = 1 0; task branch is behind the epic branch by the controller dispatch checkpoint and will need freshness refresh before review or merge.",
+          "branchFreshness": "behind_epic_controller_checkpoint",
+          "files": [
+            "src/cli/admin/pgm-admin.ts",
+            "src/transport/admin.ts",
+            "src/services/admin-maintenance-service.ts",
+            "src/transport/admin-maintenance.ts",
+            "tests/contract/admin-maintenance-api.test.ts"
+          ],
+          "untrackedFiles": [
+            "src/services/admin-maintenance-service.ts",
+            "src/transport/admin-maintenance.ts",
+            "tests/contract/admin-maintenance-api.test.ts"
+          ],
+          "recentFilesWithinHeartbeatWindow": [
+            "src/cli/admin/pgm-admin.ts",
+            "src/services/admin-maintenance-service.ts",
+            "src/transport/admin-maintenance.ts",
+            "src/transport/admin.ts",
+            "tests/contract/admin-maintenance-api.test.ts"
+          ],
+          "diffCheck": "Tracked git diff --check passed; no staged files.",
+          "coordinationNote": "No nudge required; worker has recent activity in expected task-owned files. Branch freshness refresh required before review or merge."
         }
       }
     ],
@@ -2450,7 +2510,7 @@
     "activationCommit": "848b902c5f4829ff78529256c3a9181423c5a150",
     "workerDispatchStartedAt": "2026-07-06T14:11:59Z",
     "dispatchedAt": "2026-07-06T14:11:59Z",
-    "lastObservedAt": "2026-07-06T14:11:59Z"
+    "lastObservedAt": "2026-07-06T14:29:25Z"
   },
   "currentGates": {
     "epicBranch": {
@@ -2485,8 +2545,8 @@
       "WAVE-005-provider-config-apply": "cleaned_up",
       "WAVE-006-admin-key-audit-stats-api": "cleaned_up",
       "WAVE-006-admin-job-foundation": "cleaned_up",
-      "WAVE-007-admin-auth-ui": "active_clean",
-      "WAVE-007-maintenance-admin-api": "active_clean"
+      "WAVE-007-admin-auth-ui": "active_uncommitted",
+      "WAVE-007-maintenance-admin-api": "active_uncommitted"
     },
     "workerDispatch": {
       "WAVE-001-admin-feasibility-gate": "reconciled",
@@ -2517,12 +2577,12 @@
     "monitoring": {
       "mode": "adaptive",
       "cadence": "15m",
-      "status": "wave_007_dispatched_monitoring_active",
-      "lastCheckedAt": "2026-07-06T14:11:59Z",
-      "nextCheckDueAt": "2026-07-06T14:26:59Z",
+      "status": "wave_007_workers_active_no_pr",
+      "lastCheckedAt": "2026-07-06T14:29:25Z",
+      "nextCheckDueAt": "2026-07-06T14:44:25Z",
       "schedulerRef": "postgram-admin-wave-005-wdd-heartbeat",
       "schedulerName": "postgram-admin-wave-007-wdd-heartbeat",
-      "fallbackPrompt": "WAVE-007 workers Meitner (TASK-011) and Helmholtz (TASK-015) are dispatched. Inspect worktrees and PRs, update gates, and move any produced PR or patch to review orchestration."
+      "fallbackPrompt": "WAVE-007 workers Meitner (TASK-011) and Helmholtz (TASK-015) are active with no PR yet. Inspect worktrees and PRs, keep no_pr unless inactive/stale, and move any produced PR or patch to review orchestration."
     },
     "review": {
       "WAVE-001-admin-feasibility-gate": {
@@ -2774,8 +2834,8 @@
       "WAVE-005-provider-config-apply": "current_at_merge",
       "WAVE-006-admin-key-audit-stats-api": "current_at_merge",
       "WAVE-006-admin-job-foundation": "current_at_merge",
-      "WAVE-007-admin-auth-ui": "current_at_dispatch",
-      "WAVE-007-maintenance-admin-api": "current_at_dispatch"
+      "WAVE-007-admin-auth-ui": "behind_epic_controller_checkpoint",
+      "WAVE-007-maintenance-admin-api": "behind_epic_controller_checkpoint"
     },
     "merge": {
       "WAVE-001-admin-feasibility-gate": {
@@ -3515,14 +3575,14 @@
         "evidence": "WAVE-006 reconciled on 2026-07-06 after PR #85 and PR #86 were confirmed MERGED. Shared context resources now record the key/audit/stats admin API contract, admin job foundation, security gates, validation evidence, and migration/job persistence rules. TASK-014 worktree was clean and removed; TASK-008 was already cleaned up. Future TASK-011/TASK-012/TASK-015/TASK-016 carry forward WAVE-006 route/job contracts."
       },
       "WAVE-007-admin-auth-ui": {
-        "result": "branch_pushed_worker_dispatched",
-        "checkedAt": "2026-07-06T14:11:59Z",
-        "evidence": "Clean worktree and pushed branch at 848b902; worker Meitner (019f37c5-29ec-7ec3-b6fd-6aba64df3dc9) dispatched."
+        "result": "in_progress_observed_recent_activity_tracked_diff_check_passed",
+        "checkedAt": "2026-07-06T14:29:25Z",
+        "evidence": "Meitner remains RUNNING; no PR exists for codex/task/TASK-011-admin-auth-ui. Worktree has active uncommitted frontend auth changes in expected TASK-011 areas, with recent mtimes during this tick. Tracked git diff --check passed; no staged files. No nudge required because worker appears active."
       },
       "WAVE-007-maintenance-admin-api": {
-        "result": "branch_pushed_worker_dispatched",
-        "checkedAt": "2026-07-06T14:11:59Z",
-        "evidence": "Clean worktree and pushed branch at 848b902; worker Helmholtz (019f37c5-7084-7920-916a-7fd9ac7d8cb6) dispatched."
+        "result": "in_progress_observed_recent_activity_tracked_diff_check_passed",
+        "checkedAt": "2026-07-06T14:29:25Z",
+        "evidence": "Helmholtz remains RUNNING; no PR exists for codex/task/TASK-015-maintenance-admin-api. Worktree has active uncommitted backend maintenance API changes in expected TASK-015 areas, with tests modified at the current tick. Tracked git diff --check passed; no staged files. No nudge required because worker appears active."
       }
     },
     "feedback": {
@@ -3651,44 +3711,75 @@
         ],
         "branch": "codex/task/TASK-011-admin-auth-ui",
         "worktree": "/Users/ivo.toby/workspace/postgram/.worktrees/TASK-011-admin-auth-ui",
-        "worktreeStatus": "active_clean",
+        "worktreeStatus": "active_uncommitted",
         "workerThreadId": "019f37c5-29ec-7ec3-b6fd-6aba64df3dc9",
         "workerNickname": "Meitner",
         "reviewThreadId": null,
         "reviewNickname": null,
         "currentGate": "no_pr",
-        "branchFreshness": "current_at_dispatch",
+        "branchFreshness": "behind_epic_controller_checkpoint",
         "pr": null,
         "latestCommit": "848b902c5f4829ff78529256c3a9181423c5a150",
         "blockingFeedback": [],
         "verification": {
-          "result": "branch_pushed_worker_dispatched",
+          "result": "in_progress_observed_recent_activity_tracked_diff_check_passed",
           "commands": [
+            "multi_agent_v1.wait_agent Meitner Helmholtz timeout 10000ms",
+            "gh pr list --base codex/epic/admin-configuration-frontend --head <task-branch> --json number,url,state,isDraft,title,headRefOid,updatedAt,mergeStateStatus",
             "git status --short --branch",
-            "git rev-parse --short HEAD",
+            "git rev-parse HEAD",
             "git rev-list --left-right --count origin/codex/epic/admin-configuration-frontend...HEAD",
-            "git push -u origin codex/task/TASK-011-admin-auth-ui"
+            "git diff --name-only",
+            "git diff --cached --name-only",
+            "git diff --check",
+            "stat changed and untracked files for recent activity"
           ],
-          "evidence": "Worktree /Users/ivo.toby/workspace/postgram/.worktrees/TASK-011-admin-auth-ui is clean at 848b902; remote branch codex/task/TASK-011-admin-auth-ui is pushed at the activation base with divergence 0 0. Worker Meitner (019f37c5-29ec-7ec3-b6fd-6aba64df3dc9) dispatched at 2026-07-06T14:11:59Z."
+          "evidence": "Meitner remains RUNNING; no PR exists for codex/task/TASK-011-admin-auth-ui. Worktree has active uncommitted frontend auth changes in expected TASK-011 areas, with recent mtimes during this tick. Tracked git diff --check passed; no staged files. No nudge required because worker appears active."
         },
         "activatedAt": "2026-07-06T14:08:16Z",
         "cleanupState": "not_started",
         "sharedContextReconciliation": "not_started",
-        "lastObservedAt": "2026-07-06T14:11:59Z",
+        "lastObservedAt": "2026-07-06T14:29:25Z",
         "branchPushedAt": "2026-07-06T14:11:59Z",
         "dispatchedAt": "2026-07-06T14:11:59Z",
         "dispatchBaseCommit": "848b902c5f4829ff78529256c3a9181423c5a150",
         "worktreeObservation": {
-          "observedAt": "2026-07-06T14:11:59Z",
+          "observedAt": "2026-07-06T14:29:25Z",
           "taskId": "TASK-011-admin-auth-ui",
-          "status": "worker_dispatched_no_pr",
+          "status": "active_uncommitted_no_pr",
           "workerStatus": "RUNNING",
+          "workerPoll": "timed_out_no_final_status",
           "pr": null,
           "prState": "none",
-          "worktreeStatus": "active_clean",
+          "worktreeStatus": "active_uncommitted",
           "branchHead": "848b902c5f4829ff78529256c3a9181423c5a150",
-          "branchFreshness": "current_at_dispatch",
-          "coordinationNote": "Initial dispatch complete; await PR or patch reference."
+          "branchDivergence": "origin/codex/epic/admin-configuration-frontend...HEAD = 1 0; task branch is behind the epic branch by the controller dispatch checkpoint and will need freshness refresh before review or merge.",
+          "branchFreshness": "behind_epic_controller_checkpoint",
+          "files": [
+            "ui/nginx.conf",
+            "ui/src/App.tsx",
+            "ui/src/components/TopBar.tsx",
+            "ui/vite.config.ts",
+            "ui/src/components/AdminAuth.test.tsx",
+            "ui/src/components/admin/AdminAuth.tsx",
+            "ui/src/lib/adminApi.ts"
+          ],
+          "untrackedFiles": [
+            "ui/src/components/AdminAuth.test.tsx",
+            "ui/src/components/admin/AdminAuth.tsx",
+            "ui/src/lib/adminApi.ts"
+          ],
+          "recentFilesWithinHeartbeatWindow": [
+            "ui/nginx.conf",
+            "ui/src/App.tsx",
+            "ui/src/components/AdminAuth.test.tsx",
+            "ui/src/components/TopBar.tsx",
+            "ui/src/components/admin/AdminAuth.tsx",
+            "ui/src/lib/adminApi.ts",
+            "ui/vite.config.ts"
+          ],
+          "diffCheck": "Tracked git diff --check passed; no staged files.",
+          "coordinationNote": "No nudge required; worker has recent activity in expected task-owned files. Branch freshness refresh required before review or merge."
         }
       },
       {
@@ -3698,44 +3789,71 @@
         ],
         "branch": "codex/task/TASK-015-maintenance-admin-api",
         "worktree": "/Users/ivo.toby/workspace/postgram/.worktrees/TASK-015-maintenance-admin-api",
-        "worktreeStatus": "active_clean",
+        "worktreeStatus": "active_uncommitted",
         "workerThreadId": "019f37c5-7084-7920-916a-7fd9ac7d8cb6",
         "workerNickname": "Helmholtz",
         "reviewThreadId": null,
         "reviewNickname": null,
         "currentGate": "no_pr",
-        "branchFreshness": "current_at_dispatch",
+        "branchFreshness": "behind_epic_controller_checkpoint",
         "pr": null,
         "latestCommit": "848b902c5f4829ff78529256c3a9181423c5a150",
         "blockingFeedback": [],
         "verification": {
-          "result": "branch_pushed_worker_dispatched",
+          "result": "in_progress_observed_recent_activity_tracked_diff_check_passed",
           "commands": [
+            "multi_agent_v1.wait_agent Meitner Helmholtz timeout 10000ms",
+            "gh pr list --base codex/epic/admin-configuration-frontend --head <task-branch> --json number,url,state,isDraft,title,headRefOid,updatedAt,mergeStateStatus",
             "git status --short --branch",
-            "git rev-parse --short HEAD",
+            "git rev-parse HEAD",
             "git rev-list --left-right --count origin/codex/epic/admin-configuration-frontend...HEAD",
-            "git push -u origin codex/task/TASK-015-maintenance-admin-api"
+            "git diff --name-only",
+            "git diff --cached --name-only",
+            "git diff --check",
+            "stat changed and untracked files for recent activity"
           ],
-          "evidence": "Worktree /Users/ivo.toby/workspace/postgram/.worktrees/TASK-015-maintenance-admin-api is clean at 848b902; remote branch codex/task/TASK-015-maintenance-admin-api is pushed at the activation base with divergence 0 0. Worker Helmholtz (019f37c5-7084-7920-916a-7fd9ac7d8cb6) dispatched at 2026-07-06T14:11:59Z."
+          "evidence": "Helmholtz remains RUNNING; no PR exists for codex/task/TASK-015-maintenance-admin-api. Worktree has active uncommitted backend maintenance API changes in expected TASK-015 areas, with tests modified at the current tick. Tracked git diff --check passed; no staged files. No nudge required because worker appears active."
         },
         "activatedAt": "2026-07-06T14:08:16Z",
         "cleanupState": "not_started",
         "sharedContextReconciliation": "not_started",
-        "lastObservedAt": "2026-07-06T14:11:59Z",
+        "lastObservedAt": "2026-07-06T14:29:25Z",
         "branchPushedAt": "2026-07-06T14:11:59Z",
         "dispatchedAt": "2026-07-06T14:11:59Z",
         "dispatchBaseCommit": "848b902c5f4829ff78529256c3a9181423c5a150",
         "worktreeObservation": {
-          "observedAt": "2026-07-06T14:11:59Z",
+          "observedAt": "2026-07-06T14:29:25Z",
           "taskId": "TASK-015-maintenance-admin-api",
-          "status": "worker_dispatched_no_pr",
+          "status": "active_uncommitted_no_pr",
           "workerStatus": "RUNNING",
+          "workerPoll": "timed_out_no_final_status",
           "pr": null,
           "prState": "none",
-          "worktreeStatus": "active_clean",
+          "worktreeStatus": "active_uncommitted",
           "branchHead": "848b902c5f4829ff78529256c3a9181423c5a150",
-          "branchFreshness": "current_at_dispatch",
-          "coordinationNote": "Initial dispatch complete; await PR or patch reference."
+          "branchDivergence": "origin/codex/epic/admin-configuration-frontend...HEAD = 1 0; task branch is behind the epic branch by the controller dispatch checkpoint and will need freshness refresh before review or merge.",
+          "branchFreshness": "behind_epic_controller_checkpoint",
+          "files": [
+            "src/cli/admin/pgm-admin.ts",
+            "src/transport/admin.ts",
+            "src/services/admin-maintenance-service.ts",
+            "src/transport/admin-maintenance.ts",
+            "tests/contract/admin-maintenance-api.test.ts"
+          ],
+          "untrackedFiles": [
+            "src/services/admin-maintenance-service.ts",
+            "src/transport/admin-maintenance.ts",
+            "tests/contract/admin-maintenance-api.test.ts"
+          ],
+          "recentFilesWithinHeartbeatWindow": [
+            "src/cli/admin/pgm-admin.ts",
+            "src/services/admin-maintenance-service.ts",
+            "src/transport/admin-maintenance.ts",
+            "src/transport/admin.ts",
+            "tests/contract/admin-maintenance-api.test.ts"
+          ],
+          "diffCheck": "Tracked git diff --check passed; no staged files.",
+          "coordinationNote": "No nudge required; worker has recent activity in expected task-owned files. Branch freshness refresh required before review or merge."
         }
       }
     ],
@@ -3743,6 +3861,6 @@
     "activationCommit": "848b902c5f4829ff78529256c3a9181423c5a150",
     "workerDispatchStartedAt": "2026-07-06T14:11:59Z",
     "dispatchedAt": "2026-07-06T14:11:59Z",
-    "lastObservedAt": "2026-07-06T14:11:59Z"
+    "lastObservedAt": "2026-07-06T14:29:25Z"
   }
 }

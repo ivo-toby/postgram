@@ -91,11 +91,11 @@ Mode: adaptive
 
 Cadence: 15m
 
-Status: wave_007_dispatched_monitoring_active
+Status: wave_007_workers_active_no_pr
 
-Last check: 2026-07-06T14:11:59Z
+Last check: 2026-07-06T14:29:25Z
 
-Next check due: 2026-07-06T14:26:59Z
+Next check due: 2026-07-06T14:44:25Z
 
 Scheduler reference: `postgram-admin-wave-005-wdd-heartbeat`
 
@@ -104,9 +104,9 @@ Scheduler name: `postgram-admin-wave-007-wdd-heartbeat`
 Fallback prompt:
 
 ```text
-WAVE-007 workers Meitner (TASK-011) and Helmholtz (TASK-015) are dispatched.
-Inspect worktrees and PRs, update gates, and move any produced PR or patch to
-review orchestration.
+WAVE-007 workers Meitner (TASK-011) and Helmholtz (TASK-015) are active with
+no PR yet. Inspect worktrees and PRs, keep no_pr unless inactive/stale, and
+move any produced PR or patch to review orchestration.
 ```
 
 ## Active Wave Strategy
@@ -158,11 +158,11 @@ review orchestration.
 | TASK-008-admin-key-audit-stats-api | TICKET-003-admin-api-foundation | codex/task/TASK-008-admin-key-audit-stats-api | cleaned_up | reconciled | REVIEW_PASS; freshness current at task head `281681b`; post-merge tests/typecheck/touched-file ESLint passed; merged locally into epic branch in `13465eb`; WAVE-006 reconciled |
 | TASK-009-settings-secret-store | TICKET-004-runtime-configuration | codex/task/TASK-009-settings-secret-store | cleaned_up | reconciled | PR #81 follow-up REVIEW_PASS, final branch freshness passed at `ca9c96f`, merged locally into epic branch in `b63ad08`; worktree cleaned up during WAVE-004 reconciliation |
 | TASK-010-provider-config-apply | TICKET-004-runtime-configuration | codex/task/TASK-010-provider-config-apply | cleaned_up | reconciled | REVIEW_PASS; final branch freshness passed at `515cfa5`; merged locally into epic branch in `f5efbc0`; PR #84 merged at 2026-07-06T11:31:10Z; WAVE-005 reconciled |
-| TASK-011-admin-auth-ui | TICKET-005-admin-frontend | codex/task/TASK-011-admin-auth-ui | active_clean | no_pr | `npm --prefix ui run test -- --run src/components/AdminAuth.test.tsx`; `npm --prefix ui run typecheck` |
+| TASK-011-admin-auth-ui | TICKET-005-admin-frontend | codex/task/TASK-011-admin-auth-ui | active_uncommitted | no_pr | Meitner running; active frontend auth changes observed; tracked `git diff --check` passed; branch freshness refresh required before review/merge |
 | TASK-012-admin-ops-dashboard-ui | TICKET-005-admin-frontend | codex/task/TASK-012-admin-ops-dashboard-ui | not_created | planned | `npm --prefix ui run test -- --run src/components/AdminOps.test.tsx`; `npm --prefix ui run typecheck` |
 | TASK-013-admin-config-ui | TICKET-005-admin-frontend | codex/task/TASK-013-admin-config-ui | not_created | planned | `npm --prefix ui run test -- --run src/components/AdminConfig.test.tsx`; `npm --prefix ui run typecheck` |
 | TASK-014-admin-job-foundation | TICKET-006-maintenance-jobs | codex/task/TASK-014-admin-job-foundation | cleaned_up | reconciled | Lorentz REVIEW_PASS; freshness current at task head `0e08630`; post-merge tests/typecheck/touched-file ESLint passed; merged locally into epic branch in `c5edbfc`; WAVE-006 reconciled and worktree cleaned up |
-| TASK-015-maintenance-admin-api | TICKET-006-maintenance-jobs | codex/task/TASK-015-maintenance-admin-api | active_clean | no_pr | `npm test -- tests/contract/admin-maintenance-api.test.ts`; `npm test -- tests/integration/cli-admin.test.ts`; `npm run typecheck` |
+| TASK-015-maintenance-admin-api | TICKET-006-maintenance-jobs | codex/task/TASK-015-maintenance-admin-api | active_uncommitted | no_pr | Helmholtz running; active backend maintenance API changes observed; tracked `git diff --check` passed; branch freshness refresh required before review/merge |
 | TASK-016-maintenance-admin-ui | TICKET-006-maintenance-jobs | codex/task/TASK-016-maintenance-admin-ui | not_created | planned | `npm --prefix ui run test -- --run src/components/AdminMaintenance.test.tsx`; `npm --prefix ui run typecheck` |
 | TASK-017-docker-first-run-no-cli | TICKET-007-docker-e2e-validation | codex/task/TASK-017-docker-first-run-no-cli | not_created | planned | `docker compose config`; `npm run typecheck`; `npm --prefix ui run build` |
 | TASK-018-security-epic-validation | TICKET-007-docker-e2e-validation | codex/task/TASK-018-security-epic-validation | not_created | planned | broad backend, frontend, Docker, and smoke validation |
@@ -1277,6 +1277,20 @@ review orchestration.
   (`019f37c5-29ec-7ec3-b6fd-6aba64df3dc9`) for TASK-011 and Helmholtz
   (`019f37c5-7084-7920-916a-7fd9ac7d8cb6`) for TASK-015. Both gates are
   `no_pr`; next check due 2026-07-06T14:26:59Z.
+- 2026-07-06T14:29:25Z: Bounded poll found Meitner and Helmholtz still
+  running with no PRs yet. TASK-011 has active uncommitted frontend auth
+  changes in `ui/src/App.tsx`, `ui/src/components/TopBar.tsx`,
+  `ui/src/components/AdminAuth.test.tsx`,
+  `ui/src/components/admin/AdminAuth.tsx`, `ui/src/lib/adminApi.ts`,
+  `ui/nginx.conf`, and `ui/vite.config.ts`. TASK-015 has active uncommitted
+  backend maintenance API changes in `src/cli/admin/pgm-admin.ts`,
+  `src/transport/admin.ts`, `src/services/admin-maintenance-service.ts`,
+  `src/transport/admin-maintenance.ts`, and
+  `tests/contract/admin-maintenance-api.test.ts`. Both branches are one
+  controller checkpoint behind the epic branch and must refresh before review
+  or merge. Tracked `git diff --check` passed in both worktrees; no nudge sent
+  because both workers have recent task-owned activity. Next check due
+  2026-07-06T14:44:25Z.
 
 ## Next Action
 

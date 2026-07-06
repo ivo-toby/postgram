@@ -21,12 +21,12 @@ assigned_model_class: implementationComplex
 review_model_class: review
 branch: codex/task/TASK-015-maintenance-admin-api
 worker_worktree: /Users/ivo.toby/workspace/postgram/.worktrees/TASK-015-maintenance-admin-api
-worktree_status: active_clean
+worktree_status: active_uncommitted
 pr: null
 worker_thread_id: 019f37c5-7084-7920-916a-7fd9ac7d8cb6
 review_thread_id: null
 current_gate: no_pr
-branch_freshness: current_at_dispatch
+branch_freshness: behind_epic_controller_checkpoint
 verification:
   - npm test -- tests/contract/admin-maintenance-api.test.ts
   - npm test -- tests/integration/cli-admin.test.ts
@@ -175,9 +175,18 @@ Keep command-specific logic typed and bounded rather than generic.
 
 ## Verification Evidence
 
-- Branch/worktree setup verified at activation base `848b902`; worker Helmholtz
-  (`019f37c5-7084-7920-916a-7fd9ac7d8cb6`) dispatched at
-  2026-07-06T14:11:59Z. Task implementation verification has not run yet.
+- 2026-07-06T14:11:59Z: Branch/worktree setup verified at activation base
+  `848b902`; worker Helmholtz
+  (`019f37c5-7084-7920-916a-7fd9ac7d8cb6`) dispatched. Task implementation
+  verification has not run yet.
+- 2026-07-06T14:29:25Z: Helmholtz was still running with no PR or patch. The
+  worktree has active uncommitted changes in expected backend maintenance API
+  files: `src/cli/admin/pgm-admin.ts`, `src/transport/admin.ts`,
+  `src/services/admin-maintenance-service.ts`,
+  `src/transport/admin-maintenance.ts`, and
+  `tests/contract/admin-maintenance-api.test.ts`. Tracked `git diff --check`
+  passed; the branch is one controller checkpoint behind the epic branch and
+  must refresh before review or merge.
 
 ## Review Feedback
 

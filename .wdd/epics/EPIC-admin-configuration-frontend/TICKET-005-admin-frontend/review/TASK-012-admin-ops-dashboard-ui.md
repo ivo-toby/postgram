@@ -6,7 +6,7 @@ ticket: TICKET-005-admin-frontend
 wave: WAVE-008
 slug: admin-ops-dashboard-ui
 title: Admin Ops Dashboard UI
-status: in_progress
+status: review
 depends_on:
   - TASK-008-admin-key-audit-stats-api
   - TASK-011-admin-auth-ui
@@ -19,21 +19,24 @@ review_model_class: review
 branch: codex/task/TASK-012-admin-ops-dashboard-ui
 worker_worktree: /Users/ivo.toby/workspace/postgram/.worktrees/TASK-012-admin-ops-dashboard-ui
 worktree_status: clean_pushed
-pr: null
+pr: https://github.com/ivo-toby/postgram/pull/89
 worker_thread_id: 019f3879-c7a0-7851-b455-5fe3749adc2b
-review_thread_id: null
-current_gate: no_pr
-branch_freshness: current_at_activation
+review_thread_id: 019f38a1-7b30-7433-a197-086490965e17
+current_gate: review
+branch_freshness: pushed_at_82008b9
 verification:
   - npm --prefix ui run test -- --run src/components/AdminOps.test.tsx
+  - npm --prefix ui run test -- --run src/components/AdminAuth.test.tsx
   - npm --prefix ui run typecheck
+  - git diff --check
+  - codex review --uncommitted
 ---
 
 # TASK-012-admin-ops-dashboard-ui: Admin Ops Dashboard UI
 
 ## Status
 
-in_progress
+review
 
 ## Parent Ticket
 
@@ -114,11 +117,11 @@ assigned for WAVE-008 activation; created from pushed epic activation head
 `7e5c49c` and pushed to origin.
 
 Worker Sagan (`019f3879-c7a0-7851-b455-5fe3749adc2b`) dispatched at
-2026-07-06T17:29:45Z. Await PR or patch reference.
+2026-07-06T17:29:45Z. Draft PR opened for review.
 
 ## PR / Patch Reference
 
-None yet.
+https://github.com/ivo-toby/postgram/pull/89
 
 ## RED-GREEN TDD Plan
 
@@ -159,10 +162,10 @@ duplication.
 
 ## Task-Level Definition of Done
 
-- [ ] Dashboard pages are implemented and covered.
-- [ ] Key plaintext appears only immediately after create.
-- [ ] Audit/stats/queue states are usable.
-- [ ] UI typecheck passes.
+- [x] Dashboard pages are implemented and covered.
+- [x] Key plaintext appears only immediately after create.
+- [x] Audit/stats/queue states are usable.
+- [x] UI typecheck passes.
 
 ## Validation Steps
 
@@ -171,7 +174,16 @@ duplication.
 
 ## Verification Evidence
 
-- Not run yet.
+- PASS `npm --prefix ui run test -- --run src/components/AdminOps.test.tsx`
+  (11 tests).
+- PASS `npm --prefix ui run test -- --run src/components/AdminAuth.test.tsx`
+  (16 tests).
+- PASS `npm --prefix ui run typecheck`.
+- PASS `git diff --check`.
+- PASS `codex review --uncommitted` after fixing routed P2 feedback; final
+  review found no actionable correctness issues.
+- Additional review-run checks passed: scoped ESLint for touched UI files and
+  `npm --prefix ui run build` (with the existing Vite large chunk warning).
 
 ## Review Feedback
 
@@ -181,7 +193,10 @@ duplication.
 
 ### P2
 
-- None.
+- Fixed: queue panel now surfaces extraction failures rather than only completed
+  extraction counts.
+- Fixed: audit log now supports server pagination via `nextOffset` and a load
+  more control.
 
 ### P3
 
@@ -189,4 +204,9 @@ duplication.
 
 ## Completion Notes
 
-- None yet.
+- Added the protected operations dashboard, API key management, audit log,
+  diagnostics/status panels, and focused UI tests.
+- Extended the existing admin API client additively; no parallel admin auth
+  store, bearer header, localStorage credential path, provider config forms, or
+  maintenance job mutation UI was added.
+- Latest implementation commit before task-file metadata update: `82008b9`.

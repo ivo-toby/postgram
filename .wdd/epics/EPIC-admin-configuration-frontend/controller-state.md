@@ -68,9 +68,9 @@ pushed at `848b902`, and workers Meitner and Helmholtz were dispatched at
 locally into the epic branch in `4e77a6b`, GitHub marked PR #87 `MERGED` at
 2026-07-06T15:48:11Z after the epic branch push, and the clean TASK-011
 worktree was removed. TASK-015 shipped in draft PR #88 after Helmholtz
-returned `DONE`; Lorentz review is requested. PR #88 is currently `DIRTY`
-because the task branch must refresh against the latest epic WDD controller
-state before merge.
+returned `DONE`. Lorentz returned `REVIEW_BLOCKED` with one P2 branch
+freshness blocker: PR #88 is `DIRTY` and merge-tree conflicts in the WDD
+TASK-015 review file. Feedback has been routed to Helmholtz.
 
 WAVE-004 is done and reconciled. PR #81/TASK-009 and PR #82/TASK-006 are
 merged, shared context is reconciled, and both WAVE-004 worktrees are cleaned
@@ -98,11 +98,11 @@ Mode: adaptive
 
 Cadence: 5m
 
-Status: wave_007_task015_pr88_review_pending_dirty
+Status: wave_007_task015_pr88_needs_freshness_fix
 
-Last check: 2026-07-06T16:40:31Z
+Last check: 2026-07-06T16:45:31Z
 
-Next check due: 2026-07-06T16:45:31Z
+Next check due: 2026-07-06T16:50:31Z
 
 Scheduler reference: `postgram-admin-wave-005-wdd-heartbeat`
 
@@ -111,9 +111,9 @@ Scheduler name: `postgram-admin-wave-007-wdd-heartbeat`
 Fallback prompt:
 
 ```text
-WAVE-007 TASK-015 PR #88 is open/draft/DIRTY and Lorentz review is still
-pending. Poll review; route any P1/P2 to Helmholtz. If review passes, refresh
-dirty branch before merge.
+WAVE-007 TASK-015 PR #88 has Lorentz REVIEW_BLOCKED with one P2 branch
+freshness/WDD task-file conflict. Feedback is routed to Helmholtz; poll for
+refreshed PR head and rerun review/freshness gates.
 ```
 
 ## Active Wave Strategy
@@ -170,7 +170,7 @@ dirty branch before merge.
 | TASK-012-admin-ops-dashboard-ui | TICKET-005-admin-frontend | codex/task/TASK-012-admin-ops-dashboard-ui | not_created | planned | `npm --prefix ui run test -- --run src/components/AdminOps.test.tsx`; `npm --prefix ui run typecheck` |
 | TASK-013-admin-config-ui | TICKET-005-admin-frontend | codex/task/TASK-013-admin-config-ui | not_created | planned | `npm --prefix ui run test -- --run src/components/AdminConfig.test.tsx`; `npm --prefix ui run typecheck` |
 | TASK-014-admin-job-foundation | TICKET-006-maintenance-jobs | codex/task/TASK-014-admin-job-foundation | cleaned_up | reconciled | Lorentz REVIEW_PASS; freshness current at task head `0e08630`; post-merge tests/typecheck/touched-file ESLint passed; merged locally into epic branch in `c5edbfc`; WAVE-006 reconciled and worktree cleaned up |
-| TASK-015-maintenance-admin-api | TICKET-006-maintenance-jobs | codex/task/TASK-015-maintenance-admin-api | clean_pushed | reviewing | Draft PR #88 opened at `4a3e99d`; Helmholtz returned `DONE`; worker verification passed; PR is `DIRTY` with WDD task-file merge-tree conflict and branch divergence `1 3`; Lorentz review requested in submission `019f384a-790e-7d12-8bee-29d351519b3b` |
+| TASK-015-maintenance-admin-api | TICKET-006-maintenance-jobs | codex/task/TASK-015-maintenance-admin-api | clean_pushed_needs_freshness_fix | needs_fixes | Lorentz REVIEW_BLOCKED with one P2 branch-freshness blocker; PR #88 is `DIRTY` with WDD task-file merge-tree conflict; no product-code P1/P2; feedback routed to Helmholtz in submission `019f3852-f2bc-7651-a502-e31ae60ac612` |
 | TASK-016-maintenance-admin-ui | TICKET-006-maintenance-jobs | codex/task/TASK-016-maintenance-admin-ui | not_created | planned | `npm --prefix ui run test -- --run src/components/AdminMaintenance.test.tsx`; `npm --prefix ui run typecheck` |
 | TASK-017-docker-first-run-no-cli | TICKET-007-docker-e2e-validation | codex/task/TASK-017-docker-first-run-no-cli | not_created | planned | `docker compose config`; `npm run typecheck`; `npm --prefix ui run build` |
 | TASK-018-security-epic-validation | TICKET-007-docker-e2e-validation | codex/task/TASK-018-security-epic-validation | not_created | planned | broad backend, frontend, Docker, and smoke validation |
@@ -1400,9 +1400,18 @@ dirty branch before merge.
   out without a final review result, so no feedback was routed. Epic checkout
   and TASK-015 worktree are clean. Gate remains `reviewing`; branch freshness
   conflict must be fixed before merge. Next check due 2026-07-06T16:45:31Z.
+- 2026-07-06T16:45:31Z: Lorentz returned `REVIEW_BLOCKED` for PR #88 with one
+  P2 branch freshness blocker. PR #88 is still `DIRTY` and merge-tree conflicts
+  in the WDD TASK-015 review file. Lorentz found no product-code conflict and no
+  additional P1/P2 implementation issues; contract tests, CLI integration tests,
+  and typecheck passed during review. Controller routed a narrow refresh-only
+  fix to Helmholtz in submission `019f3852-f2bc-7651-a502-e31ae60ac612`: refresh
+  against latest epic, preserve TASK-015 review/PR metadata, rerun freshness and
+  targeted verification, and push PR #88. Gate is `needs_fixes`; next check due
+  2026-07-06T16:50:31Z.
 
 ## Next Action
 
-Next action: poll Lorentz review for PR #88. If review reports P1/P2, route
-feedback to Helmholtz; if review passes, refresh the dirty task branch against
-the epic branch, rerun required verification, then merge or mark merge-ready.
+Next action: poll Helmholtz/TASK-015 for the freshness fix to PR #88. When a
+new head is pushed, rerun freshness verification and request follow-up review
+or merge if all gates pass.

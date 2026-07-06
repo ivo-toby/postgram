@@ -2190,14 +2190,27 @@
       "workerThreadId": "019f37c5-7084-7920-916a-7fd9ac7d8cb6",
       "reviewThreadId": "019f322c-02e7-7590-8b8e-ebdd1e9c52ac",
       "workerWorktree": "/Users/ivo.toby/workspace/postgram/.worktrees/TASK-015-maintenance-admin-api",
-      "worktreeStatus": "clean_pushed",
+      "worktreeStatus": "clean_pushed_needs_freshness_fix",
       "pr": "https://github.com/ivo-toby/postgram/pull/88",
       "latestCommit": "4a3e99dce019370137d9461f62201bc7a05fb7fd",
       "branchFreshness": "stale_dirty_needs_freshness_refresh",
-      "blockingFeedback": [],
+      "blockingFeedback": [
+        {
+          "priority": "P2",
+          "id": "P2-task015-branch-freshness-wdd-task-file-conflict",
+          "status": "routed",
+          "owner": "Helmholtz",
+          "workerThreadId": "019f37c5-7084-7920-916a-7fd9ac7d8cb6",
+          "reviewer": "Lorentz",
+          "reviewThreadId": "019f322c-02e7-7590-8b8e-ebdd1e9c52ac",
+          "routedAt": "2026-07-06T16:45:31Z",
+          "routedSubmissionId": "019f3852-f2bc-7651-a502-e31ae60ac612",
+          "summary": "PR #88 is DIRTY and merge-tree conflicts in the WDD TASK-015 review task file. Lorentz found no product-code P1/P2 issues. Refresh against latest epic branch, preserve TASK-015 review/PR metadata, rerun freshness and targeted tests, and push updated PR #88."
+        }
+      ],
       "verification": {
-        "result": "draft_pr_open_review_pending_dirty_worker_verification_passed",
-        "checkedAt": "2026-07-06T16:40:31Z",
+        "result": "review_blocked_branch_freshness_conflict_feedback_routed",
+        "checkedAt": "2026-07-06T16:45:31Z",
         "commands": [
           "gh pr view 88 --json number,url,state,isDraft,title,headRefName,headRefOid,baseRefName,mergeStateStatus,reviewDecision,updatedAt,createdAt,author,commits,files,statusCheckRollup",
           "git status --short --branch",
@@ -2207,11 +2220,11 @@
           "git merge-tree --write-tree origin/codex/epic/admin-configuration-frontend HEAD",
           "multi_agent_v1.send_input reviewer Lorentz"
         ],
-        "evidence": "PR #88 remains OPEN/draft at head 4a3e99dce019370137d9461f62201bc7a05fb7fd. GitHub still reports mergeStateStatus DIRTY with no reviewDecision. Lorentz reviewer poll timed out without a final review result. Worktree and epic checkout remain clean. Gate stays reviewing; branch freshness conflict remains unresolved before merge."
+        "evidence": "Lorentz returned REVIEW_BLOCKED for PR #88 with one P2 blocker: PR #88 remains DIRTY and merge-tree conflicts in the WDD TASK-015 review task file. No product-code conflict and no additional P1/P2 implementation findings were reported. Lorentz verification passed admin-maintenance contract tests (4), cli-admin integration tests (37), and typecheck; branch diff whitespace passed; worktree remained clean. Controller routed exact freshness feedback to Helmholtz in submission 019f3852-f2bc-7651-a502-e31ae60ac612."
       },
-      "currentGate": "reviewing",
+      "currentGate": "needs_fixes",
       "workerNickname": "Helmholtz",
-      "lastObservedAt": "2026-07-06T16:40:31Z",
+      "lastObservedAt": "2026-07-06T16:45:31Z",
       "reviewNickname": "Lorentz"
     },
     {
@@ -2334,12 +2347,12 @@
   "monitoring": {
     "mode": "adaptive",
     "cadence": "5m",
-    "status": "wave_007_task015_pr88_review_pending_dirty",
-    "lastCheckedAt": "2026-07-06T16:40:31Z",
-    "nextCheckDueAt": "2026-07-06T16:45:31Z",
+    "status": "wave_007_task015_pr88_needs_freshness_fix",
+    "lastCheckedAt": "2026-07-06T16:45:31Z",
+    "nextCheckDueAt": "2026-07-06T16:50:31Z",
     "schedulerRef": "postgram-admin-wave-005-wdd-heartbeat",
     "schedulerName": "postgram-admin-wave-007-wdd-heartbeat",
-    "fallbackPrompt": "WAVE-007 TASK-015 PR #88 is open/draft/DIRTY and Lorentz review is still pending. Poll review; route any P1/P2 to Helmholtz. If review passes, refresh dirty branch before merge."
+    "fallbackPrompt": "WAVE-007 TASK-015 PR #88 has Lorentz REVIEW_BLOCKED with one P2 branch-freshness/WDD task-file conflict. Feedback is routed to Helmholtz; poll for refreshed PR head and rerun review/freshness gates."
   },
   "sharedContext": {
     "index": "shared-context/index.md",
@@ -2426,19 +2439,32 @@
         ],
         "branch": "codex/task/TASK-015-maintenance-admin-api",
         "worktree": "/Users/ivo.toby/workspace/postgram/.worktrees/TASK-015-maintenance-admin-api",
-        "worktreeStatus": "clean_pushed",
+        "worktreeStatus": "clean_pushed_needs_freshness_fix",
         "workerThreadId": "019f37c5-7084-7920-916a-7fd9ac7d8cb6",
         "workerNickname": "Helmholtz",
         "reviewThreadId": "019f322c-02e7-7590-8b8e-ebdd1e9c52ac",
         "reviewNickname": "Lorentz",
-        "currentGate": "reviewing",
+        "currentGate": "needs_fixes",
         "branchFreshness": "stale_dirty_needs_freshness_refresh",
         "pr": "https://github.com/ivo-toby/postgram/pull/88",
         "latestCommit": "4a3e99dce019370137d9461f62201bc7a05fb7fd",
-        "blockingFeedback": [],
+        "blockingFeedback": [
+          {
+            "priority": "P2",
+            "id": "P2-task015-branch-freshness-wdd-task-file-conflict",
+            "status": "routed",
+            "owner": "Helmholtz",
+            "workerThreadId": "019f37c5-7084-7920-916a-7fd9ac7d8cb6",
+            "reviewer": "Lorentz",
+            "reviewThreadId": "019f322c-02e7-7590-8b8e-ebdd1e9c52ac",
+            "routedAt": "2026-07-06T16:45:31Z",
+            "routedSubmissionId": "019f3852-f2bc-7651-a502-e31ae60ac612",
+            "summary": "PR #88 is DIRTY and merge-tree conflicts in the WDD TASK-015 review task file. Lorentz found no product-code P1/P2 issues. Refresh against latest epic branch, preserve TASK-015 review/PR metadata, rerun freshness and targeted tests, and push updated PR #88."
+          }
+        ],
         "verification": {
-          "result": "draft_pr_open_review_pending_dirty_worker_verification_passed",
-          "checkedAt": "2026-07-06T16:40:31Z",
+          "result": "review_blocked_branch_freshness_conflict_feedback_routed",
+          "checkedAt": "2026-07-06T16:45:31Z",
           "commands": [
             "gh pr view 88 --json number,url,state,isDraft,title,headRefName,headRefOid,baseRefName,mergeStateStatus,reviewDecision,updatedAt,createdAt,author,commits,files,statusCheckRollup",
             "git status --short --branch",
@@ -2448,19 +2474,19 @@
             "git merge-tree --write-tree origin/codex/epic/admin-configuration-frontend HEAD",
             "multi_agent_v1.send_input reviewer Lorentz"
           ],
-          "evidence": "PR #88 remains OPEN/draft at head 4a3e99dce019370137d9461f62201bc7a05fb7fd. GitHub still reports mergeStateStatus DIRTY with no reviewDecision. Lorentz reviewer poll timed out without a final review result. Worktree and epic checkout remain clean. Gate stays reviewing; branch freshness conflict remains unresolved before merge."
+          "evidence": "Lorentz returned REVIEW_BLOCKED for PR #88 with one P2 blocker: PR #88 remains DIRTY and merge-tree conflicts in the WDD TASK-015 review task file. No product-code conflict and no additional P1/P2 implementation findings were reported. Lorentz verification passed admin-maintenance contract tests (4), cli-admin integration tests (37), and typecheck; branch diff whitespace passed; worktree remained clean. Controller routed exact freshness feedback to Helmholtz in submission 019f3852-f2bc-7651-a502-e31ae60ac612."
         },
         "activatedAt": "2026-07-06T14:08:16Z",
         "cleanupState": "not_started",
         "sharedContextReconciliation": "queued",
-        "lastObservedAt": "2026-07-06T16:40:31Z",
+        "lastObservedAt": "2026-07-06T16:45:31Z",
         "branchPushedAt": "2026-07-06T14:11:59Z",
         "dispatchedAt": "2026-07-06T14:11:59Z",
         "dispatchBaseCommit": "848b902c5f4829ff78529256c3a9181423c5a150",
         "worktreeObservation": {
-          "observedAt": "2026-07-06T16:40:31Z",
+          "observedAt": "2026-07-06T16:45:31Z",
           "taskId": "TASK-015-maintenance-admin-api",
-          "status": "draft_pr_open_review_pending_dirty",
+          "status": "review_blocked_feedback_routed",
           "workerStatus": "DONE",
           "pr": "https://github.com/ivo-toby/postgram/pull/88",
           "prState": "OPEN_DRAFT_DIRTY",
@@ -2484,11 +2510,27 @@
             "tests/integration/cli-admin.test.ts"
           ],
           "diffCheck": "git diff --check over branch diff passed.",
-          "reviewStatus": "review_pending",
+          "reviewStatus": "REVIEW_BLOCKED",
           "reviewThreadId": "019f322c-02e7-7590-8b8e-ebdd1e9c52ac",
           "reviewNickname": "Lorentz",
           "reviewSubmissionId": "019f384a-790e-7d12-8bee-29d351519b3b",
-          "coordinationNote": "Await Lorentz REVIEW_PASS or REVIEW_BLOCKED. Branch freshness conflict must be fixed before merge."
+          "coordinationNote": "Await Helmholtz freshness fix push, then rerun controller freshness verification and follow-up review.",
+          "reviewResult": "REVIEW_BLOCKED",
+          "blockingFeedback": [
+            {
+              "priority": "P2",
+              "id": "P2-task015-branch-freshness-wdd-task-file-conflict",
+              "status": "routed",
+              "owner": "Helmholtz",
+              "workerThreadId": "019f37c5-7084-7920-916a-7fd9ac7d8cb6",
+              "reviewer": "Lorentz",
+              "reviewThreadId": "019f322c-02e7-7590-8b8e-ebdd1e9c52ac",
+              "routedAt": "2026-07-06T16:45:31Z",
+              "routedSubmissionId": "019f3852-f2bc-7651-a502-e31ae60ac612",
+              "summary": "PR #88 is DIRTY and merge-tree conflicts in the WDD TASK-015 review task file. Lorentz found no product-code P1/P2 issues. Refresh against latest epic branch, preserve TASK-015 review/PR metadata, rerun freshness and targeted tests, and push updated PR #88."
+            }
+          ],
+          "feedbackSubmissionId": "019f3852-f2bc-7651-a502-e31ae60ac612"
         },
         "reviewRequestedAt": "2026-07-06T16:36:00Z",
         "reviewSubmissionId": "019f384a-790e-7d12-8bee-29d351519b3b"
@@ -2498,7 +2540,7 @@
     "activationCommit": "848b902c5f4829ff78529256c3a9181423c5a150",
     "workerDispatchStartedAt": "2026-07-06T14:11:59Z",
     "dispatchedAt": "2026-07-06T14:11:59Z",
-    "lastObservedAt": "2026-07-06T16:40:31Z"
+    "lastObservedAt": "2026-07-06T16:45:31Z"
   },
   "currentGates": {
     "epicBranch": {
@@ -2534,7 +2576,7 @@
       "WAVE-006-admin-key-audit-stats-api": "cleaned_up",
       "WAVE-006-admin-job-foundation": "cleaned_up",
       "WAVE-007-admin-auth-ui": "cleaned_up",
-      "WAVE-007-maintenance-admin-api": "clean_pushed"
+      "WAVE-007-maintenance-admin-api": "clean_pushed_needs_freshness_fix"
     },
     "workerDispatch": {
       "WAVE-001-admin-feasibility-gate": "reconciled",
@@ -2547,7 +2589,7 @@
       "WAVE-006-admin-key-audit-stats-api": "reconciled",
       "WAVE-006-admin-job-foundation": "reconciled",
       "WAVE-007-admin-auth-ui": "merged",
-      "WAVE-007-maintenance-admin-api": "reviewing"
+      "WAVE-007-maintenance-admin-api": "needs_fixes"
     },
     "waveCompletion": {
       "WAVE-001": "done",
@@ -2565,12 +2607,12 @@
     "monitoring": {
       "mode": "adaptive",
       "cadence": "5m",
-      "status": "wave_007_task015_pr88_review_pending_dirty",
-      "lastCheckedAt": "2026-07-06T16:40:31Z",
-      "nextCheckDueAt": "2026-07-06T16:45:31Z",
+      "status": "wave_007_task015_pr88_needs_freshness_fix",
+      "lastCheckedAt": "2026-07-06T16:45:31Z",
+      "nextCheckDueAt": "2026-07-06T16:50:31Z",
       "schedulerRef": "postgram-admin-wave-005-wdd-heartbeat",
       "schedulerName": "postgram-admin-wave-007-wdd-heartbeat",
-      "fallbackPrompt": "WAVE-007 TASK-015 PR #88 is open/draft/DIRTY and Lorentz review is still pending. Poll review; route any P1/P2 to Helmholtz. If review passes, refresh dirty branch before merge."
+      "fallbackPrompt": "WAVE-007 TASK-015 PR #88 has Lorentz REVIEW_BLOCKED with one P2 branch-freshness/WDD task-file conflict. Feedback is routed to Helmholtz; poll for refreshed PR head and rerun review/freshness gates."
     },
     "review": {
       "WAVE-001-admin-feasibility-gate": {
@@ -2829,7 +2871,7 @@
         "findings": []
       },
       "WAVE-007-maintenance-admin-api": {
-        "status": "review_pending",
+        "status": "blocked",
         "pr": "https://github.com/ivo-toby/postgram/pull/88",
         "latestCommit": "4a3e99dce019370137d9461f62201bc7a05fb7fd",
         "workerBaseCommit": "faab7e0a71bba506f19e6b59911ac7df1f7742f1",
@@ -2839,9 +2881,39 @@
         "workerNickname": "Helmholtz",
         "requestedAt": "2026-07-06T16:36:00Z",
         "submissionId": "019f384a-790e-7d12-8bee-29d351519b3b",
-        "blockingFeedback": [],
+        "blockingFeedback": [
+          {
+            "priority": "P2",
+            "id": "P2-task015-branch-freshness-wdd-task-file-conflict",
+            "status": "routed",
+            "owner": "Helmholtz",
+            "workerThreadId": "019f37c5-7084-7920-916a-7fd9ac7d8cb6",
+            "reviewer": "Lorentz",
+            "reviewThreadId": "019f322c-02e7-7590-8b8e-ebdd1e9c52ac",
+            "routedAt": "2026-07-06T16:45:31Z",
+            "routedSubmissionId": "019f3852-f2bc-7651-a502-e31ae60ac612",
+            "summary": "PR #88 is DIRTY and merge-tree conflicts in the WDD TASK-015 review task file. Lorentz found no product-code P1/P2 issues. Refresh against latest epic branch, preserve TASK-015 review/PR metadata, rerun freshness and targeted tests, and push updated PR #88."
+          }
+        ],
         "freshnessNote": "PR #88 remains DIRTY with a WDD task-file conflict; branch freshness must be resolved before merge.",
-        "lastPolledAt": "2026-07-06T16:40:31Z"
+        "lastPolledAt": "2026-07-06T16:40:31Z",
+        "result": "REVIEW_BLOCKED",
+        "reviewedHead": "4a3e99dce019370137d9461f62201bc7a05fb7fd",
+        "reviewedAt": "2026-07-06T16:45:31Z",
+        "findings": [
+          {
+            "priority": "P2",
+            "id": "P2-task015-branch-freshness-wdd-task-file-conflict",
+            "status": "routed",
+            "owner": "Helmholtz",
+            "workerThreadId": "019f37c5-7084-7920-916a-7fd9ac7d8cb6",
+            "reviewer": "Lorentz",
+            "reviewThreadId": "019f322c-02e7-7590-8b8e-ebdd1e9c52ac",
+            "routedAt": "2026-07-06T16:45:31Z",
+            "routedSubmissionId": "019f3852-f2bc-7651-a502-e31ae60ac612",
+            "summary": "PR #88 is DIRTY and merge-tree conflicts in the WDD TASK-015 review task file. Lorentz found no product-code P1/P2 issues. Refresh against latest epic branch, preserve TASK-015 review/PR metadata, rerun freshness and targeted tests, and push updated PR #88."
+          }
+        ]
       }
     },
     "branchFreshness": {
@@ -3105,14 +3177,15 @@
         "checkedAt": "2026-07-06T15:48:11Z"
       },
       "WAVE-007-maintenance-admin-api": {
-        "status": "OPEN_DRAFT_DIRTY_REVIEW_PENDING",
+        "status": "OPEN_DRAFT_DIRTY_REVIEW_BLOCKED",
         "pr": "https://github.com/ivo-toby/postgram/pull/88",
         "number": 88,
         "headRefOid": "4a3e99dce019370137d9461f62201bc7a05fb7fd",
         "mergeStateStatus": "DIRTY",
-        "checkedAt": "2026-07-06T16:40:31Z",
+        "checkedAt": "2026-07-06T16:45:31Z",
         "reviewSubmissionId": "019f384a-790e-7d12-8bee-29d351519b3b",
-        "reviewDecision": ""
+        "reviewDecision": "",
+        "feedbackSubmissionId": "019f3852-f2bc-7651-a502-e31ae60ac612"
       }
     },
     "cleanup": {
@@ -3644,8 +3717,8 @@
         "evidence": "Lorentz returned REVIEW_PASS for PR #87 with no P1/P2/P3 findings. Controller refreshed the TASK-011 branch against the latest epic branch (task head 344bab8ed51c76eb18ee6b8d2dbd020d70bec329), reran focused AdminAuth tests, UI typecheck, branch diff check, merge-tree, and orchestration JSON parse successfully, then merged TASK-011 locally into the epic branch in 4e77a6b5362160f854d36b4283157c658a9096e2. Post-merge AdminAuth tests and UI typecheck passed in the epic checkout after installing missing ui dependencies with npm --prefix ui ci; git diff --check HEAD^..HEAD and orchestration JSON parse passed. PR #87 remains pending remote MERGED confirmation until the epic branch push. Epic branch push marked PR #87 MERGED at 2026-07-06T15:48:11Z; the clean TASK-011 worktree was removed and pruned."
       },
       "WAVE-007-maintenance-admin-api": {
-        "result": "draft_pr_open_review_pending_dirty_worker_verification_passed",
-        "checkedAt": "2026-07-06T16:40:31Z",
+        "result": "review_blocked_branch_freshness_conflict_feedback_routed",
+        "checkedAt": "2026-07-06T16:45:31Z",
         "commands": [
           "gh pr view 88 --json number,url,state,isDraft,title,headRefName,headRefOid,baseRefName,mergeStateStatus,reviewDecision,updatedAt,createdAt,author,commits,files,statusCheckRollup",
           "git status --short --branch",
@@ -3655,7 +3728,7 @@
           "git merge-tree --write-tree origin/codex/epic/admin-configuration-frontend HEAD",
           "multi_agent_v1.send_input reviewer Lorentz"
         ],
-        "evidence": "PR #88 remains OPEN/draft at head 4a3e99dce019370137d9461f62201bc7a05fb7fd. GitHub still reports mergeStateStatus DIRTY with no reviewDecision. Lorentz reviewer poll timed out without a final review result. Worktree and epic checkout remain clean. Gate stays reviewing; branch freshness conflict remains unresolved before merge."
+        "evidence": "Lorentz returned REVIEW_BLOCKED for PR #88 with one P2 blocker: PR #88 remains DIRTY and merge-tree conflicts in the WDD TASK-015 review task file. No product-code conflict and no additional P1/P2 implementation findings were reported. Lorentz verification passed admin-maintenance contract tests (4), cli-admin integration tests (37), and typecheck; branch diff whitespace passed; worktree remained clean. Controller routed exact freshness feedback to Helmholtz in submission 019f3852-f2bc-7651-a502-e31ae60ac612."
       }
     },
     "feedback": {
@@ -3720,7 +3793,20 @@
         "blocking": []
       },
       "WAVE-007-maintenance-admin-api": {
-        "blocking": [],
+        "blocking": [
+          {
+            "priority": "P2",
+            "id": "P2-task015-branch-freshness-wdd-task-file-conflict",
+            "status": "routed",
+            "owner": "Helmholtz",
+            "workerThreadId": "019f37c5-7084-7920-916a-7fd9ac7d8cb6",
+            "reviewer": "Lorentz",
+            "reviewThreadId": "019f322c-02e7-7590-8b8e-ebdd1e9c52ac",
+            "routedAt": "2026-07-06T16:45:31Z",
+            "routedSubmissionId": "019f3852-f2bc-7651-a502-e31ae60ac612",
+            "summary": "PR #88 is DIRTY and merge-tree conflicts in the WDD TASK-015 review task file. Lorentz found no product-code P1/P2 issues. Refresh against latest epic branch, preserve TASK-015 review/PR metadata, rerun freshness and targeted tests, and push updated PR #88."
+          }
+        ],
         "operationalNudges": [
           {
             "routedAt": "2026-07-06T16:32:01Z",
@@ -3729,7 +3815,9 @@
             "workerThreadId": "019f37c5-7084-7920-916a-7fd9ac7d8cb6",
             "summary": "Clean local commit faab7e0 exists but no pushed branch/PR/patch and task file remains in in-progress. Asked worker to move task file to review if complete, push task branch, open draft PR against the epic branch or provide patch, and return final status token with verification evidence."
           }
-        ]
+        ],
+        "routedAt": "2026-07-06T16:45:31Z",
+        "feedbackSubmissionId": "019f3852-f2bc-7651-a502-e31ae60ac612"
       }
     },
     "activationArtifact": {

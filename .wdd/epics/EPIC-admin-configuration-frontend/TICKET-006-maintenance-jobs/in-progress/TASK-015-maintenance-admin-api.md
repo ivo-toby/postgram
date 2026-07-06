@@ -21,11 +21,11 @@ assigned_model_class: implementationComplex
 review_model_class: review
 branch: codex/task/TASK-015-maintenance-admin-api
 worker_worktree: /Users/ivo.toby/workspace/postgram/.worktrees/TASK-015-maintenance-admin-api
-worktree_status: clean_pushed
+worktree_status: clean_pushed_needs_freshness_fix
 pr: https://github.com/ivo-toby/postgram/pull/88
 worker_thread_id: 019f37c5-7084-7920-916a-7fd9ac7d8cb6
 review_thread_id: 019f322c-02e7-7590-8b8e-ebdd1e9c52ac
-current_gate: reviewing
+current_gate: needs_fixes
 branch_freshness: stale_dirty_needs_freshness_refresh
 verification:
   - npm test -- tests/contract/admin-maintenance-api.test.ts
@@ -254,6 +254,14 @@ Keep command-specific logic typed and bounded rather than generic.
   merge-tree conflict in the WDD TASK-015 review file; branch freshness must be
   fixed before merge. Lorentz review was requested in submission
   `019f384a-790e-7d12-8bee-29d351519b3b`.
+- 2026-07-06T16:45:31Z: Lorentz returned `REVIEW_BLOCKED` with one P2 branch
+  freshness blocker: PR #88 remains `DIRTY` and merge-tree conflicts in the WDD
+  TASK-015 review file. Lorentz reported no product-code conflict and no
+  additional P1/P2 implementation findings. Controller routed exact refresh
+  feedback to Helmholtz in submission
+  `019f3852-f2bc-7651-a502-e31ae60ac612`: refresh against the latest epic
+  branch, preserve TASK-015 review/PR metadata, rerun freshness and targeted
+  tests, and push the updated task branch.
 
 ## Review Feedback
 
@@ -263,7 +271,9 @@ Keep command-specific logic typed and bounded rather than generic.
 
 ### P2
 
-- None.
+- `P2-task015-branch-freshness-wdd-task-file-conflict`: PR #88 is dirty and
+  merge-tree conflicts in the WDD TASK-015 review file. Routed to Helmholtz in
+  submission `019f3852-f2bc-7651-a502-e31ae60ac612`.
 
 ### P3
 

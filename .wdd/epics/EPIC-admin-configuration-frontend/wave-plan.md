@@ -659,6 +659,10 @@ Progress:
 - Workers dispatched at 2026-07-06T17:29:45Z: Sagan for
   TASK-012-admin-ops-dashboard-ui and Parfit for TASK-013-admin-config-ui.
   Both bundles are in `no_pr` monitoring.
+- 2026-07-06T17:47:01Z controller poll: both workers are active with
+  uncommitted implementation changes and no PRs yet. Both tracked diffs pass
+  `git diff --check`; both branches are behind the epic branch by one
+  controller monitoring checkpoint.
 
 Stop condition:
 

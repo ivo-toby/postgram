@@ -104,11 +104,11 @@ Mode: adaptive
 
 Cadence: 15m
 
-Status: wave_008_workers_dispatched_no_pr
+Status: wave_008_workers_active_no_pr
 
-Last check: 2026-07-06T17:29:45Z
+Last check: 2026-07-06T17:47:01Z
 
-Next check due: 2026-07-06T17:44:45Z
+Next check due: 2026-07-06T18:02:01Z
 
 Scheduler reference: `postgram-admin-wave-005-wdd-heartbeat`
 
@@ -184,8 +184,8 @@ to GitHub between tasks/waves.
 | TASK-009-settings-secret-store | TICKET-004-runtime-configuration | codex/task/TASK-009-settings-secret-store | cleaned_up | reconciled | PR #81 follow-up REVIEW_PASS, final branch freshness passed at `ca9c96f`, merged locally into epic branch in `b63ad08`; worktree cleaned up during WAVE-004 reconciliation |
 | TASK-010-provider-config-apply | TICKET-004-runtime-configuration | codex/task/TASK-010-provider-config-apply | cleaned_up | reconciled | REVIEW_PASS; final branch freshness passed at `515cfa5`; merged locally into epic branch in `f5efbc0`; PR #84 merged at 2026-07-06T11:31:10Z; WAVE-005 reconciled |
 | TASK-011-admin-auth-ui | TICKET-005-admin-frontend | codex/task/TASK-011-admin-auth-ui | cleaned_up | reconciled | Lorentz REVIEW_PASS; refreshed branch head `344bab8`; post-refresh AdminAuth tests/typecheck/diff/merge-tree/JQ passed; merged locally in `4e77a6b`; PR #87 merged at 2026-07-06T15:48:11Z; shared context reconciled |
-| TASK-012-admin-ops-dashboard-ui | TICKET-005-admin-frontend | codex/task/TASK-012-admin-ops-dashboard-ui | clean_pushed | no_pr | Worker Sagan `019f3879-c7a0-7851-b455-5fe3749adc2b`; `npm --prefix ui run test -- --run src/components/AdminOps.test.tsx`; `npm --prefix ui run typecheck` |
-| TASK-013-admin-config-ui | TICKET-005-admin-frontend | codex/task/TASK-013-admin-config-ui | clean_pushed | no_pr | Worker Parfit `019f387a-3f1d-74a0-9949-5a318a43e494`; `npm --prefix ui run test -- --run src/components/AdminConfig.test.tsx`; `npm --prefix ui run typecheck` |
+| TASK-012-admin-ops-dashboard-ui | TICKET-005-admin-frontend | codex/task/TASK-012-admin-ops-dashboard-ui | active_uncommitted | no_pr | Worker Sagan `019f3879-c7a0-7851-b455-5fe3749adc2b`; tracked `git diff --check` passed; behind epic by one controller checkpoint |
+| TASK-013-admin-config-ui | TICKET-005-admin-frontend | codex/task/TASK-013-admin-config-ui | active_uncommitted | no_pr | Worker Parfit `019f387a-3f1d-74a0-9949-5a318a43e494`; tracked `git diff --check` passed; behind epic by one controller checkpoint |
 | TASK-014-admin-job-foundation | TICKET-006-maintenance-jobs | codex/task/TASK-014-admin-job-foundation | cleaned_up | reconciled | Lorentz REVIEW_PASS; freshness current at task head `0e08630`; post-merge tests/typecheck/touched-file ESLint passed; merged locally into epic branch in `c5edbfc`; WAVE-006 reconciled and worktree cleaned up |
 | TASK-015-maintenance-admin-api | TICKET-006-maintenance-jobs | codex/task/TASK-015-maintenance-admin-api | cleaned_up | reconciled | Lorentz REVIEW_PASS; final freshness passed at task head `ea88af4`; post-merge contract tests 4/4, CLI integration 37/37, typecheck, scoped ESLint, JSON parse, and diff check passed; merged locally in `78f0f43`; PR #88 merged at 2026-07-06T17:02:28Z; shared context reconciled |
 | TASK-016-maintenance-admin-ui | TICKET-006-maintenance-jobs | codex/task/TASK-016-maintenance-admin-ui | not_created | planned | `npm --prefix ui run test -- --run src/components/AdminMaintenance.test.tsx`; `npm --prefix ui run typecheck` |
@@ -1493,6 +1493,15 @@ to GitHub between tasks/waves.
   `postgram-admin-wave-005-wdd-heartbeat` to scheduler name
   `postgram-admin-wave-008-wdd-heartbeat` with the WAVE-008
   `subagent-pr-orchestration` monitor prompt and 15-minute cadence.
+- 2026-07-06T17:47:01Z: Bounded poll found both WAVE-008 workers still active
+  with no PRs yet. Sagan's TASK-012 worktree has active UI/admin API client
+  changes including `AdminOps.test.tsx`, `AdminDashboard`, `AdminApiKeys`,
+  `AdminAudit`, `AdminAuth`, and `adminApi.ts`; Parfit's TASK-013 worktree has
+  active config UI/API changes including `AdminConfig.test.tsx`, `AdminConfig`,
+  `admin-provider-config`, `AdminAuth`, and `adminApi.ts`. Both tracked diffs
+  pass `git diff --check`. Both branches are behind the epic branch by one
+  controller monitoring checkpoint and will need freshness refresh before merge.
+  No nudge was sent because both worktrees are active and not stale.
 
 ## Next Action
 

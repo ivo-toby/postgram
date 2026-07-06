@@ -2276,12 +2276,12 @@
   "monitoring": {
     "mode": "codex_thread_heartbeat",
     "cadence": "5m",
-    "status": "monitoring_wave_006_task014_reviewing_dirty",
-    "lastCheckedAt": "2026-07-06T13:32:24Z",
-    "nextCheckDueAt": "2026-07-06T13:37:24Z",
+    "status": "monitoring_wave_006_task014_needs_fixes",
+    "lastCheckedAt": "2026-07-06T13:39:24Z",
+    "nextCheckDueAt": "2026-07-06T13:44:24Z",
     "schedulerRef": "postgram-admin-wave-005-wdd-heartbeat",
     "schedulerName": "postgram-admin-wave-006-wdd-heartbeat",
-    "fallbackPrompt": "Run one bounded WDD controller heartbeat for /Users/ivo.toby/workspace/postgram, epic EPIC-admin-configuration-frontend, active wave WAVE-006. Use the subagent-pr-orchestration skill. Start in /Users/ivo.toby/workspace/postgram on branch codex/epic/admin-configuration-frontend. Read .wdd/epics/EPIC-admin-configuration-frontend/orchestration.json and controller-state.md. TASK-008 / PR #85 is MERGED at 2026-07-06T13:19:57Z after REVIEW_PASS, local merge 13465eb, and TASK-008 worktree cleanup. Inspect draft PR #86 (https://github.com/ivo-toby/postgram/pull/86), reviewer Lorentz (019f322c-02e7-7590-8b8e-ebdd1e9c52ac), worker Anscombe (019f3748-041f-7540-b336-12c285848008), and assigned worktree /Users/ivo.toby/workspace/postgram/.worktrees/TASK-014-admin-job-foundation for bundle WAVE-006-admin-job-foundation / TASK-014-admin-job-foundation. PR #86 is DIRTY at head 0fb47acf388cd1e4a75bad4893800f0e4c24767d; merge-tree conflicts are currently in the TASK-014 review file and src/transport/admin.ts. Update gates, branch freshness, verification, PR refs, review refs, feedback, shared-context reconciliation status, and monitoring timestamps. If review reports P1/P2, route feedback to Anscombe or a fresh fix worker. If review passes, refresh stale task branch against codex/epic/admin-configuration-frontend, rerun required freshness verification, then merge or mark merge_ready according to policy. Stop when WAVE-006 bundles are merged, blocked, cancelled, or ready for wdd-reconcile-wave. After WAVE-006 is reconciled, continue to the next wave per Ivo's finish-all-waves instruction and push to GitHub between tasks/waves."
+    "fallbackPrompt": "Run one bounded WDD controller heartbeat for /Users/ivo.toby/workspace/postgram, epic EPIC-admin-configuration-frontend, active wave WAVE-006. Use the subagent-pr-orchestration skill. Start in /Users/ivo.toby/workspace/postgram on branch codex/epic/admin-configuration-frontend. Read .wdd/epics/EPIC-admin-configuration-frontend/orchestration.json and controller-state.md. TASK-008 / PR #85 is MERGED and pushed. Inspect PR #86 for WAVE-006-admin-job-foundation / TASK-014-admin-job-foundation, worker Anscombe (019f3748-041f-7540-b336-12c285848008), reviewer Lorentz (019f322c-02e7-7590-8b8e-ebdd1e9c52ac), and the worktree /Users/ivo.toby/workspace/postgram/.worktrees/TASK-014-admin-job-foundation. Current gate is needs_fixes after Lorentz REVIEW_BLOCKED: P2 refresh the stale task branch against codex/epic/admin-configuration-frontend, resolve src/transport/admin.ts so TASK-008 keys/audit/stats routes and TASK-014 job routes all remain wired, resolve the TASK-014 review-file conflict, rerun required verification, and push PR #86. If fixes are pushed, verify git diff --check, required tests/evidence, orchestration JSON, then request or run follow-up review. If no fix is present, keep needs_fixes and nudge exact missing deliverables only if needed. Stop when WAVE-006 bundles are merged, blocked, cancelled, or ready for wdd-reconcile-wave. After WAVE-006 is reconciled, continue to the next wave per Ivo finish-all-waves instruction and push to GitHub between tasks/waves."
   },
   "sharedContext": {
     "index": "shared-context/index.md",
@@ -2401,11 +2401,27 @@
         "workerNickname": "Anscombe",
         "reviewThreadId": "019f322c-02e7-7590-8b8e-ebdd1e9c52ac",
         "reviewNickname": "Lorentz",
-        "currentGate": "reviewing",
-        "branchFreshness": "stale_dirty_needs_freshness_refresh",
+        "currentGate": "needs_fixes",
+        "branchFreshness": "stale_dirty_needs_worker_refresh",
         "pr": "https://github.com/ivo-toby/postgram/pull/86",
         "latestCommit": "0fb47acf388cd1e4a75bad4893800f0e4c24767d",
-        "blockingFeedback": [],
+        "blockingFeedback": [
+          {
+            "priority": "P2",
+            "id": "P2-task014-branch-freshness-admin-route-conflict",
+            "status": "routed_to_worker",
+            "owner": "Anscombe",
+            "workerThreadId": "019f3748-041f-7540-b336-12c285848008",
+            "reviewer": "Lorentz",
+            "reviewThreadId": "019f322c-02e7-7590-8b8e-ebdd1e9c52ac",
+            "reviewSubmissionId": "019f37a2-cb34-7181-bb6c-8f3ddfedd507",
+            "routedSubmissionId": "019f37a9-6ad5-70f0-88fa-16e413f682fe",
+            "routedAt": "2026-07-06T13:39:24Z",
+            "pr": "https://github.com/ivo-toby/postgram/pull/86",
+            "latestCommit": "0fb47acf388cd1e4a75bad4893800f0e4c24767d",
+            "summary": "PR #86 is not merge-fresh and has a real src/transport/admin.ts route-registration conflict with the merged TASK-008 admin key/audit/stats routes. Refresh against codex/epic/admin-configuration-frontend, preserve existing TASK-008 routes plus diagnostics/provider-config routing, and add TASK-014 registerAdminJobRoutes(app, pool), resolve the TASK-014 WDD task-file conflict, rerun required verification, and push the branch."
+          }
+        ],
         "verification": {
           "result": "draft_pr_open_review_requested_branch_dirty_worker_verification_passed",
           "commands": [
@@ -2425,14 +2441,14 @@
         "activatedAt": "2026-07-06T11:39:24Z",
         "cleanupState": "not_started",
         "sharedContextReconciliation": "queued",
-        "lastObservedAt": "2026-07-06T13:32:24Z",
+        "lastObservedAt": "2026-07-06T13:39:24Z",
         "branchPushedAt": "2026-07-06T11:44:24Z",
         "dispatchedAt": "2026-07-06T11:49:24Z",
         "dispatchBaseCommit": "0d41c5304ec5895db334af1ad9ab54bb6a2db0d3",
         "worktreeObservation": {
-          "observedAt": "2026-07-06T13:32:24Z",
+          "observedAt": "2026-07-06T13:39:24Z",
           "taskId": "TASK-014-admin-job-foundation",
-          "status": "draft_pr_open_review_requested_dirty",
+          "status": "review_blocked_needs_freshness_fix",
           "workerStatus": "DONE",
           "workerPoll": "completed_done",
           "pr": "https://github.com/ivo-toby/postgram/pull/86",
@@ -2441,14 +2457,14 @@
           "prHead": "0fb47acf388cd1e4a75bad4893800f0e4c24767d",
           "prCreatedAt": "2026-07-06T13:31:42Z",
           "prUpdatedAt": "2026-07-06T13:32:19Z",
-          "reviewStatus": "review_requested",
+          "reviewStatus": "REVIEW_BLOCKED",
           "reviewThreadId": "019f322c-02e7-7590-8b8e-ebdd1e9c52ac",
           "reviewNickname": "Lorentz",
           "reviewSubmissionId": "019f37a2-cb34-7181-bb6c-8f3ddfedd507",
           "worktreeStatus": "clean_pushed",
           "branchHead": "0fb47acf388cd1e4a75bad4893800f0e4c24767d",
-          "branchDivergence": "origin/codex/epic/admin-configuration-frontend...HEAD = 10 2; task branch is stale and dirty against the epic branch.",
-          "branchFreshness": "stale_dirty_needs_freshness_refresh",
+          "branchDivergence": "origin/codex/epic/admin-configuration-frontend...HEAD = 11 2; task branch is stale and dirty against the epic branch.",
+          "branchFreshness": "stale_dirty_needs_worker_refresh",
           "mergeTreeConflicts": [
             ".wdd/epics/EPIC-admin-configuration-frontend/TICKET-006-maintenance-jobs/review/TASK-014-admin-job-foundation.md",
             "src/transport/admin.ts"
@@ -2463,13 +2479,14 @@
             "tests/integration/admin-job-service.test.ts"
           ],
           "diffCheck": "git diff --check passed in the clean pushed TASK-014 worktree.",
-          "coordinationNote": "TASK-014 moved from no_pr to reviewing. Await Lorentz REVIEW_PASS or REVIEW_BLOCKED; branch freshness conflicts must be resolved before merge."
+          "coordinationNote": "Lorentz returned REVIEW_BLOCKED with one P2 branch freshness/product-code conflict. Feedback was routed to Anscombe to refresh the branch, preserve TASK-008 routes and TASK-014 job routes together, resolve the TASK-014 WDD file conflict, rerun verification, and push PR #86.",
+          "feedbackSubmissionId": "019f37a9-6ad5-70f0-88fa-16e413f682fe"
         }
       }
     ],
     "dispatchState": "dispatched",
     "activationCommit": "e46eb9a10233fcbadf446cf81d13e8a60f7ab942",
-    "lastObservedAt": "2026-07-06T13:32:24Z",
+    "lastObservedAt": "2026-07-06T13:39:24Z",
     "workerDispatchStartedAt": "2026-07-06T11:49:24Z",
     "dispatchedAt": "2026-07-06T11:49:24Z"
   },
@@ -2515,7 +2532,7 @@
       "WAVE-005-admin-api-shell-diagnostics": "reconciled",
       "WAVE-005-provider-config-apply": "reconciled",
       "WAVE-006-admin-key-audit-stats-api": "merged",
-      "WAVE-006-admin-job-foundation": "reviewing"
+      "WAVE-006-admin-job-foundation": "needs_fixes"
     },
     "waveCompletion": {
       "WAVE-001": "done",
@@ -2532,12 +2549,12 @@
     "monitoring": {
       "mode": "codex_thread_heartbeat",
       "cadence": "5m",
-      "status": "monitoring_wave_006_task014_reviewing_dirty",
-      "lastCheckedAt": "2026-07-06T13:32:24Z",
-      "nextCheckDueAt": "2026-07-06T13:37:24Z",
+      "status": "monitoring_wave_006_task014_needs_fixes",
+      "lastCheckedAt": "2026-07-06T13:39:24Z",
+      "nextCheckDueAt": "2026-07-06T13:44:24Z",
       "schedulerRef": "postgram-admin-wave-005-wdd-heartbeat",
       "schedulerName": "postgram-admin-wave-006-wdd-heartbeat",
-      "fallbackPrompt": "Run one bounded WDD controller heartbeat for /Users/ivo.toby/workspace/postgram, epic EPIC-admin-configuration-frontend, active wave WAVE-006. Use the subagent-pr-orchestration skill. Start in /Users/ivo.toby/workspace/postgram on branch codex/epic/admin-configuration-frontend. Read .wdd/epics/EPIC-admin-configuration-frontend/orchestration.json and controller-state.md. TASK-008 / PR #85 is MERGED at 2026-07-06T13:19:57Z after REVIEW_PASS, local merge 13465eb, and TASK-008 worktree cleanup. Inspect draft PR #86 (https://github.com/ivo-toby/postgram/pull/86), reviewer Lorentz (019f322c-02e7-7590-8b8e-ebdd1e9c52ac), worker Anscombe (019f3748-041f-7540-b336-12c285848008), and assigned worktree /Users/ivo.toby/workspace/postgram/.worktrees/TASK-014-admin-job-foundation for bundle WAVE-006-admin-job-foundation / TASK-014-admin-job-foundation. PR #86 is DIRTY at head 0fb47acf388cd1e4a75bad4893800f0e4c24767d; merge-tree conflicts are currently in the TASK-014 review file and src/transport/admin.ts. Update gates, branch freshness, verification, PR refs, review refs, feedback, shared-context reconciliation status, and monitoring timestamps. If review reports P1/P2, route feedback to Anscombe or a fresh fix worker. If review passes, refresh stale task branch against codex/epic/admin-configuration-frontend, rerun required freshness verification, then merge or mark merge_ready according to policy. Stop when WAVE-006 bundles are merged, blocked, cancelled, or ready for wdd-reconcile-wave. After WAVE-006 is reconciled, continue to the next wave per Ivo's finish-all-waves instruction and push to GitHub between tasks/waves."
+      "fallbackPrompt": "Run one bounded WDD controller heartbeat for /Users/ivo.toby/workspace/postgram, epic EPIC-admin-configuration-frontend, active wave WAVE-006. Use the subagent-pr-orchestration skill. Start in /Users/ivo.toby/workspace/postgram on branch codex/epic/admin-configuration-frontend. Read .wdd/epics/EPIC-admin-configuration-frontend/orchestration.json and controller-state.md. TASK-008 / PR #85 is MERGED and pushed. Inspect PR #86 for WAVE-006-admin-job-foundation / TASK-014-admin-job-foundation, worker Anscombe (019f3748-041f-7540-b336-12c285848008), reviewer Lorentz (019f322c-02e7-7590-8b8e-ebdd1e9c52ac), and the worktree /Users/ivo.toby/workspace/postgram/.worktrees/TASK-014-admin-job-foundation. Current gate is needs_fixes after Lorentz REVIEW_BLOCKED: P2 refresh the stale task branch against codex/epic/admin-configuration-frontend, resolve src/transport/admin.ts so TASK-008 keys/audit/stats routes and TASK-014 job routes all remain wired, resolve the TASK-014 review-file conflict, rerun required verification, and push PR #86. If fixes are pushed, verify git diff --check, required tests/evidence, orchestration JSON, then request or run follow-up review. If no fix is present, keep needs_fixes and nudge exact missing deliverables only if needed. Stop when WAVE-006 bundles are merged, blocked, cancelled, or ready for wdd-reconcile-wave. After WAVE-006 is reconciled, continue to the next wave per Ivo finish-all-waves instruction and push to GitHub between tasks/waves."
     },
     "review": {
       "WAVE-001-admin-feasibility-gate": {
@@ -2744,18 +2761,36 @@
         "blockingFeedback": []
       },
       "WAVE-006-admin-job-foundation": {
-        "status": "reviewing",
-        "result": "REVIEW_REQUESTED",
+        "status": "blocked",
+        "result": "REVIEW_BLOCKED",
         "pr": "https://github.com/ivo-toby/postgram/pull/86",
         "latestCommit": "0fb47acf388cd1e4a75bad4893800f0e4c24767d",
-        "reviewedHead": null,
+        "reviewedHead": "0fb47acf388cd1e4a75bad4893800f0e4c24767d",
+        "reviewedAt": "2026-07-06T13:39:24Z",
         "reviewThreadId": "019f322c-02e7-7590-8b8e-ebdd1e9c52ac",
         "reviewNickname": "Lorentz",
         "workerThreadId": "019f3748-041f-7540-b336-12c285848008",
         "workerNickname": "Anscombe",
         "requestedAt": "2026-07-06T13:32:24Z",
         "submissionId": "019f37a2-cb34-7181-bb6c-8f3ddfedd507",
-        "blockingFeedback": [],
+        "blockingFeedback": [
+          {
+            "priority": "P2",
+            "id": "P2-task014-branch-freshness-admin-route-conflict",
+            "status": "routed_to_worker",
+            "owner": "Anscombe",
+            "workerThreadId": "019f3748-041f-7540-b336-12c285848008",
+            "reviewer": "Lorentz",
+            "reviewThreadId": "019f322c-02e7-7590-8b8e-ebdd1e9c52ac",
+            "reviewSubmissionId": "019f37a2-cb34-7181-bb6c-8f3ddfedd507",
+            "routedSubmissionId": "019f37a9-6ad5-70f0-88fa-16e413f682fe",
+            "routedAt": "2026-07-06T13:39:24Z",
+            "pr": "https://github.com/ivo-toby/postgram/pull/86",
+            "latestCommit": "0fb47acf388cd1e4a75bad4893800f0e4c24767d",
+            "summary": "PR #86 is not merge-fresh and has a real src/transport/admin.ts route-registration conflict with the merged TASK-008 admin key/audit/stats routes. Refresh against codex/epic/admin-configuration-frontend, preserve existing TASK-008 routes plus diagnostics/provider-config routing, and add TASK-014 registerAdminJobRoutes(app, pool), resolve the TASK-014 WDD task-file conflict, rerun required verification, and push the branch."
+          }
+        ],
+        "routedFeedbackSubmissionId": "019f37a9-6ad5-70f0-88fa-16e413f682fe",
         "freshnessNote": "PR #86 is DIRTY; merge-tree conflicts are in the TASK-014 review file and src/transport/admin.ts. Branch must refresh against latest epic before merge."
       }
     },
@@ -3477,20 +3512,17 @@
         "evidence": "Lorentz returned REVIEW_PASS with no P1/P2/P3 findings for PR #85 at head 281681b8f6be6a30c6a4ec53f9b646154f85d8bc. Branch freshness was current before merge (origin epic...task = 0 2). Controller merged TASK-008 locally into the epic branch in 13465ebb44db1f98183f47fbaa1c6d90e6a23c80, ran post-merge verification successfully (admin-key-audit-stats contract tests 10, key-service integration tests 3, typecheck, touched-file ESLint, git diff --check HEAD^..HEAD), moved the task file to done, and removed the clean pushed TASK-008 worktree."
       },
       "WAVE-006-admin-job-foundation": {
-        "result": "draft_pr_open_review_requested_branch_dirty_worker_verification_passed",
+        "result": "review_blocked_branch_dirty_feedback_routed",
         "commands": [
-          "multi_agent_v1.wait_agent Anscombe",
-          "gh pr list --head codex/task/TASK-014-admin-job-foundation --json number,url,state,isDraft,headRefOid,baseRefName,mergeStateStatus,updatedAt,title",
-          "gh pr view 86 --json number,url,state,isDraft,title,headRefName,headRefOid,baseRefName,mergeStateStatus,reviewDecision,updatedAt,createdAt,author,commits,files,statusCheckRollup",
+          "gh pr view 86 --json number,url,state,isDraft,title,headRefName,headRefOid,baseRefName,mergeStateStatus,reviewDecision,updatedAt,createdAt,commits,files,statusCheckRollup",
           "git status --short --branch",
           "git rev-parse HEAD",
           "git rev-list --left-right --count origin/codex/epic/admin-configuration-frontend...HEAD",
-          "git diff --name-only",
           "git diff --check",
-          "git merge-tree origin/codex/epic/admin-configuration-frontend HEAD",
-          "multi_agent_v1.send_input reviewer Lorentz"
+          "multi_agent_v1.wait_agent Lorentz",
+          "multi_agent_v1.send_input Anscombe"
         ],
-        "evidence": "Anscombe returned DONE and opened draft PR #86 at head 0fb47acf388cd1e4a75bad4893800f0e4c24767d against codex/epic/admin-configuration-frontend. PR #86 is OPEN, draft, and DIRTY; branch divergence is origin epic...HEAD = 10 2. Worker-reported verification passed: admin-job-service integration tests, typecheck, admin-api contract tests, scoped ESLint, git diff --check, and codex review --uncommitted. Controller merge-tree reports conflicts in the TASK-014 review file and src/transport/admin.ts. Lorentz review requested in submission 019f37a2-cb34-7181-bb6c-8f3ddfedd507; no review result yet."
+        "evidence": "PR #86 remains OPEN/draft/DIRTY at head 0fb47acf388cd1e4a75bad4893800f0e4c24767d. TASK-014 worktree is clean and pushed; branch divergence from origin/codex/epic/admin-configuration-frontend is 11 2 and git diff --check passed. Lorentz returned REVIEW_BLOCKED with one P2: refresh the stale task branch and reconcile the real src/transport/admin.ts route-registration conflict so TASK-008 keys/audit/stats routes and TASK-014 job routes all remain wired; also resolve the TASK-014 review-file conflict. Feedback routed to Anscombe in submission 019f37a9-6ad5-70f0-88fa-16e413f682fe."
       }
     },
     "feedback": {
@@ -3526,7 +3558,23 @@
         ]
       },
       "WAVE-006-admin-job-foundation": {
-        "blocking": [],
+        "blocking": [
+          {
+            "priority": "P2",
+            "id": "P2-task014-branch-freshness-admin-route-conflict",
+            "status": "routed_to_worker",
+            "owner": "Anscombe",
+            "workerThreadId": "019f3748-041f-7540-b336-12c285848008",
+            "reviewer": "Lorentz",
+            "reviewThreadId": "019f322c-02e7-7590-8b8e-ebdd1e9c52ac",
+            "reviewSubmissionId": "019f37a2-cb34-7181-bb6c-8f3ddfedd507",
+            "routedSubmissionId": "019f37a9-6ad5-70f0-88fa-16e413f682fe",
+            "routedAt": "2026-07-06T13:39:24Z",
+            "pr": "https://github.com/ivo-toby/postgram/pull/86",
+            "latestCommit": "0fb47acf388cd1e4a75bad4893800f0e4c24767d",
+            "summary": "PR #86 is not merge-fresh and has a real src/transport/admin.ts route-registration conflict with the merged TASK-008 admin key/audit/stats routes. Refresh against codex/epic/admin-configuration-frontend, preserve existing TASK-008 routes plus diagnostics/provider-config routing, and add TASK-014 registerAdminJobRoutes(app, pool), resolve the TASK-014 WDD task-file conflict, rerun required verification, and push the branch."
+          }
+        ],
         "nonBlockingCoordination": [
           {
             "routedAt": "2026-07-06T12:10:24Z",

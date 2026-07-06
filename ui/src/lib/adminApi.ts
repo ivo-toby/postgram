@@ -389,6 +389,50 @@ export type AdminJobListResponse = {
   offset: number;
 };
 
+export type AdminJobResponse = {
+  job: AdminJob;
+};
+
+export type AdminMaintenanceEntityScope =
+  | { kind: 'all' }
+  | { kind: 'type'; type: AdminEntityType }
+  | { kind: 'id'; id: string }
+  | { kind: 'failed' };
+
+export type AdminMaintenanceReextractInput = {
+  scope: AdminMaintenanceEntityScope;
+  onlyFailed?: boolean;
+  limit?: number;
+  cleanEdges?: boolean;
+  includeAutoCreated?: boolean;
+  noEdgesOnly?: boolean;
+  showSkipped?: boolean;
+};
+
+export type AdminMaintenanceReembedInput = {
+  scope: AdminMaintenanceEntityScope;
+  onlyFailed?: boolean;
+};
+
+export type AdminMaintenancePruneEdgesInput = {
+  below: number;
+  source?: 'llm-extraction';
+  relation?: string;
+};
+
+export type AdminMaintenanceApplyEvidence = {
+  previewJobId: string;
+  idempotencyKey: string;
+};
+
+export type AdminMaintenanceRunResponse = {
+  operation: 'reextract' | 'reembed' | 'prune-edges';
+  dryRun: boolean;
+  job: AdminJob | Pick<AdminJob, 'id' | 'status'>;
+  metadata: Record<string, unknown>;
+  reused?: boolean;
+};
+
 export class AdminApiError extends Error {
   constructor(
     readonly status: number,
@@ -434,6 +478,25 @@ type AdminApiClient = {
     offset?: number;
     status?: AdminJobStatus[];
   }) => Promise<AdminJobListResponse>;
+  getJob: (jobId: string) => Promise<AdminJobResponse>;
+  dryRunReextractMaintenance: (
+    input: AdminMaintenanceReextractInput
+  ) => Promise<AdminMaintenanceRunResponse>;
+  applyReextractMaintenance: (
+    input: AdminMaintenanceReextractInput & AdminMaintenanceApplyEvidence
+  ) => Promise<AdminMaintenanceRunResponse>;
+  dryRunReembedMaintenance: (
+    input: AdminMaintenanceReembedInput
+  ) => Promise<AdminMaintenanceRunResponse>;
+  applyReembedMaintenance: (
+    input: AdminMaintenanceReembedInput & AdminMaintenanceApplyEvidence
+  ) => Promise<AdminMaintenanceRunResponse>;
+  dryRunPruneEdgesMaintenance: (
+    input: AdminMaintenancePruneEdgesInput
+  ) => Promise<AdminMaintenanceRunResponse>;
+  applyPruneEdgesMaintenance: (
+    input: AdminMaintenancePruneEdgesInput & AdminMaintenanceApplyEvidence
+  ) => Promise<AdminMaintenanceRunResponse>;
   getProviderConfig: () => Promise<AdminProviderConfigurationResponse>;
   saveProviderConfig: (input: {
     settings: Partial<
@@ -655,6 +718,70 @@ export function createAdminApiClient(): AdminApiClient {
       if (input.status?.length) params.set('status', input.status.join(','));
       appendPagination(params, input, { limit: 20, offset: 0 });
       return request<AdminJobListResponse>(`/admin/api/jobs?${params}`);
+    },
+
+    getJob(jobId) {
+      return request<AdminJobResponse>(`/admin/api/jobs/${jobId}`);
+    },
+
+    dryRunReextractMaintenance(input) {
+      return request<AdminMaintenanceRunResponse>(
+        '/admin/api/maintenance/reextract/dry-run',
+        {
+          method: 'POST',
+          body: input,
+        }
+      );
+    },
+
+    applyReextractMaintenance(input) {
+      return request<AdminMaintenanceRunResponse>(
+        '/admin/api/maintenance/reextract/apply',
+        {
+          method: 'POST',
+          body: input,
+        }
+      );
+    },
+
+    dryRunReembedMaintenance(input) {
+      return request<AdminMaintenanceRunResponse>(
+        '/admin/api/maintenance/reembed/dry-run',
+        {
+          method: 'POST',
+          body: input,
+        }
+      );
+    },
+
+    applyReembedMaintenance(input) {
+      return request<AdminMaintenanceRunResponse>(
+        '/admin/api/maintenance/reembed/apply',
+        {
+          method: 'POST',
+          body: input,
+        }
+      );
+    },
+
+    dryRunPruneEdgesMaintenance(input) {
+      return request<AdminMaintenanceRunResponse>(
+        '/admin/api/maintenance/prune-edges/dry-run',
+        {
+          method: 'POST',
+          body: input,
+        }
+      );
+    },
+
+    applyPruneEdgesMaintenance(input) {
+      return request<AdminMaintenanceRunResponse>(
+        '/admin/api/maintenance/prune-edges/apply',
+        {
+          method: 'POST',
+          body: input,
+        }
+      );
     },
 
     getProviderConfig() {

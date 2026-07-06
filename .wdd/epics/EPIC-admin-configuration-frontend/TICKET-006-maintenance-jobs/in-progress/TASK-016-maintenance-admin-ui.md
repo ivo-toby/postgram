@@ -196,6 +196,11 @@ Share confirmation/progress components with config UI if useful.
   still running, the worktree has active uncommitted changes in expected
   TASK-016 UI/client files, branch divergence remains `0 0`, and
   `git diff --check` passed.
+- 2026-07-06T21:11:02Z controller heartbeat: no PR exists yet; Singer is
+  still running, the worktree remains active in expected TASK-016 UI/client
+  files, branch divergence remains `0 0`, `git diff --check` passed, and
+  `AdminMaintenance.tsx` plus `AdminMaintenance.test.tsx` changed during this
+  heartbeat window.
 - Worker verification pending.
 
 ## Review Feedback

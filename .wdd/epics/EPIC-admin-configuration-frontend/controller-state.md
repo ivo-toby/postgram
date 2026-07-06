@@ -150,6 +150,8 @@ Scheduler reference: `postgram-admin-wave-005-wdd-heartbeat`
 
 Scheduler name: `postgram-admin-wave-010-wdd-heartbeat`
 
+Automation update: updated_in_app
+
 Fallback prompt:
 
 ```text

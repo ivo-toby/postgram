@@ -21,12 +21,12 @@ assigned_model_class: implementationComplex
 review_model_class: review
 branch: codex/task/TASK-010-provider-config-apply
 worker_worktree: /Users/ivo.toby/workspace/postgram/.worktrees/TASK-010-provider-config-apply
-worktree_status: pushed
+worktree_status: refreshed_pushed
 pr: https://github.com/ivo-toby/postgram/pull/84
 worker_thread_id: 019f35ff-a193-7ae0-a4b8-1ec53faabb74
 review_thread_id: 019f3708-a5ce-7053-97df-8703bcfbb90c
 current_gate: review
-branch_freshness: current_at_dispatch
+branch_freshness: refreshed_with_origin_codex_epic_admin_configuration_frontend
 verification:
   - npm test -- tests/integration/admin-provider-config.test.ts
   - npm test -- tests/unit/config.test.ts
@@ -216,6 +216,16 @@ Keep provider construction logic centralized to avoid env/DB drift.
 - GREEN: `git diff --check` passed.
 - REVIEW: `codex review --uncommitted` review thread `019f3708-a5ce-7053-97df-8703bcfbb90c` reported no actionable correctness, security, or maintainability issues.
 - NOTE: Full repo lint with `npm run lint -- --max-warnings=0` still fails on existing unrelated files outside TASK-010 scope; targeted lint for all touched TASK-010 files passed.
+- REVIEW_BLOCKED: Lorentz reported one P2 freshness blocker after TASK-007 merged: branch was 28/2 divergent and product-code conflicts existed in `src/index.ts`, `src/transport/admin.ts`, and this task file.
+- GREEN: merged `origin/codex/epic/admin-configuration-frontend` into `codex/task/TASK-010-provider-config-apply`, preserving TASK-007 diagnostics route/options/extraction-enabled wiring and TASK-010 provider-config route/options/runtime wiring.
+- GREEN: `git diff --check` passed after conflict resolution.
+- GREEN: `git diff --cached --check` passed after conflict resolution.
+- GREEN: `npm test -- tests/integration/admin-provider-config.test.ts` passed, 39 tests.
+- GREEN: `npm test -- tests/unit/config.test.ts` passed, 26 tests.
+- GREEN: `npm test -- tests/integration/admin-settings-service.test.ts` passed, 8 tests.
+- GREEN: `npm test -- tests/contract/admin-auth-routes.test.ts tests/contract/admin-mfa-routes.test.ts tests/contract/admin-api.test.ts` passed, 18 tests.
+- GREEN: `npm run typecheck` passed.
+- GREEN: targeted lint passed with `npx eslint src/index.ts src/transport/admin.ts src/services/admin-diagnostics-service.ts src/config.ts src/services/admin-settings-service.ts src/services/embeddings/providers.ts src/services/llm-provider.ts src/services/admin-provider-config-service.ts src/transport/admin-provider-config.ts tests/unit/config.test.ts tests/integration/admin-provider-config.test.ts tests/contract/admin-api.test.ts`.
 
 ## Review Feedback
 
@@ -227,6 +237,7 @@ Keep provider construction logic centralized to avoid env/DB drift.
 
 - Fixed review finding: provider base URL save validation now rejects query strings, fragments, and credentials before persistence.
 - Fixed review finding: applied provider settings backfilled with zero applied version remain active while pending edits exist.
+- Fixed review blocker: refreshed the task branch against `origin/codex/epic/admin-configuration-frontend` and resolved the TASK-007/TASK-010 product-code conflicts.
 
 ### P3
 

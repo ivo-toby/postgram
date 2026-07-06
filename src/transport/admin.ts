@@ -21,11 +21,18 @@ import {
 import {
   ADMIN_STEP_UP_TTL_MS,
   ADMIN_SESSION_COOKIE,
+  createActiveAdminMiddleware,
   createAdminSessionMiddleware,
   issueAdminCsrfToken,
   setAdminNoStoreHeaders,
   type AdminRequestContext
 } from '../auth/admin-middleware.js';
+import {
+  getAdminConfigStatusDiagnostics,
+  getAdminHealthDiagnostics,
+  getAdminQueueDiagnostics,
+  listAdminEmbeddingModels
+} from '../services/admin-diagnostics-service.js';
 import {
   AppError,
   ErrorCode,
@@ -45,6 +52,7 @@ type AdminApp = Hono<{
 
 type AdminRouteOptions = AdminProviderConfigRouteOptions & {
   adminMfaSecretKey?: string | undefined;
+  extractionEnabled?: boolean | undefined;
 };
 
 type BootstrapState =
@@ -706,6 +714,58 @@ export function registerAdminRoutes(
       setAdminNoStoreHeaders(c);
       clearAdminSessionCookie(c);
       return c.json({ ok: true });
+    }
+  );
+
+  app.get(
+    '/admin/api/diagnostics/health',
+    createAdminSessionMiddleware({ pool, enforceCsrf: false }),
+    createActiveAdminMiddleware(),
+    async (c) => {
+      setAdminNoStoreHeaders(c);
+      return c.json({
+        health: await getAdminHealthDiagnostics(pool)
+      });
+    }
+  );
+
+  app.get(
+    '/admin/api/diagnostics/queue',
+    createAdminSessionMiddleware({ pool, enforceCsrf: false }),
+    createActiveAdminMiddleware(),
+    async (c) => {
+      setAdminNoStoreHeaders(c);
+      return c.json({
+        queue: await getAdminQueueDiagnostics(pool, {
+          ...(options.extractionEnabled !== undefined
+            ? { extractionEnabled: options.extractionEnabled }
+            : {})
+        })
+      });
+    }
+  );
+
+  app.get(
+    '/admin/api/diagnostics/models',
+    createAdminSessionMiddleware({ pool, enforceCsrf: false }),
+    createActiveAdminMiddleware(),
+    async (c) => {
+      setAdminNoStoreHeaders(c);
+      return c.json({
+        models: await listAdminEmbeddingModels(pool)
+      });
+    }
+  );
+
+  app.get(
+    '/admin/api/diagnostics/config-status',
+    createAdminSessionMiddleware({ pool, enforceCsrf: false }),
+    createActiveAdminMiddleware(),
+    async (c) => {
+      setAdminNoStoreHeaders(c);
+      return c.json({
+        configStatus: await getAdminConfigStatusDiagnostics(pool)
+      });
     }
   );
 

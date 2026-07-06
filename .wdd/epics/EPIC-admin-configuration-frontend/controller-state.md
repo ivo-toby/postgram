@@ -24,8 +24,12 @@ waves. The hybrid wave contains two independent bundles:
 TASK-007-admin-api-shell-diagnostics and TASK-010-provider-config-apply.
 Activation artifacts were pushed in `70df1c5`; both task branches/worktrees
 were created from that commit, pushed to GitHub, verified, and dispatched.
-Wegener owns TASK-007 and Goodall owns TASK-010. Both bundle gates are `no_pr`
-until the workers return a PR or patch.
+TASK-007 passed Lorentz review, was refreshed against the latest epic branch,
+merged locally into the epic branch in `16985ef`, and PR #83 is merged on
+GitHub. Goodall completed TASK-010, opened draft PR #84, moved the task file to
+`review/`, and pushed branch head `6cf5001`. The controller requested Lorentz
+review for PR #84. The PR is `DIRTY` and the TASK-010 branch is 27 commits
+behind the epic branch, so branch freshness remains required before merge.
 
 WAVE-004 is done and reconciled. PR #81/TASK-009 and PR #82/TASK-006 are
 merged, shared context is reconciled, and both WAVE-004 worktrees are cleaned
@@ -53,11 +57,11 @@ Mode: codex_thread_heartbeat
 
 Cadence: 5 minutes
 
-Status: active
+Status: reviewing_task_010
 
-Last check: 2026-07-06T05:59:39Z
+Last check: 2026-07-06T11:07:00Z
 
-Next check due: 2026-07-06T06:14:39Z
+Next check due: 2026-07-06T11:12:00Z
 
 Scheduler reference: `postgram-admin-wave-005-wdd-heartbeat`
 
@@ -65,14 +69,21 @@ Fallback prompt:
 
 ```text
 Run one bounded WDD controller heartbeat for /Users/ivo.toby/workspace/postgram,
-epic EPIC-admin-configuration-frontend, active wave WAVE-005. Use
-subagent-pr-orchestration. Read orchestration.json and controller-state.md,
-inspect workers Wegener (019f35ff-5f3c-7cc0-aa6e-78941a3fd7fd) for TASK-007
-and Goodall (019f35ff-a193-7ae0-a4b8-1ec53faabb74) for TASK-010 plus assigned
-worktrees. Update gates, PR refs, verification, feedback, branch freshness,
-cleanup, and monitoring. Stop when WAVE-005 is ready for wdd-reconcile-wave.
-After WAVE-005 reconciliation, continue the next wave per Ivo's
-finish-all-waves instruction.
+epic EPIC-admin-configuration-frontend, active wave WAVE-005. Use the
+subagent-pr-orchestration skill. Start in /Users/ivo.toby/workspace/postgram on
+branch codex/epic/admin-configuration-frontend. Read
+.wdd/epics/EPIC-admin-configuration-frontend/orchestration.json and
+controller-state.md. TASK-007 / PR #83 is MERGED and pushed. Inspect worker
+Goodall (019f35ff-a193-7ae0-a4b8-1ec53faabb74) and worktree
+/Users/ivo.toby/workspace/postgram/.worktrees/TASK-010-provider-config-apply on
+branch codex/task/TASK-010-provider-config-apply for
+WAVE-005-provider-config-apply / TASK-010-provider-config-apply. If Goodall has
+produced a PR or patch, move TASK-010 to review/reviewer orchestration; if no
+PR or patch exists, keep no_pr and nudge exact missing deliverables only if the
+worktree is inactive or stale. Stop when WAVE-005 bundles are merged, blocked,
+cancelled, or ready for wdd-reconcile-wave. After WAVE-005 is reconciled,
+continue to the next wave per Ivo's finish-all-waves instruction and push to
+GitHub between tasks/waves.
 ```
 
 ## Active Wave Strategy
@@ -120,10 +131,10 @@ finish-all-waves instruction.
 | TASK-004-admin-auth-persistence | TICKET-002-admin-auth-foundation | codex/task/TASK-004-admin-auth-persistence | cleaned_up | reconciled | REVIEW_PASS; freshness verification passed; merged in `0f96769`; PR #79 merged; WAVE-002 reconciled |
 | TASK-005-admin-session-routes | TICKET-002-admin-auth-foundation | codex/task/TASK-005-admin-session-routes | cleaned_up | reconciled | REVIEW_PASS; freshness verification passed; merged in `ecfe9ac`; PR #80 merged; WAVE-003 reconciled |
 | TASK-006-admin-mfa-step-up | TICKET-002-admin-auth-foundation | codex/task/TASK-006-admin-mfa-step-up | cleaned_up | reconciled | REVIEW_PASS; final branch freshness passed at `8c04680`; merged locally into epic branch in `6666508`; worktree cleaned up during WAVE-004 reconciliation |
-| TASK-007-admin-api-shell-diagnostics | TICKET-003-admin-api-foundation | codex/task/TASK-007-admin-api-shell-diagnostics | clean_pushed | no_pr | Worker Wegener dispatched; `npm test -- tests/contract/admin-api.test.ts`; `npm run typecheck` |
+| TASK-007-admin-api-shell-diagnostics | TICKET-003-admin-api-foundation | codex/task/TASK-007-admin-api-shell-diagnostics | clean_pushed | merged | REVIEW_PASS; freshness verification passed at `f0e889e`; merged locally into epic branch in `16985ef`; cleanup deferred until WAVE-005 reconciliation |
 | TASK-008-admin-key-audit-stats-api | TICKET-003-admin-api-foundation | codex/task/TASK-008-admin-key-audit-stats-api | not_created | planned | `npm test -- tests/contract/admin-key-audit-stats.test.ts`; `npm test -- tests/integration/key-service.test.ts`; `npm run typecheck` |
 | TASK-009-settings-secret-store | TICKET-004-runtime-configuration | codex/task/TASK-009-settings-secret-store | cleaned_up | reconciled | PR #81 follow-up REVIEW_PASS, final branch freshness passed at `ca9c96f`, merged locally into epic branch in `b63ad08`; worktree cleaned up during WAVE-004 reconciliation |
-| TASK-010-provider-config-apply | TICKET-004-runtime-configuration | codex/task/TASK-010-provider-config-apply | clean_pushed | no_pr | Worker Goodall dispatched; `npm test -- tests/integration/admin-provider-config.test.ts`; `npm test -- tests/unit/config.test.ts`; `npm run typecheck` |
+| TASK-010-provider-config-apply | TICKET-004-runtime-configuration | codex/task/TASK-010-provider-config-apply | clean_pushed | reviewing | Goodall opened draft PR #84 at `6cf5001`; Lorentz review requested; worker verification reported passed; controller diff check passed; PR is DIRTY and branch freshness is stale pending refresh before merge |
 | TASK-011-admin-auth-ui | TICKET-005-admin-frontend | codex/task/TASK-011-admin-auth-ui | not_created | planned | `npm --prefix ui run test -- --run src/components/AdminAuth.test.tsx`; `npm --prefix ui run typecheck` |
 | TASK-012-admin-ops-dashboard-ui | TICKET-005-admin-frontend | codex/task/TASK-012-admin-ops-dashboard-ui | not_created | planned | `npm --prefix ui run test -- --run src/components/AdminOps.test.tsx`; `npm --prefix ui run typecheck` |
 | TASK-013-admin-config-ui | TICKET-005-admin-frontend | codex/task/TASK-013-admin-config-ui | not_created | planned | `npm --prefix ui run test -- --run src/components/AdminConfig.test.tsx`; `npm --prefix ui run typecheck` |
@@ -232,6 +243,179 @@ finish-all-waves instruction.
   `/Users/ivo.toby/workspace/postgram/.worktrees/TASK-010-provider-config-apply`.
 - WAVE-005 task branches were created from activation commit `70df1c5`, pushed
   to origin, verified, and dispatched to Wegener and Goodall.
+- WAVE-005 2026-07-06T06:14:07Z observation: Wegener returned `DONE` with
+  draft PR #83 at `f1c1966`; GitHub reports PR #83 open, draft, and
+  `mergeStateStatus=CLEAN`. Lorentz review was requested under submission
+  `019f3611-2a16-72d3-bd90-db911948d8c3`. Goodall has active uncommitted
+  TASK-010 changes in the assigned worktree, including provider config service,
+  admin transport, config, settings-service, and integration/unit tests, but no
+  PR or patch yet.
+- WAVE-005 2026-07-06T06:24:15Z observation: Lorentz returned `REVIEW_PASS` for
+  PR #83 with no P1/P2/P3 findings. Controller refreshed TASK-007 against
+  `origin/codex/epic/admin-configuration-frontend`, resolved the WDD
+  task-file-only metadata conflict, reran `npm test --
+  tests/contract/admin-api.test.ts`, `npm run typecheck`, orchestration JSON
+  parse, and diff checks, pushed refreshed branch `f0e889e`, and merged
+  TASK-007 into the epic branch in `16985ef`. TASK-010 remains in progress with
+  no PR or patch.
+- WAVE-005 2026-07-06T06:29:36Z observation: Goodall did not return a final
+  status within the bounded wait; `gh pr list --head
+  codex/task/TASK-010-provider-config-apply` returned no PR. The TASK-010
+  worktree still has active uncommitted provider-config changes in the expected
+  files, so the bundle remains `no_pr` and no nudge was sent this tick.
+- WAVE-005 2026-07-06T06:33:47Z observation: PR #83 remains `MERGED`; Lorentz
+  review state was confirmed as `REVIEW_PASS`. Goodall again had no final status
+  in a bounded poll, no TASK-010 PR exists for the branch, and the worktree still
+  has active uncommitted changes in the expected provider-config files. The
+  bundle remains `no_pr`; no nudge was sent because active implementation work is
+  visible.
+- WAVE-005 2026-07-06T06:36:37Z observation: PR #83 remains `MERGED` and no
+  TASK-010 PR exists. Goodall did not return a final status during the bounded
+  poll, and the worktree still has the same active uncommitted provider-config
+  files. The bundle remains `no_pr`; no nudge was sent because active
+  implementation work is visible. Monitoring was slowed to a 15-minute cadence
+  until a PR/patch appears.
+- WAVE-005 2026-07-06T06:52:07Z observation: PR #83 remains `MERGED` and no
+  TASK-010 PR exists. Goodall did not return a final status during the bounded
+  poll, and the worktree still has active uncommitted provider-config files.
+  Recent local mtimes on the provider-config service and integration test show
+  active implementation work, so the bundle remains `no_pr` and no nudge was
+  sent.
+- WAVE-005 2026-07-06T07:07:07Z observation: PR #83 remains `MERGED` and no
+  TASK-010 PR exists. Goodall did not return a final status during the bounded
+  poll, and the worktree still has active uncommitted provider-config files.
+  Recent local mtimes on the provider-config service and integration test show
+  active implementation work, so the bundle remains `no_pr` and no nudge was
+  sent.
+- WAVE-005 2026-07-06T07:22:07Z observation: PR #83 remains `MERGED` and no
+  TASK-010 PR exists. Goodall did not return a final status during the bounded
+  poll, and the worktree still has active uncommitted provider-config files.
+  Recent local mtimes on the provider-config service and integration test show
+  active implementation work, so the bundle remains `no_pr` and no nudge was
+  sent.
+- WAVE-005 2026-07-06T07:37:07Z observation: PR #83 remains `MERGED` and no
+  TASK-010 PR exists. Goodall did not return a final status during the bounded
+  poll, and the worktree still has active uncommitted provider-config files.
+  Recent local mtimes on the provider-config service, transport, and integration
+  test show active implementation work, so the bundle remains `no_pr` and no
+  nudge was sent.
+- WAVE-005 2026-07-06T07:52:23Z observation: PR #83 remains `MERGED` and no
+  TASK-010 PR exists. Goodall did not return a final status during the bounded
+  poll, and the worktree still has active uncommitted provider-config files.
+  Recent local mtimes on the provider-config service and integration test show
+  active implementation work, so the bundle remains `no_pr` and no nudge was
+  sent.
+- WAVE-005 2026-07-06T08:07:23Z observation: PR #83 remains `MERGED` and no
+  TASK-010 PR exists. Goodall did not return a final status during the bounded
+  poll, and the worktree still has active uncommitted provider-config changes,
+  now including provider construction files under
+  `src/services/embeddings/providers.ts` and `src/services/llm-provider.ts`.
+  Recent local mtimes show active implementation work, so no nudge was sent.
+  The task branch is at `e73a57d` and is 15 commits behind the epic branch at
+  `f6950c4`, so final branch freshness is recorded as stale pending refresh
+  before review or merge.
+- WAVE-005 2026-07-06T08:22:23Z observation: PR #83 remains `MERGED` and no
+  TASK-010 PR exists. Goodall did not return a final status during the bounded
+  poll, and the worktree remains active/uncommitted in the same expected
+  provider-config/provider-construction file set. Recent local mtimes on
+  `src/services/admin-provider-config-service.ts` and
+  `tests/integration/admin-provider-config.test.ts` show active implementation
+  work within this monitoring cadence, so no nudge was sent. The task branch is
+  still at `e73a57d` and is now 16 commits behind the epic branch at `3533264`;
+  refresh remains required before review or merge.
+- WAVE-005 2026-07-06T08:37:23Z observation: PR #83 remains `MERGED` and no
+  TASK-010 PR exists. Goodall did not return a final status during the bounded
+  poll, and the worktree remains active/uncommitted in the expected
+  provider-config/provider-construction file set. Local mtimes on
+  `src/services/admin-provider-config-service.ts` and
+  `tests/integration/admin-provider-config.test.ts` moved during this heartbeat
+  window, so no nudge was sent. The task branch is still at `e73a57d` and is
+  now 17 commits behind the epic branch at `d7471f8`; refresh remains required
+  before review or merge.
+- WAVE-005 2026-07-06T08:52:24Z observation: PR #83 remains `MERGED` and no
+  TASK-010 PR exists. Goodall did not return a final status during the bounded
+  poll, and the worktree remains active/uncommitted in the expected
+  provider-config/provider-construction file set. The integration test mtime
+  moved during this heartbeat, so no nudge was sent. The task branch is still
+  at `e73a57d` and is now 18 commits behind the epic branch at `adbd600`;
+  refresh remains required before review or merge.
+- WAVE-005 2026-07-06T09:07:24Z observation: PR #83 remains `MERGED` and no
+  TASK-010 PR exists. Goodall did not return a final status during the bounded
+  poll, and the worktree remains active/uncommitted in the expected
+  provider-config/provider-construction file set. Recent local mtimes on the
+  provider-config service and integration test show visible implementation
+  activity, so no nudge was sent. The task branch is still at `e73a57d` and is
+  now 19 commits behind the epic branch at `93ba2a7`; refresh remains required
+  before review or merge.
+- WAVE-005 2026-07-06T09:22:24Z observation: PR #83 remains `MERGED` and no
+  TASK-010 PR exists. Goodall did not return a final status during the bounded
+  poll, and the worktree remains active/uncommitted in the expected
+  provider-config/provider-construction file set. Recent local mtimes on the
+  provider-config service and integration test show visible implementation
+  activity, so no nudge was sent. The task branch is still at `e73a57d` and is
+  now 20 commits behind the epic branch at `3dde76d`; refresh remains required
+  before review or merge.
+- WAVE-005 2026-07-06T09:37:24Z observation: PR #83 remains `MERGED` and no
+  TASK-010 PR exists. Goodall did not return a final status during the bounded
+  poll, and the worktree remains active/uncommitted in the expected
+  provider-config/provider-construction file set. A fresh local mtime on
+  `tests/unit/config.test.ts` shows visible implementation activity, so no
+  nudge was sent. The task branch is still at `e73a57d` and is now 21 commits
+  behind the epic branch at `44d0f1e`; refresh remains required before review
+  or merge.
+- WAVE-005 2026-07-06T09:52:54Z observation: PR #83 remains `MERGED` and no
+  TASK-010 PR exists. Goodall did not return a final status during the bounded
+  poll, and the worktree remains active/uncommitted in the expected
+  provider-config/provider-construction file set, now including
+  `src/db/migrations/012_admin_settings_applied_values.sql`. Fresh local mtimes
+  on the provider-config service, admin settings service, migration, and
+  integration test show visible implementation activity, so no nudge was sent.
+  The task branch is still at `e73a57d` and is now 22 commits behind the epic
+  branch at `30c1043`; refresh remains required before review or merge.
+- WAVE-005 2026-07-06T10:07:54Z observation: PR #83 remains `MERGED` and no
+  TASK-010 PR exists. Goodall did not return a final status during the bounded
+  poll, and the worktree remains active/uncommitted in the expected
+  provider-config/provider-construction file set, including the applied-values
+  migration. Fresh local mtimes on the provider-config service and integration
+  test show visible implementation activity, so no nudge was sent. The task
+  branch is still at `e73a57d` and is now 23 commits behind the epic branch at
+  `d13c188`; refresh remains required before review or merge.
+- WAVE-005 2026-07-06T10:22:54Z observation: PR #83 remains `MERGED` and no
+  TASK-010 PR exists. Goodall did not return a final status during the bounded
+  poll, and the worktree remains active/uncommitted in the expected
+  provider-config/provider-construction file set, including the applied-values
+  migration. Fresh local mtimes on the provider-config service and integration
+  test show visible implementation activity, so no nudge was sent. The task
+  branch is still at `e73a57d` and is now 24 commits behind the epic branch at
+  `1b36bab`; refresh remains required before review or merge.
+- WAVE-005 2026-07-06T10:37:54Z observation: PR #83 remains `MERGED` and no
+  TASK-010 PR exists. Goodall did not return a final status during the bounded
+  poll, and the worktree remains active/uncommitted in the expected
+  provider-config/provider-construction file set, including the applied-values
+  migration. Local mtimes on the provider-config service and integration test
+  remain inside this monitoring cadence, so no nudge was sent. The task branch
+  is still at `e73a57d` and is now 25 commits behind the epic branch at
+  `50dbf0b`; refresh remains required before review or merge.
+- WAVE-005 2026-07-06T10:52:54Z observation: PR #83 remains `MERGED` and
+  `gh pr list` returned no TASK-010 PR. Goodall's thread remains active in a
+  final uncommitted review pass (`019f3708-a5ce-7053-97df-8703bcfbb90c`) with
+  no final status token yet. The assigned worktree remains active/uncommitted
+  in the expected provider-config/provider-construction file set, including the
+  applied-values migration. `git diff --check` passed, and fresh local mtimes on
+  the provider-config service and integration test show activity inside this
+  monitoring cadence, so no nudge was sent. The task branch is still at
+  `e73a57d` and is now 26 commits behind the epic branch at `84f4787`; refresh
+  remains required before review or merge.
+- WAVE-005 2026-07-06T11:07:00Z observation: Goodall returned `DONE`, pushed
+  branch head `6cf5001`, moved TASK-010 to `review/`, and opened draft PR #84
+  at https://github.com/ivo-toby/postgram/pull/84. The controller verified PR
+  #84 is open/draft against `codex/epic/admin-configuration-frontend`, worker
+  thread is idle, assigned worktree is clean and pushed, and `git diff --check
+  origin/codex/epic/admin-configuration-frontend...origin/codex/task/TASK-010-provider-config-apply`
+  passed. Lorentz review was requested on thread
+  `019f322c-02e7-7590-8b8e-ebdd1e9c52ac`. PR #84 reports
+  `mergeStateStatus=DIRTY` and branch divergence is `27 2`, so freshness refresh
+  and post-refresh verification remain required before merge.
 
 ## WAVE-001 Reconciled State
 
@@ -307,8 +491,8 @@ finish-all-waves instruction.
 - WAVE-004 shared context is reconciled and TASK-006/TASK-009 worktree cleanup
   gates are handled.
 - WAVE-005 is active. Eligible tasks are
-  TASK-007-admin-api-shell-diagnostics and TASK-010-provider-config-apply, with
-  workers dispatched and PR/patch output pending.
+  TASK-007-admin-api-shell-diagnostics and TASK-010-provider-config-apply.
+  TASK-007 is merged and TASK-010 implementation is still in progress.
 - WAVE-006 remains blocked until WAVE-005 is merged/closed and reconciled.
 
 ## Verification Status
@@ -447,10 +631,103 @@ finish-all-waves instruction.
   context and downstream task briefs are updated, orchestration JSON parses,
   `git diff --check` passes, and the clean TASK-006/TASK-009 worktrees were
   removed.
+- WAVE-005 2026-07-06T08:07:23Z heartbeat verification: `gh pr list` returned
+  no PR for `codex/task/TASK-010-provider-config-apply`; Goodall's bounded
+  worker poll timed out without final status; the assigned worktree is
+  active/uncommitted with recent mtimes on provider service, provider
+  construction, and integration test files; `git rev-list --left-right --count
+  origin/codex/epic/admin-configuration-frontend...HEAD` returned `15 0`, so
+  TASK-010 must refresh against the epic branch before review or merge.
+- WAVE-005 2026-07-06T08:22:23Z heartbeat verification: `gh pr list` returned
+  no PR for `codex/task/TASK-010-provider-config-apply`; Goodall's bounded
+  worker poll timed out without final status; the assigned worktree is
+  active/uncommitted with recent mtimes on the provider-config service and
+  integration test; `git rev-list --left-right --count
+  origin/codex/epic/admin-configuration-frontend...HEAD` returned `16 0`, so
+  TASK-010 still must refresh against the epic branch before review or merge.
+- WAVE-005 2026-07-06T08:37:23Z heartbeat verification: `gh pr list` returned
+  no PR for `codex/task/TASK-010-provider-config-apply`; Goodall's bounded
+  worker poll timed out without final status; the assigned worktree is
+  active/uncommitted with mtimes from this heartbeat window on the
+  provider-config service and integration test; `git rev-list --left-right
+  --count origin/codex/epic/admin-configuration-frontend...HEAD` returned
+  `17 0`, so TASK-010 still must refresh against the epic branch before review
+  or merge.
+- WAVE-005 2026-07-06T08:52:24Z heartbeat verification: `gh pr list` returned
+  no PR for `codex/task/TASK-010-provider-config-apply`; Goodall's bounded
+  worker poll timed out without final status; the assigned worktree is
+  active/uncommitted with an integration-test mtime from this heartbeat;
+  `git rev-list --left-right --count
+  origin/codex/epic/admin-configuration-frontend...HEAD` returned `18 0`, so
+  TASK-010 still must refresh against the epic branch before review or merge.
+- WAVE-005 2026-07-06T09:07:24Z heartbeat verification: `gh pr list` returned
+  no PR for `codex/task/TASK-010-provider-config-apply`; Goodall's bounded
+  worker poll timed out without final status; the assigned worktree is
+  active/uncommitted with recent local mtimes on the provider-config service
+  and integration test; `git rev-list --left-right --count
+  origin/codex/epic/admin-configuration-frontend...HEAD` returned `19 0`, so
+  TASK-010 still must refresh against the epic branch before review or merge.
+- WAVE-005 2026-07-06T09:22:24Z heartbeat verification: `gh pr list` returned
+  no PR for `codex/task/TASK-010-provider-config-apply`; Goodall's bounded
+  worker poll timed out without final status; the assigned worktree is
+  active/uncommitted with recent local mtimes on the provider-config service
+  and integration test; `git rev-list --left-right --count
+  origin/codex/epic/admin-configuration-frontend...HEAD` returned `20 0`, so
+  TASK-010 still must refresh against the epic branch before review or merge.
+- WAVE-005 2026-07-06T09:37:24Z heartbeat verification: `gh pr list` returned
+  no PR for `codex/task/TASK-010-provider-config-apply`; Goodall's bounded
+  worker poll timed out without final status; the assigned worktree is
+  active/uncommitted with a fresh local mtime on `tests/unit/config.test.ts`;
+  `git rev-list --left-right --count
+  origin/codex/epic/admin-configuration-frontend...HEAD` returned `21 0`, so
+  TASK-010 still must refresh against the epic branch before review or merge.
+- WAVE-005 2026-07-06T09:52:54Z heartbeat verification: `gh pr list` returned
+  no PR for `codex/task/TASK-010-provider-config-apply`; Goodall's bounded
+  worker poll timed out without final status; the assigned worktree is
+  active/uncommitted with a new applied-values migration and fresh local mtimes
+  on provider-config files; `git rev-list --left-right --count
+  origin/codex/epic/admin-configuration-frontend...HEAD` returned `22 0`, so
+  TASK-010 still must refresh against the epic branch before review or merge.
+- WAVE-005 2026-07-06T10:07:54Z heartbeat verification: `gh pr list` returned
+  no PR for `codex/task/TASK-010-provider-config-apply`; Goodall's bounded
+  worker poll timed out without final status; the assigned worktree is
+  active/uncommitted with fresh local mtimes on the provider-config service and
+  integration test; `git rev-list --left-right --count
+  origin/codex/epic/admin-configuration-frontend...HEAD` returned `23 0`, so
+  TASK-010 still must refresh against the epic branch before review or merge.
+- WAVE-005 2026-07-06T10:22:54Z heartbeat verification: `gh pr list` returned
+  no PR for `codex/task/TASK-010-provider-config-apply`; Goodall's bounded
+  worker poll timed out without final status; the assigned worktree is
+  active/uncommitted with fresh local mtimes on the provider-config service and
+  integration test; `git rev-list --left-right --count
+  origin/codex/epic/admin-configuration-frontend...HEAD` returned `24 0`, so
+  TASK-010 still must refresh against the epic branch before review or merge.
+- WAVE-005 2026-07-06T10:37:54Z heartbeat verification: `gh pr list` returned
+  no PR for `codex/task/TASK-010-provider-config-apply`; Goodall's bounded
+  worker poll timed out without final status; the assigned worktree is
+  active/uncommitted with provider-config service and integration-test mtimes
+  still inside this monitoring cadence; `git rev-list --left-right --count
+  origin/codex/epic/admin-configuration-frontend...HEAD` returned `25 0`, so
+  TASK-010 still must refresh against the epic branch before review or merge.
 - WAVE-005 activation verification: activation artifacts parse and pass
   `git diff --check`; activation commit `70df1c5` is pushed; both task
   branches/worktrees were created from `70df1c5`, contain the in-progress task
   files and active orchestration state, and were pushed before worker dispatch.
+- WAVE-005 TASK-007 review-handoff verification: PR #83 is open/draft against
+  the epic branch at `f1c1966` with GitHub `mergeStateStatus=CLEAN`; Wegener
+  reported admin-api contracts, adjacent admin auth/MFA/API contracts,
+  typecheck, touched-file eslint, and `git diff --check` all passed.
+- WAVE-005 TASK-007 merge verification: Lorentz returned `REVIEW_PASS`;
+  controller refreshed the task branch against the latest epic branch at
+  `f0e889e`, reran `jq empty`, `git diff --check --cached`,
+  `npm test -- tests/contract/admin-api.test.ts`, and `npm run typecheck`; all
+  passed. The epic checkout post-merge `admin-api` contract test and typecheck
+  also passed. TASK-007 merged locally into the epic branch in `16985ef`;
+  PR #83 was marked `MERGED` by GitHub at 2026-07-06T06:27:29Z; cleanup is
+  deferred until WAVE-005 reconciliation.
+- WAVE-005 TASK-010 progress observation: Goodall's worktree has active
+  uncommitted changes in expected provider-config areas; no controller
+  verification was run against uncommitted worker code.
 
 ## Event Log
 
@@ -666,9 +943,130 @@ finish-all-waves instruction.
 - 2026-07-06T05:59:39Z: Created WAVE-005 heartbeat automation
   `postgram-admin-wave-005-wdd-heartbeat` at 15-minute cadence while both
   bundles are `no_pr`.
+- 2026-07-06T06:14:07Z: Heartbeat observed Wegener `DONE` with draft PR #83,
+  requested Lorentz review (`019f3611-2a16-72d3-bd90-db911948d8c3`), moved
+  TASK-007 to `reviewing`, observed active uncommitted TASK-010 work in
+  Goodall's worktree, and tightened heartbeat cadence to five minutes for
+  review monitoring.
+- 2026-07-06T06:24:15Z: Lorentz returned `REVIEW_PASS` for PR #83. Controller
+  refreshed TASK-007 against the latest epic branch, pushed task branch
+  `f0e889e`, merged TASK-007 into the epic branch in `16985ef`, moved the task
+  file to `done/`, and left TASK-010 as the only active WAVE-005 bundle.
+- 2026-07-06T06:27:42Z: Confirmed GitHub marked PR #83 `MERGED` at
+  2026-07-06T06:27:29Z after the epic branch push. TASK-010 remains
+  active/uncommitted with no PR or patch.
+- 2026-07-06T06:29:36Z: Goodall did not return a final status during the bounded
+  wait, no TASK-010 PR exists for the head branch, and the assigned worktree
+  remains active/uncommitted in expected provider-config files. Gate remains
+  `no_pr`; next check due 2026-07-06T06:34:36Z.
+- 2026-07-06T06:33:47Z: Confirmed PR #83 remains merged and Lorentz review state
+  is `REVIEW_PASS`. Goodall had no final status, no TASK-010 PR exists, and the
+  worktree remains active/uncommitted in expected provider-config files. Gate
+  remains `no_pr`; next check due 2026-07-06T06:38:47Z.
+- 2026-07-06T06:36:37Z: Goodall still had no final status and no TASK-010 PR;
+  the assigned worktree remains active/uncommitted in expected provider-config
+  files. Gate remains `no_pr`. Heartbeat automation was updated to 15-minute
+  cadence while no PR exists; next check due 2026-07-06T06:51:37Z.
+- 2026-07-06T06:52:07Z: Goodall still had no final status and no TASK-010 PR.
+  The assigned worktree remains active/uncommitted, with recent local mtimes on
+  provider-config service/test files, so no nudge was sent. Gate remains
+  `no_pr`; next check due 2026-07-06T07:07:07Z.
+- 2026-07-06T07:07:07Z: Goodall still had no final status and no TASK-010 PR.
+  The assigned worktree remains active/uncommitted, with recent local mtimes on
+  provider-config service/test files, so no nudge was sent. Gate remains
+  `no_pr`; next check due 2026-07-06T07:22:07Z.
+- 2026-07-06T07:22:07Z: Goodall still had no final status and no TASK-010 PR.
+  The assigned worktree remains active/uncommitted, with recent local mtimes on
+  provider-config service/test files, so no nudge was sent. Gate remains
+  `no_pr`; next check due 2026-07-06T07:37:07Z.
+- 2026-07-06T07:37:07Z: Goodall still had no final status and no TASK-010 PR.
+  The assigned worktree remains active/uncommitted, with recent local mtimes on
+  provider-config service, transport, and test files, so no nudge was sent. Gate
+  remains `no_pr`; next check due 2026-07-06T07:52:07Z.
+- 2026-07-06T07:52:23Z: Goodall still had no final status and no TASK-010 PR.
+  The assigned worktree remains active/uncommitted, with recent local mtimes on
+  provider-config service and test files, so no nudge was sent. Gate remains
+  `no_pr`; next check due 2026-07-06T08:07:23Z.
+- 2026-07-06T08:07:23Z: Goodall still had no final status and no TASK-010 PR.
+  The assigned worktree remains active/uncommitted, now including provider
+  construction files. Recent local mtimes show active implementation work, so no
+  nudge was sent. The task branch is stale relative to the epic branch and must
+  refresh before review or merge. Gate remains `no_pr`; next check due
+  2026-07-06T08:22:23Z.
+- 2026-07-06T08:22:23Z: Goodall still had no final status and no TASK-010 PR.
+  The assigned worktree remains active/uncommitted with recent local mtimes on
+  the provider-config service and integration test, so no nudge was sent. The
+  task branch remains stale relative to the epic branch and must refresh before
+  review or merge. Gate remains `no_pr`; next check due
+  2026-07-06T08:37:23Z.
+- 2026-07-06T08:37:23Z: Goodall still had no final status and no TASK-010 PR.
+  The assigned worktree remains active/uncommitted with local mtimes from this
+  heartbeat window on the provider-config service and integration test, so no
+  nudge was sent. The task branch remains stale relative to the epic branch and
+  must refresh before review or merge. Gate remains `no_pr`; next check due
+  2026-07-06T08:52:23Z.
+- 2026-07-06T08:52:24Z: Goodall still had no final status and no TASK-010 PR.
+  The assigned worktree remains active/uncommitted with a local integration-test
+  mtime from this heartbeat, so no nudge was sent. The task branch remains
+  stale relative to the epic branch and must refresh before review or merge.
+  Gate remains `no_pr`; next check due 2026-07-06T09:07:24Z.
+- 2026-07-06T09:07:24Z: Goodall still had no final status and no TASK-010 PR.
+  The assigned worktree remains active/uncommitted with recent local mtimes on
+  the provider-config service and integration test, so no nudge was sent. The
+  task branch remains stale relative to the epic branch and must refresh before
+  review or merge. Gate remains `no_pr`; next check due
+  2026-07-06T09:22:24Z.
+- 2026-07-06T09:22:24Z: Goodall still had no final status and no TASK-010 PR.
+  The assigned worktree remains active/uncommitted with recent local mtimes on
+  the provider-config service and integration test, so no nudge was sent. The
+  task branch remains stale relative to the epic branch and must refresh before
+  review or merge. Gate remains `no_pr`; next check due
+  2026-07-06T09:37:24Z.
+- 2026-07-06T09:37:24Z: Goodall still had no final status and no TASK-010 PR.
+  The assigned worktree remains active/uncommitted with a fresh local mtime on
+  `tests/unit/config.test.ts`, so no nudge was sent. The task branch remains
+  stale relative to the epic branch and must refresh before review or merge.
+  Gate remains `no_pr`; next check due 2026-07-06T09:52:24Z.
+- 2026-07-06T09:52:54Z: Goodall still had no final status and no TASK-010 PR.
+  The assigned worktree remains active/uncommitted with a new applied-values
+  migration and fresh provider-config mtimes, so no nudge was sent. The task
+  branch remains stale relative to the epic branch and must refresh before
+  review or merge. Gate remains `no_pr`; next check due
+  2026-07-06T10:07:54Z.
+- 2026-07-06T10:07:54Z: Goodall still had no final status and no TASK-010 PR.
+  The assigned worktree remains active/uncommitted with fresh provider-config
+  service and integration-test mtimes, so no nudge was sent. The task branch
+  remains stale relative to the epic branch and must refresh before review or
+  merge. Gate remains `no_pr`; next check due 2026-07-06T10:22:54Z.
+- 2026-07-06T10:22:54Z: Goodall still had no final status and no TASK-010 PR.
+  The assigned worktree remains active/uncommitted with fresh provider-config
+  service and integration-test mtimes, so no nudge was sent. The task branch
+  remains stale relative to the epic branch and must refresh before review or
+  merge. Gate remains `no_pr`; next check due 2026-07-06T10:37:54Z.
+- 2026-07-06T10:37:54Z: Goodall still had no final status and no TASK-010 PR.
+  The assigned worktree remains active/uncommitted with provider-config service
+  and integration-test mtimes still inside this monitoring cadence, so no nudge
+  was sent. The task branch remains stale relative to the epic branch and must
+  refresh before review or merge. Gate remains `no_pr`; next check due
+  2026-07-06T10:52:54Z.
+- 2026-07-06T10:52:54Z: Goodall still had no final status and no TASK-010 PR.
+  The assigned worktree remains active/uncommitted with provider-config service
+  and integration-test mtimes inside this monitoring cadence; Goodall's thread
+  is active in final uncommitted review, so no nudge was sent. `git diff
+  --check` passed. The task branch remains stale relative to the epic branch
+  and must refresh before review or merge. Gate remains `no_pr`; next check due
+  2026-07-06T11:07:54Z.
+- 2026-07-06T11:07:00Z: Goodall returned `DONE` with draft PR #84 at
+  `6cf5001`. Controller verified the PR is open/draft, the worker branch and
+  worktree are clean and pushed, and diff whitespace passes against the epic
+  branch. Lorentz review was requested. Gate is now `reviewing`; PR #84 remains
+  `DIRTY` and branch freshness must be repaired before merge. Next check due
+  2026-07-06T11:12:00Z.
 
 ## Next Action
 
-Next WAVE-005 heartbeat is due at 2026-07-06T06:14:39Z. Inspect Wegener and
-Goodall, update PR/patch refs and gates, and keep both bundles at `no_pr`
-until workers return deliverables.
+Next WAVE-005 heartbeat is due at 2026-07-06T11:12:00Z. Inspect PR #84 and
+Lorentz's review thread. If review reports P1/P2, route feedback to Goodall or
+a fresh fix worker. If review passes, refresh the stale task branch against
+`codex/epic/admin-configuration-frontend`, rerun freshness verification, then
+merge or mark merge-ready according to policy.

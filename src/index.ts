@@ -208,7 +208,10 @@ export function createApp(
         adminSettingsEncryptionKey: options.adminSettingsEncryptionKey,
         runtimeConfig: options.runtimeConfig,
         providerConfigFetch: options.providerConfigFetch,
-        providerConfigDnsLookup: options.providerConfigDnsLookup
+        providerConfigDnsLookup: options.providerConfigDnsLookup,
+        ...(options.extractionEnabled !== undefined
+          ? { extractionEnabled: options.extractionEnabled }
+          : {})
       }
     );
 

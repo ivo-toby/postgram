@@ -731,20 +731,44 @@
           "worktreeStatus": "clean_pushed",
           "workerThreadId": "019f35ff-5f3c-7cc0-aa6e-78941a3fd7fd",
           "workerNickname": "Wegener",
-          "reviewThreadId": null,
-          "reviewNickname": null,
-          "currentGate": "no_pr",
-          "branchFreshness": "current_at_dispatch",
-          "pr": null,
-          "latestCommit": "70df1c5f9324dd3f9ff424f199ee1b8896a2e410",
+          "reviewThreadId": "019f322c-02e7-7590-8b8e-ebdd1e9c52ac",
+          "reviewNickname": "Lorentz",
+          "currentGate": "merged",
+          "branchFreshness": "current_at_merge",
+          "pr": "https://github.com/ivo-toby/postgram/pull/83",
+          "latestCommit": "f0e889ed286c00aaad121095f8499ba8bc26f8bd",
           "blockingFeedback": [],
-          "verification": null,
+          "verification": {
+            "result": "review_passed_freshness_verified",
+            "commands": [
+              "npm test -- tests/contract/admin-api.test.ts",
+              "npm test -- tests/contract/admin-auth-routes.test.ts tests/contract/admin-mfa-routes.test.ts tests/contract/admin-api.test.ts",
+              "npm run typecheck",
+              "npx eslint src/index.ts src/transport/admin.ts src/services/admin-diagnostics-service.ts tests/contract/admin-api.test.ts",
+              "git diff --check",
+              "git diff --check --cached",
+              "jq empty .wdd/epics/EPIC-admin-configuration-frontend/orchestration.json"
+            ],
+            "evidence": "Wegener worker verification passed; Lorentz returned REVIEW_PASS with no P1/P2/P3; controller refreshed the task branch against origin/codex/epic/admin-configuration-frontend, resolved the WDD task-file metadata conflict only, reran admin-api contract tests (3 tests), typecheck, JSON parse, and diff checks, then merged locally in 16985ef. Epic checkout post-merge verification also passed: npm test -- tests/contract/admin-api.test.ts and npm run typecheck."
+          },
           "activatedAt": "2026-07-06T05:51:49Z",
-          "cleanupState": "not_started",
-          "sharedContextReconciliation": "pending",
+          "cleanupState": "cleanup_deferred",
+          "sharedContextReconciliation": "queued",
           "dispatchedAt": "2026-07-06T05:56:19Z",
           "dispatchBaseCommit": "70df1c5f9324dd3f9ff424f199ee1b8896a2e410",
-          "lastObservedAt": "2026-07-06T05:56:19Z"
+          "lastObservedAt": "2026-07-06T07:52:23Z",
+          "reviewRequestedAt": "2026-07-06T06:14:07Z",
+          "reviewSubmissionId": "019f3611-2a16-72d3-bd90-db911948d8c3",
+          "workerHead": "f1c19665f763481fe90786f93dc91efed40f0171",
+          "taskBranchHead": "f0e889ed286c00aaad121095f8499ba8bc26f8bd",
+          "freshnessMergeCommit": "f0e889ed286c00aaad121095f8499ba8bc26f8bd",
+          "localMergeCommit": "16985ef684213569ec6748065b390c9ab5e89b1a",
+          "reviewResult": "REVIEW_PASS",
+          "reviewedAt": "2026-07-06T06:24:15Z",
+          "mergedAt": "2026-07-06T06:24:15Z",
+          "remotePrState": "MERGED",
+          "remotePrMergedAt": "2026-07-06T06:27:29Z",
+          "closeoutCommit": "bc21b4d"
         },
         {
           "id": "WAVE-005-provider-config-apply",
@@ -756,25 +780,75 @@
           "worktreeStatus": "clean_pushed",
           "workerThreadId": "019f35ff-a193-7ae0-a4b8-1ec53faabb74",
           "workerNickname": "Goodall",
-          "reviewThreadId": null,
-          "reviewNickname": null,
-          "currentGate": "no_pr",
-          "branchFreshness": "current_at_dispatch",
-          "pr": null,
-          "latestCommit": "70df1c5f9324dd3f9ff424f199ee1b8896a2e410",
+          "reviewThreadId": "019f322c-02e7-7590-8b8e-ebdd1e9c52ac",
+          "reviewNickname": "Lorentz",
+          "currentGate": "reviewing",
+          "branchFreshness": "stale_needs_refresh_before_merge",
+          "pr": "https://github.com/ivo-toby/postgram/pull/84",
+          "latestCommit": "6cf5001662218046430971914679331bd8960de5",
           "blockingFeedback": [],
-          "verification": null,
+          "verification": {
+            "result": "worker_reported_passed_controller_diff_check_passed_review_requested",
+            "commands": [
+              "gh pr view 84 --json number,url,state,isDraft,headRefName,headRefOid,baseRefName,baseRefOid,mergeStateStatus,reviewDecision,updatedAt,createdAt,title,body",
+              "git rev-list --left-right --count origin/codex/epic/admin-configuration-frontend...origin/codex/task/TASK-010-provider-config-apply",
+              "git diff --check origin/codex/epic/admin-configuration-frontend...origin/codex/task/TASK-010-provider-config-apply"
+            ],
+            "evidence": "Goodall reported provider config integration tests, config unit tests, admin settings tests, admin auth/MFA contract tests, typecheck, build, targeted ESLint, git diff --check, and Codex review thread 019f3708-a5ce-7053-97df-8703bcfbb90c with no actionable findings. Controller verified PR #84 is OPEN draft at head 6cf5001, diff whitespace passes, and branch freshness is dirty/stale (27 behind, 2 ahead), so merge remains blocked until refresh and post-refresh verification."
+          },
           "activatedAt": "2026-07-06T05:51:49Z",
-          "cleanupState": "not_started",
-          "sharedContextReconciliation": "pending",
+          "cleanupState": "cleanup_deferred",
+          "sharedContextReconciliation": "queued",
           "dispatchedAt": "2026-07-06T05:56:19Z",
           "dispatchBaseCommit": "70df1c5f9324dd3f9ff424f199ee1b8896a2e410",
-          "lastObservedAt": "2026-07-06T05:56:19Z"
+          "lastObservedAt": "2026-07-06T11:07:00Z",
+          "worktreeObservation": {
+            "observedAt": "2026-07-06T11:07:00Z",
+            "status": "draft_pr_open_review_requested",
+            "workerStatus": "DONE",
+            "pr": "https://github.com/ivo-toby/postgram/pull/84",
+            "prState": "OPEN_DRAFT",
+            "prMergeStateStatus": "DIRTY",
+            "prHead": "6cf5001662218046430971914679331bd8960de5",
+            "workerThreadId": "019f35ff-a193-7ae0-a4b8-1ec53faabb74",
+            "workerNickname": "Goodall",
+            "reviewerThreadId": "019f322c-02e7-7590-8b8e-ebdd1e9c52ac",
+            "reviewerNickname": "Lorentz",
+            "reviewRequestedAt": "2026-07-06T11:07:00Z",
+            "branchDivergence": "origin/codex/epic/admin-configuration-frontend...origin/codex/task/TASK-010-provider-config-apply = 27 2; PR #84 is DIRTY and must be refreshed against epic head 0c47bb6736ff85112db93d391231764e9dc09748 before merge.",
+            "files": [
+              "src/config.ts",
+              "src/index.ts",
+              "src/services/admin-settings-service.ts",
+              "src/services/embeddings/providers.ts",
+              "src/services/llm-provider.ts",
+              "src/transport/admin.ts",
+              "tests/unit/config.test.ts",
+              "src/db/migrations/012_admin_settings_applied_values.sql",
+              "src/services/admin-provider-config-service.ts",
+              "src/transport/admin-provider-config.ts",
+              "tests/integration/admin-provider-config.test.ts",
+              ".wdd/epics/EPIC-admin-configuration-frontend/TICKET-004-runtime-configuration/review/TASK-010-provider-config-apply.md"
+            ],
+            "note": "Goodall completed TASK-010 and opened draft PR #84. Controller sent Lorentz a separate risk-based review request. Branch freshness remains stale/dirty and must be resolved after review before merge."
+          },
+          "reviewRequestedAt": "2026-07-06T11:07:00Z",
+          "reviewStatus": "REVIEW_REQUESTED",
+          "workerFinalStatus": "DONE",
+          "prState": {
+            "state": "OPEN",
+            "isDraft": true,
+            "mergeStateStatus": "DIRTY",
+            "headRefOid": "6cf5001662218046430971914679331bd8960de5",
+            "baseRefOid": "0c47bb6736ff85112db93d391231764e9dc09748",
+            "createdAt": "2026-07-06T10:59:32Z",
+            "updatedAt": "2026-07-06T10:59:55Z"
+          }
         }
       ],
       "activationCommit": "70df1c5f9324dd3f9ff424f199ee1b8896a2e410",
       "dispatchState": "dispatched",
-      "lastObservedAt": "2026-07-06T05:59:39Z",
+      "lastObservedAt": "2026-07-06T11:07:00Z",
       "dispatchedAt": "2026-07-06T05:56:19Z"
     },
     {
@@ -1322,8 +1396,8 @@
     {
       "id": "TASK-007-admin-api-shell-diagnostics",
       "ticket": "TICKET-003-admin-api-foundation",
-      "path": "TICKET-003-admin-api-foundation/in-progress/TASK-007-admin-api-shell-diagnostics.md",
-      "status": "in_progress",
+      "path": "TICKET-003-admin-api-foundation/done/TASK-007-admin-api-shell-diagnostics.md",
+      "status": "done",
       "dependsOn": [
         "TASK-005-admin-session-routes",
         "TASK-006-admin-mfa-step-up"
@@ -1337,23 +1411,48 @@
       "reviewModel": "review",
       "branch": "codex/task/TASK-007-admin-api-shell-diagnostics",
       "workerThreadId": "019f35ff-5f3c-7cc0-aa6e-78941a3fd7fd",
-      "reviewThreadId": null,
+      "reviewThreadId": "019f322c-02e7-7590-8b8e-ebdd1e9c52ac",
       "workerWorktree": "/Users/ivo.toby/workspace/postgram/.worktrees/TASK-007-admin-api-shell-diagnostics",
       "worktreeStatus": "clean_pushed",
-      "pr": null,
-      "latestCommit": "70df1c5f9324dd3f9ff424f199ee1b8896a2e410",
-      "branchFreshness": "current_at_dispatch",
+      "pr": "https://github.com/ivo-toby/postgram/pull/83",
+      "latestCommit": "f0e889ed286c00aaad121095f8499ba8bc26f8bd",
+      "branchFreshness": "current_at_merge",
       "blockingFeedback": [],
-      "verification": null,
-      "currentGate": "no_pr",
-      "cleanupState": "not_started",
-      "sharedContextReconciliation": "pending",
+      "verification": {
+        "result": "review_passed_freshness_verified",
+        "commands": [
+          "npm test -- tests/contract/admin-api.test.ts",
+          "npm test -- tests/contract/admin-auth-routes.test.ts tests/contract/admin-mfa-routes.test.ts tests/contract/admin-api.test.ts",
+          "npm run typecheck",
+          "npx eslint src/index.ts src/transport/admin.ts src/services/admin-diagnostics-service.ts tests/contract/admin-api.test.ts",
+          "git diff --check",
+          "git diff --check --cached",
+          "jq empty .wdd/epics/EPIC-admin-configuration-frontend/orchestration.json"
+        ],
+        "evidence": "Wegener worker verification passed; Lorentz returned REVIEW_PASS with no P1/P2/P3; controller refreshed the task branch against origin/codex/epic/admin-configuration-frontend, resolved the WDD task-file metadata conflict only, reran admin-api contract tests (3 tests), typecheck, JSON parse, and diff checks, then merged locally in 16985ef. Epic checkout post-merge verification also passed: npm test -- tests/contract/admin-api.test.ts and npm run typecheck."
+      },
+      "currentGate": "merged",
+      "cleanupState": "cleanup_deferred",
+      "sharedContextReconciliation": "queued",
       "activatedAt": "2026-07-06T05:51:49Z",
       "bundle": "WAVE-005-admin-api-shell-diagnostics",
       "workerNickname": "Wegener",
       "dispatchedAt": "2026-07-06T05:56:19Z",
       "dispatchBaseCommit": "70df1c5f9324dd3f9ff424f199ee1b8896a2e410",
-      "lastObservedAt": "2026-07-06T05:56:19Z"
+      "lastObservedAt": "2026-07-06T06:33:47Z",
+      "reviewNickname": "Lorentz",
+      "reviewRequestedAt": "2026-07-06T06:14:07Z",
+      "reviewSubmissionId": "019f3611-2a16-72d3-bd90-db911948d8c3",
+      "workerHead": "f1c19665f763481fe90786f93dc91efed40f0171",
+      "taskBranchHead": "f0e889ed286c00aaad121095f8499ba8bc26f8bd",
+      "freshnessMergeCommit": "f0e889ed286c00aaad121095f8499ba8bc26f8bd",
+      "localMergeCommit": "16985ef684213569ec6748065b390c9ab5e89b1a",
+      "reviewResult": "REVIEW_PASS",
+      "reviewedAt": "2026-07-06T06:24:15Z",
+      "mergedAt": "2026-07-06T06:24:15Z",
+      "remotePrState": "MERGED",
+      "remotePrMergedAt": "2026-07-06T06:27:29Z",
+      "closeoutCommit": "bc21b4d"
     },
     {
       "id": "TASK-008-admin-key-audit-stats-api",
@@ -1481,8 +1580,8 @@
     {
       "id": "TASK-010-provider-config-apply",
       "ticket": "TICKET-004-runtime-configuration",
-      "path": "TICKET-004-runtime-configuration/in-progress/TASK-010-provider-config-apply.md",
-      "status": "in_progress",
+      "path": "TICKET-004-runtime-configuration/review/TASK-010-provider-config-apply.md",
+      "status": "review",
       "dependsOn": [
         "TASK-009-settings-secret-store"
       ],
@@ -1496,23 +1595,51 @@
       "reviewModel": "review",
       "branch": "codex/task/TASK-010-provider-config-apply",
       "workerThreadId": "019f35ff-a193-7ae0-a4b8-1ec53faabb74",
-      "reviewThreadId": null,
+      "reviewThreadId": "019f322c-02e7-7590-8b8e-ebdd1e9c52ac",
       "workerWorktree": "/Users/ivo.toby/workspace/postgram/.worktrees/TASK-010-provider-config-apply",
       "worktreeStatus": "clean_pushed",
-      "pr": null,
-      "latestCommit": "70df1c5f9324dd3f9ff424f199ee1b8896a2e410",
-      "branchFreshness": "current_at_dispatch",
+      "pr": "https://github.com/ivo-toby/postgram/pull/84",
+      "latestCommit": "6cf5001662218046430971914679331bd8960de5",
+      "branchFreshness": "stale_needs_refresh_before_merge",
       "blockingFeedback": [],
-      "verification": null,
-      "currentGate": "no_pr",
-      "cleanupState": "not_started",
-      "sharedContextReconciliation": "pending",
+      "verification": {
+        "result": "worker_reported_passed_controller_diff_check_passed_review_requested",
+        "commands": [
+          "gh pr view 84 --json number,url,state,isDraft,headRefName,headRefOid,baseRefName,baseRefOid,mergeStateStatus,reviewDecision,updatedAt,createdAt,title,body",
+          "git rev-list --left-right --count origin/codex/epic/admin-configuration-frontend...origin/codex/task/TASK-010-provider-config-apply",
+          "git diff --check origin/codex/epic/admin-configuration-frontend...origin/codex/task/TASK-010-provider-config-apply"
+        ],
+        "evidence": "Goodall reported provider config integration tests, config unit tests, admin settings tests, admin auth/MFA contract tests, typecheck, build, targeted ESLint, git diff --check, and Codex review thread 019f3708-a5ce-7053-97df-8703bcfbb90c with no actionable findings. Controller verified PR #84 is OPEN draft at head 6cf5001, diff whitespace passes, and branch freshness is dirty/stale (27 behind, 2 ahead), so merge remains blocked until refresh and post-refresh verification."
+      },
+      "currentGate": "reviewing",
+      "cleanupState": "cleanup_deferred",
+      "sharedContextReconciliation": "queued",
       "activatedAt": "2026-07-06T05:51:49Z",
       "bundle": "WAVE-005-provider-config-apply",
       "workerNickname": "Goodall",
       "dispatchedAt": "2026-07-06T05:56:19Z",
       "dispatchBaseCommit": "70df1c5f9324dd3f9ff424f199ee1b8896a2e410",
-      "lastObservedAt": "2026-07-06T05:56:19Z"
+      "lastObservedAt": "2026-07-06T11:07:00Z",
+      "worktreeObservation": {
+        "observedAt": "2026-07-06T11:07:00Z",
+        "status": "draft_pr_open_review_requested",
+        "workerStatus": "DONE",
+        "pr": "https://github.com/ivo-toby/postgram/pull/84",
+        "prState": "OPEN_DRAFT",
+        "prMergeStateStatus": "DIRTY",
+        "prHead": "6cf5001662218046430971914679331bd8960de5",
+        "workerThreadId": "019f35ff-a193-7ae0-a4b8-1ec53faabb74",
+        "workerNickname": "Goodall",
+        "reviewerThreadId": "019f322c-02e7-7590-8b8e-ebdd1e9c52ac",
+        "reviewerNickname": "Lorentz",
+        "reviewRequestedAt": "2026-07-06T11:07:00Z",
+        "branchDivergence": "origin/codex/epic/admin-configuration-frontend...origin/codex/task/TASK-010-provider-config-apply = 27 2; PR #84 is DIRTY and must be refreshed against epic head 0c47bb6736ff85112db93d391231764e9dc09748 before merge.",
+        "note": "Goodall completed TASK-010 and opened draft PR #84. Controller sent Lorentz a separate risk-based review request. Branch freshness remains stale/dirty and must be resolved after review before merge."
+      },
+      "reviewNickname": "Lorentz",
+      "reviewRequestedAt": "2026-07-06T11:07:00Z",
+      "reviewStatus": "REVIEW_REQUESTED",
+      "workerFinalStatus": "DONE"
     },
     {
       "id": "TASK-011-admin-auth-ui",
@@ -1814,12 +1941,12 @@
   ],
   "monitoring": {
     "mode": "codex_thread_heartbeat",
-    "cadence": "15m",
-    "status": "active",
-    "lastCheckedAt": "2026-07-06T05:59:39Z",
-    "nextCheckDueAt": "2026-07-06T06:14:39Z",
+    "cadence": "5m",
+    "status": "reviewing_task_010",
+    "lastCheckedAt": "2026-07-06T11:07:00Z",
+    "nextCheckDueAt": "2026-07-06T11:12:00Z",
     "schedulerRef": "postgram-admin-wave-005-wdd-heartbeat",
-    "fallbackPrompt": "Run one bounded WDD controller heartbeat for /Users/ivo.toby/workspace/postgram, epic EPIC-admin-configuration-frontend, active wave WAVE-005. Use subagent-pr-orchestration. Read orchestration.json and controller-state.md, inspect workers Wegener (019f35ff-5f3c-7cc0-aa6e-78941a3fd7fd) for TASK-007 and Goodall (019f35ff-a193-7ae0-a4b8-1ec53faabb74) for TASK-010 plus assigned worktrees. Update gates, PR refs, verification, feedback, branch freshness, cleanup, and monitoring. Stop when WAVE-005 is ready for wdd-reconcile-wave; after WAVE-005 reconciliation continue the next wave per Ivo finish-all-waves instruction."
+    "fallbackPrompt": "Run one bounded WDD controller heartbeat for /Users/ivo.toby/workspace/postgram, epic EPIC-admin-configuration-frontend, active wave WAVE-005. Use the subagent-pr-orchestration skill. Start in /Users/ivo.toby/workspace/postgram on branch codex/epic/admin-configuration-frontend. Read .wdd/epics/EPIC-admin-configuration-frontend/orchestration.json and controller-state.md. TASK-007 / PR #83 is MERGED and pushed. Inspect PR #84 for WAVE-005-provider-config-apply / TASK-010-provider-config-apply, reviewer Lorentz (019f322c-02e7-7590-8b8e-ebdd1e9c52ac), worker Goodall (019f35ff-a193-7ae0-a4b8-1ec53faabb74), and assigned worktree /Users/ivo.toby/workspace/postgram/.worktrees/TASK-010-provider-config-apply. If review reports P1/P2, route feedback to Goodall or a fresh fix worker. If review passes, refresh the stale task branch against codex/epic/admin-configuration-frontend, rerun required freshness verification, then merge or mark merge_ready according to policy. Stop when WAVE-005 bundles are merged, blocked, cancelled, or ready for wdd-reconcile-wave. After WAVE-005 is reconciled, continue to the next wave per Ivo's finish-all-waves instruction and push to GitHub between tasks/waves."
   },
   "sharedContext": {
     "index": "shared-context/index.md",
@@ -1859,20 +1986,44 @@
         "worktreeStatus": "clean_pushed",
         "workerThreadId": "019f35ff-5f3c-7cc0-aa6e-78941a3fd7fd",
         "workerNickname": "Wegener",
-        "reviewThreadId": null,
-        "reviewNickname": null,
-        "currentGate": "no_pr",
-        "branchFreshness": "current_at_dispatch",
-        "pr": null,
-        "latestCommit": "70df1c5f9324dd3f9ff424f199ee1b8896a2e410",
+        "reviewThreadId": "019f322c-02e7-7590-8b8e-ebdd1e9c52ac",
+        "reviewNickname": "Lorentz",
+        "currentGate": "merged",
+        "branchFreshness": "current_at_merge",
+        "pr": "https://github.com/ivo-toby/postgram/pull/83",
+        "latestCommit": "f0e889ed286c00aaad121095f8499ba8bc26f8bd",
         "blockingFeedback": [],
-        "verification": null,
+        "verification": {
+          "result": "review_passed_freshness_verified",
+          "commands": [
+            "npm test -- tests/contract/admin-api.test.ts",
+            "npm test -- tests/contract/admin-auth-routes.test.ts tests/contract/admin-mfa-routes.test.ts tests/contract/admin-api.test.ts",
+            "npm run typecheck",
+            "npx eslint src/index.ts src/transport/admin.ts src/services/admin-diagnostics-service.ts tests/contract/admin-api.test.ts",
+            "git diff --check",
+            "git diff --check --cached",
+            "jq empty .wdd/epics/EPIC-admin-configuration-frontend/orchestration.json"
+          ],
+          "evidence": "Wegener worker verification passed; Lorentz returned REVIEW_PASS with no P1/P2/P3; controller refreshed the task branch against origin/codex/epic/admin-configuration-frontend, resolved the WDD task-file metadata conflict only, reran admin-api contract tests (3 tests), typecheck, JSON parse, and diff checks, then merged locally in 16985ef. Epic checkout post-merge verification also passed: npm test -- tests/contract/admin-api.test.ts and npm run typecheck."
+        },
         "activatedAt": "2026-07-06T05:51:49Z",
-        "cleanupState": "not_started",
-        "sharedContextReconciliation": "pending",
+        "cleanupState": "cleanup_deferred",
+        "sharedContextReconciliation": "queued",
         "dispatchedAt": "2026-07-06T05:56:19Z",
         "dispatchBaseCommit": "70df1c5f9324dd3f9ff424f199ee1b8896a2e410",
-        "lastObservedAt": "2026-07-06T05:56:19Z"
+        "lastObservedAt": "2026-07-06T07:52:23Z",
+        "reviewRequestedAt": "2026-07-06T06:14:07Z",
+        "reviewSubmissionId": "019f3611-2a16-72d3-bd90-db911948d8c3",
+        "workerHead": "f1c19665f763481fe90786f93dc91efed40f0171",
+        "taskBranchHead": "f0e889ed286c00aaad121095f8499ba8bc26f8bd",
+        "freshnessMergeCommit": "f0e889ed286c00aaad121095f8499ba8bc26f8bd",
+        "localMergeCommit": "16985ef684213569ec6748065b390c9ab5e89b1a",
+        "reviewResult": "REVIEW_PASS",
+        "reviewedAt": "2026-07-06T06:24:15Z",
+        "mergedAt": "2026-07-06T06:24:15Z",
+        "remotePrState": "MERGED",
+        "remotePrMergedAt": "2026-07-06T06:27:29Z",
+        "closeoutCommit": "bc21b4d"
       },
       {
         "id": "WAVE-005-provider-config-apply",
@@ -1884,26 +2035,76 @@
         "worktreeStatus": "clean_pushed",
         "workerThreadId": "019f35ff-a193-7ae0-a4b8-1ec53faabb74",
         "workerNickname": "Goodall",
-        "reviewThreadId": null,
-        "reviewNickname": null,
-        "currentGate": "no_pr",
-        "branchFreshness": "current_at_dispatch",
-        "pr": null,
-        "latestCommit": "70df1c5f9324dd3f9ff424f199ee1b8896a2e410",
+        "reviewThreadId": "019f322c-02e7-7590-8b8e-ebdd1e9c52ac",
+        "reviewNickname": "Lorentz",
+        "currentGate": "reviewing",
+        "branchFreshness": "stale_needs_refresh_before_merge",
+        "pr": "https://github.com/ivo-toby/postgram/pull/84",
+        "latestCommit": "6cf5001662218046430971914679331bd8960de5",
         "blockingFeedback": [],
-        "verification": null,
+        "verification": {
+          "result": "worker_reported_passed_controller_diff_check_passed_review_requested",
+          "commands": [
+            "gh pr view 84 --json number,url,state,isDraft,headRefName,headRefOid,baseRefName,baseRefOid,mergeStateStatus,reviewDecision,updatedAt,createdAt,title,body",
+            "git rev-list --left-right --count origin/codex/epic/admin-configuration-frontend...origin/codex/task/TASK-010-provider-config-apply",
+            "git diff --check origin/codex/epic/admin-configuration-frontend...origin/codex/task/TASK-010-provider-config-apply"
+          ],
+          "evidence": "Goodall reported provider config integration tests, config unit tests, admin settings tests, admin auth/MFA contract tests, typecheck, build, targeted ESLint, git diff --check, and Codex review thread 019f3708-a5ce-7053-97df-8703bcfbb90c with no actionable findings. Controller verified PR #84 is OPEN draft at head 6cf5001, diff whitespace passes, and branch freshness is dirty/stale (27 behind, 2 ahead), so merge remains blocked until refresh and post-refresh verification."
+        },
         "activatedAt": "2026-07-06T05:51:49Z",
-        "cleanupState": "not_started",
-        "sharedContextReconciliation": "pending",
+        "cleanupState": "cleanup_deferred",
+        "sharedContextReconciliation": "queued",
         "dispatchedAt": "2026-07-06T05:56:19Z",
         "dispatchBaseCommit": "70df1c5f9324dd3f9ff424f199ee1b8896a2e410",
-        "lastObservedAt": "2026-07-06T05:56:19Z"
+        "lastObservedAt": "2026-07-06T11:07:00Z",
+        "worktreeObservation": {
+          "observedAt": "2026-07-06T11:07:00Z",
+          "status": "draft_pr_open_review_requested",
+          "workerStatus": "DONE",
+          "pr": "https://github.com/ivo-toby/postgram/pull/84",
+          "prState": "OPEN_DRAFT",
+          "prMergeStateStatus": "DIRTY",
+          "prHead": "6cf5001662218046430971914679331bd8960de5",
+          "workerThreadId": "019f35ff-a193-7ae0-a4b8-1ec53faabb74",
+          "workerNickname": "Goodall",
+          "reviewerThreadId": "019f322c-02e7-7590-8b8e-ebdd1e9c52ac",
+          "reviewerNickname": "Lorentz",
+          "reviewRequestedAt": "2026-07-06T11:07:00Z",
+          "branchDivergence": "origin/codex/epic/admin-configuration-frontend...origin/codex/task/TASK-010-provider-config-apply = 27 2; PR #84 is DIRTY and must be refreshed against epic head 0c47bb6736ff85112db93d391231764e9dc09748 before merge.",
+          "files": [
+            "src/config.ts",
+            "src/index.ts",
+            "src/services/admin-settings-service.ts",
+            "src/services/embeddings/providers.ts",
+            "src/services/llm-provider.ts",
+            "src/transport/admin.ts",
+            "tests/unit/config.test.ts",
+            "src/db/migrations/012_admin_settings_applied_values.sql",
+            "src/services/admin-provider-config-service.ts",
+            "src/transport/admin-provider-config.ts",
+            "tests/integration/admin-provider-config.test.ts",
+            ".wdd/epics/EPIC-admin-configuration-frontend/TICKET-004-runtime-configuration/review/TASK-010-provider-config-apply.md"
+          ],
+          "note": "Goodall completed TASK-010 and opened draft PR #84. Controller sent Lorentz a separate risk-based review request. Branch freshness remains stale/dirty and must be resolved after review before merge."
+        },
+        "reviewRequestedAt": "2026-07-06T11:07:00Z",
+        "reviewStatus": "REVIEW_REQUESTED",
+        "workerFinalStatus": "DONE",
+        "prState": {
+          "state": "OPEN",
+          "isDraft": true,
+          "mergeStateStatus": "DIRTY",
+          "headRefOid": "6cf5001662218046430971914679331bd8960de5",
+          "baseRefOid": "0c47bb6736ff85112db93d391231764e9dc09748",
+          "createdAt": "2026-07-06T10:59:32Z",
+          "updatedAt": "2026-07-06T10:59:55Z"
+        }
       }
     ],
     "status": "in_progress",
     "dispatchedAt": "2026-07-06T05:56:19Z",
     "activationCommit": "70df1c5f9324dd3f9ff424f199ee1b8896a2e410",
-    "lastObservedAt": "2026-07-06T05:59:39Z",
+    "lastObservedAt": "2026-07-06T11:07:00Z",
     "dispatchState": "dispatched"
   },
   "currentGates": {
@@ -1942,8 +2143,8 @@
       "WAVE-003-admin-session-routes": "reconciled",
       "WAVE-004-admin-mfa-step-up": "reconciled",
       "WAVE-004-settings-secret-store": "reconciled",
-      "WAVE-005-admin-api-shell-diagnostics": "no_pr",
-      "WAVE-005-provider-config-apply": "no_pr"
+      "WAVE-005-admin-api-shell-diagnostics": "merged",
+      "WAVE-005-provider-config-apply": "reviewing"
     },
     "waveCompletion": {
       "WAVE-001": "done",
@@ -1958,12 +2159,12 @@
     },
     "monitoring": {
       "mode": "codex_thread_heartbeat",
-      "cadence": "15m",
-      "status": "active",
-      "lastCheckedAt": "2026-07-06T05:59:39Z",
-      "nextCheckDueAt": "2026-07-06T06:14:39Z",
+      "cadence": "5m",
+      "status": "reviewing_task_010",
+      "lastCheckedAt": "2026-07-06T11:07:00Z",
+      "nextCheckDueAt": "2026-07-06T11:12:00Z",
       "schedulerRef": "postgram-admin-wave-005-wdd-heartbeat",
-      "fallbackPrompt": "Run one bounded WDD controller heartbeat for /Users/ivo.toby/workspace/postgram, epic EPIC-admin-configuration-frontend, active wave WAVE-005. Use subagent-pr-orchestration. Read orchestration.json and controller-state.md, inspect workers Wegener (019f35ff-5f3c-7cc0-aa6e-78941a3fd7fd) for TASK-007 and Goodall (019f35ff-a193-7ae0-a4b8-1ec53faabb74) for TASK-010 plus assigned worktrees. Update gates, PR refs, verification, feedback, branch freshness, cleanup, and monitoring. Stop when WAVE-005 is ready for wdd-reconcile-wave; after WAVE-005 reconciliation continue the next wave per Ivo finish-all-waves instruction."
+      "fallbackPrompt": "Run one bounded WDD controller heartbeat for /Users/ivo.toby/workspace/postgram, epic EPIC-admin-configuration-frontend, active wave WAVE-005. Use the subagent-pr-orchestration skill. Start in /Users/ivo.toby/workspace/postgram on branch codex/epic/admin-configuration-frontend. Read .wdd/epics/EPIC-admin-configuration-frontend/orchestration.json and controller-state.md. TASK-007 / PR #83 is MERGED and pushed. Inspect PR #84 for WAVE-005-provider-config-apply / TASK-010-provider-config-apply, reviewer Lorentz (019f322c-02e7-7590-8b8e-ebdd1e9c52ac), worker Goodall (019f35ff-a193-7ae0-a4b8-1ec53faabb74), and assigned worktree /Users/ivo.toby/workspace/postgram/.worktrees/TASK-010-provider-config-apply. If review reports P1/P2, route feedback to Goodall or a fresh fix worker. If review passes, refresh the stale task branch against codex/epic/admin-configuration-frontend, rerun required freshness verification, then merge or mark merge_ready according to policy. Stop when WAVE-005 bundles are merged, blocked, cancelled, or ready for wdd-reconcile-wave. After WAVE-005 is reconciled, continue to the next wave per Ivo's finish-all-waves instruction and push to GitHub between tasks/waves."
     },
     "review": {
       "WAVE-001-admin-feasibility-gate": {
@@ -2101,6 +2302,35 @@
             "resolvedAt": "2026-07-05T18:05:13Z"
           }
         ]
+      },
+      "WAVE-005-admin-api-shell-diagnostics": {
+        "status": "passed",
+        "result": "REVIEW_PASS",
+        "pr": "https://github.com/ivo-toby/postgram/pull/83",
+        "latestCommit": "f0e889ed286c00aaad121095f8499ba8bc26f8bd",
+        "reviewedHead": "f1c19665f763481fe90786f93dc91efed40f0171",
+        "reviewThreadId": "019f322c-02e7-7590-8b8e-ebdd1e9c52ac",
+        "reviewNickname": "Lorentz",
+        "workerThreadId": "019f35ff-5f3c-7cc0-aa6e-78941a3fd7fd",
+        "workerNickname": "Wegener",
+        "requestedAt": "2026-07-06T06:14:07Z",
+        "submissionId": "019f3611-2a16-72d3-bd90-db911948d8c3",
+        "reviewedAt": "2026-07-06T06:24:15Z",
+        "blockingFeedback": []
+      },
+      "WAVE-005-provider-config-apply": {
+        "status": "review_requested",
+        "result": null,
+        "pr": "https://github.com/ivo-toby/postgram/pull/84",
+        "latestCommit": "6cf5001662218046430971914679331bd8960de5",
+        "reviewThreadId": "019f322c-02e7-7590-8b8e-ebdd1e9c52ac",
+        "reviewNickname": "Lorentz",
+        "workerThreadId": "019f35ff-a193-7ae0-a4b8-1ec53faabb74",
+        "workerNickname": "Goodall",
+        "requestedAt": "2026-07-06T11:07:00Z",
+        "blockingFeedback": [],
+        "branchFreshness": "stale_needs_refresh_before_merge",
+        "note": "Review requested after Goodall opened draft PR #84. Branch freshness remains dirty/stale and must be resolved before merge."
       }
     },
     "branchFreshness": {
@@ -2109,8 +2339,8 @@
       "WAVE-003-admin-session-routes": "current_at_merge",
       "WAVE-004-admin-mfa-step-up": "current_at_merge",
       "WAVE-004-settings-secret-store": "current_at_merge",
-      "WAVE-005-admin-api-shell-diagnostics": "current_at_dispatch",
-      "WAVE-005-provider-config-apply": "current_at_dispatch"
+      "WAVE-005-admin-api-shell-diagnostics": "current_at_merge",
+      "WAVE-005-provider-config-apply": "stale_needs_refresh_before_merge"
     },
     "merge": {
       "WAVE-001-admin-feasibility-gate": {
@@ -2176,6 +2406,27 @@
         "remoteBasePushedAt": "2026-07-05T18:17:48Z",
         "reconciledAt": "2026-07-05T18:26:34Z",
         "reconciliationSummary": "WAVE-004 reconciled MFA/step-up decisions into shared context and downstream task briefs; TASK-006 worktree cleaned up."
+      },
+      "WAVE-005-admin-api-shell-diagnostics": {
+        "status": "merged_pending_wave_completion",
+        "commit": "16985ef684213569ec6748065b390c9ab5e89b1a",
+        "taskBranchHead": "f0e889ed286c00aaad121095f8499ba8bc26f8bd",
+        "workerHead": "f1c19665f763481fe90786f93dc91efed40f0171",
+        "freshnessMergeCommit": "f0e889ed286c00aaad121095f8499ba8bc26f8bd",
+        "mergedAt": "2026-07-06T06:24:15Z",
+        "cleanupState": "cleanup_deferred",
+        "reviewResult": "REVIEW_PASS",
+        "branchFreshness": "current_at_merge",
+        "pr": "https://github.com/ivo-toby/postgram/pull/83",
+        "remotePrState": "MERGED",
+        "remotePrMergedAt": "2026-07-06T06:27:29Z",
+        "remoteBasePushedAt": "2026-07-06T06:27:29Z",
+        "closeoutCommit": "bc21b4d"
+      },
+      "WAVE-005-provider-config-apply": {
+        "status": "reviewing",
+        "pr": "https://github.com/ivo-toby/postgram/pull/84",
+        "branchFreshness": "stale_needs_refresh_before_merge"
       }
     },
     "sharedContextReconciliation": {
@@ -2183,7 +2434,7 @@
       "WAVE-002": "completed",
       "WAVE-003": "completed",
       "WAVE-004": "completed",
-      "WAVE-005": "pending"
+      "WAVE-005": "queued_for_task_007_pending_task_010"
     },
     "prState": {
       "WAVE-001-admin-feasibility-gate": {
@@ -2249,6 +2500,23 @@
         "localMergeCommit": "b63ad08619f3fb96606a7adc2fcd84118c106637",
         "mergedAt": "2026-07-05T18:13:59Z",
         "remoteBasePushedAt": "2026-07-05T18:13:59Z"
+      },
+      "WAVE-005-admin-api-shell-diagnostics": {
+        "state": "MERGED",
+        "isDraft": true,
+        "url": "https://github.com/ivo-toby/postgram/pull/83",
+        "number": 83,
+        "checkedAt": "2026-07-06T10:37:54Z",
+        "headRef": "codex/task/TASK-007-admin-api-shell-diagnostics",
+        "headSha": "f0e889ed286c00aaad121095f8499ba8bc26f8bd",
+        "reviewedHead": "f1c19665f763481fe90786f93dc91efed40f0171",
+        "baseRef": "codex/epic/admin-configuration-frontend",
+        "mergeStateStatus": "MERGED_BY_BASE_PUSH",
+        "reviewDecision": "REVIEW_PASS",
+        "localMergeCommit": "16985ef684213569ec6748065b390c9ab5e89b1a",
+        "mergedAt": "2026-07-06T06:27:29Z",
+        "remoteBasePushedAt": "2026-07-06T06:27:29Z",
+        "closeoutCommit": "bc21b4d"
       }
     },
     "cleanup": {
@@ -2283,8 +2551,9 @@
         "evidence": "Worker worktree was clean and pushed; ran git worktree remove /Users/ivo.toby/workspace/postgram/.worktrees/TASK-009-settings-secret-store and git worktree prune during WAVE-004 reconciliation."
       },
       "WAVE-005-admin-api-shell-diagnostics": {
-        "status": "not_started",
-        "worktree": "/Users/ivo.toby/workspace/postgram/.worktrees/TASK-007-admin-api-shell-diagnostics"
+        "status": "cleanup_deferred",
+        "worktree": "/Users/ivo.toby/workspace/postgram/.worktrees/TASK-007-admin-api-shell-diagnostics",
+        "reason": "WAVE-005 still has TASK-010 in progress; cleanup deferred until wave reconciliation."
       },
       "WAVE-005-provider-config-apply": {
         "status": "not_started",
@@ -2545,10 +2814,38 @@
         "result": "reconciliation_verified",
         "checkedAt": "2026-07-05T18:26:34Z",
         "evidence": "Task files in done; shared context and downstream task briefs reconciled; WAVE-004 worktrees cleaned up; final syntax verification is recorded in controller-state.md."
+      },
+      "WAVE-005-admin-api-shell-diagnostics": {
+        "result": "review_passed_freshness_verified",
+        "commands": [
+          "npm test -- tests/contract/admin-api.test.ts",
+          "npm test -- tests/contract/admin-auth-routes.test.ts tests/contract/admin-mfa-routes.test.ts tests/contract/admin-api.test.ts",
+          "npm run typecheck",
+          "npx eslint src/index.ts src/transport/admin.ts src/services/admin-diagnostics-service.ts tests/contract/admin-api.test.ts",
+          "git diff --check",
+          "git diff --check --cached",
+          "jq empty .wdd/epics/EPIC-admin-configuration-frontend/orchestration.json"
+        ],
+        "evidence": "Wegener worker verification passed; Lorentz returned REVIEW_PASS with no P1/P2/P3; controller refreshed the task branch against origin/codex/epic/admin-configuration-frontend, resolved the WDD task-file metadata conflict only, reran admin-api contract tests (3 tests), typecheck, JSON parse, and diff checks, then merged locally in 16985ef. Epic checkout post-merge verification also passed: npm test -- tests/contract/admin-api.test.ts and npm run typecheck."
+      },
+      "WAVE-005-provider-config-apply": {
+        "result": "worker_reported_passed_controller_diff_check_passed_review_requested",
+        "commands": [
+          "gh pr view 84 --json number,url,state,isDraft,headRefName,headRefOid,baseRefName,baseRefOid,mergeStateStatus,reviewDecision,updatedAt,createdAt,title,body",
+          "git rev-list --left-right --count origin/codex/epic/admin-configuration-frontend...origin/codex/task/TASK-010-provider-config-apply",
+          "git diff --check origin/codex/epic/admin-configuration-frontend...origin/codex/task/TASK-010-provider-config-apply"
+        ],
+        "evidence": "Goodall reported provider config integration tests, config unit tests, admin settings tests, admin auth/MFA contract tests, typecheck, build, targeted ESLint, git diff --check, and Codex review thread 019f3708-a5ce-7053-97df-8703bcfbb90c with no actionable findings. Controller verified PR #84 is OPEN draft at head 6cf5001, diff whitespace passes, and branch freshness is dirty/stale (27 behind, 2 ahead), so merge remains blocked until refresh and post-refresh verification."
       }
     },
     "feedback": {
       "WAVE-004": {
+        "blocking": []
+      },
+      "WAVE-005-admin-api-shell-diagnostics": {
+        "blocking": []
+      },
+      "WAVE-005-provider-config-apply": {
         "blocking": []
       }
     },
@@ -2611,20 +2908,32 @@
         "worktreeStatus": "clean_pushed",
         "workerThreadId": "019f35ff-5f3c-7cc0-aa6e-78941a3fd7fd",
         "workerNickname": "Wegener",
-        "reviewThreadId": null,
-        "reviewNickname": null,
-        "currentGate": "no_pr",
-        "branchFreshness": "current_at_dispatch",
-        "pr": null,
-        "latestCommit": "70df1c5f9324dd3f9ff424f199ee1b8896a2e410",
+        "reviewThreadId": "019f322c-02e7-7590-8b8e-ebdd1e9c52ac",
+        "reviewNickname": "Lorentz",
+        "currentGate": "reviewing",
+        "branchFreshness": "current_at_review_request",
+        "pr": "https://github.com/ivo-toby/postgram/pull/83",
+        "latestCommit": "f1c19665f763481fe90786f93dc91efed40f0171",
         "blockingFeedback": [],
-        "verification": null,
+        "verification": {
+          "result": "worker_verified",
+          "commands": [
+            "npm test -- tests/contract/admin-api.test.ts",
+            "npm test -- tests/contract/admin-auth-routes.test.ts tests/contract/admin-mfa-routes.test.ts tests/contract/admin-api.test.ts",
+            "npm run typecheck",
+            "npx eslint src/index.ts src/transport/admin.ts src/services/admin-diagnostics-service.ts tests/contract/admin-api.test.ts",
+            "git diff --check"
+          ],
+          "evidence": "Wegener reported admin-api contract suite passed with 3 tests, adjacent admin auth/MFA/API contract suite passed with 18 tests, typecheck passed, touched-file eslint passed, and git diff --check passed."
+        },
         "activatedAt": "2026-07-06T05:51:49Z",
         "cleanupState": "not_started",
-        "sharedContextReconciliation": "pending",
+        "sharedContextReconciliation": "queued",
         "dispatchedAt": "2026-07-06T05:56:19Z",
         "dispatchBaseCommit": "70df1c5f9324dd3f9ff424f199ee1b8896a2e410",
-        "lastObservedAt": "2026-07-06T05:56:19Z"
+        "lastObservedAt": "2026-07-06T06:14:07Z",
+        "reviewRequestedAt": "2026-07-06T06:14:07Z",
+        "reviewSubmissionId": "019f3611-2a16-72d3-bd90-db911948d8c3"
       },
       {
         "id": "WAVE-005-provider-config-apply",
@@ -2636,24 +2945,75 @@
         "worktreeStatus": "clean_pushed",
         "workerThreadId": "019f35ff-a193-7ae0-a4b8-1ec53faabb74",
         "workerNickname": "Goodall",
-        "reviewThreadId": null,
-        "reviewNickname": null,
-        "currentGate": "no_pr",
-        "branchFreshness": "current_at_dispatch",
-        "pr": null,
-        "latestCommit": "70df1c5f9324dd3f9ff424f199ee1b8896a2e410",
+        "reviewThreadId": "019f322c-02e7-7590-8b8e-ebdd1e9c52ac",
+        "reviewNickname": "Lorentz",
+        "currentGate": "reviewing",
+        "branchFreshness": "stale_needs_refresh_before_merge",
+        "pr": "https://github.com/ivo-toby/postgram/pull/84",
+        "latestCommit": "6cf5001662218046430971914679331bd8960de5",
         "blockingFeedback": [],
-        "verification": null,
+        "verification": {
+          "result": "worker_reported_passed_controller_diff_check_passed_review_requested",
+          "commands": [
+            "gh pr view 84 --json number,url,state,isDraft,headRefName,headRefOid,baseRefName,baseRefOid,mergeStateStatus,reviewDecision,updatedAt,createdAt,title,body",
+            "git rev-list --left-right --count origin/codex/epic/admin-configuration-frontend...origin/codex/task/TASK-010-provider-config-apply",
+            "git diff --check origin/codex/epic/admin-configuration-frontend...origin/codex/task/TASK-010-provider-config-apply"
+          ],
+          "evidence": "Goodall reported provider config integration tests, config unit tests, admin settings tests, admin auth/MFA contract tests, typecheck, build, targeted ESLint, git diff --check, and Codex review thread 019f3708-a5ce-7053-97df-8703bcfbb90c with no actionable findings. Controller verified PR #84 is OPEN draft at head 6cf5001, diff whitespace passes, and branch freshness is dirty/stale (27 behind, 2 ahead), so merge remains blocked until refresh and post-refresh verification."
+        },
         "activatedAt": "2026-07-06T05:51:49Z",
-        "cleanupState": "not_started",
-        "sharedContextReconciliation": "pending",
+        "cleanupState": "cleanup_deferred",
+        "sharedContextReconciliation": "queued",
         "dispatchedAt": "2026-07-06T05:56:19Z",
         "dispatchBaseCommit": "70df1c5f9324dd3f9ff424f199ee1b8896a2e410",
-        "lastObservedAt": "2026-07-06T05:56:19Z"
+        "lastObservedAt": "2026-07-06T11:07:00Z",
+        "worktreeObservation": {
+          "observedAt": "2026-07-06T11:07:00Z",
+          "status": "draft_pr_open_review_requested",
+          "workerStatus": "DONE",
+          "pr": "https://github.com/ivo-toby/postgram/pull/84",
+          "prState": "OPEN_DRAFT",
+          "prMergeStateStatus": "DIRTY",
+          "prHead": "6cf5001662218046430971914679331bd8960de5",
+          "workerThreadId": "019f35ff-a193-7ae0-a4b8-1ec53faabb74",
+          "workerNickname": "Goodall",
+          "reviewerThreadId": "019f322c-02e7-7590-8b8e-ebdd1e9c52ac",
+          "reviewerNickname": "Lorentz",
+          "reviewRequestedAt": "2026-07-06T11:07:00Z",
+          "branchDivergence": "origin/codex/epic/admin-configuration-frontend...origin/codex/task/TASK-010-provider-config-apply = 27 2; PR #84 is DIRTY and must be refreshed against epic head 0c47bb6736ff85112db93d391231764e9dc09748 before merge.",
+          "files": [
+            "src/config.ts",
+            "src/index.ts",
+            "src/services/admin-settings-service.ts",
+            "src/services/embeddings/providers.ts",
+            "src/services/llm-provider.ts",
+            "src/transport/admin.ts",
+            "tests/unit/config.test.ts",
+            "src/db/migrations/012_admin_settings_applied_values.sql",
+            "src/services/admin-provider-config-service.ts",
+            "src/transport/admin-provider-config.ts",
+            "tests/integration/admin-provider-config.test.ts",
+            ".wdd/epics/EPIC-admin-configuration-frontend/TICKET-004-runtime-configuration/review/TASK-010-provider-config-apply.md"
+          ],
+          "note": "Goodall completed TASK-010 and opened draft PR #84. Controller sent Lorentz a separate risk-based review request. Branch freshness remains stale/dirty and must be resolved after review before merge."
+        },
+        "reviewRequestedAt": "2026-07-06T11:07:00Z",
+        "reviewStatus": "REVIEW_REQUESTED",
+        "workerFinalStatus": "DONE",
+        "prState": {
+          "state": "OPEN",
+          "isDraft": true,
+          "mergeStateStatus": "DIRTY",
+          "headRefOid": "6cf5001662218046430971914679331bd8960de5",
+          "baseRefOid": "0c47bb6736ff85112db93d391231764e9dc09748",
+          "createdAt": "2026-07-06T10:59:32Z",
+          "updatedAt": "2026-07-06T10:59:55Z"
+        }
       }
     ],
     "activationCommit": "70df1c5f9324dd3f9ff424f199ee1b8896a2e410",
     "dispatchState": "dispatched",
-    "dispatchedAt": "2026-07-06T05:56:19Z"
+    "dispatchedAt": "2026-07-06T05:56:19Z",
+    "lastObservedAt": "2026-07-06T11:07:00Z"
   }
 }

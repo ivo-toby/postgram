@@ -6,7 +6,7 @@ ticket: TICKET-006-maintenance-jobs
 wave: WAVE-006
 slug: admin-job-foundation
 title: Admin Job Foundation
-status: in_progress
+status: review
 depends_on:
   - TASK-006-admin-mfa-step-up
   - TASK-009-settings-secret-store
@@ -21,10 +21,10 @@ review_model_class: review
 branch: codex/task/TASK-014-admin-job-foundation
 worker_worktree: /Users/ivo.toby/workspace/postgram/.worktrees/TASK-014-admin-job-foundation
 worktree_status: verified_pushed
-pr: null
+pr: pending draft PR
 worker_thread_id: null
 review_thread_id: null
-current_gate: no_pr
+current_gate: ready_for_review
 branch_freshness: current_at_dispatch_base
 verification:
   - npm test -- tests/integration/admin-job-service.test.ts
@@ -35,7 +35,7 @@ verification:
 
 ## Status
 
-in_progress
+review
 
 ## Parent Ticket
 
@@ -119,7 +119,7 @@ worktree contains the in-progress task file and orchestration state.
 
 ## PR / Patch Reference
 
-None yet.
+Pending draft PR creation.
 
 ## RED-GREEN TDD Plan
 
@@ -164,10 +164,10 @@ creating an overbroad abstraction.
 
 ## Task-Level Definition of Done
 
-- [ ] Job model is persisted and covered.
-- [ ] Job status API exists.
-- [ ] Audit metadata records admin actor.
-- [ ] Long-running maintenance tasks have a target foundation.
+- [x] Job model is persisted and covered.
+- [x] Job status API exists.
+- [x] Audit metadata records admin actor.
+- [x] Long-running maintenance tasks have a target foundation.
 
 ## Validation Steps
 
@@ -176,7 +176,12 @@ creating an overbroad abstraction.
 
 ## Verification Evidence
 
-- Not run yet.
+- `npm test -- tests/integration/admin-job-service.test.ts` - PASS (5 tests)
+- `npm run typecheck` - PASS
+- `npm test -- tests/contract/admin-api.test.ts` - PASS (3 tests)
+- `npx eslint src/services/admin-job-service.ts src/transport/admin-jobs.ts tests/integration/admin-job-service.test.ts tests/helpers/postgres.ts src/transport/admin.ts` - PASS
+- `git diff --check` - PASS
+- `codex review --uncommitted` - PASS; no actionable P0/P1/P2 correctness issues found.
 
 ## Review Feedback
 
@@ -194,4 +199,8 @@ creating an overbroad abstraction.
 
 ## Completion Notes
 
-- None yet.
+- Added `admin_jobs` and `admin_job_events` persistence for queued/running/cancel-requested/terminal lifecycle state, progress, requested scope, request summary, result summary, and idempotency.
+- Added `admin-job-service` helpers for create/read/list/start/progress/cancel/complete with structured admin actor audit events.
+- Added read-only `/admin/api/jobs` and `/admin/api/jobs/:jobId` status routes under active MFA, leaving existing admin transport behavior additive.
+- Enforced active MFA for job creation, recent step-up plus scoped idempotency for apply jobs, and summary safety guards that reject provider secrets, ciphertext, token prefixes, arbitrary validation metadata, and provider metadata/body containers.
+- Did not implement specific maintenance operations or UI.

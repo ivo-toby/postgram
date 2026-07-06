@@ -17,6 +17,15 @@ import { createEdge } from '../../services/edge-service.js';
 import { findSemanticNeighbors } from '../../services/extraction-service.js';
 import type { validateEdgeBatch as validateEdgeBatchFn } from '../../services/edge-validation-service.js';
 import {
+  applyAdminPruneEdgesMaintenance,
+  applyAdminReembedMaintenance,
+  applyAdminReextractMaintenance,
+  previewAdminPruneEdgesMaintenance,
+  previewAdminReembedMaintenance,
+  previewAdminReextractMaintenance,
+  type MaintenanceEntityScope
+} from '../../services/admin-maintenance-service.js';
+import {
   applyDurableGrooming,
   groomDurableMemory,
   groomSessionContext,
@@ -518,87 +527,65 @@ program
   .option('--model <id>', 'switch active model before re-embedding')
   .option('--all', 're-embed all entities with content')
   .option('--type <type>', 're-embed entities of this type only')
+  .option('--id <uuid>', 're-embed a single entity by id')
   .option('--only-failed', "only re-queue entities whose enrichment_status = 'failed'")
+  .option('--dry-run', 'report affected counts without deleting chunks')
   .action(async (options, command) => {
     const json = isJsonMode(command);
 
-    if (!options.all && !options.type && !options.onlyFailed) {
+    if (!options.all && !options.type && !options.id && !options.onlyFailed) {
       await handleCliFailure(
         new Error(
-          'Specify --all, --type <type>, or --only-failed to confirm which entities to re-embed'
+          'Specify --all, --type <type>, --id <uuid>, or --only-failed to confirm which entities to re-embed'
         ),
         json
       );
       return;
     }
 
+    if (options.id && !UUID_REGEX.test(options.id)) {
+      await handleCliFailure(
+        new Error(`--id must be a valid UUID (got "${options.id}")`),
+        json
+      );
+      return;
+    }
+
     await runWithPool(json, async (pool) => {
-      const client = await pool.connect();
-      try {
-        await client.query('BEGIN');
+      const scope: MaintenanceEntityScope = options.id
+        ? { kind: 'id', id: options.id }
+        : options.type
+          ? { kind: 'type', type: options.type }
+          : options.onlyFailed
+            ? { kind: 'failed' }
+            : { kind: 'all' };
+      const input = {
+        scope,
+        onlyFailed: !options.id && Boolean(options.onlyFailed),
+        ...(options.model ? { modelId: options.model } : {})
+      };
 
-        if (options.model) {
-          await client.query('UPDATE embedding_models SET is_active = false');
-          const modelResult = await client.query<{ id: string }>(
-            'UPDATE embedding_models SET is_active = true WHERE id = $1 RETURNING id',
-            [options.model]
-          );
-          if (!modelResult.rows[0]) {
-            throw new Error('Model not found');
-          }
-        }
-
-        const conditions = ["content IS NOT NULL"];
-        const params: unknown[] = [];
-
-        if (options.type) {
-          params.push(options.type);
-          conditions.push(`type = $${params.length}`);
-        }
-
-        if (options.onlyFailed) {
-          conditions.push("enrichment_status = 'failed'");
-        }
-
-        const whereClause = conditions.join(' AND ');
-
-        await client.query(
-          `DELETE FROM chunks WHERE entity_id IN (SELECT id FROM entities WHERE ${whereClause})`,
-          params
-        );
-
-        const updateResult = await client.query(
-          `UPDATE entities SET enrichment_status = 'pending', enrichment_attempts = 0 WHERE ${whereClause}`,
-          params
-        );
-
-        await client.query('COMMIT');
-
-        const markedCount = updateResult.rowCount ?? 0;
-
-        await appendAuditEntry(pool, {
-          operation: 'reembed.start',
-          details: {
-            markedCount,
-            model: options.model ?? null,
-            type: options.type ?? 'all',
-            onlyFailed: Boolean(options.onlyFailed)
-          }
-        });
-
+      if (options.dryRun) {
+        const preview = await previewAdminReembedMaintenance(pool, input);
         return json
-          ? { markedCount }
+          ? {
+              dryRun: true,
+              wouldMark: preview.wouldMark,
+              wouldDeleteChunks: preview.wouldDeleteChunks
+            }
           : [
-              `Marked ${markedCount} entities for re-embedding${
-                options.onlyFailed ? ' (only failed)' : ''
-              }`
+              `Would mark ${preview.wouldMark} entities for re-embedding and delete ${preview.wouldDeleteChunks} chunks`
             ];
-      } catch (error) {
-        await client.query('ROLLBACK');
-        throw error;
-      } finally {
-        client.release();
       }
+
+      const result = await applyAdminReembedMaintenance(pool, input);
+      return json
+        ? { markedCount: result.markedCount, deletedChunks: result.deletedChunks }
+        : [
+            `Marked ${result.markedCount} entities for re-embedding${
+              options.onlyFailed ? ' (only failed)' : ''
+            }`
+          ];
     });
   });
 
@@ -629,6 +616,7 @@ program
     '--show-skipped',
     "report how many entities matching --type/--only-failed/--id were skipped by guardrails (no content, archived, auto-created), broken down by category. Counts ignore --limit so you see the full picture."
   )
+  .option('--dry-run', 'report affected counts without changing extraction state')
   .action(async (options, command) => {
     const json = isJsonMode(command);
 
@@ -664,205 +652,96 @@ program
     }
 
     await runWithPool(json, async (pool) => {
-      const client = await pool.connect();
-      try {
-        await client.query('BEGIN');
+      const scope: MaintenanceEntityScope = options.id
+        ? { kind: 'id', id: options.id }
+        : options.type
+          ? { kind: 'type', type: options.type }
+          : options.onlyFailed
+            ? { kind: 'failed' }
+            : { kind: 'all' };
+      const input = {
+        scope,
+        onlyFailed: !options.id && Boolean(options.onlyFailed),
+        ...(limit !== undefined ? { limit } : {}),
+        cleanEdges: Boolean(options.cleanEdges),
+        includeAutoCreated: Boolean(options.includeAutoCreated),
+        noEdgesOnly: Boolean(options.noEdgesOnly),
+        showSkipped: Boolean(options.showSkipped)
+      };
 
-        // Archived entities are explicitly out-of-scope for graph writes —
-        // re-extracting them would cause pointless LLM calls and, with
-        // auto-create enabled, spawn new stubs from data the user already
-        // decided to retire. Auto-created stubs (content = just a name)
-        // loop the extraction pipeline and are excluded by default; pass
-        // --include-auto-created to override.
-        const conditions = [
-          'content IS NOT NULL',
-          "status IS DISTINCT FROM 'archived'",
-          "extraction_status IS DISTINCT FROM 'skipped'"
-        ];
-        if (!options.includeAutoCreated) {
-          conditions.push("NOT ('auto-created' = ANY(tags))");
-        }
-        if (options.noEdgesOnly) {
-          conditions.push(
-            "NOT EXISTS (SELECT 1 FROM edges WHERE source_id = id AND source = 'llm-extraction')"
-          );
-        }
-        const params: unknown[] = [];
+      const suffixes: string[] = [];
+      if (options.onlyFailed) suffixes.push('only failed');
+      if (limit !== undefined) suffixes.push(`limit ${limit}`);
 
-        // --id is exclusive: when given it pinpoints a single row, so
-        // --type / --only-failed / --limit on top of it are nonsense.
-        // The guardrails (content/status/auto-created) still apply and
-        // surface as a 0-rows result rather than a misleading success.
-        if (options.id) {
-          params.push(options.id);
-          conditions.push(`id = $${params.length}::uuid`);
-        } else {
-          if (options.type) {
-            params.push(options.type);
-            conditions.push(`type = $${params.length}`);
-          }
-          if (options.onlyFailed) {
-            conditions.push("extraction_status = 'failed'");
-          }
-        }
-
-        const whereClause = conditions.join(' AND ');
-
-        // PostgreSQL doesn't allow LIMIT directly on UPDATE/DELETE, so we
-        // wrap the selection in a subquery. Both the DELETE (for
-        // --clean-edges) and the UPDATE use the same subquery shape — in a
-        // single transaction this resolves to the same entity set, so
-        // edges are cleaned for exactly the rows that are then re-queued.
-        const selectionSubquery =
-          limit !== undefined
-            ? `SELECT id FROM entities WHERE ${whereClause} ORDER BY created_at ASC LIMIT ${limit}`
-            : `SELECT id FROM entities WHERE ${whereClause}`;
-
-        let deletedEdges = 0;
+      if (options.dryRun) {
+        const preview = await previewAdminReextractMaintenance(pool, input);
         if (options.cleanEdges) {
-          const deleteResult = await client.query(
-            `DELETE FROM edges
-             WHERE source = 'llm-extraction'
-               AND source_id IN (${selectionSubquery})`,
-            params
-          );
-          deletedEdges = deleteResult.rowCount ?? 0;
+          suffixes.push(`would delete ${preview.wouldDeleteEdges} prior edges`);
         }
-
-        const updateResult = await client.query(
-          limit !== undefined
-            ? `UPDATE entities
-               SET extraction_status = 'pending',
-                   extraction_error = NULL
-               WHERE id IN (${selectionSubquery})`
-            : `UPDATE entities
-               SET extraction_status = 'pending',
-                   extraction_error = NULL
-               WHERE ${whereClause}`,
-          params
-        );
-
-        // The skipped breakdown re-runs the user-specified filters
-        // (--type, --only-failed, --id) without the guardrails, then
-        // buckets each non-marked match into the FIRST guardrail it
-        // tripped, in priority order: no_content → archived →
-        // auto_created. This keeps the buckets disjoint so marked +
-        // skipped totals add up. --limit is intentionally NOT applied to
-        // the skipped query so operators see the full guardrail picture.
-        let skipped:
-          | {
-              noContent: number;
-              archived: number;
-              autoCreated: number;
-              skippedExtraction: number;
-            }
-          | undefined;
-        if (options.showSkipped) {
-          const userConditions: string[] = [];
-          const userParams: unknown[] = [];
-          if (options.id) {
-            userParams.push(options.id);
-            userConditions.push(`id = $${userParams.length}::uuid`);
-          } else {
-            if (options.type) {
-              userParams.push(options.type);
-              userConditions.push(`type = $${userParams.length}`);
-            }
-            if (options.onlyFailed) {
-              userConditions.push("extraction_status = 'failed'");
-            }
-          }
-          const userWhere = userConditions.length
-            ? userConditions.join(' AND ')
-            : 'TRUE';
-
-          const autoCreatedFilter = options.includeAutoCreated
-            ? '0'
-            : `count(*) FILTER (
-                 WHERE content IS NOT NULL
-                   AND status IS DISTINCT FROM 'archived'
-                   AND 'auto-created' = ANY(tags)
-               )`;
-
-          const skippedResult = await client.query<{
-            no_content: string;
-            archived: string;
-            auto_created: string;
-            skipped_extraction: string;
-          }>(
-            `SELECT
-               count(*) FILTER (WHERE content IS NULL) AS no_content,
-               count(*) FILTER (
-                 WHERE content IS NOT NULL
-                   AND status = 'archived'
-               ) AS archived,
-               ${autoCreatedFilter} AS auto_created,
-               count(*) FILTER (
-                 WHERE content IS NOT NULL
-                   AND status IS DISTINCT FROM 'archived'
-                   AND NOT ('auto-created' = ANY(tags))
-                   AND extraction_status = 'skipped'
-               ) AS skipped_extraction
-             FROM entities
-             WHERE ${userWhere}`,
-            userParams
-          );
-          const row = skippedResult.rows[0];
-          skipped = {
-            noContent: Number(row?.no_content ?? '0'),
-            archived: Number(row?.archived ?? '0'),
-            autoCreated: Number(row?.auto_created ?? '0'),
-            skippedExtraction: Number(row?.skipped_extraction ?? '0')
-          };
-        }
-
-        await client.query('COMMIT');
-
-        const markedCount = updateResult.rowCount ?? 0;
-
-        await appendAuditEntry(pool, {
-          operation: 'reextract.start',
-          details: {
-            markedCount,
-            deletedEdges,
-            type: options.type ?? (options.id ? null : 'all'),
-            id: options.id ?? null,
-            limit: limit ?? null,
-            cleanEdges: Boolean(options.cleanEdges),
-            includeAutoCreated: Boolean(options.includeAutoCreated),
-            onlyFailed: Boolean(options.onlyFailed)
-          }
-        });
-
-        const suffixes: string[] = [];
-        if (options.onlyFailed) suffixes.push('only failed');
-        if (limit !== undefined) suffixes.push(`limit ${limit}`);
-        if (options.cleanEdges) suffixes.push(`deleted ${deletedEdges} prior edges`);
-        const suffix = suffixes.length > 0 ? ` (${suffixes.join('; ')})` : '';
-
+        const suffix =
+          suffixes.length > 0 ? ` (${suffixes.join('; ')})` : '';
         if (json) {
-          return skipped
-            ? { markedCount, deletedEdges, skipped }
-            : { markedCount, deletedEdges };
+          return preview.skipped
+            ? {
+                dryRun: true,
+                wouldMark: preview.wouldMark,
+                wouldDeleteEdges: preview.wouldDeleteEdges,
+                skipped: preview.skipped
+              }
+            : {
+                dryRun: true,
+                wouldMark: preview.wouldMark,
+                wouldDeleteEdges: preview.wouldDeleteEdges
+              };
         }
-        const lines = [`Marked ${markedCount} entities for re-extraction${suffix}`];
-        if (skipped) {
+        const lines = [
+          `Would mark ${preview.wouldMark} entities for re-extraction${suffix}`
+        ];
+        if (preview.skipped) {
           const total =
-            skipped.noContent +
-            skipped.archived +
-            skipped.autoCreated +
-            skipped.skippedExtraction;
+            preview.skipped.noContent +
+            preview.skipped.archived +
+            preview.skipped.autoCreated +
+            preview.skipped.skippedExtraction;
           lines.push(
-            `Skipped ${total} (no_content=${skipped.noContent}, archived=${skipped.archived}, auto_created=${skipped.autoCreated}, skipped_extraction=${skipped.skippedExtraction})`
+            `Skipped ${total} (no_content=${preview.skipped.noContent}, archived=${preview.skipped.archived}, auto_created=${preview.skipped.autoCreated}, skipped_extraction=${preview.skipped.skippedExtraction})`
           );
         }
         return lines;
-      } catch (error) {
-        await client.query('ROLLBACK');
-        throw error;
-      } finally {
-        client.release();
       }
+
+      const result = await applyAdminReextractMaintenance(pool, input);
+      if (options.cleanEdges) {
+        suffixes.push(`deleted ${result.deletedEdges} prior edges`);
+      }
+      const suffix = suffixes.length > 0 ? ` (${suffixes.join('; ')})` : '';
+
+      if (json) {
+        return result.skipped
+          ? {
+              markedCount: result.markedCount,
+              deletedEdges: result.deletedEdges,
+              skipped: result.skipped
+            }
+          : {
+              markedCount: result.markedCount,
+              deletedEdges: result.deletedEdges
+            };
+      }
+      const lines = [
+        `Marked ${result.markedCount} entities for re-extraction${suffix}`
+      ];
+      if (result.skipped) {
+        const total =
+          result.skipped.noContent +
+          result.skipped.archived +
+          result.skipped.autoCreated +
+          result.skipped.skippedExtraction;
+        lines.push(
+          `Skipped ${total} (no_content=${result.skipped.noContent}, archived=${result.skipped.archived}, auto_created=${result.skipped.autoCreated}, skipped_extraction=${result.skipped.skippedExtraction})`
+        );
+      }
+      return lines;
     });
   });
 
@@ -886,51 +765,39 @@ program
     }
 
     await runWithPool(json, async (pool) => {
-      const conditions: string[] = ['confidence < $1'];
-      const params: unknown[] = [threshold];
-
-      if (options.source && options.source !== 'any') {
-        params.push(options.source);
-        conditions.push(`source = $${params.length}`);
-      }
-
-      if (options.relation) {
-        params.push(options.relation);
-        conditions.push(`relation = $${params.length}`);
-      }
-
-      const whereClause = conditions.join(' AND ');
-
       if (options.dryRun) {
-        const countResult = await pool.query<{ count: string }>(
-          `SELECT count(*)::text AS count FROM edges WHERE ${whereClause}`,
-          params
-        );
-        const wouldDelete = Number(countResult.rows[0]?.count ?? '0');
+        const preview = await previewAdminPruneEdgesMaintenance(pool, {
+          below: threshold,
+          source: options.source,
+          relation: options.relation
+        });
         return json
-          ? { wouldDelete, threshold, source: options.source, relation: options.relation ?? null, dryRun: true }
-          : [`Would delete ${wouldDelete} edges below confidence ${threshold}`];
+          ? {
+              wouldDelete: preview.wouldDelete,
+              threshold: preview.threshold,
+              source: preview.source,
+              relation: preview.relation,
+              dryRun: true
+            }
+          : [
+              `Would delete ${preview.wouldDelete} edges below confidence ${threshold}`
+            ];
       }
 
-      const deleteResult = await pool.query(
-        `DELETE FROM edges WHERE ${whereClause}`,
-        params
-      );
-      const deleted = deleteResult.rowCount ?? 0;
-
-      await appendAuditEntry(pool, {
-        operation: 'edges.prune',
-        details: {
-          deleted,
-          threshold,
-          source: options.source,
-          relation: options.relation ?? null
-        }
+      const result = await applyAdminPruneEdgesMaintenance(pool, {
+        below: threshold,
+        source: options.source,
+        relation: options.relation
       });
 
       return json
-        ? { deleted, threshold, source: options.source, relation: options.relation ?? null }
-        : [`Deleted ${deleted} edges below confidence ${threshold}`];
+        ? {
+            deleted: result.deleted,
+            threshold,
+            source: result.source,
+            relation: result.relation
+          }
+        : [`Deleted ${result.deleted} edges below confidence ${threshold}`];
     });
   });
 

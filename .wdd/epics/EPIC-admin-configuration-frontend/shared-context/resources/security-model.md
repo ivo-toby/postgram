@@ -503,6 +503,43 @@ Carry-forward security gates:
   secret/session leakage, one-time API-key plaintext behavior, provider secret
   redaction, stale-validation gating, and preserved dashboard panel access.
 
+## WAVE-009 Reconciled Maintenance UI Controls
+
+TASK-016 completed the browser maintenance admin UI in PR #91.
+
+Implemented maintenance UI controls:
+
+- `AdminMaintenance` is mounted in the existing protected `AdminDashboard`
+  shell and uses the shared admin API client with same-origin cookies and
+  in-memory CSRF.
+- The UI does not introduce admin bearer headers or localStorage-backed admin
+  credential state.
+- Reextract, reembed, and edge-prune flows enforce preview before apply.
+- Apply actions require recent step-up, a fresh matching preview job, and a
+  scoped idempotency key before calling destructive maintenance endpoints.
+- Request-shaping controls are locked while preview/apply jobs are non-terminal
+  so a user cannot silently change the target scope while polling continues.
+- Preview/apply progress is fetched from `/admin/api/jobs/:jobId`; transient
+  job-status failures are retryable and stale polling errors clear after a
+  successful refresh.
+- Reused/idempotent apply responses fetch the referenced job detail before
+  rendering result evidence.
+- Browser edge pruning remains constrained to the reviewed `llm-extraction`
+  source.
+- Maintenance result rendering uses safe summaries only and avoids provider
+  bodies, auth headers, token prefixes, ciphertext, arbitrary validation
+  metadata, and hidden secret-derived material.
+
+Carry-forward security gates:
+
+- TASK-017 must prove at least one safe maintenance dry-run and visible job
+  polling from the browser in the clean Docker first-run path without normal
+  `pgm-admin` usage.
+- TASK-018 must include maintenance UI security review for preview-before-apply,
+  recent step-up, scoped idempotency, job polling, safe result rendering,
+  browser-storage non-persistence, and the `llm-extraction` edge-prune
+  constraint.
+
 ## OAuth/OIDC Boundary
 
 Existing OAuth/DCR is for native remote MCP connectors. It lets external clients

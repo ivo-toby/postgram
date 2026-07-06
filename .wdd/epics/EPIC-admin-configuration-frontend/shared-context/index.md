@@ -95,6 +95,11 @@ configuration, maintenance jobs, or Docker behavior.
 - Provider configuration UI keeps provider secrets write-only and blank on
   load, uses in-memory CSRF through the shared admin client, blocks apply until
   current validation evidence exists, and surfaces restart/reembed impacts.
+- Maintenance admin UI is now implemented in the protected `AdminDashboard`
+  shell. It uses shared admin API client methods for maintenance dry-run,
+  apply, and job polling; requires preview-before-apply, step-up, and scoped
+  idempotency evidence; constrains edge pruning to `llm-extraction`; and
+  renders only safe job summaries.
 
 ## Key Warnings
 
@@ -395,6 +400,37 @@ configuration, maintenance jobs, or Docker behavior.
     `pgm-admin` usage.
   - TASK-018 final validation must include browser-storage checks for the
     dashboard/config UI and provider secret redaction/write-only behavior.
+
+### WAVE-009 Maintenance Admin UI
+
+- Status: merged and reconciled on 2026-07-06.
+- PR: https://github.com/ivo-toby/postgram/pull/91, merged at
+  2026-07-06T21:37:31Z.
+- Merge commit: `10b2738` for TASK-016 maintenance admin UI.
+- Review: Hypatia `REVIEW_PASS`, no P1/P2/P3 findings.
+- Implemented maintenance UI contract:
+  - `ui/src/components/admin/AdminMaintenance.tsx` is mounted inside the
+    existing `AdminDashboard` shell instead of adding a parallel admin surface.
+  - `ui/src/lib/adminApi.ts` exposes maintenance dry-run/apply and job-detail
+    methods using same-origin credentials, in-memory CSRF, and no admin bearer
+    header.
+  - The UI supports approved reextract, reembed, and constrained
+    `llm-extraction` prune-edge flows.
+  - Apply controls require a fresh matching preview job, recent step-up, and a
+    scoped idempotency key before destructive maintenance can start.
+  - Preview/apply job state is polled through `/admin/api/jobs/:jobId`; the UI
+    does not assume synchronous completion in maintenance apply responses.
+  - Job progress/results render safe summaries only and avoid provider bodies,
+    auth headers, token prefixes, ciphertext, arbitrary validation metadata,
+    and hidden secret-derived material.
+- Carry-forward gates:
+  - TASK-017 Docker smoke must exercise the protected admin dashboard,
+    Config tab, API-key create flow, dashboard status panels, and one safe
+    maintenance dry-run from the browser without normal `pgm-admin` use.
+  - TASK-018 final validation must include maintenance UI checks for
+    preview-before-apply, step-up, scoped idempotency, job polling, safe result
+    rendering, `llm-extraction` edge-prune constraint, and no browser storage
+    of admin/session/bootstrap/TOTP/provider secret/job secret material.
 
 ## Recent Durable Memory
 

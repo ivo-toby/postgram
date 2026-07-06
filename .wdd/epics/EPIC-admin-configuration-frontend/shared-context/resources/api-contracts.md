@@ -329,6 +329,45 @@ Handoff contract:
   navigation and should keep all destructive operations behind preview,
   step-up, idempotency, and job polling flows.
 
+## WAVE-009 Implemented Maintenance UI Client Consumption
+
+TASK-016 consumed the WAVE-007 maintenance API contract from the frontend in
+PR #91.
+
+Implemented frontend contract:
+
+- `AdminMaintenance` is mounted inside `AdminDashboard` and preserves the
+  existing health, queue, stats, config/models/jobs, API-key, audit, and Config
+  panels.
+- `ui/src/lib/adminApi.ts` now includes maintenance dry-run/apply helpers for
+  reextract, reembed, and prune-edges, plus job-detail polling through
+  `/admin/api/jobs/:jobId`.
+- Maintenance requests continue to use the same admin browser client:
+  same-origin credentials, HttpOnly session cookie, in-memory CSRF, and no
+  admin bearer header.
+- Apply UI requires a successful matching preview job, recent step-up, and a
+  scoped idempotency key before calling the apply endpoints.
+- Reused/idempotent apply responses that return only a terminal job reference
+  are followed by job-detail fetches before rendering result evidence.
+- Request-shaping controls are locked while preview/apply jobs are non-terminal
+  so in-flight polling and idempotency context cannot drift.
+- Preview and apply polling retry after transient job-status fetch failures and
+  clear stale polling errors after successful refresh.
+
+Carry-forward contract:
+
+- Browser maintenance UI may expose only the reviewed reextract, reembed, and
+  `llm-extraction` prune-edge flows; it must not expose CLI's broader `any`
+  edge-prune source selector.
+- Rendered job summaries must remain safe. Do not display provider bodies, auth
+  headers, token prefixes, ciphertext, arbitrary validation metadata, or hidden
+  secret-derived material.
+- TASK-017 Docker smoke should include one safe browser maintenance dry-run and
+  visible job polling without normal `pgm-admin` usage.
+- TASK-018 final validation should review the maintenance UI with the same
+  admin session/CSRF/browser-storage invariants as the dashboard and Config
+  panels.
+
 ## Response Shape
 
 Use the existing app error response style where practical:

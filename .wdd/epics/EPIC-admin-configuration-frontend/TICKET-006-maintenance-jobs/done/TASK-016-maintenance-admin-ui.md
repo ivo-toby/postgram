@@ -24,7 +24,7 @@ worktree_status: cleaned_up
 pr: https://github.com/ivo-toby/postgram/pull/91
 worker_thread_id: 019f3926-c2c5-7290-9c2f-9a4cca19e6ae
 review_thread_id: 019f3954-7e17-7652-8673-c2304fd7c54a
-current_gate: merged
+current_gate: reconciled
 branch_freshness: current_at_merge
 verification:
   - npm --prefix ui run test -- --run src/components/AdminMaintenance.test.tsx
@@ -223,6 +223,10 @@ Share confirmation/progress components with config UI if useful.
 - TASK-016 merged into the epic branch in `10b27384545cb450e6d3c5c10460af1bc22c5667`.
   PR #91 was marked `MERGED` by GitHub at 2026-07-06T21:37:31Z, and the clean
   pushed worktree was removed.
+- 2026-07-06T21:42:32Z WAVE-009 reconciliation completed. Shared context now
+  records the maintenance dashboard/client contract, preview-before-apply,
+  recent step-up, scoped idempotency, job polling, safe result rendering,
+  `llm-extraction` edge-prune constraint, and TASK-017/TASK-018 handoffs.
 
 ## Review Feedback
 

@@ -24,8 +24,8 @@ updated_at: 2026-07-06
 | TASK-009-settings-secret-store | TICKET-004-runtime-configuration | TASK-003, TASK-005 | settings migrations, secret encryption, config service | done |
 | TASK-010-provider-config-apply | TICKET-004-runtime-configuration | TASK-009 | provider lifecycle, validation flows, config tests, worker reload semantics | done |
 | TASK-011-admin-auth-ui | TICKET-005-admin-frontend | TASK-006 | React auth shell, admin session client, MFA UI, UI routing | done |
-| TASK-012-admin-ops-dashboard-ui | TICKET-005-admin-frontend | TASK-008, TASK-011 | API key UI, audit/stats/health pages, admin API client | todo |
-| TASK-013-admin-config-ui | TICKET-005-admin-frontend | TASK-010, TASK-011 | runtime config UI, secret redaction, provider validation UI | todo |
+| TASK-012-admin-ops-dashboard-ui | TICKET-005-admin-frontend | TASK-008, TASK-011 | API key UI, audit/stats/health pages, admin API client | done |
+| TASK-013-admin-config-ui | TICKET-005-admin-frontend | TASK-010, TASK-011 | runtime config UI, secret redaction, provider validation UI | done |
 | TASK-014-admin-job-foundation | TICKET-006-maintenance-jobs | TASK-006, TASK-009 | job tables, job service, audit integration, progress state | done |
 | TASK-015-maintenance-admin-api | TICKET-006-maintenance-jobs | TASK-008, TASK-010, TASK-014 | graph/memory/embedding services, dry-run/apply admin APIs, CLI regressions | done |
 | TASK-016-maintenance-admin-ui | TICKET-006-maintenance-jobs | TASK-011, TASK-015 | maintenance UI, confirmations, progress polling, admin API client | done |
@@ -755,7 +755,7 @@ Stop condition:
 
 ### WAVE-009
 
-Status: ready_for_reconciliation
+Status: done
 
 Tasks:
 
@@ -810,6 +810,12 @@ Progress:
   refreshed TASK-016 to task head `1885b64`, verified freshness and required UI
   checks, merged PR #91 into the epic branch in `10b2738`, cleaned up the
   worktree, and queued WAVE-009 for reconciliation.
+- 2026-07-06T21:42:32Z reconciliation: WAVE-009 shared context now records the
+  `AdminMaintenance` dashboard panel, concrete maintenance dry-run/apply client
+  methods, preview-before-apply/step-up/idempotency/job-polling behavior, safe
+  job summary rendering, and TASK-017/TASK-018 Docker/security handoffs. PR #91
+  is merged, the task file is in `done/`, the worktree is cleaned up, and
+  WAVE-010 is ready to start.
 
 Stop condition:
 
@@ -818,7 +824,7 @@ Stop condition:
 
 ### WAVE-010
 
-Status: planned
+Status: ready_to_start
 
 Tasks:
 
@@ -831,8 +837,8 @@ Recommended strategy:
 - Review mode: risk_based
 - Monitoring mode: adaptive
 - Confidence: medium
-- Requires user confirmation: yes
-- Confirmed by: null
+- Requires user confirmation: no
+- Confirmed by: Ivo via Codex finish-all-waves request on 2026-07-06
 
 Rationale:
 
@@ -843,6 +849,7 @@ Rationale:
 Activation rule:
 
 - Activate after WAVE-009 reconciliation.
+- Ready after WAVE-009 reconciliation on 2026-07-06.
 
 Stop condition:
 

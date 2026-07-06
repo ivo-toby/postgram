@@ -465,6 +465,58 @@ Carry-forward test expectations:
 - TASK-018 should include broad UI storage assertions and final security review
   for dashboard/config/maintenance surfaces.
 
+## WAVE-009 Verification Evidence
+
+TASK-016 merged after Hypatia `REVIEW_PASS` with no P1/P2/P3 findings.
+
+TASK-016 passed before merge after final freshness head `1885b64`:
+
+- `git rev-list --left-right --count origin/codex/epic/admin-configuration-frontend...HEAD`
+  reported `0 3`.
+- `git merge-tree --write-tree origin/codex/epic/admin-configuration-frontend HEAD`
+  returned tree `3377f9c2f689ffdf924804d3150170c953cec12f`.
+- `git diff --check origin/codex/epic/admin-configuration-frontend...HEAD`
+- `npm --prefix ui run test -- --run src/components/AdminMaintenance.test.tsx`
+  (9 tests)
+- `npm --prefix ui run test -- --run src/components/AdminOps.test.tsx src/components/AdminConfig.test.tsx src/components/AdminAuth.test.tsx`
+  (49 tests)
+- `npm --prefix ui run typecheck`
+- Post-merge `git diff --check HEAD^..HEAD`
+- `jq empty .wdd/epics/EPIC-admin-configuration-frontend/orchestration.json`
+
+Additional worker/review evidence for TASK-016:
+
+- Worker full UI suite passed from `ui` (`npm test`, 125 tests).
+- Worker `codex review --uncommitted` reported no P0/P1/P2 findings after
+  local fixes.
+- PR #91 was marked `MERGED` at 2026-07-06T21:37:31Z after the epic branch
+  push.
+
+Coverage added:
+
+- Maintenance UI rendering for approved reextract, reembed, and constrained
+  `llm-extraction` prune-edge flows inside the existing dashboard shell.
+- Dry-run preview gating before apply, recent step-up/apply evidence, scoped
+  idempotency handling, reused apply job-detail fetching, and in-flight request
+  locking.
+- Job polling/progress, terminal completion, failure retention, and transient
+  polling recovery.
+- Safe maintenance result rendering and same-origin shared-admin-client route
+  usage without introducing an admin bearer-header path.
+- Regression coverage preserving AdminOps, AdminConfig, and AdminAuth behavior
+  after the maintenance panel and client methods were added.
+
+Carry-forward test expectations:
+
+- TASK-017 should run a clean-volume Docker/browser smoke that exercises
+  bootstrap, login/MFA, Config tab redaction/write-only behavior, API-key
+  creation, dashboard status panels, and one safe maintenance dry-run with job
+  polling without normal `pgm-admin` use.
+- TASK-018 should include final security validation for dashboard/config/
+  maintenance browser storage, preview-before-apply, recent step-up, scoped
+  idempotency, safe result rendering, and the `llm-extraction` edge-prune
+  constraint.
+
 ## Durable Memory
 
 ### Docker First-Run Must Be Tested, Not Assumed

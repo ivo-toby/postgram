@@ -79,6 +79,8 @@ and maintenance require no normal `pgm-admin` usage or manual env-file edits.
 - `ui/Dockerfile`
 - `ui/src/components/admin/AdminDashboard.tsx`
 - `ui/src/components/admin/AdminConfig.tsx`
+- `ui/src/components/admin/AdminMaintenance.tsx`
+- `ui/src/lib/adminApi.ts`
 
 ### Shared Context References
 
@@ -155,13 +157,18 @@ Keep docs honest about emergency CLI fallback and public exposure risks.
   configuration panel, API-key creation from the admin UI, and dashboard
   health/queue/stats/config-model/jobs/audit visibility rather than only
   backend routes.
+- WAVE-009 added `AdminMaintenance` inside the same `AdminDashboard` shell.
+  The clean-volume browser smoke should include one safe maintenance dry-run
+  from the UI, prove `/admin/api/jobs/:jobId` polling is visible, and confirm
+  the health, queue, stats, config/models/jobs, API keys, audit, Config, and
+  Maintenance panels remain reachable after login/MFA.
 - Provider secrets configured through the UI must remain write-only/redacted
   after reload/restart. Do not document any Docker path that requires putting
   provider plaintext, TOTP seeds, session tokens, or bootstrap tokens into
   browser storage or database backups.
-- After TASK-016 lands, include one safe maintenance dry-run from the admin UI
-  and prove job polling works without normal `pgm-admin` usage. Keep emergency
-  `pgm-admin` recovery documented separately from the supported happy path.
+- Keep emergency `pgm-admin` recovery documented separately from the supported
+  happy path. The supported happy path should not require normal `pgm-admin`
+  use after Docker startup/bootstrap.
 
 ## Durable Memory Notes To Consider
 

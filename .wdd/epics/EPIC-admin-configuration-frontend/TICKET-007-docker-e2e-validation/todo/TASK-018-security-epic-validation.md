@@ -151,6 +151,12 @@ Keep final artifacts concise and evidence-based.
   apply blocking, restart/reembed warnings, one-time API-key plaintext display,
   preview-before-apply maintenance controls, step-up gating, safe job summary
   rendering, and preservation of all dashboard panels after TASK-016.
+- Include the WAVE-009 maintenance UI specifics: a fresh matching
+  `previewJobId` before apply, recent step-up before apply, scoped idempotency
+  behavior, `/admin/api/jobs/:jobId` polling, transient polling recovery,
+  in-flight request-scope locking, `llm-extraction` edge-prune constraint, and
+  no rendering of provider bodies, auth headers, token prefixes, ciphertext,
+  arbitrary validation metadata, or hidden secret-derived material.
 - Treat the Docker no-CLI claim as proven only if TASK-017 recorded a
   clean-volume browser smoke for bootstrap/login/MFA, Config tab redaction,
   API-key creation, dashboard status, and a safe maintenance dry-run without

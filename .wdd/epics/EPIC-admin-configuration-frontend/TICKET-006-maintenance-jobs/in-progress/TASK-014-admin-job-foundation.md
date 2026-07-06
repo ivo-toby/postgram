@@ -20,12 +20,12 @@ assigned_model_class: implementationComplex
 review_model_class: review
 branch: codex/task/TASK-014-admin-job-foundation
 worker_worktree: /Users/ivo.toby/workspace/postgram/.worktrees/TASK-014-admin-job-foundation
-worktree_status: verified_pushed
+worktree_status: active_uncommitted
 pr: null
 worker_thread_id: 019f3748-041f-7540-b336-12c285848008
 review_thread_id: null
 current_gate: no_pr
-branch_freshness: current_at_dispatch_base
+branch_freshness: behind_epic_controller_checkpoint
 verification:
   - npm test -- tests/integration/admin-job-service.test.ts
   - npm run typecheck
@@ -119,6 +119,13 @@ worktree contains the in-progress task file and orchestration state.
 
 Dispatched to worker Anscombe (`019f3748-041f-7540-b336-12c285848008`) at
 2026-07-06T11:49:24Z.
+
+Controller heartbeat at 2026-07-06T12:10:24Z observed Anscombe still running,
+no PR, and active uncommitted changes in expected TASK-014 areas:
+`src/transport/admin.ts`, `tests/helpers/postgres.ts`, admin jobs migration,
+service, transport, and integration test. `git diff --check` passed. The task
+branch is one controller checkpoint behind the epic branch and must be
+refreshed before review or merge.
 
 ## PR / Patch Reference
 

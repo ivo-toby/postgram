@@ -19,12 +19,12 @@ assigned_model_class: implementationComplex
 review_model_class: review
 branch: codex/task/TASK-008-admin-key-audit-stats-api
 worker_worktree: /Users/ivo.toby/workspace/postgram/.worktrees/TASK-008-admin-key-audit-stats-api
-worktree_status: verified_pushed
+worktree_status: active_uncommitted
 pr: null
 worker_thread_id: 019f3748-036a-7422-9f84-ab790313375f
 review_thread_id: null
 current_gate: no_pr
-branch_freshness: current_at_dispatch_base
+branch_freshness: behind_epic_controller_checkpoint
 verification:
   - npm test -- tests/contract/admin-key-audit-stats.test.ts
   - npm test -- tests/integration/key-service.test.ts
@@ -119,6 +119,13 @@ worktree contains the in-progress task file and orchestration state.
 
 Dispatched to worker Maxwell (`019f3748-036a-7422-9f84-ab790313375f`) at
 2026-07-06T11:49:24Z.
+
+Controller heartbeat at 2026-07-06T12:10:24Z observed Maxwell still running,
+no PR, and active uncommitted changes in expected TASK-008 areas:
+`src/transport/admin.ts`, admin key/audit/stats services, and
+`tests/contract/admin-key-audit-stats.test.ts`. `git diff --check` passed. The
+task branch is one controller checkpoint behind the epic branch and must be
+refreshed before review or merge.
 
 ## PR / Patch Reference
 

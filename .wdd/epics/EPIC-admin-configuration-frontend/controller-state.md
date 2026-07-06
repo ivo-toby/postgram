@@ -53,13 +53,13 @@ up.
 
 Mode: codex_thread_heartbeat
 
-Cadence: 5 minutes
+Cadence: 15 minutes
 
-Status: worker_monitoring
+Status: worker_monitoring_no_pr
 
-Last check: 2026-07-06T06:33:47Z
+Last check: 2026-07-06T06:36:37Z
 
-Next check due: 2026-07-06T06:38:47Z
+Next check due: 2026-07-06T06:51:37Z
 
 Scheduler reference: `postgram-admin-wave-005-wdd-heartbeat`
 
@@ -67,14 +67,21 @@ Fallback prompt:
 
 ```text
 Run one bounded WDD controller heartbeat for /Users/ivo.toby/workspace/postgram,
-epic EPIC-admin-configuration-frontend, active wave WAVE-005. Use
-subagent-pr-orchestration. Read orchestration.json and controller-state.md;
-TASK-007 / PR #83 is MERGED and pushed. Inspect worker Goodall
-(019f35ff-a193-7ae0-a4b8-1ec53faabb74) and
-worktree /Users/ivo.toby/workspace/postgram/.worktrees/TASK-010-provider-config-apply
-for TASK-010. If TASK-010 has a PR or patch, start review; if not, keep no_pr
-unless deliverables are stale. Stop when WAVE-005 is ready for wdd-reconcile-wave;
-after reconciliation continue to WAVE-006 per Ivo finish-all-waves instruction.
+epic EPIC-admin-configuration-frontend, active wave WAVE-005. Use the
+subagent-pr-orchestration skill. Start in /Users/ivo.toby/workspace/postgram on
+branch codex/epic/admin-configuration-frontend. Read
+.wdd/epics/EPIC-admin-configuration-frontend/orchestration.json and
+controller-state.md. TASK-007 / PR #83 is MERGED and pushed. Inspect worker
+Goodall (019f35ff-a193-7ae0-a4b8-1ec53faabb74) and worktree
+/Users/ivo.toby/workspace/postgram/.worktrees/TASK-010-provider-config-apply on
+branch codex/task/TASK-010-provider-config-apply for
+WAVE-005-provider-config-apply / TASK-010-provider-config-apply. If Goodall has
+produced a PR or patch, move TASK-010 to review/reviewer orchestration; if no
+PR or patch exists, keep no_pr and nudge exact missing deliverables only if the
+worktree is inactive or stale. Stop when WAVE-005 bundles are merged, blocked,
+cancelled, or ready for wdd-reconcile-wave. After WAVE-005 is reconciled,
+continue to the next wave per Ivo's finish-all-waves instruction and push to
+GitHub between tasks/waves.
 ```
 
 ## Active Wave Strategy
@@ -260,6 +267,12 @@ after reconciliation continue to WAVE-006 per Ivo finish-all-waves instruction.
   has active uncommitted changes in the expected provider-config files. The
   bundle remains `no_pr`; no nudge was sent because active implementation work is
   visible.
+- WAVE-005 2026-07-06T06:36:37Z observation: PR #83 remains `MERGED` and no
+  TASK-010 PR exists. Goodall did not return a final status during the bounded
+  poll, and the worktree still has the same active uncommitted provider-config
+  files. The bundle remains `no_pr`; no nudge was sent because active
+  implementation work is visible. Monitoring was slowed to a 15-minute cadence
+  until a PR/patch appears.
 
 ## WAVE-001 Reconciled State
 
@@ -729,9 +742,14 @@ after reconciliation continue to WAVE-006 per Ivo finish-all-waves instruction.
   is `REVIEW_PASS`. Goodall had no final status, no TASK-010 PR exists, and the
   worktree remains active/uncommitted in expected provider-config files. Gate
   remains `no_pr`; next check due 2026-07-06T06:38:47Z.
+- 2026-07-06T06:36:37Z: Goodall still had no final status and no TASK-010 PR;
+  the assigned worktree remains active/uncommitted in expected provider-config
+  files. Gate remains `no_pr`. Heartbeat automation was updated to 15-minute
+  cadence while no PR exists; next check due 2026-07-06T06:51:37Z.
 
 ## Next Action
 
-Next WAVE-005 heartbeat is due at 2026-07-06T06:38:47Z. Inspect Goodall's
+Next WAVE-005 heartbeat is due at 2026-07-06T06:51:37Z. Inspect Goodall's
 TASK-010 worker and worktree. If TASK-010 has a PR or patch, start review;
-otherwise keep `no_pr` unless the exact deliverables are stale.
+otherwise keep `no_pr` unless the exact deliverables are stale or the worktree
+has gone inactive.

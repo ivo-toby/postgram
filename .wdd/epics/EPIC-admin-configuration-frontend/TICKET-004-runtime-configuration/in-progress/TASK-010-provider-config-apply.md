@@ -205,6 +205,10 @@ Keep provider construction logic centralized to avoid env/DB drift.
   status during the bounded wait, no PR exists for
   `codex/task/TASK-010-provider-config-apply`, and the assigned worktree still
   has active uncommitted changes in expected provider-config files.
+- 2026-07-06T06:36:37Z controller observation: Goodall still had no final
+  status and no PR for `codex/task/TASK-010-provider-config-apply`; the assigned
+  worktree remained active/uncommitted in the same expected provider-config
+  files. No nudge was sent because visible implementation work is ongoing.
 
 ## Review Feedback
 

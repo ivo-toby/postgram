@@ -57,9 +57,9 @@ Cadence: 15 minutes
 
 Status: worker_monitoring_no_pr
 
-Last check: 2026-07-06T06:36:37Z
+Last check: 2026-07-06T06:52:07Z
 
-Next check due: 2026-07-06T06:51:37Z
+Next check due: 2026-07-06T07:07:07Z
 
 Scheduler reference: `postgram-admin-wave-005-wdd-heartbeat`
 
@@ -273,6 +273,12 @@ GitHub between tasks/waves.
   files. The bundle remains `no_pr`; no nudge was sent because active
   implementation work is visible. Monitoring was slowed to a 15-minute cadence
   until a PR/patch appears.
+- WAVE-005 2026-07-06T06:52:07Z observation: PR #83 remains `MERGED` and no
+  TASK-010 PR exists. Goodall did not return a final status during the bounded
+  poll, and the worktree still has active uncommitted provider-config files.
+  Recent local mtimes on the provider-config service and integration test show
+  active implementation work, so the bundle remains `no_pr` and no nudge was
+  sent.
 
 ## WAVE-001 Reconciled State
 
@@ -746,10 +752,14 @@ GitHub between tasks/waves.
   the assigned worktree remains active/uncommitted in expected provider-config
   files. Gate remains `no_pr`. Heartbeat automation was updated to 15-minute
   cadence while no PR exists; next check due 2026-07-06T06:51:37Z.
+- 2026-07-06T06:52:07Z: Goodall still had no final status and no TASK-010 PR.
+  The assigned worktree remains active/uncommitted, with recent local mtimes on
+  provider-config service/test files, so no nudge was sent. Gate remains
+  `no_pr`; next check due 2026-07-06T07:07:07Z.
 
 ## Next Action
 
-Next WAVE-005 heartbeat is due at 2026-07-06T06:51:37Z. Inspect Goodall's
+Next WAVE-005 heartbeat is due at 2026-07-06T07:07:07Z. Inspect Goodall's
 TASK-010 worker and worktree. If TASK-010 has a PR or patch, start review;
 otherwise keep `no_pr` unless the exact deliverables are stale or the worktree
 has gone inactive.

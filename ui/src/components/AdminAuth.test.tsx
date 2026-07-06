@@ -41,6 +41,84 @@ const activeSession = {
   mfaVerified: true,
 };
 
+function adminOpsRoutes(): MockRoute[] {
+  return [
+    {
+      path: '/admin/api/diagnostics/health',
+      body: {
+        health: {
+          status: 'ok',
+          postgres: 'connected',
+          embeddingModel: 'text-embedding-3-small',
+        },
+      },
+    },
+    {
+      path: '/admin/api/diagnostics/queue',
+      body: {
+        queue: {
+          embedding: {
+            pending: 0,
+            completed: 0,
+            failed: 0,
+            retry_eligible: 0,
+            oldest_pending_secs: null,
+          },
+          extraction: null,
+        },
+      },
+    },
+    { path: '/admin/api/diagnostics/models', body: { models: [] } },
+    {
+      path: '/admin/api/diagnostics/config-status',
+      body: {
+        configStatus: {
+          settings: {
+            total: 0,
+            byState: {},
+            byClassification: {},
+            byValidationStatus: {},
+          },
+          secrets: {
+            totalConfigured: 0,
+            byPurpose: {},
+            byValidationStatus: {},
+          },
+        },
+      },
+    },
+    {
+      path: '/admin/api/stats',
+      body: {
+        stats: {
+          entityCounts: {},
+          chunkCount: 0,
+          keyCount: 0,
+          databaseSizeBytes: 0,
+          uptimeSeconds: 0,
+        },
+      },
+    },
+    {
+      path: '/admin/api/keys?limit=50&offset=0',
+      body: { keys: [], pagination: { limit: 50, offset: 0, nextOffset: null } },
+    },
+    {
+      path: '/admin/api/audit?limit=50&offset=0',
+      body: {
+        audit: {
+          entries: [],
+          pagination: { limit: 50, offset: 0, nextOffset: null },
+        },
+      },
+    },
+    {
+      path: '/admin/api/jobs?limit=20&offset=0',
+      body: { jobs: [], total: 0, limit: 20, offset: 0 },
+    },
+  ];
+}
+
 function jsonResponse(body: unknown, status = 200) {
   return new Response(JSON.stringify(body), {
     status,
@@ -360,6 +438,7 @@ describe('AdminAuth', () => {
           expect(init.headers).not.toHaveProperty('Authorization');
         },
       },
+      ...adminOpsRoutes(),
     ]);
 
     render(<AdminAuth />);
@@ -373,19 +452,18 @@ describe('AdminAuth', () => {
     await user.click(screen.getByRole('button', { name: 'Create admin' }));
 
     expect(await screen.findByRole('heading', { name: 'MFA enrollment' })).toBeInTheDocument();
-    expect(screen.queryByRole('button', { name: 'Diagnostics' })).not.toBeInTheDocument();
+    expect(screen.queryByRole('heading', { name: 'Operations dashboard' })).not.toBeInTheDocument();
 
     await user.click(screen.getByRole('button', { name: 'Begin enrollment' }));
     expect(await screen.findByText('JBSWY3DPEHPK3PXP')).toBeInTheDocument();
     await user.type(screen.getByLabelText('Authenticator code'), '123456');
     await user.click(screen.getByRole('button', { name: 'Verify MFA' }));
 
-    expect(await screen.findByRole('heading', { name: 'Admin Console' })).toBeInTheDocument();
-    expect(screen.getByRole('button', { name: 'Diagnostics' })).toBeInTheDocument();
+    expect(await screen.findByRole('heading', { name: 'Operations dashboard' })).toBeInTheDocument();
     expect(screen.queryByText('JBSWY3DPEHPK3PXP')).not.toBeInTheDocument();
     expect(screen.queryByText(/otpauth:\/\//i)).not.toBeInTheDocument();
 
-    expect(fetchMock).toHaveBeenCalledTimes(5);
+    expect(fetchMock.mock.calls.some(([path]) => path === '/admin/api/session/mfa/verify')).toBe(true);
     expectNoAdminSecretInLocalStorage(
       storageWrites,
       'bootstrap-token-plaintext',
@@ -455,7 +533,7 @@ describe('AdminAuth', () => {
     expect(screen.getByRole('heading', { name: 'MFA enrollment' })).toBeInTheDocument();
     expect(screen.getByText('JBSWY3DPEHPK3PXP')).toBeInTheDocument();
     expect(screen.queryByRole('heading', { name: 'Admin sign in' })).not.toBeInTheDocument();
-    expect(screen.queryByRole('button', { name: 'Diagnostics' })).not.toBeInTheDocument();
+    expect(screen.queryByRole('heading', { name: 'Operations dashboard' })).not.toBeInTheDocument();
   });
 
   it('requires MFA challenge before active admin navigation after login', async () => {
@@ -491,6 +569,7 @@ describe('AdminAuth', () => {
           expect(init.headers).not.toHaveProperty('Authorization');
         },
       },
+      ...adminOpsRoutes(),
     ]);
 
     render(<AdminAuth />);
@@ -501,13 +580,12 @@ describe('AdminAuth', () => {
     await user.click(screen.getByRole('button', { name: 'Sign in' }));
 
     expect(await screen.findByRole('heading', { name: 'MFA challenge' })).toBeInTheDocument();
-    expect(screen.queryByRole('button', { name: 'Diagnostics' })).not.toBeInTheDocument();
+    expect(screen.queryByRole('heading', { name: 'Operations dashboard' })).not.toBeInTheDocument();
 
     await user.type(screen.getByLabelText('Authenticator code'), '654321');
     await user.click(screen.getByRole('button', { name: 'Verify code' }));
 
-    expect(await screen.findByRole('heading', { name: 'Admin Console' })).toBeInTheDocument();
-    expect(screen.getByRole('button', { name: 'Diagnostics' })).toBeInTheDocument();
+    expect(await screen.findByRole('heading', { name: 'Operations dashboard' })).toBeInTheDocument();
   });
 
   it('keeps MFA challenge state when an authenticator code is invalid', async () => {
@@ -546,7 +624,7 @@ describe('AdminAuth', () => {
     expect(await screen.findByText('Unable to verify MFA challenge')).toBeInTheDocument();
     expect(screen.getByRole('heading', { name: 'MFA challenge' })).toBeInTheDocument();
     expect(screen.queryByRole('heading', { name: 'Admin sign in' })).not.toBeInTheDocument();
-    expect(screen.queryByRole('button', { name: 'Diagnostics' })).not.toBeInTheDocument();
+    expect(screen.queryByRole('heading', { name: 'Operations dashboard' })).not.toBeInTheDocument();
   });
 
   it('lets pending MFA sessions sign out before admin navigation is available', async () => {
@@ -586,7 +664,7 @@ describe('AdminAuth', () => {
     await user.click(screen.getByRole('button', { name: 'Sign in' }));
 
     expect(await screen.findByRole('heading', { name: 'MFA challenge' })).toBeInTheDocument();
-    expect(screen.queryByRole('button', { name: 'Diagnostics' })).not.toBeInTheDocument();
+    expect(screen.queryByRole('heading', { name: 'Operations dashboard' })).not.toBeInTheDocument();
     await user.click(screen.getByRole('button', { name: 'Sign out' }));
 
     expect(await screen.findByRole('heading', { name: 'Admin sign in' })).toBeInTheDocument();
@@ -635,7 +713,7 @@ describe('AdminAuth', () => {
     expect(await screen.findByRole('heading', { name: 'Admin sign in' })).toBeInTheDocument();
     expect(screen.getByText('Admin session expired. Sign in again.')).toBeInTheDocument();
     expect(screen.queryByRole('heading', { name: 'MFA challenge' })).not.toBeInTheDocument();
-    expect(screen.queryByRole('button', { name: 'Diagnostics' })).not.toBeInTheDocument();
+    expect(screen.queryByRole('heading', { name: 'Operations dashboard' })).not.toBeInTheDocument();
   });
 
   it('hydrates the current active session and refreshes CSRF before logout', async () => {
@@ -644,6 +722,7 @@ describe('AdminAuth', () => {
     mockFetch([
       { path: '/admin/api/bootstrap/status', body: { state: 'configured' } },
       { path: '/admin/api/session/current', body: { user: activeUser, session: activeSession } },
+      ...adminOpsRoutes(),
       { path: '/admin/api/session/csrf', body: { csrfToken: 'csrf-from-refresh' } },
       {
         path: '/admin/api/session/logout',
@@ -661,7 +740,7 @@ describe('AdminAuth', () => {
 
     render(<AdminAuth />);
 
-    expect(await screen.findByRole('heading', { name: 'Admin Console' })).toBeInTheDocument();
+    expect(await screen.findByRole('heading', { name: 'Operations dashboard' })).toBeInTheDocument();
     await user.click(screen.getByRole('button', { name: 'Sign out' }));
 
     expect(await screen.findByRole('heading', { name: 'Admin sign in' })).toBeInTheDocument();
@@ -679,6 +758,7 @@ describe('AdminAuth', () => {
     mockFetch([
       { path: '/admin/api/bootstrap/status', body: { state: 'configured' } },
       { path: '/admin/api/session/current', body: { user: activeUser, session: activeSession } },
+      ...adminOpsRoutes(),
       { path: '/admin/api/session/csrf', body: { csrfToken: 'csrf-from-refresh' } },
       {
         path: '/admin/api/session/logout',
@@ -690,11 +770,11 @@ describe('AdminAuth', () => {
 
     render(<AdminAuth />);
 
-    expect(await screen.findByRole('heading', { name: 'Admin Console' })).toBeInTheDocument();
+    expect(await screen.findByRole('heading', { name: 'Operations dashboard' })).toBeInTheDocument();
     await user.click(screen.getByRole('button', { name: 'Sign out' }));
 
     expect(await screen.findByText('Logout service unavailable')).toBeInTheDocument();
-    expect(screen.getByRole('heading', { name: 'Admin Console' })).toBeInTheDocument();
+    expect(screen.getByRole('heading', { name: 'Operations dashboard' })).toBeInTheDocument();
     expect(screen.queryByRole('heading', { name: 'Admin sign in' })).not.toBeInTheDocument();
   });
 
@@ -703,6 +783,7 @@ describe('AdminAuth', () => {
     mockFetch([
       { path: '/admin/api/bootstrap/status', body: { state: 'configured' } },
       { path: '/admin/api/session/current', body: { user: activeUser, session: activeSession } },
+      ...adminOpsRoutes(),
       {
         path: '/admin/api/session/csrf',
         status: 401,
@@ -712,11 +793,11 @@ describe('AdminAuth', () => {
 
     render(<AdminAuth />);
 
-    expect(await screen.findByRole('heading', { name: 'Admin Console' })).toBeInTheDocument();
+    expect(await screen.findByRole('heading', { name: 'Operations dashboard' })).toBeInTheDocument();
     await user.click(screen.getByRole('button', { name: 'Sign out' }));
 
     expect(await screen.findByRole('heading', { name: 'Admin sign in' })).toBeInTheDocument();
     expect(screen.getByText('Admin session expired. Sign in again.')).toBeInTheDocument();
-    expect(screen.queryByRole('heading', { name: 'Admin Console' })).not.toBeInTheDocument();
+    expect(screen.queryByRole('heading', { name: 'Operations dashboard' })).not.toBeInTheDocument();
   });
 });

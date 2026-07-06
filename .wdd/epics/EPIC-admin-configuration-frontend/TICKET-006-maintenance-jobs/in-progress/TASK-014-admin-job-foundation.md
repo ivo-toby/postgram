@@ -133,6 +133,13 @@ Tracked `git diff --check` passed. The task branch is two controller
 checkpoints behind the epic branch and must be refreshed before review or
 merge.
 
+Controller heartbeat at 2026-07-06T12:40:24Z observed Anscombe still running,
+no PR, and recent activity in expected TASK-014 files:
+`src/db/migrations/013_admin_jobs.sql`, `src/services/admin-job-service.ts`,
+and `tests/integration/admin-job-service.test.ts`. Tracked `git diff --check`
+passed. The task branch is three controller checkpoints behind the epic branch
+and must be refreshed before review or merge.
+
 ## PR / Patch Reference
 
 None yet.

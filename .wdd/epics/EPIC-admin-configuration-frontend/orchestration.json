@@ -939,25 +939,26 @@
           "latestCommit": "a41ffb44deebc5029cddffe4e5e953caf69528d9",
           "blockingFeedback": [],
           "verification": {
-            "result": "in_progress_observed_tracked_diff_check_passed",
+            "result": "in_progress_observed_recent_activity_tracked_diff_check_passed",
             "commands": [
               "git status --short --branch",
               "gh pr list --head codex/task/TASK-008-admin-key-audit-stats-api --json number,url,state,isDraft,headRefOid,baseRefName,mergeStateStatus,updatedAt,title",
               "git rev-list --left-right --count origin/codex/epic/admin-configuration-frontend...HEAD",
               "git diff --name-only",
-              "git diff --check"
+              "git diff --check",
+              "find src tests .wdd/epics/EPIC-admin-configuration-frontend -type f -mmin -20"
             ],
-            "evidence": "RUNNING worker poll timed out without final status; no PR exists for codex/task/TASK-008-admin-key-audit-stats-api; assigned worktree has active uncommitted changes in expected task-owned areas; branch is two controller checkpoints behind the epic branch; tracked git diff --check passed. No nudge was needed because the worker appears active."
+            "evidence": "RUNNING worker poll timed out without final status; no PR exists for codex/task/TASK-008-admin-key-audit-stats-api; assigned worktree has active uncommitted changes and recent activity in expected task-owned areas; branch is three controller checkpoints behind the epic branch; tracked git diff --check passed. No nudge was needed because the worker appears active."
           },
           "activatedAt": "2026-07-06T11:39:24Z",
           "cleanupState": "not_started",
           "sharedContextReconciliation": "queued",
-          "lastObservedAt": "2026-07-06T12:25:24Z",
+          "lastObservedAt": "2026-07-06T12:40:24Z",
           "branchPushedAt": "2026-07-06T11:44:24Z",
           "dispatchedAt": "2026-07-06T11:49:24Z",
           "dispatchBaseCommit": "0d41c5304ec5895db334af1ad9ab54bb6a2db0d3",
           "worktreeObservation": {
-            "observedAt": "2026-07-06T12:25:24Z",
+            "observedAt": "2026-07-06T12:40:24Z",
             "taskId": "TASK-008-admin-key-audit-stats-api",
             "status": "active_uncommitted_no_pr",
             "workerStatus": "RUNNING",
@@ -965,7 +966,7 @@
             "pr": null,
             "prState": "none",
             "worktreeStatus": "active_uncommitted",
-            "branchDivergence": "origin/codex/epic/admin-configuration-frontend...HEAD = 2 0; task branch is behind the epic branch by controller checkpoints ffd67ab and will need freshness refresh before review or merge.",
+            "branchDivergence": "origin/codex/epic/admin-configuration-frontend...HEAD = 3 0; task branch is behind the epic branch by controller checkpoints and will need freshness refresh before review or merge.",
             "files": [
               "src/auth/key-service.ts",
               "src/transport/admin.ts",
@@ -974,8 +975,14 @@
               "src/services/admin-stats-service.ts",
               "tests/contract/admin-key-audit-stats.test.ts"
             ],
+            "recentFilesWithin20m": [
+              "src/auth/key-service.ts",
+              "src/services/admin-audit-service.ts",
+              "src/transport/admin.ts",
+              "tests/contract/admin-key-audit-stats.test.ts"
+            ],
             "diffCheck": "git diff --check passed for tracked changes; untracked task files are still worker-owned and not staged by the controller.",
-            "coordinationNote": "No new nudge required; worker is actively editing expected TASK-008 files."
+            "coordinationNote": "No new nudge required; worker has recent activity in expected TASK-008 files."
           }
         },
         {
@@ -996,25 +1003,26 @@
           "latestCommit": "a41ffb44deebc5029cddffe4e5e953caf69528d9",
           "blockingFeedback": [],
           "verification": {
-            "result": "in_progress_observed_tracked_diff_check_passed",
+            "result": "in_progress_observed_recent_activity_tracked_diff_check_passed",
             "commands": [
               "git status --short --branch",
               "gh pr list --head codex/task/TASK-014-admin-job-foundation --json number,url,state,isDraft,headRefOid,baseRefName,mergeStateStatus,updatedAt,title",
               "git rev-list --left-right --count origin/codex/epic/admin-configuration-frontend...HEAD",
               "git diff --name-only",
-              "git diff --check"
+              "git diff --check",
+              "find src tests .wdd/epics/EPIC-admin-configuration-frontend -type f -mmin -20"
             ],
-            "evidence": "RUNNING worker poll timed out without final status; no PR exists for codex/task/TASK-014-admin-job-foundation; assigned worktree has active uncommitted changes in expected task-owned areas; branch is two controller checkpoints behind the epic branch; tracked git diff --check passed. No nudge was needed because the worker appears active."
+            "evidence": "RUNNING worker poll timed out without final status; no PR exists for codex/task/TASK-014-admin-job-foundation; assigned worktree has active uncommitted changes and recent activity in expected task-owned areas; branch is three controller checkpoints behind the epic branch; tracked git diff --check passed. No nudge was needed because the worker appears active."
           },
           "activatedAt": "2026-07-06T11:39:24Z",
           "cleanupState": "not_started",
           "sharedContextReconciliation": "queued",
-          "lastObservedAt": "2026-07-06T12:25:24Z",
+          "lastObservedAt": "2026-07-06T12:40:24Z",
           "branchPushedAt": "2026-07-06T11:44:24Z",
           "dispatchedAt": "2026-07-06T11:49:24Z",
           "dispatchBaseCommit": "0d41c5304ec5895db334af1ad9ab54bb6a2db0d3",
           "worktreeObservation": {
-            "observedAt": "2026-07-06T12:25:24Z",
+            "observedAt": "2026-07-06T12:40:24Z",
             "taskId": "TASK-014-admin-job-foundation",
             "status": "active_uncommitted_no_pr",
             "workerStatus": "RUNNING",
@@ -1022,7 +1030,7 @@
             "pr": null,
             "prState": "none",
             "worktreeStatus": "active_uncommitted",
-            "branchDivergence": "origin/codex/epic/admin-configuration-frontend...HEAD = 2 0; task branch is behind the epic branch by controller checkpoints ffd67ab and will need freshness refresh before review or merge.",
+            "branchDivergence": "origin/codex/epic/admin-configuration-frontend...HEAD = 3 0; task branch is behind the epic branch by controller checkpoints and will need freshness refresh before review or merge.",
             "files": [
               "src/transport/admin.ts",
               "tests/helpers/postgres.ts",
@@ -1031,14 +1039,19 @@
               "src/transport/admin-jobs.ts",
               "tests/integration/admin-job-service.test.ts"
             ],
+            "recentFilesWithin20m": [
+              "src/db/migrations/013_admin_jobs.sql",
+              "src/services/admin-job-service.ts",
+              "tests/integration/admin-job-service.test.ts"
+            ],
             "diffCheck": "git diff --check passed for tracked changes; untracked task files are still worker-owned and not staged by the controller.",
-            "coordinationNote": "No new nudge required; worker is actively editing expected TASK-014 files."
+            "coordinationNote": "No new nudge required; worker has recent activity in expected TASK-014 files."
           }
         }
       ],
       "activationCommit": "e46eb9a10233fcbadf446cf81d13e8a60f7ab942",
       "dispatchState": "dispatched",
-      "lastObservedAt": "2026-07-06T12:25:24Z",
+      "lastObservedAt": "2026-07-06T12:40:24Z",
       "dispatchedAt": "2026-07-06T11:49:24Z"
     },
     {
@@ -1646,27 +1659,28 @@
       "branchFreshness": "behind_epic_controller_checkpoints",
       "blockingFeedback": [],
       "verification": {
-        "result": "in_progress_observed_tracked_diff_check_passed",
+        "result": "in_progress_observed_recent_activity_tracked_diff_check_passed",
         "commands": [
           "git status --short --branch",
           "gh pr list --head codex/task/TASK-008-admin-key-audit-stats-api --json number,url,state,isDraft,headRefOid,baseRefName,mergeStateStatus,updatedAt,title",
           "git rev-list --left-right --count origin/codex/epic/admin-configuration-frontend...HEAD",
           "git diff --name-only",
-          "git diff --check"
+          "git diff --check",
+          "find src tests .wdd/epics/EPIC-admin-configuration-frontend -type f -mmin -20"
         ],
-        "evidence": "RUNNING worker poll timed out without final status; no PR exists for codex/task/TASK-008-admin-key-audit-stats-api; assigned worktree has active uncommitted changes in expected task-owned areas; branch is two controller checkpoints behind the epic branch; tracked git diff --check passed. No nudge was needed because the worker appears active."
+        "evidence": "RUNNING worker poll timed out without final status; no PR exists for codex/task/TASK-008-admin-key-audit-stats-api; assigned worktree has active uncommitted changes and recent activity in expected task-owned areas; branch is three controller checkpoints behind the epic branch; tracked git diff --check passed. No nudge was needed because the worker appears active."
       },
       "currentGate": "no_pr",
       "activatedAt": "2026-07-06T11:39:24Z",
       "bundle": "WAVE-006-admin-key-audit-stats-api",
       "sharedContextReconciliation": "queued",
       "cleanupState": "not_started",
-      "lastObservedAt": "2026-07-06T12:25:24Z",
+      "lastObservedAt": "2026-07-06T12:40:24Z",
       "workerNickname": "Maxwell",
       "dispatchedAt": "2026-07-06T11:49:24Z",
       "dispatchBaseCommit": "0d41c5304ec5895db334af1ad9ab54bb6a2db0d3",
       "worktreeObservation": {
-        "observedAt": "2026-07-06T12:25:24Z",
+        "observedAt": "2026-07-06T12:40:24Z",
         "taskId": "TASK-008-admin-key-audit-stats-api",
         "status": "active_uncommitted_no_pr",
         "workerStatus": "RUNNING",
@@ -1674,7 +1688,7 @@
         "pr": null,
         "prState": "none",
         "worktreeStatus": "active_uncommitted",
-        "branchDivergence": "origin/codex/epic/admin-configuration-frontend...HEAD = 2 0; task branch is behind the epic branch by controller checkpoints ffd67ab and will need freshness refresh before review or merge.",
+        "branchDivergence": "origin/codex/epic/admin-configuration-frontend...HEAD = 3 0; task branch is behind the epic branch by controller checkpoints and will need freshness refresh before review or merge.",
         "files": [
           "src/auth/key-service.ts",
           "src/transport/admin.ts",
@@ -1683,8 +1697,14 @@
           "src/services/admin-stats-service.ts",
           "tests/contract/admin-key-audit-stats.test.ts"
         ],
+        "recentFilesWithin20m": [
+          "src/auth/key-service.ts",
+          "src/services/admin-audit-service.ts",
+          "src/transport/admin.ts",
+          "tests/contract/admin-key-audit-stats.test.ts"
+        ],
         "diffCheck": "git diff --check passed for tracked changes; untracked task files are still worker-owned and not staged by the controller.",
-        "coordinationNote": "No new nudge required; worker is actively editing expected TASK-008 files."
+        "coordinationNote": "No new nudge required; worker has recent activity in expected TASK-008 files."
       }
     },
     {
@@ -1995,27 +2015,28 @@
       "branchFreshness": "behind_epic_controller_checkpoints",
       "blockingFeedback": [],
       "verification": {
-        "result": "in_progress_observed_tracked_diff_check_passed",
+        "result": "in_progress_observed_recent_activity_tracked_diff_check_passed",
         "commands": [
           "git status --short --branch",
           "gh pr list --head codex/task/TASK-014-admin-job-foundation --json number,url,state,isDraft,headRefOid,baseRefName,mergeStateStatus,updatedAt,title",
           "git rev-list --left-right --count origin/codex/epic/admin-configuration-frontend...HEAD",
           "git diff --name-only",
-          "git diff --check"
+          "git diff --check",
+          "find src tests .wdd/epics/EPIC-admin-configuration-frontend -type f -mmin -20"
         ],
-        "evidence": "RUNNING worker poll timed out without final status; no PR exists for codex/task/TASK-014-admin-job-foundation; assigned worktree has active uncommitted changes in expected task-owned areas; branch is two controller checkpoints behind the epic branch; tracked git diff --check passed. No nudge was needed because the worker appears active."
+        "evidence": "RUNNING worker poll timed out without final status; no PR exists for codex/task/TASK-014-admin-job-foundation; assigned worktree has active uncommitted changes and recent activity in expected task-owned areas; branch is three controller checkpoints behind the epic branch; tracked git diff --check passed. No nudge was needed because the worker appears active."
       },
       "currentGate": "no_pr",
       "activatedAt": "2026-07-06T11:39:24Z",
       "bundle": "WAVE-006-admin-job-foundation",
       "sharedContextReconciliation": "queued",
       "cleanupState": "not_started",
-      "lastObservedAt": "2026-07-06T12:25:24Z",
+      "lastObservedAt": "2026-07-06T12:40:24Z",
       "workerNickname": "Anscombe",
       "dispatchedAt": "2026-07-06T11:49:24Z",
       "dispatchBaseCommit": "0d41c5304ec5895db334af1ad9ab54bb6a2db0d3",
       "worktreeObservation": {
-        "observedAt": "2026-07-06T12:25:24Z",
+        "observedAt": "2026-07-06T12:40:24Z",
         "taskId": "TASK-014-admin-job-foundation",
         "status": "active_uncommitted_no_pr",
         "workerStatus": "RUNNING",
@@ -2023,7 +2044,7 @@
         "pr": null,
         "prState": "none",
         "worktreeStatus": "active_uncommitted",
-        "branchDivergence": "origin/codex/epic/admin-configuration-frontend...HEAD = 2 0; task branch is behind the epic branch by controller checkpoints ffd67ab and will need freshness refresh before review or merge.",
+        "branchDivergence": "origin/codex/epic/admin-configuration-frontend...HEAD = 3 0; task branch is behind the epic branch by controller checkpoints and will need freshness refresh before review or merge.",
         "files": [
           "src/transport/admin.ts",
           "tests/helpers/postgres.ts",
@@ -2032,8 +2053,13 @@
           "src/transport/admin-jobs.ts",
           "tests/integration/admin-job-service.test.ts"
         ],
+        "recentFilesWithin20m": [
+          "src/db/migrations/013_admin_jobs.sql",
+          "src/services/admin-job-service.ts",
+          "tests/integration/admin-job-service.test.ts"
+        ],
         "diffCheck": "git diff --check passed for tracked changes; untracked task files are still worker-owned and not staged by the controller.",
-        "coordinationNote": "No new nudge required; worker is actively editing expected TASK-014 files."
+        "coordinationNote": "No new nudge required; worker has recent activity in expected TASK-014 files."
       }
     },
     {
@@ -2195,8 +2221,8 @@
     "mode": "codex_thread_heartbeat",
     "cadence": "15m",
     "status": "monitoring_wave_006_workers_active_no_pr",
-    "lastCheckedAt": "2026-07-06T12:25:24Z",
-    "nextCheckDueAt": "2026-07-06T12:40:24Z",
+    "lastCheckedAt": "2026-07-06T12:40:24Z",
+    "nextCheckDueAt": "2026-07-06T12:55:24Z",
     "schedulerRef": "postgram-admin-wave-005-wdd-heartbeat",
     "schedulerName": "postgram-admin-wave-006-wdd-heartbeat",
     "fallbackPrompt": "Run one bounded WDD controller heartbeat for /Users/ivo.toby/workspace/postgram, epic EPIC-admin-configuration-frontend, active wave WAVE-006. Use the subagent-pr-orchestration skill. Start in /Users/ivo.toby/workspace/postgram on branch codex/epic/admin-configuration-frontend. Read .wdd/epics/EPIC-admin-configuration-frontend/orchestration.json and controller-state.md. Inspect worker Maxwell (019f3748-036a-7422-9f84-ab790313375f) and assigned worktree /Users/ivo.toby/workspace/postgram/.worktrees/TASK-008-admin-key-audit-stats-api on branch codex/task/TASK-008-admin-key-audit-stats-api for bundle WAVE-006-admin-key-audit-stats-api / TASK-008-admin-key-audit-stats-api, and worker Anscombe (019f3748-041f-7540-b336-12c285848008) and assigned worktree /Users/ivo.toby/workspace/postgram/.worktrees/TASK-014-admin-job-foundation on branch codex/task/TASK-014-admin-job-foundation for bundle WAVE-006-admin-job-foundation / TASK-014-admin-job-foundation. Update gates, branch freshness, verification, PR or patch refs, reviewer refs, feedback, shared-context reconciliation status, and monitoring timestamps. If a worker has produced a PR or patch, move that bundle to review/reviewer orchestration; if no PR or patch exists, keep no_pr and nudge exact missing deliverables only if needed. Stop when WAVE-006 bundles are merged, blocked, cancelled, or ready for wdd-reconcile-wave. After WAVE-006 is reconciled, continue to the next wave per Ivo finish-all-waves instruction and push to GitHub between tasks/waves."
@@ -2248,25 +2274,26 @@
         "latestCommit": "a41ffb44deebc5029cddffe4e5e953caf69528d9",
         "blockingFeedback": [],
         "verification": {
-          "result": "in_progress_observed_tracked_diff_check_passed",
+          "result": "in_progress_observed_recent_activity_tracked_diff_check_passed",
           "commands": [
             "git status --short --branch",
             "gh pr list --head codex/task/TASK-008-admin-key-audit-stats-api --json number,url,state,isDraft,headRefOid,baseRefName,mergeStateStatus,updatedAt,title",
             "git rev-list --left-right --count origin/codex/epic/admin-configuration-frontend...HEAD",
             "git diff --name-only",
-            "git diff --check"
+            "git diff --check",
+            "find src tests .wdd/epics/EPIC-admin-configuration-frontend -type f -mmin -20"
           ],
-          "evidence": "RUNNING worker poll timed out without final status; no PR exists for codex/task/TASK-008-admin-key-audit-stats-api; assigned worktree has active uncommitted changes in expected task-owned areas; branch is two controller checkpoints behind the epic branch; tracked git diff --check passed. No nudge was needed because the worker appears active."
+          "evidence": "RUNNING worker poll timed out without final status; no PR exists for codex/task/TASK-008-admin-key-audit-stats-api; assigned worktree has active uncommitted changes and recent activity in expected task-owned areas; branch is three controller checkpoints behind the epic branch; tracked git diff --check passed. No nudge was needed because the worker appears active."
         },
         "activatedAt": "2026-07-06T11:39:24Z",
         "cleanupState": "not_started",
         "sharedContextReconciliation": "queued",
-        "lastObservedAt": "2026-07-06T12:25:24Z",
+        "lastObservedAt": "2026-07-06T12:40:24Z",
         "branchPushedAt": "2026-07-06T11:44:24Z",
         "dispatchedAt": "2026-07-06T11:49:24Z",
         "dispatchBaseCommit": "0d41c5304ec5895db334af1ad9ab54bb6a2db0d3",
         "worktreeObservation": {
-          "observedAt": "2026-07-06T12:25:24Z",
+          "observedAt": "2026-07-06T12:40:24Z",
           "taskId": "TASK-008-admin-key-audit-stats-api",
           "status": "active_uncommitted_no_pr",
           "workerStatus": "RUNNING",
@@ -2274,7 +2301,7 @@
           "pr": null,
           "prState": "none",
           "worktreeStatus": "active_uncommitted",
-          "branchDivergence": "origin/codex/epic/admin-configuration-frontend...HEAD = 2 0; task branch is behind the epic branch by controller checkpoints ffd67ab and will need freshness refresh before review or merge.",
+          "branchDivergence": "origin/codex/epic/admin-configuration-frontend...HEAD = 3 0; task branch is behind the epic branch by controller checkpoints and will need freshness refresh before review or merge.",
           "files": [
             "src/auth/key-service.ts",
             "src/transport/admin.ts",
@@ -2283,8 +2310,14 @@
             "src/services/admin-stats-service.ts",
             "tests/contract/admin-key-audit-stats.test.ts"
           ],
+          "recentFilesWithin20m": [
+            "src/auth/key-service.ts",
+            "src/services/admin-audit-service.ts",
+            "src/transport/admin.ts",
+            "tests/contract/admin-key-audit-stats.test.ts"
+          ],
           "diffCheck": "git diff --check passed for tracked changes; untracked task files are still worker-owned and not staged by the controller.",
-          "coordinationNote": "No new nudge required; worker is actively editing expected TASK-008 files."
+          "coordinationNote": "No new nudge required; worker has recent activity in expected TASK-008 files."
         }
       },
       {
@@ -2305,25 +2338,26 @@
         "latestCommit": "a41ffb44deebc5029cddffe4e5e953caf69528d9",
         "blockingFeedback": [],
         "verification": {
-          "result": "in_progress_observed_tracked_diff_check_passed",
+          "result": "in_progress_observed_recent_activity_tracked_diff_check_passed",
           "commands": [
             "git status --short --branch",
             "gh pr list --head codex/task/TASK-014-admin-job-foundation --json number,url,state,isDraft,headRefOid,baseRefName,mergeStateStatus,updatedAt,title",
             "git rev-list --left-right --count origin/codex/epic/admin-configuration-frontend...HEAD",
             "git diff --name-only",
-            "git diff --check"
+            "git diff --check",
+            "find src tests .wdd/epics/EPIC-admin-configuration-frontend -type f -mmin -20"
           ],
-          "evidence": "RUNNING worker poll timed out without final status; no PR exists for codex/task/TASK-014-admin-job-foundation; assigned worktree has active uncommitted changes in expected task-owned areas; branch is two controller checkpoints behind the epic branch; tracked git diff --check passed. No nudge was needed because the worker appears active."
+          "evidence": "RUNNING worker poll timed out without final status; no PR exists for codex/task/TASK-014-admin-job-foundation; assigned worktree has active uncommitted changes and recent activity in expected task-owned areas; branch is three controller checkpoints behind the epic branch; tracked git diff --check passed. No nudge was needed because the worker appears active."
         },
         "activatedAt": "2026-07-06T11:39:24Z",
         "cleanupState": "not_started",
         "sharedContextReconciliation": "queued",
-        "lastObservedAt": "2026-07-06T12:25:24Z",
+        "lastObservedAt": "2026-07-06T12:40:24Z",
         "branchPushedAt": "2026-07-06T11:44:24Z",
         "dispatchedAt": "2026-07-06T11:49:24Z",
         "dispatchBaseCommit": "0d41c5304ec5895db334af1ad9ab54bb6a2db0d3",
         "worktreeObservation": {
-          "observedAt": "2026-07-06T12:25:24Z",
+          "observedAt": "2026-07-06T12:40:24Z",
           "taskId": "TASK-014-admin-job-foundation",
           "status": "active_uncommitted_no_pr",
           "workerStatus": "RUNNING",
@@ -2331,7 +2365,7 @@
           "pr": null,
           "prState": "none",
           "worktreeStatus": "active_uncommitted",
-          "branchDivergence": "origin/codex/epic/admin-configuration-frontend...HEAD = 2 0; task branch is behind the epic branch by controller checkpoints ffd67ab and will need freshness refresh before review or merge.",
+          "branchDivergence": "origin/codex/epic/admin-configuration-frontend...HEAD = 3 0; task branch is behind the epic branch by controller checkpoints and will need freshness refresh before review or merge.",
           "files": [
             "src/transport/admin.ts",
             "tests/helpers/postgres.ts",
@@ -2340,14 +2374,19 @@
             "src/transport/admin-jobs.ts",
             "tests/integration/admin-job-service.test.ts"
           ],
+          "recentFilesWithin20m": [
+            "src/db/migrations/013_admin_jobs.sql",
+            "src/services/admin-job-service.ts",
+            "tests/integration/admin-job-service.test.ts"
+          ],
           "diffCheck": "git diff --check passed for tracked changes; untracked task files are still worker-owned and not staged by the controller.",
-          "coordinationNote": "No new nudge required; worker is actively editing expected TASK-014 files."
+          "coordinationNote": "No new nudge required; worker has recent activity in expected TASK-014 files."
         }
       }
     ],
     "dispatchState": "dispatched",
     "activationCommit": "e46eb9a10233fcbadf446cf81d13e8a60f7ab942",
-    "lastObservedAt": "2026-07-06T12:25:24Z",
+    "lastObservedAt": "2026-07-06T12:40:24Z",
     "workerDispatchStartedAt": "2026-07-06T11:49:24Z",
     "dispatchedAt": "2026-07-06T11:49:24Z"
   },
@@ -2411,8 +2450,8 @@
       "mode": "codex_thread_heartbeat",
       "cadence": "15m",
       "status": "monitoring_wave_006_workers_active_no_pr",
-      "lastCheckedAt": "2026-07-06T12:25:24Z",
-      "nextCheckDueAt": "2026-07-06T12:40:24Z",
+      "lastCheckedAt": "2026-07-06T12:40:24Z",
+      "nextCheckDueAt": "2026-07-06T12:55:24Z",
       "schedulerRef": "postgram-admin-wave-005-wdd-heartbeat",
       "schedulerName": "postgram-admin-wave-006-wdd-heartbeat",
       "fallbackPrompt": "Run one bounded WDD controller heartbeat for /Users/ivo.toby/workspace/postgram, epic EPIC-admin-configuration-frontend, active wave WAVE-006. Use the subagent-pr-orchestration skill. Start in /Users/ivo.toby/workspace/postgram on branch codex/epic/admin-configuration-frontend. Read .wdd/epics/EPIC-admin-configuration-frontend/orchestration.json and controller-state.md. Inspect worker Maxwell (019f3748-036a-7422-9f84-ab790313375f) and assigned worktree /Users/ivo.toby/workspace/postgram/.worktrees/TASK-008-admin-key-audit-stats-api on branch codex/task/TASK-008-admin-key-audit-stats-api for bundle WAVE-006-admin-key-audit-stats-api / TASK-008-admin-key-audit-stats-api, and worker Anscombe (019f3748-041f-7540-b336-12c285848008) and assigned worktree /Users/ivo.toby/workspace/postgram/.worktrees/TASK-014-admin-job-foundation on branch codex/task/TASK-014-admin-job-foundation for bundle WAVE-006-admin-job-foundation / TASK-014-admin-job-foundation. Update gates, branch freshness, verification, PR or patch refs, reviewer refs, feedback, shared-context reconciliation status, and monitoring timestamps. If a worker has produced a PR or patch, move that bundle to review/reviewer orchestration; if no PR or patch exists, keep no_pr and nudge exact missing deliverables only if needed. Stop when WAVE-006 bundles are merged, blocked, cancelled, or ready for wdd-reconcile-wave. After WAVE-006 is reconciled, continue to the next wave per Ivo finish-all-waves instruction and push to GitHub between tasks/waves."
@@ -3130,14 +3169,14 @@
         "lastObservedAt": "2026-07-06T11:34:24Z"
       },
       "WAVE-006-admin-key-audit-stats-api": {
-        "status": "running_no_pr_active_uncommitted",
+        "status": "running_no_pr_active_uncommitted_recent_activity",
         "workerThreadId": "019f3748-036a-7422-9f84-ab790313375f",
         "workerNickname": "Maxwell",
         "dispatchedAt": "2026-07-06T11:49:24Z",
-        "lastObservedAt": "2026-07-06T12:25:24Z",
+        "lastObservedAt": "2026-07-06T12:40:24Z",
         "cleanupState": "not_started",
         "lastObservation": {
-          "observedAt": "2026-07-06T12:25:24Z",
+          "observedAt": "2026-07-06T12:40:24Z",
           "taskId": "TASK-008-admin-key-audit-stats-api",
           "status": "active_uncommitted_no_pr",
           "workerStatus": "RUNNING",
@@ -3145,7 +3184,7 @@
           "pr": null,
           "prState": "none",
           "worktreeStatus": "active_uncommitted",
-          "branchDivergence": "origin/codex/epic/admin-configuration-frontend...HEAD = 2 0; task branch is behind the epic branch by controller checkpoints ffd67ab and will need freshness refresh before review or merge.",
+          "branchDivergence": "origin/codex/epic/admin-configuration-frontend...HEAD = 3 0; task branch is behind the epic branch by controller checkpoints and will need freshness refresh before review or merge.",
           "files": [
             "src/auth/key-service.ts",
             "src/transport/admin.ts",
@@ -3154,19 +3193,25 @@
             "src/services/admin-stats-service.ts",
             "tests/contract/admin-key-audit-stats.test.ts"
           ],
+          "recentFilesWithin20m": [
+            "src/auth/key-service.ts",
+            "src/services/admin-audit-service.ts",
+            "src/transport/admin.ts",
+            "tests/contract/admin-key-audit-stats.test.ts"
+          ],
           "diffCheck": "git diff --check passed for tracked changes; untracked task files are still worker-owned and not staged by the controller.",
-          "coordinationNote": "No new nudge required; worker is actively editing expected TASK-008 files."
+          "coordinationNote": "No new nudge required; worker has recent activity in expected TASK-008 files."
         }
       },
       "WAVE-006-admin-job-foundation": {
-        "status": "running_no_pr_active_uncommitted",
+        "status": "running_no_pr_active_uncommitted_recent_activity",
         "workerThreadId": "019f3748-041f-7540-b336-12c285848008",
         "workerNickname": "Anscombe",
         "dispatchedAt": "2026-07-06T11:49:24Z",
-        "lastObservedAt": "2026-07-06T12:25:24Z",
+        "lastObservedAt": "2026-07-06T12:40:24Z",
         "cleanupState": "not_started",
         "lastObservation": {
-          "observedAt": "2026-07-06T12:25:24Z",
+          "observedAt": "2026-07-06T12:40:24Z",
           "taskId": "TASK-014-admin-job-foundation",
           "status": "active_uncommitted_no_pr",
           "workerStatus": "RUNNING",
@@ -3174,7 +3219,7 @@
           "pr": null,
           "prState": "none",
           "worktreeStatus": "active_uncommitted",
-          "branchDivergence": "origin/codex/epic/admin-configuration-frontend...HEAD = 2 0; task branch is behind the epic branch by controller checkpoints ffd67ab and will need freshness refresh before review or merge.",
+          "branchDivergence": "origin/codex/epic/admin-configuration-frontend...HEAD = 3 0; task branch is behind the epic branch by controller checkpoints and will need freshness refresh before review or merge.",
           "files": [
             "src/transport/admin.ts",
             "tests/helpers/postgres.ts",
@@ -3183,8 +3228,13 @@
             "src/transport/admin-jobs.ts",
             "tests/integration/admin-job-service.test.ts"
           ],
+          "recentFilesWithin20m": [
+            "src/db/migrations/013_admin_jobs.sql",
+            "src/services/admin-job-service.ts",
+            "tests/integration/admin-job-service.test.ts"
+          ],
           "diffCheck": "git diff --check passed for tracked changes; untracked task files are still worker-owned and not staged by the controller.",
-          "coordinationNote": "No new nudge required; worker is actively editing expected TASK-014 files."
+          "coordinationNote": "No new nudge required; worker has recent activity in expected TASK-014 files."
         }
       }
     },
@@ -3225,26 +3275,28 @@
         "evidence": "Task files in done; shared context and downstream task briefs reconciled; WAVE-005 worktrees cleaned up; orchestration JSON and diff checks queued for final verification."
       },
       "WAVE-006-admin-key-audit-stats-api": {
-        "result": "in_progress_observed_tracked_diff_check_passed",
+        "result": "in_progress_observed_recent_activity_tracked_diff_check_passed",
         "commands": [
           "git status --short --branch",
           "gh pr list --head codex/task/TASK-008-admin-key-audit-stats-api --json number,url,state,isDraft,headRefOid,baseRefName,mergeStateStatus,updatedAt,title",
           "git rev-list --left-right --count origin/codex/epic/admin-configuration-frontend...HEAD",
           "git diff --name-only",
-          "git diff --check"
+          "git diff --check",
+          "find src tests .wdd/epics/EPIC-admin-configuration-frontend -type f -mmin -20"
         ],
-        "evidence": "RUNNING worker poll timed out without final status; no PR exists for codex/task/TASK-008-admin-key-audit-stats-api; assigned worktree has active uncommitted changes in expected task-owned areas; branch is two controller checkpoints behind the epic branch; tracked git diff --check passed. No nudge was needed because the worker appears active."
+        "evidence": "RUNNING worker poll timed out without final status; no PR exists for codex/task/TASK-008-admin-key-audit-stats-api; assigned worktree has active uncommitted changes and recent activity in expected task-owned areas; branch is three controller checkpoints behind the epic branch; tracked git diff --check passed. No nudge was needed because the worker appears active."
       },
       "WAVE-006-admin-job-foundation": {
-        "result": "in_progress_observed_tracked_diff_check_passed",
+        "result": "in_progress_observed_recent_activity_tracked_diff_check_passed",
         "commands": [
           "git status --short --branch",
           "gh pr list --head codex/task/TASK-014-admin-job-foundation --json number,url,state,isDraft,headRefOid,baseRefName,mergeStateStatus,updatedAt,title",
           "git rev-list --left-right --count origin/codex/epic/admin-configuration-frontend...HEAD",
           "git diff --name-only",
-          "git diff --check"
+          "git diff --check",
+          "find src tests .wdd/epics/EPIC-admin-configuration-frontend -type f -mmin -20"
         ],
-        "evidence": "RUNNING worker poll timed out without final status; no PR exists for codex/task/TASK-014-admin-job-foundation; assigned worktree has active uncommitted changes in expected task-owned areas; branch is two controller checkpoints behind the epic branch; tracked git diff --check passed. No nudge was needed because the worker appears active."
+        "evidence": "RUNNING worker poll timed out without final status; no PR exists for codex/task/TASK-014-admin-job-foundation; assigned worktree has active uncommitted changes and recent activity in expected task-owned areas; branch is three controller checkpoints behind the epic branch; tracked git diff --check passed. No nudge was needed because the worker appears active."
       }
     },
     "feedback": {
@@ -3353,25 +3405,26 @@
         "latestCommit": "a41ffb44deebc5029cddffe4e5e953caf69528d9",
         "blockingFeedback": [],
         "verification": {
-          "result": "in_progress_observed_tracked_diff_check_passed",
+          "result": "in_progress_observed_recent_activity_tracked_diff_check_passed",
           "commands": [
             "git status --short --branch",
             "gh pr list --head codex/task/TASK-008-admin-key-audit-stats-api --json number,url,state,isDraft,headRefOid,baseRefName,mergeStateStatus,updatedAt,title",
             "git rev-list --left-right --count origin/codex/epic/admin-configuration-frontend...HEAD",
             "git diff --name-only",
-            "git diff --check"
+            "git diff --check",
+            "find src tests .wdd/epics/EPIC-admin-configuration-frontend -type f -mmin -20"
           ],
-          "evidence": "RUNNING worker poll timed out without final status; no PR exists for codex/task/TASK-008-admin-key-audit-stats-api; assigned worktree has active uncommitted changes in expected task-owned areas; branch is two controller checkpoints behind the epic branch; tracked git diff --check passed. No nudge was needed because the worker appears active."
+          "evidence": "RUNNING worker poll timed out without final status; no PR exists for codex/task/TASK-008-admin-key-audit-stats-api; assigned worktree has active uncommitted changes and recent activity in expected task-owned areas; branch is three controller checkpoints behind the epic branch; tracked git diff --check passed. No nudge was needed because the worker appears active."
         },
         "activatedAt": "2026-07-06T11:39:24Z",
         "cleanupState": "not_started",
         "sharedContextReconciliation": "queued",
-        "lastObservedAt": "2026-07-06T12:25:24Z",
+        "lastObservedAt": "2026-07-06T12:40:24Z",
         "branchPushedAt": "2026-07-06T11:44:24Z",
         "dispatchedAt": "2026-07-06T11:49:24Z",
         "dispatchBaseCommit": "0d41c5304ec5895db334af1ad9ab54bb6a2db0d3",
         "worktreeObservation": {
-          "observedAt": "2026-07-06T12:25:24Z",
+          "observedAt": "2026-07-06T12:40:24Z",
           "taskId": "TASK-008-admin-key-audit-stats-api",
           "status": "active_uncommitted_no_pr",
           "workerStatus": "RUNNING",
@@ -3379,7 +3432,7 @@
           "pr": null,
           "prState": "none",
           "worktreeStatus": "active_uncommitted",
-          "branchDivergence": "origin/codex/epic/admin-configuration-frontend...HEAD = 2 0; task branch is behind the epic branch by controller checkpoints ffd67ab and will need freshness refresh before review or merge.",
+          "branchDivergence": "origin/codex/epic/admin-configuration-frontend...HEAD = 3 0; task branch is behind the epic branch by controller checkpoints and will need freshness refresh before review or merge.",
           "files": [
             "src/auth/key-service.ts",
             "src/transport/admin.ts",
@@ -3388,8 +3441,14 @@
             "src/services/admin-stats-service.ts",
             "tests/contract/admin-key-audit-stats.test.ts"
           ],
+          "recentFilesWithin20m": [
+            "src/auth/key-service.ts",
+            "src/services/admin-audit-service.ts",
+            "src/transport/admin.ts",
+            "tests/contract/admin-key-audit-stats.test.ts"
+          ],
           "diffCheck": "git diff --check passed for tracked changes; untracked task files are still worker-owned and not staged by the controller.",
-          "coordinationNote": "No new nudge required; worker is actively editing expected TASK-008 files."
+          "coordinationNote": "No new nudge required; worker has recent activity in expected TASK-008 files."
         }
       },
       {
@@ -3410,25 +3469,26 @@
         "latestCommit": "a41ffb44deebc5029cddffe4e5e953caf69528d9",
         "blockingFeedback": [],
         "verification": {
-          "result": "in_progress_observed_tracked_diff_check_passed",
+          "result": "in_progress_observed_recent_activity_tracked_diff_check_passed",
           "commands": [
             "git status --short --branch",
             "gh pr list --head codex/task/TASK-014-admin-job-foundation --json number,url,state,isDraft,headRefOid,baseRefName,mergeStateStatus,updatedAt,title",
             "git rev-list --left-right --count origin/codex/epic/admin-configuration-frontend...HEAD",
             "git diff --name-only",
-            "git diff --check"
+            "git diff --check",
+            "find src tests .wdd/epics/EPIC-admin-configuration-frontend -type f -mmin -20"
           ],
-          "evidence": "RUNNING worker poll timed out without final status; no PR exists for codex/task/TASK-014-admin-job-foundation; assigned worktree has active uncommitted changes in expected task-owned areas; branch is two controller checkpoints behind the epic branch; tracked git diff --check passed. No nudge was needed because the worker appears active."
+          "evidence": "RUNNING worker poll timed out without final status; no PR exists for codex/task/TASK-014-admin-job-foundation; assigned worktree has active uncommitted changes and recent activity in expected task-owned areas; branch is three controller checkpoints behind the epic branch; tracked git diff --check passed. No nudge was needed because the worker appears active."
         },
         "activatedAt": "2026-07-06T11:39:24Z",
         "cleanupState": "not_started",
         "sharedContextReconciliation": "queued",
-        "lastObservedAt": "2026-07-06T12:25:24Z",
+        "lastObservedAt": "2026-07-06T12:40:24Z",
         "branchPushedAt": "2026-07-06T11:44:24Z",
         "dispatchedAt": "2026-07-06T11:49:24Z",
         "dispatchBaseCommit": "0d41c5304ec5895db334af1ad9ab54bb6a2db0d3",
         "worktreeObservation": {
-          "observedAt": "2026-07-06T12:25:24Z",
+          "observedAt": "2026-07-06T12:40:24Z",
           "taskId": "TASK-014-admin-job-foundation",
           "status": "active_uncommitted_no_pr",
           "workerStatus": "RUNNING",
@@ -3436,7 +3496,7 @@
           "pr": null,
           "prState": "none",
           "worktreeStatus": "active_uncommitted",
-          "branchDivergence": "origin/codex/epic/admin-configuration-frontend...HEAD = 2 0; task branch is behind the epic branch by controller checkpoints ffd67ab and will need freshness refresh before review or merge.",
+          "branchDivergence": "origin/codex/epic/admin-configuration-frontend...HEAD = 3 0; task branch is behind the epic branch by controller checkpoints and will need freshness refresh before review or merge.",
           "files": [
             "src/transport/admin.ts",
             "tests/helpers/postgres.ts",
@@ -3445,14 +3505,19 @@
             "src/transport/admin-jobs.ts",
             "tests/integration/admin-job-service.test.ts"
           ],
+          "recentFilesWithin20m": [
+            "src/db/migrations/013_admin_jobs.sql",
+            "src/services/admin-job-service.ts",
+            "tests/integration/admin-job-service.test.ts"
+          ],
           "diffCheck": "git diff --check passed for tracked changes; untracked task files are still worker-owned and not staged by the controller.",
-          "coordinationNote": "No new nudge required; worker is actively editing expected TASK-014 files."
+          "coordinationNote": "No new nudge required; worker has recent activity in expected TASK-014 files."
         }
       }
     ],
     "dispatchState": "dispatched",
     "activationCommit": "e46eb9a10233fcbadf446cf81d13e8a60f7ab942",
-    "lastObservedAt": "2026-07-06T12:25:24Z",
+    "lastObservedAt": "2026-07-06T12:40:24Z",
     "workerDispatchStartedAt": "2026-07-06T11:49:24Z",
     "dispatchedAt": "2026-07-06T11:49:24Z"
   }

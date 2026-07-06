@@ -133,6 +133,14 @@ no PR, and active uncommitted changes in expected TASK-008 areas, now including
 is two controller checkpoints behind the epic branch and must be refreshed
 before review or merge.
 
+Controller heartbeat at 2026-07-06T12:40:24Z observed Maxwell still running,
+no PR, and recent activity in expected TASK-008 files:
+`src/auth/key-service.ts`, `src/services/admin-audit-service.ts`,
+`src/transport/admin.ts`, and `tests/contract/admin-key-audit-stats.test.ts`.
+Tracked `git diff --check` passed. The task branch is three controller
+checkpoints behind the epic branch and must be refreshed before review or
+merge.
+
 ## PR / Patch Reference
 
 None yet.

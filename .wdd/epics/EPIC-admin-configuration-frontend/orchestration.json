@@ -2367,10 +2367,10 @@
     "mode": "adaptive",
     "cadence": "manual_handoff",
     "status": "wave_007_ready_for_reconciliation",
-    "lastCheckedAt": "2026-07-06T17:02:56Z",
-    "nextCheckDueAt": "2026-07-06T17:07:56Z",
+    "lastCheckedAt": "2026-07-06T17:06:05Z",
+    "nextCheckDueAt": "2026-07-06T17:11:05Z",
     "schedulerRef": "postgram-admin-wave-005-wdd-heartbeat",
-    "schedulerName": "postgram-admin-wave-007-wdd-heartbeat",
+    "schedulerName": "postgram-admin-wave-007-reconcile-heartbeat",
     "fallbackPrompt": "WAVE-007 is ready for wdd-reconcile-wave. Confirm TASK-011 PR #87 and TASK-015 PR #88 are MERGED, task files are in done, currentGates.workerDispatch entries are merged, branch freshness is current_at_merge, cleanup is cleaned_up, blocking feedback is empty, and shared-context reconciliation is queued. Run wdd-reconcile-wave for WAVE-007, then continue to WAVE-008 after reconciliation is pushed."
   },
   "sharedContext": {
@@ -2615,10 +2615,10 @@
       "mode": "adaptive",
       "cadence": "manual_handoff",
       "status": "wave_007_ready_for_reconciliation",
-      "lastCheckedAt": "2026-07-06T17:02:56Z",
-      "nextCheckDueAt": "2026-07-06T17:07:56Z",
+      "lastCheckedAt": "2026-07-06T17:06:05Z",
+      "nextCheckDueAt": "2026-07-06T17:11:05Z",
       "schedulerRef": "postgram-admin-wave-005-wdd-heartbeat",
-      "schedulerName": "postgram-admin-wave-007-wdd-heartbeat",
+      "schedulerName": "postgram-admin-wave-007-reconcile-heartbeat",
       "fallbackPrompt": "WAVE-007 is ready for wdd-reconcile-wave. Confirm TASK-011 PR #87 and TASK-015 PR #88 are MERGED, task files are in done, currentGates.workerDispatch entries are merged, branch freshness is current_at_merge, cleanup is cleaned_up, blocking feedback is empty, and shared-context reconciliation is queued. Run wdd-reconcile-wave for WAVE-007, then continue to WAVE-008 after reconciliation is pushed."
     },
     "review": {

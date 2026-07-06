@@ -12,6 +12,8 @@ export interface EmbeddingProvider {
   embedBatch(texts: string[]): Promise<number[][]>;
 }
 
+type ProviderFetch = (input: string, init: RequestInit) => Promise<Response>;
+
 export type EmbeddingProviderConfig =
   | {
       provider: 'openai';
@@ -25,6 +27,7 @@ export type EmbeddingProviderConfig =
       dimensions: number;
       baseUrl: string;
       apiKey?: string | undefined;
+      fetchImpl?: ProviderFetch | undefined;
     };
 
 const OPENAI_DEFAULT_MODEL = 'text-embedding-3-small';
@@ -172,7 +175,7 @@ export function createOllamaEmbeddingProvider(
 
     let response: Response;
     try {
-      response = await fetch(`${baseUrl}/api/embeddings`, {
+      response = await (config.fetchImpl ?? fetch)(`${baseUrl}/api/embeddings`, {
         method: 'POST',
         headers,
         body: JSON.stringify({ model: config.model, prompt })

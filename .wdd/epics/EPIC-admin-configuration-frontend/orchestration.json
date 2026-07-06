@@ -782,82 +782,87 @@
           "workerNickname": "Goodall",
           "reviewThreadId": "019f322c-02e7-7590-8b8e-ebdd1e9c52ac",
           "reviewNickname": "Lorentz",
-          "currentGate": "needs_fixes",
-          "branchFreshness": "stale_conflicts_need_refresh",
+          "currentGate": "reviewing",
+          "branchFreshness": "current_pending_followup_review",
           "pr": "https://github.com/ivo-toby/postgram/pull/84",
-          "latestCommit": "6cf5001662218046430971914679331bd8960de5",
+          "latestCommit": "fd440de590baff405e3413e33235b94376b474c7",
           "blockingFeedback": [
             {
               "priority": "P2",
               "id": "P2-branch-freshness-product-conflict",
-              "status": "routed_to_worker",
+              "status": "fix_pushed_pending_followup_review",
               "owner": "Goodall",
               "reviewer": "Lorentz",
               "reviewThreadId": "019f322c-02e7-7590-8b8e-ebdd1e9c52ac",
               "workerThreadId": "019f35ff-a193-7ae0-a4b8-1ec53faabb74",
               "routedAt": "2026-07-06T11:14:24Z",
-              "summary": "PR #84 is stale against the epic branch with product-code merge conflicts in src/index.ts and src/transport/admin.ts, plus the TASK-010 review task file. Refresh the task branch against origin/codex/epic/admin-configuration-frontend and preserve both TASK-007 diagnostics/extraction wiring and TASK-010 provider-config route/options/runtime wiring before merge."
+              "fixPushedAt": "2026-07-06T11:23:20Z",
+              "fixCommit": "fd440de590baff405e3413e33235b94376b474c7",
+              "summary": "Goodall refreshed PR #84 against the latest epic branch, preserving TASK-007 diagnostics/extraction wiring and TASK-010 provider-config route/options/runtime wiring. Controller verified rev-list 0 4, diff whitespace passed, merge-tree clean, PR #84 CLEAN, and requested Lorentz follow-up review."
             }
           ],
           "verification": {
-            "result": "review_blocked_branch_freshness_conflict_feedback_routed",
+            "result": "fix_pushed_controller_freshness_passed_followup_review_requested",
             "commands": [
-              "gh pr view 84 --json number,url,state,isDraft,headRefName,headRefOid,baseRefName,baseRefOid,mergeStateStatus,reviewDecision,updatedAt,createdAt,title,latestReviews",
+              "gh pr view 84 --json number,url,state,isDraft,headRefName,headRefOid,baseRefName,baseRefOid,mergeStateStatus,reviewDecision,updatedAt,title",
               "git rev-list --left-right --count origin/codex/epic/admin-configuration-frontend...origin/codex/task/TASK-010-provider-config-apply",
               "git diff --check origin/codex/epic/admin-configuration-frontend...origin/codex/task/TASK-010-provider-config-apply",
               "git merge-tree --write-tree origin/codex/epic/admin-configuration-frontend origin/codex/task/TASK-010-provider-config-apply"
             ],
-            "evidence": "Lorentz returned REVIEW_BLOCKED with one P2: branch refresh is required because PR #84 has product-code conflicts with the epic branch in src/index.ts and src/transport/admin.ts, plus a WDD task-file conflict. Controller confirmed divergence 28 behind / 2 ahead, diff whitespace passed, merge-tree conflicts reproduced, and routed the exact refresh/conflict-resolution deliverable to Goodall."
+            "evidence": "Goodall pushed refreshed PR #84 head fd440de after resolving the P2 freshness conflicts. Controller verified PR #84 is OPEN draft and CLEAN against base 782f969, branch divergence is 0 behind / 4 ahead, diff whitespace passes, merge-tree is clean, and the task worktree is clean and pushed. Goodall reported final provider/config/settings/admin-route tests, typecheck, and targeted ESLint passed. Follow-up review was requested from Lorentz."
           },
           "activatedAt": "2026-07-06T05:51:49Z",
           "cleanupState": "cleanup_deferred",
           "sharedContextReconciliation": "queued",
           "dispatchedAt": "2026-07-06T05:56:19Z",
           "dispatchBaseCommit": "70df1c5f9324dd3f9ff424f199ee1b8896a2e410",
-          "lastObservedAt": "2026-07-06T11:14:24Z",
+          "lastObservedAt": "2026-07-06T11:23:20Z",
           "worktreeObservation": {
-            "observedAt": "2026-07-06T11:14:24Z",
-            "status": "review_blocked_needs_fixes",
-            "workerStatus": "DONE_NEEDS_REFRESH_FIX",
+            "observedAt": "2026-07-06T11:23:20Z",
+            "status": "fix_pushed_followup_review_requested",
+            "workerStatus": "DONE",
             "pr": "https://github.com/ivo-toby/postgram/pull/84",
             "prState": "OPEN_DRAFT",
-            "prMergeStateStatus": "DIRTY",
-            "prHead": "6cf5001662218046430971914679331bd8960de5",
+            "prMergeStateStatus": "CLEAN",
+            "prHead": "fd440de590baff405e3413e33235b94376b474c7",
+            "prBase": "782f969364d1106aaf13c634421bc21c7cc92303",
             "workerThreadId": "019f35ff-a193-7ae0-a4b8-1ec53faabb74",
             "workerNickname": "Goodall",
             "reviewerThreadId": "019f322c-02e7-7590-8b8e-ebdd1e9c52ac",
             "reviewerNickname": "Lorentz",
-            "reviewResult": "REVIEW_BLOCKED",
-            "feedbackRoutedAt": "2026-07-06T11:14:24Z",
-            "branchDivergence": "origin/codex/epic/admin-configuration-frontend...origin/codex/task/TASK-010-provider-config-apply = 28 2; merge-tree conflicts in src/index.ts, src/transport/admin.ts, and the TASK-010 review task file.",
+            "reviewResult": "REVIEW_BLOCKED_FIX_PUSHED_PENDING_REVIEW",
+            "followupReviewRequestedAt": "2026-07-06T11:23:20Z",
+            "branchDivergence": "origin/codex/epic/admin-configuration-frontend...origin/codex/task/TASK-010-provider-config-apply = 0 4; PR #84 mergeStateStatus=CLEAN.",
             "files": [
               "src/index.ts",
               "src/transport/admin.ts",
               ".wdd/epics/EPIC-admin-configuration-frontend/TICKET-004-runtime-configuration/review/TASK-010-provider-config-apply.md"
             ],
-            "note": "Implementation review was otherwise sound; Goodall must refresh the branch and preserve both TASK-007 diagnostics wiring and TASK-010 provider-config wiring before follow-up review/freshness verification."
+            "note": "Goodall resolved the freshness conflict and pushed PR #84 head fd440de. Controller freshness checks passed; Lorentz follow-up review is pending before merge."
           },
           "reviewRequestedAt": "2026-07-06T11:07:00Z",
-          "reviewStatus": "REVIEW_BLOCKED",
+          "reviewStatus": "FOLLOWUP_REVIEW_REQUESTED",
           "workerFinalStatus": "DONE",
           "prState": {
             "state": "OPEN",
             "isDraft": true,
-            "mergeStateStatus": "DIRTY",
-            "headRefOid": "6cf5001662218046430971914679331bd8960de5",
-            "baseRefOid": "0c47bb6736ff85112db93d391231764e9dc09748",
-            "createdAt": "2026-07-06T10:59:32Z",
-            "updatedAt": "2026-07-06T10:59:55Z"
+            "mergeStateStatus": "CLEAN",
+            "headRefOid": "fd440de590baff405e3413e33235b94376b474c7",
+            "baseRefOid": "782f969364d1106aaf13c634421bc21c7cc92303",
+            "updatedAt": "2026-07-06T11:22:04Z"
           },
-          "reviewResult": "REVIEW_BLOCKED",
+          "reviewResult": "REVIEW_BLOCKED_FIX_PUSHED_PENDING_REVIEW",
           "reviewedAt": "2026-07-06T11:14:24Z",
           "feedbackRoutedAt": "2026-07-06T11:14:24Z",
-          "feedbackThreadId": "019f35ff-a193-7ae0-a4b8-1ec53faabb74"
+          "feedbackThreadId": "019f35ff-a193-7ae0-a4b8-1ec53faabb74",
+          "taskBranchHead": "fd440de590baff405e3413e33235b94376b474c7",
+          "fixPushedAt": "2026-07-06T11:23:20Z",
+          "followupReviewRequestedAt": "2026-07-06T11:23:20Z"
         }
       ],
       "activationCommit": "70df1c5f9324dd3f9ff424f199ee1b8896a2e410",
       "dispatchState": "dispatched",
-      "lastObservedAt": "2026-07-06T11:14:24Z",
+      "lastObservedAt": "2026-07-06T11:23:20Z",
       "dispatchedAt": "2026-07-06T05:56:19Z"
     },
     {
@@ -1951,11 +1956,11 @@
   "monitoring": {
     "mode": "codex_thread_heartbeat",
     "cadence": "5m",
-    "status": "needs_fixes_task_010",
-    "lastCheckedAt": "2026-07-06T11:14:24Z",
-    "nextCheckDueAt": "2026-07-06T11:19:24Z",
+    "status": "reviewing_task_010_followup",
+    "lastCheckedAt": "2026-07-06T11:23:20Z",
+    "nextCheckDueAt": "2026-07-06T11:28:20Z",
     "schedulerRef": "postgram-admin-wave-005-wdd-heartbeat",
-    "fallbackPrompt": "Run one bounded WDD controller heartbeat for /Users/ivo.toby/workspace/postgram, epic EPIC-admin-configuration-frontend, active wave WAVE-005. Use the subagent-pr-orchestration skill. Start in /Users/ivo.toby/workspace/postgram on branch codex/epic/admin-configuration-frontend. Read .wdd/epics/EPIC-admin-configuration-frontend/orchestration.json and controller-state.md. TASK-007 / PR #83 is MERGED and pushed. PR #84 / TASK-010 is REVIEW_BLOCKED after Lorentz found P2 branch freshness product-code conflicts in src/index.ts and src/transport/admin.ts plus the TASK-010 review file. Feedback was routed to Goodall (019f35ff-a193-7ae0-a4b8-1ec53faabb74). Inspect Goodall and /Users/ivo.toby/workspace/postgram/.worktrees/TASK-010-provider-config-apply on branch codex/task/TASK-010-provider-config-apply. If Goodall pushed fixes, verify git diff --check, branch freshness, required tests, PR #84 state, and request or run follow-up review. If no fix is present, keep needs_fixes and nudge exact missing deliverables only if stale. Stop when WAVE-005 bundles are merged, blocked, cancelled, or ready for wdd-reconcile-wave. After WAVE-005 is reconciled, continue to the next wave per Ivo finish-all-waves instruction and push to GitHub between tasks/waves."
+    "fallbackPrompt": "Run one bounded WDD controller heartbeat for /Users/ivo.toby/workspace/postgram, epic EPIC-admin-configuration-frontend, active wave WAVE-005. Use the subagent-pr-orchestration skill. Start in /Users/ivo.toby/workspace/postgram on branch codex/epic/admin-configuration-frontend. Read .wdd/epics/EPIC-admin-configuration-frontend/orchestration.json and controller-state.md. TASK-007 / PR #83 is MERGED and pushed. PR #84 / TASK-010 had a P2 freshness blocker; Goodall pushed fix head fd440de and controller verified PR #84 is CLEAN, rev-list is 0 4, diff-check passes, and merge-tree is clean. Lorentz follow-up review was requested. Inspect Lorentz (019f322c-02e7-7590-8b8e-ebdd1e9c52ac), PR #84, Goodall, and the TASK-010 worktree. If follow-up review passes, merge or mark merge_ready according to policy after final freshness verification. If review reports P1/P2, route feedback. Stop when WAVE-005 bundles are merged, blocked, cancelled, or ready for wdd-reconcile-wave. After WAVE-005 is reconciled, continue to the next wave per Ivo finish-all-waves instruction and push to GitHub between tasks/waves."
   },
   "sharedContext": {
     "index": "shared-context/index.md",
@@ -2046,83 +2051,88 @@
         "workerNickname": "Goodall",
         "reviewThreadId": "019f322c-02e7-7590-8b8e-ebdd1e9c52ac",
         "reviewNickname": "Lorentz",
-        "currentGate": "needs_fixes",
-        "branchFreshness": "stale_conflicts_need_refresh",
+        "currentGate": "reviewing",
+        "branchFreshness": "current_pending_followup_review",
         "pr": "https://github.com/ivo-toby/postgram/pull/84",
-        "latestCommit": "6cf5001662218046430971914679331bd8960de5",
+        "latestCommit": "fd440de590baff405e3413e33235b94376b474c7",
         "blockingFeedback": [
           {
             "priority": "P2",
             "id": "P2-branch-freshness-product-conflict",
-            "status": "routed_to_worker",
+            "status": "fix_pushed_pending_followup_review",
             "owner": "Goodall",
             "reviewer": "Lorentz",
             "reviewThreadId": "019f322c-02e7-7590-8b8e-ebdd1e9c52ac",
             "workerThreadId": "019f35ff-a193-7ae0-a4b8-1ec53faabb74",
             "routedAt": "2026-07-06T11:14:24Z",
-            "summary": "PR #84 is stale against the epic branch with product-code merge conflicts in src/index.ts and src/transport/admin.ts, plus the TASK-010 review task file. Refresh the task branch against origin/codex/epic/admin-configuration-frontend and preserve both TASK-007 diagnostics/extraction wiring and TASK-010 provider-config route/options/runtime wiring before merge."
+            "fixPushedAt": "2026-07-06T11:23:20Z",
+            "fixCommit": "fd440de590baff405e3413e33235b94376b474c7",
+            "summary": "Goodall refreshed PR #84 against the latest epic branch, preserving TASK-007 diagnostics/extraction wiring and TASK-010 provider-config route/options/runtime wiring. Controller verified rev-list 0 4, diff whitespace passed, merge-tree clean, PR #84 CLEAN, and requested Lorentz follow-up review."
           }
         ],
         "verification": {
-          "result": "review_blocked_branch_freshness_conflict_feedback_routed",
+          "result": "fix_pushed_controller_freshness_passed_followup_review_requested",
           "commands": [
-            "gh pr view 84 --json number,url,state,isDraft,headRefName,headRefOid,baseRefName,baseRefOid,mergeStateStatus,reviewDecision,updatedAt,createdAt,title,latestReviews",
+            "gh pr view 84 --json number,url,state,isDraft,headRefName,headRefOid,baseRefName,baseRefOid,mergeStateStatus,reviewDecision,updatedAt,title",
             "git rev-list --left-right --count origin/codex/epic/admin-configuration-frontend...origin/codex/task/TASK-010-provider-config-apply",
             "git diff --check origin/codex/epic/admin-configuration-frontend...origin/codex/task/TASK-010-provider-config-apply",
             "git merge-tree --write-tree origin/codex/epic/admin-configuration-frontend origin/codex/task/TASK-010-provider-config-apply"
           ],
-          "evidence": "Lorentz returned REVIEW_BLOCKED with one P2: branch refresh is required because PR #84 has product-code conflicts with the epic branch in src/index.ts and src/transport/admin.ts, plus a WDD task-file conflict. Controller confirmed divergence 28 behind / 2 ahead, diff whitespace passed, merge-tree conflicts reproduced, and routed the exact refresh/conflict-resolution deliverable to Goodall."
+          "evidence": "Goodall pushed refreshed PR #84 head fd440de after resolving the P2 freshness conflicts. Controller verified PR #84 is OPEN draft and CLEAN against base 782f969, branch divergence is 0 behind / 4 ahead, diff whitespace passes, merge-tree is clean, and the task worktree is clean and pushed. Goodall reported final provider/config/settings/admin-route tests, typecheck, and targeted ESLint passed. Follow-up review was requested from Lorentz."
         },
         "activatedAt": "2026-07-06T05:51:49Z",
         "cleanupState": "cleanup_deferred",
         "sharedContextReconciliation": "queued",
         "dispatchedAt": "2026-07-06T05:56:19Z",
         "dispatchBaseCommit": "70df1c5f9324dd3f9ff424f199ee1b8896a2e410",
-        "lastObservedAt": "2026-07-06T11:14:24Z",
+        "lastObservedAt": "2026-07-06T11:23:20Z",
         "worktreeObservation": {
-          "observedAt": "2026-07-06T11:14:24Z",
-          "status": "review_blocked_needs_fixes",
-          "workerStatus": "DONE_NEEDS_REFRESH_FIX",
+          "observedAt": "2026-07-06T11:23:20Z",
+          "status": "fix_pushed_followup_review_requested",
+          "workerStatus": "DONE",
           "pr": "https://github.com/ivo-toby/postgram/pull/84",
           "prState": "OPEN_DRAFT",
-          "prMergeStateStatus": "DIRTY",
-          "prHead": "6cf5001662218046430971914679331bd8960de5",
+          "prMergeStateStatus": "CLEAN",
+          "prHead": "fd440de590baff405e3413e33235b94376b474c7",
+          "prBase": "782f969364d1106aaf13c634421bc21c7cc92303",
           "workerThreadId": "019f35ff-a193-7ae0-a4b8-1ec53faabb74",
           "workerNickname": "Goodall",
           "reviewerThreadId": "019f322c-02e7-7590-8b8e-ebdd1e9c52ac",
           "reviewerNickname": "Lorentz",
-          "reviewResult": "REVIEW_BLOCKED",
-          "feedbackRoutedAt": "2026-07-06T11:14:24Z",
-          "branchDivergence": "origin/codex/epic/admin-configuration-frontend...origin/codex/task/TASK-010-provider-config-apply = 28 2; merge-tree conflicts in src/index.ts, src/transport/admin.ts, and the TASK-010 review task file.",
+          "reviewResult": "REVIEW_BLOCKED_FIX_PUSHED_PENDING_REVIEW",
+          "followupReviewRequestedAt": "2026-07-06T11:23:20Z",
+          "branchDivergence": "origin/codex/epic/admin-configuration-frontend...origin/codex/task/TASK-010-provider-config-apply = 0 4; PR #84 mergeStateStatus=CLEAN.",
           "files": [
             "src/index.ts",
             "src/transport/admin.ts",
             ".wdd/epics/EPIC-admin-configuration-frontend/TICKET-004-runtime-configuration/review/TASK-010-provider-config-apply.md"
           ],
-          "note": "Implementation review was otherwise sound; Goodall must refresh the branch and preserve both TASK-007 diagnostics wiring and TASK-010 provider-config wiring before follow-up review/freshness verification."
+          "note": "Goodall resolved the freshness conflict and pushed PR #84 head fd440de. Controller freshness checks passed; Lorentz follow-up review is pending before merge."
         },
         "reviewRequestedAt": "2026-07-06T11:07:00Z",
-        "reviewStatus": "REVIEW_BLOCKED",
+        "reviewStatus": "FOLLOWUP_REVIEW_REQUESTED",
         "workerFinalStatus": "DONE",
         "prState": {
           "state": "OPEN",
           "isDraft": true,
-          "mergeStateStatus": "DIRTY",
-          "headRefOid": "6cf5001662218046430971914679331bd8960de5",
-          "baseRefOid": "0c47bb6736ff85112db93d391231764e9dc09748",
-          "createdAt": "2026-07-06T10:59:32Z",
-          "updatedAt": "2026-07-06T10:59:55Z"
+          "mergeStateStatus": "CLEAN",
+          "headRefOid": "fd440de590baff405e3413e33235b94376b474c7",
+          "baseRefOid": "782f969364d1106aaf13c634421bc21c7cc92303",
+          "updatedAt": "2026-07-06T11:22:04Z"
         },
-        "reviewResult": "REVIEW_BLOCKED",
+        "reviewResult": "REVIEW_BLOCKED_FIX_PUSHED_PENDING_REVIEW",
         "reviewedAt": "2026-07-06T11:14:24Z",
         "feedbackRoutedAt": "2026-07-06T11:14:24Z",
-        "feedbackThreadId": "019f35ff-a193-7ae0-a4b8-1ec53faabb74"
+        "feedbackThreadId": "019f35ff-a193-7ae0-a4b8-1ec53faabb74",
+        "taskBranchHead": "fd440de590baff405e3413e33235b94376b474c7",
+        "fixPushedAt": "2026-07-06T11:23:20Z",
+        "followupReviewRequestedAt": "2026-07-06T11:23:20Z"
       }
     ],
     "status": "in_progress",
     "dispatchedAt": "2026-07-06T05:56:19Z",
     "activationCommit": "70df1c5f9324dd3f9ff424f199ee1b8896a2e410",
-    "lastObservedAt": "2026-07-06T11:14:24Z",
+    "lastObservedAt": "2026-07-06T11:23:20Z",
     "dispatchState": "dispatched"
   },
   "currentGates": {
@@ -2162,7 +2172,7 @@
       "WAVE-004-admin-mfa-step-up": "reconciled",
       "WAVE-004-settings-secret-store": "reconciled",
       "WAVE-005-admin-api-shell-diagnostics": "merged",
-      "WAVE-005-provider-config-apply": "needs_fixes"
+      "WAVE-005-provider-config-apply": "reviewing"
     },
     "waveCompletion": {
       "WAVE-001": "done",
@@ -2337,11 +2347,12 @@
         "blockingFeedback": []
       },
       "WAVE-005-provider-config-apply": {
-        "status": "blocked",
-        "result": "REVIEW_BLOCKED",
+        "status": "followup_review_requested",
+        "result": "REVIEW_BLOCKED_FIX_PUSHED_PENDING_REVIEW",
         "pr": "https://github.com/ivo-toby/postgram/pull/84",
-        "latestCommit": "6cf5001662218046430971914679331bd8960de5",
+        "latestCommit": "fd440de590baff405e3413e33235b94376b474c7",
         "reviewedHead": "6cf5001662218046430971914679331bd8960de5",
+        "fixedHead": "fd440de590baff405e3413e33235b94376b474c7",
         "reviewThreadId": "019f322c-02e7-7590-8b8e-ebdd1e9c52ac",
         "reviewNickname": "Lorentz",
         "workerThreadId": "019f35ff-a193-7ae0-a4b8-1ec53faabb74",
@@ -2349,22 +2360,26 @@
         "requestedAt": "2026-07-06T11:07:00Z",
         "reviewedAt": "2026-07-06T11:14:24Z",
         "feedbackRoutedAt": "2026-07-06T11:14:24Z",
+        "fixPushedAt": "2026-07-06T11:23:20Z",
+        "followupReviewRequestedAt": "2026-07-06T11:23:20Z",
         "feedbackThreadId": "019f35ff-a193-7ae0-a4b8-1ec53faabb74",
         "blockingFeedback": [
           {
             "priority": "P2",
             "id": "P2-branch-freshness-product-conflict",
-            "status": "routed_to_worker",
+            "status": "fix_pushed_pending_followup_review",
             "owner": "Goodall",
             "reviewer": "Lorentz",
             "reviewThreadId": "019f322c-02e7-7590-8b8e-ebdd1e9c52ac",
             "workerThreadId": "019f35ff-a193-7ae0-a4b8-1ec53faabb74",
             "routedAt": "2026-07-06T11:14:24Z",
-            "summary": "PR #84 is stale against the epic branch with product-code merge conflicts in src/index.ts and src/transport/admin.ts, plus the TASK-010 review task file. Refresh the task branch against origin/codex/epic/admin-configuration-frontend and preserve both TASK-007 diagnostics/extraction wiring and TASK-010 provider-config route/options/runtime wiring before merge."
+            "fixPushedAt": "2026-07-06T11:23:20Z",
+            "fixCommit": "fd440de590baff405e3413e33235b94376b474c7",
+            "summary": "Goodall refreshed PR #84 against the latest epic branch, preserving TASK-007 diagnostics/extraction wiring and TASK-010 provider-config route/options/runtime wiring. Controller verified rev-list 0 4, diff whitespace passed, merge-tree clean, PR #84 CLEAN, and requested Lorentz follow-up review."
           }
         ],
-        "branchFreshness": "stale_conflicts_need_refresh",
-        "note": "Implementation review passed on substance, but merge is blocked by real product-code freshness conflicts after TASK-007. Feedback routed to Goodall for branch refresh and conflict resolution."
+        "branchFreshness": "current_pending_followup_review",
+        "note": "Goodall pushed the freshness fix and controller checks passed. Waiting for Lorentz follow-up review before merge."
       }
     },
     "branchFreshness": {
@@ -2374,7 +2389,7 @@
       "WAVE-004-admin-mfa-step-up": "current_at_merge",
       "WAVE-004-settings-secret-store": "current_at_merge",
       "WAVE-005-admin-api-shell-diagnostics": "current_at_merge",
-      "WAVE-005-provider-config-apply": "stale_conflicts_need_refresh"
+      "WAVE-005-provider-config-apply": "current_pending_followup_review"
     },
     "merge": {
       "WAVE-001-admin-feasibility-gate": {

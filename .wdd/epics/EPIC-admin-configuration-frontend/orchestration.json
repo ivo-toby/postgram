@@ -2190,28 +2190,29 @@
       "workerThreadId": "019f37c5-7084-7920-916a-7fd9ac7d8cb6",
       "reviewThreadId": null,
       "workerWorktree": "/Users/ivo.toby/workspace/postgram/.worktrees/TASK-015-maintenance-admin-api",
-      "worktreeStatus": "active_uncommitted",
+      "worktreeStatus": "clean_local_commit_unpushed",
       "pr": null,
-      "latestCommit": "848b902c5f4829ff78529256c3a9181423c5a150",
-      "branchFreshness": "behind_epic_controller_checkpoints_11",
+      "latestCommit": "faab7e0a71bba506f19e6b59911ac7df1f7742f1",
+      "branchFreshness": "current_at_observation_refresh_required_after_controller_checkpoint",
       "blockingFeedback": [],
       "verification": {
-        "result": "in_progress_observed_recent_activity_tracked_diff_check_passed",
-        "checkedAt": "2026-07-06T16:08:16Z",
+        "result": "clean_local_commit_no_pr_handoff_nudged",
+        "checkedAt": "2026-07-06T16:32:01Z",
         "commands": [
-          "multi_agent_v1.wait_agent Helmholtz timeout 10000ms",
           "gh pr list --head codex/task/TASK-015-maintenance-admin-api --json number,url,state,isDraft,headRefOid,baseRefName,mergeStateStatus,updatedAt,title",
           "git status --short --branch",
           "git rev-list --left-right --count origin/codex/epic/admin-configuration-frontend...HEAD",
-          "git diff --check",
-          "git ls-files -m -o --exclude-standard",
-          "stat changed and untracked files for recent activity"
+          "git diff --check origin/codex/epic/admin-configuration-frontend...HEAD",
+          "git merge-tree --write-tree origin/codex/epic/admin-configuration-frontend HEAD",
+          "git show --stat --oneline --decorate --name-status --max-count=1 HEAD",
+          "multi_agent_v1.wait_agent Helmholtz timeout 10000ms",
+          "multi_agent_v1.send_input Helmholtz exact missing handoff deliverables"
         ],
-        "evidence": "Helmholtz remains RUNNING; direct worker poll timed out without final status and no PR exists for codex/task/TASK-015-maintenance-admin-api. Worktree remains active/uncommitted in expected maintenance API areas (admin maintenance service/transport, admin transport, admin job service, pgm-admin CLI, contract and CLI integration tests). Recent activity was observed in src/transport/admin-maintenance.ts and tests/contract/admin-maintenance-api.test.ts within the heartbeat window. Tracked git diff --check passed, no staged files, and branch divergence is origin/codex/epic/admin-configuration-frontend...HEAD = 11 0 after TASK-011 closeout. No nudge required because the worktree is active; branch freshness refresh is required before review or merge."
+        "evidence": "Helmholtz has a clean local TASK-015 commit faab7e0a71bba506f19e6b59911ac7df1f7742f1 (`feat(admin): add maintenance job APIs`) in the assigned worktree, but no PR exists and origin/codex/task/TASK-015-maintenance-admin-api remains at activation commit 848b902c5f4829ff78529256c3a9181423c5a150. The worktree is clean and ahead of its remote task branch by local commits; branch freshness against origin/codex/epic/admin-configuration-frontend was current at inspection (rev-list = 0 1), git diff --check over the branch diff passed, and merge-tree was clean. The task file is still in in-progress, so controller nudged Helmholtz in submission 019f3847-8b09-7863-b57d-b14ba6490702 to move it to review if complete, push the task branch, open a draft PR or provide a patch, and return a final status token plus verification evidence. After this controller checkpoint, the task branch will need a freshness refresh before review or merge."
       },
       "currentGate": "no_pr",
       "workerNickname": "Helmholtz",
-      "lastObservedAt": "2026-07-06T16:08:16Z"
+      "lastObservedAt": "2026-07-06T16:32:01Z"
     },
     {
       "id": "TASK-016-maintenance-admin-ui",
@@ -2332,13 +2333,13 @@
   ],
   "monitoring": {
     "mode": "adaptive",
-    "cadence": "15m",
-    "status": "wave_007_task011_merged_cleaned_up_task015_active_no_pr",
-    "lastCheckedAt": "2026-07-06T16:08:16Z",
-    "nextCheckDueAt": "2026-07-06T16:23:16Z",
+    "cadence": "5m",
+    "status": "wave_007_task015_clean_local_commit_no_pr_nudged",
+    "lastCheckedAt": "2026-07-06T16:32:01Z",
+    "nextCheckDueAt": "2026-07-06T16:37:01Z",
     "schedulerRef": "postgram-admin-wave-005-wdd-heartbeat",
     "schedulerName": "postgram-admin-wave-007-wdd-heartbeat",
-    "fallbackPrompt": "WAVE-007 TASK-011 PR #87 is merged and its worktree is cleaned up. Continue monitoring Helmholtz/TASK-015 for PR or patch handoff; if no PR exists, keep no_pr and nudge only if the worktree is inactive or stale."
+    "fallbackPrompt": "WAVE-007 TASK-015 has clean local commit faab7e0 but no pushed branch or PR yet; Helmholtz was nudged to push/open PR or report BLOCKED/NEEDS_CONTEXT. Poll Helmholtz/worktree/GitHub and move to review when PR or patch exists."
   },
   "sharedContext": {
     "index": "shared-context/index.md",
@@ -2425,70 +2426,64 @@
         ],
         "branch": "codex/task/TASK-015-maintenance-admin-api",
         "worktree": "/Users/ivo.toby/workspace/postgram/.worktrees/TASK-015-maintenance-admin-api",
-        "worktreeStatus": "active_uncommitted",
+        "worktreeStatus": "clean_local_commit_unpushed",
         "workerThreadId": "019f37c5-7084-7920-916a-7fd9ac7d8cb6",
         "workerNickname": "Helmholtz",
         "reviewThreadId": null,
         "reviewNickname": null,
         "currentGate": "no_pr",
-        "branchFreshness": "behind_epic_controller_checkpoints_11",
+        "branchFreshness": "current_at_observation_refresh_required_after_controller_checkpoint",
         "pr": null,
-        "latestCommit": "848b902c5f4829ff78529256c3a9181423c5a150",
+        "latestCommit": "faab7e0a71bba506f19e6b59911ac7df1f7742f1",
         "blockingFeedback": [],
         "verification": {
-          "result": "in_progress_observed_recent_activity_tracked_diff_check_passed",
-          "checkedAt": "2026-07-06T16:08:16Z",
+          "result": "clean_local_commit_no_pr_handoff_nudged",
+          "checkedAt": "2026-07-06T16:32:01Z",
           "commands": [
-            "multi_agent_v1.wait_agent Helmholtz timeout 10000ms",
             "gh pr list --head codex/task/TASK-015-maintenance-admin-api --json number,url,state,isDraft,headRefOid,baseRefName,mergeStateStatus,updatedAt,title",
             "git status --short --branch",
             "git rev-list --left-right --count origin/codex/epic/admin-configuration-frontend...HEAD",
-            "git diff --check",
-            "git ls-files -m -o --exclude-standard",
-            "stat changed and untracked files for recent activity"
+            "git diff --check origin/codex/epic/admin-configuration-frontend...HEAD",
+            "git merge-tree --write-tree origin/codex/epic/admin-configuration-frontend HEAD",
+            "git show --stat --oneline --decorate --name-status --max-count=1 HEAD",
+            "multi_agent_v1.wait_agent Helmholtz timeout 10000ms",
+            "multi_agent_v1.send_input Helmholtz exact missing handoff deliverables"
           ],
-          "evidence": "Helmholtz remains RUNNING; direct worker poll timed out without final status and no PR exists for codex/task/TASK-015-maintenance-admin-api. Worktree remains active/uncommitted in expected maintenance API areas (admin maintenance service/transport, admin transport, admin job service, pgm-admin CLI, contract and CLI integration tests). Recent activity was observed in src/transport/admin-maintenance.ts and tests/contract/admin-maintenance-api.test.ts within the heartbeat window. Tracked git diff --check passed, no staged files, and branch divergence is origin/codex/epic/admin-configuration-frontend...HEAD = 11 0 after TASK-011 closeout. No nudge required because the worktree is active; branch freshness refresh is required before review or merge."
+          "evidence": "Helmholtz has a clean local TASK-015 commit faab7e0a71bba506f19e6b59911ac7df1f7742f1 (`feat(admin): add maintenance job APIs`) in the assigned worktree, but no PR exists and origin/codex/task/TASK-015-maintenance-admin-api remains at activation commit 848b902c5f4829ff78529256c3a9181423c5a150. The worktree is clean and ahead of its remote task branch by local commits; branch freshness against origin/codex/epic/admin-configuration-frontend was current at inspection (rev-list = 0 1), git diff --check over the branch diff passed, and merge-tree was clean. The task file is still in in-progress, so controller nudged Helmholtz in submission 019f3847-8b09-7863-b57d-b14ba6490702 to move it to review if complete, push the task branch, open a draft PR or provide a patch, and return a final status token plus verification evidence. After this controller checkpoint, the task branch will need a freshness refresh before review or merge."
         },
         "activatedAt": "2026-07-06T14:08:16Z",
         "cleanupState": "not_started",
         "sharedContextReconciliation": "not_started",
-        "lastObservedAt": "2026-07-06T16:08:16Z",
+        "lastObservedAt": "2026-07-06T16:32:01Z",
         "branchPushedAt": "2026-07-06T14:11:59Z",
         "dispatchedAt": "2026-07-06T14:11:59Z",
         "dispatchBaseCommit": "848b902c5f4829ff78529256c3a9181423c5a150",
         "worktreeObservation": {
-          "observedAt": "2026-07-06T16:08:16Z",
+          "observedAt": "2026-07-06T16:32:01Z",
           "taskId": "TASK-015-maintenance-admin-api",
-          "status": "active_uncommitted_no_pr",
-          "workerStatus": "RUNNING",
+          "status": "clean_local_commit_no_pr_handoff_nudged",
+          "workerStatus": "RUNNING_OR_UNRETURNED",
           "workerPoll": "timed_out_no_final_status",
           "pr": null,
           "prState": "none",
-          "worktreeStatus": "active_uncommitted",
-          "branchHead": "848b902c5f4829ff78529256c3a9181423c5a150",
-          "epicHead": "3337cb78e4e5f350abc43ca591fee57603a7ba84",
-          "branchDivergence": "origin/codex/epic/admin-configuration-frontend...HEAD = 11 0; task branch is behind the epic branch by controller and TASK-011 closeout commits and must refresh before review or merge.",
-          "branchFreshness": "behind_epic_controller_checkpoints_11",
+          "worktreeStatus": "clean_local_commit_unpushed",
+          "localHead": "faab7e0a71bba506f19e6b59911ac7df1f7742f1",
+          "originTaskHead": "848b902c5f4829ff78529256c3a9181423c5a150",
+          "epicHead": "b9d5f340ca19675d1515c80a8bda2d3df33c88a1",
+          "branchDivergence": "origin/codex/epic/admin-configuration-frontend...HEAD = 0 1 at inspection; after this controller checkpoint the task branch will need freshness refresh before review or merge.",
+          "branchFreshness": "current_at_observation_refresh_required_after_controller_checkpoint",
           "files": [
             "src/cli/admin/pgm-admin.ts",
             "src/services/admin-job-service.ts",
+            "src/services/admin-maintenance-service.ts",
+            "src/transport/admin-maintenance.ts",
             "src/transport/admin.ts",
-            "tests/integration/cli-admin.test.ts",
-            "src/services/admin-maintenance-service.ts",
-            "src/transport/admin-maintenance.ts",
-            "tests/contract/admin-maintenance-api.test.ts"
+            "tests/contract/admin-maintenance-api.test.ts",
+            "tests/integration/cli-admin.test.ts"
           ],
-          "untrackedFiles": [
-            "src/services/admin-maintenance-service.ts",
-            "src/transport/admin-maintenance.ts",
-            "tests/contract/admin-maintenance-api.test.ts"
-          ],
-          "recentFilesWithinHeartbeatWindow": [
-            "src/transport/admin-maintenance.ts",
-            "tests/contract/admin-maintenance-api.test.ts"
-          ],
-          "diffCheck": "Tracked git diff --check passed; no staged files.",
-          "coordinationNote": "No nudge required; worker has recent activity in expected task-owned files. Branch freshness refresh required before review or merge."
+          "diffCheck": "git diff --check over the branch diff passed; merge-tree clean.",
+          "nudgeSubmissionId": "019f3847-8b09-7863-b57d-b14ba6490702",
+          "coordinationNote": "Exact missing handoff deliverables were routed to Helmholtz: push/open PR or patch, move task file to review if complete, and return final status token with verification evidence."
         }
       }
     ],
@@ -2496,7 +2491,7 @@
     "activationCommit": "848b902c5f4829ff78529256c3a9181423c5a150",
     "workerDispatchStartedAt": "2026-07-06T14:11:59Z",
     "dispatchedAt": "2026-07-06T14:11:59Z",
-    "lastObservedAt": "2026-07-06T16:08:16Z"
+    "lastObservedAt": "2026-07-06T16:32:01Z"
   },
   "currentGates": {
     "epicBranch": {
@@ -2532,7 +2527,7 @@
       "WAVE-006-admin-key-audit-stats-api": "cleaned_up",
       "WAVE-006-admin-job-foundation": "cleaned_up",
       "WAVE-007-admin-auth-ui": "cleaned_up",
-      "WAVE-007-maintenance-admin-api": "active_uncommitted"
+      "WAVE-007-maintenance-admin-api": "clean_local_commit_unpushed"
     },
     "workerDispatch": {
       "WAVE-001-admin-feasibility-gate": "reconciled",
@@ -2562,13 +2557,13 @@
     },
     "monitoring": {
       "mode": "adaptive",
-      "cadence": "15m",
-      "status": "wave_007_task011_merged_cleaned_up_task015_active_no_pr",
-      "lastCheckedAt": "2026-07-06T16:08:16Z",
-      "nextCheckDueAt": "2026-07-06T16:23:16Z",
+      "cadence": "5m",
+      "status": "wave_007_task015_clean_local_commit_no_pr_nudged",
+      "lastCheckedAt": "2026-07-06T16:32:01Z",
+      "nextCheckDueAt": "2026-07-06T16:37:01Z",
       "schedulerRef": "postgram-admin-wave-005-wdd-heartbeat",
       "schedulerName": "postgram-admin-wave-007-wdd-heartbeat",
-      "fallbackPrompt": "WAVE-007 TASK-011 PR #87 is merged and its worktree is cleaned up. Continue monitoring Helmholtz/TASK-015 for PR or patch handoff; if no PR exists, keep no_pr and nudge only if the worktree is inactive or stale."
+      "fallbackPrompt": "WAVE-007 TASK-015 has clean local commit faab7e0 but no pushed branch or PR yet; Helmholtz was nudged to push/open PR or report BLOCKED/NEEDS_CONTEXT. Poll Helmholtz/worktree/GitHub and move to review when PR or patch exists."
     },
     "review": {
       "WAVE-001-admin-feasibility-gate": {
@@ -2838,7 +2833,7 @@
       "WAVE-006-admin-key-audit-stats-api": "current_at_merge",
       "WAVE-006-admin-job-foundation": "current_at_merge",
       "WAVE-007-admin-auth-ui": "current_at_merge",
-      "WAVE-007-maintenance-admin-api": "behind_epic_controller_checkpoints_11"
+      "WAVE-007-maintenance-admin-api": "current_at_observation_refresh_required_after_controller_checkpoint"
     },
     "merge": {
       "WAVE-001-admin-feasibility-gate": {
@@ -3088,10 +3083,12 @@
         "checkedAt": "2026-07-06T15:48:11Z"
       },
       "WAVE-007-maintenance-admin-api": {
-        "status": "none",
+        "status": "none_local_commit_unpushed",
         "pr": null,
-        "checkedAt": "2026-07-06T16:08:16Z",
-        "branch": "codex/task/TASK-015-maintenance-admin-api"
+        "checkedAt": "2026-07-06T16:32:01Z",
+        "branch": "codex/task/TASK-015-maintenance-admin-api",
+        "localHead": "faab7e0a71bba506f19e6b59911ac7df1f7742f1",
+        "originTaskHead": "848b902c5f4829ff78529256c3a9181423c5a150"
       }
     },
     "cleanup": {
@@ -3623,18 +3620,19 @@
         "evidence": "Lorentz returned REVIEW_PASS for PR #87 with no P1/P2/P3 findings. Controller refreshed the TASK-011 branch against the latest epic branch (task head 344bab8ed51c76eb18ee6b8d2dbd020d70bec329), reran focused AdminAuth tests, UI typecheck, branch diff check, merge-tree, and orchestration JSON parse successfully, then merged TASK-011 locally into the epic branch in 4e77a6b5362160f854d36b4283157c658a9096e2. Post-merge AdminAuth tests and UI typecheck passed in the epic checkout after installing missing ui dependencies with npm --prefix ui ci; git diff --check HEAD^..HEAD and orchestration JSON parse passed. PR #87 remains pending remote MERGED confirmation until the epic branch push. Epic branch push marked PR #87 MERGED at 2026-07-06T15:48:11Z; the clean TASK-011 worktree was removed and pruned."
       },
       "WAVE-007-maintenance-admin-api": {
-        "result": "in_progress_observed_recent_activity_tracked_diff_check_passed",
-        "checkedAt": "2026-07-06T16:08:16Z",
+        "result": "clean_local_commit_no_pr_handoff_nudged",
+        "checkedAt": "2026-07-06T16:32:01Z",
         "commands": [
-          "multi_agent_v1.wait_agent Helmholtz timeout 10000ms",
           "gh pr list --head codex/task/TASK-015-maintenance-admin-api --json number,url,state,isDraft,headRefOid,baseRefName,mergeStateStatus,updatedAt,title",
           "git status --short --branch",
           "git rev-list --left-right --count origin/codex/epic/admin-configuration-frontend...HEAD",
-          "git diff --check",
-          "git ls-files -m -o --exclude-standard",
-          "stat changed and untracked files for recent activity"
+          "git diff --check origin/codex/epic/admin-configuration-frontend...HEAD",
+          "git merge-tree --write-tree origin/codex/epic/admin-configuration-frontend HEAD",
+          "git show --stat --oneline --decorate --name-status --max-count=1 HEAD",
+          "multi_agent_v1.wait_agent Helmholtz timeout 10000ms",
+          "multi_agent_v1.send_input Helmholtz exact missing handoff deliverables"
         ],
-        "evidence": "Helmholtz remains RUNNING; direct worker poll timed out without final status and no PR exists for codex/task/TASK-015-maintenance-admin-api. Worktree remains active/uncommitted in expected maintenance API areas (admin maintenance service/transport, admin transport, admin job service, pgm-admin CLI, contract and CLI integration tests). Recent activity was observed in src/transport/admin-maintenance.ts and tests/contract/admin-maintenance-api.test.ts within the heartbeat window. Tracked git diff --check passed, no staged files, and branch divergence is origin/codex/epic/admin-configuration-frontend...HEAD = 11 0 after TASK-011 closeout. No nudge required because the worktree is active; branch freshness refresh is required before review or merge."
+        "evidence": "Helmholtz has a clean local TASK-015 commit faab7e0a71bba506f19e6b59911ac7df1f7742f1 (`feat(admin): add maintenance job APIs`) in the assigned worktree, but no PR exists and origin/codex/task/TASK-015-maintenance-admin-api remains at activation commit 848b902c5f4829ff78529256c3a9181423c5a150. The worktree is clean and ahead of its remote task branch by local commits; branch freshness against origin/codex/epic/admin-configuration-frontend was current at inspection (rev-list = 0 1), git diff --check over the branch diff passed, and merge-tree was clean. The task file is still in in-progress, so controller nudged Helmholtz in submission 019f3847-8b09-7863-b57d-b14ba6490702 to move it to review if complete, push the task branch, open a draft PR or provide a patch, and return a final status token plus verification evidence. After this controller checkpoint, the task branch will need a freshness refresh before review or merge."
       }
     },
     "feedback": {
@@ -3699,7 +3697,16 @@
         "blocking": []
       },
       "WAVE-007-maintenance-admin-api": {
-        "blocking": []
+        "blocking": [],
+        "operationalNudges": [
+          {
+            "routedAt": "2026-07-06T16:32:01Z",
+            "submissionId": "019f3847-8b09-7863-b57d-b14ba6490702",
+            "owner": "Helmholtz",
+            "workerThreadId": "019f37c5-7084-7920-916a-7fd9ac7d8cb6",
+            "summary": "Clean local commit faab7e0 exists but no pushed branch/PR/patch and task file remains in in-progress. Asked worker to move task file to review if complete, push task branch, open draft PR against the epic branch or provide patch, and return final status token with verification evidence."
+          }
+        ]
       }
     },
     "activationArtifact": {

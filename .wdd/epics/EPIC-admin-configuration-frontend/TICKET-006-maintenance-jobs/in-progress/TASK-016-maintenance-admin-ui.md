@@ -6,7 +6,7 @@ ticket: TICKET-006-maintenance-jobs
 wave: WAVE-009
 slug: maintenance-admin-ui
 title: Maintenance Admin UI
-status: todo
+status: in_progress
 depends_on:
   - TASK-011-admin-auth-ui
   - TASK-012-admin-ops-dashboard-ui
@@ -19,13 +19,13 @@ conflict_domains:
 assigned_model_class: implementationComplex
 review_model_class: review
 branch: codex/task/TASK-016-maintenance-admin-ui
-worker_worktree: null
-worktree_status: unassigned
+worker_worktree: /Users/ivo.toby/workspace/postgram/.worktrees/TASK-016-maintenance-admin-ui
+worktree_status: pending_creation
 pr: null
 worker_thread_id: null
 review_thread_id: null
-current_gate: not_started
-branch_freshness: unknown
+current_gate: pending_dispatch
+branch_freshness: pending_branch_creation
 verification:
   - npm --prefix ui run test -- --run src/components/AdminMaintenance.test.tsx
   - npm --prefix ui run test -- --run src/components/AdminOps.test.tsx src/components/AdminConfig.test.tsx src/components/AdminAuth.test.tsx
@@ -36,7 +36,7 @@ verification:
 
 ## Status
 
-todo
+in_progress
 
 ## Parent Ticket
 
@@ -113,7 +113,7 @@ codex/task/TASK-016-maintenance-admin-ui
 
 ## Worker Worktree
 
-None assigned yet.
+/Users/ivo.toby/workspace/postgram/.worktrees/TASK-016-maintenance-admin-ui
 
 ## PR / Patch Reference
 

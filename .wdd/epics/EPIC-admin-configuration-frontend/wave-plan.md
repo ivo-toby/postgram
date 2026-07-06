@@ -755,7 +755,7 @@ Stop condition:
 
 ### WAVE-009
 
-Status: ready_to_start
+Status: in_progress
 
 Tasks:
 
@@ -781,6 +781,15 @@ Activation rule:
 
 - Activate after WAVE-008 reconciliation.
 - Ready after WAVE-008 reconciliation on 2026-07-06.
+- Activated at 2026-07-06T20:30:02Z after WAVE-008 reconciliation checkpoint
+  `ff2a873` was pushed.
+
+Progress:
+
+- TASK-016-maintenance-admin-ui moved to `in-progress/`; dedicated branch
+  `codex/task/TASK-016-maintenance-admin-ui` and worktree
+  `/Users/ivo.toby/workspace/postgram/.worktrees/TASK-016-maintenance-admin-ui`
+  are assigned and pending creation from the pushed activation checkpoint.
 
 Stop condition:
 

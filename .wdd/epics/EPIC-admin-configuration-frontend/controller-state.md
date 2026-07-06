@@ -2,8 +2,8 @@
 id: EPIC-admin-configuration-frontend-CONTROLLER
 kind: controller_state
 epic: EPIC-admin-configuration-frontend
-active_wave: null
-status: wave_reconciled_ready_for_next_wave
+active_wave: WAVE-009
+status: activating
 updated_at: 2026-07-06
 ---
 
@@ -91,6 +91,14 @@ operations shell, `AdminConfig` Config-tab integration, UI secret
 redaction/write-only controls, validation/apply warnings, and downstream
 TASK-016/TASK-017/TASK-018 handoffs. WAVE-009 is ready to start next.
 
+WAVE-009 is activating after WAVE-008 reconciliation checkpoint `ff2a873` was
+pushed. Its bundled task is TASK-016-maintenance-admin-ui. The task file moved
+to `in-progress/`, and the planned task branch/worktree are
+`codex/task/TASK-016-maintenance-admin-ui` and
+`/Users/ivo.toby/workspace/postgram/.worktrees/TASK-016-maintenance-admin-ui`.
+Activation artifacts must be pushed before creating the branch/worktree and
+dispatching the worker.
+
 WAVE-004 is done and reconciled. PR #81/TASK-009 and PR #82/TASK-006 are
 merged, shared context is reconciled, and both WAVE-004 worktrees are cleaned
 up.
@@ -107,7 +115,7 @@ up.
 | WAVE-006 | TASK-008, TASK-014 | full / hybrid / risk_based / adaptive | done | confirmed by Ivo via finish-all-waves request on 2026-07-06 |
 | WAVE-007 | TASK-011, TASK-015 | full / parallel / risk_based / adaptive | done | confirmed by Ivo via finish-all-waves request on 2026-07-06 |
 | WAVE-008 | TASK-012, TASK-013 | full / hybrid / risk_based / adaptive | done | confirmed by Ivo via finish-all-waves request on 2026-07-06 |
-| WAVE-009 | TASK-016 | full / bundled / risk_based / adaptive | ready_to_start | confirmed by Ivo via finish-all-waves request on 2026-07-06 |
+| WAVE-009 | TASK-016 | full / bundled / risk_based / adaptive | in_progress | confirmed by Ivo via finish-all-waves request on 2026-07-06 |
 | WAVE-010 | TASK-017 | full / bundled / risk_based / adaptive | planned | required |
 | WAVE-011 | TASK-018 | full / bundled / risk_based / adaptive | planned | not required |
 
@@ -117,46 +125,52 @@ Mode: adaptive
 
 Cadence: 5m
 
-Status: wave_008_reconciled_ready_for_wave_009
+Status: wave_009_activation_pending_worktree
 
-Last check: 2026-07-06T20:18:32Z
+Last check: 2026-07-06T20:30:02Z
 
-Next check due: 2026-07-06T20:23:32Z
+Next check due: 2026-07-06T20:45:02Z
 
 Scheduler reference: `postgram-admin-wave-005-wdd-heartbeat`
 
-Scheduler name: `postgram-admin-wave-009-start-wave`
+Scheduler name: `postgram-admin-wave-009-wdd-heartbeat`
 
 Fallback prompt:
 
 ```text
-Run one bounded WDD start-wave heartbeat for /Users/ivo.toby/workspace/postgram,
-epic EPIC-admin-configuration-frontend, next wave WAVE-009. Use the
-wdd-start-wave skill. Start in /Users/ivo.toby/workspace/postgram on branch
-codex/epic/admin-configuration-frontend. Read
+Run one bounded WDD controller heartbeat for /Users/ivo.toby/workspace/postgram,
+epic EPIC-admin-configuration-frontend, active wave WAVE-009. Use the
+subagent-pr-orchestration skill. Start in /Users/ivo.toby/workspace/postgram on
+branch codex/epic/admin-configuration-frontend. Read
 .wdd/epics/EPIC-admin-configuration-frontend/orchestration.json and
-controller-state.md. Confirm WAVE-008 is done/reconciled and pushed, PR #89 and
-PR #90 are MERGED, activeWave is null, WAVE-009 is ready_to_start, and
-WAVE-009 task is TASK-016-maintenance-admin-ui. Activate WAVE-009, update
-orchestration.json/controller-state.md/task files, create and verify the
-isolated worktree under /Users/ivo.toby/workspace/postgram/.worktrees for
-TASK-016-maintenance-admin-ui on branch codex/task/TASK-016-maintenance-admin-ui,
-push activation artifacts to GitHub before worker dispatch, then
-dispatch/monitor according to WDD policy. Stop after WAVE-009
-activation/dispatch state is pushed and heartbeat monitoring is updated; do not
-start WAVE-010 until WAVE-009 is merged and reconciled.
+controller-state.md, then inspect worker THREAD_PENDING and assigned worktree
+/Users/ivo.toby/workspace/postgram/.worktrees/TASK-016-maintenance-admin-ui on
+branch codex/task/TASK-016-maintenance-admin-ui for bundle
+WAVE-009-maintenance-admin-ui / TASK-016-maintenance-admin-ui. Update gates,
+branch freshness, verification, PR or patch refs, reviewer refs, feedback,
+shared-context reconciliation status, and monitoring timestamps. If the worker
+has produced a PR or patch, move TASK-016 to review/reviewer orchestration; if
+no PR or patch exists, keep no_pr and nudge exact missing deliverables only if
+needed. If review reports P1/P2, route feedback to the owning worker or a fresh
+fix worker. If review passes, refresh stale task branch against
+codex/epic/admin-configuration-frontend, rerun required freshness verification,
+then merge or mark merge_ready according to policy. Stop when WAVE-009 is
+merged, blocked, cancelled, or ready for wdd-reconcile-wave. After WAVE-009 is
+reconciled, continue to WAVE-010 per Ivo finish-all-waves instruction and push
+to GitHub between tasks/waves.
 ```
 
 ## Active Wave Strategy
 
-- Active wave: none.
+- Active wave: WAVE-009.
 - Last active wave: WAVE-008.
 - WAVE-008 outcome: done and reconciled.
-- Next wave: WAVE-009.
+- Next wave after WAVE-009: WAVE-010.
 - WAVE-009 strategy: full / bundled / risk_based / adaptive.
 - WAVE-009 task: TASK-016-maintenance-admin-ui.
 - Confirmation: Ivo via Codex finish-all-waves request on 2026-07-06.
-- Current gate: WAVE-008 reconciled and pushed; WAVE-009 is ready to start.
+- Current gate: activation artifacts are being synced before task
+  branch/worktree creation.
 
 ## Last Reconciled Wave
 
@@ -209,7 +223,7 @@ start WAVE-010 until WAVE-009 is merged and reconciled.
 | TASK-013-admin-config-ui | TICKET-005-admin-frontend | codex/task/TASK-013-admin-config-ui | cleaned_up | reconciled | Schrodinger follow-up REVIEW_PASS; final freshness passed at task head `2efc58f`; post-merge AdminConfig/AdminOps/AdminAuth UI tests, UI typecheck, root typecheck, JSON parse, and diff-check passed; PR #90 merged at 2026-07-06T20:15:58Z in `9974b29`; worktree cleaned up; WAVE-008 shared context reconciled |
 | TASK-014-admin-job-foundation | TICKET-006-maintenance-jobs | codex/task/TASK-014-admin-job-foundation | cleaned_up | reconciled | Lorentz REVIEW_PASS; freshness current at task head `0e08630`; post-merge tests/typecheck/touched-file ESLint passed; merged locally into epic branch in `c5edbfc`; WAVE-006 reconciled and worktree cleaned up |
 | TASK-015-maintenance-admin-api | TICKET-006-maintenance-jobs | codex/task/TASK-015-maintenance-admin-api | cleaned_up | reconciled | Lorentz REVIEW_PASS; final freshness passed at task head `ea88af4`; post-merge contract tests 4/4, CLI integration 37/37, typecheck, scoped ESLint, JSON parse, and diff check passed; merged locally in `78f0f43`; PR #88 merged at 2026-07-06T17:02:28Z; shared context reconciled |
-| TASK-016-maintenance-admin-ui | TICKET-006-maintenance-jobs | codex/task/TASK-016-maintenance-admin-ui | not_created | ready_to_start | `npm --prefix ui run test -- --run src/components/AdminMaintenance.test.tsx`; AdminOps/AdminConfig/AdminAuth regressions if dashboard/client changes; `npm --prefix ui run typecheck` |
+| TASK-016-maintenance-admin-ui | TICKET-006-maintenance-jobs | codex/task/TASK-016-maintenance-admin-ui | pending_creation | pending_dispatch | `npm --prefix ui run test -- --run src/components/AdminMaintenance.test.tsx`; AdminOps/AdminConfig/AdminAuth regressions if dashboard/client changes; `npm --prefix ui run typecheck` |
 | TASK-017-docker-first-run-no-cli | TICKET-007-docker-e2e-validation | codex/task/TASK-017-docker-first-run-no-cli | not_created | planned | `docker compose config`; `npm run typecheck`; `npm --prefix ui run build` |
 | TASK-018-security-epic-validation | TICKET-007-docker-e2e-validation | codex/task/TASK-018-security-epic-validation | not_created | planned | broad backend, frontend, Docker, and smoke validation |
 
@@ -631,6 +645,10 @@ start WAVE-010 until WAVE-009 is merged and reconciled.
 - WAVE-009 is ready to start after WAVE-008 reconciliation. Its task is
   TASK-016-maintenance-admin-ui, and Ivo's finish-all-waves instruction is the
   confirmation to continue.
+- WAVE-009 activation is in progress. TASK-016 has moved to `in-progress/`,
+  with branch `codex/task/TASK-016-maintenance-admin-ui` and worktree
+  `/Users/ivo.toby/workspace/postgram/.worktrees/TASK-016-maintenance-admin-ui`
+  pending creation from the pushed activation checkpoint.
 
 ## Verification Status
 
@@ -1666,8 +1684,15 @@ start WAVE-010 until WAVE-009 is merged and reconciled.
   and TASK-016/TASK-017/TASK-018 handoffs. TASK-012 and TASK-013 gates are
   reconciled, both worktrees are cleaned up, blocking feedback is empty, and
   WAVE-009 is ready to start.
+- 2026-07-06T20:30:02Z: Started WAVE-009 activation. TASK-016 moved from
+  `todo/` to `in-progress/`, WAVE-009 is active with bundled execution, and
+  the controller recorded the branch/worktree assignment
+  `codex/task/TASK-016-maintenance-admin-ui` at
+  `/Users/ivo.toby/workspace/postgram/.worktrees/TASK-016-maintenance-admin-ui`.
+  Activation artifacts must be pushed before creating the task branch/worktree
+  and dispatching the worker.
 
 ## Next Action
 
-Next action: run `wdd-start-wave` for WAVE-009 and activate
-TASK-016-maintenance-admin-ui.
+Next action: push the WAVE-009 activation checkpoint, create the TASK-016
+branch/worktree from that checkpoint, then dispatch the worker.

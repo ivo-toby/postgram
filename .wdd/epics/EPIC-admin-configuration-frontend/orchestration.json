@@ -1180,7 +1180,7 @@
     },
     {
       "id": "WAVE-009",
-      "status": "ready_to_start",
+      "status": "in_progress",
       "strategy": {
         "profile": "full",
         "executionMode": "bundled",
@@ -1204,7 +1204,8 @@
       "tasks": [
         "TASK-016-maintenance-admin-ui"
       ],
-      "readyAt": "2026-07-06T20:18:32Z"
+      "readyAt": "2026-07-06T20:18:32Z",
+      "activatedAt": "2026-07-06T20:30:02Z"
     },
     {
       "id": "WAVE-010",
@@ -2383,8 +2384,8 @@
     {
       "id": "TASK-016-maintenance-admin-ui",
       "ticket": "TICKET-006-maintenance-jobs",
-      "path": "TICKET-006-maintenance-jobs/todo/TASK-016-maintenance-admin-ui.md",
-      "status": "todo",
+      "path": "TICKET-006-maintenance-jobs/in-progress/TASK-016-maintenance-admin-ui.md",
+      "status": "in_progress",
       "dependsOn": [
         "TASK-011-admin-auth-ui",
         "TASK-015-maintenance-admin-api",
@@ -2402,11 +2403,11 @@
       "branch": "codex/task/TASK-016-maintenance-admin-ui",
       "workerThreadId": null,
       "reviewThreadId": null,
-      "workerWorktree": null,
-      "worktreeStatus": "not_created",
+      "workerWorktree": "/Users/ivo.toby/workspace/postgram/.worktrees/TASK-016-maintenance-admin-ui",
+      "worktreeStatus": "pending_creation",
       "pr": null,
       "latestCommit": null,
-      "branchFreshness": "not_started",
+      "branchFreshness": "pending_branch_creation",
       "blockingFeedback": [],
       "verification": {
         "result": "not_run",
@@ -2417,7 +2418,11 @@
         ],
         "evidence": null
       },
-      "currentGate": "ready_to_start"
+      "currentGate": "pending_dispatch",
+      "activatedAt": "2026-07-06T20:30:02Z",
+      "bundle": "WAVE-009-maintenance-admin-ui",
+      "sharedContextReconciliation": "not_started",
+      "cleanupState": "not_started"
     },
     {
       "id": "TASK-017-docker-first-run-no-cli",
@@ -2503,15 +2508,15 @@
   ],
   "monitoring": {
     "mode": "adaptive",
-    "cadence": "5m",
-    "status": "wave_008_reconciled_ready_for_wave_009",
-    "lastCheckedAt": "2026-07-06T20:18:32Z",
-    "nextCheckDueAt": "2026-07-06T20:23:32Z",
+    "cadence": "15m",
+    "status": "wave_009_activation_pending_worktree",
+    "lastCheckedAt": "2026-07-06T20:30:02Z",
+    "nextCheckDueAt": "2026-07-06T20:45:02Z",
     "schedulerRef": "postgram-admin-wave-005-wdd-heartbeat",
-    "schedulerName": "postgram-admin-wave-009-start-wave",
-    "fallbackPrompt": "Run one bounded WDD start-wave heartbeat for /Users/ivo.toby/workspace/postgram, epic EPIC-admin-configuration-frontend, next wave WAVE-009. Use the wdd-start-wave skill. Start in /Users/ivo.toby/workspace/postgram on branch codex/epic/admin-configuration-frontend. Read .wdd/epics/EPIC-admin-configuration-frontend/orchestration.json and controller-state.md. Confirm WAVE-008 is done/reconciled and pushed, PR #89 and PR #90 are MERGED, activeWave is null, WAVE-009 is ready_to_start, and WAVE-009 task is TASK-016-maintenance-admin-ui. Activate WAVE-009, update orchestration.json/controller-state.md/task files, create and verify the isolated worktree under /Users/ivo.toby/workspace/postgram/.worktrees for TASK-016-maintenance-admin-ui on branch codex/task/TASK-016-maintenance-admin-ui, push activation artifacts to GitHub before worker dispatch, then dispatch/monitor according to WDD policy. Stop after WAVE-009 activation/dispatch state is pushed and heartbeat monitoring is updated; do not start WAVE-010 until WAVE-009 is merged and reconciled.",
-    "verifiedAt": "2026-07-06T20:18:32Z",
-    "automationUpdateResult": "updated"
+    "schedulerName": "postgram-admin-wave-009-wdd-heartbeat",
+    "fallbackPrompt": "Run one bounded WDD controller heartbeat for /Users/ivo.toby/workspace/postgram, epic EPIC-admin-configuration-frontend, active wave WAVE-009. Use the subagent-pr-orchestration skill. Start in /Users/ivo.toby/workspace/postgram on branch codex/epic/admin-configuration-frontend. Read .wdd/epics/EPIC-admin-configuration-frontend/orchestration.json and controller-state.md, then inspect worker THREAD_PENDING and assigned worktree /Users/ivo.toby/workspace/postgram/.worktrees/TASK-016-maintenance-admin-ui on branch codex/task/TASK-016-maintenance-admin-ui for bundle WAVE-009-maintenance-admin-ui / TASK-016-maintenance-admin-ui. Update gates, branch freshness, verification, PR or patch refs, reviewer refs, feedback, shared-context reconciliation status, and monitoring timestamps. If the worker has produced a PR or patch, move TASK-016 to review/reviewer orchestration; if no PR or patch exists, keep no_pr and nudge exact missing deliverables only if needed. If review reports P1/P2, route feedback to the owning worker or a fresh fix worker. If review passes, refresh stale task branch against codex/epic/admin-configuration-frontend, rerun required freshness verification, then merge or mark merge_ready according to policy. Stop when WAVE-009 is merged, blocked, cancelled, or ready for wdd-reconcile-wave. After WAVE-009 is reconciled, continue to WAVE-010 per Ivo finish-all-waves instruction and push to GitHub between tasks/waves.",
+    "verifiedAt": "2026-07-06T20:30:02Z",
+    "automationUpdateResult": "pending_update"
   },
   "sharedContext": {
     "index": "shared-context/index.md",
@@ -2525,7 +2530,57 @@
     ],
     "reconcileAfterEveryWave": true
   },
-  "activeWave": null,
+  "activeWave": {
+    "id": "WAVE-009",
+    "activatedAt": "2026-07-06T20:30:02Z",
+    "status": "in_progress",
+    "strategy": {
+      "profile": "full",
+      "executionMode": "bundled",
+      "reviewMode": "risk_based",
+      "monitoringMode": "adaptive",
+      "confirmedBy": "Ivo via Codex finish-all-waves request on 2026-07-06"
+    },
+    "eligibleTasks": [
+      "TASK-016-maintenance-admin-ui"
+    ],
+    "nonEligibleTasks": [],
+    "bundles": [
+      {
+        "id": "WAVE-009-maintenance-admin-ui",
+        "tasks": [
+          "TASK-016-maintenance-admin-ui"
+        ],
+        "branch": "codex/task/TASK-016-maintenance-admin-ui",
+        "worktree": "/Users/ivo.toby/workspace/postgram/.worktrees/TASK-016-maintenance-admin-ui",
+        "worktreeStatus": "pending_creation",
+        "workerThreadId": null,
+        "workerNickname": null,
+        "reviewThreadId": null,
+        "reviewNickname": null,
+        "currentGate": "pending_dispatch",
+        "branchFreshness": "pending_branch_creation",
+        "pr": null,
+        "latestCommit": null,
+        "blockingFeedback": [],
+        "verification": {
+          "result": "activation_pending_worktree",
+          "checkedAt": "2026-07-06T20:30:02Z",
+          "commands": [],
+          "evidence": "WAVE-009 activation artifacts prepared; task branch/worktree must be created from the pushed activation commit before dispatch."
+        },
+        "activatedAt": "2026-07-06T20:30:02Z",
+        "cleanupState": "not_started",
+        "sharedContextReconciliation": "not_started",
+        "lastObservedAt": "2026-07-06T20:30:02Z"
+      }
+    ],
+    "dispatchState": "pending_worktree",
+    "activationCommit": "pending_push",
+    "workerDispatchStartedAt": null,
+    "dispatchedAt": null,
+    "lastObservedAt": "2026-07-06T20:30:02Z"
+  },
   "currentGates": {
     "epicBranch": {
       "status": "verified",
@@ -2534,13 +2589,12 @@
       "verifiedAt": "2026-07-05T11:36:08Z"
     },
     "activationArtifactsSynced": {
-      "status": "none_pending_wave_009_start",
-      "commit": "f4bf3d2d9efd1c4423c5cf6b67f6f10b22d8ce49",
+      "status": "pending_push",
+      "commit": "pending_push",
       "requiredBeforeTaskWorktrees": true,
-      "wave": "WAVE-008",
-      "syncedAt": "2026-07-06T17:17:56Z",
-      "nextWave": "WAVE-009",
-      "updatedAt": "2026-07-06T20:18:32Z"
+      "wave": "WAVE-009",
+      "syncedAt": null,
+      "updatedAt": "2026-07-06T20:30:02Z"
     },
     "waveStrategyConfirmation": {
       "WAVE-001": "confirmed_by_ivo_2026-07-05",
@@ -2566,7 +2620,8 @@
       "WAVE-007-admin-auth-ui": "cleaned_up",
       "WAVE-007-maintenance-admin-api": "cleaned_up",
       "WAVE-008-admin-ops-dashboard-ui": "cleaned_up",
-      "WAVE-008-admin-config-ui": "cleaned_up"
+      "WAVE-008-admin-config-ui": "cleaned_up",
+      "WAVE-009-maintenance-admin-ui": "pending_creation"
     },
     "workerDispatch": {
       "WAVE-001-admin-feasibility-gate": "reconciled",
@@ -2581,7 +2636,8 @@
       "WAVE-007-admin-auth-ui": "reconciled",
       "WAVE-007-maintenance-admin-api": "reconciled",
       "WAVE-008-admin-ops-dashboard-ui": "reconciled",
-      "WAVE-008-admin-config-ui": "reconciled"
+      "WAVE-008-admin-config-ui": "reconciled",
+      "WAVE-009-maintenance-admin-ui": "pending_dispatch"
     },
     "waveCompletion": {
       "WAVE-001": "done",
@@ -2591,23 +2647,24 @@
       "WAVE-005": "done",
       "WAVE-006": "done",
       "WAVE-007": "done",
-      "WAVE-008": "done"
+      "WAVE-008": "done",
+      "WAVE-009": "in_progress"
     },
     "nextWave": {
-      "id": "WAVE-009",
-      "status": "ready_to_start"
+      "id": "WAVE-010",
+      "status": "planned"
     },
     "monitoring": {
       "mode": "adaptive",
-      "cadence": "5m",
-      "status": "wave_008_reconciled_ready_for_wave_009",
-      "lastCheckedAt": "2026-07-06T20:18:32Z",
-      "nextCheckDueAt": "2026-07-06T20:23:32Z",
+      "cadence": "15m",
+      "status": "wave_009_activation_pending_worktree",
+      "lastCheckedAt": "2026-07-06T20:30:02Z",
+      "nextCheckDueAt": "2026-07-06T20:45:02Z",
       "schedulerRef": "postgram-admin-wave-005-wdd-heartbeat",
-      "schedulerName": "postgram-admin-wave-009-start-wave",
-      "fallbackPrompt": "Run one bounded WDD start-wave heartbeat for /Users/ivo.toby/workspace/postgram, epic EPIC-admin-configuration-frontend, next wave WAVE-009. Use the wdd-start-wave skill. Start in /Users/ivo.toby/workspace/postgram on branch codex/epic/admin-configuration-frontend. Read .wdd/epics/EPIC-admin-configuration-frontend/orchestration.json and controller-state.md. Confirm WAVE-008 is done/reconciled and pushed, PR #89 and PR #90 are MERGED, activeWave is null, WAVE-009 is ready_to_start, and WAVE-009 task is TASK-016-maintenance-admin-ui. Activate WAVE-009, update orchestration.json/controller-state.md/task files, create and verify the isolated worktree under /Users/ivo.toby/workspace/postgram/.worktrees for TASK-016-maintenance-admin-ui on branch codex/task/TASK-016-maintenance-admin-ui, push activation artifacts to GitHub before worker dispatch, then dispatch/monitor according to WDD policy. Stop after WAVE-009 activation/dispatch state is pushed and heartbeat monitoring is updated; do not start WAVE-010 until WAVE-009 is merged and reconciled.",
-      "verifiedAt": "2026-07-06T20:18:32Z",
-      "automationUpdateResult": "updated"
+      "schedulerName": "postgram-admin-wave-009-wdd-heartbeat",
+      "fallbackPrompt": "Run one bounded WDD controller heartbeat for /Users/ivo.toby/workspace/postgram, epic EPIC-admin-configuration-frontend, active wave WAVE-009. Use the subagent-pr-orchestration skill. Start in /Users/ivo.toby/workspace/postgram on branch codex/epic/admin-configuration-frontend. Read .wdd/epics/EPIC-admin-configuration-frontend/orchestration.json and controller-state.md, then inspect worker THREAD_PENDING and assigned worktree /Users/ivo.toby/workspace/postgram/.worktrees/TASK-016-maintenance-admin-ui on branch codex/task/TASK-016-maintenance-admin-ui for bundle WAVE-009-maintenance-admin-ui / TASK-016-maintenance-admin-ui. Update gates, branch freshness, verification, PR or patch refs, reviewer refs, feedback, shared-context reconciliation status, and monitoring timestamps. If the worker has produced a PR or patch, move TASK-016 to review/reviewer orchestration; if no PR or patch exists, keep no_pr and nudge exact missing deliverables only if needed. If review reports P1/P2, route feedback to the owning worker or a fresh fix worker. If review passes, refresh stale task branch against codex/epic/admin-configuration-frontend, rerun required freshness verification, then merge or mark merge_ready according to policy. Stop when WAVE-009 is merged, blocked, cancelled, or ready for wdd-reconcile-wave. After WAVE-009 is reconciled, continue to WAVE-010 per Ivo finish-all-waves instruction and push to GitHub between tasks/waves.",
+      "verifiedAt": "2026-07-06T20:30:02Z",
+      "automationUpdateResult": "pending_update"
     },
     "review": {
       "WAVE-001-admin-feasibility-gate": {
@@ -2975,7 +3032,8 @@
       "WAVE-007-admin-auth-ui": "current_at_merge",
       "WAVE-007-maintenance-admin-api": "current_at_merge",
       "WAVE-008-admin-ops-dashboard-ui": "current_at_merge",
-      "WAVE-008-admin-config-ui": "current_at_merge"
+      "WAVE-008-admin-config-ui": "current_at_merge",
+      "WAVE-009-maintenance-admin-ui": "pending_branch_creation"
     },
     "merge": {
       "WAVE-001-admin-feasibility-gate": {
@@ -3154,7 +3212,9 @@
       "WAVE-007": "completed",
       "WAVE-008-admin-ops-dashboard-ui": "completed",
       "WAVE-008-admin-config-ui": "completed",
-      "WAVE-008": "completed"
+      "WAVE-008": "completed",
+      "WAVE-009-maintenance-admin-ui": "not_started",
+      "WAVE-009": "not_started"
     },
     "prState": {
       "WAVE-001-admin-feasibility-gate": {
@@ -3366,7 +3426,8 @@
         "condition": "PR #89 merged and task branch/worktree clean and fully pushed before removal.",
         "evidence": "Worker worktree was clean at task head 298804f17ae15956135149300558c26c55691e79; ran git worktree remove and git worktree prune."
       },
-      "WAVE-008-admin-config-ui": "cleaned_up"
+      "WAVE-008-admin-config-ui": "cleaned_up",
+      "WAVE-009-maintenance-admin-ui": "not_started"
     },
     "worker": {
       "WAVE-002-admin-auth-persistence": {
@@ -3920,6 +3981,12 @@
           "git diff --check"
         ],
         "evidence": "WAVE-008 reconciled after PR #89 and PR #90 were confirmed MERGED. Shared context records the AdminDashboard operations shell, AdminConfig Config-tab integration, shared adminApi UI contract, secret write-only/redaction controls, validation/apply warnings, and downstream TASK-016/TASK-017/TASK-018 handoffs. TASK-012 and TASK-013 worktrees were already cleaned up."
+      },
+      "WAVE-009-maintenance-admin-ui": {
+        "result": "activation_pending_worktree",
+        "checkedAt": "2026-07-06T20:30:02Z",
+        "commands": [],
+        "evidence": "Activation artifacts updated; worktree creation and dispatch pending."
       }
     },
     "feedback": {
@@ -4097,6 +4164,9 @@
       },
       "WAVE-008": {
         "blocking": []
+      },
+      "WAVE-009-maintenance-admin-ui": {
+        "blocking": []
       }
     },
     "activationArtifact": {
@@ -4132,5 +4202,5 @@
     "nextWave": "WAVE-009"
   },
   "lastMergedWave": "WAVE-008",
-  "lastStartedWave": "WAVE-008"
+  "lastStartedWave": "WAVE-009"
 }

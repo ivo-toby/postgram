@@ -682,6 +682,12 @@ Progress:
   current epic head `cb1c1ae` with the WDD task-file merge-tree conflict. The
   freshness P2 remains open and was rerouted to Sagan. TASK-013 remains active
   with no PR or patch.
+- 2026-07-06T18:45:07Z controller poll: Sagan pushed TASK-012 head `3933ff2`.
+  PR #89 is GitHub `CLEAN` and merge-tree passes; Schrodinger follow-up review
+  was requested with final controller-checkpoint freshness still required
+  before merge. TASK-013 remains active with no PR or patch.
+- 2026-07-06T18:48:29Z review result: Schrodinger returned `REVIEW_PASS` for
+  PR #89 at `3933ff2`; final freshness remains required before merge.
 
 Stop condition:
 

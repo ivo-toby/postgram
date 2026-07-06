@@ -164,7 +164,10 @@ export function createApp(
       app as unknown as Parameters<typeof registerAdminRoutes>[0],
       options.pool,
       {
-        adminMfaSecretKey: options.adminMfaSecretKey
+        adminMfaSecretKey: options.adminMfaSecretKey,
+        ...(options.extractionEnabled !== undefined
+          ? { extractionEnabled: options.extractionEnabled }
+          : {})
       }
     );
 

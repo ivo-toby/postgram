@@ -6,7 +6,7 @@ ticket: TICKET-006-maintenance-jobs
 wave: WAVE-009
 slug: maintenance-admin-ui
 title: Maintenance Admin UI
-status: in_progress
+status: review
 depends_on:
   - TASK-011-admin-auth-ui
   - TASK-012-admin-ops-dashboard-ui
@@ -20,11 +20,11 @@ assigned_model_class: implementationComplex
 review_model_class: review
 branch: codex/task/TASK-016-maintenance-admin-ui
 worker_worktree: /Users/ivo.toby/workspace/postgram/.worktrees/TASK-016-maintenance-admin-ui
-worktree_status: worker_active
-pr: null
+worktree_status: worker_review
+pr: https://github.com/ivo-toby/postgram/pull/91
 worker_thread_id: 019f3926-c2c5-7290-9c2f-9a4cca19e6ae
 review_thread_id: null
-current_gate: no_pr
+current_gate: draft_pr_open
 branch_freshness: current_at_observation
 verification:
   - npm --prefix ui run test -- --run src/components/AdminMaintenance.test.tsx
@@ -36,7 +36,7 @@ verification:
 
 ## Status
 
-in_progress
+review
 
 ## Parent Ticket
 
@@ -117,8 +117,10 @@ codex/task/TASK-016-maintenance-admin-ui
 
 ## PR / Patch Reference
 
-None yet. Singer (`019f3926-c2c5-7290-9c2f-9a4cca19e6ae`) was dispatched
-at 2026-07-06T20:30:02Z on branch
+Draft PR: https://github.com/ivo-toby/postgram/pull/91
+
+Singer (`019f3926-c2c5-7290-9c2f-9a4cca19e6ae`) was dispatched at
+2026-07-06T20:30:02Z on branch
 `codex/task/TASK-016-maintenance-admin-ui`.
 
 ## RED-GREEN TDD Plan
@@ -176,10 +178,10 @@ Share confirmation/progress components with config UI if useful.
 
 ## Task-Level Definition of Done
 
-- [ ] Maintenance UI covers approved operations.
-- [ ] Dry-run before apply is enforced in UI.
-- [ ] Step-up and job progress states are handled.
-- [ ] UI typecheck passes.
+- [x] Maintenance UI covers approved operations.
+- [x] Dry-run before apply is enforced in UI.
+- [x] Step-up and job progress states are handled.
+- [x] UI typecheck passes.
 
 ## Validation Steps
 
@@ -201,7 +203,15 @@ Share confirmation/progress components with config UI if useful.
   files, branch divergence remains `0 0`, `git diff --check` passed, and
   `AdminMaintenance.tsx` plus `AdminMaintenance.test.tsx` changed during this
   heartbeat window.
-- Worker verification pending.
+- 2026-07-06T21:13Z worker verification passed:
+  `npm --prefix ui run test -- --run src/components/AdminMaintenance.test.tsx`
+  (9 tests), `npm --prefix ui run test -- --run src/components/AdminOps.test.tsx src/components/AdminConfig.test.tsx src/components/AdminAuth.test.tsx`
+  (49 tests), `npm --prefix ui run typecheck`, and `git diff --check`.
+- 2026-07-06T21:18Z final local Codex review pass reported no P0/P1/P2
+  findings. During review, the full UI suite also passed: `npm test` from
+  `ui` (125 tests).
+- 2026-07-06T21:19:39Z draft PR opened:
+  https://github.com/ivo-toby/postgram/pull/91
 
 ## Review Feedback
 
@@ -211,7 +221,12 @@ Share confirmation/progress components with config UI if useful.
 
 ### P2
 
-- None.
+- Resolved: reused/idempotent apply responses that return only a terminal job
+  reference now fetch full job detail before rendering result evidence.
+- Resolved: request-shaping controls are locked while preview/apply jobs are
+  non-terminal so in-flight polling and idempotency context are preserved.
+- Resolved: preview and apply polling retry after transient job-status fetch
+  failures and clear stale polling errors after successful refresh.
 
 ### P3
 
@@ -219,4 +234,12 @@ Share confirmation/progress components with config UI if useful.
 
 ## Completion Notes
 
-- None yet.
+- Added `AdminMaintenance` for approved reextract, reembed, and constrained
+  `llm-extraction` edge-prune maintenance flows inside the WAVE-008 dashboard.
+- Extended the shared admin API client with maintenance dry-run/apply and job
+  detail methods using the existing same-origin cookie and in-memory CSRF
+  request path.
+- Added focused UI coverage for preview-before-apply, step-up/apply evidence,
+  job progress and completion, failure retention, safe result rendering,
+  same-origin route usage, dashboard preservation, in-flight edit locking, and
+  polling recovery.

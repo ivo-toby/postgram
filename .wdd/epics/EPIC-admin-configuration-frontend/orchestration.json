@@ -919,7 +919,7 @@
         "TASK-014-admin-job-foundation"
       ],
       "activatedAt": "2026-07-06T11:39:24Z",
-      "workerDispatchStartedAt": "2026-07-06T11:44:24Z",
+      "workerDispatchStartedAt": "2026-07-06T11:49:24Z",
       "bundles": [
         {
           "id": "WAVE-006-admin-key-audit-stats-api",
@@ -929,8 +929,8 @@
           "branch": "codex/task/TASK-008-admin-key-audit-stats-api",
           "worktree": "/Users/ivo.toby/workspace/postgram/.worktrees/TASK-008-admin-key-audit-stats-api",
           "worktreeStatus": "verified_pushed",
-          "workerThreadId": null,
-          "workerNickname": null,
+          "workerThreadId": "019f3748-036a-7422-9f84-ab790313375f",
+          "workerNickname": "Maxwell",
           "reviewThreadId": null,
           "reviewNickname": null,
           "currentGate": "no_pr",
@@ -950,8 +950,10 @@
           "activatedAt": "2026-07-06T11:39:24Z",
           "cleanupState": "not_started",
           "sharedContextReconciliation": "queued",
-          "lastObservedAt": "2026-07-06T11:44:24Z",
-          "branchPushedAt": "2026-07-06T11:44:24Z"
+          "lastObservedAt": "2026-07-06T11:49:24Z",
+          "branchPushedAt": "2026-07-06T11:44:24Z",
+          "dispatchedAt": "2026-07-06T11:49:24Z",
+          "dispatchBaseCommit": "0d41c5304ec5895db334af1ad9ab54bb6a2db0d3"
         },
         {
           "id": "WAVE-006-admin-job-foundation",
@@ -961,8 +963,8 @@
           "branch": "codex/task/TASK-014-admin-job-foundation",
           "worktree": "/Users/ivo.toby/workspace/postgram/.worktrees/TASK-014-admin-job-foundation",
           "worktreeStatus": "verified_pushed",
-          "workerThreadId": null,
-          "workerNickname": null,
+          "workerThreadId": "019f3748-041f-7540-b336-12c285848008",
+          "workerNickname": "Anscombe",
           "reviewThreadId": null,
           "reviewNickname": null,
           "currentGate": "no_pr",
@@ -982,13 +984,16 @@
           "activatedAt": "2026-07-06T11:39:24Z",
           "cleanupState": "not_started",
           "sharedContextReconciliation": "queued",
-          "lastObservedAt": "2026-07-06T11:44:24Z",
-          "branchPushedAt": "2026-07-06T11:44:24Z"
+          "lastObservedAt": "2026-07-06T11:49:24Z",
+          "branchPushedAt": "2026-07-06T11:44:24Z",
+          "dispatchedAt": "2026-07-06T11:49:24Z",
+          "dispatchBaseCommit": "0d41c5304ec5895db334af1ad9ab54bb6a2db0d3"
         }
       ],
       "activationCommit": "e46eb9a10233fcbadf446cf81d13e8a60f7ab942",
-      "dispatchState": "worktrees_verified_pending_dispatch",
-      "lastObservedAt": "2026-07-06T11:44:24Z"
+      "dispatchState": "dispatched",
+      "lastObservedAt": "2026-07-06T11:49:24Z",
+      "dispatchedAt": "2026-07-06T11:49:24Z"
     },
     {
       "id": "WAVE-007",
@@ -1586,7 +1591,7 @@
       "assignedModel": "implementationComplex",
       "reviewModel": "review",
       "branch": "codex/task/TASK-008-admin-key-audit-stats-api",
-      "workerThreadId": null,
+      "workerThreadId": "019f3748-036a-7422-9f84-ab790313375f",
       "reviewThreadId": null,
       "workerWorktree": "/Users/ivo.toby/workspace/postgram/.worktrees/TASK-008-admin-key-audit-stats-api",
       "worktreeStatus": "verified_pushed",
@@ -1608,7 +1613,10 @@
       "bundle": "WAVE-006-admin-key-audit-stats-api",
       "sharedContextReconciliation": "queued",
       "cleanupState": "not_started",
-      "lastObservedAt": "2026-07-06T11:44:24Z"
+      "lastObservedAt": "2026-07-06T11:49:24Z",
+      "workerNickname": "Maxwell",
+      "dispatchedAt": "2026-07-06T11:49:24Z",
+      "dispatchBaseCommit": "0d41c5304ec5895db334af1ad9ab54bb6a2db0d3"
     },
     {
       "id": "TASK-009-settings-secret-store",
@@ -1909,7 +1917,7 @@
       "assignedModel": "implementationComplex",
       "reviewModel": "review",
       "branch": "codex/task/TASK-014-admin-job-foundation",
-      "workerThreadId": null,
+      "workerThreadId": "019f3748-041f-7540-b336-12c285848008",
       "reviewThreadId": null,
       "workerWorktree": "/Users/ivo.toby/workspace/postgram/.worktrees/TASK-014-admin-job-foundation",
       "worktreeStatus": "verified_pushed",
@@ -1931,7 +1939,10 @@
       "bundle": "WAVE-006-admin-job-foundation",
       "sharedContextReconciliation": "queued",
       "cleanupState": "not_started",
-      "lastObservedAt": "2026-07-06T11:44:24Z"
+      "lastObservedAt": "2026-07-06T11:49:24Z",
+      "workerNickname": "Anscombe",
+      "dispatchedAt": "2026-07-06T11:49:24Z",
+      "dispatchBaseCommit": "0d41c5304ec5895db334af1ad9ab54bb6a2db0d3"
     },
     {
       "id": "TASK-015-maintenance-admin-api",
@@ -2089,13 +2100,14 @@
     }
   ],
   "monitoring": {
-    "mode": "manual",
+    "mode": "codex_thread_heartbeat",
     "cadence": "15m",
-    "status": "worktrees_verified_pending_dispatch",
-    "lastCheckedAt": "2026-07-06T11:44:24Z",
-    "nextCheckDueAt": "2026-07-06T11:59:24Z",
-    "schedulerRef": "manual_until_activation_dispatch_completes",
-    "fallbackPrompt": "Resume WAVE-006 dispatch for /Users/ivo.toby/workspace/postgram on codex/epic/admin-configuration-frontend. Read orchestration.json and controller-state.md, verify TASK-008 and TASK-014 worktrees are synced to the dispatch-state commit, dispatch workers, then update monitoring."
+    "status": "monitoring_wave_006_workers_no_pr",
+    "lastCheckedAt": "2026-07-06T11:49:24Z",
+    "nextCheckDueAt": "2026-07-06T12:04:24Z",
+    "schedulerRef": "postgram-admin-wave-005-wdd-heartbeat",
+    "schedulerName": "postgram-admin-wave-006-wdd-heartbeat",
+    "fallbackPrompt": "Run one bounded WDD controller heartbeat for /Users/ivo.toby/workspace/postgram, epic EPIC-admin-configuration-frontend, active wave WAVE-006. Use the subagent-pr-orchestration skill. Start in /Users/ivo.toby/workspace/postgram on branch codex/epic/admin-configuration-frontend. Read .wdd/epics/EPIC-admin-configuration-frontend/orchestration.json and controller-state.md. Inspect worker Maxwell (019f3748-036a-7422-9f84-ab790313375f) and assigned worktree /Users/ivo.toby/workspace/postgram/.worktrees/TASK-008-admin-key-audit-stats-api on branch codex/task/TASK-008-admin-key-audit-stats-api for bundle WAVE-006-admin-key-audit-stats-api / TASK-008-admin-key-audit-stats-api, and worker Anscombe (019f3748-041f-7540-b336-12c285848008) and assigned worktree /Users/ivo.toby/workspace/postgram/.worktrees/TASK-014-admin-job-foundation on branch codex/task/TASK-014-admin-job-foundation for bundle WAVE-006-admin-job-foundation / TASK-014-admin-job-foundation. Update gates, branch freshness, verification, PR or patch refs, reviewer refs, feedback, shared-context reconciliation status, and monitoring timestamps. If a worker has produced a PR or patch, move that bundle to review/reviewer orchestration; if no PR or patch exists, keep no_pr and nudge exact missing deliverables only if needed. Stop when WAVE-006 bundles are merged, blocked, cancelled, or ready for wdd-reconcile-wave. After WAVE-006 is reconciled, continue to the next wave per Ivo finish-all-waves instruction and push to GitHub between tasks/waves."
   },
   "sharedContext": {
     "index": "shared-context/index.md",
@@ -2134,8 +2146,8 @@
         "branch": "codex/task/TASK-008-admin-key-audit-stats-api",
         "worktree": "/Users/ivo.toby/workspace/postgram/.worktrees/TASK-008-admin-key-audit-stats-api",
         "worktreeStatus": "verified_pushed",
-        "workerThreadId": null,
-        "workerNickname": null,
+        "workerThreadId": "019f3748-036a-7422-9f84-ab790313375f",
+        "workerNickname": "Maxwell",
         "reviewThreadId": null,
         "reviewNickname": null,
         "currentGate": "no_pr",
@@ -2155,8 +2167,10 @@
         "activatedAt": "2026-07-06T11:39:24Z",
         "cleanupState": "not_started",
         "sharedContextReconciliation": "queued",
-        "lastObservedAt": "2026-07-06T11:44:24Z",
-        "branchPushedAt": "2026-07-06T11:44:24Z"
+        "lastObservedAt": "2026-07-06T11:49:24Z",
+        "branchPushedAt": "2026-07-06T11:44:24Z",
+        "dispatchedAt": "2026-07-06T11:49:24Z",
+        "dispatchBaseCommit": "0d41c5304ec5895db334af1ad9ab54bb6a2db0d3"
       },
       {
         "id": "WAVE-006-admin-job-foundation",
@@ -2166,8 +2180,8 @@
         "branch": "codex/task/TASK-014-admin-job-foundation",
         "worktree": "/Users/ivo.toby/workspace/postgram/.worktrees/TASK-014-admin-job-foundation",
         "worktreeStatus": "verified_pushed",
-        "workerThreadId": null,
-        "workerNickname": null,
+        "workerThreadId": "019f3748-041f-7540-b336-12c285848008",
+        "workerNickname": "Anscombe",
         "reviewThreadId": null,
         "reviewNickname": null,
         "currentGate": "no_pr",
@@ -2187,14 +2201,17 @@
         "activatedAt": "2026-07-06T11:39:24Z",
         "cleanupState": "not_started",
         "sharedContextReconciliation": "queued",
-        "lastObservedAt": "2026-07-06T11:44:24Z",
-        "branchPushedAt": "2026-07-06T11:44:24Z"
+        "lastObservedAt": "2026-07-06T11:49:24Z",
+        "branchPushedAt": "2026-07-06T11:44:24Z",
+        "dispatchedAt": "2026-07-06T11:49:24Z",
+        "dispatchBaseCommit": "0d41c5304ec5895db334af1ad9ab54bb6a2db0d3"
       }
     ],
-    "dispatchState": "worktrees_verified_pending_dispatch",
+    "dispatchState": "dispatched",
     "activationCommit": "e46eb9a10233fcbadf446cf81d13e8a60f7ab942",
-    "lastObservedAt": "2026-07-06T11:44:24Z",
-    "workerDispatchStartedAt": "2026-07-06T11:44:24Z"
+    "lastObservedAt": "2026-07-06T11:49:24Z",
+    "workerDispatchStartedAt": "2026-07-06T11:49:24Z",
+    "dispatchedAt": "2026-07-06T11:49:24Z"
   },
   "currentGates": {
     "epicBranch": {
@@ -2253,13 +2270,14 @@
       "status": "blocked_until_wave_006_reconciled"
     },
     "monitoring": {
-      "mode": "manual",
+      "mode": "codex_thread_heartbeat",
       "cadence": "15m",
-      "status": "worktrees_verified_pending_dispatch",
-      "lastCheckedAt": "2026-07-06T11:44:24Z",
-      "nextCheckDueAt": "2026-07-06T11:59:24Z",
-      "schedulerRef": "manual_until_activation_dispatch_completes",
-      "fallbackPrompt": "Resume WAVE-006 dispatch for /Users/ivo.toby/workspace/postgram on codex/epic/admin-configuration-frontend. Read orchestration.json and controller-state.md, verify TASK-008 and TASK-014 worktrees are synced to the dispatch-state commit, dispatch workers, then update monitoring."
+      "status": "monitoring_wave_006_workers_no_pr",
+      "lastCheckedAt": "2026-07-06T11:49:24Z",
+      "nextCheckDueAt": "2026-07-06T12:04:24Z",
+      "schedulerRef": "postgram-admin-wave-005-wdd-heartbeat",
+      "schedulerName": "postgram-admin-wave-006-wdd-heartbeat",
+      "fallbackPrompt": "Run one bounded WDD controller heartbeat for /Users/ivo.toby/workspace/postgram, epic EPIC-admin-configuration-frontend, active wave WAVE-006. Use the subagent-pr-orchestration skill. Start in /Users/ivo.toby/workspace/postgram on branch codex/epic/admin-configuration-frontend. Read .wdd/epics/EPIC-admin-configuration-frontend/orchestration.json and controller-state.md. Inspect worker Maxwell (019f3748-036a-7422-9f84-ab790313375f) and assigned worktree /Users/ivo.toby/workspace/postgram/.worktrees/TASK-008-admin-key-audit-stats-api on branch codex/task/TASK-008-admin-key-audit-stats-api for bundle WAVE-006-admin-key-audit-stats-api / TASK-008-admin-key-audit-stats-api, and worker Anscombe (019f3748-041f-7540-b336-12c285848008) and assigned worktree /Users/ivo.toby/workspace/postgram/.worktrees/TASK-014-admin-job-foundation on branch codex/task/TASK-014-admin-job-foundation for bundle WAVE-006-admin-job-foundation / TASK-014-admin-job-foundation. Update gates, branch freshness, verification, PR or patch refs, reviewer refs, feedback, shared-context reconciliation status, and monitoring timestamps. If a worker has produced a PR or patch, move that bundle to review/reviewer orchestration; if no PR or patch exists, keep no_pr and nudge exact missing deliverables only if needed. Stop when WAVE-006 bundles are merged, blocked, cancelled, or ready for wdd-reconcile-wave. After WAVE-006 is reconciled, continue to the next wave per Ivo finish-all-waves instruction and push to GitHub between tasks/waves."
     },
     "review": {
       "WAVE-001-admin-feasibility-gate": {
@@ -2972,6 +2990,22 @@
         "cleanupState": "cleaned_up",
         "reconciledAt": "2026-07-06T11:34:24Z",
         "lastObservedAt": "2026-07-06T11:34:24Z"
+      },
+      "WAVE-006-admin-key-audit-stats-api": {
+        "status": "dispatched_no_pr",
+        "workerThreadId": "019f3748-036a-7422-9f84-ab790313375f",
+        "workerNickname": "Maxwell",
+        "dispatchedAt": "2026-07-06T11:49:24Z",
+        "lastObservedAt": "2026-07-06T11:49:24Z",
+        "cleanupState": "not_started"
+      },
+      "WAVE-006-admin-job-foundation": {
+        "status": "dispatched_no_pr",
+        "workerThreadId": "019f3748-041f-7540-b336-12c285848008",
+        "workerNickname": "Anscombe",
+        "dispatchedAt": "2026-07-06T11:49:24Z",
+        "lastObservedAt": "2026-07-06T11:49:24Z",
+        "cleanupState": "not_started"
       }
     },
     "verification": {
@@ -3111,8 +3145,8 @@
         "branch": "codex/task/TASK-008-admin-key-audit-stats-api",
         "worktree": "/Users/ivo.toby/workspace/postgram/.worktrees/TASK-008-admin-key-audit-stats-api",
         "worktreeStatus": "verified_pushed",
-        "workerThreadId": null,
-        "workerNickname": null,
+        "workerThreadId": "019f3748-036a-7422-9f84-ab790313375f",
+        "workerNickname": "Maxwell",
         "reviewThreadId": null,
         "reviewNickname": null,
         "currentGate": "no_pr",
@@ -3132,8 +3166,10 @@
         "activatedAt": "2026-07-06T11:39:24Z",
         "cleanupState": "not_started",
         "sharedContextReconciliation": "queued",
-        "lastObservedAt": "2026-07-06T11:44:24Z",
-        "branchPushedAt": "2026-07-06T11:44:24Z"
+        "lastObservedAt": "2026-07-06T11:49:24Z",
+        "branchPushedAt": "2026-07-06T11:44:24Z",
+        "dispatchedAt": "2026-07-06T11:49:24Z",
+        "dispatchBaseCommit": "0d41c5304ec5895db334af1ad9ab54bb6a2db0d3"
       },
       {
         "id": "WAVE-006-admin-job-foundation",
@@ -3143,8 +3179,8 @@
         "branch": "codex/task/TASK-014-admin-job-foundation",
         "worktree": "/Users/ivo.toby/workspace/postgram/.worktrees/TASK-014-admin-job-foundation",
         "worktreeStatus": "verified_pushed",
-        "workerThreadId": null,
-        "workerNickname": null,
+        "workerThreadId": "019f3748-041f-7540-b336-12c285848008",
+        "workerNickname": "Anscombe",
         "reviewThreadId": null,
         "reviewNickname": null,
         "currentGate": "no_pr",
@@ -3164,13 +3200,16 @@
         "activatedAt": "2026-07-06T11:39:24Z",
         "cleanupState": "not_started",
         "sharedContextReconciliation": "queued",
-        "lastObservedAt": "2026-07-06T11:44:24Z",
-        "branchPushedAt": "2026-07-06T11:44:24Z"
+        "lastObservedAt": "2026-07-06T11:49:24Z",
+        "branchPushedAt": "2026-07-06T11:44:24Z",
+        "dispatchedAt": "2026-07-06T11:49:24Z",
+        "dispatchBaseCommit": "0d41c5304ec5895db334af1ad9ab54bb6a2db0d3"
       }
     ],
-    "dispatchState": "worktrees_verified_pending_dispatch",
+    "dispatchState": "dispatched",
     "activationCommit": "e46eb9a10233fcbadf446cf81d13e8a60f7ab942",
-    "lastObservedAt": "2026-07-06T11:44:24Z",
-    "workerDispatchStartedAt": "2026-07-06T11:44:24Z"
+    "lastObservedAt": "2026-07-06T11:49:24Z",
+    "workerDispatchStartedAt": "2026-07-06T11:49:24Z",
+    "dispatchedAt": "2026-07-06T11:49:24Z"
   }
 }

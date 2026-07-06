@@ -22,7 +22,7 @@ branch: codex/task/TASK-014-admin-job-foundation
 worker_worktree: /Users/ivo.toby/workspace/postgram/.worktrees/TASK-014-admin-job-foundation
 worktree_status: verified_pushed
 pr: null
-worker_thread_id: null
+worker_thread_id: 019f3748-041f-7540-b336-12c285848008
 review_thread_id: null
 current_gate: no_pr
 branch_freshness: current_at_dispatch_base
@@ -116,6 +116,9 @@ Assigned by WAVE-006 activation and verified at pushed epic head `a41ffb4`.
 The controller created and pushed branch
 `codex/task/TASK-014-admin-job-foundation`, then verified this isolated
 worktree contains the in-progress task file and orchestration state.
+
+Dispatched to worker Anscombe (`019f3748-041f-7540-b336-12c285848008`) at
+2026-07-06T11:49:24Z.
 
 ## PR / Patch Reference
 

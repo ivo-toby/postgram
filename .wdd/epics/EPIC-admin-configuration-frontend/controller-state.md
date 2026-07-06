@@ -38,7 +38,8 @@ TASK-008-admin-key-audit-stats-api and TASK-014-admin-job-foundation. Their
 task files have moved to `in-progress/` and the controller has recorded
 dedicated task branches and worktree paths. Both task branches and worktrees
 were created from pushed epic head `a41ffb4`, pushed to GitHub, and verified.
-Worker dispatch is the next activation gate.
+Workers Maxwell and Anscombe were dispatched at 2026-07-06T11:49:24Z. Both
+bundles are now in the no-PR monitoring phase.
 
 WAVE-004 is done and reconciled. PR #81/TASK-009 and PR #82/TASK-006 are
 merged, shared context is reconciled, and both WAVE-004 worktrees are cleaned
@@ -66,21 +67,34 @@ Mode: codex_thread_heartbeat
 
 Cadence: 5 minutes
 
-Status: worktrees_verified_pending_dispatch
+Status: monitoring_wave_006_workers_no_pr
 
-Last check: 2026-07-06T11:44:24Z
+Last check: 2026-07-06T11:49:24Z
 
-Next check due: 2026-07-06T11:59:24Z
+Next check due: 2026-07-06T12:04:24Z
 
-Scheduler reference: `manual_until_activation_dispatch_completes`
+Scheduler reference: `postgram-admin-wave-005-wdd-heartbeat`
+
+Scheduler name: `postgram-admin-wave-006-wdd-heartbeat`
 
 Fallback prompt:
 
 ```text
-Resume WAVE-006 dispatch for /Users/ivo.toby/workspace/postgram on
-codex/epic/admin-configuration-frontend. Read orchestration.json and
-controller-state.md, verify TASK-008 and TASK-014 worktrees are synced to the
-dispatch-state commit, dispatch workers, then update monitoring.
+Run one bounded WDD controller heartbeat for /Users/ivo.toby/workspace/postgram,
+epic EPIC-admin-configuration-frontend, active wave WAVE-006. Use the
+subagent-pr-orchestration skill. Start in /Users/ivo.toby/workspace/postgram on
+branch codex/epic/admin-configuration-frontend. Read orchestration.json and
+controller-state.md. Inspect worker Maxwell
+(`019f3748-036a-7422-9f84-ab790313375f`) and worktree
+`/Users/ivo.toby/workspace/postgram/.worktrees/TASK-008-admin-key-audit-stats-api`
+for TASK-008, and worker Anscombe (`019f3748-041f-7540-b336-12c285848008`) and
+worktree
+`/Users/ivo.toby/workspace/postgram/.worktrees/TASK-014-admin-job-foundation`
+for TASK-014. Update gates, freshness, verification, PR or patch refs, review
+refs, feedback, shared-context reconciliation status, and monitoring
+timestamps. If a worker has produced a PR or patch, move that bundle to review;
+if no PR or patch exists, keep no_pr and nudge exact missing deliverables only
+if needed.
 ```
 
 ## Active Wave Strategy
@@ -100,7 +114,9 @@ dispatch-state commit, dispatch workers, then update monitoring.
 - Bundle worktree:
   `/Users/ivo.toby/workspace/postgram/.worktrees/TASK-014-admin-job-foundation`.
 - Activation commit: `e46eb9a10233fcbadf446cf81d13e8a60f7ab942`.
-- Current gate: worktrees verified and pushed; dispatch workers next.
+- Worker: Maxwell (`019f3748-036a-7422-9f84-ab790313375f`).
+- Worker: Anscombe (`019f3748-041f-7540-b336-12c285848008`).
+- Current gate: no_pr for both bundles.
 
 ## Last Reconciled Wave
 
@@ -537,7 +553,8 @@ dispatch-state commit, dispatch workers, then update monitoring.
   context is reconciled, and both WAVE-005 worktrees are cleaned up.
 - WAVE-006 is active. Eligible tasks are TASK-008-admin-key-audit-stats-api and
   TASK-014-admin-job-foundation. Both task worktrees are verified and pushed;
-  worker dispatch is pending.
+  workers Maxwell and Anscombe are dispatched and the no-PR monitoring cadence
+  is active.
 
 ## Verification Status
 
@@ -1149,9 +1166,14 @@ dispatch-state commit, dispatch workers, then update monitoring.
   `codex/task/TASK-014-admin-job-foundation` from pushed epic head `a41ffb4`.
   Verified both assigned worktrees contain their in-progress task file and
   orchestration state.
+- 2026-07-06T11:49:24Z: Dispatched WAVE-006 workers Maxwell
+  (`019f3748-036a-7422-9f84-ab790313375f`) for TASK-008 and Anscombe
+  (`019f3748-041f-7540-b336-12c285848008`) for TASK-014. Updated the existing
+  heartbeat automation to `postgram-admin-wave-006-wdd-heartbeat` at 15-minute
+  cadence while both bundles are in no-PR state.
 
 ## Next Action
 
-Push the worktree-verification state, fast-forward both task worktrees to that
-state, dispatch workers, and update monitoring to the active WAVE-006
-heartbeat.
+Next heartbeat is due at 2026-07-06T12:04:24Z. Inspect Maxwell and Anscombe,
+advance any PR or patch to review, or keep no_pr if they are still actively
+working.

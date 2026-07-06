@@ -266,6 +266,14 @@ Keep provider construction logic centralized to avoid env/DB drift.
   window, so no nudge was sent. `git rev-list --left-right --count
   origin/codex/epic/admin-configuration-frontend...HEAD` returned `17 0`;
   refresh the task branch against the epic branch before review or merge.
+- 2026-07-06T08:52:24Z controller observation: Goodall still had no final
+  status and no PR for `codex/task/TASK-010-provider-config-apply`; the assigned
+  worktree remained active/uncommitted in the expected provider-config file set.
+  The local mtime on `tests/integration/admin-provider-config.test.ts` moved
+  during this heartbeat, so no nudge was sent. `git rev-list --left-right
+  --count origin/codex/epic/admin-configuration-frontend...HEAD` returned
+  `18 0`; refresh the task branch against the epic branch before review or
+  merge.
 
 ## Review Feedback
 

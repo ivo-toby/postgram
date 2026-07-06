@@ -22,7 +22,7 @@ worktree_status: clean_pushed
 pr: https://github.com/ivo-toby/postgram/pull/90
 worker_thread_id: 019f387a-3f1d-74a0-9949-5a318a43e494
 review_thread_id: 019f38ab-a97f-7462-84dc-5537e1efe934
-current_gate: reviewing
+current_gate: needs_fixes
 branch_freshness: dirty_product_conflicts_needs_freshness_refresh
 verification:
   - npm --prefix ui run test -- --run src/components/AdminConfig.test.tsx
@@ -37,6 +37,8 @@ verification:
 # TASK-013-admin-config-ui: Admin Config UI
 
 ## Status
+
+needs_fixes
 
 reviewing
 
@@ -169,6 +171,19 @@ and `ui/src/lib/adminApi.ts`. Schrodinger review was requested in submission
 `019f38f7-8d65-74e3-8a30-5e4edc7c1b32`; no review result returned during the
 bounded wait.
 
+Schrodinger returned `REVIEW_BLOCKED` during the 2026-07-06T19:45:01Z
+controller tick with one blocking P2 and no additional product/security P1/P2
+findings. PR #90 remains `DIRTY` at head
+`fe1a454f545f815c35978e3c600fd101eae2893f`; the task branch must refresh
+against the latest `origin/codex/epic/admin-configuration-frontend` and resolve
+the WDD/AdminAuth/AdminDashboard/adminApi conflicts. The product integration
+fix must integrate `AdminConfig` into the TASK-012 operations dashboard shell
+without dropping health, queue, stats, config/models/jobs, API keys, or audit
+panels. Feedback was routed to Parfit in submission
+`019f38fd-830e-7743-889d-ab73a8729989`; required verification is
+AdminConfig/AdminOps/AdminAuth UI tests, UI typecheck, root typecheck,
+branch-freshness, merge-tree, and diff-check before pushing PR #90.
+
 ## PR / Patch Reference
 
 Draft PR #90: https://github.com/ivo-toby/postgram/pull/90
@@ -260,14 +275,13 @@ maintenance UI if useful.
 
 - None.
 
-### Pending Review
-
-- Schrodinger review requested at 2026-07-06T19:45:01Z in submission
-  `019f38f7-8d65-74e3-8a30-5e4edc7c1b32`.
-
 ### P2
 
-- None.
+- P2 branch freshness/product integration: PR #90 is `DIRTY` at head
+  `fe1a454f545f815c35978e3c600fd101eae2893f` and merge-tree conflicts require
+  a refresh against the latest epic branch. The fix must preserve the TASK-012
+  operations dashboard panels while integrating `AdminConfig`. Routed to Parfit
+  in submission `019f38fd-830e-7743-889d-ab73a8729989`.
 
 ### P3
 

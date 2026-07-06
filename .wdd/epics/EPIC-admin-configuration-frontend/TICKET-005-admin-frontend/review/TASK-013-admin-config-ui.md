@@ -279,9 +279,9 @@ maintenance UI if useful.
 - Worker PASS `codex review --uncommitted` after worker P1/P2 fixes.
 - Controller PASS `git diff --check origin/codex/epic/admin-configuration-frontend...HEAD`.
 - Follow-up PASS `git rev-list --left-right --count origin/codex/epic/admin-configuration-frontend...HEAD`
-  returned `0 4`.
+  returned no base-only commits in final local verification.
 - Follow-up PASS `git merge-tree --write-tree origin/codex/epic/admin-configuration-frontend HEAD`
-  returned clean tree `4ff5efaf4d75f49d213d3ad2b650e7e31b0564f8`.
+  returned clean.
 - Follow-up PASS `git diff --check origin/codex/epic/admin-configuration-frontend...HEAD`.
 - Follow-up PASS: TASK-013 branch was refreshed against latest
   `origin/codex/epic/admin-configuration-frontend`; product integration

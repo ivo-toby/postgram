@@ -49,8 +49,11 @@ TASK-014 shipped in draft PR #86 after Anscombe returned `DONE`. Lorentz
 returned `REVIEW_BLOCKED` with one P2 branch-freshness blocker: PR #86 is
 `DIRTY` and has a real `src/transport/admin.ts` route-registration conflict
 with the merged TASK-008 admin key/audit/stats routes. Feedback was routed to
-Anscombe under submission `019f37a9-6ad5-70f0-88fa-16e413f682fe`; the branch
-must be refreshed and verified before merge.
+Anscombe under submission `019f37a9-6ad5-70f0-88fa-16e413f682fe`. Anscombe
+refreshed the task branch, pushed PR #86 to head `0e08630`, and controller
+verification passed. Lorentz follow-up review returned `REVIEW_PASS`, TASK-014
+merged locally into the epic branch in `c5edbfc`, post-merge verification
+passed, and WAVE-006 is ready for reconciliation.
 
 WAVE-004 is done and reconciled. PR #81/TASK-009 and PR #82/TASK-006 are
 merged, shared context is reconciled, and both WAVE-004 worktrees are cleaned
@@ -65,7 +68,7 @@ up.
 | WAVE-003 | TASK-005 | full / bundled / risk_based / adaptive | done | confirmed by Ivo via Codex sequential-waves request on 2026-07-05 |
 | WAVE-004 | TASK-006, TASK-009 | full / hybrid / risk_based / adaptive | done | confirmed by Ivo via sequential-waves request on 2026-07-05 |
 | WAVE-005 | TASK-007, TASK-010 | full / hybrid / risk_based / adaptive | done | confirmed by Ivo via finish-all-waves request on 2026-07-06 |
-| WAVE-006 | TASK-008, TASK-014 | full / hybrid / risk_based / adaptive | in_progress | confirmed by Ivo via finish-all-waves request on 2026-07-06 |
+| WAVE-006 | TASK-008, TASK-014 | full / hybrid / risk_based / adaptive | ready_for_reconciliation | confirmed by Ivo via finish-all-waves request on 2026-07-06 |
 | WAVE-007 | TASK-011, TASK-015 | full / parallel / risk_based / adaptive | planned | required |
 | WAVE-008 | TASK-012, TASK-013 | full / hybrid / risk_based / adaptive | planned | required |
 | WAVE-009 | TASK-016 | full / bundled / risk_based / adaptive | planned | required |
@@ -78,11 +81,11 @@ Mode: codex_thread_heartbeat
 
 Cadence: 5 minutes
 
-Status: monitoring_wave_006_task014_needs_fixes
+Status: monitoring_wave_006_ready_for_reconciliation
 
-Last check: 2026-07-06T13:39:24Z
+Last check: 2026-07-06T13:51:23Z
 
-Next check due: 2026-07-06T13:44:24Z
+Next check due: 2026-07-06T13:56:23Z
 
 Scheduler reference: `postgram-admin-wave-005-wdd-heartbeat`
 
@@ -91,26 +94,24 @@ Scheduler name: `postgram-admin-wave-006-wdd-heartbeat`
 Fallback prompt:
 
 ```text
-Run one bounded WDD controller heartbeat for /Users/ivo.toby/workspace/postgram,
-epic EPIC-admin-configuration-frontend, active wave WAVE-006. Use the
-subagent-pr-orchestration skill. Start in /Users/ivo.toby/workspace/postgram on
-branch codex/epic/admin-configuration-frontend. Read orchestration.json and
-controller-state.md. TASK-008 / PR #85 is MERGED and pushed. Inspect PR #86 for
-WAVE-006-admin-job-foundation / TASK-014-admin-job-foundation, worker Anscombe
-(`019f3748-041f-7540-b336-12c285848008`), reviewer Lorentz
-(`019f322c-02e7-7590-8b8e-ebdd1e9c52ac`), and worktree
-`/Users/ivo.toby/workspace/postgram/.worktrees/TASK-014-admin-job-foundation`.
-Current gate is needs_fixes after Lorentz REVIEW_BLOCKED: P2 refresh the stale
-task branch against codex/epic/admin-configuration-frontend, resolve
-`src/transport/admin.ts` so TASK-008 keys/audit/stats routes and TASK-014 job
-routes all remain wired, resolve the TASK-014 review-file conflict, rerun
-required verification, and push PR #86. If fixes are pushed, verify
-`git diff --check`, required tests/evidence, orchestration JSON, then request or
-run follow-up review. If no fix is present, keep needs_fixes and nudge exact
-missing deliverables only if needed. Stop when WAVE-006 bundles are merged,
-blocked, cancelled, or ready for wdd-reconcile-wave. After WAVE-006 is
-reconciled, continue to the next wave per Ivo finish-all-waves instruction and
-push to GitHub between tasks/waves.
+Run one bounded WDD reconciliation handoff heartbeat for
+/Users/ivo.toby/workspace/postgram, epic EPIC-admin-configuration-frontend,
+active wave WAVE-006. Use the wdd-reconcile-wave skill. Start in
+/Users/ivo.toby/workspace/postgram on branch
+codex/epic/admin-configuration-frontend. Read orchestration.json and
+controller-state.md. Confirm WAVE-006 bundles TASK-008-admin-key-audit-stats-api
+and TASK-014-admin-job-foundation are merged into the epic branch; TASK-008
+merged in `13465ebb44db1f98183f47fbaa1c6d90e6a23c80` and TASK-014 merged
+locally in `c5edbfca7114a2b8b523e4bdc1fa634fb51f4a6e` after Lorentz
+REVIEW_PASS. Confirm PR #85 is MERGED and PR #86 is MERGED after the epic branch
+push, task files are in done/, currentGates.workerDispatch entries are merged,
+WAVE-006 waveCompletion is ready_for_reconciliation, branch freshness is
+current_at_merge, cleanup is cleanup_deferred for TASK-014, blocking feedback is
+empty, and shared-context reconciliation is queued. Run wdd-reconcile-wave for
+WAVE-006, reconcile admin key/audit/stats and admin job foundation decisions
+into shared context and downstream tasks, update orchestration.json and
+controller-state.md, clean up WAVE-006 worktrees if safe, then continue to
+WAVE-007 per Ivo finish-all-waves instruction after reconciliation is pushed.
 ```
 
 ## Active Wave Strategy
@@ -132,8 +133,8 @@ push to GitHub between tasks/waves.
 - Activation commit: `e46eb9a10233fcbadf446cf81d13e8a60f7ab942`.
 - Worker: Maxwell (`019f3748-036a-7422-9f84-ab790313375f`).
 - Worker: Anscombe (`019f3748-041f-7540-b336-12c285848008`).
-- Current gate: TASK-008 merged; TASK-014 needs fixes for stale/dirty branch
-  freshness and the `src/transport/admin.ts` route-registration conflict.
+- Current gate: TASK-008 merged; TASK-014 merged locally. WAVE-006 is ready for
+  reconciliation.
 
 ## Last Reconciled Wave
 
@@ -172,7 +173,7 @@ push to GitHub between tasks/waves.
 | TASK-011-admin-auth-ui | TICKET-005-admin-frontend | codex/task/TASK-011-admin-auth-ui | not_created | planned | `npm --prefix ui run test -- --run src/components/AdminAuth.test.tsx`; `npm --prefix ui run typecheck` |
 | TASK-012-admin-ops-dashboard-ui | TICKET-005-admin-frontend | codex/task/TASK-012-admin-ops-dashboard-ui | not_created | planned | `npm --prefix ui run test -- --run src/components/AdminOps.test.tsx`; `npm --prefix ui run typecheck` |
 | TASK-013-admin-config-ui | TICKET-005-admin-frontend | codex/task/TASK-013-admin-config-ui | not_created | planned | `npm --prefix ui run test -- --run src/components/AdminConfig.test.tsx`; `npm --prefix ui run typecheck` |
-| TASK-014-admin-job-foundation | TICKET-006-maintenance-jobs | codex/task/TASK-014-admin-job-foundation | clean_pushed | needs_fixes | Draft PR #86 open; Lorentz REVIEW_BLOCKED with one P2; refresh branch and resolve `src/transport/admin.ts` so TASK-008 keys/audit/stats routes and TASK-014 job routes all remain wired; resolve TASK-014 review-file conflict; rerun verification |
+| TASK-014-admin-job-foundation | TICKET-006-maintenance-jobs | codex/task/TASK-014-admin-job-foundation | clean_pushed | merged | Lorentz REVIEW_PASS; freshness current at task head `0e08630`; post-merge tests/typecheck/touched-file ESLint passed; merged locally into epic branch in `c5edbfc`; cleanup deferred to WAVE-006 reconciliation |
 | TASK-015-maintenance-admin-api | TICKET-006-maintenance-jobs | codex/task/TASK-015-maintenance-admin-api | not_created | planned | `npm test -- tests/contract/admin-maintenance-api.test.ts`; `npm test -- tests/integration/cli-admin.test.ts`; `npm run typecheck` |
 | TASK-016-maintenance-admin-ui | TICKET-006-maintenance-jobs | codex/task/TASK-016-maintenance-admin-ui | not_created | planned | `npm --prefix ui run test -- --run src/components/AdminMaintenance.test.tsx`; `npm --prefix ui run typecheck` |
 | TASK-017-docker-first-run-no-cli | TICKET-007-docker-e2e-validation | codex/task/TASK-017-docker-first-run-no-cli | not_created | planned | `docker compose config`; `npm run typecheck`; `npm --prefix ui run build` |
@@ -1248,11 +1249,30 @@ push to GitHub between tasks/waves.
   TASK-014 `registerAdminJobRoutes(app, pool)`, resolve the TASK-014 WDD
   review-file conflict, rerun verification, and push PR #86. Gate is now
   `needs_fixes`; next check due 2026-07-06T13:44:24Z.
+- 2026-07-06T13:45:16Z: Bounded wait on Anscombe timed out, but a worktree
+  check shows the feedback is being acted on: the TASK-014 worktree is now
+  dirty with staged/uncommitted branch-refresh changes including TASK-008 route
+  and service additions plus `src/transport/admin.ts`. No refreshed PR head is
+  pushed yet. Gate remains `needs_fixes`; next check due
+  2026-07-06T13:50:16Z.
+- 2026-07-06T13:48:02Z: Anscombe pushed the freshness fix. PR #86 is now CLEAN
+  at head `0e08630`; branch divergence is `0 4`. Controller verification
+  passed: `git diff --check` over the branch diff, merge-tree clean, WDD
+  orchestration JSON parse, `admin-job-service` integration tests (5),
+  `admin-api` contract tests (3), `npm run typecheck`, scoped ESLint, and a
+  route-registration check confirming diagnostics, keys/audit/stats, jobs, and
+  provider-config routes remain wired. Lorentz follow-up review requested in
+  submission `019f37af-7bd6-7be2-94ad-350625522ec8`; gate is `reviewing`.
+- 2026-07-06T13:51:23Z: Lorentz follow-up returned `REVIEW_PASS` with no
+  findings. Controller merged TASK-014 locally into the epic branch in
+  `c5edbfc`, moved the task file to `done/`, and ran post-merge verification:
+  `admin-job-service` integration tests, `admin-api` contract tests, `npm run
+  typecheck`, scoped ESLint, `git diff --check HEAD^..HEAD`, and WDD
+  orchestration JSON parse all passed. WAVE-006 is ready for reconciliation
+  after the epic branch is pushed and PR #86 is confirmed merged.
 
 ## Next Action
 
-Next heartbeat is due at 2026-07-06T13:44:24Z. Inspect Anscombe and PR #86 for
-the routed freshness fix. If the branch was refreshed and pushed, verify
-`git diff --check`, required test evidence, and orchestration JSON, then request
-or run follow-up review. If no fix is present, keep `needs_fixes` and nudge only
-the exact missing deliverables.
+Next heartbeat is due at 2026-07-06T13:56:23Z. Push the epic branch if needed,
+confirm PR #86 is marked `MERGED`, then run WAVE-006 reconciliation with
+`wdd-reconcile-wave`. Do not start WAVE-007 until reconciliation is pushed.

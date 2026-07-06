@@ -6,7 +6,7 @@ ticket: TICKET-006-maintenance-jobs
 wave: WAVE-006
 slug: admin-job-foundation
 title: Admin Job Foundation
-status: review
+status: done
 depends_on:
   - TASK-006-admin-mfa-step-up
   - TASK-009-settings-secret-store
@@ -20,22 +20,24 @@ assigned_model_class: implementationComplex
 review_model_class: review
 branch: codex/task/TASK-014-admin-job-foundation
 worker_worktree: /Users/ivo.toby/workspace/postgram/.worktrees/TASK-014-admin-job-foundation
-worktree_status: verified_pushed
+worktree_status: cleanup_deferred
 pr: https://github.com/ivo-toby/postgram/pull/86
 worker_thread_id: 019f3748-041f-7540-b336-12c285848008
-review_thread_id: null
-current_gate: ready_for_review
-branch_freshness: refreshed_against_origin_epic_after_review_feedback
+review_thread_id: 019f322c-02e7-7590-8b8e-ebdd1e9c52ac
+current_gate: merged
+branch_freshness: current_at_merge
 verification:
   - npm test -- tests/integration/admin-job-service.test.ts
+  - npm test -- tests/contract/admin-api.test.ts
   - npm run typecheck
+  - npx eslint src/services/admin-job-service.ts src/transport/admin-jobs.ts src/transport/admin.ts tests/integration/admin-job-service.test.ts tests/contract/admin-api.test.ts --quiet
 ---
 
 # TASK-014-admin-job-foundation: Admin Job Foundation
 
 ## Status
 
-review
+done
 
 ## Parent Ticket
 

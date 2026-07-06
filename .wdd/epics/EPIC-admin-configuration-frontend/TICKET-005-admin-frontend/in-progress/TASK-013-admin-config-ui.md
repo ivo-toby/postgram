@@ -23,7 +23,7 @@ pr: null
 worker_thread_id: 019f387a-3f1d-74a0-9949-5a318a43e494
 review_thread_id: null
 current_gate: no_pr
-branch_freshness: behind_epic_by_1_controller_checkpoint
+branch_freshness: behind_epic_by_2_controller_checkpoints
 verification:
   - npm --prefix ui run test -- --run src/components/AdminConfig.test.tsx
   - npm --prefix ui run typecheck
@@ -114,6 +114,11 @@ Worker Parfit (`019f387a-3f1d-74a0-9949-5a318a43e494`) dispatched at
 Controller observed active uncommitted implementation work at
 2026-07-06T17:47:01Z with no PR yet. The task branch is behind the epic branch
 by one controller monitoring checkpoint and will need freshness verification
+before merge.
+
+Controller observed continued active uncommitted implementation work at
+2026-07-06T18:02:01Z with no PR yet. The task branch is behind the epic branch
+by two controller monitoring checkpoints and will need freshness verification
 before merge.
 
 ## PR / Patch Reference

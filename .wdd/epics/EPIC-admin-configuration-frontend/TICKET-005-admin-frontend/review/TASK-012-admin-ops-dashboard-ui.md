@@ -6,7 +6,7 @@ ticket: TICKET-005-admin-frontend
 wave: WAVE-008
 slug: admin-ops-dashboard-ui
 title: Admin Ops Dashboard UI
-status: in_progress
+status: review
 depends_on:
   - TASK-008-admin-key-audit-stats-api
   - TASK-011-admin-auth-ui
@@ -22,18 +22,21 @@ worktree_status: clean_pushed
 pr: https://github.com/ivo-toby/postgram/pull/89
 worker_thread_id: 019f3879-c7a0-7851-b455-5fe3749adc2b
 review_thread_id: 019f38ab-a97f-7462-84dc-5537e1efe934
-current_gate: needs_fixes
-branch_freshness: stale_dirty_needs_freshness_refresh
+current_gate: review
+branch_freshness: refreshed_against_latest_epic_required_checks_passed
 verification:
   - npm --prefix ui run test -- --run src/components/AdminOps.test.tsx
+  - npm --prefix ui run test -- --run src/components/AdminAuth.test.tsx
   - npm --prefix ui run typecheck
+  - git diff --check
+  - codex review --uncommitted
 ---
 
 # TASK-012-admin-ops-dashboard-ui: Admin Ops Dashboard UI
 
 ## Status
 
-in_progress
+review
 
 ## Parent Ticket
 
@@ -114,7 +117,7 @@ assigned for WAVE-008 activation; created from pushed epic activation head
 `7e5c49c` and pushed to origin.
 
 Worker Sagan (`019f3879-c7a0-7851-b455-5fe3749adc2b`) dispatched at
-2026-07-06T17:29:45Z. Await PR or patch reference.
+2026-07-06T17:29:45Z. Draft PR opened for review.
 
 Controller observed active uncommitted implementation work at
 2026-07-06T17:47:01Z with no PR yet. The task branch is behind the epic branch
@@ -131,6 +134,14 @@ Controller observed continued active uncommitted implementation work at
 by three controller monitoring checkpoints and will need freshness verification
 before merge.
 
+Controller/Schrodinger review reported REVIEW_BLOCKED at PR head
+`b9a10433fc8233cdab5e1c2e8848a06e9668b8d5`: product/security review passed;
+the only P2 blocker was branch freshness/WDD task-file conflict. Controller
+observed `origin/codex/epic/admin-configuration-frontend...HEAD` as `4 2`, and
+`git merge-tree --write-tree origin/codex/epic/admin-configuration-frontend HEAD`
+reported a content conflict in this review task file. The refresh merge keeps
+TASK-012 PR/review metadata while preserving these controller freshness notes.
+
 Sagan returned `DONE` at 2026-07-06T18:24:15Z with draft PR #89 at head
 `b9a1043` after implementation commit `82008b9`. Worker evidence passed:
 AdminOps tests, AdminAuth tests, UI typecheck, `git diff --check`, and
@@ -141,6 +152,15 @@ Schrodinger was assigned as reviewer.
 Schrodinger returned `REVIEW_BLOCKED` at 2026-07-06T18:28:44Z with one P2
 freshness/WDD task-file blocker only; product/security review passed. Feedback
 was routed to Sagan in submission `019f38b0-2985-71d2-a649-aaa0d3e3872c`.
+
+Controller follow-up reported PR #89 head
+`928ea350afc9eee0948617645420175163f7182a` still stale because it merged
+epic parent `dc73cf7` while current
+`origin/codex/epic/admin-configuration-frontend` had advanced to
+`cb1c1ae52448b5cddf6c852ef394801407482cb6`. Fresh verification before this
+second refresh showed divergence `1 3` and merge-tree still conflicted in this
+task file. The second refresh merge preserves TASK-012 PR/review metadata and
+controller freshness notes while merging current epic head `cb1c1ae`.
 
 ## PR / Patch Reference
 
@@ -185,10 +205,10 @@ duplication.
 
 ## Task-Level Definition of Done
 
-- [ ] Dashboard pages are implemented and covered.
-- [ ] Key plaintext appears only immediately after create.
-- [ ] Audit/stats/queue states are usable.
-- [ ] UI typecheck passes.
+- [x] Dashboard pages are implemented and covered.
+- [x] Key plaintext appears only immediately after create.
+- [x] Audit/stats/queue states are usable.
+- [x] UI typecheck passes.
 
 ## Validation Steps
 
@@ -197,6 +217,20 @@ duplication.
 
 ## Verification Evidence
 
+- PASS `npm --prefix ui run test -- --run src/components/AdminOps.test.tsx`
+  (11 tests).
+- PASS `npm --prefix ui run test -- --run src/components/AdminAuth.test.tsx`
+  (16 tests).
+- PASS `npm --prefix ui run typecheck`.
+- PASS `git diff --check`.
+- PASS `codex review --uncommitted` after fixing routed P2 feedback; final
+  review found no actionable correctness issues.
+- Additional review-run checks passed: scoped ESLint for touched UI files and
+  `npm --prefix ui run build` (with the existing Vite large chunk warning).
+- Refresh PASS after merging `origin/codex/epic/admin-configuration-frontend`:
+  `npm --prefix ui run test -- --run src/components/AdminOps.test.tsx`,
+  `npm --prefix ui run test -- --run src/components/AdminAuth.test.tsx`,
+  `npm --prefix ui run typecheck`, and `git diff --check`.
 - Worker evidence passed: `npm --prefix ui run test -- --run
   src/components/AdminOps.test.tsx`, `npm --prefix ui run test -- --run
   src/components/AdminAuth.test.tsx`, `npm --prefix ui run typecheck`,
@@ -204,6 +238,10 @@ duplication.
 - Reviewer evidence passed product/security checks and targeted UI checks, but
   branch freshness is blocked: PR #89 is `DIRTY`, divergence is `4 2`, and
   merge-tree reports a WDD task-file conflict.
+- Second refresh PASS after fetching and merging current epic head `cb1c1ae`:
+  `npm --prefix ui run test -- --run src/components/AdminOps.test.tsx`,
+  `npm --prefix ui run test -- --run src/components/AdminAuth.test.tsx`,
+  `npm --prefix ui run typecheck`, and `git diff --check`.
 
 ## Review Feedback
 
@@ -213,12 +251,27 @@ duplication.
 
 ### P2
 
+- Controller/Schrodinger REVIEW_BLOCKED P2: branch freshness/WDD task-file
+  conflict at PR head `b9a10433fc8233cdab5e1c2e8848a06e9668b8d5`; product and
+  security review passed. Resolved by refreshing the task branch against
+  `origin/codex/epic/admin-configuration-frontend` and preserving PR/review
+  metadata plus controller freshness notes.
 - `P2-task012-branch-freshness-wdd-task-file-conflict`: Schrodinger reports PR
   #89 is `DIRTY` at `b9a1043`; `origin/codex/epic/admin-configuration-frontend...HEAD`
   is `4 2`; merge-tree conflicts in the TASK-012 WDD review task file.
   Product/security review passed. Routed to Sagan at 2026-07-06T18:28:44Z to
   refresh against the epic branch, preserve review metadata, rerun required
   verification, and push PR #89.
+- Controller follow-up P2: PR #89 remained stale at head
+  `928ea350afc9eee0948617645420175163f7182a`; latest epic head was
+  `cb1c1ae52448b5cddf6c852ef394801407482cb6`; divergence was `1 3`; merge-tree
+  still conflicted in this task file. Resolved by fetching immediately,
+  merging current epic head, preserving TASK-012 review metadata and controller
+  notes, and rerunning required freshness/UI/typecheck/diff checks.
+- Fixed: queue panel now surfaces extraction failures rather than only completed
+  extraction counts.
+- Fixed: audit log now supports server pagination via `nextOffset` and a load
+  more control.
 
 ### P3
 
@@ -228,4 +281,9 @@ duplication.
 
 ## Completion Notes
 
-- None yet.
+- Added the protected operations dashboard, API key management, audit log,
+  diagnostics/status panels, and focused UI tests.
+- Extended the existing admin API client additively; no parallel admin auth
+  store, bearer header, localStorage credential path, provider config forms, or
+  maintenance job mutation UI was added.
+- Latest implementation commit before task-file metadata update: `82008b9`.

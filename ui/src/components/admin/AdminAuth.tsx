@@ -10,6 +10,7 @@ import {
   type AdminStepUp,
   type AdminUser,
 } from '../../lib/adminApi.ts';
+import AdminDashboard from './AdminDashboard.tsx';
 
 type AuthMode =
   | 'loading'
@@ -213,10 +214,17 @@ export default function AdminAuth({ onBack }: AdminAuthProps) {
               }}
             />
           ) : state.mode === 'active' && state.user && state.session ? (
-            <AdminShell
+            <AdminDashboard
+              api={api}
               user={state.user}
               session={state.session}
               stepUp={state.stepUp}
+              onAuthUpdate={response => {
+                setEnrollment(null);
+                setLogoutError(undefined);
+                setState(stateFromAuth(response));
+              }}
+              onSessionExpired={handleUnauthorizedSession}
             />
           ) : state.mode === 'locked' ? (
             <StatusPanel
@@ -627,87 +635,5 @@ function MfaChallengePanel({
         </button>
       </form>
     </section>
-  );
-}
-
-function AdminShell({
-  user,
-  session,
-  stepUp,
-}: {
-  user: AdminUser;
-  session: AdminSession;
-  stepUp?: AdminStepUp;
-}) {
-  return (
-    <section className="flex w-full max-w-5xl flex-col gap-4">
-      <div className="flex flex-wrap items-start gap-3 border-b border-gray-800 pb-4">
-        <div>
-          <h1 className="text-xl font-semibold text-white">Admin Console</h1>
-          <p className="mt-1 text-sm text-gray-400">{user.email}</p>
-        </div>
-        <div className="flex-1" />
-      </div>
-      <div className="grid gap-3 md:grid-cols-3">
-        <Metric label="Session" value={session.mfaVerified ? 'MFA verified' : 'MFA pending'} />
-        <Metric label="Expires" value={new Date(session.expiresAt).toLocaleString()} />
-        <Metric label="Step-up" value={stepUp?.fresh ? 'Fresh' : 'Required for sensitive actions'} />
-      </div>
-      <nav className="flex flex-wrap gap-2 border-b border-gray-800 pb-3">
-        <AdminNavButton active>Diagnostics</AdminNavButton>
-        <AdminNavButton>API keys</AdminNavButton>
-        <AdminNavButton>Audit</AdminNavButton>
-        <AdminNavButton>Jobs</AdminNavButton>
-      </nav>
-      <div className="grid gap-3 lg:grid-cols-2">
-        <div className="rounded-lg border border-gray-800 bg-gray-900 p-4">
-          <h2 className="text-sm font-semibold text-white">Diagnostics</h2>
-          <p className="mt-2 text-sm text-gray-400">
-            Admin APIs are protected by the active MFA session. Detailed pages land in the following UI tasks.
-          </p>
-        </div>
-        <div className="rounded-lg border border-gray-800 bg-gray-900 p-4">
-          <h2 className="text-sm font-semibold text-white">Security posture</h2>
-          <dl className="mt-3 grid grid-cols-2 gap-2 text-xs">
-            <dt className="text-gray-500">Credential mode</dt>
-            <dd className="text-gray-200">HttpOnly cookie</dd>
-            <dt className="text-gray-500">CSRF</dt>
-            <dd className="text-gray-200">Required on mutations</dd>
-            <dt className="text-gray-500">Bearer auth</dt>
-            <dd className="text-gray-200">Rejected for admin</dd>
-          </dl>
-        </div>
-      </div>
-    </section>
-  );
-}
-
-function Metric({ label, value }: { label: string; value: string }) {
-  return (
-    <div className="rounded-lg border border-gray-800 bg-gray-900 p-3">
-      <p className="text-xs uppercase text-gray-500">{label}</p>
-      <p className="mt-1 truncate text-sm text-gray-100">{value}</p>
-    </div>
-  );
-}
-
-function AdminNavButton({
-  active = false,
-  children,
-}: {
-  active?: boolean;
-  children: string;
-}) {
-  return (
-    <button
-      type="button"
-      className={`rounded-md px-3 py-1.5 text-sm transition-colors ${
-        active
-          ? 'bg-gray-800 text-white'
-          : 'text-gray-400 hover:bg-gray-800/60 hover:text-white'
-      }`}
-    >
-      {children}
-    </button>
   );
 }

@@ -2,8 +2,8 @@
 id: EPIC-admin-configuration-frontend-CONTROLLER
 kind: controller_state
 epic: EPIC-admin-configuration-frontend
-active_wave: null
-status: between_waves
+active_wave: WAVE-007
+status: monitoring
 updated_at: 2026-07-06
 ---
 
@@ -58,8 +58,11 @@ now reconciled. Shared context records the admin key/audit/stats route contract
 and the admin job foundation; TASK-014's clean worktree was removed during
 reconciliation.
 
-WAVE-007 is ready to start. Its parallel tasks are TASK-011-admin-auth-ui and
-TASK-015-maintenance-admin-api, confirmed by Ivo's finish-all-waves request.
+WAVE-007 is active after WAVE-006 reconciliation was pushed in `109744b`.
+Its parallel tasks are TASK-011-admin-auth-ui and
+TASK-015-maintenance-admin-api. Task files are in `in-progress/`, dedicated
+branches and worktree paths are reserved, and the activation checkpoint is
+pending push before worker dispatch.
 
 WAVE-004 is done and reconciled. PR #81/TASK-009 and PR #82/TASK-006 are
 merged, shared context is reconciled, and both WAVE-004 worktrees are cleaned
@@ -75,7 +78,7 @@ up.
 | WAVE-004 | TASK-006, TASK-009 | full / hybrid / risk_based / adaptive | done | confirmed by Ivo via sequential-waves request on 2026-07-05 |
 | WAVE-005 | TASK-007, TASK-010 | full / hybrid / risk_based / adaptive | done | confirmed by Ivo via finish-all-waves request on 2026-07-06 |
 | WAVE-006 | TASK-008, TASK-014 | full / hybrid / risk_based / adaptive | done | confirmed by Ivo via finish-all-waves request on 2026-07-06 |
-| WAVE-007 | TASK-011, TASK-015 | full / parallel / risk_based / adaptive | ready_to_start | confirmed by Ivo via finish-all-waves request on 2026-07-06 |
+| WAVE-007 | TASK-011, TASK-015 | full / parallel / risk_based / adaptive | in_progress | confirmed by Ivo via finish-all-waves request on 2026-07-06 |
 | WAVE-008 | TASK-012, TASK-013 | full / hybrid / risk_based / adaptive | planned | required |
 | WAVE-009 | TASK-016 | full / bundled / risk_based / adaptive | planned | required |
 | WAVE-010 | TASK-017 | full / bundled / risk_based / adaptive | planned | required |
@@ -83,38 +86,39 @@ up.
 
 ## Monitoring
 
-Mode: inactive
+Mode: adaptive
 
-Cadence: none
+Cadence: 15m
 
-Status: wave_006_reconciled_ready_for_wave_007_start
+Status: wave_007_activation_pushed_pending_worker_dispatch
 
-Last check: 2026-07-06T13:57:55Z
+Last check: 2026-07-06T14:08:16Z
 
-Next check due: null
+Next check due: 2026-07-06T14:23:16Z
 
 Scheduler reference: `postgram-admin-wave-005-wdd-heartbeat`
 
-Scheduler name: `postgram-admin-wave-006-wdd-heartbeat`
+Scheduler name: `postgram-admin-wave-007-wdd-heartbeat`
 
 Fallback prompt:
 
 ```text
-WAVE-006 is reconciled. Start WAVE-007 with wdd-start-wave for
-TASK-011-admin-auth-ui and TASK-015-maintenance-admin-api, then establish
-active heartbeat monitoring.
+WAVE-007 is active. Inspect TASK-011-admin-auth-ui and
+TASK-015-maintenance-admin-api worktrees, then continue
+subagent-pr-orchestration monitoring.
 ```
 
 ## Active Wave Strategy
 
-- Active wave: none.
+- Active wave: WAVE-007.
 - Last active wave: WAVE-006.
 - WAVE-006 outcome: done and reconciled.
-- Next wave: WAVE-007.
+- Next wave after WAVE-007: WAVE-008.
 - WAVE-007 strategy: full / parallel / risk_based / adaptive.
 - WAVE-007 tasks: TASK-011-admin-auth-ui and TASK-015-maintenance-admin-api.
 - Confirmation: Ivo via Codex finish-all-waves request on 2026-07-06.
-- Current gate: start WAVE-007 after the reconciliation commit is pushed.
+- Current gate: push activation artifacts, create/push task branches and
+  worktrees, then dispatch workers.
 
 ## Last Reconciled Wave
 
@@ -154,11 +158,11 @@ active heartbeat monitoring.
 | TASK-008-admin-key-audit-stats-api | TICKET-003-admin-api-foundation | codex/task/TASK-008-admin-key-audit-stats-api | cleaned_up | reconciled | REVIEW_PASS; freshness current at task head `281681b`; post-merge tests/typecheck/touched-file ESLint passed; merged locally into epic branch in `13465eb`; WAVE-006 reconciled |
 | TASK-009-settings-secret-store | TICKET-004-runtime-configuration | codex/task/TASK-009-settings-secret-store | cleaned_up | reconciled | PR #81 follow-up REVIEW_PASS, final branch freshness passed at `ca9c96f`, merged locally into epic branch in `b63ad08`; worktree cleaned up during WAVE-004 reconciliation |
 | TASK-010-provider-config-apply | TICKET-004-runtime-configuration | codex/task/TASK-010-provider-config-apply | cleaned_up | reconciled | REVIEW_PASS; final branch freshness passed at `515cfa5`; merged locally into epic branch in `f5efbc0`; PR #84 merged at 2026-07-06T11:31:10Z; WAVE-005 reconciled |
-| TASK-011-admin-auth-ui | TICKET-005-admin-frontend | codex/task/TASK-011-admin-auth-ui | not_created | planned | `npm --prefix ui run test -- --run src/components/AdminAuth.test.tsx`; `npm --prefix ui run typecheck` |
+| TASK-011-admin-auth-ui | TICKET-005-admin-frontend | codex/task/TASK-011-admin-auth-ui | pending_creation | pending_worker_dispatch | `npm --prefix ui run test -- --run src/components/AdminAuth.test.tsx`; `npm --prefix ui run typecheck` |
 | TASK-012-admin-ops-dashboard-ui | TICKET-005-admin-frontend | codex/task/TASK-012-admin-ops-dashboard-ui | not_created | planned | `npm --prefix ui run test -- --run src/components/AdminOps.test.tsx`; `npm --prefix ui run typecheck` |
 | TASK-013-admin-config-ui | TICKET-005-admin-frontend | codex/task/TASK-013-admin-config-ui | not_created | planned | `npm --prefix ui run test -- --run src/components/AdminConfig.test.tsx`; `npm --prefix ui run typecheck` |
 | TASK-014-admin-job-foundation | TICKET-006-maintenance-jobs | codex/task/TASK-014-admin-job-foundation | cleaned_up | reconciled | Lorentz REVIEW_PASS; freshness current at task head `0e08630`; post-merge tests/typecheck/touched-file ESLint passed; merged locally into epic branch in `c5edbfc`; WAVE-006 reconciled and worktree cleaned up |
-| TASK-015-maintenance-admin-api | TICKET-006-maintenance-jobs | codex/task/TASK-015-maintenance-admin-api | not_created | planned | `npm test -- tests/contract/admin-maintenance-api.test.ts`; `npm test -- tests/integration/cli-admin.test.ts`; `npm run typecheck` |
+| TASK-015-maintenance-admin-api | TICKET-006-maintenance-jobs | codex/task/TASK-015-maintenance-admin-api | pending_creation | pending_worker_dispatch | `npm test -- tests/contract/admin-maintenance-api.test.ts`; `npm test -- tests/integration/cli-admin.test.ts`; `npm run typecheck` |
 | TASK-016-maintenance-admin-ui | TICKET-006-maintenance-jobs | codex/task/TASK-016-maintenance-admin-ui | not_created | planned | `npm --prefix ui run test -- --run src/components/AdminMaintenance.test.tsx`; `npm --prefix ui run typecheck` |
 | TASK-017-docker-first-run-no-cli | TICKET-007-docker-e2e-validation | codex/task/TASK-017-docker-first-run-no-cli | not_created | planned | `docker compose config`; `npm run typecheck`; `npm --prefix ui run build` |
 | TASK-018-security-epic-validation | TICKET-007-docker-e2e-validation | codex/task/TASK-018-security-epic-validation | not_created | planned | broad backend, frontend, Docker, and smoke validation |

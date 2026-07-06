@@ -6,7 +6,7 @@ ticket: TICKET-006-maintenance-jobs
 wave: WAVE-007
 slug: maintenance-admin-api
 title: Maintenance Admin API
-status: todo
+status: in_progress
 depends_on:
   - TASK-008-admin-key-audit-stats-api
   - TASK-010-provider-config-apply
@@ -20,13 +20,13 @@ conflict_domains:
 assigned_model_class: implementationComplex
 review_model_class: review
 branch: codex/task/TASK-015-maintenance-admin-api
-worker_worktree: null
-worktree_status: unassigned
+worker_worktree: /Users/ivo.toby/workspace/postgram/.worktrees/TASK-015-maintenance-admin-api
+worktree_status: pending_creation
 pr: null
 worker_thread_id: null
 review_thread_id: null
-current_gate: not_started
-branch_freshness: unknown
+current_gate: activation_pushed_pending_dispatch
+branch_freshness: current_at_activation
 verification:
   - npm test -- tests/contract/admin-maintenance-api.test.ts
   - npm test -- tests/integration/cli-admin.test.ts
@@ -37,7 +37,7 @@ verification:
 
 ## Status
 
-todo
+in_progress
 
 ## Parent Ticket
 
@@ -118,7 +118,7 @@ codex/task/TASK-015-maintenance-admin-api
 
 ## Worker Worktree
 
-None assigned yet.
+Reserved at `/Users/ivo.toby/workspace/postgram/.worktrees/TASK-015-maintenance-admin-api`.
 
 ## PR / Patch Reference
 

@@ -6,7 +6,7 @@ ticket: TICKET-005-admin-frontend
 wave: WAVE-007
 slug: admin-auth-ui
 title: Admin Auth UI
-status: todo
+status: in_progress
 depends_on:
   - TASK-006-admin-mfa-step-up
 conflict_domains:
@@ -17,13 +17,13 @@ conflict_domains:
 assigned_model_class: implementationComplex
 review_model_class: review
 branch: codex/task/TASK-011-admin-auth-ui
-worker_worktree: null
-worktree_status: unassigned
+worker_worktree: /Users/ivo.toby/workspace/postgram/.worktrees/TASK-011-admin-auth-ui
+worktree_status: pending_creation
 pr: null
 worker_thread_id: null
 review_thread_id: null
-current_gate: not_started
-branch_freshness: unknown
+current_gate: activation_pushed_pending_dispatch
+branch_freshness: current_at_activation
 verification:
   - npm --prefix ui run test -- --run src/components/AdminAuth.test.tsx
   - npm --prefix ui run typecheck
@@ -33,7 +33,7 @@ verification:
 
 ## Status
 
-todo
+in_progress
 
 ## Parent Ticket
 
@@ -110,7 +110,7 @@ codex/task/TASK-011-admin-auth-ui
 
 ## Worker Worktree
 
-None assigned yet.
+Reserved at `/Users/ivo.toby/workspace/postgram/.worktrees/TASK-011-admin-auth-ui`.
 
 ## PR / Patch Reference
 

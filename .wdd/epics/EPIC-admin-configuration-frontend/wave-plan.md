@@ -790,6 +790,9 @@ Progress:
   `codex/task/TASK-016-maintenance-admin-ui` and worktree
   `/Users/ivo.toby/workspace/postgram/.worktrees/TASK-016-maintenance-admin-ui`
   are assigned and pending creation from the pushed activation checkpoint.
+- Activation checkpoint `b34d0eb` was pushed to the epic branch. The TASK-016
+  task branch/worktree were created from that checkpoint, pushed to origin, and
+  verified clean/current with the in-progress task file and WDD state present.
 
 Stop condition:
 

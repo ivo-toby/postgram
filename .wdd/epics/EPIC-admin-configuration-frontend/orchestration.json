@@ -2404,19 +2404,21 @@
       "workerThreadId": null,
       "reviewThreadId": null,
       "workerWorktree": "/Users/ivo.toby/workspace/postgram/.worktrees/TASK-016-maintenance-admin-ui",
-      "worktreeStatus": "pending_creation",
+      "worktreeStatus": "clean_pushed",
       "pr": null,
-      "latestCommit": null,
-      "branchFreshness": "pending_branch_creation",
+      "latestCommit": "b34d0eb2a9efb0332b168abf9aa64c5033d248c4",
+      "branchFreshness": "current_at_activation",
       "blockingFeedback": [],
       "verification": {
-        "result": "not_run",
+        "result": "activation_worktree_verified_pending_dispatch",
         "commands": [
-          "npm --prefix ui run test -- --run src/components/AdminMaintenance.test.tsx",
-          "npm --prefix ui run test -- --run src/components/AdminOps.test.tsx src/components/AdminConfig.test.tsx src/components/AdminAuth.test.tsx",
-          "npm --prefix ui run typecheck"
+          "git worktree add -b codex/task/TASK-016-maintenance-admin-ui /Users/ivo.toby/workspace/postgram/.worktrees/TASK-016-maintenance-admin-ui b34d0eb2a9efb0332b168abf9aa64c5033d248c4",
+          "git -C /Users/ivo.toby/workspace/postgram/.worktrees/TASK-016-maintenance-admin-ui status --short --branch",
+          "git -C /Users/ivo.toby/workspace/postgram/.worktrees/TASK-016-maintenance-admin-ui push -u origin codex/task/TASK-016-maintenance-admin-ui",
+          "test -f /Users/ivo.toby/workspace/postgram/.worktrees/TASK-016-maintenance-admin-ui/.wdd/epics/EPIC-admin-configuration-frontend/TICKET-006-maintenance-jobs/in-progress/TASK-016-maintenance-admin-ui.md",
+          "git -C /Users/ivo.toby/workspace/postgram/.worktrees/TASK-016-maintenance-admin-ui rev-list --left-right --count origin/codex/epic/admin-configuration-frontend...HEAD"
         ],
-        "evidence": null
+        "evidence": "Activation checkpoint b34d0eb was pushed to the epic branch. Created clean worktree/branch for TASK-016 at the activation commit, pushed codex/task/TASK-016-maintenance-admin-ui to origin, verified task file/orchestration/controller artifacts exist in the worktree, and branch divergence from origin/codex/epic/admin-configuration-frontend is 0 0."
       },
       "currentGate": "pending_dispatch",
       "activatedAt": "2026-07-06T20:30:02Z",
@@ -2553,30 +2555,52 @@
         ],
         "branch": "codex/task/TASK-016-maintenance-admin-ui",
         "worktree": "/Users/ivo.toby/workspace/postgram/.worktrees/TASK-016-maintenance-admin-ui",
-        "worktreeStatus": "pending_creation",
+        "worktreeStatus": "clean_pushed",
         "workerThreadId": null,
         "workerNickname": null,
         "reviewThreadId": null,
         "reviewNickname": null,
         "currentGate": "pending_dispatch",
-        "branchFreshness": "pending_branch_creation",
+        "branchFreshness": "current_at_activation",
         "pr": null,
-        "latestCommit": null,
+        "latestCommit": "b34d0eb2a9efb0332b168abf9aa64c5033d248c4",
         "blockingFeedback": [],
         "verification": {
-          "result": "activation_pending_worktree",
+          "result": "activation_worktree_verified_pending_dispatch",
           "checkedAt": "2026-07-06T20:30:02Z",
-          "commands": [],
-          "evidence": "WAVE-009 activation artifacts prepared; task branch/worktree must be created from the pushed activation commit before dispatch."
+          "commands": [
+            "git worktree add -b codex/task/TASK-016-maintenance-admin-ui /Users/ivo.toby/workspace/postgram/.worktrees/TASK-016-maintenance-admin-ui b34d0eb2a9efb0332b168abf9aa64c5033d248c4",
+            "git -C /Users/ivo.toby/workspace/postgram/.worktrees/TASK-016-maintenance-admin-ui status --short --branch",
+            "git -C /Users/ivo.toby/workspace/postgram/.worktrees/TASK-016-maintenance-admin-ui push -u origin codex/task/TASK-016-maintenance-admin-ui",
+            "test -f /Users/ivo.toby/workspace/postgram/.worktrees/TASK-016-maintenance-admin-ui/.wdd/epics/EPIC-admin-configuration-frontend/TICKET-006-maintenance-jobs/in-progress/TASK-016-maintenance-admin-ui.md",
+            "git -C /Users/ivo.toby/workspace/postgram/.worktrees/TASK-016-maintenance-admin-ui rev-list --left-right --count origin/codex/epic/admin-configuration-frontend...HEAD"
+          ],
+          "evidence": "Activation checkpoint b34d0eb was pushed to the epic branch. Created clean worktree/branch for TASK-016 at the activation commit, pushed codex/task/TASK-016-maintenance-admin-ui to origin, verified task file/orchestration/controller artifacts exist in the worktree, and branch divergence from origin/codex/epic/admin-configuration-frontend is 0 0."
         },
         "activatedAt": "2026-07-06T20:30:02Z",
         "cleanupState": "not_started",
         "sharedContextReconciliation": "not_started",
-        "lastObservedAt": "2026-07-06T20:30:02Z"
+        "lastObservedAt": "2026-07-06T20:30:02Z",
+        "branchPushedAt": "2026-07-06T20:30:02Z",
+        "worktreeObservation": {
+          "observedAt": "2026-07-06T20:30:02Z",
+          "taskId": "TASK-016-maintenance-admin-ui",
+          "status": "worktree_created_clean_pushed_pending_dispatch",
+          "worktreeStatus": "clean_pushed",
+          "branchHead": "b34d0eb2a9efb0332b168abf9aa64c5033d248c4",
+          "branchFreshness": "current_at_activation",
+          "branchDivergence": "origin/codex/epic/admin-configuration-frontend...HEAD = 0 0 at activation.",
+          "files": [
+            ".wdd/epics/EPIC-admin-configuration-frontend/TICKET-006-maintenance-jobs/in-progress/TASK-016-maintenance-admin-ui.md",
+            ".wdd/epics/EPIC-admin-configuration-frontend/orchestration.json",
+            ".wdd/epics/EPIC-admin-configuration-frontend/controller-state.md"
+          ],
+          "coordinationNote": "Ready to dispatch TASK-016 worker after this worktree-state checkpoint is pushed and synced into the task branch."
+        }
       }
     ],
-    "dispatchState": "pending_worktree",
-    "activationCommit": "pending_push",
+    "dispatchState": "pending_dispatch",
+    "activationCommit": "b34d0eb2a9efb0332b168abf9aa64c5033d248c4",
     "workerDispatchStartedAt": null,
     "dispatchedAt": null,
     "lastObservedAt": "2026-07-06T20:30:02Z"
@@ -2589,11 +2613,11 @@
       "verifiedAt": "2026-07-05T11:36:08Z"
     },
     "activationArtifactsSynced": {
-      "status": "pending_push",
-      "commit": "pending_push",
+      "status": "synced_to_epic_branch",
+      "commit": "b34d0eb2a9efb0332b168abf9aa64c5033d248c4",
       "requiredBeforeTaskWorktrees": true,
       "wave": "WAVE-009",
-      "syncedAt": null,
+      "syncedAt": "2026-07-06T20:30:02Z",
       "updatedAt": "2026-07-06T20:30:02Z"
     },
     "waveStrategyConfirmation": {
@@ -2621,7 +2645,7 @@
       "WAVE-007-maintenance-admin-api": "cleaned_up",
       "WAVE-008-admin-ops-dashboard-ui": "cleaned_up",
       "WAVE-008-admin-config-ui": "cleaned_up",
-      "WAVE-009-maintenance-admin-ui": "pending_creation"
+      "WAVE-009-maintenance-admin-ui": "clean_pushed"
     },
     "workerDispatch": {
       "WAVE-001-admin-feasibility-gate": "reconciled",
@@ -3033,7 +3057,7 @@
       "WAVE-007-maintenance-admin-api": "current_at_merge",
       "WAVE-008-admin-ops-dashboard-ui": "current_at_merge",
       "WAVE-008-admin-config-ui": "current_at_merge",
-      "WAVE-009-maintenance-admin-ui": "pending_branch_creation"
+      "WAVE-009-maintenance-admin-ui": "current_at_activation"
     },
     "merge": {
       "WAVE-001-admin-feasibility-gate": {
@@ -3983,10 +4007,16 @@
         "evidence": "WAVE-008 reconciled after PR #89 and PR #90 were confirmed MERGED. Shared context records the AdminDashboard operations shell, AdminConfig Config-tab integration, shared adminApi UI contract, secret write-only/redaction controls, validation/apply warnings, and downstream TASK-016/TASK-017/TASK-018 handoffs. TASK-012 and TASK-013 worktrees were already cleaned up."
       },
       "WAVE-009-maintenance-admin-ui": {
-        "result": "activation_pending_worktree",
+        "result": "activation_worktree_verified_pending_dispatch",
         "checkedAt": "2026-07-06T20:30:02Z",
-        "commands": [],
-        "evidence": "Activation artifacts updated; worktree creation and dispatch pending."
+        "commands": [
+          "git worktree add -b codex/task/TASK-016-maintenance-admin-ui /Users/ivo.toby/workspace/postgram/.worktrees/TASK-016-maintenance-admin-ui b34d0eb2a9efb0332b168abf9aa64c5033d248c4",
+          "git -C /Users/ivo.toby/workspace/postgram/.worktrees/TASK-016-maintenance-admin-ui status --short --branch",
+          "git -C /Users/ivo.toby/workspace/postgram/.worktrees/TASK-016-maintenance-admin-ui push -u origin codex/task/TASK-016-maintenance-admin-ui",
+          "test -f /Users/ivo.toby/workspace/postgram/.worktrees/TASK-016-maintenance-admin-ui/.wdd/epics/EPIC-admin-configuration-frontend/TICKET-006-maintenance-jobs/in-progress/TASK-016-maintenance-admin-ui.md",
+          "git -C /Users/ivo.toby/workspace/postgram/.worktrees/TASK-016-maintenance-admin-ui rev-list --left-right --count origin/codex/epic/admin-configuration-frontend...HEAD"
+        ],
+        "evidence": "Activation checkpoint b34d0eb was pushed to the epic branch. Created clean worktree/branch for TASK-016 at the activation commit, pushed codex/task/TASK-016-maintenance-admin-ui to origin, verified task file/orchestration/controller artifacts exist in the worktree, and branch divergence from origin/codex/epic/admin-configuration-frontend is 0 0."
       }
     },
     "feedback": {
@@ -4170,10 +4200,10 @@
       }
     },
     "activationArtifact": {
-      "commit": "f4bf3d2d9efd1c4423c5cf6b67f6f10b22d8ce49",
+      "commit": "b34d0eb2a9efb0332b168abf9aa64c5033d248c4",
       "requiredBeforeTaskWorktrees": true,
-      "wave": "WAVE-008",
-      "syncedAt": "2026-07-06T17:17:56Z"
+      "wave": "WAVE-009",
+      "syncedAt": "2026-07-06T20:30:02Z"
     }
   },
   "lastReconciledWave": {

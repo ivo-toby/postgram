@@ -96,8 +96,10 @@ pushed. Its bundled task is TASK-016-maintenance-admin-ui. The task file moved
 to `in-progress/`, and the planned task branch/worktree are
 `codex/task/TASK-016-maintenance-admin-ui` and
 `/Users/ivo.toby/workspace/postgram/.worktrees/TASK-016-maintenance-admin-ui`.
-Activation artifacts must be pushed before creating the branch/worktree and
-dispatching the worker.
+Activation checkpoint `b34d0eb` was pushed before branch/worktree creation.
+The TASK-016 branch and worktree were created from that checkpoint, pushed to
+origin, and verified clean/current. Worker dispatch is pending the
+worktree-state checkpoint.
 
 WAVE-004 is done and reconciled. PR #81/TASK-009 and PR #82/TASK-006 are
 merged, shared context is reconciled, and both WAVE-004 worktrees are cleaned
@@ -125,7 +127,7 @@ Mode: adaptive
 
 Cadence: 5m
 
-Status: wave_009_activation_pending_worktree
+Status: wave_009_worktree_verified_pending_dispatch
 
 Last check: 2026-07-06T20:30:02Z
 
@@ -169,8 +171,7 @@ to GitHub between tasks/waves.
 - WAVE-009 strategy: full / bundled / risk_based / adaptive.
 - WAVE-009 task: TASK-016-maintenance-admin-ui.
 - Confirmation: Ivo via Codex finish-all-waves request on 2026-07-06.
-- Current gate: activation artifacts are being synced before task
-  branch/worktree creation.
+- Current gate: activation and worktree are verified; worker dispatch is next.
 
 ## Last Reconciled Wave
 
@@ -223,7 +224,7 @@ to GitHub between tasks/waves.
 | TASK-013-admin-config-ui | TICKET-005-admin-frontend | codex/task/TASK-013-admin-config-ui | cleaned_up | reconciled | Schrodinger follow-up REVIEW_PASS; final freshness passed at task head `2efc58f`; post-merge AdminConfig/AdminOps/AdminAuth UI tests, UI typecheck, root typecheck, JSON parse, and diff-check passed; PR #90 merged at 2026-07-06T20:15:58Z in `9974b29`; worktree cleaned up; WAVE-008 shared context reconciled |
 | TASK-014-admin-job-foundation | TICKET-006-maintenance-jobs | codex/task/TASK-014-admin-job-foundation | cleaned_up | reconciled | Lorentz REVIEW_PASS; freshness current at task head `0e08630`; post-merge tests/typecheck/touched-file ESLint passed; merged locally into epic branch in `c5edbfc`; WAVE-006 reconciled and worktree cleaned up |
 | TASK-015-maintenance-admin-api | TICKET-006-maintenance-jobs | codex/task/TASK-015-maintenance-admin-api | cleaned_up | reconciled | Lorentz REVIEW_PASS; final freshness passed at task head `ea88af4`; post-merge contract tests 4/4, CLI integration 37/37, typecheck, scoped ESLint, JSON parse, and diff check passed; merged locally in `78f0f43`; PR #88 merged at 2026-07-06T17:02:28Z; shared context reconciled |
-| TASK-016-maintenance-admin-ui | TICKET-006-maintenance-jobs | codex/task/TASK-016-maintenance-admin-ui | pending_creation | pending_dispatch | `npm --prefix ui run test -- --run src/components/AdminMaintenance.test.tsx`; AdminOps/AdminConfig/AdminAuth regressions if dashboard/client changes; `npm --prefix ui run typecheck` |
+| TASK-016-maintenance-admin-ui | TICKET-006-maintenance-jobs | codex/task/TASK-016-maintenance-admin-ui | clean_pushed | pending_dispatch | `npm --prefix ui run test -- --run src/components/AdminMaintenance.test.tsx`; AdminOps/AdminConfig/AdminAuth regressions if dashboard/client changes; `npm --prefix ui run typecheck` |
 | TASK-017-docker-first-run-no-cli | TICKET-007-docker-e2e-validation | codex/task/TASK-017-docker-first-run-no-cli | not_created | planned | `docker compose config`; `npm run typecheck`; `npm --prefix ui run build` |
 | TASK-018-security-epic-validation | TICKET-007-docker-e2e-validation | codex/task/TASK-018-security-epic-validation | not_created | planned | broad backend, frontend, Docker, and smoke validation |
 
@@ -648,7 +649,7 @@ to GitHub between tasks/waves.
 - WAVE-009 activation is in progress. TASK-016 has moved to `in-progress/`,
   with branch `codex/task/TASK-016-maintenance-admin-ui` and worktree
   `/Users/ivo.toby/workspace/postgram/.worktrees/TASK-016-maintenance-admin-ui`
-  pending creation from the pushed activation checkpoint.
+  verified clean and pushed from activation checkpoint `b34d0eb`.
 
 ## Verification Status
 
@@ -1691,8 +1692,13 @@ to GitHub between tasks/waves.
   `/Users/ivo.toby/workspace/postgram/.worktrees/TASK-016-maintenance-admin-ui`.
   Activation artifacts must be pushed before creating the task branch/worktree
   and dispatching the worker.
+- 2026-07-06T20:30:02Z: Pushed activation checkpoint `b34d0eb`, created
+  `codex/task/TASK-016-maintenance-admin-ui` and worktree
+  `/Users/ivo.toby/workspace/postgram/.worktrees/TASK-016-maintenance-admin-ui`
+  from that checkpoint, pushed the task branch to origin, and verified the
+  in-progress TASK-016 file plus orchestration/controller artifacts exist in
+  the worker worktree. Branch divergence from the epic branch is `0 0`.
 
 ## Next Action
 
-Next action: push the WAVE-009 activation checkpoint, create the TASK-016
-branch/worktree from that checkpoint, then dispatch the worker.
+Next action: dispatch the TASK-016 worker and update heartbeat monitoring.

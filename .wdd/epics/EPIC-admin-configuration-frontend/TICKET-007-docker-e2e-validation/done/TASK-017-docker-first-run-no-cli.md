@@ -6,7 +6,7 @@ ticket: TICKET-007-docker-e2e-validation
 wave: WAVE-010
 slug: docker-first-run-no-cli
 title: Docker First Run No CLI
-status: review
+status: done
 depends_on:
   - TASK-012-admin-ops-dashboard-ui
   - TASK-013-admin-config-ui
@@ -20,12 +20,12 @@ assigned_model_class: implementationComplex
 review_model_class: review
 branch: codex/task/TASK-017-docker-first-run-no-cli
 worker_worktree: /Users/ivo.toby/workspace/postgram/.worktrees/TASK-017-docker-first-run-no-cli
-worktree_status: clean_pushed
+worktree_status: cleaned_up
 pr: https://github.com/ivo-toby/postgram/pull/92
 worker_thread_id: 019f396f-3da8-7d11-94a0-3d84d26f490b
 review_thread_id: 019f398f-98c3-7350-be3f-1cb4af8aab75
-current_gate: review_passed_pending_freshness
-branch_freshness: refreshed_with_epic_checkpoint
+current_gate: merged
+branch_freshness: current_at_merge
 verification:
   - docker compose config
   - npm run typecheck
@@ -37,7 +37,7 @@ verification:
 
 ## Status
 
-review
+done
 
 ## Parent Ticket
 
@@ -296,6 +296,20 @@ Keep docs honest about emergency CLI fallback and public exposure risks.
 - Post-review `docker compose config` with an empty environment showed
   `EMBEDDING_PROVIDER: ""` for the app entrypoint to resolve and
   `POSTGRES_PASSWORD: ""` unless a legacy override is supplied.
+- Final freshness passed after task branch refresh commit
+  `38bfe21912d4d4793564047327e5f9c0b9c31f1b`: branch divergence was `0 4`,
+  merge-tree was clean, branch diff whitespace passed, `docker compose config`
+  passed, docker-first-run unit tests passed 5/5, admin-auth-service
+  integration tests passed 18/18, root typecheck passed, UI typecheck passed,
+  and UI build passed with the existing chunk-size warning.
+- TASK-017 merged locally into the epic branch in
+  `ce0bb83d6075d2644f253db490e43c0c41c20381`.
+- Post-merge verification passed: `git diff --check HEAD^..HEAD`,
+  orchestration JSON parse, `docker compose config`, docker-first-run unit
+  tests 5/5, admin-auth-service integration tests 18/18, root typecheck, UI
+  typecheck, and UI build.
+- Epic branch push marked PR #92 `MERGED` at 2026-07-06T22:56:32Z, and the
+  clean pushed TASK-017 worktree was removed.
 
 ## Review Feedback
 

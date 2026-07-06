@@ -3,7 +3,7 @@ id: EPIC-admin-configuration-frontend-CONTROLLER
 kind: controller_state
 epic: EPIC-admin-configuration-frontend
 active_wave: WAVE-010
-status: wave_010_pr92_fix_review_pending
+status: wave_010_merged_pending_push_reconciliation
 updated_at: 2026-07-06
 ---
 
@@ -124,8 +124,12 @@ review and returned `REVIEW_BLOCKED` on reviewed head
 `6a0259701fbfba648d37472653a5760b3d0d1602` with two P2 upgrade blockers.
 Bacon had already pushed fix head `48f7f67fc2400a87dd9adbdb175013ed09a5cac4`
 and confirmed no unpushed work remains. Controller verification passed on the
-fix head, and Dewey follow-up returned `REVIEW_PASS` with no P1/P2/P3; final
-branch freshness is required before merge.
+fix head, and Dewey follow-up returned `REVIEW_PASS` with no P1/P2/P3. TASK-017
+was refreshed against the latest epic checkpoint, final freshness verification
+passed, and TASK-017 merged locally into the epic branch in
+`ce0bb83d6075d2644f253db490e43c0c41c20381`. The epic push marked PR #92
+`MERGED` at 2026-07-06T22:56:32Z, the clean TASK-017 worktree was removed, and
+WAVE-010 is ready for reconciliation.
 
 WAVE-004 is done and reconciled. PR #81/TASK-009 and PR #82/TASK-006 are
 merged, shared context is reconciled, and both WAVE-004 worktrees are cleaned
@@ -144,7 +148,7 @@ up.
 | WAVE-007 | TASK-011, TASK-015 | full / parallel / risk_based / adaptive | done | confirmed by Ivo via finish-all-waves request on 2026-07-06 |
 | WAVE-008 | TASK-012, TASK-013 | full / hybrid / risk_based / adaptive | done | confirmed by Ivo via finish-all-waves request on 2026-07-06 |
 | WAVE-009 | TASK-016 | full / bundled / risk_based / adaptive | done | confirmed by Ivo via finish-all-waves request on 2026-07-06 |
-| WAVE-010 | TASK-017 | full / bundled / risk_based / adaptive | in_progress | confirmed by Ivo via finish-all-waves request on 2026-07-06 |
+| WAVE-010 | TASK-017 | full / bundled / risk_based / adaptive | ready_for_reconciliation | confirmed by Ivo via finish-all-waves request on 2026-07-06 |
 | WAVE-011 | TASK-018 | full / bundled / risk_based / adaptive | planned | not required |
 
 ## Monitoring
@@ -153,11 +157,11 @@ Mode: adaptive
 
 Cadence: 5m
 
-Status: wave_010_pr92_review_passed_pending_freshness
+Status: wave_010_ready_for_reconciliation
 
 Last check: 2026-07-06T22:43:02Z
 
-Next check due: 2026-07-06T22:48:02Z
+Next check due: 2026-07-06T23:01:32Z
 
 Scheduler reference: `postgram-admin-wave-005-wdd-heartbeat`
 
@@ -168,28 +172,24 @@ Automation update: verified_in_app
 Fallback prompt:
 
 ```text
-Run one bounded WDD controller heartbeat for /Users/ivo.toby/workspace/postgram,
-epic EPIC-admin-configuration-frontend, active wave WAVE-010. Use the
-subagent-pr-orchestration skill. Start in /Users/ivo.toby/workspace/postgram on
-branch codex/epic/admin-configuration-frontend. Read
+Run one bounded WDD reconciliation handoff heartbeat for
+/Users/ivo.toby/workspace/postgram, epic EPIC-admin-configuration-frontend,
+active wave WAVE-010. Use the wdd-reconcile-wave skill. Start in
+/Users/ivo.toby/workspace/postgram on branch
+codex/epic/admin-configuration-frontend. Read
 .wdd/epics/EPIC-admin-configuration-frontend/orchestration.json and
-controller-state.md, then inspect PR #92 for
-WAVE-010-docker-first-run-no-cli / TASK-017-docker-first-run-no-cli, reviewer
-Dewey (`019f398f-98c3-7350-be3f-1cb4af8aab75`), worker Bacon
-(`019f396f-3da8-7d11-94a0-3d84d26f490b`), and assigned worktree
-/Users/ivo.toby/workspace/postgram/.worktrees/TASK-017-docker-first-run-no-cli.
-Dewey follow-up returned REVIEW_PASS at head
-`48f7f67fc2400a87dd9adbdb175013ed09a5cac4` after Bacon fixed the two P2
-upgrade blockers. Final branch freshness is pending because PR #92 remains
-DIRTY due a WDD TASK-017 review-file conflict only. Refresh the task branch
-against latest codex/epic/admin-configuration-frontend, resolve the WDD
-review-file conflict while preserving PR #92 metadata and evidence, rerun
-required Docker/UI/root verification, push the task branch, verify PR
-cleanliness/freshness, merge or mark merge_ready according to policy, update
-WDD artifacts, push, and hand off to wdd-reconcile-wave. Stop when WAVE-010 is
-merged, blocked, cancelled, or ready for wdd-reconcile-wave. After WAVE-010 is
-reconciled, continue to WAVE-011 per Ivo's finish-all-waves instruction and
-push to GitHub between tasks/waves.
+controller-state.md. Confirm WAVE-010 bundle TASK-017-docker-first-run-no-cli
+is merged into the epic branch in merge commit
+ce0bb83d6075d2644f253db490e43c0c41c20381; PR #92 is MERGED at
+2026-07-06T22:56:32Z after Dewey REVIEW_PASS; task file is in done/;
+currentGates.workerDispatch is merged; WAVE-010 waveCompletion is
+ready_for_reconciliation; branch freshness is current_at_merge; cleanup is
+cleaned_up; blocking feedback is empty; shared-context reconciliation is
+queued. Run wdd-reconcile-wave for WAVE-010, reconcile Docker
+first-run/no-CLI decisions into shared context and downstream TASK-018, update
+orchestration.json and controller-state.md, push the reconciliation checkpoint,
+then continue to WAVE-011 per Ivo's finish-all-waves instruction after
+reconciliation is pushed.
 ```
 
 ## Active Wave Strategy
@@ -200,9 +200,8 @@ push to GitHub between tasks/waves.
 - WAVE-010 strategy: full / bundled / risk_based / adaptive.
 - WAVE-010 task: TASK-017-docker-first-run-no-cli.
 - Confirmation: Ivo via Codex finish-all-waves request on 2026-07-06.
-- Current gate: PR #92 fix head `48f7f67` is open/draft and Dewey follow-up
-  review is pending after P2 fixes; final branch freshness refresh is required
-  before merge.
+- Current gate: TASK-017 is merged in `ce0bb83`, PR #92 is MERGED, cleanup is
+  complete, and WAVE-010 is ready for reconciliation.
 
 ## Last Reconciled Wave
 
@@ -259,7 +258,7 @@ push to GitHub between tasks/waves.
 | TASK-014-admin-job-foundation | TICKET-006-maintenance-jobs | codex/task/TASK-014-admin-job-foundation | cleaned_up | reconciled | Lorentz REVIEW_PASS; freshness current at task head `0e08630`; post-merge tests/typecheck/touched-file ESLint passed; merged locally into epic branch in `c5edbfc`; WAVE-006 reconciled and worktree cleaned up |
 | TASK-015-maintenance-admin-api | TICKET-006-maintenance-jobs | codex/task/TASK-015-maintenance-admin-api | cleaned_up | reconciled | Lorentz REVIEW_PASS; final freshness passed at task head `ea88af4`; post-merge contract tests 4/4, CLI integration 37/37, typecheck, scoped ESLint, JSON parse, and diff check passed; merged locally in `78f0f43`; PR #88 merged at 2026-07-06T17:02:28Z; shared context reconciled |
 | TASK-016-maintenance-admin-ui | TICKET-006-maintenance-jobs | codex/task/TASK-016-maintenance-admin-ui | cleaned_up | reconciled | Hypatia REVIEW_PASS; final task head `1885b64`; freshness `0 3`; AdminMaintenance 9/9, AdminOps/AdminConfig/AdminAuth 49/49, UI typecheck passed; merged in `10b2738`; PR #91 MERGED at 2026-07-06T21:37:31Z; WAVE-009 shared context reconciled |
-| TASK-017-docker-first-run-no-cli | TICKET-007-docker-e2e-validation | codex/task/TASK-017-docker-first-run-no-cli | clean_pushed | review_passed_pending_freshness | Dewey REVIEW_PASS at fix head `48f7f67`; controller verification passed; merge-tree conflict limited to WDD review task file; final freshness required |
+| TASK-017-docker-first-run-no-cli | TICKET-007-docker-e2e-validation | codex/task/TASK-017-docker-first-run-no-cli | cleaned_up | merged | Dewey REVIEW_PASS; final freshness passed at task head `38bfe21`; merged in `ce0bb83`; PR #92 MERGED at 2026-07-06T22:56:32Z; post-merge Docker/tests/typechecks/UI build passed; WAVE-010 ready for reconciliation |
 | TASK-018-security-epic-validation | TICKET-007-docker-e2e-validation | codex/task/TASK-018-security-epic-validation | not_created | planned | broad backend, frontend, Docker, and smoke validation |
 
 ## Branch And Worktree State
@@ -1842,9 +1841,20 @@ push to GitHub between tasks/waves.
   Docker upgrade blockers and settings-key validation concern are resolved.
   Final branch freshness remains pending because PR #92 merge-tree conflicts
   only in the WDD TASK-017 review file.
+- 2026-07-06T22:43:02Z: Refreshed TASK-017 against epic checkpoint `f366b6a`,
+  resolved the WDD review-file conflict, pushed task branch head `38bfe21`, and
+  verified final freshness: divergence `0 4`, merge-tree clean, branch diff
+  whitespace clean, `docker compose config`, docker-first-run unit tests 5/5,
+  admin-auth-service integration tests 18/18, root typecheck, UI typecheck, and
+  UI build passed. PR #92 reported `CLEAN`; TASK-017 merged locally into the
+  epic branch in `ce0bb83`. Post-merge verification passed: merge diff
+  whitespace, orchestration JSON parse, `docker compose config`,
+  docker-first-run unit tests 5/5, admin-auth-service integration tests 18/18,
+  root typecheck, UI typecheck, and UI build.
+  The epic branch push marked PR #92 `MERGED` at 2026-07-06T22:56:32Z, and the
+  clean pushed TASK-017 worktree was removed.
 
 ## Next Action
 
-Next action: refresh TASK-017 against the latest epic branch, resolve the WDD
-review-file conflict, rerun required verification, push, and merge or mark
-merge-ready according to policy.
+Next action: run WAVE-010 reconciliation, then continue to WAVE-011 after the
+reconciliation checkpoint is pushed.

@@ -2613,7 +2613,8 @@
     "schedulerRef": "postgram-admin-wave-005-wdd-heartbeat",
     "schedulerName": "postgram-admin-wave-011-start-heartbeat",
     "fallbackPrompt": "Run one bounded WDD start-wave heartbeat for /Users/ivo.toby/workspace/postgram, epic EPIC-admin-configuration-frontend, next wave WAVE-011. Use the wdd-start-wave skill. Start in /Users/ivo.toby/workspace/postgram on branch codex/epic/admin-configuration-frontend. Read .wdd/epics/EPIC-admin-configuration-frontend/orchestration.json and controller-state.md. Confirm WAVE-010 is done/reconciled and pushed, PR #92 is MERGED at 2026-07-06T22:56:32Z, activeWave is null, WAVE-011 is ready_to_start, and WAVE-011 task is TASK-018-security-epic-validation. Activate WAVE-011, update orchestration.json/controller-state.md/task files, create and verify the isolated worktree under /Users/ivo.toby/workspace/postgram/.worktrees for TASK-018-security-epic-validation on branch codex/task/TASK-018-security-epic-validation, push activation artifacts to GitHub before worker dispatch, then dispatch/monitor according to WDD policy. Stop after WAVE-011 activation/dispatch state is pushed and heartbeat monitoring is updated; after WAVE-011 is merged and reconciled, proceed to epic validation/final PR per Ivo's finish-all-waves instruction.",
-    "automationUpdateResult": "pending_update_after_reconciliation_push"
+    "automationUpdateResult": "verified_in_app",
+    "updatedAt": "2026-07-06T22:58:32Z"
   },
   "sharedContext": {
     "index": "shared-context/index.md",
@@ -2715,7 +2716,8 @@
       "schedulerRef": "postgram-admin-wave-005-wdd-heartbeat",
       "schedulerName": "postgram-admin-wave-011-start-heartbeat",
       "fallbackPrompt": "Run one bounded WDD start-wave heartbeat for /Users/ivo.toby/workspace/postgram, epic EPIC-admin-configuration-frontend, next wave WAVE-011. Use the wdd-start-wave skill. Start in /Users/ivo.toby/workspace/postgram on branch codex/epic/admin-configuration-frontend. Read .wdd/epics/EPIC-admin-configuration-frontend/orchestration.json and controller-state.md. Confirm WAVE-010 is done/reconciled and pushed, PR #92 is MERGED at 2026-07-06T22:56:32Z, activeWave is null, WAVE-011 is ready_to_start, and WAVE-011 task is TASK-018-security-epic-validation. Activate WAVE-011, update orchestration.json/controller-state.md/task files, create and verify the isolated worktree under /Users/ivo.toby/workspace/postgram/.worktrees for TASK-018-security-epic-validation on branch codex/task/TASK-018-security-epic-validation, push activation artifacts to GitHub before worker dispatch, then dispatch/monitor according to WDD policy. Stop after WAVE-011 activation/dispatch state is pushed and heartbeat monitoring is updated; after WAVE-011 is merged and reconciled, proceed to epic validation/final PR per Ivo's finish-all-waves instruction.",
-      "automationUpdateResult": "pending_update_after_reconciliation_push"
+      "automationUpdateResult": "verified_in_app",
+      "updatedAt": "2026-07-06T22:58:32Z"
     },
     "review": {
       "WAVE-001-admin-feasibility-gate": {

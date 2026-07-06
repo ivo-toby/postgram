@@ -170,7 +170,7 @@ Scheduler reference: `postgram-admin-wave-005-wdd-heartbeat`
 
 Scheduler name: `postgram-admin-wave-011-start-heartbeat`
 
-Automation update: pending_update_after_reconciliation_push
+Automation update: verified_in_app
 
 Fallback prompt:
 

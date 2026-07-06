@@ -15,6 +15,7 @@ import {
 import AdminApiKeys from './AdminApiKeys.tsx';
 import AdminAudit from './AdminAudit.tsx';
 import AdminConfig from './AdminConfig.tsx';
+import AdminMaintenance from './AdminMaintenance.tsx';
 
 type AdminDashboardProps = {
   api: AdminApiClient;
@@ -31,7 +32,7 @@ type ResourceState<T> = {
   loading: boolean;
 };
 
-type DashboardPanel = 'overview' | 'provider-config';
+type DashboardPanel = 'overview' | 'provider-config' | 'maintenance';
 
 function pendingResource<T>(): ResourceState<T> {
   return {
@@ -398,10 +399,23 @@ export default function AdminDashboard({
         >
           Config
         </DashboardNavButton>
+        <DashboardNavButton
+          active={activePanel === 'maintenance'}
+          onClick={() => setActivePanel('maintenance')}
+        >
+          Maintenance
+        </DashboardNavButton>
       </nav>
 
       {activePanel === 'provider-config' ? (
         <AdminConfig
+          api={api}
+          initialStepUp={stepUp}
+          onAuthUpdate={onAuthUpdate}
+          onSessionExpired={onSessionExpired}
+        />
+      ) : activePanel === 'maintenance' ? (
+        <AdminMaintenance
           api={api}
           initialStepUp={stepUp}
           onAuthUpdate={onAuthUpdate}

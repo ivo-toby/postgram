@@ -919,7 +919,7 @@
         "TASK-014-admin-job-foundation"
       ],
       "activatedAt": "2026-07-06T11:39:24Z",
-      "workerDispatchStartedAt": null,
+      "workerDispatchStartedAt": "2026-07-06T11:44:24Z",
       "bundles": [
         {
           "id": "WAVE-006-admin-key-audit-stats-api",
@@ -928,28 +928,30 @@
           ],
           "branch": "codex/task/TASK-008-admin-key-audit-stats-api",
           "worktree": "/Users/ivo.toby/workspace/postgram/.worktrees/TASK-008-admin-key-audit-stats-api",
-          "worktreeStatus": "pending_creation",
+          "worktreeStatus": "verified_pushed",
           "workerThreadId": null,
           "workerNickname": null,
           "reviewThreadId": null,
           "reviewNickname": null,
-          "currentGate": "pending_dispatch",
-          "branchFreshness": "pending_branch_creation",
+          "currentGate": "no_pr",
+          "branchFreshness": "current_at_dispatch_base",
           "pr": null,
-          "latestCommit": null,
+          "latestCommit": "a41ffb44deebc5029cddffe4e5e953caf69528d9",
           "blockingFeedback": [],
           "verification": {
-            "result": "not_run",
+            "result": "activation_verified",
             "commands": [
-              "npm test -- tests/contract/admin-key-audit-stats.test.ts",
-              "npm test -- tests/integration/key-service.test.ts",
-              "npm run typecheck"
+              "test -f .wdd/epics/EPIC-admin-configuration-frontend/TICKET-003-admin-api-foundation/in-progress/TASK-008-admin-key-audit-stats-api.md",
+              "test -f .wdd/epics/EPIC-admin-configuration-frontend/orchestration.json",
+              "git status --short --branch"
             ],
-            "evidence": null
+            "evidence": "Controller created the task branch/worktree from pushed epic head a41ffb4, pushed the task branch to origin, verified the assigned in-progress task file and orchestration.json exist, and observed a clean branch checkout."
           },
           "activatedAt": "2026-07-06T11:39:24Z",
           "cleanupState": "not_started",
-          "sharedContextReconciliation": "queued"
+          "sharedContextReconciliation": "queued",
+          "lastObservedAt": "2026-07-06T11:44:24Z",
+          "branchPushedAt": "2026-07-06T11:44:24Z"
         },
         {
           "id": "WAVE-006-admin-job-foundation",
@@ -958,32 +960,35 @@
           ],
           "branch": "codex/task/TASK-014-admin-job-foundation",
           "worktree": "/Users/ivo.toby/workspace/postgram/.worktrees/TASK-014-admin-job-foundation",
-          "worktreeStatus": "pending_creation",
+          "worktreeStatus": "verified_pushed",
           "workerThreadId": null,
           "workerNickname": null,
           "reviewThreadId": null,
           "reviewNickname": null,
-          "currentGate": "pending_dispatch",
-          "branchFreshness": "pending_branch_creation",
+          "currentGate": "no_pr",
+          "branchFreshness": "current_at_dispatch_base",
           "pr": null,
-          "latestCommit": null,
+          "latestCommit": "a41ffb44deebc5029cddffe4e5e953caf69528d9",
           "blockingFeedback": [],
           "verification": {
-            "result": "not_run",
+            "result": "activation_verified",
             "commands": [
-              "npm test -- tests/integration/admin-job-service.test.ts",
-              "npm run typecheck"
+              "test -f .wdd/epics/EPIC-admin-configuration-frontend/TICKET-006-maintenance-jobs/in-progress/TASK-014-admin-job-foundation.md",
+              "test -f .wdd/epics/EPIC-admin-configuration-frontend/orchestration.json",
+              "git status --short --branch"
             ],
-            "evidence": null
+            "evidence": "Controller created the task branch/worktree from pushed epic head a41ffb4, pushed the task branch to origin, verified the assigned in-progress task file and orchestration.json exist, and observed a clean branch checkout."
           },
           "activatedAt": "2026-07-06T11:39:24Z",
           "cleanupState": "not_started",
-          "sharedContextReconciliation": "queued"
+          "sharedContextReconciliation": "queued",
+          "lastObservedAt": "2026-07-06T11:44:24Z",
+          "branchPushedAt": "2026-07-06T11:44:24Z"
         }
       ],
       "activationCommit": "e46eb9a10233fcbadf446cf81d13e8a60f7ab942",
-      "dispatchState": "pending_worktree_creation",
-      "lastObservedAt": "2026-07-06T11:39:24Z"
+      "dispatchState": "worktrees_verified_pending_dispatch",
+      "lastObservedAt": "2026-07-06T11:44:24Z"
     },
     {
       "id": "WAVE-007",
@@ -1584,25 +1589,26 @@
       "workerThreadId": null,
       "reviewThreadId": null,
       "workerWorktree": "/Users/ivo.toby/workspace/postgram/.worktrees/TASK-008-admin-key-audit-stats-api",
-      "worktreeStatus": "pending_creation",
+      "worktreeStatus": "verified_pushed",
       "pr": null,
-      "latestCommit": null,
-      "branchFreshness": "pending_branch_creation",
+      "latestCommit": "a41ffb44deebc5029cddffe4e5e953caf69528d9",
+      "branchFreshness": "current_at_dispatch_base",
       "blockingFeedback": [],
       "verification": {
-        "result": "not_run",
+        "result": "activation_verified",
         "commands": [
-          "npm test -- tests/contract/admin-key-audit-stats.test.ts",
-          "npm test -- tests/integration/key-service.test.ts",
-          "npm run typecheck"
+          "test -f .wdd/epics/EPIC-admin-configuration-frontend/TICKET-003-admin-api-foundation/in-progress/TASK-008-admin-key-audit-stats-api.md",
+          "test -f .wdd/epics/EPIC-admin-configuration-frontend/orchestration.json",
+          "git status --short --branch"
         ],
-        "evidence": null
+        "evidence": "Controller created the task branch/worktree from pushed epic head a41ffb4, pushed the task branch to origin, verified the assigned in-progress task file and orchestration.json exist, and observed a clean branch checkout."
       },
-      "currentGate": "pending_dispatch",
+      "currentGate": "no_pr",
       "activatedAt": "2026-07-06T11:39:24Z",
       "bundle": "WAVE-006-admin-key-audit-stats-api",
       "sharedContextReconciliation": "queued",
-      "cleanupState": "not_started"
+      "cleanupState": "not_started",
+      "lastObservedAt": "2026-07-06T11:44:24Z"
     },
     {
       "id": "TASK-009-settings-secret-store",
@@ -1906,24 +1912,26 @@
       "workerThreadId": null,
       "reviewThreadId": null,
       "workerWorktree": "/Users/ivo.toby/workspace/postgram/.worktrees/TASK-014-admin-job-foundation",
-      "worktreeStatus": "pending_creation",
+      "worktreeStatus": "verified_pushed",
       "pr": null,
-      "latestCommit": null,
-      "branchFreshness": "pending_branch_creation",
+      "latestCommit": "a41ffb44deebc5029cddffe4e5e953caf69528d9",
+      "branchFreshness": "current_at_dispatch_base",
       "blockingFeedback": [],
       "verification": {
-        "result": "not_run",
+        "result": "activation_verified",
         "commands": [
-          "npm test -- tests/integration/admin-job-service.test.ts",
-          "npm run typecheck"
+          "test -f .wdd/epics/EPIC-admin-configuration-frontend/TICKET-006-maintenance-jobs/in-progress/TASK-014-admin-job-foundation.md",
+          "test -f .wdd/epics/EPIC-admin-configuration-frontend/orchestration.json",
+          "git status --short --branch"
         ],
-        "evidence": null
+        "evidence": "Controller created the task branch/worktree from pushed epic head a41ffb4, pushed the task branch to origin, verified the assigned in-progress task file and orchestration.json exist, and observed a clean branch checkout."
       },
-      "currentGate": "pending_dispatch",
+      "currentGate": "no_pr",
       "activatedAt": "2026-07-06T11:39:24Z",
       "bundle": "WAVE-006-admin-job-foundation",
       "sharedContextReconciliation": "queued",
-      "cleanupState": "not_started"
+      "cleanupState": "not_started",
+      "lastObservedAt": "2026-07-06T11:44:24Z"
     },
     {
       "id": "TASK-015-maintenance-admin-api",
@@ -2083,11 +2091,11 @@
   "monitoring": {
     "mode": "manual",
     "cadence": "15m",
-    "status": "activating_wave_006_pending_worktrees",
-    "lastCheckedAt": "2026-07-06T11:39:24Z",
-    "nextCheckDueAt": "2026-07-06T11:54:24Z",
+    "status": "worktrees_verified_pending_dispatch",
+    "lastCheckedAt": "2026-07-06T11:44:24Z",
+    "nextCheckDueAt": "2026-07-06T11:59:24Z",
     "schedulerRef": "manual_until_activation_dispatch_completes",
-    "fallbackPrompt": "Resume WAVE-006 activation for /Users/ivo.toby/workspace/postgram on codex/epic/admin-configuration-frontend. Read orchestration.json and controller-state.md, verify activation artifacts are pushed, create/verify task worktrees for TASK-008 and TASK-014 from the pushed epic branch, dispatch workers, and update monitoring."
+    "fallbackPrompt": "Resume WAVE-006 dispatch for /Users/ivo.toby/workspace/postgram on codex/epic/admin-configuration-frontend. Read orchestration.json and controller-state.md, verify TASK-008 and TASK-014 worktrees are synced to the dispatch-state commit, dispatch workers, then update monitoring."
   },
   "sharedContext": {
     "index": "shared-context/index.md",
@@ -2125,28 +2133,30 @@
         ],
         "branch": "codex/task/TASK-008-admin-key-audit-stats-api",
         "worktree": "/Users/ivo.toby/workspace/postgram/.worktrees/TASK-008-admin-key-audit-stats-api",
-        "worktreeStatus": "pending_creation",
+        "worktreeStatus": "verified_pushed",
         "workerThreadId": null,
         "workerNickname": null,
         "reviewThreadId": null,
         "reviewNickname": null,
-        "currentGate": "pending_dispatch",
-        "branchFreshness": "pending_branch_creation",
+        "currentGate": "no_pr",
+        "branchFreshness": "current_at_dispatch_base",
         "pr": null,
-        "latestCommit": null,
+        "latestCommit": "a41ffb44deebc5029cddffe4e5e953caf69528d9",
         "blockingFeedback": [],
         "verification": {
-          "result": "not_run",
+          "result": "activation_verified",
           "commands": [
-            "npm test -- tests/contract/admin-key-audit-stats.test.ts",
-            "npm test -- tests/integration/key-service.test.ts",
-            "npm run typecheck"
+            "test -f .wdd/epics/EPIC-admin-configuration-frontend/TICKET-003-admin-api-foundation/in-progress/TASK-008-admin-key-audit-stats-api.md",
+            "test -f .wdd/epics/EPIC-admin-configuration-frontend/orchestration.json",
+            "git status --short --branch"
           ],
-          "evidence": null
+          "evidence": "Controller created the task branch/worktree from pushed epic head a41ffb4, pushed the task branch to origin, verified the assigned in-progress task file and orchestration.json exist, and observed a clean branch checkout."
         },
         "activatedAt": "2026-07-06T11:39:24Z",
         "cleanupState": "not_started",
-        "sharedContextReconciliation": "queued"
+        "sharedContextReconciliation": "queued",
+        "lastObservedAt": "2026-07-06T11:44:24Z",
+        "branchPushedAt": "2026-07-06T11:44:24Z"
       },
       {
         "id": "WAVE-006-admin-job-foundation",
@@ -2155,32 +2165,36 @@
         ],
         "branch": "codex/task/TASK-014-admin-job-foundation",
         "worktree": "/Users/ivo.toby/workspace/postgram/.worktrees/TASK-014-admin-job-foundation",
-        "worktreeStatus": "pending_creation",
+        "worktreeStatus": "verified_pushed",
         "workerThreadId": null,
         "workerNickname": null,
         "reviewThreadId": null,
         "reviewNickname": null,
-        "currentGate": "pending_dispatch",
-        "branchFreshness": "pending_branch_creation",
+        "currentGate": "no_pr",
+        "branchFreshness": "current_at_dispatch_base",
         "pr": null,
-        "latestCommit": null,
+        "latestCommit": "a41ffb44deebc5029cddffe4e5e953caf69528d9",
         "blockingFeedback": [],
         "verification": {
-          "result": "not_run",
+          "result": "activation_verified",
           "commands": [
-            "npm test -- tests/integration/admin-job-service.test.ts",
-            "npm run typecheck"
+            "test -f .wdd/epics/EPIC-admin-configuration-frontend/TICKET-006-maintenance-jobs/in-progress/TASK-014-admin-job-foundation.md",
+            "test -f .wdd/epics/EPIC-admin-configuration-frontend/orchestration.json",
+            "git status --short --branch"
           ],
-          "evidence": null
+          "evidence": "Controller created the task branch/worktree from pushed epic head a41ffb4, pushed the task branch to origin, verified the assigned in-progress task file and orchestration.json exist, and observed a clean branch checkout."
         },
         "activatedAt": "2026-07-06T11:39:24Z",
         "cleanupState": "not_started",
-        "sharedContextReconciliation": "queued"
+        "sharedContextReconciliation": "queued",
+        "lastObservedAt": "2026-07-06T11:44:24Z",
+        "branchPushedAt": "2026-07-06T11:44:24Z"
       }
     ],
-    "dispatchState": "pending_worktree_creation",
+    "dispatchState": "worktrees_verified_pending_dispatch",
     "activationCommit": "e46eb9a10233fcbadf446cf81d13e8a60f7ab942",
-    "lastObservedAt": "2026-07-06T11:39:24Z"
+    "lastObservedAt": "2026-07-06T11:44:24Z",
+    "workerDispatchStartedAt": "2026-07-06T11:44:24Z"
   },
   "currentGates": {
     "epicBranch": {
@@ -2212,8 +2226,8 @@
       "WAVE-004-settings-secret-store": "cleaned_up",
       "WAVE-005-admin-api-shell-diagnostics": "cleaned_up",
       "WAVE-005-provider-config-apply": "cleaned_up",
-      "WAVE-006-admin-key-audit-stats-api": "pending_creation",
-      "WAVE-006-admin-job-foundation": "pending_creation"
+      "WAVE-006-admin-key-audit-stats-api": "verified_pushed",
+      "WAVE-006-admin-job-foundation": "verified_pushed"
     },
     "workerDispatch": {
       "WAVE-001-admin-feasibility-gate": "reconciled",
@@ -2223,8 +2237,8 @@
       "WAVE-004-settings-secret-store": "reconciled",
       "WAVE-005-admin-api-shell-diagnostics": "reconciled",
       "WAVE-005-provider-config-apply": "reconciled",
-      "WAVE-006-admin-key-audit-stats-api": "pending_dispatch",
-      "WAVE-006-admin-job-foundation": "pending_dispatch"
+      "WAVE-006-admin-key-audit-stats-api": "no_pr",
+      "WAVE-006-admin-job-foundation": "no_pr"
     },
     "waveCompletion": {
       "WAVE-001": "done",
@@ -2241,11 +2255,11 @@
     "monitoring": {
       "mode": "manual",
       "cadence": "15m",
-      "status": "activating_wave_006_pending_worktrees",
-      "lastCheckedAt": "2026-07-06T11:39:24Z",
-      "nextCheckDueAt": "2026-07-06T11:54:24Z",
+      "status": "worktrees_verified_pending_dispatch",
+      "lastCheckedAt": "2026-07-06T11:44:24Z",
+      "nextCheckDueAt": "2026-07-06T11:59:24Z",
       "schedulerRef": "manual_until_activation_dispatch_completes",
-      "fallbackPrompt": "Resume WAVE-006 activation for /Users/ivo.toby/workspace/postgram on codex/epic/admin-configuration-frontend. Read orchestration.json and controller-state.md, verify activation artifacts are pushed, create/verify task worktrees for TASK-008 and TASK-014 from the pushed epic branch, dispatch workers, and update monitoring."
+      "fallbackPrompt": "Resume WAVE-006 dispatch for /Users/ivo.toby/workspace/postgram on codex/epic/admin-configuration-frontend. Read orchestration.json and controller-state.md, verify TASK-008 and TASK-014 worktrees are synced to the dispatch-state commit, dispatch workers, then update monitoring."
     },
     "review": {
       "WAVE-001-admin-feasibility-gate": {
@@ -2445,8 +2459,8 @@
       "WAVE-004-settings-secret-store": "current_at_merge",
       "WAVE-005-admin-api-shell-diagnostics": "current_at_merge",
       "WAVE-005-provider-config-apply": "current_at_merge",
-      "WAVE-006-admin-key-audit-stats-api": "pending_branch_creation",
-      "WAVE-006-admin-job-foundation": "pending_branch_creation"
+      "WAVE-006-admin-key-audit-stats-api": "current_at_dispatch_base",
+      "WAVE-006-admin-job-foundation": "current_at_dispatch_base"
     },
     "merge": {
       "WAVE-001-admin-feasibility-gate": {
@@ -2997,21 +3011,22 @@
         "evidence": "Task files in done; shared context and downstream task briefs reconciled; WAVE-005 worktrees cleaned up; orchestration JSON and diff checks queued for final verification."
       },
       "WAVE-006-admin-key-audit-stats-api": {
-        "result": "not_run",
+        "result": "activation_verified",
         "commands": [
-          "npm test -- tests/contract/admin-key-audit-stats.test.ts",
-          "npm test -- tests/integration/key-service.test.ts",
-          "npm run typecheck"
+          "test -f .wdd/epics/EPIC-admin-configuration-frontend/TICKET-003-admin-api-foundation/in-progress/TASK-008-admin-key-audit-stats-api.md",
+          "test -f .wdd/epics/EPIC-admin-configuration-frontend/orchestration.json",
+          "git status --short --branch"
         ],
-        "evidence": null
+        "evidence": "Controller created the task branch/worktree from pushed epic head a41ffb4, pushed the task branch to origin, verified the assigned in-progress task file and orchestration.json exist, and observed a clean branch checkout."
       },
       "WAVE-006-admin-job-foundation": {
-        "result": "not_run",
+        "result": "activation_verified",
         "commands": [
-          "npm test -- tests/integration/admin-job-service.test.ts",
-          "npm run typecheck"
+          "test -f .wdd/epics/EPIC-admin-configuration-frontend/TICKET-006-maintenance-jobs/in-progress/TASK-014-admin-job-foundation.md",
+          "test -f .wdd/epics/EPIC-admin-configuration-frontend/orchestration.json",
+          "git status --short --branch"
         ],
-        "evidence": null
+        "evidence": "Controller created the task branch/worktree from pushed epic head a41ffb4, pushed the task branch to origin, verified the assigned in-progress task file and orchestration.json exist, and observed a clean branch checkout."
       }
     },
     "feedback": {
@@ -3095,28 +3110,30 @@
         ],
         "branch": "codex/task/TASK-008-admin-key-audit-stats-api",
         "worktree": "/Users/ivo.toby/workspace/postgram/.worktrees/TASK-008-admin-key-audit-stats-api",
-        "worktreeStatus": "pending_creation",
+        "worktreeStatus": "verified_pushed",
         "workerThreadId": null,
         "workerNickname": null,
         "reviewThreadId": null,
         "reviewNickname": null,
-        "currentGate": "pending_dispatch",
-        "branchFreshness": "pending_branch_creation",
+        "currentGate": "no_pr",
+        "branchFreshness": "current_at_dispatch_base",
         "pr": null,
-        "latestCommit": null,
+        "latestCommit": "a41ffb44deebc5029cddffe4e5e953caf69528d9",
         "blockingFeedback": [],
         "verification": {
-          "result": "not_run",
+          "result": "activation_verified",
           "commands": [
-            "npm test -- tests/contract/admin-key-audit-stats.test.ts",
-            "npm test -- tests/integration/key-service.test.ts",
-            "npm run typecheck"
+            "test -f .wdd/epics/EPIC-admin-configuration-frontend/TICKET-003-admin-api-foundation/in-progress/TASK-008-admin-key-audit-stats-api.md",
+            "test -f .wdd/epics/EPIC-admin-configuration-frontend/orchestration.json",
+            "git status --short --branch"
           ],
-          "evidence": null
+          "evidence": "Controller created the task branch/worktree from pushed epic head a41ffb4, pushed the task branch to origin, verified the assigned in-progress task file and orchestration.json exist, and observed a clean branch checkout."
         },
         "activatedAt": "2026-07-06T11:39:24Z",
         "cleanupState": "not_started",
-        "sharedContextReconciliation": "queued"
+        "sharedContextReconciliation": "queued",
+        "lastObservedAt": "2026-07-06T11:44:24Z",
+        "branchPushedAt": "2026-07-06T11:44:24Z"
       },
       {
         "id": "WAVE-006-admin-job-foundation",
@@ -3125,31 +3142,35 @@
         ],
         "branch": "codex/task/TASK-014-admin-job-foundation",
         "worktree": "/Users/ivo.toby/workspace/postgram/.worktrees/TASK-014-admin-job-foundation",
-        "worktreeStatus": "pending_creation",
+        "worktreeStatus": "verified_pushed",
         "workerThreadId": null,
         "workerNickname": null,
         "reviewThreadId": null,
         "reviewNickname": null,
-        "currentGate": "pending_dispatch",
-        "branchFreshness": "pending_branch_creation",
+        "currentGate": "no_pr",
+        "branchFreshness": "current_at_dispatch_base",
         "pr": null,
-        "latestCommit": null,
+        "latestCommit": "a41ffb44deebc5029cddffe4e5e953caf69528d9",
         "blockingFeedback": [],
         "verification": {
-          "result": "not_run",
+          "result": "activation_verified",
           "commands": [
-            "npm test -- tests/integration/admin-job-service.test.ts",
-            "npm run typecheck"
+            "test -f .wdd/epics/EPIC-admin-configuration-frontend/TICKET-006-maintenance-jobs/in-progress/TASK-014-admin-job-foundation.md",
+            "test -f .wdd/epics/EPIC-admin-configuration-frontend/orchestration.json",
+            "git status --short --branch"
           ],
-          "evidence": null
+          "evidence": "Controller created the task branch/worktree from pushed epic head a41ffb4, pushed the task branch to origin, verified the assigned in-progress task file and orchestration.json exist, and observed a clean branch checkout."
         },
         "activatedAt": "2026-07-06T11:39:24Z",
         "cleanupState": "not_started",
-        "sharedContextReconciliation": "queued"
+        "sharedContextReconciliation": "queued",
+        "lastObservedAt": "2026-07-06T11:44:24Z",
+        "branchPushedAt": "2026-07-06T11:44:24Z"
       }
     ],
-    "dispatchState": "pending_worktree_creation",
+    "dispatchState": "worktrees_verified_pending_dispatch",
     "activationCommit": "e46eb9a10233fcbadf446cf81d13e8a60f7ab942",
-    "lastObservedAt": "2026-07-06T11:39:24Z"
+    "lastObservedAt": "2026-07-06T11:44:24Z",
+    "workerDispatchStartedAt": "2026-07-06T11:44:24Z"
   }
 }

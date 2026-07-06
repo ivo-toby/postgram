@@ -19,12 +19,12 @@ assigned_model_class: implementationComplex
 review_model_class: review
 branch: codex/task/TASK-008-admin-key-audit-stats-api
 worker_worktree: /Users/ivo.toby/workspace/postgram/.worktrees/TASK-008-admin-key-audit-stats-api
-worktree_status: pending_creation
+worktree_status: verified_pushed
 pr: null
 worker_thread_id: null
 review_thread_id: null
-current_gate: pending_dispatch
-branch_freshness: pending_branch_creation
+current_gate: no_pr
+branch_freshness: current_at_dispatch_base
 verification:
   - npm test -- tests/contract/admin-key-audit-stats.test.ts
   - npm test -- tests/integration/key-service.test.ts
@@ -112,8 +112,10 @@ codex/task/TASK-008-admin-key-audit-stats-api
 
 /Users/ivo.toby/workspace/postgram/.worktrees/TASK-008-admin-key-audit-stats-api
 
-Assigned by WAVE-006 activation. The controller must create and verify this
-isolated worktree from the pushed activation commit before dispatch.
+Assigned by WAVE-006 activation and verified at pushed epic head `a41ffb4`.
+The controller created and pushed branch
+`codex/task/TASK-008-admin-key-audit-stats-api`, then verified this isolated
+worktree contains the in-progress task file and orchestration state.
 
 ## PR / Patch Reference
 

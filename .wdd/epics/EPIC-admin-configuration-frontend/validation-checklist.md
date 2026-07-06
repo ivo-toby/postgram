@@ -2,9 +2,9 @@
 id: EPIC-admin-configuration-frontend-VALIDATION
 kind: validation_checklist
 epic: EPIC-admin-configuration-frontend
-status: in_progress
+status: passed_with_concerns
 created_at: 2026-07-05
-updated_at: 2026-07-05
+updated_at: 2026-07-06
 ---
 
 # Planning Validation Checklist: EPIC-admin-configuration-frontend
@@ -120,3 +120,29 @@ was reconciled on 2026-07-05:
 Next step: confirm WAVE-002, then run wdd-start-wave for
 EPIC-admin-configuration-frontend WAVE-002.
 ```
+
+## Final Validation Result
+
+- [x] WAVE-001 through WAVE-010 are done and reconciled.
+- [x] TASK-017 Docker clean-volume smoke evidence was reviewed for bootstrap,
+      MFA, dashboard, Config secret redaction after restart, API-key creation,
+      safe maintenance dry-run/job polling, and browser storage
+      non-persistence.
+- [x] Legacy `POSTGRES_PASSWORD` upgrade preservation was verified through
+      TASK-017 evidence and `tests/unit/docker-first-run.test.ts`.
+- [x] OpenAI provider default preservation was verified through TASK-017
+      evidence and `tests/unit/docker-first-run.test.ts`.
+- [x] Admin key fail-closed behavior was verified through Docker script review
+      and docker-first-run tests.
+- [x] Emergency `pgm-admin` fallback wording remains scoped in README.
+- [x] Runtime production dependency audit findings were fixed with non-force
+      lockfile updates.
+- [x] Broad backend and frontend tests passed.
+- [x] No unresolved P1/P2 security finding remains.
+- [ ] `npm run lint` is clean. It still fails on existing repo-wide lint
+      baseline outside TASK-018 product behavior.
+- [ ] Full UI dev dependency audit is clean. Production audit is clean, but
+      dev-tooling advisories require a breaking Vitest/Vite upgrade.
+
+Result: passed with non-blocking concerns. See `epic-validation.md` and
+`final-pr.md` for final evidence and handoff notes.

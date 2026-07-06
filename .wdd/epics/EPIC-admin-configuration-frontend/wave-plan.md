@@ -30,7 +30,7 @@ updated_at: 2026-07-06
 | TASK-015-maintenance-admin-api | TICKET-006-maintenance-jobs | TASK-008, TASK-010, TASK-014 | graph/memory/embedding services, dry-run/apply admin APIs, CLI regressions | done |
 | TASK-016-maintenance-admin-ui | TICKET-006-maintenance-jobs | TASK-011, TASK-015 | maintenance UI, confirmations, progress polling, admin API client | done |
 | TASK-017-docker-first-run-no-cli | TICKET-007-docker-e2e-validation | TASK-012, TASK-013, TASK-016 | Docker Compose, `.env.example`, README/deployment docs, smoke tests | done |
-| TASK-018-security-epic-validation | TICKET-007-docker-e2e-validation | TASK-017 | security review, broad validation, final handoff artifacts | todo |
+| TASK-018-security-epic-validation | TICKET-007-docker-e2e-validation | TASK-017 | security review, broad validation, final handoff artifacts | review |
 
 ## Dependency Grid
 
@@ -904,7 +904,7 @@ Drift notes:
 
 ### WAVE-011
 
-Status: in_progress
+Status: review
 
 Tasks:
 
@@ -933,10 +933,11 @@ Activation rule:
 
 Progress:
 
-- TASK-018-security-epic-validation moved to `in-progress/`; bundled branch
-  `codex/task/TASK-018-security-epic-validation` and worktree
-  `/Users/ivo.toby/workspace/postgram/.worktrees/TASK-018-security-epic-validation`
-  are assigned and pending creation from the pushed activation checkpoint.
+- TASK-018-security-epic-validation moved to `review/` after final validation.
+  It fixed production audit findings with non-force lockfile updates, prepared
+  `epic-validation.md` and `final-pr.md`, and recorded broad verification
+  evidence. No unresolved P1/P2 security finding remains; repo-wide lint and
+  dev-tooling audit concerns are recorded as non-blocking.
 
 Stop condition:
 

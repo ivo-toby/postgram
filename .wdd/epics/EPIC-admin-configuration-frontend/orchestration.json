@@ -2382,7 +2382,9 @@
     "nextCheckDueAt": "2026-07-06T17:44:45Z",
     "schedulerRef": "postgram-admin-wave-005-wdd-heartbeat",
     "schedulerName": "postgram-admin-wave-008-wdd-heartbeat",
-    "fallbackPrompt": "WAVE-008 is active. Read .wdd/epics/EPIC-admin-configuration-frontend/orchestration.json and controller-state.md, inspect TASK-012-admin-ops-dashboard-ui and TASK-013-admin-config-ui workers and worktrees, update gates, PR/review refs, feedback, branch freshness, verification, shared-context reconciliation, and monitoring timestamps. If a worker has produced a PR or patch, move that bundle to review/reviewer orchestration; if no PR or patch exists, keep no_pr and nudge exact missing deliverables only if needed. Stop when WAVE-008 bundles are merged, blocked, cancelled, or ready for wdd-reconcile-wave. After WAVE-008 is reconciled, continue to WAVE-009 per Ivo finish-all-waves instruction and push to GitHub between tasks/waves."
+    "fallbackPrompt": "WAVE-008 is active. Read .wdd/epics/EPIC-admin-configuration-frontend/orchestration.json and controller-state.md, inspect TASK-012-admin-ops-dashboard-ui and TASK-013-admin-config-ui workers and worktrees, update gates, PR/review refs, feedback, branch freshness, verification, shared-context reconciliation, and monitoring timestamps. If a worker has produced a PR or patch, move that bundle to review/reviewer orchestration; if no PR or patch exists, keep no_pr and nudge exact missing deliverables only if needed. Stop when WAVE-008 bundles are merged, blocked, cancelled, or ready for wdd-reconcile-wave. After WAVE-008 is reconciled, continue to WAVE-009 per Ivo finish-all-waves instruction and push to GitHub between tasks/waves.",
+    "verifiedAt": "2026-07-06T17:32:41Z",
+    "automationUpdateResult": "updated"
   },
   "sharedContext": {
     "index": "shared-context/index.md",
@@ -2578,7 +2580,9 @@
       "nextCheckDueAt": "2026-07-06T17:44:45Z",
       "schedulerRef": "postgram-admin-wave-005-wdd-heartbeat",
       "schedulerName": "postgram-admin-wave-008-wdd-heartbeat",
-      "fallbackPrompt": "WAVE-008 is active. Read .wdd/epics/EPIC-admin-configuration-frontend/orchestration.json and controller-state.md, inspect TASK-012-admin-ops-dashboard-ui and TASK-013-admin-config-ui workers and worktrees, update gates, PR/review refs, feedback, branch freshness, verification, shared-context reconciliation, and monitoring timestamps. If a worker has produced a PR or patch, move that bundle to review/reviewer orchestration; if no PR or patch exists, keep no_pr and nudge exact missing deliverables only if needed. Stop when WAVE-008 bundles are merged, blocked, cancelled, or ready for wdd-reconcile-wave. After WAVE-008 is reconciled, continue to WAVE-009 per Ivo finish-all-waves instruction and push to GitHub between tasks/waves."
+      "fallbackPrompt": "WAVE-008 is active. Read .wdd/epics/EPIC-admin-configuration-frontend/orchestration.json and controller-state.md, inspect TASK-012-admin-ops-dashboard-ui and TASK-013-admin-config-ui workers and worktrees, update gates, PR/review refs, feedback, branch freshness, verification, shared-context reconciliation, and monitoring timestamps. If a worker has produced a PR or patch, move that bundle to review/reviewer orchestration; if no PR or patch exists, keep no_pr and nudge exact missing deliverables only if needed. Stop when WAVE-008 bundles are merged, blocked, cancelled, or ready for wdd-reconcile-wave. After WAVE-008 is reconciled, continue to WAVE-009 per Ivo finish-all-waves instruction and push to GitHub between tasks/waves.",
+      "verifiedAt": "2026-07-06T17:32:41Z",
+      "automationUpdateResult": "updated"
     },
     "review": {
       "WAVE-001-admin-feasibility-gate": {

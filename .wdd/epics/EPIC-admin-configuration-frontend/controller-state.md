@@ -1489,6 +1489,10 @@ to GitHub between tasks/waves.
   (`019f387a-3f1d-74a0-9949-5a318a43e494`) for
   TASK-013-admin-config-ui. Both gates are `no_pr`; monitor again at
   2026-07-06T17:44:45Z unless a worker returns sooner.
+- 2026-07-06T17:32:41Z: Updated Codex heartbeat automation
+  `postgram-admin-wave-005-wdd-heartbeat` to scheduler name
+  `postgram-admin-wave-008-wdd-heartbeat` with the WAVE-008
+  `subagent-pr-orchestration` monitor prompt and 15-minute cadence.
 
 ## Next Action
 

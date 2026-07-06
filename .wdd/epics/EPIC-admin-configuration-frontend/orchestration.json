@@ -1970,23 +1970,24 @@
       "assignedModel": "implementationComplex",
       "reviewModel": "review",
       "branch": "codex/task/TASK-011-admin-auth-ui",
-      "workerThreadId": null,
+      "workerThreadId": "019f37c5-29ec-7ec3-b6fd-6aba64df3dc9",
       "reviewThreadId": null,
       "workerWorktree": "/Users/ivo.toby/workspace/postgram/.worktrees/TASK-011-admin-auth-ui",
-      "worktreeStatus": "pending_creation",
+      "worktreeStatus": "active_clean",
       "pr": null,
-      "latestCommit": null,
-      "branchFreshness": "current_at_activation",
+      "latestCommit": "848b902c5f4829ff78529256c3a9181423c5a150",
+      "branchFreshness": "current_at_dispatch",
       "blockingFeedback": [],
       "verification": {
-        "result": "not_run",
+        "result": "branch_pushed_worker_dispatched",
         "commands": [
           "npm --prefix ui run test -- --run src/components/AdminAuth.test.tsx",
           "npm --prefix ui run typecheck"
         ],
-        "evidence": null
+        "evidence": "Task branch codex/task/TASK-011-admin-auth-ui and worktree /Users/ivo.toby/workspace/postgram/.worktrees/TASK-011-admin-auth-ui are clean/pushed at 848b902; worker Meitner (019f37c5-29ec-7ec3-b6fd-6aba64df3dc9) dispatched at 2026-07-06T14:11:59Z. Task implementation verification has not run yet."
       },
-      "currentGate": "pending_worker_dispatch"
+      "currentGate": "no_pr",
+      "workerNickname": "Meitner"
     },
     {
       "id": "TASK-012-admin-ops-dashboard-ui",
@@ -2174,24 +2175,25 @@
       "assignedModel": "implementationComplex",
       "reviewModel": "review",
       "branch": "codex/task/TASK-015-maintenance-admin-api",
-      "workerThreadId": null,
+      "workerThreadId": "019f37c5-7084-7920-916a-7fd9ac7d8cb6",
       "reviewThreadId": null,
       "workerWorktree": "/Users/ivo.toby/workspace/postgram/.worktrees/TASK-015-maintenance-admin-api",
-      "worktreeStatus": "pending_creation",
+      "worktreeStatus": "active_clean",
       "pr": null,
-      "latestCommit": null,
-      "branchFreshness": "current_at_activation",
+      "latestCommit": "848b902c5f4829ff78529256c3a9181423c5a150",
+      "branchFreshness": "current_at_dispatch",
       "blockingFeedback": [],
       "verification": {
-        "result": "not_run",
+        "result": "branch_pushed_worker_dispatched",
         "commands": [
           "npm test -- tests/contract/admin-maintenance-api.test.ts",
           "npm test -- tests/integration/cli-admin.test.ts",
           "npm run typecheck"
         ],
-        "evidence": null
+        "evidence": "Task branch codex/task/TASK-015-maintenance-admin-api and worktree /Users/ivo.toby/workspace/postgram/.worktrees/TASK-015-maintenance-admin-api are clean/pushed at 848b902; worker Helmholtz (019f37c5-7084-7920-916a-7fd9ac7d8cb6) dispatched at 2026-07-06T14:11:59Z. Task implementation verification has not run yet."
       },
-      "currentGate": "pending_worker_dispatch"
+      "currentGate": "no_pr",
+      "workerNickname": "Helmholtz"
     },
     {
       "id": "TASK-016-maintenance-admin-ui",
@@ -2313,12 +2315,12 @@
   "monitoring": {
     "mode": "adaptive",
     "cadence": "15m",
-    "status": "wave_007_activation_pushed_pending_worker_dispatch",
-    "lastCheckedAt": "2026-07-06T14:08:16Z",
-    "nextCheckDueAt": "2026-07-06T14:23:16Z",
+    "status": "wave_007_dispatched_monitoring_active",
+    "lastCheckedAt": "2026-07-06T14:11:59Z",
+    "nextCheckDueAt": "2026-07-06T14:26:59Z",
     "schedulerRef": "postgram-admin-wave-005-wdd-heartbeat",
     "schedulerName": "postgram-admin-wave-007-wdd-heartbeat",
-    "fallbackPrompt": "WAVE-007 is active. Inspect TASK-011-admin-auth-ui and TASK-015-maintenance-admin-api worktrees, then continue subagent-pr-orchestration monitoring."
+    "fallbackPrompt": "WAVE-007 workers Meitner (TASK-011) and Helmholtz (TASK-015) are dispatched. Inspect worktrees and PRs, update gates, and move any produced PR or patch to review orchestration."
   },
   "sharedContext": {
     "index": "shared-context/index.md",
@@ -2356,25 +2358,45 @@
         ],
         "branch": "codex/task/TASK-011-admin-auth-ui",
         "worktree": "/Users/ivo.toby/workspace/postgram/.worktrees/TASK-011-admin-auth-ui",
-        "worktreeStatus": "pending_creation",
-        "workerThreadId": null,
-        "workerNickname": null,
+        "worktreeStatus": "active_clean",
+        "workerThreadId": "019f37c5-29ec-7ec3-b6fd-6aba64df3dc9",
+        "workerNickname": "Meitner",
         "reviewThreadId": null,
         "reviewNickname": null,
-        "currentGate": "pending_worker_dispatch",
-        "branchFreshness": "current_at_activation",
+        "currentGate": "no_pr",
+        "branchFreshness": "current_at_dispatch",
         "pr": null,
-        "latestCommit": null,
+        "latestCommit": "848b902c5f4829ff78529256c3a9181423c5a150",
         "blockingFeedback": [],
         "verification": {
-          "result": "not_run",
-          "commands": [],
-          "evidence": null
+          "result": "branch_pushed_worker_dispatched",
+          "commands": [
+            "git status --short --branch",
+            "git rev-parse --short HEAD",
+            "git rev-list --left-right --count origin/codex/epic/admin-configuration-frontend...HEAD",
+            "git push -u origin codex/task/TASK-011-admin-auth-ui"
+          ],
+          "evidence": "Worktree /Users/ivo.toby/workspace/postgram/.worktrees/TASK-011-admin-auth-ui is clean at 848b902; remote branch codex/task/TASK-011-admin-auth-ui is pushed at the activation base with divergence 0 0. Worker Meitner (019f37c5-29ec-7ec3-b6fd-6aba64df3dc9) dispatched at 2026-07-06T14:11:59Z."
         },
         "activatedAt": "2026-07-06T14:08:16Z",
         "cleanupState": "not_started",
         "sharedContextReconciliation": "not_started",
-        "lastObservedAt": "2026-07-06T14:08:16Z"
+        "lastObservedAt": "2026-07-06T14:11:59Z",
+        "branchPushedAt": "2026-07-06T14:11:59Z",
+        "dispatchedAt": "2026-07-06T14:11:59Z",
+        "dispatchBaseCommit": "848b902c5f4829ff78529256c3a9181423c5a150",
+        "worktreeObservation": {
+          "observedAt": "2026-07-06T14:11:59Z",
+          "taskId": "TASK-011-admin-auth-ui",
+          "status": "worker_dispatched_no_pr",
+          "workerStatus": "RUNNING",
+          "pr": null,
+          "prState": "none",
+          "worktreeStatus": "active_clean",
+          "branchHead": "848b902c5f4829ff78529256c3a9181423c5a150",
+          "branchFreshness": "current_at_dispatch",
+          "coordinationNote": "Initial dispatch complete; await PR or patch reference."
+        }
       },
       {
         "id": "WAVE-007-maintenance-admin-api",
@@ -2383,32 +2405,52 @@
         ],
         "branch": "codex/task/TASK-015-maintenance-admin-api",
         "worktree": "/Users/ivo.toby/workspace/postgram/.worktrees/TASK-015-maintenance-admin-api",
-        "worktreeStatus": "pending_creation",
-        "workerThreadId": null,
-        "workerNickname": null,
+        "worktreeStatus": "active_clean",
+        "workerThreadId": "019f37c5-7084-7920-916a-7fd9ac7d8cb6",
+        "workerNickname": "Helmholtz",
         "reviewThreadId": null,
         "reviewNickname": null,
-        "currentGate": "pending_worker_dispatch",
-        "branchFreshness": "current_at_activation",
+        "currentGate": "no_pr",
+        "branchFreshness": "current_at_dispatch",
         "pr": null,
-        "latestCommit": null,
+        "latestCommit": "848b902c5f4829ff78529256c3a9181423c5a150",
         "blockingFeedback": [],
         "verification": {
-          "result": "not_run",
-          "commands": [],
-          "evidence": null
+          "result": "branch_pushed_worker_dispatched",
+          "commands": [
+            "git status --short --branch",
+            "git rev-parse --short HEAD",
+            "git rev-list --left-right --count origin/codex/epic/admin-configuration-frontend...HEAD",
+            "git push -u origin codex/task/TASK-015-maintenance-admin-api"
+          ],
+          "evidence": "Worktree /Users/ivo.toby/workspace/postgram/.worktrees/TASK-015-maintenance-admin-api is clean at 848b902; remote branch codex/task/TASK-015-maintenance-admin-api is pushed at the activation base with divergence 0 0. Worker Helmholtz (019f37c5-7084-7920-916a-7fd9ac7d8cb6) dispatched at 2026-07-06T14:11:59Z."
         },
         "activatedAt": "2026-07-06T14:08:16Z",
         "cleanupState": "not_started",
         "sharedContextReconciliation": "not_started",
-        "lastObservedAt": "2026-07-06T14:08:16Z"
+        "lastObservedAt": "2026-07-06T14:11:59Z",
+        "branchPushedAt": "2026-07-06T14:11:59Z",
+        "dispatchedAt": "2026-07-06T14:11:59Z",
+        "dispatchBaseCommit": "848b902c5f4829ff78529256c3a9181423c5a150",
+        "worktreeObservation": {
+          "observedAt": "2026-07-06T14:11:59Z",
+          "taskId": "TASK-015-maintenance-admin-api",
+          "status": "worker_dispatched_no_pr",
+          "workerStatus": "RUNNING",
+          "pr": null,
+          "prState": "none",
+          "worktreeStatus": "active_clean",
+          "branchHead": "848b902c5f4829ff78529256c3a9181423c5a150",
+          "branchFreshness": "current_at_dispatch",
+          "coordinationNote": "Initial dispatch complete; await PR or patch reference."
+        }
       }
     ],
-    "dispatchState": "pending_worker_dispatch",
-    "activationCommit": null,
-    "workerDispatchStartedAt": null,
-    "dispatchedAt": null,
-    "lastObservedAt": "2026-07-06T14:08:16Z"
+    "dispatchState": "dispatched",
+    "activationCommit": "848b902c5f4829ff78529256c3a9181423c5a150",
+    "workerDispatchStartedAt": "2026-07-06T14:11:59Z",
+    "dispatchedAt": "2026-07-06T14:11:59Z",
+    "lastObservedAt": "2026-07-06T14:11:59Z"
   },
   "currentGates": {
     "epicBranch": {
@@ -2418,11 +2460,11 @@
       "verifiedAt": "2026-07-05T11:36:08Z"
     },
     "activationArtifactsSynced": {
-      "status": "pending_push",
-      "commit": null,
+      "status": "synced_to_epic_branch",
+      "commit": "848b902c5f4829ff78529256c3a9181423c5a150",
       "requiredBeforeTaskWorktrees": true,
       "wave": "WAVE-007",
-      "syncedAt": null
+      "syncedAt": "2026-07-06T14:08:16Z"
     },
     "waveStrategyConfirmation": {
       "WAVE-001": "confirmed_by_ivo_2026-07-05",
@@ -2443,8 +2485,8 @@
       "WAVE-005-provider-config-apply": "cleaned_up",
       "WAVE-006-admin-key-audit-stats-api": "cleaned_up",
       "WAVE-006-admin-job-foundation": "cleaned_up",
-      "WAVE-007-admin-auth-ui": "pending_creation",
-      "WAVE-007-maintenance-admin-api": "pending_creation"
+      "WAVE-007-admin-auth-ui": "active_clean",
+      "WAVE-007-maintenance-admin-api": "active_clean"
     },
     "workerDispatch": {
       "WAVE-001-admin-feasibility-gate": "reconciled",
@@ -2456,8 +2498,8 @@
       "WAVE-005-provider-config-apply": "reconciled",
       "WAVE-006-admin-key-audit-stats-api": "reconciled",
       "WAVE-006-admin-job-foundation": "reconciled",
-      "WAVE-007-admin-auth-ui": "pending_worker_dispatch",
-      "WAVE-007-maintenance-admin-api": "pending_worker_dispatch"
+      "WAVE-007-admin-auth-ui": "no_pr",
+      "WAVE-007-maintenance-admin-api": "no_pr"
     },
     "waveCompletion": {
       "WAVE-001": "done",
@@ -2475,12 +2517,12 @@
     "monitoring": {
       "mode": "adaptive",
       "cadence": "15m",
-      "status": "wave_007_activation_pushed_pending_worker_dispatch",
-      "lastCheckedAt": "2026-07-06T14:08:16Z",
-      "nextCheckDueAt": "2026-07-06T14:23:16Z",
+      "status": "wave_007_dispatched_monitoring_active",
+      "lastCheckedAt": "2026-07-06T14:11:59Z",
+      "nextCheckDueAt": "2026-07-06T14:26:59Z",
       "schedulerRef": "postgram-admin-wave-005-wdd-heartbeat",
       "schedulerName": "postgram-admin-wave-007-wdd-heartbeat",
-      "fallbackPrompt": "WAVE-007 is active. Inspect TASK-011-admin-auth-ui and TASK-015-maintenance-admin-api worktrees, then continue subagent-pr-orchestration monitoring."
+      "fallbackPrompt": "WAVE-007 workers Meitner (TASK-011) and Helmholtz (TASK-015) are dispatched. Inspect worktrees and PRs, update gates, and move any produced PR or patch to review orchestration."
     },
     "review": {
       "WAVE-001-admin-feasibility-gate": {
@@ -2732,8 +2774,8 @@
       "WAVE-005-provider-config-apply": "current_at_merge",
       "WAVE-006-admin-key-audit-stats-api": "current_at_merge",
       "WAVE-006-admin-job-foundation": "current_at_merge",
-      "WAVE-007-admin-auth-ui": "current_at_activation",
-      "WAVE-007-maintenance-admin-api": "current_at_activation"
+      "WAVE-007-admin-auth-ui": "current_at_dispatch",
+      "WAVE-007-maintenance-admin-api": "current_at_dispatch"
     },
     "merge": {
       "WAVE-001-admin-feasibility-gate": {
@@ -3471,6 +3513,16 @@
           "git diff --check"
         ],
         "evidence": "WAVE-006 reconciled on 2026-07-06 after PR #85 and PR #86 were confirmed MERGED. Shared context resources now record the key/audit/stats admin API contract, admin job foundation, security gates, validation evidence, and migration/job persistence rules. TASK-014 worktree was clean and removed; TASK-008 was already cleaned up. Future TASK-011/TASK-012/TASK-015/TASK-016 carry forward WAVE-006 route/job contracts."
+      },
+      "WAVE-007-admin-auth-ui": {
+        "result": "branch_pushed_worker_dispatched",
+        "checkedAt": "2026-07-06T14:11:59Z",
+        "evidence": "Clean worktree and pushed branch at 848b902; worker Meitner (019f37c5-29ec-7ec3-b6fd-6aba64df3dc9) dispatched."
+      },
+      "WAVE-007-maintenance-admin-api": {
+        "result": "branch_pushed_worker_dispatched",
+        "checkedAt": "2026-07-06T14:11:59Z",
+        "evidence": "Clean worktree and pushed branch at 848b902; worker Helmholtz (019f37c5-7084-7920-916a-7fd9ac7d8cb6) dispatched."
       }
     },
     "feedback": {
@@ -3539,10 +3591,10 @@
       }
     },
     "activationArtifact": {
-      "commit": null,
+      "commit": "848b902c5f4829ff78529256c3a9181423c5a150",
       "requiredBeforeTaskWorktrees": true,
       "wave": "WAVE-007",
-      "syncedAt": null
+      "syncedAt": "2026-07-06T14:08:16Z"
     }
   },
   "lastReconciledWave": {
@@ -3599,25 +3651,45 @@
         ],
         "branch": "codex/task/TASK-011-admin-auth-ui",
         "worktree": "/Users/ivo.toby/workspace/postgram/.worktrees/TASK-011-admin-auth-ui",
-        "worktreeStatus": "pending_creation",
-        "workerThreadId": null,
-        "workerNickname": null,
+        "worktreeStatus": "active_clean",
+        "workerThreadId": "019f37c5-29ec-7ec3-b6fd-6aba64df3dc9",
+        "workerNickname": "Meitner",
         "reviewThreadId": null,
         "reviewNickname": null,
-        "currentGate": "pending_worker_dispatch",
-        "branchFreshness": "current_at_activation",
+        "currentGate": "no_pr",
+        "branchFreshness": "current_at_dispatch",
         "pr": null,
-        "latestCommit": null,
+        "latestCommit": "848b902c5f4829ff78529256c3a9181423c5a150",
         "blockingFeedback": [],
         "verification": {
-          "result": "not_run",
-          "commands": [],
-          "evidence": null
+          "result": "branch_pushed_worker_dispatched",
+          "commands": [
+            "git status --short --branch",
+            "git rev-parse --short HEAD",
+            "git rev-list --left-right --count origin/codex/epic/admin-configuration-frontend...HEAD",
+            "git push -u origin codex/task/TASK-011-admin-auth-ui"
+          ],
+          "evidence": "Worktree /Users/ivo.toby/workspace/postgram/.worktrees/TASK-011-admin-auth-ui is clean at 848b902; remote branch codex/task/TASK-011-admin-auth-ui is pushed at the activation base with divergence 0 0. Worker Meitner (019f37c5-29ec-7ec3-b6fd-6aba64df3dc9) dispatched at 2026-07-06T14:11:59Z."
         },
         "activatedAt": "2026-07-06T14:08:16Z",
         "cleanupState": "not_started",
         "sharedContextReconciliation": "not_started",
-        "lastObservedAt": "2026-07-06T14:08:16Z"
+        "lastObservedAt": "2026-07-06T14:11:59Z",
+        "branchPushedAt": "2026-07-06T14:11:59Z",
+        "dispatchedAt": "2026-07-06T14:11:59Z",
+        "dispatchBaseCommit": "848b902c5f4829ff78529256c3a9181423c5a150",
+        "worktreeObservation": {
+          "observedAt": "2026-07-06T14:11:59Z",
+          "taskId": "TASK-011-admin-auth-ui",
+          "status": "worker_dispatched_no_pr",
+          "workerStatus": "RUNNING",
+          "pr": null,
+          "prState": "none",
+          "worktreeStatus": "active_clean",
+          "branchHead": "848b902c5f4829ff78529256c3a9181423c5a150",
+          "branchFreshness": "current_at_dispatch",
+          "coordinationNote": "Initial dispatch complete; await PR or patch reference."
+        }
       },
       {
         "id": "WAVE-007-maintenance-admin-api",
@@ -3626,31 +3698,51 @@
         ],
         "branch": "codex/task/TASK-015-maintenance-admin-api",
         "worktree": "/Users/ivo.toby/workspace/postgram/.worktrees/TASK-015-maintenance-admin-api",
-        "worktreeStatus": "pending_creation",
-        "workerThreadId": null,
-        "workerNickname": null,
+        "worktreeStatus": "active_clean",
+        "workerThreadId": "019f37c5-7084-7920-916a-7fd9ac7d8cb6",
+        "workerNickname": "Helmholtz",
         "reviewThreadId": null,
         "reviewNickname": null,
-        "currentGate": "pending_worker_dispatch",
-        "branchFreshness": "current_at_activation",
+        "currentGate": "no_pr",
+        "branchFreshness": "current_at_dispatch",
         "pr": null,
-        "latestCommit": null,
+        "latestCommit": "848b902c5f4829ff78529256c3a9181423c5a150",
         "blockingFeedback": [],
         "verification": {
-          "result": "not_run",
-          "commands": [],
-          "evidence": null
+          "result": "branch_pushed_worker_dispatched",
+          "commands": [
+            "git status --short --branch",
+            "git rev-parse --short HEAD",
+            "git rev-list --left-right --count origin/codex/epic/admin-configuration-frontend...HEAD",
+            "git push -u origin codex/task/TASK-015-maintenance-admin-api"
+          ],
+          "evidence": "Worktree /Users/ivo.toby/workspace/postgram/.worktrees/TASK-015-maintenance-admin-api is clean at 848b902; remote branch codex/task/TASK-015-maintenance-admin-api is pushed at the activation base with divergence 0 0. Worker Helmholtz (019f37c5-7084-7920-916a-7fd9ac7d8cb6) dispatched at 2026-07-06T14:11:59Z."
         },
         "activatedAt": "2026-07-06T14:08:16Z",
         "cleanupState": "not_started",
         "sharedContextReconciliation": "not_started",
-        "lastObservedAt": "2026-07-06T14:08:16Z"
+        "lastObservedAt": "2026-07-06T14:11:59Z",
+        "branchPushedAt": "2026-07-06T14:11:59Z",
+        "dispatchedAt": "2026-07-06T14:11:59Z",
+        "dispatchBaseCommit": "848b902c5f4829ff78529256c3a9181423c5a150",
+        "worktreeObservation": {
+          "observedAt": "2026-07-06T14:11:59Z",
+          "taskId": "TASK-015-maintenance-admin-api",
+          "status": "worker_dispatched_no_pr",
+          "workerStatus": "RUNNING",
+          "pr": null,
+          "prState": "none",
+          "worktreeStatus": "active_clean",
+          "branchHead": "848b902c5f4829ff78529256c3a9181423c5a150",
+          "branchFreshness": "current_at_dispatch",
+          "coordinationNote": "Initial dispatch complete; await PR or patch reference."
+        }
       }
     ],
-    "dispatchState": "pending_worker_dispatch",
-    "activationCommit": null,
-    "workerDispatchStartedAt": null,
-    "dispatchedAt": null,
-    "lastObservedAt": "2026-07-06T14:08:16Z"
+    "dispatchState": "dispatched",
+    "activationCommit": "848b902c5f4829ff78529256c3a9181423c5a150",
+    "workerDispatchStartedAt": "2026-07-06T14:11:59Z",
+    "dispatchedAt": "2026-07-06T14:11:59Z",
+    "lastObservedAt": "2026-07-06T14:11:59Z"
   }
 }

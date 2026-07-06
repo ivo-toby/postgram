@@ -18,12 +18,12 @@ assigned_model_class: implementationComplex
 review_model_class: review
 branch: codex/task/TASK-011-admin-auth-ui
 worker_worktree: /Users/ivo.toby/workspace/postgram/.worktrees/TASK-011-admin-auth-ui
-worktree_status: pending_creation
+worktree_status: active_clean
 pr: null
-worker_thread_id: null
+worker_thread_id: 019f37c5-29ec-7ec3-b6fd-6aba64df3dc9
 review_thread_id: null
-current_gate: activation_pushed_pending_dispatch
-branch_freshness: current_at_activation
+current_gate: no_pr
+branch_freshness: current_at_dispatch
 verification:
   - npm --prefix ui run test -- --run src/components/AdminAuth.test.tsx
   - npm --prefix ui run typecheck
@@ -110,7 +110,7 @@ codex/task/TASK-011-admin-auth-ui
 
 ## Worker Worktree
 
-Reserved at `/Users/ivo.toby/workspace/postgram/.worktrees/TASK-011-admin-auth-ui`.
+Active at `/Users/ivo.toby/workspace/postgram/.worktrees/TASK-011-admin-auth-ui`.
 
 ## PR / Patch Reference
 
@@ -174,7 +174,9 @@ Keep admin auth UI separate from current API-key login.
 
 ## Verification Evidence
 
-- Not run yet.
+- Branch/worktree setup verified at activation base `848b902`; worker Meitner
+  (`019f37c5-29ec-7ec3-b6fd-6aba64df3dc9`) dispatched at
+  2026-07-06T14:11:59Z. Task implementation verification has not run yet.
 
 ## Review Feedback
 

@@ -58,11 +58,12 @@ now reconciled. Shared context records the admin key/audit/stats route contract
 and the admin job foundation; TASK-014's clean worktree was removed during
 reconciliation.
 
-WAVE-007 is active after WAVE-006 reconciliation was pushed in `109744b`.
-Its parallel tasks are TASK-011-admin-auth-ui and
-TASK-015-maintenance-admin-api. Task files are in `in-progress/`, dedicated
-branches and worktree paths are reserved, and the activation checkpoint is
-pending push before worker dispatch.
+WAVE-007 is active after WAVE-006 reconciliation was pushed in `109744b` and
+the WAVE-007 activation checkpoint was pushed in `848b902`. Its parallel tasks
+are TASK-011-admin-auth-ui and TASK-015-maintenance-admin-api. Task files are
+in `in-progress/`, dedicated task branches and worktrees were created and
+pushed at `848b902`, and workers Meitner and Helmholtz were dispatched at
+2026-07-06T14:11:59Z. Both bundles are at the `no_pr` monitoring gate.
 
 WAVE-004 is done and reconciled. PR #81/TASK-009 and PR #82/TASK-006 are
 merged, shared context is reconciled, and both WAVE-004 worktrees are cleaned
@@ -90,11 +91,11 @@ Mode: adaptive
 
 Cadence: 15m
 
-Status: wave_007_activation_pushed_pending_worker_dispatch
+Status: wave_007_dispatched_monitoring_active
 
-Last check: 2026-07-06T14:08:16Z
+Last check: 2026-07-06T14:11:59Z
 
-Next check due: 2026-07-06T14:23:16Z
+Next check due: 2026-07-06T14:26:59Z
 
 Scheduler reference: `postgram-admin-wave-005-wdd-heartbeat`
 
@@ -103,9 +104,9 @@ Scheduler name: `postgram-admin-wave-007-wdd-heartbeat`
 Fallback prompt:
 
 ```text
-WAVE-007 is active. Inspect TASK-011-admin-auth-ui and
-TASK-015-maintenance-admin-api worktrees, then continue
-subagent-pr-orchestration monitoring.
+WAVE-007 workers Meitner (TASK-011) and Helmholtz (TASK-015) are dispatched.
+Inspect worktrees and PRs, update gates, and move any produced PR or patch to
+review orchestration.
 ```
 
 ## Active Wave Strategy
@@ -117,8 +118,7 @@ subagent-pr-orchestration monitoring.
 - WAVE-007 strategy: full / parallel / risk_based / adaptive.
 - WAVE-007 tasks: TASK-011-admin-auth-ui and TASK-015-maintenance-admin-api.
 - Confirmation: Ivo via Codex finish-all-waves request on 2026-07-06.
-- Current gate: push activation artifacts, create/push task branches and
-  worktrees, then dispatch workers.
+- Current gate: monitor WAVE-007 workers for PR or patch handoff.
 
 ## Last Reconciled Wave
 
@@ -158,11 +158,11 @@ subagent-pr-orchestration monitoring.
 | TASK-008-admin-key-audit-stats-api | TICKET-003-admin-api-foundation | codex/task/TASK-008-admin-key-audit-stats-api | cleaned_up | reconciled | REVIEW_PASS; freshness current at task head `281681b`; post-merge tests/typecheck/touched-file ESLint passed; merged locally into epic branch in `13465eb`; WAVE-006 reconciled |
 | TASK-009-settings-secret-store | TICKET-004-runtime-configuration | codex/task/TASK-009-settings-secret-store | cleaned_up | reconciled | PR #81 follow-up REVIEW_PASS, final branch freshness passed at `ca9c96f`, merged locally into epic branch in `b63ad08`; worktree cleaned up during WAVE-004 reconciliation |
 | TASK-010-provider-config-apply | TICKET-004-runtime-configuration | codex/task/TASK-010-provider-config-apply | cleaned_up | reconciled | REVIEW_PASS; final branch freshness passed at `515cfa5`; merged locally into epic branch in `f5efbc0`; PR #84 merged at 2026-07-06T11:31:10Z; WAVE-005 reconciled |
-| TASK-011-admin-auth-ui | TICKET-005-admin-frontend | codex/task/TASK-011-admin-auth-ui | pending_creation | pending_worker_dispatch | `npm --prefix ui run test -- --run src/components/AdminAuth.test.tsx`; `npm --prefix ui run typecheck` |
+| TASK-011-admin-auth-ui | TICKET-005-admin-frontend | codex/task/TASK-011-admin-auth-ui | active_clean | no_pr | `npm --prefix ui run test -- --run src/components/AdminAuth.test.tsx`; `npm --prefix ui run typecheck` |
 | TASK-012-admin-ops-dashboard-ui | TICKET-005-admin-frontend | codex/task/TASK-012-admin-ops-dashboard-ui | not_created | planned | `npm --prefix ui run test -- --run src/components/AdminOps.test.tsx`; `npm --prefix ui run typecheck` |
 | TASK-013-admin-config-ui | TICKET-005-admin-frontend | codex/task/TASK-013-admin-config-ui | not_created | planned | `npm --prefix ui run test -- --run src/components/AdminConfig.test.tsx`; `npm --prefix ui run typecheck` |
 | TASK-014-admin-job-foundation | TICKET-006-maintenance-jobs | codex/task/TASK-014-admin-job-foundation | cleaned_up | reconciled | Lorentz REVIEW_PASS; freshness current at task head `0e08630`; post-merge tests/typecheck/touched-file ESLint passed; merged locally into epic branch in `c5edbfc`; WAVE-006 reconciled and worktree cleaned up |
-| TASK-015-maintenance-admin-api | TICKET-006-maintenance-jobs | codex/task/TASK-015-maintenance-admin-api | pending_creation | pending_worker_dispatch | `npm test -- tests/contract/admin-maintenance-api.test.ts`; `npm test -- tests/integration/cli-admin.test.ts`; `npm run typecheck` |
+| TASK-015-maintenance-admin-api | TICKET-006-maintenance-jobs | codex/task/TASK-015-maintenance-admin-api | active_clean | no_pr | `npm test -- tests/contract/admin-maintenance-api.test.ts`; `npm test -- tests/integration/cli-admin.test.ts`; `npm run typecheck` |
 | TASK-016-maintenance-admin-ui | TICKET-006-maintenance-jobs | codex/task/TASK-016-maintenance-admin-ui | not_created | planned | `npm --prefix ui run test -- --run src/components/AdminMaintenance.test.tsx`; `npm --prefix ui run typecheck` |
 | TASK-017-docker-first-run-no-cli | TICKET-007-docker-e2e-validation | codex/task/TASK-017-docker-first-run-no-cli | not_created | planned | `docker compose config`; `npm run typecheck`; `npm --prefix ui run build` |
 | TASK-018-security-epic-validation | TICKET-007-docker-e2e-validation | codex/task/TASK-018-security-epic-validation | not_created | planned | broad backend, frontend, Docker, and smoke validation |
@@ -1268,9 +1268,19 @@ subagent-pr-orchestration monitoring.
   TASK-014 are reconciled; blocking feedback is empty; TASK-014's clean
   worktree was removed and worktree metadata is `cleaned_up`. WAVE-007 is
   ready to start after this reconciliation commit is pushed.
+- 2026-07-06T14:11:59Z: Started WAVE-007 after WAVE-006 reconciliation push.
+  Activation commit `848b902` moved TASK-011 and TASK-015 to `in-progress/`
+  and was pushed before worker dispatch. Created and pushed clean task branches
+  `codex/task/TASK-011-admin-auth-ui` and
+  `codex/task/TASK-015-maintenance-admin-api` from `848b902` with branch
+  divergence `0 0`. Dispatched Meitner
+  (`019f37c5-29ec-7ec3-b6fd-6aba64df3dc9`) for TASK-011 and Helmholtz
+  (`019f37c5-7084-7920-916a-7fd9ac7d8cb6`) for TASK-015. Both gates are
+  `no_pr`; next check due 2026-07-06T14:26:59Z.
 
 ## Next Action
 
-Next action: push the WAVE-006 reconciliation commit, then start WAVE-007 with
-`wdd-start-wave` for TASK-011-admin-auth-ui and
-TASK-015-maintenance-admin-api.
+Next action: monitor WAVE-007 workers Meitner and Helmholtz. If either worker
+produces a PR or patch, move that bundle to review/reviewer orchestration; if
+no PR or patch exists, keep `no_pr` and nudge exact missing deliverables only
+if the worktree is inactive or stale.

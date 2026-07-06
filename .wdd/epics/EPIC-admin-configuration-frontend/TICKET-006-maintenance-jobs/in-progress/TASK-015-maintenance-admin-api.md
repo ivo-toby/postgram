@@ -21,12 +21,12 @@ assigned_model_class: implementationComplex
 review_model_class: review
 branch: codex/task/TASK-015-maintenance-admin-api
 worker_worktree: /Users/ivo.toby/workspace/postgram/.worktrees/TASK-015-maintenance-admin-api
-worktree_status: pending_creation
+worktree_status: active_clean
 pr: null
-worker_thread_id: null
+worker_thread_id: 019f37c5-7084-7920-916a-7fd9ac7d8cb6
 review_thread_id: null
-current_gate: activation_pushed_pending_dispatch
-branch_freshness: current_at_activation
+current_gate: no_pr
+branch_freshness: current_at_dispatch
 verification:
   - npm test -- tests/contract/admin-maintenance-api.test.ts
   - npm test -- tests/integration/cli-admin.test.ts
@@ -118,7 +118,7 @@ codex/task/TASK-015-maintenance-admin-api
 
 ## Worker Worktree
 
-Reserved at `/Users/ivo.toby/workspace/postgram/.worktrees/TASK-015-maintenance-admin-api`.
+Active at `/Users/ivo.toby/workspace/postgram/.worktrees/TASK-015-maintenance-admin-api`.
 
 ## PR / Patch Reference
 
@@ -175,7 +175,9 @@ Keep command-specific logic typed and bounded rather than generic.
 
 ## Verification Evidence
 
-- Not run yet.
+- Branch/worktree setup verified at activation base `848b902`; worker Helmholtz
+  (`019f37c5-7084-7920-916a-7fd9ac7d8cb6`) dispatched at
+  2026-07-06T14:11:59Z. Task implementation verification has not run yet.
 
 ## Review Feedback
 

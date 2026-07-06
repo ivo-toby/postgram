@@ -30,7 +30,7 @@ updated_at: 2026-07-06
 | TASK-015-maintenance-admin-api | TICKET-006-maintenance-jobs | TASK-008, TASK-010, TASK-014 | graph/memory/embedding services, dry-run/apply admin APIs, CLI regressions | done |
 | TASK-016-maintenance-admin-ui | TICKET-006-maintenance-jobs | TASK-011, TASK-015 | maintenance UI, confirmations, progress polling, admin API client | done |
 | TASK-017-docker-first-run-no-cli | TICKET-007-docker-e2e-validation | TASK-012, TASK-013, TASK-016 | Docker Compose, `.env.example`, README/deployment docs, smoke tests | done |
-| TASK-018-security-epic-validation | TICKET-007-docker-e2e-validation | TASK-017 | security review, broad validation, final handoff artifacts | review |
+| TASK-018-security-epic-validation | TICKET-007-docker-e2e-validation | TASK-017 | security review, broad validation, final handoff artifacts | done |
 
 ## Dependency Grid
 
@@ -904,7 +904,7 @@ Drift notes:
 
 ### WAVE-011
 
-Status: review
+Status: done
 
 Tasks:
 
@@ -931,13 +931,30 @@ Activation rule:
 - Ready after WAVE-010 reconciliation on 2026-07-06.
 - Activated at 2026-07-06T23:11:02Z from pushed epic checkpoint `202b422`.
 
-Progress:
+Completion evidence:
 
-- TASK-018-security-epic-validation moved to `review/` after final validation.
-  It fixed production audit findings with non-force lockfile updates, prepared
-  `epic-validation.md` and `final-pr.md`, and recorded broad verification
-  evidence. No unresolved P1/P2 security finding remains; repo-wide lint and
-  dev-tooling audit concerns are recorded as non-blocking.
+- PR #93: merged by GitHub at 2026-07-06T23:49:13Z.
+- Review: Dewey `REVIEW_PASS`, no P1/P2 findings.
+- Final task head after freshness refresh: `1a890e2`.
+- Epic merge commit: `1b7c891`.
+- Reconciliation checkpoint: pending in this heartbeat.
+- Verification passed:
+  - Final freshness divergence `0 3`.
+  - Merge-tree clean before merge.
+  - Branch and post-merge `git diff --check`.
+  - `jq empty .wdd/epics/EPIC-admin-configuration-frontend/orchestration.json`.
+  - Root and UI production audits with zero vulnerabilities.
+  - `npm test -- tests/unit/docker-first-run.test.ts` (5 tests).
+
+Reconciled decisions:
+
+- The epic hypothesis is proven for the documented Docker/browser happy path.
+- The no-normal-CLI claim remains scoped to bootstrap, MFA, provider
+  configuration, API-key creation, dashboard inspection, and safe maintenance
+  dry-runs.
+- `pgm-admin` remains the emergency/advanced-operator fallback.
+- Existing repo-wide lint and dev-tooling audit concerns are non-blocking and
+  recorded in `epic-validation.md` and `final-pr.md`.
 
 Stop condition:
 
@@ -945,3 +962,4 @@ Stop condition:
 - Broad backend, frontend, Docker, and smoke validation has run or explicit
   blockers are documented.
 - Final handoff is ready for WDD epic validation and final PR preparation.
+- Wave reconciliation completed on 2026-07-06.

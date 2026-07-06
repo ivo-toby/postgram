@@ -576,6 +576,35 @@ Carry-forward security gates:
   fail-closed behavior, and browser-storage non-persistence as final security
   validation gates.
 
+## WAVE-011 Final Security Validation
+
+TASK-018 completed the final security and epic validation in PR #93.
+
+Final security result:
+
+- Dewey returned `REVIEW_PASS` with no P1/P2 findings.
+- Admin authority remains a cookie-session plus active-MFA boundary; ordinary
+  API-key bearer auth and MCP OAuth bearer auth do not authorize admin routes.
+- Unsafe admin methods require CSRF, and sensitive mutations require recent
+  TOTP step-up.
+- Provider secrets remain encrypted, write-only after save, and redacted from
+  reads, audit/job summaries, logs, and browser storage.
+- Maintenance applies require preview evidence, scoped idempotency, step-up,
+  jobs, and safe summaries.
+- The Docker happy path is validated for browser bootstrap, MFA, provider
+  secret entry, API-key creation, dashboard inspection, and safe maintenance
+  dry-run without normal `pgm-admin` use.
+- The no-normal-CLI claim is not broader than the supported happy path.
+  Emergency `pgm-admin` recovery and advanced operator flows remain outside
+  the browser admin surface.
+
+Non-blocking residual risks:
+
+- Lint remains noisy on an existing repo-wide baseline, so it is not yet a
+  reliable final gate.
+- Full dev dependency audits still contain tooling advisories; root/UI
+  production audits are clean.
+
 ## OAuth/OIDC Boundary
 
 Existing OAuth/DCR is for native remote MCP connectors. It lets external clients

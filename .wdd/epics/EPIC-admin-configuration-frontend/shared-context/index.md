@@ -478,6 +478,34 @@ configuration, maintenance jobs, or Docker behavior.
     preservation, admin key fail-closed behavior, Config-tab secret redaction
     after restart, and browser storage non-persistence.
 
+### WAVE-011 Security And Epic Validation
+
+- Status: merged and reconciled on 2026-07-06.
+- PR: https://github.com/ivo-toby/postgram/pull/93, merged at
+  2026-07-06T23:49:13Z.
+- Merge commit: `1b7c891` for TASK-018 security/epic validation.
+- Review: Dewey `REVIEW_PASS`, no P1/P2 findings.
+- Final validation result:
+  - The core hypothesis is proven for the supported Docker happy path:
+    first-run bootstrap, MFA-backed admin setup, provider settings/secrets,
+    API-key creation, dashboard inspection, and safe maintenance dry-runs can
+    be completed from the browser without normal `pgm-admin` use or manual
+    env-file edits after Docker startup.
+  - The claim remains intentionally scoped. `pgm-admin` is still the emergency
+    and advanced-operator fallback for recovery, raw inspection, embedding
+    migrations, and operations not yet exposed through reviewed typed admin
+    APIs.
+  - No unresolved P1/P2 security findings remain across admin auth/session/MFA,
+    CSRF, bootstrap, secret storage/redaction, provider configuration,
+    API-key/audit/stats routes, maintenance jobs/UI, Docker first-run setup, or
+    browser-storage behavior.
+- Non-blocking concerns:
+  - `npm run lint` still fails on an existing repo-wide lint baseline outside
+    TASK-018 product behavior.
+  - Full dev dependency audits still have tooling advisories. Root/UI
+    production audits pass with zero vulnerabilities after non-force lockfile
+    updates.
+
 ## Recent Durable Memory
 
 - Durable memory `1f10a9c4-432b-42a2-a5f0-32505100e756`: this full-profile

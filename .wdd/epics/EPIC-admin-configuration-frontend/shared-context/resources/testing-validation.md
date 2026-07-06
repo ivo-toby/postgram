@@ -579,6 +579,45 @@ Carry-forward test expectations:
   after restart, browser storage non-persistence, and emergency `pgm-admin`
   fallback wording.
 
+## WAVE-011 Final Validation Evidence
+
+TASK-018 merged after Dewey `REVIEW_PASS` with no P1/P2 findings.
+
+TASK-018 worker validation passed before review:
+
+- `npm run typecheck`
+- `npm test` (45 files / 491 tests)
+- `npm run build`
+- `npm --prefix ui run typecheck`
+- `npm --prefix ui run test -- --run` (15 files / 125 tests)
+- `npm --prefix ui run build` with the existing Vite chunk-size warning
+- `docker compose config`
+- `jq empty .wdd/epics/EPIC-admin-configuration-frontend/orchestration.json`
+- `git diff --check`
+- `npm audit --omit=dev --audit-level=high` (0 vulnerabilities)
+- `npm --prefix ui audit --omit=dev --audit-level=high` (0 vulnerabilities)
+
+Final freshness and post-merge verification passed:
+
+- TASK-018 was refreshed against epic checkpoint `1bd737d` at task head
+  `1a890e2`.
+- `git rev-list --left-right --count origin/codex/epic/admin-configuration-frontend...HEAD`
+  reported `0 3`.
+- `git merge-tree --write-tree origin/codex/epic/admin-configuration-frontend HEAD`
+  was clean.
+- Branch diff-check, orchestration JSON parse, root/UI production audits, and
+  `npm test -- tests/unit/docker-first-run.test.ts` passed.
+- TASK-018 merged into the epic branch in `1b7c891`.
+- Post-merge diff-check, orchestration JSON parse, root/UI production audits,
+  and docker-first-run unit tests 5/5 passed.
+
+Final validation conclusions:
+
+- The Docker no-normal-CLI claim is proven for the documented happy path only.
+- Emergency/advanced `pgm-admin` fallback remains intentional.
+- Existing lint baseline and dev-tooling audit advisories are recorded as
+  non-blocking follow-ups; production audits are clean.
+
 ## Durable Memory
 
 ### Docker First-Run Must Be Tested, Not Assumed

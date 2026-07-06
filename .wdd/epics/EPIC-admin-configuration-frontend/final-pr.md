@@ -2,7 +2,7 @@
 id: EPIC-admin-configuration-frontend-FINAL-PR
 kind: final_pr_handoff
 epic: EPIC-admin-configuration-frontend
-status: ready_after_task_018_review
+status: ready_for_final_pr
 created_at: 2026-07-06
 updated_at: 2026-07-06
 ---
@@ -14,8 +14,7 @@ updated_at: 2026-07-06
 - Base: `main`
 - Head: `codex/epic/admin-configuration-frontend`
 - Draft title: `feat: add safe admin configuration frontend`
-- Open after: TASK-018 review passes and WAVE-011 is reconciled into the epic
-  branch.
+- Open after: WAVE-011 reconciliation and epic validation pass.
 
 ## Summary
 
@@ -68,6 +67,8 @@ Fresh TASK-018 verification:
   `npm audit --omit=dev --audit-level=high` and
   `npm --prefix ui audit --omit=dev --audit-level=high` both passed with 0
   vulnerabilities.
+- WAVE-011 reconciliation confirmed PR #93 merged, TASK-018 is in `done/`,
+  shared context is reconciled, and monitoring is stopped.
 
 Non-blocking concerns to mention in the final PR:
 

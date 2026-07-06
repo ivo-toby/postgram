@@ -74,7 +74,7 @@ APIs.
 | TASK-015-maintenance-admin-api | done | PR #88 | passed | REVIEW_PASS after P2 WDD freshness fix |
 | TASK-016-maintenance-admin-ui | done | PR #91 | passed | REVIEW_PASS |
 | TASK-017-docker-first-run-no-cli | done | PR #92 | passed | REVIEW_PASS after two P2 upgrade fixes |
-| TASK-018-security-epic-validation | review | PR #93 | passed with concerns | pending controller review |
+| TASK-018-security-epic-validation | done | PR #93 | passed with concerns | REVIEW_PASS |
 
 ## Review Audit
 
@@ -167,17 +167,15 @@ Fresh TASK-018 validation on 2026-07-06 UTC:
 - Security model, API contracts, architecture, testing-validation, and
   migration/config notes all include WAVE-010 carry-forward gates.
 - No large unindexed shared-context dump was introduced.
-- TASK-018 should be reconciled by the controller after review/merge.
+- TASK-018 is reconciled into the shared context and final handoff artifacts.
 
 ## Monitoring Audit
 
 - Monitoring mode: adaptive.
-- Monitoring status before this worker: WAVE-011 worktree ready pending
-  dispatch.
-- Worker outcome: TASK-018 moved to review with draft PR #93.
-- Stop condition: controller should request review; if review passes, refresh
-  against `codex/epic/admin-configuration-frontend`, rerun freshness checks,
-  merge TASK-018 into the epic branch, then run WDD epic validation/final PR.
+- Monitoring status: stopped after WAVE-011 reconciliation.
+- Worker outcome: TASK-018 merged in PR #93 after Dewey `REVIEW_PASS`.
+- Stop condition: WAVE-011 is reconciled; next phase is final PR preparation
+  into `main`.
 
 ## Integration Risks
 
@@ -193,9 +191,10 @@ Fresh TASK-018 validation on 2026-07-06 UTC:
 
 - Target branch: `main`.
 - Epic branch: `codex/epic/admin-configuration-frontend`.
-- Task branch: `codex/task/TASK-018-security-epic-validation`.
-- Branch freshness before artifact edits: task branch was `1 0` relative to
-  `origin/codex/epic/admin-configuration-frontend`, and merge-tree was clean.
+- Task branch: `codex/task/TASK-018-security-epic-validation`, merged into the
+  epic branch in `1b7c891`.
+- Final task branch freshness passed at `1a890e2` with divergence `0 3` and a
+  clean merge-tree before merge.
 
 ## Result
 

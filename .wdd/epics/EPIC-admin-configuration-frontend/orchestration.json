@@ -1252,7 +1252,7 @@
     },
     {
       "id": "WAVE-011",
-      "status": "in_progress",
+      "status": "done",
       "strategy": {
         "profile": "full",
         "executionMode": "bundled",
@@ -1277,7 +1277,18 @@
         "TASK-018-security-epic-validation"
       ],
       "readyAt": "2026-07-06T22:58:32Z",
-      "activatedAt": "2026-07-06T23:11:02Z"
+      "activatedAt": "2026-07-06T23:11:02Z",
+      "mergedAt": "2026-07-06T23:49:13Z",
+      "completedAt": "2026-07-06T23:50:02Z",
+      "reconciledAt": "2026-07-06T23:50:02Z",
+      "sharedContextReconciliation": "completed",
+      "outcome": {
+        "status": "reconciled",
+        "mergeCommit": "1b7c89157f17812a62d8137d0e3b14019336f688",
+        "pr": "https://github.com/ivo-toby/postgram/pull/93",
+        "mergedAt": "2026-07-06T23:49:13Z",
+        "summary": "WAVE-011 reconciled after PR #93 was confirmed MERGED. Shared context records the final security validation result, the scoped Docker/browser no-normal-CLI hypothesis, clean production audits, and non-blocking lint/dev-tooling audit caveats. TASK-018 worktree was clean and removed."
+      }
     }
   ],
   "taskState": [
@@ -2583,37 +2594,36 @@
       "workerThreadId": "019f39b8-b83d-7350-b93e-c037b63ab845",
       "reviewThreadId": "019f398f-98c3-7350-be3f-1cb4af8aab75",
       "workerWorktree": "/Users/ivo.toby/workspace/postgram/.worktrees/TASK-018-security-epic-validation",
-      "worktreeStatus": "clean_pushed",
+      "worktreeStatus": "cleaned_up",
       "pr": "https://github.com/ivo-toby/postgram/pull/93",
       "latestCommit": "1a890e288435b210e9ea0433fd785b58b9f03c10",
       "branchFreshness": "current_at_merge",
       "blockingFeedback": [],
       "verification": {
-        "result": "not_run",
+        "result": "review_passed_freshness_verified_merged_reconciled",
+        "checkedAt": "2026-07-06T23:50:02Z",
         "commands": [
-          "npm run typecheck",
-          "npm test",
-          "npm run lint",
-          "npm run build",
-          "npm --prefix ui run typecheck",
-          "npm --prefix ui run test -- --run",
-          "npm --prefix ui run build",
-          "docker compose config",
+          "gh pr view 93 --json number,url,state,mergedAt,headRefOid,baseRefOid,mergeCommit",
+          "find .wdd/epics/EPIC-admin-configuration-frontend/TICKET-007-docker-e2e-validation -maxdepth 2 -type f",
+          "git worktree list --porcelain",
+          "git worktree remove /Users/ivo.toby/workspace/postgram/.worktrees/TASK-018-security-epic-validation",
+          "git worktree prune --verbose",
+          "jq empty .wdd/epics/EPIC-admin-configuration-frontend/orchestration.json",
           "git diff --check"
         ],
-        "evidence": null
+        "evidence": "PR #93 is MERGED at 2026-07-06T23:49:13Z with merge commit 1b7c891. TASK-018 is in done/, shared context and final validation/handoff artifacts were reconciled, blocking feedback is empty, and the clean TASK-018 worktree was removed and pruned."
       },
-      "currentGate": "merged",
+      "currentGate": "reconciled",
       "readyAt": "2026-07-06T22:58:32Z",
       "bundle": "WAVE-011-security-epic-validation",
       "activatedAt": "2026-07-06T23:11:02Z",
-      "cleanupState": "not_started",
-      "sharedContextReconciliation": "not_started",
+      "cleanupState": "cleaned_up",
+      "sharedContextReconciliation": "completed",
       "branchPushedAt": "2026-07-06T23:11:02Z",
       "worktreeCreatedAt": "2026-07-06T23:11:02Z",
       "workerNickname": "Ramanujan",
       "dispatchedAt": "2026-07-06T23:11:02Z",
-      "lastObservedAt": "2026-07-06T23:47:08Z",
+      "lastObservedAt": "2026-07-06T23:50:02Z",
       "reviewNickname": "Dewey",
       "reviewRequestedAt": "2026-07-06T23:33:02Z",
       "reviewSubmissionId": "019f39cd-142a-7630-a41c-fb3c1433e979",
@@ -2624,20 +2634,23 @@
       "reviewedAt": "2026-07-06T23:33:02Z",
       "reviewedHead": "b9a19e946a1efa7e907e333556a4679ad2c12acf",
       "mergeCommit": "1b7c89157f17812a62d8137d0e3b14019336f688",
-      "mergedAt": "2026-07-06T23:47:08Z"
+      "mergedAt": "2026-07-06T23:47:08Z",
+      "reconciledAt": "2026-07-06T23:50:02Z",
+      "cleanupAt": "2026-07-06T23:50:02Z",
+      "closeoutCommit": "890bdbad594c585a4c1bcf9f0e7854abb436c1b6"
     }
   ],
   "monitoring": {
-    "mode": "adaptive",
-    "cadence": "5m",
-    "status": "wave_011_ready_for_reconciliation",
-    "lastCheckedAt": "2026-07-06T23:47:08Z",
-    "nextCheckDueAt": "2026-07-06T23:52:08Z",
+    "mode": "inactive",
+    "cadence": null,
+    "status": "stopped_wave_011_reconciled",
+    "lastCheckedAt": "2026-07-06T23:50:02Z",
+    "nextCheckDueAt": null,
     "schedulerRef": "postgram-admin-wave-005-wdd-heartbeat",
     "schedulerName": "postgram-admin-wave-011-reconcile-heartbeat",
-    "fallbackPrompt": "Run one bounded WDD reconciliation handoff heartbeat for /Users/ivo.toby/workspace/postgram, epic EPIC-admin-configuration-frontend, active wave WAVE-011. Use the wdd-reconcile-wave skill. Start in /Users/ivo.toby/workspace/postgram on branch codex/epic/admin-configuration-frontend. Read .wdd/epics/EPIC-admin-configuration-frontend/orchestration.json and controller-state.md. Confirm WAVE-011 bundle TASK-018-security-epic-validation is merged into the epic branch in merge commit 1b7c89157f17812a62d8137d0e3b14019336f688; PR #93 is merged or locally merged after Dewey REVIEW_PASS; task file is in done/; currentGates.workerDispatch is merged; WAVE-011 waveCompletion is ready_for_reconciliation; branch freshness is current_at_merge; cleanup is cleanup_deferred; blocking feedback is empty; and shared-context reconciliation is queued. Run wdd-reconcile-wave for WAVE-011, reconcile final security/epic validation decisions into shared context and final handoff artifacts, update orchestration.json and controller-state.md, clean up the TASK-018 worktree if safe, push the reconciliation checkpoint, then proceed to wdd-epic-validation and wdd-final-pr per Ivo's finish-all-waves instruction.",
-    "automationUpdateResult": "updated_in_app_reconciliation_handoff",
-    "updatedAt": "2026-07-06T23:47:08Z"
+    "fallbackPrompt": null,
+    "automationUpdateResult": "will_delete_after_final_pr",
+    "updatedAt": "2026-07-06T23:50:02Z"
   },
   "sharedContext": {
     "index": "shared-context/index.md",
@@ -2651,87 +2664,7 @@
     ],
     "reconcileAfterEveryWave": true
   },
-  "activeWave": {
-    "id": "WAVE-011",
-    "activatedAt": "2026-07-06T23:11:02Z",
-    "status": "ready_for_reconciliation",
-    "strategy": {
-      "profile": "full",
-      "executionMode": "bundled",
-      "reviewMode": "risk_based",
-      "monitoringMode": "adaptive",
-      "confirmedBy": "Ivo via Codex finish-all-waves request on 2026-07-06"
-    },
-    "eligibleTasks": [
-      "TASK-018-security-epic-validation"
-    ],
-    "nonEligibleTasks": [],
-    "bundles": [
-      {
-        "id": "WAVE-011-security-epic-validation",
-        "tasks": [
-          "TASK-018-security-epic-validation"
-        ],
-        "branch": "codex/task/TASK-018-security-epic-validation",
-        "worktree": "/Users/ivo.toby/workspace/postgram/.worktrees/TASK-018-security-epic-validation",
-        "worktreeStatus": "clean_pushed",
-        "workerThreadId": "019f39b8-b83d-7350-b93e-c037b63ab845",
-        "workerNickname": "Ramanujan",
-        "reviewThreadId": "019f398f-98c3-7350-be3f-1cb4af8aab75",
-        "reviewNickname": "Dewey",
-        "currentGate": "merged",
-        "branchFreshness": "current_at_merge",
-        "pr": "https://github.com/ivo-toby/postgram/pull/93",
-        "latestCommit": "1a890e288435b210e9ea0433fd785b58b9f03c10",
-        "blockingFeedback": [],
-        "verification": {
-          "result": "review_passed_freshness_verified_merged",
-          "checkedAt": "2026-07-06T23:47:08Z",
-          "commands": [
-            "git rev-list --left-right --count origin/codex/epic/admin-configuration-frontend...HEAD",
-            "git merge-tree --write-tree origin/codex/epic/admin-configuration-frontend HEAD",
-            "git diff --check origin/codex/epic/admin-configuration-frontend...HEAD",
-            "jq empty .wdd/epics/EPIC-admin-configuration-frontend/orchestration.json",
-            "npm audit --omit=dev --audit-level=high",
-            "npm --prefix ui audit --omit=dev --audit-level=high",
-            "npm test -- tests/unit/docker-first-run.test.ts",
-            "git merge --no-ff origin/codex/task/TASK-018-security-epic-validation -m \"merge: task 018 security epic validation\"",
-            "git diff --check HEAD^..HEAD"
-          ],
-          "evidence": "Dewey returned REVIEW_PASS on PR #93 head b9a19e9. TASK-018 branch was refreshed against epic checkpoint 1bd737d in commit 1a890e2; final divergence was 0 3, merge-tree clean, branch diff-check clean, orchestration JSON parse passed, root/UI production audits passed, and docker-first-run unit tests passed 5/5. TASK-018 merged into the epic branch in 1b7c89157f17812a62d8137d0e3b14019336f688; post-merge diff-check, orchestration JSON parse, production audits, and docker-first-run unit tests passed."
-        },
-        "activatedAt": "2026-07-06T23:11:02Z",
-        "cleanupState": "cleanup_deferred",
-        "sharedContextReconciliation": "queued",
-        "lastObservedAt": "2026-07-06T23:47:08Z",
-        "branchPushedAt": "2026-07-06T23:11:02Z",
-        "worktreeCreatedAt": "2026-07-06T23:11:02Z",
-        "dispatchedAt": "2026-07-06T23:11:02Z",
-        "prOpenedAt": "2026-07-06T23:35:14Z",
-        "reviewRequestedAt": "2026-07-06T23:33:02Z",
-        "reviewSubmissionId": "019f39cd-142a-7630-a41c-fb3c1433e979",
-        "workerCompletedAt": "2026-07-06T23:37:39Z",
-        "workerResult": "DONE_WITH_CONCERNS",
-        "previousReviewSubmissionId": "019f39ca-0519-7b52-b809-b87323bb4ec5",
-        "reviewedAt": "2026-07-06T23:33:02Z",
-        "reviewResult": "REVIEW_PASS",
-        "reviewedHead": "b9a19e946a1efa7e907e333556a4679ad2c12acf",
-        "mergeCommit": "1b7c89157f17812a62d8137d0e3b14019336f688",
-        "mergedAt": "2026-07-06T23:47:08Z"
-      }
-    ],
-    "dispatchState": "merged",
-    "activatedFromCommit": "202b422",
-    "activationCommit": "0ed8c61af3cb272c54cbbb69a4fe8978f787a1e3",
-    "lastObservedAt": "2026-07-06T23:47:08Z",
-    "waveCompletion": "ready_for_reconciliation",
-    "branchPushedAt": "2026-07-06T23:11:02Z",
-    "worktreeCreatedAt": "2026-07-06T23:11:02Z",
-    "workerDispatchStartedAt": "2026-07-06T23:11:02Z",
-    "dispatchedAt": "2026-07-06T23:11:02Z",
-    "mergedAt": "2026-07-06T23:47:08Z",
-    "mergeCommit": "1b7c89157f17812a62d8137d0e3b14019336f688"
-  },
+  "activeWave": null,
   "currentGates": {
     "epicBranch": {
       "status": "verified",
@@ -2776,7 +2709,7 @@
       "WAVE-008-admin-config-ui": "cleaned_up",
       "WAVE-009-maintenance-admin-ui": "cleaned_up",
       "WAVE-010-docker-first-run-no-cli": "cleaned_up",
-      "WAVE-011-security-epic-validation": "cleanup_deferred"
+      "WAVE-011-security-epic-validation": "cleaned_up"
     },
     "workerDispatch": {
       "WAVE-001-admin-feasibility-gate": "reconciled",
@@ -2794,7 +2727,7 @@
       "WAVE-008-admin-config-ui": "reconciled",
       "WAVE-009-maintenance-admin-ui": "reconciled",
       "WAVE-010-docker-first-run-no-cli": "reconciled",
-      "WAVE-011-security-epic-validation": "merged"
+      "WAVE-011-security-epic-validation": "reconciled"
     },
     "waveCompletion": {
       "WAVE-001": "done",
@@ -2807,23 +2740,23 @@
       "WAVE-008": "done",
       "WAVE-009": "done",
       "WAVE-010": "done",
-      "WAVE-011": "ready_for_reconciliation"
+      "WAVE-011": "done"
     },
     "nextWave": {
       "id": null,
-      "status": "none_remaining_after_wave_011"
+      "status": "none_remaining_epic_validation_ready"
     },
     "monitoring": {
-      "mode": "adaptive",
-      "cadence": "5m",
-      "status": "wave_011_ready_for_reconciliation",
-      "lastCheckedAt": "2026-07-06T23:47:08Z",
-      "nextCheckDueAt": "2026-07-06T23:52:08Z",
+      "mode": "inactive",
+      "cadence": null,
+      "status": "stopped_wave_011_reconciled",
+      "lastCheckedAt": "2026-07-06T23:50:02Z",
+      "nextCheckDueAt": null,
       "schedulerRef": "postgram-admin-wave-005-wdd-heartbeat",
       "schedulerName": "postgram-admin-wave-011-reconcile-heartbeat",
-      "fallbackPrompt": "Run one bounded WDD reconciliation handoff heartbeat for /Users/ivo.toby/workspace/postgram, epic EPIC-admin-configuration-frontend, active wave WAVE-011. Use the wdd-reconcile-wave skill. Start in /Users/ivo.toby/workspace/postgram on branch codex/epic/admin-configuration-frontend. Read .wdd/epics/EPIC-admin-configuration-frontend/orchestration.json and controller-state.md. Confirm WAVE-011 bundle TASK-018-security-epic-validation is merged into the epic branch in merge commit 1b7c89157f17812a62d8137d0e3b14019336f688; PR #93 is merged or locally merged after Dewey REVIEW_PASS; task file is in done/; currentGates.workerDispatch is merged; WAVE-011 waveCompletion is ready_for_reconciliation; branch freshness is current_at_merge; cleanup is cleanup_deferred; blocking feedback is empty; and shared-context reconciliation is queued. Run wdd-reconcile-wave for WAVE-011, reconcile final security/epic validation decisions into shared context and final handoff artifacts, update orchestration.json and controller-state.md, clean up the TASK-018 worktree if safe, push the reconciliation checkpoint, then proceed to wdd-epic-validation and wdd-final-pr per Ivo's finish-all-waves instruction.",
-      "automationUpdateResult": "updated_in_app_reconciliation_handoff",
-      "updatedAt": "2026-07-06T23:47:08Z"
+      "fallbackPrompt": null,
+      "automationUpdateResult": "will_delete_after_final_pr",
+      "updatedAt": "2026-07-06T23:50:02Z"
     },
     "review": {
       "WAVE-001-admin-feasibility-gate": {
@@ -3247,7 +3180,7 @@
         "reconciledAt": "2026-07-06T22:58:32Z"
       },
       "WAVE-011-security-epic-validation": {
-        "status": "passed",
+        "status": "reconciled",
         "result": "REVIEW_PASS",
         "pr": "https://github.com/ivo-toby/postgram/pull/93",
         "latestCommit": "1a890e288435b210e9ea0433fd785b58b9f03c10",
@@ -3475,12 +3408,12 @@
         "remotePrState": "MERGED"
       },
       "WAVE-011-security-epic-validation": {
-        "status": "merged_locally_pending_push",
+        "status": "merged_pushed",
         "mergeCommit": "1b7c89157f17812a62d8137d0e3b14019336f688",
-        "mergedAt": "2026-07-06T23:47:08Z",
+        "mergedAt": "2026-07-06T23:49:13Z",
         "pr": "https://github.com/ivo-toby/postgram/pull/93",
         "head": "1a890e288435b210e9ea0433fd785b58b9f03c10",
-        "reviewedHead": "b9a19e946a1efa7e907e333556a4679ad2c12acf"
+        "remotePrState": "MERGED"
       }
     },
     "sharedContextReconciliation": {
@@ -3512,7 +3445,19 @@
         ]
       },
       "WAVE-010": "not_started",
-      "WAVE-011-security-epic-validation": "queued"
+      "WAVE-011-security-epic-validation": {
+        "status": "completed",
+        "reconciledAt": "2026-07-06T23:50:02Z",
+        "updatedResources": [
+          "shared-context/index.md",
+          "shared-context/resources/security-model.md",
+          "shared-context/resources/testing-validation.md",
+          "validation-checklist.md",
+          "wave-plan.md",
+          "epic-validation.md",
+          "final-pr.md"
+        ]
+      }
     },
     "prState": {
       "WAVE-001-admin-feasibility-gate": {
@@ -3678,14 +3623,13 @@
         "mergeStateStatus": "MERGED"
       },
       "WAVE-011-security-epic-validation": {
-        "status": "MERGED_LOCALLY_PENDING_REMOTE_CONFIRMATION",
+        "status": "MERGED",
         "pr": "https://github.com/ivo-toby/postgram/pull/93",
         "number": 93,
         "head": "1a890e288435b210e9ea0433fd785b58b9f03c10",
-        "reviewedHead": "b9a19e946a1efa7e907e333556a4679ad2c12acf",
         "mergeCommit": "1b7c89157f17812a62d8137d0e3b14019336f688",
-        "mergeStateStatus": "CLEAN_BEFORE_MERGE",
-        "mergedAt": "2026-07-06T23:47:08Z"
+        "mergedAt": "2026-07-06T23:49:13Z",
+        "mergeStateStatus": "MERGED"
       }
     },
     "cleanup": {
@@ -3755,7 +3699,7 @@
       "WAVE-008-admin-config-ui": "cleaned_up",
       "WAVE-009-maintenance-admin-ui": "cleaned_up",
       "WAVE-010-docker-first-run-no-cli": "cleaned_up",
-      "WAVE-011-security-epic-validation": "cleanup_deferred"
+      "WAVE-011-security-epic-validation": "cleaned_up"
     },
     "worker": {
       "WAVE-002-admin-auth-persistence": {
@@ -4384,20 +4328,15 @@
         "reconciledAt": "2026-07-06T22:58:32Z"
       },
       "WAVE-011-security-epic-validation": {
-        "result": "review_passed_freshness_verified_merged",
-        "checkedAt": "2026-07-06T23:47:08Z",
+        "result": "review_passed_freshness_verified_merged_reconciled",
+        "checkedAt": "2026-07-06T23:50:02Z",
         "commands": [
-          "git rev-list --left-right --count origin/codex/epic/admin-configuration-frontend...HEAD",
-          "git merge-tree --write-tree origin/codex/epic/admin-configuration-frontend HEAD",
-          "git diff --check origin/codex/epic/admin-configuration-frontend...HEAD",
+          "gh pr view 93 --json number,url,state,mergedAt,headRefOid,baseRefOid,mergeCommit",
           "jq empty .wdd/epics/EPIC-admin-configuration-frontend/orchestration.json",
-          "npm audit --omit=dev --audit-level=high",
-          "npm --prefix ui audit --omit=dev --audit-level=high",
-          "npm test -- tests/unit/docker-first-run.test.ts",
-          "git merge --no-ff origin/codex/task/TASK-018-security-epic-validation -m \"merge: task 018 security epic validation\"",
-          "git diff --check HEAD^..HEAD"
+          "git diff --check",
+          "git worktree list --porcelain"
         ],
-        "evidence": "Review passed, final freshness passed at task refresh commit 1a890e2, PR #93 was CLEAN before merge, TASK-018 merged locally into the epic branch in 1b7c891, and post-merge checks passed: diff-check, orchestration JSON parse, root/UI production audits, and docker-first-run unit tests 5/5."
+        "evidence": "WAVE-011 reconciled after PR #93 merge. TASK-018 worktree cleaned up; shared context and final handoff artifacts updated; orchestration JSON and whitespace checks passed."
       }
     },
     "feedback": {
@@ -4660,15 +4599,15 @@
             "status": "fixed_before_merge"
           }
         ],
-        "lastObservedAt": "2026-07-06T23:47:08Z",
+        "lastObservedAt": "2026-07-06T23:50:02Z",
         "workerThreadId": "019f39b8-b83d-7350-b93e-c037b63ab845",
         "workerNickname": "Ramanujan",
         "reviewThreadId": "019f398f-98c3-7350-be3f-1cb4af8aab75",
         "reviewNickname": "Dewey",
-        "status": "merged",
-        "nudge": "not_needed_merged",
+        "status": "reconciled",
+        "nudge": "not_needed_reconciled",
         "reviewResult": "REVIEW_PASS",
-        "observation": "TASK-018 merged locally into the epic branch after Dewey REVIEW_PASS and final freshness verification. WAVE-011 is ready for reconciliation."
+        "observation": "WAVE-011 reconciled after PR #93 was confirmed MERGED. Shared context records the final security validation result, the scoped Docker/browser no-normal-CLI hypothesis, clean production audits, and non-blocking lint/dev-tooling audit caveats. TASK-018 worktree was clean and removed."
       }
     },
     "activationArtifact": {
@@ -4680,23 +4619,28 @@
     }
   },
   "lastReconciledWave": {
-    "id": "WAVE-010",
+    "id": "WAVE-011",
     "status": "done",
-    "reconciledAt": "2026-07-06T22:58:32Z",
+    "reconciledAt": "2026-07-06T23:50:02Z",
     "tasks": [
-      "TASK-017-docker-first-run-no-cli"
+      "TASK-018-security-epic-validation"
     ],
     "prs": [
       {
-        "number": 92,
-        "url": "https://github.com/ivo-toby/postgram/pull/92",
-        "mergedAt": "2026-07-06T22:56:32Z",
-        "mergeCommit": "ce0bb83d6075d2644f253db490e43c0c41c20381"
+        "number": 93,
+        "url": "https://github.com/ivo-toby/postgram/pull/93",
+        "mergedAt": "2026-07-06T23:49:13Z",
+        "mergeCommit": "1b7c89157f17812a62d8137d0e3b14019336f688"
       }
     ],
     "sharedContext": "completed",
-    "nextWave": "WAVE-011"
+    "nextPhase": "wdd-epic-validation"
   },
-  "lastMergedWave": "WAVE-010",
-  "lastStartedWave": "WAVE-010"
+  "lastMergedWave": "WAVE-011",
+  "lastStartedWave": "WAVE-011",
+  "epicValidation": {
+    "status": "ready",
+    "readyAt": "2026-07-06T23:50:02Z",
+    "source": "WAVE-011 reconciliation"
+  }
 }

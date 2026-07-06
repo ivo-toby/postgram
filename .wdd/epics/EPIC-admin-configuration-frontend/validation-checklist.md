@@ -123,7 +123,7 @@ EPIC-admin-configuration-frontend WAVE-002.
 
 ## Final Validation Result
 
-- [x] WAVE-001 through WAVE-010 are done and reconciled.
+- [x] WAVE-001 through WAVE-011 are done and reconciled.
 - [x] TASK-017 Docker clean-volume smoke evidence was reviewed for bootstrap,
       MFA, dashboard, Config secret redaction after restart, API-key creation,
       safe maintenance dry-run/job polling, and browser storage
@@ -143,6 +143,8 @@ EPIC-admin-configuration-frontend WAVE-002.
       baseline outside TASK-018 product behavior.
 - [ ] Full UI dev dependency audit is clean. Production audit is clean, but
       dev-tooling advisories require a breaking Vitest/Vite upgrade.
+- [ ] Full root dev dependency audit is clean. Production audit is clean, but
+      moderate/low dev-tooling advisories remain.
 
 Result: passed with non-blocking concerns. See `epic-validation.md` and
 `final-pr.md` for final evidence and handoff notes.

@@ -32,6 +32,10 @@ import {
   toErrorResponse,
   toHttpStatus
 } from '../util/errors.js';
+import {
+  registerAdminProviderConfigRoutes,
+  type AdminProviderConfigRouteOptions
+} from './admin-provider-config.js';
 
 type AdminApp = Hono<{
   Variables: {
@@ -39,7 +43,7 @@ type AdminApp = Hono<{
   };
 }>;
 
-type AdminRouteOptions = {
+type AdminRouteOptions = AdminProviderConfigRouteOptions & {
   adminMfaSecretKey?: string | undefined;
 };
 
@@ -142,9 +146,7 @@ function toStepUpResponse(session: AdminRequestContext['session']) {
     expiresAt:
       verifiedAt === null
         ? null
-        : new Date(
-            Date.parse(verifiedAt) + ADMIN_STEP_UP_TTL_MS
-          ).toISOString()
+        : new Date(Date.parse(verifiedAt) + ADMIN_STEP_UP_TTL_MS).toISOString()
   };
 }
 
@@ -308,7 +310,10 @@ function activeAdminMfaError(): AppError {
 }
 
 function adminMfaVerificationError(): AppError {
-  return new AppError(ErrorCode.FORBIDDEN, 'Admin MFA verification is required');
+  return new AppError(
+    ErrorCode.FORBIDDEN,
+    'Admin MFA verification is required'
+  );
 }
 
 function requireAdminMfaSecretKey(secretKey: string | undefined): string {
@@ -703,4 +708,6 @@ export function registerAdminRoutes(
       return c.json({ ok: true });
     }
   );
+
+  registerAdminProviderConfigRoutes(app, pool, options);
 }

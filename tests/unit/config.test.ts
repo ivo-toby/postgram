@@ -27,24 +27,27 @@ describe('config', () => {
     expect(cfg.OPENAI_API_KEY).toBeUndefined();
   });
 
-  it('rejects OpenAI embedding provider without OPENAI_API_KEY', () => {
-    expect(() =>
-      loadConfig(baseEnv({ EMBEDDING_PROVIDER: 'openai' }))
-    ).toThrowError(/OPENAI_API_KEY is required/);
+  it('allows OpenAI embedding provider without env OPENAI_API_KEY so DB-backed secrets can supersede', () => {
+    const cfg = loadConfig(baseEnv({ EMBEDDING_PROVIDER: 'openai' }));
+
+    expect(cfg.EMBEDDING_PROVIDER).toBe('openai');
+    expect(cfg.OPENAI_API_KEY).toBeUndefined();
   });
 
-  it('rejects OpenAI extraction enabled without OPENAI_API_KEY', () => {
-    expect(() =>
-      loadConfig(
-        baseEnv({
-          EMBEDDING_PROVIDER: 'ollama',
-          EMBEDDING_DIMENSIONS: '1024',
-          EMBEDDING_BASE_URL: 'http://e.local',
-          EXTRACTION_ENABLED: 'true',
-          EXTRACTION_PROVIDER: 'openai'
-        })
-      )
-    ).toThrowError(/OPENAI_API_KEY is required/);
+  it('allows OpenAI extraction without env OPENAI_API_KEY so DB-backed secrets can supersede', () => {
+    const cfg = loadConfig(
+      baseEnv({
+        EMBEDDING_PROVIDER: 'ollama',
+        EMBEDDING_DIMENSIONS: '1024',
+        EMBEDDING_BASE_URL: 'http://e.local',
+        EXTRACTION_ENABLED: 'true',
+        EXTRACTION_PROVIDER: 'openai'
+      })
+    );
+
+    expect(cfg.EXTRACTION_ENABLED).toBe(true);
+    expect(cfg.EXTRACTION_PROVIDER).toBe('openai');
+    expect(cfg.OPENAI_API_KEY).toBeUndefined();
   });
 
   it('allows Ollama extraction with no OPENAI_API_KEY', () => {
@@ -82,18 +85,20 @@ describe('config', () => {
     expect(cfg.OPENAI_API_KEY).toBeUndefined();
   });
 
-  it('rejects enabled OpenAI-compatible extraction without EXTRACTION_BASE_URL', () => {
-    expect(() =>
-      loadConfig(
-        baseEnv({
-          EMBEDDING_PROVIDER: 'ollama',
-          EMBEDDING_DIMENSIONS: '1024',
-          EMBEDDING_BASE_URL: 'http://e.local',
-          EXTRACTION_ENABLED: 'true',
-          EXTRACTION_PROVIDER: 'openai-compatible'
-        })
-      )
-    ).toThrowError(/EXTRACTION_BASE_URL is required/);
+  it('allows OpenAI-compatible extraction without env base URL so DB-backed settings can supersede', () => {
+    const cfg = loadConfig(
+      baseEnv({
+        EMBEDDING_PROVIDER: 'ollama',
+        EMBEDDING_DIMENSIONS: '1024',
+        EMBEDDING_BASE_URL: 'http://e.local',
+        EXTRACTION_ENABLED: 'true',
+        EXTRACTION_PROVIDER: 'openai-compatible'
+      })
+    );
+
+    expect(cfg.EXTRACTION_ENABLED).toBe(true);
+    expect(cfg.EXTRACTION_PROVIDER).toBe('openai-compatible');
+    expect(cfg.EXTRACTION_BASE_URL).toBeUndefined();
   });
 
   it('accepts OpenAI defaults when OPENAI_API_KEY is present', () => {
@@ -250,6 +255,15 @@ describe('config', () => {
 });
 
 describe('buildEmbeddingProviderConfig', () => {
+  it('still rejects OpenAI embedding provider after runtime overrides when no API key exists', async () => {
+    const { buildEmbeddingProviderConfig } = await import('../../src/index.js');
+    const cfg = loadConfig(baseEnv({ EMBEDDING_PROVIDER: 'openai' }));
+
+    expect(() => buildEmbeddingProviderConfig(cfg)).toThrow(
+      /OPENAI_API_KEY is required/
+    );
+  });
+
   it('requires EMBEDDING_DIMENSIONS when EMBEDDING_MODEL is overridden', async () => {
     const { buildEmbeddingProviderConfig } = await import('../../src/index.js');
     const cfg = loadConfig(
@@ -280,5 +294,37 @@ describe('buildEmbeddingProviderConfig', () => {
       model: 'text-embedding-3-large',
       dimensions: 3072
     });
+  });
+});
+
+describe('createAppliedProviderPolicyFetch', () => {
+  it('does not wrap env-only provider URLs in the admin egress policy', async () => {
+    const { createAppliedProviderPolicyFetch } = await import(
+      '../../src/index.js'
+    );
+
+    const fetchImpl = createAppliedProviderPolicyFetch({
+      settingKey: 'OLLAMA_BASE_URL',
+      provider: 'ollama',
+      baseUrl: 'http://192.168.1.10:11434',
+      appliedSettingKeys: []
+    });
+
+    expect(fetchImpl).toBeUndefined();
+  });
+
+  it('wraps DB-applied provider URLs in the admin egress policy', async () => {
+    const { createAppliedProviderPolicyFetch } = await import(
+      '../../src/index.js'
+    );
+
+    const fetchImpl = createAppliedProviderPolicyFetch({
+      settingKey: 'OLLAMA_BASE_URL',
+      provider: 'ollama',
+      baseUrl: 'http://host.docker.internal:11434',
+      appliedSettingKeys: ['OLLAMA_BASE_URL']
+    });
+
+    expect(fetchImpl).toEqual(expect.any(Function));
   });
 });

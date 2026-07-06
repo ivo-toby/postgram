@@ -5,6 +5,7 @@
  * explicit prompt instruction.
  */
 type LlmProvider = (prompt: string, schema?: object) => Promise<string>;
+type ProviderFetch = (input: string, init: RequestInit) => Promise<Response>;
 
 function withSchemaInstruction(
   prompt: string,
@@ -32,14 +33,15 @@ const DEFAULT_LLM_TIMEOUT_MS = (() => {
 })();
 
 async function fetchWithTimeout(
-  input: RequestInfo | URL,
+  input: string,
   init: RequestInit,
-  timeoutMs: number = DEFAULT_LLM_TIMEOUT_MS
+  timeoutMs: number = DEFAULT_LLM_TIMEOUT_MS,
+  fetchImpl: ProviderFetch = fetch
 ): Promise<Response> {
   const controller = new AbortController();
   const timer = setTimeout(() => controller.abort(), timeoutMs);
   try {
-    return await fetch(input, { ...init, signal: controller.signal });
+    return await fetchImpl(input, { ...init, signal: controller.signal });
   } catch (error) {
     if (error instanceof DOMException && error.name === 'AbortError') {
       throw new Error(`LLM request timed out after ${timeoutMs}ms`);
@@ -82,7 +84,8 @@ function createOpenAiProvider(
   reasoningEffort: ReasoningEffort | undefined,
   baseUrl = 'https://api.openai.com/v1',
   errorLabel = 'OpenAI',
-  nativeStructuredOutputs = true
+  nativeStructuredOutputs = true,
+  fetchImpl?: ProviderFetch
 ): LlmProvider {
   const endpoint = `${baseUrl.replace(/\/+$/, '')}/chat/completions`;
   return async (prompt: string, schema?: object) => {
@@ -116,14 +119,19 @@ function createOpenAiProvider(
       payload['reasoning_effort'] = effort;
     }
 
-    const response = await fetchWithTimeout(endpoint, {
-      method: 'POST',
-      headers: {
-        'Content-Type': 'application/json',
-        ...(apiKey ? { Authorization: `Bearer ${apiKey}` } : {})
+    const response = await fetchWithTimeout(
+      endpoint,
+      {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          ...(apiKey ? { Authorization: `Bearer ${apiKey}` } : {})
+        },
+        body: JSON.stringify(payload)
       },
-      body: JSON.stringify(payload)
-    });
+      DEFAULT_LLM_TIMEOUT_MS,
+      fetchImpl
+    );
 
     if (!response.ok) {
       // Surface OpenAI's error body — bare status codes hid root causes
@@ -176,7 +184,8 @@ function createOllamaProvider(
   model: string,
   disableThinking: boolean,
   reasoningEffort: ReasoningEffort | undefined,
-  apiKey?: string
+  apiKey?: string,
+  fetchImpl?: ProviderFetch
 ): LlmProvider {
   const headers: Record<string, string> = {
     'Content-Type': 'application/json'
@@ -220,11 +229,16 @@ function createOllamaProvider(
     // recognise it ignore the unknown key.
     if (reasoningEffort) payload['reasoning_effort'] = reasoningEffort;
 
-    const response = await fetchWithTimeout(`${baseUrl}/api/chat`, {
-      method: 'POST',
-      headers,
-      body: JSON.stringify(payload)
-    });
+    const response = await fetchWithTimeout(
+      `${baseUrl}/api/chat`,
+      {
+        method: 'POST',
+        headers,
+        body: JSON.stringify(payload)
+      },
+      DEFAULT_LLM_TIMEOUT_MS,
+      fetchImpl
+    );
 
     if (!response.ok) {
       throw new Error(`Ollama API error: ${response.status}`);
@@ -259,6 +273,7 @@ type ProviderConfig = {
   anthropicApiKey?: string | undefined;
   ollamaBaseUrl?: string | undefined;
   ollamaApiKey?: string | undefined;
+  fetchImpl?: ProviderFetch | undefined;
   /**
    * When true (default), send provider-specific hints to disable reasoning /
    * chain-of-thought output. Extraction is structured JSON — thinking tokens
@@ -305,7 +320,8 @@ export function createLlmProvider(config: ProviderConfig): LlmProvider {
         config.reasoningEffort,
         config.extractionBaseUrl,
         'OpenAI-compatible',
-        false
+        false,
+        config.fetchImpl
       );
     }
     case 'anthropic': {
@@ -323,7 +339,8 @@ export function createLlmProvider(config: ProviderConfig): LlmProvider {
         model,
         disableThinking,
         config.reasoningEffort,
-        config.ollamaApiKey
+        config.ollamaApiKey,
+        config.fetchImpl
       );
     }
   }

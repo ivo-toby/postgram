@@ -1,4 +1,4 @@
-import { createCipheriv, randomBytes } from 'node:crypto';
+import { createCipheriv, createDecipheriv, randomBytes } from 'node:crypto';
 
 import { ResultAsync } from 'neverthrow';
 import type { Pool, PoolClient } from 'pg';
@@ -63,6 +63,7 @@ export type RuntimeValidationRecord = {
 export type RuntimeSettingRecord = {
   key: string;
   value: JsonValue;
+  appliedValue: JsonValue | null;
   valueType: RuntimeSettingValueType;
   classification: RuntimeSettingClassification;
   state: RuntimeSettingState;
@@ -128,6 +129,7 @@ export type SaveRuntimeSecretInput = {
 type RuntimeSettingRow = {
   key: string;
   value: JsonValue;
+  applied_value: JsonValue | null;
   value_type: RuntimeSettingValueType;
   classification: RuntimeSettingClassification;
   state: RuntimeSettingState;
@@ -438,9 +440,7 @@ function normalizeValidation(input: RuntimeValidationInput | undefined): {
   };
 }
 
-function normalizeSecretValidation(
-  input: RuntimeValidationInput | undefined
-): {
+function normalizeSecretValidation(input: RuntimeValidationInput | undefined): {
   status: RuntimeValidationStatus;
   message: string | null;
   metadata: JsonObject;
@@ -483,6 +483,7 @@ function mapSetting(row: RuntimeSettingRow): RuntimeSettingRecord {
   return {
     key: row.key,
     value: row.value,
+    appliedValue: row.applied_value,
     valueType: row.value_type,
     classification: row.classification,
     state: row.state,
@@ -568,6 +569,24 @@ function encryptSecret(
   };
 }
 
+function decryptSecret(
+  row: RuntimeSecretRow,
+  rawEncryptionKey: string
+): string {
+  const encryptionKey = decodeEncryptionKey(rawEncryptionKey);
+  const decipher = createDecipheriv(
+    'aes-256-gcm',
+    encryptionKey,
+    Buffer.from(row.nonce, 'base64url')
+  );
+  decipher.setAuthTag(Buffer.from(row.auth_tag, 'base64url'));
+
+  return Buffer.concat([
+    decipher.update(Buffer.from(row.ciphertext, 'base64url')),
+    decipher.final()
+  ]).toString('utf8');
+}
+
 async function rollbackQuietly(client: PoolClient): Promise<void> {
   try {
     await client.query('ROLLBACK');
@@ -610,6 +629,8 @@ export function saveRuntimeSetting(
       const valueType = getJsonValueType(value);
       const classification = requireSettingClassification(input.classification);
       const state = requireSettingState(input.state ?? 'pending');
+      const appliedValueJson =
+        state === 'applied' ? JSON.stringify(value) : null;
       const validation = normalizeValidation(input.validation);
       const now = input.now ?? new Date();
       const actorAdminUserId = input.actorAdminUserId ?? null;
@@ -622,6 +643,7 @@ export function saveRuntimeSetting(
             INSERT INTO admin_runtime_settings (
               key,
               value,
+              applied_value,
               value_type,
               classification,
               state,
@@ -633,9 +655,13 @@ export function saveRuntimeSetting(
               created_at,
               updated_at
             )
-            VALUES ($1, $2::jsonb, $3, $4, $5, $6, $7, $8::jsonb, $9, $10, $11, $11)
+            VALUES ($1, $2::jsonb, $3::jsonb, $4, $5, $6, $7, $8, $9::jsonb, $10, $11, $12, $12)
             ON CONFLICT (key) DO UPDATE SET
               value = EXCLUDED.value,
+              applied_value = CASE
+                WHEN EXCLUDED.state = 'applied' THEN EXCLUDED.value
+                ELSE admin_runtime_settings.applied_value
+              END,
               value_type = EXCLUDED.value_type,
               classification = EXCLUDED.classification,
               state = EXCLUDED.state,
@@ -650,6 +676,7 @@ export function saveRuntimeSetting(
           [
             key,
             JSON.stringify(value),
+            appliedValueJson,
             valueType,
             classification,
             state,
@@ -940,6 +967,47 @@ export function getRuntimeSecretMetadata(
       return row ? mapSecretMetadata(row) : null;
     })(),
     (error) => toAppError(error, 'Failed to get runtime secret metadata')
+  );
+}
+
+export function getRuntimeSecretPlaintext(
+  pool: Pool,
+  input: {
+    name: string;
+    encryptionKey: string;
+  }
+): ServiceResult<string | null> {
+  return ResultAsync.fromPromise(
+    (async () => {
+      const result = await pool.query<RuntimeSecretRow>(
+        `
+          SELECT
+            name,
+            provider,
+            purpose,
+            ciphertext,
+            nonce,
+            auth_tag,
+            algorithm,
+            key_version,
+            validation_status,
+            validation_message,
+            validation_metadata,
+            validated_at,
+            updated_by_admin_user_id,
+            created_at,
+            updated_at
+          FROM admin_runtime_secrets
+          WHERE name = $1
+          LIMIT 1
+        `,
+        [requireSecretName(input.name)]
+      );
+
+      const row = result.rows[0];
+      return row ? decryptSecret(row, input.encryptionKey) : null;
+    })(),
+    (error) => toAppError(error, 'Failed to read runtime secret')
   );
 }
 

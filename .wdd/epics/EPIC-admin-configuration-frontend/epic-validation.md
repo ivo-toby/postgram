@@ -73,7 +73,7 @@ APIs.
 | TASK-014-admin-job-foundation | done | PR #86 | passed | REVIEW_PASS after P2 freshness fix |
 | TASK-015-maintenance-admin-api | done | PR #88 | passed | REVIEW_PASS after P2 WDD freshness fix |
 | TASK-016-maintenance-admin-ui | done | PR #91 | passed | REVIEW_PASS |
-| TASK-017-docker-first-run-no-cli | done | PR #92 | passed | REVIEW_PASS after two P1 upgrade fixes |
+| TASK-017-docker-first-run-no-cli | done | PR #92 | passed | REVIEW_PASS after two P2 upgrade fixes |
 | TASK-018-security-epic-validation | review | PR #93 | passed with concerns | pending controller review |
 
 ## Review Audit

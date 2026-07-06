@@ -132,4 +132,6 @@ Non-blocking concerns to mention in the final PR:
 - npm run lint still fails on existing repo-wide lint baseline
 - full UI audit still has dev-tooling advisories that require a breaking
   Vitest/Vite upgrade; production audit is clean
+- full root audit still has moderate/low dev-tooling advisories; production
+  audit is clean
 ```

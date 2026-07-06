@@ -2479,54 +2479,61 @@
       "workerWorktree": "/Users/ivo.toby/workspace/postgram/.worktrees/TASK-017-docker-first-run-no-cli",
       "worktreeStatus": "clean_pushed",
       "pr": "https://github.com/ivo-toby/postgram/pull/92",
-      "latestCommit": "6a0259701fbfba648d37472653a5760b3d0d1602",
+      "latestCommit": "48f7f67fc2400a87dd9adbdb175013ed09a5cac4",
       "branchFreshness": "dirty_wdd_review_file_conflict_final_refresh_required",
       "blockingFeedback": [],
       "verification": {
-        "result": "pr_open_worker_evidence_recorded_review_pending",
-        "checkedAt": "2026-07-06T22:29:02Z",
+        "result": "review_passed_pending_final_freshness",
+        "checkedAt": "2026-07-06T22:43:02Z",
         "commands": [
-          "gh pr list --head codex/task/TASK-017-docker-first-run-no-cli --base codex/epic/admin-configuration-frontend --json number,url,state,isDraft,headRefOid,updatedAt,mergeStateStatus,title",
+          "git fetch origin +refs/pull/92/head:refs/remotes/origin/pr/92",
+          "gh pr view 92 --json number,url,state,isDraft,headRefName,headRefOid,baseRefName,baseRefOid,mergeStateStatus,updatedAt,reviewDecision,reviews,comments",
           "git -C .worktrees/TASK-017-docker-first-run-no-cli status --short --branch",
           "git -C .worktrees/TASK-017-docker-first-run-no-cli rev-list --left-right --count origin/codex/epic/admin-configuration-frontend...HEAD",
           "git -C .worktrees/TASK-017-docker-first-run-no-cli diff --check",
-          "git merge-tree origin/codex/epic/admin-configuration-frontend codex/task/TASK-017-docker-first-run-no-cli",
-          "multi_agent_v1.spawn_agent Dewey review for PR #92",
+          "git merge-tree origin/codex/epic/admin-configuration-frontend origin/pr/92",
+          "docker compose config >/tmp/task017-followup-compose.yml",
+          "npm test -- tests/unit/docker-first-run.test.ts",
+          "npm test -- tests/integration/admin-auth-service.test.ts",
+          "npm run typecheck",
+          "npm --prefix ui run typecheck",
+          "multi_agent_v1.send_input Bacon route P2 feedback",
+          "multi_agent_v1.send_input Dewey follow-up review",
           "multi_agent_v1.wait_agent Dewey timeout 30000"
         ],
-        "evidence": "PR #92 is open/draft at head 6a0259701fbfba648d37472653a5760b3d0d1602. Assigned worktree is clean/pushed, git diff --check passes, branch divergence from latest epic is 3 2, GitHub reports DIRTY, and merge-tree shows the only conflict is the WDD TASK-017 review task file. Dewey review is pending."
+        "evidence": "Dewey returned REVIEW_BLOCKED for reviewed head 6a0259701fbfba648d37472653a5760b3d0d1602 with two P2s. Bacon pushed fix head 48f7f67fc2400a87dd9adbdb175013ed09a5cac4; assigned worktree is clean/pushed; branch divergence from latest epic is 4 3; git diff --check passes; merge-tree conflict remains limited to the WDD TASK-017 review file. Controller verification on the fix head passed: docker compose config, docker-first-run unit tests 5/5, admin-auth-service integration tests 18/18, root typecheck, and UI typecheck. Follow-up review was requested from Dewey and remained pending during the bounded wait. Dewey follow-up returned REVIEW_PASS for head 48f7f67fc2400a87dd9adbdb175013ed09a5cac4 with no P1/P2/P3. Reviewer verified prior P2 upgrade blockers are resolved and key-validation concern is resolved. Final branch freshness is still pending because merge-tree conflicts only in the WDD TASK-017 review file."
       },
-      "currentGate": "reviewing",
+      "currentGate": "review_passed_pending_freshness",
       "readyAt": "2026-07-06T21:42:32Z",
       "bundle": "WAVE-010-docker-first-run-no-cli",
       "activatedAt": "2026-07-06T21:51:22Z",
       "sharedContextReconciliation": "queued_after_merge",
-      "cleanupState": "not_started",
+      "cleanupState": "not_started_pr_open",
       "branchPushedAt": "2026-07-06T21:54:35Z",
       "worktreeCreatedAt": "2026-07-06T21:54:35Z",
       "workerNickname": "Bacon",
       "dispatchedAt": "2026-07-06T21:57:06Z",
-      "lastObservedAt": "2026-07-06T22:29:02Z",
+      "lastObservedAt": "2026-07-06T22:43:02Z",
       "worktreeObservation": {
-        "observedAt": "2026-07-06T22:29:02Z",
+        "observedAt": "2026-07-06T22:43:02Z",
         "taskId": "TASK-017-docker-first-run-no-cli",
-        "status": "pr_open_review_pending",
-        "workerPoll": "wait_agent_timeout_30000_after_pr_observed",
+        "status": "fix_pushed_followup_review_pending",
         "worktreeStatus": "clean_pushed",
         "workerThreadId": "019f396f-3da8-7d11-94a0-3d84d26f490b",
         "workerNickname": "Bacon",
         "reviewThreadId": "019f398f-98c3-7350-be3f-1cb4af8aab75",
         "reviewNickname": "Dewey",
         "branch": "codex/task/TASK-017-docker-first-run-no-cli",
-        "latestCommit": "6a0259701fbfba648d37472653a5760b3d0d1602",
+        "previousReviewedHead": "6a0259701fbfba648d37472653a5760b3d0d1602",
+        "latestCommit": "48f7f67fc2400a87dd9adbdb175013ed09a5cac4",
         "branchFreshness": "dirty_wdd_review_file_conflict_final_refresh_required",
-        "branchDivergence": "origin/codex/epic/admin-configuration-frontend...HEAD = 3 2",
+        "branchDivergence": "origin/codex/epic/admin-configuration-frontend...HEAD = 4 3",
         "prState": "open_draft_dirty",
         "pr": "https://github.com/ivo-toby/postgram/pull/92",
         "mergeTree": "conflict only in .wdd/epics/EPIC-admin-configuration-frontend/TICKET-007-docker-e2e-validation/review/TASK-017-docker-first-run-no-cli.md",
         "diffCheck": "git diff --check passed in assigned worktree.",
-        "reviewState": "Dewey review requested and pending after bounded wait.",
-        "activityNote": "Bacon produced draft PR #92 and the assigned worktree is clean/pushed. Final branch freshness refresh is required before merge because controller monitoring commits created a WDD review-file conflict."
+        "reviewState": "Dewey follow-up REVIEW_PASS; final freshness pending.",
+        "activityNote": "Dewey follow-up returned REVIEW_PASS for head 48f7f67fc2400a87dd9adbdb175013ed09a5cac4 with no P1/P2/P3. Reviewer verified prior P2 upgrade blockers are resolved and key-validation concern is resolved. Final branch freshness is still pending because merge-tree conflicts only in the WDD TASK-017 review file."
       }
     },
     {
@@ -2574,12 +2581,12 @@
   "monitoring": {
     "mode": "adaptive",
     "cadence": "5m",
-    "status": "wave_010_pr92_review_pending",
-    "lastCheckedAt": "2026-07-06T22:29:02Z",
-    "nextCheckDueAt": "2026-07-06T22:34:02Z",
+    "status": "wave_010_pr92_review_passed_pending_freshness",
+    "lastCheckedAt": "2026-07-06T22:43:02Z",
+    "nextCheckDueAt": "2026-07-06T22:48:02Z",
     "schedulerRef": "postgram-admin-wave-005-wdd-heartbeat",
     "schedulerName": "postgram-admin-wave-010-wdd-heartbeat",
-    "fallbackPrompt": "Run one bounded WDD controller heartbeat for /Users/ivo.toby/workspace/postgram, epic EPIC-admin-configuration-frontend, active wave WAVE-010. Use the subagent-pr-orchestration skill. Start in /Users/ivo.toby/workspace/postgram on branch codex/epic/admin-configuration-frontend. Read .wdd/epics/EPIC-admin-configuration-frontend/orchestration.json and controller-state.md, then inspect PR #92 for WAVE-010-docker-first-run-no-cli / TASK-017-docker-first-run-no-cli, reviewer Dewey (019f398f-98c3-7350-be3f-1cb4af8aab75), worker Bacon (019f396f-3da8-7d11-94a0-3d84d26f490b), and assigned worktree /Users/ivo.toby/workspace/postgram/.worktrees/TASK-017-docker-first-run-no-cli. PR #92 is open/draft at head 6a0259701fbfba648d37472653a5760b3d0d1602 and currently DIRTY due a WDD TASK-017 review-file conflict only; final branch freshness refresh is required before merge. If Dewey reports P1/P2, route feedback to Bacon or a fresh fix worker. If review passes, refresh the task branch against latest codex/epic/admin-configuration-frontend, resolve the WDD review-file conflict while preserving PR #92 metadata and evidence, rerun required Docker/UI/root verification, push the task branch, verify PR cleanliness/freshness, merge or mark merge_ready according to policy, update WDD artifacts, push, and hand off to wdd-reconcile-wave. Stop when WAVE-010 is merged, blocked, cancelled, or ready for wdd-reconcile-wave. After WAVE-010 is reconciled, continue to WAVE-011 per Ivo's finish-all-waves instruction and push to GitHub between tasks/waves.",
+    "fallbackPrompt": "Run one bounded WDD controller heartbeat for /Users/ivo.toby/workspace/postgram, epic EPIC-admin-configuration-frontend, active wave WAVE-010. Use the subagent-pr-orchestration skill. Start in /Users/ivo.toby/workspace/postgram on branch codex/epic/admin-configuration-frontend. Read .wdd/epics/EPIC-admin-configuration-frontend/orchestration.json and controller-state.md, then inspect PR #92 for WAVE-010-docker-first-run-no-cli / TASK-017-docker-first-run-no-cli. Dewey follow-up returned REVIEW_PASS at head 48f7f67fc2400a87dd9adbdb175013ed09a5cac4 after Bacon fixed the two P2 upgrade blockers. Final branch freshness is pending because PR #92 remains DIRTY due a WDD TASK-017 review-file conflict only. Refresh the task branch against latest codex/epic/admin-configuration-frontend, resolve the WDD review-file conflict while preserving PR #92 metadata and evidence, rerun required Docker/UI/root verification, push the task branch, verify PR cleanliness/freshness, merge or mark merge_ready according to policy, update WDD artifacts, push, and hand off to wdd-reconcile-wave. Stop when WAVE-010 is merged, blocked, cancelled, or ready for wdd-reconcile-wave. After WAVE-010 is reconciled, continue to WAVE-011 per Ivo's finish-all-waves instruction and push to GitHub between tasks/waves.",
     "automationUpdateResult": "verified_in_app"
   },
   "sharedContext": {
@@ -2617,71 +2624,71 @@
         ],
         "branch": "codex/task/TASK-017-docker-first-run-no-cli",
         "worktree": "/Users/ivo.toby/workspace/postgram/.worktrees/TASK-017-docker-first-run-no-cli",
-        "worktreeStatus": "dirty_active_uncommitted_changes",
+        "worktreeStatus": "clean_pushed",
         "workerThreadId": "019f396f-3da8-7d11-94a0-3d84d26f490b",
         "workerNickname": "Bacon",
-        "reviewThreadId": null,
-        "reviewNickname": null,
-        "currentGate": "no_pr",
-        "branchFreshness": "behind_epic_controller_checkpoints_final_refresh_required",
-        "pr": null,
-        "latestCommit": null,
+        "reviewThreadId": "019f398f-98c3-7350-be3f-1cb4af8aab75",
+        "reviewNickname": "Dewey",
+        "currentGate": "review_passed_pending_freshness",
+        "branchFreshness": "dirty_wdd_review_file_conflict_final_refresh_required",
+        "pr": "https://github.com/ivo-toby/postgram/pull/92",
+        "latestCommit": "48f7f67fc2400a87dd9adbdb175013ed09a5cac4",
         "blockingFeedback": [],
         "verification": {
-          "result": "worktree_created_branch_pushed_ready_for_dispatch",
-          "checkedAt": "2026-07-06T21:54:35Z",
+          "result": "review_passed_pending_final_freshness",
+          "checkedAt": "2026-07-06T22:43:02Z",
           "commands": [
-            "git worktree add -b codex/task/TASK-017-docker-first-run-no-cli .worktrees/TASK-017-docker-first-run-no-cli origin/codex/epic/admin-configuration-frontend",
+            "git fetch origin +refs/pull/92/head:refs/remotes/origin/pr/92",
+            "gh pr view 92 --json number,url,state,isDraft,headRefName,headRefOid,baseRefName,baseRefOid,mergeStateStatus,updatedAt,reviewDecision,reviews,comments",
             "git -C .worktrees/TASK-017-docker-first-run-no-cli status --short --branch",
             "git -C .worktrees/TASK-017-docker-first-run-no-cli rev-list --left-right --count origin/codex/epic/admin-configuration-frontend...HEAD",
-            "git -C .worktrees/TASK-017-docker-first-run-no-cli push -u origin codex/task/TASK-017-docker-first-run-no-cli"
+            "git -C .worktrees/TASK-017-docker-first-run-no-cli diff --check",
+            "git merge-tree origin/codex/epic/admin-configuration-frontend origin/pr/92",
+            "docker compose config >/tmp/task017-followup-compose.yml",
+            "npm test -- tests/unit/docker-first-run.test.ts",
+            "npm test -- tests/integration/admin-auth-service.test.ts",
+            "npm run typecheck",
+            "npm --prefix ui run typecheck",
+            "multi_agent_v1.send_input Bacon route P2 feedback",
+            "multi_agent_v1.send_input Dewey follow-up review",
+            "multi_agent_v1.wait_agent Dewey timeout 30000"
           ],
-          "evidence": "Task branch/worktree created from pushed epic activation checkpoint d43f7df, in-progress TASK-017 file and orchestration state verified, branch divergence from epic was 0 0, and task branch was pushed to origin."
+          "evidence": "Dewey returned REVIEW_BLOCKED for reviewed head 6a0259701fbfba648d37472653a5760b3d0d1602 with two P2s. Bacon pushed fix head 48f7f67fc2400a87dd9adbdb175013ed09a5cac4; assigned worktree is clean/pushed; branch divergence from latest epic is 4 3; git diff --check passes; merge-tree conflict remains limited to the WDD TASK-017 review file. Controller verification on the fix head passed: docker compose config, docker-first-run unit tests 5/5, admin-auth-service integration tests 18/18, root typecheck, and UI typecheck. Follow-up review was requested from Dewey and remained pending during the bounded wait. Dewey follow-up returned REVIEW_PASS for head 48f7f67fc2400a87dd9adbdb175013ed09a5cac4 with no P1/P2/P3. Reviewer verified prior P2 upgrade blockers are resolved and key-validation concern is resolved. Final branch freshness is still pending because merge-tree conflicts only in the WDD TASK-017 review file."
         },
         "activatedAt": "2026-07-06T21:51:22Z",
-        "cleanupState": "not_started",
-        "sharedContextReconciliation": "not_started",
-        "lastObservedAt": "2026-07-06T22:14:02Z",
+        "cleanupState": "not_started_pr_open",
+        "sharedContextReconciliation": "queued_after_merge",
+        "lastObservedAt": "2026-07-06T22:43:02Z",
         "branchPushedAt": "2026-07-06T21:54:35Z",
         "worktreeCreatedAt": "2026-07-06T21:54:35Z",
         "dispatchedAt": "2026-07-06T21:57:06Z",
         "worktreeObservation": {
-          "observedAt": "2026-07-06T22:14:02Z",
+          "observedAt": "2026-07-06T22:43:02Z",
           "taskId": "TASK-017-docker-first-run-no-cli",
-          "status": "worker_active_no_pr",
-          "workerPoll": "wait_agent_timeout_30000",
-          "worktreeStatus": "dirty_active_uncommitted_changes",
+          "status": "fix_pushed_followup_review_pending",
+          "worktreeStatus": "clean_pushed",
           "workerThreadId": "019f396f-3da8-7d11-94a0-3d84d26f490b",
           "workerNickname": "Bacon",
+          "reviewThreadId": "019f398f-98c3-7350-be3f-1cb4af8aab75",
+          "reviewNickname": "Dewey",
           "branch": "codex/task/TASK-017-docker-first-run-no-cli",
-          "branchFreshness": "behind_epic_controller_checkpoints_final_refresh_required",
-          "branchDivergence": "origin/codex/epic/admin-configuration-frontend...HEAD = 2 0; task branch is behind by controller monitoring checkpoints while worker has active uncommitted changes.",
-          "prState": "no_pr",
-          "changedFiles": [
-            ".env.example",
-            "Dockerfile",
-            "README.md",
-            "docker-compose.yml",
-            "docs/manual-test-plan.md",
-            "src/auth/admin-service.ts",
-            "src/index.ts",
-            "tests/integration/admin-auth-service.test.ts"
-          ],
-          "untrackedFiles": [
-            ".playwright-cli/",
-            "docker/postgram-ensure-secrets.sh",
-            "docker/postgram-entrypoint.sh",
-            "tests/unit/docker-first-run.test.ts"
-          ],
+          "previousReviewedHead": "6a0259701fbfba648d37472653a5760b3d0d1602",
+          "latestCommit": "48f7f67fc2400a87dd9adbdb175013ed09a5cac4",
+          "branchFreshness": "dirty_wdd_review_file_conflict_final_refresh_required",
+          "branchDivergence": "origin/codex/epic/admin-configuration-frontend...HEAD = 4 3",
+          "prState": "open_draft_dirty",
+          "pr": "https://github.com/ivo-toby/postgram/pull/92",
+          "mergeTree": "conflict only in .wdd/epics/EPIC-admin-configuration-frontend/TICKET-007-docker-e2e-validation/review/TASK-017-docker-first-run-no-cli.md",
           "diffCheck": "git diff --check passed in assigned worktree.",
-          "activityNote": "Worktree has active Docker/docs/backend setup changes and Playwright evidence files from the heartbeat window, so no missing-deliverable nudge was sent."
+          "reviewState": "Dewey follow-up REVIEW_PASS; final freshness pending.",
+          "activityNote": "Dewey follow-up returned REVIEW_PASS for head 48f7f67fc2400a87dd9adbdb175013ed09a5cac4 with no P1/P2/P3. Reviewer verified prior P2 upgrade blockers are resolved and key-validation concern is resolved. Final branch freshness is still pending because merge-tree conflicts only in the WDD TASK-017 review file."
         }
       }
     ],
-    "dispatchState": "no_pr",
+    "dispatchState": "reviewing",
     "activatedFromCommit": "8b7f6c38723d9ff27f95cf2aa2cb9ac639b98242",
-    "lastObservedAt": "2026-07-06T22:14:02Z",
-    "waveCompletion": "in_progress",
+    "lastObservedAt": "2026-07-06T22:43:02Z",
+    "waveCompletion": "in_progress_reviewing",
     "activationCommit": "d43f7dff1a8e693d26d0efb51556de4ae2eb08e2",
     "branchPushedAt": "2026-07-06T21:54:35Z",
     "worktreeCreatedAt": "2026-07-06T21:54:35Z",
@@ -2747,7 +2754,7 @@
       "WAVE-008-admin-ops-dashboard-ui": "reconciled",
       "WAVE-008-admin-config-ui": "reconciled",
       "WAVE-009-maintenance-admin-ui": "reconciled",
-      "WAVE-010-docker-first-run-no-cli": "reviewing"
+      "WAVE-010-docker-first-run-no-cli": "review_passed_pending_freshness"
     },
     "waveCompletion": {
       "WAVE-001": "done",
@@ -2768,12 +2775,12 @@
     "monitoring": {
       "mode": "adaptive",
       "cadence": "5m",
-      "status": "wave_010_pr92_review_pending",
-      "lastCheckedAt": "2026-07-06T22:29:02Z",
-      "nextCheckDueAt": "2026-07-06T22:34:02Z",
+      "status": "wave_010_pr92_review_passed_pending_freshness",
+      "lastCheckedAt": "2026-07-06T22:43:02Z",
+      "nextCheckDueAt": "2026-07-06T22:48:02Z",
       "schedulerRef": "postgram-admin-wave-005-wdd-heartbeat",
       "schedulerName": "postgram-admin-wave-010-wdd-heartbeat",
-      "fallbackPrompt": "Run one bounded WDD controller heartbeat for /Users/ivo.toby/workspace/postgram, epic EPIC-admin-configuration-frontend, active wave WAVE-010. Use the subagent-pr-orchestration skill. Start in /Users/ivo.toby/workspace/postgram on branch codex/epic/admin-configuration-frontend. Read .wdd/epics/EPIC-admin-configuration-frontend/orchestration.json and controller-state.md, then inspect PR #92 for WAVE-010-docker-first-run-no-cli / TASK-017-docker-first-run-no-cli, reviewer Dewey (019f398f-98c3-7350-be3f-1cb4af8aab75), worker Bacon (019f396f-3da8-7d11-94a0-3d84d26f490b), and assigned worktree /Users/ivo.toby/workspace/postgram/.worktrees/TASK-017-docker-first-run-no-cli. PR #92 is open/draft at head 6a0259701fbfba648d37472653a5760b3d0d1602 and currently DIRTY due a WDD TASK-017 review-file conflict only; final branch freshness refresh is required before merge. If Dewey reports P1/P2, route feedback to Bacon or a fresh fix worker. If review passes, refresh the task branch against latest codex/epic/admin-configuration-frontend, resolve the WDD review-file conflict while preserving PR #92 metadata and evidence, rerun required Docker/UI/root verification, push the task branch, verify PR cleanliness/freshness, merge or mark merge_ready according to policy, update WDD artifacts, push, and hand off to wdd-reconcile-wave. Stop when WAVE-010 is merged, blocked, cancelled, or ready for wdd-reconcile-wave. After WAVE-010 is reconciled, continue to WAVE-011 per Ivo's finish-all-waves instruction and push to GitHub between tasks/waves.",
+      "fallbackPrompt": "Run one bounded WDD controller heartbeat for /Users/ivo.toby/workspace/postgram, epic EPIC-admin-configuration-frontend, active wave WAVE-010. Use the subagent-pr-orchestration skill. Start in /Users/ivo.toby/workspace/postgram on branch codex/epic/admin-configuration-frontend. Read .wdd/epics/EPIC-admin-configuration-frontend/orchestration.json and controller-state.md, then inspect PR #92 for WAVE-010-docker-first-run-no-cli / TASK-017-docker-first-run-no-cli. Dewey follow-up returned REVIEW_PASS at head 48f7f67fc2400a87dd9adbdb175013ed09a5cac4 after Bacon fixed the two P2 upgrade blockers. Final branch freshness is pending because PR #92 remains DIRTY due a WDD TASK-017 review-file conflict only. Refresh the task branch against latest codex/epic/admin-configuration-frontend, resolve the WDD review-file conflict while preserving PR #92 metadata and evidence, rerun required Docker/UI/root verification, push the task branch, verify PR cleanliness/freshness, merge or mark merge_ready according to policy, update WDD artifacts, push, and hand off to wdd-reconcile-wave. Stop when WAVE-010 is merged, blocked, cancelled, or ready for wdd-reconcile-wave. After WAVE-010 is reconciled, continue to WAVE-011 per Ivo's finish-all-waves instruction and push to GitHub between tasks/waves.",
       "automationUpdateResult": "verified_in_app"
     },
     "review": {
@@ -3140,18 +3147,58 @@
         "residualRisk": "Reviewer did not rerun full UI suite or backend maintenance contract suite; worker had full UI evidence and controller reran focused UI/client checks."
       },
       "WAVE-010-docker-first-run-no-cli": {
-        "status": "pending",
-        "result": null,
+        "status": "passed",
+        "result": "REVIEW_PASS",
         "pr": "https://github.com/ivo-toby/postgram/pull/92",
-        "latestCommit": "6a0259701fbfba648d37472653a5760b3d0d1602",
+        "latestCommit": "48f7f67fc2400a87dd9adbdb175013ed09a5cac4",
+        "previousReviewedHead": "6a0259701fbfba648d37472653a5760b3d0d1602",
         "reviewThreadId": "019f398f-98c3-7350-be3f-1cb4af8aab75",
         "reviewNickname": "Dewey",
         "workerThreadId": "019f396f-3da8-7d11-94a0-3d84d26f490b",
         "workerNickname": "Bacon",
         "requestedAt": "2026-07-06T22:29:02Z",
-        "submissionId": "019f398f-98c3-7350-be3f-1cb4af8aab75",
+        "reviewedAt": "2026-07-06T22:43:02Z",
+        "followupReviewRequestedAt": "2026-07-06T22:43:02Z",
+        "followupReviewSubmissionId": "019f399a-c385-73e2-abba-fc7b0c7f0388",
         "blockingFeedback": [],
-        "freshnessNote": "PR #92 is DIRTY due WDD review-file conflict only; product review requested with final branch freshness pending."
+        "resolvedFeedback": [
+          {
+            "priority": "P2",
+            "id": "P2-docker-upgrade-postgres-password-preservation",
+            "status": "resolved_review_passed",
+            "owner": "Bacon",
+            "workerThreadId": "019f396f-3da8-7d11-94a0-3d84d26f490b",
+            "reviewer": "Dewey",
+            "reviewThreadId": "019f398f-98c3-7350-be3f-1cb4af8aab75",
+            "reviewedHead": "6a0259701fbfba648d37472653a5760b3d0d1602",
+            "fixedHead": "48f7f67fc2400a87dd9adbdb175013ed09a5cac4",
+            "resolvedAt": "2026-07-06T22:43:02Z",
+            "summary": "Existing Compose pgdata/POSTGRES_PASSWORD upgrade compatibility is resolved by seeding the new postgres-password secret from legacy POSTGRES_PASSWORD when present."
+          },
+          {
+            "priority": "P2",
+            "id": "P2-openai-compose-provider-upgrade-compatibility",
+            "status": "resolved_review_passed",
+            "owner": "Bacon",
+            "workerThreadId": "019f396f-3da8-7d11-94a0-3d84d26f490b",
+            "reviewer": "Dewey",
+            "reviewThreadId": "019f398f-98c3-7350-be3f-1cb4af8aab75",
+            "reviewedHead": "6a0259701fbfba648d37472653a5760b3d0d1602",
+            "fixedHead": "48f7f67fc2400a87dd9adbdb175013ed09a5cac4",
+            "resolvedAt": "2026-07-06T22:43:02Z",
+            "summary": "Existing OpenAI-backed Compose installs are preserved because Compose leaves EMBEDDING_PROVIDER blank and the entrypoint selects openai when OPENAI_API_KEY is present."
+          }
+        ],
+        "nonBlockingFeedback": [
+          {
+            "priority": "P3",
+            "id": "P3-final-freshness-wdd-review-file-conflict",
+            "status": "pending_final_freshness",
+            "reviewedHead": "48f7f67fc2400a87dd9adbdb175013ed09a5cac4",
+            "summary": "Final freshness remains pending; merge-tree conflict is limited to WDD TASK-017 review file."
+          }
+        ],
+        "freshnessNote": "Final branch freshness pending: PR #92 remains DIRTY due WDD review-file conflict only."
       }
     },
     "branchFreshness": {
@@ -3518,13 +3565,14 @@
         "observedAt": "2026-07-06T21:26:02Z"
       },
       "WAVE-010-docker-first-run-no-cli": {
-        "status": "open_draft_dirty",
+        "status": "open_draft_dirty_review_passed",
         "pr": "https://github.com/ivo-toby/postgram/pull/92",
         "number": 92,
-        "head": "6a0259701fbfba648d37472653a5760b3d0d1602",
+        "previousReviewedHead": "6a0259701fbfba648d37472653a5760b3d0d1602",
+        "head": "48f7f67fc2400a87dd9adbdb175013ed09a5cac4",
         "mergeStateStatus": "DIRTY",
-        "observedAt": "2026-07-06T22:29:02Z",
-        "note": "Merge-tree conflict is limited to WDD TASK-017 review file; final freshness refresh required before merge."
+        "observedAt": "2026-07-06T22:43:02Z",
+        "note": "Dewey REVIEW_PASS at fix head 48f7f67; final freshness refresh required because merge-tree conflict is limited to WDD TASK-017 review file."
       }
     },
     "cleanup": {
@@ -4193,18 +4241,25 @@
         "evidence": "WAVE-009 reconciled after PR #91 was confirmed MERGED. Shared context records the AdminMaintenance dashboard panel, maintenance dry-run/apply and job-polling client contract, preview-before-apply, recent step-up, scoped idempotency, safe job-summary rendering, llm-extraction edge-prune constraint, and TASK-017/TASK-018 Docker/security handoffs. TASK-016 worktree was already cleaned up."
       },
       "WAVE-010-docker-first-run-no-cli": {
-        "result": "pr_open_worker_evidence_recorded_review_pending",
-        "checkedAt": "2026-07-06T22:29:02Z",
+        "result": "review_passed_pending_final_freshness",
+        "checkedAt": "2026-07-06T22:43:02Z",
         "commands": [
-          "gh pr list --head codex/task/TASK-017-docker-first-run-no-cli --base codex/epic/admin-configuration-frontend --json number,url,state,isDraft,headRefOid,updatedAt,mergeStateStatus,title",
+          "git fetch origin +refs/pull/92/head:refs/remotes/origin/pr/92",
+          "gh pr view 92 --json number,url,state,isDraft,headRefName,headRefOid,baseRefName,baseRefOid,mergeStateStatus,updatedAt,reviewDecision,reviews,comments",
           "git -C .worktrees/TASK-017-docker-first-run-no-cli status --short --branch",
           "git -C .worktrees/TASK-017-docker-first-run-no-cli rev-list --left-right --count origin/codex/epic/admin-configuration-frontend...HEAD",
           "git -C .worktrees/TASK-017-docker-first-run-no-cli diff --check",
-          "git merge-tree origin/codex/epic/admin-configuration-frontend codex/task/TASK-017-docker-first-run-no-cli",
-          "multi_agent_v1.spawn_agent Dewey review for PR #92",
+          "git merge-tree origin/codex/epic/admin-configuration-frontend origin/pr/92",
+          "docker compose config >/tmp/task017-followup-compose.yml",
+          "npm test -- tests/unit/docker-first-run.test.ts",
+          "npm test -- tests/integration/admin-auth-service.test.ts",
+          "npm run typecheck",
+          "npm --prefix ui run typecheck",
+          "multi_agent_v1.send_input Bacon route P2 feedback",
+          "multi_agent_v1.send_input Dewey follow-up review",
           "multi_agent_v1.wait_agent Dewey timeout 30000"
         ],
-        "evidence": "PR #92 is open/draft at head 6a0259701fbfba648d37472653a5760b3d0d1602. Assigned worktree is clean/pushed, git diff --check passes, branch divergence from latest epic is 3 2, GitHub reports DIRTY, and merge-tree shows the only conflict is the WDD TASK-017 review task file. Dewey review is pending."
+        "evidence": "Dewey returned REVIEW_BLOCKED for reviewed head 6a0259701fbfba648d37472653a5760b3d0d1602 with two P2s. Bacon pushed fix head 48f7f67fc2400a87dd9adbdb175013ed09a5cac4; assigned worktree is clean/pushed; branch divergence from latest epic is 4 3; git diff --check passes; merge-tree conflict remains limited to the WDD TASK-017 review file. Controller verification on the fix head passed: docker compose config, docker-first-run unit tests 5/5, admin-auth-service integration tests 18/18, root typecheck, and UI typecheck. Follow-up review was requested from Dewey and remained pending during the bounded wait. Dewey follow-up returned REVIEW_PASS for head 48f7f67fc2400a87dd9adbdb175013ed09a5cac4 with no P1/P2/P3. Reviewer verified prior P2 upgrade blockers are resolved and key-validation concern is resolved. Final branch freshness is still pending because merge-tree conflicts only in the WDD TASK-017 review file."
       }
     },
     "feedback": {
@@ -4398,14 +4453,58 @@
       },
       "WAVE-010-docker-first-run-no-cli": {
         "blocking": [],
-        "lastObservedAt": "2026-07-06T22:29:02Z",
+        "nonBlocking": [
+          {
+            "priority": "P3",
+            "id": "P3-final-freshness-wdd-review-file-conflict",
+            "status": "pending_final_freshness",
+            "reviewedHead": "48f7f67fc2400a87dd9adbdb175013ed09a5cac4",
+            "summary": "Final freshness remains pending; merge-tree conflict is limited to WDD TASK-017 review file."
+          }
+        ],
+        "lastObservedAt": "2026-07-06T22:43:02Z",
         "workerThreadId": "019f396f-3da8-7d11-94a0-3d84d26f490b",
         "workerNickname": "Bacon",
         "reviewThreadId": "019f398f-98c3-7350-be3f-1cb4af8aab75",
         "reviewNickname": "Dewey",
-        "status": "reviewing",
-        "nudge": "not_needed_pr_open_review_pending",
-        "observation": "Bacon produced draft PR #92; Dewey review is pending; no P1/P2 feedback routed yet."
+        "status": "review_passed_pending_final_freshness",
+        "nudge": "p2_feedback_routed_fix_already_pushed",
+        "routedAt": "2026-07-06T22:43:02Z",
+        "feedbackSubmissionId": "019f399a-a02a-7651-9f0f-2175b4a56116",
+        "fixedHead": "48f7f67fc2400a87dd9adbdb175013ed09a5cac4",
+        "fixObservedAt": "2026-07-06T22:43:02Z",
+        "followupReviewSubmissionId": "019f399a-c385-73e2-abba-fc7b0c7f0388",
+        "observation": "Dewey follow-up returned REVIEW_PASS for head 48f7f67fc2400a87dd9adbdb175013ed09a5cac4 with no P1/P2/P3. Reviewer verified prior P2 upgrade blockers are resolved and key-validation concern is resolved. Final branch freshness is still pending because merge-tree conflicts only in the WDD TASK-017 review file.",
+        "resolved": [
+          {
+            "priority": "P2",
+            "id": "P2-docker-upgrade-postgres-password-preservation",
+            "status": "resolved_review_passed",
+            "owner": "Bacon",
+            "workerThreadId": "019f396f-3da8-7d11-94a0-3d84d26f490b",
+            "reviewer": "Dewey",
+            "reviewThreadId": "019f398f-98c3-7350-be3f-1cb4af8aab75",
+            "reviewedHead": "6a0259701fbfba648d37472653a5760b3d0d1602",
+            "fixedHead": "48f7f67fc2400a87dd9adbdb175013ed09a5cac4",
+            "resolvedAt": "2026-07-06T22:43:02Z",
+            "summary": "Existing Compose pgdata/POSTGRES_PASSWORD upgrade compatibility is resolved by seeding the new postgres-password secret from legacy POSTGRES_PASSWORD when present."
+          },
+          {
+            "priority": "P2",
+            "id": "P2-openai-compose-provider-upgrade-compatibility",
+            "status": "resolved_review_passed",
+            "owner": "Bacon",
+            "workerThreadId": "019f396f-3da8-7d11-94a0-3d84d26f490b",
+            "reviewer": "Dewey",
+            "reviewThreadId": "019f398f-98c3-7350-be3f-1cb4af8aab75",
+            "reviewedHead": "6a0259701fbfba648d37472653a5760b3d0d1602",
+            "fixedHead": "48f7f67fc2400a87dd9adbdb175013ed09a5cac4",
+            "resolvedAt": "2026-07-06T22:43:02Z",
+            "summary": "Existing OpenAI-backed Compose installs are preserved because Compose leaves EMBEDDING_PROVIDER blank and the entrypoint selects openai when OPENAI_API_KEY is present."
+          }
+        ],
+        "reviewResult": "REVIEW_PASS",
+        "reviewPassedAt": "2026-07-06T22:43:02Z"
       }
     },
     "activationArtifact": {

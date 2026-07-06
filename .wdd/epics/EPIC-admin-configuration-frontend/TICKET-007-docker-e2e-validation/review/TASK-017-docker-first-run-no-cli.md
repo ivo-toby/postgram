@@ -286,6 +286,23 @@ Keep docs honest about emergency CLI fallback and public exposure risks.
   pushed; `git diff --check` passes in the assigned worktree; branch divergence
   from the latest epic is `3 2`; `git merge-tree` reports a WDD review-file
   conflict only; Dewey review is pending.
+- 2026-07-06T22:43:02Z controller heartbeat: Dewey returned
+  `REVIEW_BLOCKED` for reviewed head
+  `6a0259701fbfba648d37472653a5760b3d0d1602` with two P2 upgrade blockers.
+  Bacon had already pushed fix head
+  `48f7f67fc2400a87dd9adbdb175013ed09a5cac4`; feedback was routed to Bacon in
+  submission `019f399a-a02a-7651-9f0f-2175b4a56116`, and Bacon confirmed
+  no unpushed work remains. Controller verification on the fix head passed:
+  `docker compose config`, `npm test -- tests/unit/docker-first-run.test.ts`
+  (5 tests), `npm test -- tests/integration/admin-auth-service.test.ts`
+  (18 tests), `npm run typecheck`, `npm --prefix ui run typecheck`, and
+  `git diff --check`. Dewey follow-up review was requested in submission
+  `019f399a-c385-73e2-abba-fc7b0c7f0388` and is pending.
+- 2026-07-06T22:43:02Z follow-up: Dewey returned `REVIEW_PASS` for fix head
+  `48f7f67fc2400a87dd9adbdb175013ed09a5cac4` with no P1/P2/P3. The prior
+  Docker upgrade blockers and settings-key validation concern are resolved.
+  Final branch freshness is still pending because merge-tree conflicts only in
+  this WDD review task file.
 
 ## Review Feedback
 
@@ -295,11 +312,25 @@ Keep docs honest about emergency CLI fallback and public exposure risks.
 
 ### P2
 
-- None.
+- Resolved by follow-up review:
+  `P2-docker-upgrade-postgres-password-preservation`. Existing Compose installs
+  with initialized `pgdata` and old `POSTGRES_PASSWORD` could lose DB access
+  when the new `postgram_secrets/postgres-password` file was generated
+  randomly. Bacon pushed fix head `48f7f67` to seed the new secret file from
+  legacy `POSTGRES_PASSWORD` when present; Dewey follow-up passed.
+- Resolved by follow-up review:
+  `P2-openai-compose-provider-upgrade-compatibility`. Existing Compose installs
+  with `OPENAI_API_KEY` but no explicit `EMBEDDING_PROVIDER` could silently
+  switch to Ollama. Bacon pushed fix head `48f7f67` so the entrypoint selects
+  OpenAI when `OPENAI_API_KEY` is present unless the operator explicitly sets a
+  provider; Dewey follow-up passed.
 
 ### P3
 
-- None.
+- Pending final freshness: PR #92 still needs branch refresh against the latest
+  epic checkpoint; merge-tree conflict is limited to this WDD review task file.
+- Resolved by follow-up review: Docker settings-key validation was tightened to
+  match the app validator more closely.
 
 ## Completion Notes
 
@@ -315,3 +346,6 @@ Keep docs honest about emergency CLI fallback and public exposure risks.
 - Updated Docker/manual test docs to cover backup, restore, and failure
   behavior for `ADMIN_MFA_SECRET_KEY` and
   `ADMIN_SETTINGS_ENCRYPTION_KEY`.
+- Preserved existing Docker upgrades by seeding the new Postgres secret from
+  legacy `POSTGRES_PASSWORD` and keeping OpenAI as the implicit provider when
+  a legacy `OPENAI_API_KEY` exists.

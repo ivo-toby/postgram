@@ -58,9 +58,9 @@ Cadence: 15 minutes
 
 Status: worker_monitoring_no_pr
 
-Last check: 2026-07-06T09:07:24Z
+Last check: 2026-07-06T09:22:24Z
 
-Next check due: 2026-07-06T09:22:24Z
+Next check due: 2026-07-06T09:37:24Z
 
 Scheduler reference: `postgram-admin-wave-005-wdd-heartbeat`
 
@@ -346,6 +346,14 @@ GitHub between tasks/waves.
   activity, so no nudge was sent. The task branch is still at `e73a57d` and is
   now 19 commits behind the epic branch at `93ba2a7`; refresh remains required
   before review or merge.
+- WAVE-005 2026-07-06T09:22:24Z observation: PR #83 remains `MERGED` and no
+  TASK-010 PR exists. Goodall did not return a final status during the bounded
+  poll, and the worktree remains active/uncommitted in the expected
+  provider-config/provider-construction file set. Recent local mtimes on the
+  provider-config service and integration test show visible implementation
+  activity, so no nudge was sent. The task branch is still at `e73a57d` and is
+  now 20 commits behind the epic branch at `3dde76d`; refresh remains required
+  before review or merge.
 
 ## WAVE-001 Reconciled State
 
@@ -596,6 +604,13 @@ GitHub between tasks/waves.
   active/uncommitted with recent local mtimes on the provider-config service
   and integration test; `git rev-list --left-right --count
   origin/codex/epic/admin-configuration-frontend...HEAD` returned `19 0`, so
+  TASK-010 still must refresh against the epic branch before review or merge.
+- WAVE-005 2026-07-06T09:22:24Z heartbeat verification: `gh pr list` returned
+  no PR for `codex/task/TASK-010-provider-config-apply`; Goodall's bounded
+  worker poll timed out without final status; the assigned worktree is
+  active/uncommitted with recent local mtimes on the provider-config service
+  and integration test; `git rev-list --left-right --count
+  origin/codex/epic/admin-configuration-frontend...HEAD` returned `20 0`, so
   TASK-010 still must refresh against the epic branch before review or merge.
 - WAVE-005 activation verification: activation artifacts parse and pass
   `git diff --check`; activation commit `70df1c5` is pushed; both task
@@ -904,10 +919,16 @@ GitHub between tasks/waves.
   task branch remains stale relative to the epic branch and must refresh before
   review or merge. Gate remains `no_pr`; next check due
   2026-07-06T09:22:24Z.
+- 2026-07-06T09:22:24Z: Goodall still had no final status and no TASK-010 PR.
+  The assigned worktree remains active/uncommitted with recent local mtimes on
+  the provider-config service and integration test, so no nudge was sent. The
+  task branch remains stale relative to the epic branch and must refresh before
+  review or merge. Gate remains `no_pr`; next check due
+  2026-07-06T09:37:24Z.
 
 ## Next Action
 
-Next WAVE-005 heartbeat is due at 2026-07-06T09:22:24Z. Inspect Goodall's
+Next WAVE-005 heartbeat is due at 2026-07-06T09:37:24Z. Inspect Goodall's
 TASK-010 worker and worktree. If TASK-010 has a PR or patch, start review;
 otherwise keep `no_pr` unless the exact deliverables are stale or the worktree
 has gone inactive. Enforce a branch refresh against

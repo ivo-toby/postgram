@@ -22,10 +22,10 @@ branch: codex/task/TASK-017-docker-first-run-no-cli
 worker_worktree: /Users/ivo.toby/workspace/postgram/.worktrees/TASK-017-docker-first-run-no-cli
 worktree_status: clean_pushed
 pr: null
-worker_thread_id: null
+worker_thread_id: 019f396f-3da8-7d11-94a0-3d84d26f490b
 review_thread_id: null
-current_gate: ready_for_dispatch
-branch_freshness: current
+current_gate: no_pr
+branch_freshness: current_at_dispatch
 verification:
   - docker compose config
   - npm run typecheck
@@ -131,6 +131,9 @@ path above. At 2026-07-06T21:54:35Z the task branch/worktree were created from
 the pushed epic activation checkpoint, verified clean/current, and the task
 branch was pushed to GitHub.
 
+Bacon (`019f396f-3da8-7d11-94a0-3d84d26f490b`) was dispatched at
+2026-07-06T21:57:06Z after the branch/worktree checkpoint was pushed.
+
 ## RED-GREEN TDD Plan
 
 ### RED
@@ -202,6 +205,7 @@ Keep docs honest about emergency CLI fallback and public exposure risks.
   epic checkpoint `d43f7df`, in-progress TASK-017 file present, orchestration
   activeWave present, branch divergence from epic was `0 0`, and the task
   branch was pushed to origin.
+- 2026-07-06T21:57:06Z worker dispatched; current gate is `no_pr`.
 
 ## Review Feedback
 

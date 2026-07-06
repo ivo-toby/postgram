@@ -859,6 +859,11 @@ Progress:
   `codex/task/TASK-017-docker-first-run-no-cli` and worktree
   `/Users/ivo.toby/workspace/postgram/.worktrees/TASK-017-docker-first-run-no-cli`
   are assigned and pending creation from the pushed activation checkpoint.
+- 2026-07-06T21:54:35Z: branch/worktree were created from pushed activation
+  checkpoint `d43f7df`, verified current with divergence `0 0`, and pushed.
+- 2026-07-06T21:57:06Z: Bacon
+  (`019f396f-3da8-7d11-94a0-3d84d26f490b`) was dispatched; current gate is
+  `no_pr`.
 
 Stop condition:
 

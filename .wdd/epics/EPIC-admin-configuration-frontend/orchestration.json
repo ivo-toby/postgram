@@ -2492,13 +2492,13 @@
   "monitoring": {
     "mode": "adaptive",
     "cadence": "5m",
-    "status": "wave_008_ready_for_reconciliation_pending_push",
-    "lastCheckedAt": "2026-07-06T20:09:32Z",
-    "nextCheckDueAt": "2026-07-06T20:14:32Z",
+    "status": "wave_008_ready_for_reconciliation",
+    "lastCheckedAt": "2026-07-06T20:15:58Z",
+    "nextCheckDueAt": "2026-07-06T20:20:58Z",
     "schedulerRef": "postgram-admin-wave-005-wdd-heartbeat",
     "schedulerName": "postgram-admin-wave-008-reconcile-handoff",
-    "fallbackPrompt": "Run one bounded WDD reconciliation handoff heartbeat for /Users/ivo.toby/workspace/postgram, epic EPIC-admin-configuration-frontend, active wave WAVE-008. Use the wdd-reconcile-wave skill. Start in /Users/ivo.toby/workspace/postgram on branch codex/epic/admin-configuration-frontend. Read .wdd/epics/EPIC-admin-configuration-frontend/orchestration.json and controller-state.md. Confirm WAVE-008 bundles TASK-012-admin-ops-dashboard-ui and TASK-013-admin-config-ui are merged into the epic branch; TASK-012 / PR #89 was MERGED at 2026-07-06T18:54:38Z in merge commit ef54876a27164d3a91ba60d32f9e23b71d9cdf38 and cleaned up; TASK-013 / PR #90 passed Schrodinger REVIEW_PASS, was refreshed to task head 2efc58f17b0990801e82ece4b705e439dbcda164, merged locally in 9974b2921b2c9b2fe5453f82e5c7e7f647ec3254, and cleaned up. Verify task files are in done/, currentGates.workerDispatch entries are merged, WAVE-008 waveCompletion is ready_for_reconciliation, branch freshness is current_at_merge, cleanup is cleaned_up, blocking feedback is empty, and shared-context reconciliation is queued. First confirm the epic branch push marked PR #90 MERGED; if not yet pushed, push codex/epic/admin-configuration-frontend and verify PR #90 state. Then run wdd-reconcile-wave for WAVE-008, reconcile admin ops dashboard and admin config UI decisions into shared context and downstream tasks, update orchestration.json and controller-state.md, push the reconciliation checkpoint, then continue to WAVE-009 per Ivo finish-all-waves instruction after reconciliation is pushed.",
-    "verifiedAt": "2026-07-06T20:09:32Z",
+    "fallbackPrompt": "Run one bounded WDD reconciliation handoff heartbeat for /Users/ivo.toby/workspace/postgram, epic EPIC-admin-configuration-frontend, active wave WAVE-008. Use the wdd-reconcile-wave skill. Start in /Users/ivo.toby/workspace/postgram on branch codex/epic/admin-configuration-frontend. Read .wdd/epics/EPIC-admin-configuration-frontend/orchestration.json and controller-state.md. Confirm WAVE-008 bundles TASK-012-admin-ops-dashboard-ui and TASK-013-admin-config-ui are merged into the epic branch; TASK-012 / PR #89 is MERGED at 2026-07-06T18:54:38Z in merge commit ef54876a27164d3a91ba60d32f9e23b71d9cdf38 and cleaned up; TASK-013 / PR #90 is MERGED at 2026-07-06T20:15:58Z with merge commit 9974b2921b2c9b2fe5453f82e5c7e7f647ec3254 after Schrodinger REVIEW_PASS, final task head 2efc58f17b0990801e82ece4b705e439dbcda164, and cleanup. Verify task files are in done/, currentGates.workerDispatch entries are merged, WAVE-008 waveCompletion is ready_for_reconciliation, branch freshness is current_at_merge, cleanup is cleaned_up, blocking feedback is empty, and shared-context reconciliation is queued. Run wdd-reconcile-wave for WAVE-008, reconcile admin ops dashboard and admin config UI decisions into shared context and downstream tasks, update orchestration.json and controller-state.md, push the reconciliation checkpoint, then continue to WAVE-009 per Ivo finish-all-waves instruction after reconciliation is pushed.",
+    "verifiedAt": "2026-07-06T20:15:58Z",
     "automationUpdateResult": "updated"
   },
   "sharedContext": {
@@ -2715,14 +2715,14 @@
         "dispatchedAt": "2026-07-06T17:29:45Z",
         "dispatchBaseCommit": "dacb6440e23d9f75e0a26a529aa54e986bbee697",
         "worktreeObservation": {
-          "observedAt": "2026-07-06T20:09:32Z",
+          "observedAt": "2026-07-06T20:15:58Z",
           "taskId": "TASK-013-admin-config-ui",
-          "status": "merged_cleaned_up_pending_epic_push",
+          "status": "merged_remote_confirmed_cleaned_up",
           "workerStatus": "DONE_WITH_CONCERNS_RESOLVED",
           "workerPoll": "timed_out_no_final_status_after_push",
           "pr": "https://github.com/ivo-toby/postgram/pull/90",
           "prNumber": 90,
-          "prState": "OPEN_UNTIL_EPIC_PUSH",
+          "prState": "MERGED",
           "prHead": "2efc58f17b0990801e82ece4b705e439dbcda164",
           "featureCommit": "d229df88131089c36b92d451c6adef4325d21e3a",
           "branchHead": "2efc58f17b0990801e82ece4b705e439dbcda164",
@@ -2753,7 +2753,7 @@
           "reviewThreadId": "019f38ab-a97f-7462-84dc-5537e1efe934",
           "reviewNickname": "Schrodinger",
           "reviewSubmissionId": "019f38f7-8d65-74e3-8a30-5e4edc7c1b32",
-          "coordinationNote": "TASK-013 is merged locally and cleaned up; push epic branch to mark PR #90 merged, then reconcile WAVE-008.",
+          "coordinationNote": "PR #90 is remotely MERGED and WAVE-008 is ready for reconciliation.",
           "reviewResult": "REVIEW_BLOCKED",
           "productSecurityReview": "No additional P1/P2 findings in the submitted TASK-013 diff; security posture passed for redacted/write-only secrets, no browser persistence, CSRF/same-origin client behavior, step-up, stale validation/apply guards, and restart/reembed warnings.",
           "blockingFeedback": [
@@ -2781,7 +2781,8 @@
           "verificationSummary": "AdminConfig 22/22, AdminOps 11/11, AdminAuth 16/16, UI typecheck, root typecheck, and diff-check passed.",
           "followupReviewSubmissionId": "019f3909-49a4-7902-bf82-5ea9a1c7468d",
           "mergeCommit": "9974b2921b2c9b2fe5453f82e5c7e7f647ec3254",
-          "postMergeVerification": "AdminConfig 22/22, AdminOps 11/11, AdminAuth 16/16, UI typecheck, root typecheck, and orchestration jq parse passed."
+          "postMergeVerification": "AdminConfig 22/22, AdminOps 11/11, AdminAuth 16/16, UI typecheck, root typecheck, and orchestration jq parse passed.",
+          "remoteMergedAt": "2026-07-06T20:15:58Z"
         },
         "nonBlockingFeedback": [
           {
@@ -2800,21 +2801,23 @@
         "prState": {
           "number": 90,
           "url": "https://github.com/ivo-toby/postgram/pull/90",
-          "state": "OPEN_UNTIL_EPIC_PUSH",
+          "state": "MERGED",
           "isDraft": true,
           "title": "feat(admin): add provider configuration UI",
           "headRefName": "codex/task/TASK-013-admin-config-ui",
           "headRefOid": "2efc58f17b0990801e82ece4b705e439dbcda164",
           "baseRefName": "codex/epic/admin-configuration-frontend",
-          "mergeStateStatus": "CLEAN_BEFORE_LOCAL_MERGE",
+          "mergeStateStatus": "UNKNOWN_AFTER_REMOTE_MERGE",
           "reviewDecision": "REVIEW_PASS",
           "createdAt": "2026-07-06T19:38:14Z",
           "updatedAt": "2026-07-06T19:39:10Z",
-          "checkedAt": "2026-07-06T20:09:32Z",
-          "status": "MERGED_LOCAL_PENDING_REMOTE_CONFIRMATION",
+          "checkedAt": "2026-07-06T20:15:58Z",
+          "status": "MERGED",
           "pr": "https://github.com/ivo-toby/postgram/pull/90",
           "baseRef": "codex/epic/admin-configuration-frontend",
-          "mergeCommit": "9974b2921b2c9b2fe5453f82e5c7e7f647ec3254"
+          "mergeCommit": "9974b2921b2c9b2fe5453f82e5c7e7f647ec3254",
+          "mergedAt": "2026-07-06T20:15:58Z",
+          "remoteConfirmedAt": "2026-07-06T20:15:58Z"
         },
         "reviewRequestedAt": "2026-07-06T19:45:01Z",
         "reviewStartedAt": "2026-07-06T19:45:01Z",
@@ -3441,10 +3444,12 @@
         "note": "Final freshness passed after refreshing the task branch against epic checkpoint 07e760b; PR #89 was marked MERGED after the epic branch push, and the clean task worktree was removed."
       },
       "WAVE-008-admin-config-ui": {
-        "status": "merged_local_pending_push",
+        "status": "merged_remote_confirmed",
         "mergeCommit": "9974b2921b2c9b2fe5453f82e5c7e7f647ec3254",
         "mergedAt": "2026-07-06T20:09:32Z",
-        "taskHead": "2efc58f17b0990801e82ece4b705e439dbcda164"
+        "taskHead": "2efc58f17b0990801e82ece4b705e439dbcda164",
+        "remotePrState": "MERGED",
+        "remoteMergedAt": "2026-07-06T20:15:58Z"
       }
     },
     "sharedContextReconciliation": {
@@ -3589,21 +3594,23 @@
       "WAVE-008-admin-config-ui": {
         "number": 90,
         "url": "https://github.com/ivo-toby/postgram/pull/90",
-        "state": "OPEN_UNTIL_EPIC_PUSH",
+        "state": "MERGED",
         "isDraft": true,
         "title": "feat(admin): add provider configuration UI",
         "headRefName": "codex/task/TASK-013-admin-config-ui",
         "headRefOid": "2efc58f17b0990801e82ece4b705e439dbcda164",
         "baseRefName": "codex/epic/admin-configuration-frontend",
-        "mergeStateStatus": "CLEAN_BEFORE_LOCAL_MERGE",
+        "mergeStateStatus": "UNKNOWN_AFTER_REMOTE_MERGE",
         "reviewDecision": "REVIEW_PASS",
         "createdAt": "2026-07-06T19:38:14Z",
         "updatedAt": "2026-07-06T19:39:10Z",
-        "checkedAt": "2026-07-06T20:09:32Z",
-        "status": "MERGED_LOCAL_PENDING_REMOTE_CONFIRMATION",
+        "checkedAt": "2026-07-06T20:15:58Z",
+        "status": "MERGED",
         "pr": "https://github.com/ivo-toby/postgram/pull/90",
         "baseRef": "codex/epic/admin-configuration-frontend",
-        "mergeCommit": "9974b2921b2c9b2fe5453f82e5c7e7f647ec3254"
+        "mergeCommit": "9974b2921b2c9b2fe5453f82e5c7e7f647ec3254",
+        "mergedAt": "2026-07-06T20:15:58Z",
+        "remoteConfirmedAt": "2026-07-06T20:15:58Z"
       }
     },
     "cleanup": {

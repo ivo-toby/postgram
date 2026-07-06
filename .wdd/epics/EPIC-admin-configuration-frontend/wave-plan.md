@@ -736,9 +736,9 @@ Progress:
   task head `2efc58f`, verified final freshness `0 8`, merge-tree and
   diff-check, merged TASK-013 into the epic branch in `9974b29`, reran
   AdminConfig/AdminOps/AdminAuth UI tests plus UI/root typecheck, moved the
-  task file to `done/`, and removed the clean TASK-013 worktree. WAVE-008 is
-  ready for reconciliation after the epic branch push confirms PR #90 as
-  merged.
+  task file to `done/`, removed the clean TASK-013 worktree, and pushed the
+  epic branch. GitHub marked PR #90 `MERGED` at 2026-07-06T20:15:58Z. WAVE-008
+  is ready for reconciliation.
 
 Stop condition:
 

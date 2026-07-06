@@ -2,7 +2,7 @@
 id: EPIC-admin-configuration-frontend-FINAL-PR
 kind: final_pr_handoff
 epic: EPIC-admin-configuration-frontend
-status: validated_ready_for_final_pr
+status: draft_pr_open
 created_at: 2026-07-06
 updated_at: 2026-07-06
 ---
@@ -13,9 +13,13 @@ updated_at: 2026-07-06
 
 - Base: `main`
 - Head: `codex/epic/admin-configuration-frontend`
+- URL: https://github.com/ivo-toby/postgram/pull/94
+- State: draft/open
 - Draft title: `feat: add safe admin configuration frontend`
 - Open after: WAVE-011 reconciliation and epic validation pass, completed at
   2026-07-06T23:56:58Z.
+- Opened at: 2026-07-06T23:59:01Z from head
+  `a7343934a2a451d80eb40db7941668e223ac857d`.
 
 ## Summary
 

@@ -3,7 +3,7 @@ id: EPIC-admin-configuration-frontend-CONTROLLER
 kind: controller_state
 epic: EPIC-admin-configuration-frontend
 active_wave: null
-status: final_pr_ready
+status: final_pr_open
 updated_at: 2026-07-06
 ---
 
@@ -172,8 +172,9 @@ Epic validation passed at 2026-07-06T23:56:58Z after WAVE-011 reconciliation.
 The controller rechecked orchestration JSON, conflict markers, diff whitespace,
 root and UI production audits, root and UI typechecks, TASK-018 worktree
 cleanup, and final PR existence. The epic branch is `0 233` against
-`origin/main`; no final PR exists yet, so the next step is creating the draft
-PR from `codex/epic/admin-configuration-frontend` into `main`.
+`origin/main`. Draft final PR #94 is open from
+`codex/epic/admin-configuration-frontend` into `main` at
+https://github.com/ivo-toby/postgram/pull/94.
 
 ## Wave Summary
 
@@ -207,7 +208,7 @@ Scheduler reference: `postgram-admin-wave-005-wdd-heartbeat`
 
 Scheduler name: `postgram-admin-wave-011-wdd-heartbeat`
 
-Automation update: will delete after final PR
+Automation update: will delete after final PR checkpoint push
 
 Fallback prompt:
 
@@ -1939,10 +1940,12 @@ None. WAVE-011 monitoring stopped after reconciliation; next phase is
   diff-check, root/UI production audits, root/UI typechecks, TASK-018 worktree
   cleanup, and final PR existence checks passed. Epic branch is `0 233`
   against `origin/main`; final PR is ready to create.
+- 2026-07-06T23:59:01Z: Created draft final PR #94 from
+  `codex/epic/admin-configuration-frontend` into `main` at
+  https://github.com/ivo-toby/postgram/pull/94. PR head is
+  `a7343934a2a451d80eb40db7941668e223ac857d`.
 
 ## Next Action
 
-Next action: create the draft final PR from
-`codex/epic/admin-configuration-frontend` into `main`, record the PR URL in
-the WDD artifacts, push the final checkpoint, and delete the stale heartbeat
-automation.
+Next action: monitor final PR #94 review/CI from GitHub. The wave heartbeat is
+obsolete after the final checkpoint push and should remain deleted.

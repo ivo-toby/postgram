@@ -2643,14 +2643,14 @@
   "monitoring": {
     "mode": "inactive",
     "cadence": null,
-    "status": "stopped_epic_validation_passed",
-    "lastCheckedAt": "2026-07-06T23:56:58Z",
+    "status": "stopped_final_pr_open",
+    "lastCheckedAt": "2026-07-06T23:59:09Z",
     "nextCheckDueAt": null,
     "schedulerRef": "postgram-admin-wave-005-wdd-heartbeat",
     "schedulerName": "postgram-admin-wave-011-reconcile-heartbeat",
     "fallbackPrompt": null,
-    "automationUpdateResult": "will_delete_after_final_pr",
-    "updatedAt": "2026-07-06T23:56:58Z"
+    "automationUpdateResult": "delete_after_final_checkpoint_push",
+    "updatedAt": "2026-07-06T23:59:09Z"
   },
   "sharedContext": {
     "index": "shared-context/index.md",
@@ -2749,14 +2749,14 @@
     "monitoring": {
       "mode": "inactive",
       "cadence": null,
-      "status": "stopped_epic_validation_passed",
-      "lastCheckedAt": "2026-07-06T23:56:58Z",
+      "status": "stopped_final_pr_open",
+      "lastCheckedAt": "2026-07-06T23:59:09Z",
       "nextCheckDueAt": null,
       "schedulerRef": "postgram-admin-wave-005-wdd-heartbeat",
       "schedulerName": "postgram-admin-wave-011-reconcile-heartbeat",
       "fallbackPrompt": null,
-      "automationUpdateResult": "will_delete_after_final_pr",
-      "updatedAt": "2026-07-06T23:56:58Z"
+      "automationUpdateResult": "delete_after_final_checkpoint_push",
+      "updatedAt": "2026-07-06T23:59:09Z"
     },
     "review": {
       "WAVE-001-admin-feasibility-gate": {
@@ -4618,7 +4618,7 @@
       "updatedAt": "2026-07-06T23:11:02Z"
     },
     "epicValidation": "passed",
-    "finalPr": "ready_to_create"
+    "finalPr": "draft_open"
   },
   "lastReconciledWave": {
     "id": "WAVE-011",
@@ -4670,14 +4670,14 @@
     ]
   },
   "finalPr": {
-    "status": "ready_to_create",
+    "status": "draft_open",
     "base": "main",
     "head": "codex/epic/admin-configuration-frontend",
     "title": "feat: add safe admin configuration frontend",
     "draft": true,
     "readyAt": "2026-07-06T23:56:58Z",
-    "url": null,
-    "createdAt": null,
+    "url": "https://github.com/ivo-toby/postgram/pull/94",
+    "createdAt": "2026-07-06T23:59:01Z",
     "validationEvidence": {
       "checkedAt": "2026-07-06T23:56:58Z",
       "result": "passed",
@@ -4694,7 +4694,23 @@
         "git worktree list --porcelain | sed -n '/TASK-018/,+3p'"
       ],
       "evidence": "Post-reconciliation epic validation passed. Orchestration JSON parsed, WDD conflict-marker scan passed, diff whitespace passed, root/UI production audits reported 0 vulnerabilities, root/UI typechecks passed, TASK-018 worktree is cleaned up, and no existing final PR from the epic branch to main exists. The epic branch is 0 behind and 233 ahead of origin/main."
+    },
+    "number": 94,
+    "state": "OPEN",
+    "isDraft": true,
+    "recordedAt": "2026-07-06T23:59:09Z",
+    "headRefOid": "a7343934a2a451d80eb40db7941668e223ac857d",
+    "pr": {
+      "number": 94,
+      "url": "https://github.com/ivo-toby/postgram/pull/94",
+      "state": "OPEN",
+      "isDraft": true,
+      "base": "main",
+      "head": "codex/epic/admin-configuration-frontend",
+      "title": "feat: add safe admin configuration frontend",
+      "headRefOid": "a7343934a2a451d80eb40db7941668e223ac857d",
+      "createdAt": "2026-07-06T23:59:01Z"
     }
   },
-  "updatedAt": "2026-07-06T23:56:58Z"
+  "updatedAt": "2026-07-06T23:59:09Z"
 }

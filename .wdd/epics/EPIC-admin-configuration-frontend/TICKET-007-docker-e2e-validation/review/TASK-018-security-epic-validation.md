@@ -21,7 +21,7 @@ review_model_class: review
 branch: codex/task/TASK-018-security-epic-validation
 worker_worktree: /Users/ivo.toby/workspace/postgram/.worktrees/TASK-018-security-epic-validation
 worktree_status: review_ready
-pr: pending
+pr: https://github.com/ivo-toby/postgram/pull/93
 worker_thread_id: null
 review_thread_id: null
 current_gate: review_ready
@@ -126,7 +126,7 @@ codex/task/TASK-018-security-epic-validation
 
 ## PR / Patch Reference
 
-Pending draft PR creation against `codex/epic/admin-configuration-frontend`.
+Draft PR: https://github.com/ivo-toby/postgram/pull/93
 
 ## RED-GREEN TDD Plan
 
@@ -246,6 +246,7 @@ Fresh TASK-018 validation on 2026-07-06 UTC:
 - `jq empty .wdd/epics/EPIC-admin-configuration-frontend/orchestration.json`:
   passed.
 - `git diff --check`: passed.
+- Draft PR #93: opened against `codex/epic/admin-configuration-frontend`.
 - `npm run lint`: failed with 22 existing repo-wide lint errors outside
   TASK-018 product changes: older unsafe assignments, async test helpers
   without `await`, missing `react-hooks/exhaustive-deps` rule setup, UI
@@ -294,3 +295,4 @@ Fresh TASK-018 validation on 2026-07-06 UTC:
   path.
 - Created `epic-validation.md` and `final-pr.md`; updated
   `validation-checklist.md`, `wave-plan.md`, and TICKET-007 state.
+- Opened draft PR #93 against `codex/epic/admin-configuration-frontend`.

@@ -74,7 +74,7 @@ APIs.
 | TASK-015-maintenance-admin-api | done | PR #88 | passed | REVIEW_PASS after P2 WDD freshness fix |
 | TASK-016-maintenance-admin-ui | done | PR #91 | passed | REVIEW_PASS |
 | TASK-017-docker-first-run-no-cli | done | PR #92 | passed | REVIEW_PASS after two P1 upgrade fixes |
-| TASK-018-security-epic-validation | review | pending task PR | passed with concerns | pending controller review |
+| TASK-018-security-epic-validation | review | PR #93 | passed with concerns | pending controller review |
 
 ## Review Audit
 
@@ -174,7 +174,7 @@ Fresh TASK-018 validation on 2026-07-06 UTC:
 - Monitoring mode: adaptive.
 - Monitoring status before this worker: WAVE-011 worktree ready pending
   dispatch.
-- Worker outcome: TASK-018 moved to review with task PR pending creation.
+- Worker outcome: TASK-018 moved to review with draft PR #93.
 - Stop condition: controller should request review; if review passes, refresh
   against `codex/epic/admin-configuration-frontend`, rerun freshness checks,
   merge TASK-018 into the epic branch, then run WDD epic validation/final PR.

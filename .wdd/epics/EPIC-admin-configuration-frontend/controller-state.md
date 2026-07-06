@@ -173,11 +173,11 @@ Mode: adaptive
 
 Cadence: 5m
 
-Status: wave_011_review_ready_pending_pr
+Status: wave_011_review_ready
 
 Last check: 2026-07-06T23:11:02Z
 
-Next check due: after TASK-018 draft PR creation
+Next check due: controller review of TASK-018 draft PR #93
 
 Scheduler reference: `postgram-admin-wave-005-wdd-heartbeat`
 
@@ -218,8 +218,8 @@ finish-all-waves instruction.
 - WAVE-011 strategy: full / bundled / risk_based / adaptive.
 - WAVE-011 task: TASK-018-security-epic-validation.
 - Confirmation: Ivo via Codex finish-all-waves request on 2026-07-06.
-- Current gate: TASK-018 validation artifacts are ready for review; draft PR
-  creation is pending.
+- Current gate: TASK-018 validation artifacts are ready for review in draft PR
+  #93.
 
 ## Last Reconciled Wave
 
@@ -280,7 +280,7 @@ finish-all-waves instruction.
 | TASK-015-maintenance-admin-api | TICKET-006-maintenance-jobs | codex/task/TASK-015-maintenance-admin-api | cleaned_up | reconciled | Lorentz REVIEW_PASS; final freshness passed at task head `ea88af4`; post-merge contract tests 4/4, CLI integration 37/37, typecheck, scoped ESLint, JSON parse, and diff check passed; merged locally in `78f0f43`; PR #88 merged at 2026-07-06T17:02:28Z; shared context reconciled |
 | TASK-016-maintenance-admin-ui | TICKET-006-maintenance-jobs | codex/task/TASK-016-maintenance-admin-ui | cleaned_up | reconciled | Hypatia REVIEW_PASS; final task head `1885b64`; freshness `0 3`; AdminMaintenance 9/9, AdminOps/AdminConfig/AdminAuth 49/49, UI typecheck passed; merged in `10b2738`; PR #91 MERGED at 2026-07-06T21:37:31Z; WAVE-009 shared context reconciled |
 | TASK-017-docker-first-run-no-cli | TICKET-007-docker-e2e-validation | codex/task/TASK-017-docker-first-run-no-cli | cleaned_up | reconciled | Dewey REVIEW_PASS; final freshness passed at task head `38bfe21`; merged in `ce0bb83`; PR #92 MERGED at 2026-07-06T22:56:32Z; post-merge Docker/tests/typechecks/UI build passed; WAVE-010 reconciled |
-| TASK-018-security-epic-validation | TICKET-007-docker-e2e-validation | codex/task/TASK-018-security-epic-validation | review_ready | review_ready_pending_pr | final security, Docker/no-CLI, audit, and epic validation passed with non-blocking lint/dev-audit concerns; WDD handoff artifacts prepared |
+| TASK-018-security-epic-validation | TICKET-007-docker-e2e-validation | codex/task/TASK-018-security-epic-validation | review_ready | review_ready | PR #93; final security, Docker/no-CLI, audit, and epic validation passed with non-blocking lint/dev-audit concerns; WDD handoff artifacts prepared |
 
 ## Branch And Worktree State
 

@@ -25,7 +25,7 @@ pr: null
 worker_thread_id: 019f3926-c2c5-7290-9c2f-9a4cca19e6ae
 review_thread_id: null
 current_gate: no_pr
-branch_freshness: current_at_dispatch
+branch_freshness: current_at_observation
 verification:
   - npm --prefix ui run test -- --run src/components/AdminMaintenance.test.tsx
   - npm --prefix ui run test -- --run src/components/AdminOps.test.tsx src/components/AdminConfig.test.tsx src/components/AdminAuth.test.tsx
@@ -192,6 +192,10 @@ Share confirmation/progress components with config UI if useful.
 - Controller dispatch verification: TASK-016 worktree and branch were clean,
   pushed, and current with `origin/codex/epic/admin-configuration-frontend`
   before worker dispatch; branch divergence was `0 0`.
+- 2026-07-06T20:56:02Z controller heartbeat: no PR exists yet; Singer is
+  still running, the worktree has active uncommitted changes in expected
+  TASK-016 UI/client files, branch divergence remains `0 0`, and
+  `git diff --check` passed.
 - Worker verification pending.
 
 ## Review Feedback

@@ -796,6 +796,9 @@ Progress:
 - Worktree-state checkpoint `bf06360` was pushed and fast-forwarded into the
   task branch. Singer (`019f3926-c2c5-7290-9c2f-9a4cca19e6ae`) is dispatched;
   current gate is `no_pr`.
+- 2026-07-06T20:56:02Z heartbeat: no PR exists yet; Singer is still active in
+  the expected maintenance UI/client files, branch freshness is current, and no
+  nudge was sent.
 
 Stop condition:
 

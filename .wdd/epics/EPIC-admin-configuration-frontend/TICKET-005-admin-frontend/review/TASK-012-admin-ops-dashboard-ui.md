@@ -23,7 +23,7 @@ pr: https://github.com/ivo-toby/postgram/pull/89
 worker_thread_id: 019f3879-c7a0-7851-b455-5fe3749adc2b
 review_thread_id: 019f38a1-7b30-7433-a197-086490965e17
 current_gate: review
-branch_freshness: pushed_at_82008b9
+branch_freshness: refreshed_against_epic_required_checks_passed
 verification:
   - npm --prefix ui run test -- --run src/components/AdminOps.test.tsx
   - npm --prefix ui run test -- --run src/components/AdminAuth.test.tsx
@@ -119,6 +119,29 @@ assigned for WAVE-008 activation; created from pushed epic activation head
 Worker Sagan (`019f3879-c7a0-7851-b455-5fe3749adc2b`) dispatched at
 2026-07-06T17:29:45Z. Draft PR opened for review.
 
+Controller observed active uncommitted implementation work at
+2026-07-06T17:47:01Z with no PR yet. The task branch is behind the epic branch
+by one controller monitoring checkpoint and will need freshness verification
+before merge.
+
+Controller observed continued active uncommitted implementation work at
+2026-07-06T18:02:01Z with no PR yet. The task branch is behind the epic branch
+by two controller monitoring checkpoints and will need freshness verification
+before merge.
+
+Controller observed continued active uncommitted implementation work at
+2026-07-06T18:17:01Z with no PR yet. The task branch is behind the epic branch
+by three controller monitoring checkpoints and will need freshness verification
+before merge.
+
+Controller/Schrodinger review reported REVIEW_BLOCKED at PR head
+`b9a10433fc8233cdab5e1c2e8848a06e9668b8d5`: product/security review passed;
+the only P2 blocker was branch freshness/WDD task-file conflict. Controller
+observed `origin/codex/epic/admin-configuration-frontend...HEAD` as `4 2`, and
+`git merge-tree --write-tree origin/codex/epic/admin-configuration-frontend HEAD`
+reported a content conflict in this review task file. The refresh merge keeps
+TASK-012 PR/review metadata while preserving these controller freshness notes.
+
 ## PR / Patch Reference
 
 https://github.com/ivo-toby/postgram/pull/89
@@ -184,6 +207,10 @@ duplication.
   review found no actionable correctness issues.
 - Additional review-run checks passed: scoped ESLint for touched UI files and
   `npm --prefix ui run build` (with the existing Vite large chunk warning).
+- Refresh PASS after merging `origin/codex/epic/admin-configuration-frontend`:
+  `npm --prefix ui run test -- --run src/components/AdminOps.test.tsx`,
+  `npm --prefix ui run test -- --run src/components/AdminAuth.test.tsx`,
+  `npm --prefix ui run typecheck`, and `git diff --check`.
 
 ## Review Feedback
 
@@ -193,6 +220,11 @@ duplication.
 
 ### P2
 
+- Controller/Schrodinger REVIEW_BLOCKED P2: branch freshness/WDD task-file
+  conflict at PR head `b9a10433fc8233cdab5e1c2e8848a06e9668b8d5`; product and
+  security review passed. Resolved by refreshing the task branch against
+  `origin/codex/epic/admin-configuration-frontend` and preserving PR/review
+  metadata plus controller freshness notes.
 - Fixed: queue panel now surfaces extraction failures rather than only completed
   extraction counts.
 - Fixed: audit log now supports server pagination via `nextOffset` and a load

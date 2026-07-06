@@ -18,12 +18,12 @@ assigned_model_class: implementationComplex
 review_model_class: review
 branch: codex/task/TASK-013-admin-config-ui
 worker_worktree: /Users/ivo.toby/workspace/postgram/.worktrees/TASK-013-admin-config-ui
-worktree_status: clean_pushed
+worktree_status: active_uncommitted
 pr: null
 worker_thread_id: 019f387a-3f1d-74a0-9949-5a318a43e494
 review_thread_id: null
 current_gate: no_pr
-branch_freshness: current_at_activation
+branch_freshness: behind_epic_by_3_controller_checkpoints
 verification:
   - npm --prefix ui run test -- --run src/components/AdminConfig.test.tsx
   - npm --prefix ui run typecheck
@@ -110,6 +110,21 @@ assigned for WAVE-008 activation; created from pushed epic activation head
 
 Worker Parfit (`019f387a-3f1d-74a0-9949-5a318a43e494`) dispatched at
 2026-07-06T17:29:45Z. Await PR or patch reference.
+
+Controller observed active uncommitted implementation work at
+2026-07-06T17:47:01Z with no PR yet. The task branch is behind the epic branch
+by one controller monitoring checkpoint and will need freshness verification
+before merge.
+
+Controller observed continued active uncommitted implementation work at
+2026-07-06T18:02:01Z with no PR yet. The task branch is behind the epic branch
+by two controller monitoring checkpoints and will need freshness verification
+before merge.
+
+Controller observed continued active uncommitted implementation work at
+2026-07-06T18:17:01Z with no PR yet. The task branch is behind the epic branch
+by three controller monitoring checkpoints and will need freshness verification
+before merge.
 
 ## PR / Patch Reference
 

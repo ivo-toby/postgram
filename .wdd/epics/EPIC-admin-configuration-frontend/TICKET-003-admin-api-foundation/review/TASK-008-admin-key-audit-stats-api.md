@@ -19,11 +19,11 @@ assigned_model_class: implementationComplex
 review_model_class: review
 branch: codex/task/TASK-008-admin-key-audit-stats-api
 worker_worktree: /Users/ivo.toby/workspace/postgram/.worktrees/TASK-008-admin-key-audit-stats-api
-worktree_status: ready_for_review
-pr: null
+worktree_status: draft_pr_open
+pr: https://github.com/ivo-toby/postgram/pull/85
 worker_thread_id: 019f3748-036a-7422-9f84-ab790313375f
 review_thread_id: null
-current_gate: ready_for_pr
+current_gate: draft_pr_open
 branch_freshness: refreshed_on_epic_checkpoint_38a65d3
 verification:
   - npm test -- tests/contract/admin-key-audit-stats.test.ts
@@ -153,9 +153,7 @@ is blocked.
 
 ## PR / Patch Reference
 
-Pending draft PR creation from
-`codex/task/TASK-008-admin-key-audit-stats-api` into
-`codex/epic/admin-configuration-frontend`.
+Draft PR: https://github.com/ivo-toby/postgram/pull/85
 
 ## RED-GREEN TDD Plan
 

@@ -6,7 +6,7 @@ ticket: TICKET-007-docker-e2e-validation
 wave: WAVE-011
 slug: security-epic-validation
 title: Security And Epic Validation
-status: todo
+status: in-progress
 depends_on:
   - TASK-017-docker-first-run-no-cli
 conflict_domains:
@@ -19,13 +19,13 @@ conflict_domains:
 assigned_model_class: epicValidation
 review_model_class: review
 branch: codex/task/TASK-018-security-epic-validation
-worker_worktree: null
-worktree_status: unassigned
+worker_worktree: /Users/ivo.toby/workspace/postgram/.worktrees/TASK-018-security-epic-validation
+worktree_status: pending_creation
 pr: null
 worker_thread_id: null
 review_thread_id: null
-current_gate: not_started
-branch_freshness: unknown
+current_gate: pending_worktree
+branch_freshness: pending
 verification:
   - npm run typecheck
   - npm test
@@ -42,7 +42,7 @@ verification:
 
 ## Status
 
-todo
+in-progress
 
 ## Parent Ticket
 
@@ -122,7 +122,7 @@ codex/task/TASK-018-security-epic-validation
 
 ## Worker Worktree
 
-None assigned yet.
+/Users/ivo.toby/workspace/postgram/.worktrees/TASK-018-security-epic-validation
 
 ## PR / Patch Reference
 

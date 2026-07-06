@@ -904,7 +904,7 @@ Drift notes:
 
 ### WAVE-011
 
-Status: ready_to_start
+Status: in_progress
 
 Tasks:
 
@@ -918,7 +918,7 @@ Recommended strategy:
 - Monitoring mode: adaptive
 - Confidence: high
 - Requires user confirmation: no
-- Confirmed by: null
+- Confirmed by: Ivo via Codex finish-all-waves request on 2026-07-06
 
 Rationale:
 
@@ -929,6 +929,14 @@ Activation rule:
 
 - Activate after WAVE-010 reconciliation.
 - Ready after WAVE-010 reconciliation on 2026-07-06.
+- Activated at 2026-07-06T23:11:02Z from pushed epic checkpoint `202b422`.
+
+Progress:
+
+- TASK-018-security-epic-validation moved to `in-progress/`; bundled branch
+  `codex/task/TASK-018-security-epic-validation` and worktree
+  `/Users/ivo.toby/workspace/postgram/.worktrees/TASK-018-security-epic-validation`
+  are assigned and pending creation from the pushed activation checkpoint.
 
 Stop condition:
 

@@ -1252,7 +1252,7 @@
     },
     {
       "id": "WAVE-011",
-      "status": "ready_to_start",
+      "status": "in_progress",
       "strategy": {
         "profile": "full",
         "executionMode": "bundled",
@@ -1276,7 +1276,8 @@
       "tasks": [
         "TASK-018-security-epic-validation"
       ],
-      "readyAt": "2026-07-06T22:58:32Z"
+      "readyAt": "2026-07-06T22:58:32Z",
+      "activatedAt": "2026-07-06T23:11:02Z"
     }
   ],
   "taskState": [
@@ -2563,27 +2564,29 @@
     {
       "id": "TASK-018-security-epic-validation",
       "ticket": "TICKET-007-docker-e2e-validation",
-      "path": "TICKET-007-docker-e2e-validation/todo/TASK-018-security-epic-validation.md",
-      "status": "todo",
+      "path": "TICKET-007-docker-e2e-validation/in-progress/TASK-018-security-epic-validation.md",
+      "status": "in-progress",
       "dependsOn": [
         "TASK-017-docker-first-run-no-cli"
       ],
       "conflictDomains": [
-        "security review",
-        "broad validation",
-        "final handoff",
-        "epic validation"
+        ".wdd/epics/EPIC-admin-configuration-frontend/**",
+        "README.md",
+        "docs/**",
+        "docker-compose.yml",
+        "docker/**",
+        "tests/**"
       ],
       "assignedModel": "epicValidation",
       "reviewModel": "review",
       "branch": "codex/task/TASK-018-security-epic-validation",
       "workerThreadId": null,
       "reviewThreadId": null,
-      "workerWorktree": null,
-      "worktreeStatus": "not_created",
+      "workerWorktree": "/Users/ivo.toby/workspace/postgram/.worktrees/TASK-018-security-epic-validation",
+      "worktreeStatus": "pending_creation",
       "pr": null,
       "latestCommit": null,
-      "branchFreshness": "not_started",
+      "branchFreshness": "pending",
       "blockingFeedback": [],
       "verification": {
         "result": "not_run",
@@ -2600,21 +2603,24 @@
         ],
         "evidence": null
       },
-      "currentGate": "ready_to_start",
-      "readyAt": "2026-07-06T22:58:32Z"
+      "currentGate": "pending_worktree",
+      "readyAt": "2026-07-06T22:58:32Z",
+      "bundle": "WAVE-011-security-epic-validation",
+      "activatedAt": "2026-07-06T23:11:02Z",
+      "cleanupState": "not_started",
+      "sharedContextReconciliation": "not_started"
     }
   ],
   "monitoring": {
     "mode": "adaptive",
-    "cadence": "5m",
-    "status": "wave_011_ready_to_start",
-    "lastCheckedAt": "2026-07-06T22:58:32Z",
-    "nextCheckDueAt": "2026-07-06T23:03:32Z",
+    "cadence": "15m",
+    "status": "wave_011_activation_pending_worktree",
+    "lastCheckedAt": "2026-07-06T23:11:02Z",
+    "nextCheckDueAt": "2026-07-06T23:26:02Z",
     "schedulerRef": "postgram-admin-wave-005-wdd-heartbeat",
-    "schedulerName": "postgram-admin-wave-011-start-heartbeat",
-    "fallbackPrompt": "Run one bounded WDD start-wave heartbeat for /Users/ivo.toby/workspace/postgram, epic EPIC-admin-configuration-frontend, next wave WAVE-011. Use the wdd-start-wave skill. Start in /Users/ivo.toby/workspace/postgram on branch codex/epic/admin-configuration-frontend. Read .wdd/epics/EPIC-admin-configuration-frontend/orchestration.json and controller-state.md. Confirm WAVE-010 is done/reconciled and pushed, PR #92 is MERGED at 2026-07-06T22:56:32Z, activeWave is null, WAVE-011 is ready_to_start, and WAVE-011 task is TASK-018-security-epic-validation. Activate WAVE-011, update orchestration.json/controller-state.md/task files, create and verify the isolated worktree under /Users/ivo.toby/workspace/postgram/.worktrees for TASK-018-security-epic-validation on branch codex/task/TASK-018-security-epic-validation, push activation artifacts to GitHub before worker dispatch, then dispatch/monitor according to WDD policy. Stop after WAVE-011 activation/dispatch state is pushed and heartbeat monitoring is updated; after WAVE-011 is merged and reconciled, proceed to epic validation/final PR per Ivo's finish-all-waves instruction.",
-    "automationUpdateResult": "verified_in_app",
-    "updatedAt": "2026-07-06T22:58:32Z"
+    "schedulerName": "postgram-admin-wave-011-wdd-heartbeat",
+    "fallbackPrompt": "Run one bounded WDD controller heartbeat for /Users/ivo.toby/workspace/postgram, epic EPIC-admin-configuration-frontend, active wave WAVE-011. Use the subagent-pr-orchestration skill. Start in /Users/ivo.toby/workspace/postgram on branch codex/epic/admin-configuration-frontend. Read .wdd/epics/EPIC-admin-configuration-frontend/orchestration.json and controller-state.md, then inspect worker TBD and assigned worktree /Users/ivo.toby/workspace/postgram/.worktrees/TASK-018-security-epic-validation on branch codex/task/TASK-018-security-epic-validation for bundle WAVE-011-security-epic-validation / TASK-018-security-epic-validation. Update gates, branch freshness, verification, PR or patch refs, reviewer refs, feedback, shared-context reconciliation status, and monitoring timestamps. If the worker has produced a PR or patch, move TASK-018 to review/reviewer orchestration; if no PR or patch exists, keep no_pr and nudge exact missing deliverables only if needed. If review reports P1/P2, route feedback to the worker or a fresh fix worker. If review passes, refresh stale task branch against codex/epic/admin-configuration-frontend, rerun required freshness verification, then merge or mark merge_ready according to policy. Stop when WAVE-011 is merged, blocked, cancelled, or ready for wdd-reconcile-wave. After WAVE-011 is reconciled, proceed to wdd-epic-validation and final PR per Ivo's finish-all-waves instruction.",
+    "automationUpdateResult": "pending_update_after_worker_dispatch"
   },
   "sharedContext": {
     "index": "shared-context/index.md",
@@ -2628,7 +2634,66 @@
     ],
     "reconcileAfterEveryWave": true
   },
-  "activeWave": null,
+  "activeWave": {
+    "id": "WAVE-011",
+    "activatedAt": "2026-07-06T23:11:02Z",
+    "status": "in_progress",
+    "strategy": {
+      "profile": "full",
+      "executionMode": "bundled",
+      "reviewMode": "risk_based",
+      "monitoringMode": "adaptive",
+      "confirmedBy": "Ivo via Codex finish-all-waves request on 2026-07-06"
+    },
+    "eligibleTasks": [
+      "TASK-018-security-epic-validation"
+    ],
+    "nonEligibleTasks": [],
+    "bundles": [
+      {
+        "id": "WAVE-011-security-epic-validation",
+        "tasks": [
+          "TASK-018-security-epic-validation"
+        ],
+        "branch": "codex/task/TASK-018-security-epic-validation",
+        "worktree": "/Users/ivo.toby/workspace/postgram/.worktrees/TASK-018-security-epic-validation",
+        "worktreeStatus": "pending_creation",
+        "workerThreadId": null,
+        "workerNickname": null,
+        "reviewThreadId": null,
+        "reviewNickname": null,
+        "currentGate": "pending_worktree",
+        "branchFreshness": "pending",
+        "pr": null,
+        "latestCommit": null,
+        "blockingFeedback": [],
+        "verification": {
+          "result": "not_run",
+          "commands": [
+            "npm run typecheck",
+            "npm test",
+            "npm run lint",
+            "npm run build",
+            "npm --prefix ui run typecheck",
+            "npm --prefix ui run test -- --run",
+            "npm --prefix ui run build",
+            "docker compose config",
+            "git diff --check"
+          ],
+          "evidence": null
+        },
+        "activatedAt": "2026-07-06T23:11:02Z",
+        "cleanupState": "not_started",
+        "sharedContextReconciliation": "not_started",
+        "lastObservedAt": "2026-07-06T23:11:02Z"
+      }
+    ],
+    "dispatchState": "pending_worktree_creation",
+    "activatedFromCommit": "202b422",
+    "activationCommit": "pending_activation_commit",
+    "lastObservedAt": "2026-07-06T23:11:02Z",
+    "waveCompletion": "in_progress"
+  },
   "currentGates": {
     "epicBranch": {
       "status": "verified",
@@ -2637,12 +2702,12 @@
       "verifiedAt": "2026-07-05T11:36:08Z"
     },
     "activationArtifactsSynced": {
-      "status": "synced_to_epic_branch",
-      "commit": "d43f7dff1a8e693d26d0efb51556de4ae2eb08e2",
+      "status": "pending_sync_to_epic_branch",
+      "commit": "pending_activation_commit",
       "requiredBeforeTaskWorktrees": true,
-      "wave": "WAVE-010",
-      "syncedAt": "2026-07-06T21:51:22Z",
-      "updatedAt": "2026-07-06T21:54:35Z"
+      "wave": "WAVE-011",
+      "syncedAt": null,
+      "updatedAt": "2026-07-06T23:11:02Z"
     },
     "waveStrategyConfirmation": {
       "WAVE-001": "confirmed_by_ivo_2026-07-05",
@@ -2671,7 +2736,8 @@
       "WAVE-008-admin-ops-dashboard-ui": "cleaned_up",
       "WAVE-008-admin-config-ui": "cleaned_up",
       "WAVE-009-maintenance-admin-ui": "cleaned_up",
-      "WAVE-010-docker-first-run-no-cli": "cleaned_up"
+      "WAVE-010-docker-first-run-no-cli": "cleaned_up",
+      "WAVE-011-security-epic-validation": "pending_creation"
     },
     "workerDispatch": {
       "WAVE-001-admin-feasibility-gate": "reconciled",
@@ -2688,7 +2754,8 @@
       "WAVE-008-admin-ops-dashboard-ui": "reconciled",
       "WAVE-008-admin-config-ui": "reconciled",
       "WAVE-009-maintenance-admin-ui": "reconciled",
-      "WAVE-010-docker-first-run-no-cli": "reconciled"
+      "WAVE-010-docker-first-run-no-cli": "reconciled",
+      "WAVE-011-security-epic-validation": "pending_worktree"
     },
     "waveCompletion": {
       "WAVE-001": "done",
@@ -2700,24 +2767,23 @@
       "WAVE-007": "done",
       "WAVE-008": "done",
       "WAVE-009": "done",
-      "WAVE-010": "done"
+      "WAVE-010": "done",
+      "WAVE-011": "in_progress"
     },
     "nextWave": {
-      "id": "WAVE-011",
-      "status": "ready_to_start",
-      "readyAt": "2026-07-06T22:58:32Z"
+      "id": null,
+      "status": "none_remaining_after_wave_011"
     },
     "monitoring": {
       "mode": "adaptive",
-      "cadence": "5m",
-      "status": "wave_011_ready_to_start",
-      "lastCheckedAt": "2026-07-06T22:58:32Z",
-      "nextCheckDueAt": "2026-07-06T23:03:32Z",
+      "cadence": "15m",
+      "status": "wave_011_activation_pending_worktree",
+      "lastCheckedAt": "2026-07-06T23:11:02Z",
+      "nextCheckDueAt": "2026-07-06T23:26:02Z",
       "schedulerRef": "postgram-admin-wave-005-wdd-heartbeat",
-      "schedulerName": "postgram-admin-wave-011-start-heartbeat",
-      "fallbackPrompt": "Run one bounded WDD start-wave heartbeat for /Users/ivo.toby/workspace/postgram, epic EPIC-admin-configuration-frontend, next wave WAVE-011. Use the wdd-start-wave skill. Start in /Users/ivo.toby/workspace/postgram on branch codex/epic/admin-configuration-frontend. Read .wdd/epics/EPIC-admin-configuration-frontend/orchestration.json and controller-state.md. Confirm WAVE-010 is done/reconciled and pushed, PR #92 is MERGED at 2026-07-06T22:56:32Z, activeWave is null, WAVE-011 is ready_to_start, and WAVE-011 task is TASK-018-security-epic-validation. Activate WAVE-011, update orchestration.json/controller-state.md/task files, create and verify the isolated worktree under /Users/ivo.toby/workspace/postgram/.worktrees for TASK-018-security-epic-validation on branch codex/task/TASK-018-security-epic-validation, push activation artifacts to GitHub before worker dispatch, then dispatch/monitor according to WDD policy. Stop after WAVE-011 activation/dispatch state is pushed and heartbeat monitoring is updated; after WAVE-011 is merged and reconciled, proceed to epic validation/final PR per Ivo's finish-all-waves instruction.",
-      "automationUpdateResult": "verified_in_app",
-      "updatedAt": "2026-07-06T22:58:32Z"
+      "schedulerName": "postgram-admin-wave-011-wdd-heartbeat",
+      "fallbackPrompt": "Run one bounded WDD controller heartbeat for /Users/ivo.toby/workspace/postgram, epic EPIC-admin-configuration-frontend, active wave WAVE-011. Use the subagent-pr-orchestration skill. Start in /Users/ivo.toby/workspace/postgram on branch codex/epic/admin-configuration-frontend. Read .wdd/epics/EPIC-admin-configuration-frontend/orchestration.json and controller-state.md, then inspect worker TBD and assigned worktree /Users/ivo.toby/workspace/postgram/.worktrees/TASK-018-security-epic-validation on branch codex/task/TASK-018-security-epic-validation for bundle WAVE-011-security-epic-validation / TASK-018-security-epic-validation. Update gates, branch freshness, verification, PR or patch refs, reviewer refs, feedback, shared-context reconciliation status, and monitoring timestamps. If the worker has produced a PR or patch, move TASK-018 to review/reviewer orchestration; if no PR or patch exists, keep no_pr and nudge exact missing deliverables only if needed. If review reports P1/P2, route feedback to the worker or a fresh fix worker. If review passes, refresh stale task branch against codex/epic/admin-configuration-frontend, rerun required freshness verification, then merge or mark merge_ready according to policy. Stop when WAVE-011 is merged, blocked, cancelled, or ready for wdd-reconcile-wave. After WAVE-011 is reconciled, proceed to wdd-epic-validation and final PR per Ivo's finish-all-waves instruction.",
+      "automationUpdateResult": "pending_update_after_worker_dispatch"
     },
     "review": {
       "WAVE-001-admin-feasibility-gate": {
@@ -3139,6 +3205,14 @@
         "branchFreshness": "current_at_merge",
         "sharedContextReconciliation": "completed",
         "reconciledAt": "2026-07-06T22:58:32Z"
+      },
+      "WAVE-011-security-epic-validation": {
+        "status": "not_started",
+        "pr": null,
+        "latestCommit": null,
+        "reviewThreadId": null,
+        "workerThreadId": null,
+        "blockingFeedback": []
       }
     },
     "branchFreshness": {
@@ -4225,6 +4299,22 @@
         ],
         "evidence": "Dewey follow-up returned REVIEW_PASS at fix head 48f7f67 with no findings. TASK-017 was refreshed against epic checkpoint f366b6a in task-branch refresh commit 38bfe21912d4d4793564047327e5f9c0b9c31f1b; final divergence was 0 4, merge-tree clean, branch diff whitespace clean, docker compose config passed, docker-first-run unit tests passed 5/5, admin-auth-service integration tests passed 18/18, root typecheck passed, UI typecheck passed, and UI build passed with the existing chunk-size warning. PR #92 was CLEAN before merge. TASK-017 merged locally into the epic branch in ce0bb83d6075d2644f253db490e43c0c41c20381. Post-merge diff-check, orchestration JSON parse, docker compose config, docker-first-run unit tests 5/5, admin-auth-service integration tests 18/18, root typecheck, UI typecheck, and UI build passed. Shared context and TASK-018 handoff reconciled at 2026-07-06T22:58:32Z.",
         "reconciledAt": "2026-07-06T22:58:32Z"
+      },
+      "WAVE-011-security-epic-validation": {
+        "result": "not_run",
+        "checkedAt": "2026-07-06T23:11:02Z",
+        "commands": [
+          "npm run typecheck",
+          "npm test",
+          "npm run lint",
+          "npm run build",
+          "npm --prefix ui run typecheck",
+          "npm --prefix ui run test -- --run",
+          "npm --prefix ui run build",
+          "docker compose config",
+          "git diff --check"
+        ],
+        "evidence": null
       }
     },
     "feedback": {
@@ -4472,14 +4562,21 @@
         "reviewResult": "REVIEW_PASS",
         "reviewPassedAt": "2026-07-06T22:43:02Z",
         "mergedAt": "2026-07-06T22:56:32Z"
+      },
+      "WAVE-011-security-epic-validation": {
+        "blocking": [],
+        "lastObservedAt": "2026-07-06T23:11:02Z",
+        "status": "pending_worktree",
+        "workerThreadId": null,
+        "nudge": "not_needed_activation_in_progress"
       }
     },
     "activationArtifact": {
-      "commit": "d43f7dff1a8e693d26d0efb51556de4ae2eb08e2",
+      "commit": "pending_activation_commit",
       "requiredBeforeTaskWorktrees": true,
-      "wave": "WAVE-010",
-      "syncedAt": "2026-07-06T21:51:22Z",
-      "updatedAt": "2026-07-06T21:54:35Z"
+      "wave": "WAVE-011",
+      "syncedAt": null,
+      "updatedAt": "2026-07-06T23:11:02Z"
     }
   },
   "lastReconciledWave": {

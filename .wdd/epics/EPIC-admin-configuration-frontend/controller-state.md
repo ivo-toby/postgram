@@ -2,8 +2,8 @@
 id: EPIC-admin-configuration-frontend-CONTROLLER
 kind: controller_state
 epic: EPIC-admin-configuration-frontend
-active_wave: null
-status: wave_010_reconciled_wave_011_ready_to_start
+active_wave: WAVE-011
+status: wave_011_activation_pending_worktree
 updated_at: 2026-07-06
 ---
 
@@ -134,6 +134,14 @@ secret-volume/entrypoint contract, no-normal-CLI browser happy path, legacy
 `POSTGRES_PASSWORD` upgrade preservation, OpenAI provider default preservation,
 and TASK-018 final validation gates. TASK-018 is ready to start as WAVE-011.
 
+WAVE-011 activation started at 2026-07-06T23:11:02Z after WAVE-010
+reconciliation checkpoint `202b422` was pushed. TASK-018-security-epic-validation
+has moved to `in-progress/`; the controller assigned branch
+`codex/task/TASK-018-security-epic-validation` and worktree
+`/Users/ivo.toby/workspace/postgram/.worktrees/TASK-018-security-epic-validation`.
+Activation artifacts must be pushed before creating the task branch/worktree
+and dispatching the worker.
+
 WAVE-004 is done and reconciled. PR #81/TASK-009 and PR #82/TASK-006 are
 merged, shared context is reconciled, and both WAVE-004 worktrees are cleaned
 up.
@@ -152,7 +160,7 @@ up.
 | WAVE-008 | TASK-012, TASK-013 | full / hybrid / risk_based / adaptive | done | confirmed by Ivo via finish-all-waves request on 2026-07-06 |
 | WAVE-009 | TASK-016 | full / bundled / risk_based / adaptive | done | confirmed by Ivo via finish-all-waves request on 2026-07-06 |
 | WAVE-010 | TASK-017 | full / bundled / risk_based / adaptive | done | confirmed by Ivo via finish-all-waves request on 2026-07-06 |
-| WAVE-011 | TASK-018 | full / bundled / risk_based / adaptive | ready_to_start | confirmed by Ivo via finish-all-waves request on 2026-07-06 |
+| WAVE-011 | TASK-018 | full / bundled / risk_based / adaptive | in_progress | confirmed by Ivo via finish-all-waves request on 2026-07-06 |
 
 ## Monitoring
 
@@ -160,49 +168,53 @@ Mode: adaptive
 
 Cadence: 5m
 
-Status: wave_011_ready_to_start
+Status: wave_011_activation_pending_worktree
 
-Last check: 2026-07-06T22:58:32Z
+Last check: 2026-07-06T23:11:02Z
 
-Next check due: 2026-07-06T23:03:32Z
+Next check due: 2026-07-06T23:26:02Z
 
 Scheduler reference: `postgram-admin-wave-005-wdd-heartbeat`
 
-Scheduler name: `postgram-admin-wave-011-start-heartbeat`
+Scheduler name: `postgram-admin-wave-011-wdd-heartbeat`
 
-Automation update: verified_in_app
+Automation update: pending_update_after_worker_dispatch
 
 Fallback prompt:
 
 ```text
-Run one bounded WDD start-wave heartbeat for /Users/ivo.toby/workspace/postgram,
-epic EPIC-admin-configuration-frontend, next wave WAVE-011. Use the
-wdd-start-wave skill. Start in /Users/ivo.toby/workspace/postgram on branch
-codex/epic/admin-configuration-frontend. Read
+Run one bounded WDD controller heartbeat for /Users/ivo.toby/workspace/postgram,
+epic EPIC-admin-configuration-frontend, active wave WAVE-011. Use the
+subagent-pr-orchestration skill. Start in /Users/ivo.toby/workspace/postgram on
+branch codex/epic/admin-configuration-frontend. Read
 .wdd/epics/EPIC-admin-configuration-frontend/orchestration.json and
-controller-state.md. Confirm WAVE-010 is done/reconciled and pushed, PR #92 is
-MERGED at 2026-07-06T22:56:32Z, activeWave is null, WAVE-011 is
-ready_to_start, and WAVE-011 task is TASK-018-security-epic-validation.
-Activate WAVE-011, update orchestration.json/controller-state.md/task files,
-create and verify the isolated worktree under
-/Users/ivo.toby/workspace/postgram/.worktrees for
-TASK-018-security-epic-validation on branch
-codex/task/TASK-018-security-epic-validation, push activation artifacts to
-GitHub before worker dispatch, then dispatch/monitor according to WDD policy.
-Stop after WAVE-011 activation/dispatch state is pushed and heartbeat
-monitoring is updated; after WAVE-011 is merged and reconciled, proceed to epic
-validation/final PR per Ivo's finish-all-waves instruction.
+controller-state.md, then inspect worker TBD and assigned worktree
+/Users/ivo.toby/workspace/postgram/.worktrees/TASK-018-security-epic-validation
+on branch codex/task/TASK-018-security-epic-validation for bundle
+WAVE-011-security-epic-validation / TASK-018-security-epic-validation. Update
+gates, branch freshness, verification, PR or patch refs, reviewer refs,
+feedback, shared-context reconciliation status, and monitoring timestamps. If
+the worker has produced a PR or patch, move TASK-018 to review/reviewer
+orchestration; if no PR or patch exists, keep no_pr and nudge exact missing
+deliverables only if needed. If review reports P1/P2, route feedback to the
+worker or a fresh fix worker. If review passes, refresh stale task branch
+against codex/epic/admin-configuration-frontend, rerun required freshness
+verification, then merge or mark merge_ready according to policy. Stop when
+WAVE-011 is merged, blocked, cancelled, or ready for wdd-reconcile-wave. After
+WAVE-011 is reconciled, proceed to wdd-epic-validation and final PR per Ivo's
+finish-all-waves instruction.
 ```
 
 ## Active Wave Strategy
 
-- Active wave: none.
+- Active wave: WAVE-011.
 - Last active wave: WAVE-010.
 - WAVE-010 outcome: done and reconciled.
 - WAVE-011 strategy: full / bundled / risk_based / adaptive.
 - WAVE-011 task: TASK-018-security-epic-validation.
 - Confirmation: Ivo via Codex finish-all-waves request on 2026-07-06.
-- Current gate: WAVE-011 is ready to start after WAVE-010 reconciliation.
+- Current gate: activation artifacts are pending push before creating the
+  TASK-018 branch/worktree and dispatching the worker.
 
 ## Last Reconciled Wave
 
@@ -263,7 +275,7 @@ validation/final PR per Ivo's finish-all-waves instruction.
 | TASK-015-maintenance-admin-api | TICKET-006-maintenance-jobs | codex/task/TASK-015-maintenance-admin-api | cleaned_up | reconciled | Lorentz REVIEW_PASS; final freshness passed at task head `ea88af4`; post-merge contract tests 4/4, CLI integration 37/37, typecheck, scoped ESLint, JSON parse, and diff check passed; merged locally in `78f0f43`; PR #88 merged at 2026-07-06T17:02:28Z; shared context reconciled |
 | TASK-016-maintenance-admin-ui | TICKET-006-maintenance-jobs | codex/task/TASK-016-maintenance-admin-ui | cleaned_up | reconciled | Hypatia REVIEW_PASS; final task head `1885b64`; freshness `0 3`; AdminMaintenance 9/9, AdminOps/AdminConfig/AdminAuth 49/49, UI typecheck passed; merged in `10b2738`; PR #91 MERGED at 2026-07-06T21:37:31Z; WAVE-009 shared context reconciled |
 | TASK-017-docker-first-run-no-cli | TICKET-007-docker-e2e-validation | codex/task/TASK-017-docker-first-run-no-cli | cleaned_up | reconciled | Dewey REVIEW_PASS; final freshness passed at task head `38bfe21`; merged in `ce0bb83`; PR #92 MERGED at 2026-07-06T22:56:32Z; post-merge Docker/tests/typechecks/UI build passed; WAVE-010 reconciled |
-| TASK-018-security-epic-validation | TICKET-007-docker-e2e-validation | codex/task/TASK-018-security-epic-validation | not_created | ready_to_start | broad backend, frontend, Docker, and smoke validation with WAVE-010 Docker upgrade/no-CLI gates |
+| TASK-018-security-epic-validation | TICKET-007-docker-e2e-validation | codex/task/TASK-018-security-epic-validation | pending_creation | pending_worktree | broad backend, frontend, Docker, and smoke validation with WAVE-010 Docker upgrade/no-CLI gates |
 
 ## Branch And Worktree State
 
@@ -296,6 +308,10 @@ validation/final PR per Ivo's finish-all-waves instruction.
   dispatch.
 - Controller checkout rule: workers must not switch branches in the controller
   checkout.
+- WAVE-011 bundle branch/worktree assignment:
+  `codex/task/TASK-018-security-epic-validation` at
+  `/Users/ivo.toby/workspace/postgram/.worktrees/TASK-018-security-epic-validation`.
+- WAVE-011 worktree status: pending creation from the activation checkpoint.
 - WAVE-008 branch/worktree assignments:
   `codex/task/TASK-012-admin-ops-dashboard-ui` at
   `/Users/ivo.toby/workspace/postgram/.worktrees/TASK-012-admin-ops-dashboard-ui`
@@ -1857,8 +1873,15 @@ validation/final PR per Ivo's finish-all-waves instruction.
   root typecheck, UI typecheck, and UI build.
   The epic branch push marked PR #92 `MERGED` at 2026-07-06T22:56:32Z, and the
   clean pushed TASK-017 worktree was removed.
+- 2026-07-06T23:11:02Z: Started WAVE-011 activation. TASK-018 moved from
+  `todo/` to `in-progress/`, WAVE-011 is active with bundled execution, and
+  the controller recorded the branch/worktree assignment
+  `codex/task/TASK-018-security-epic-validation` at
+  `/Users/ivo.toby/workspace/postgram/.worktrees/TASK-018-security-epic-validation`.
+  Activation artifacts must be pushed before creating the task branch/worktree
+  and dispatching the worker.
 
 ## Next Action
 
-Next action: push the WAVE-010 reconciliation checkpoint, then start WAVE-011
-and dispatch TASK-018-security-epic-validation from a fresh isolated worktree.
+Next action: push the WAVE-011 activation checkpoint, then create and verify
+the TASK-018 branch/worktree and dispatch the validation worker.

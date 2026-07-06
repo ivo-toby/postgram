@@ -793,10 +793,12 @@
           "sharedContextReconciliation": "pending",
           "dispatchedAt": "2026-07-06T05:56:19Z",
           "dispatchBaseCommit": "70df1c5f9324dd3f9ff424f199ee1b8896a2e410",
-          "lastObservedAt": "2026-07-06T06:14:07Z",
+          "lastObservedAt": "2026-07-06T06:29:36Z",
           "worktreeObservation": {
-            "observedAt": "2026-07-06T06:14:07Z",
-            "status": "active_uncommitted_changes",
+            "observedAt": "2026-07-06T06:29:36Z",
+            "status": "active_uncommitted_changes_no_pr",
+            "workerWait": "timed_out_no_final_status",
+            "prSearch": "no_pr_for_head_branch",
             "files": [
               "src/config.ts",
               "src/index.ts",
@@ -807,13 +809,13 @@
               "src/transport/admin-provider-config.ts",
               "tests/integration/admin-provider-config.test.ts"
             ],
-            "note": "Goodall has active TASK-010 implementation changes in the assigned worktree; no PR or patch yet, so no nudge sent this tick."
+            "note": "Goodall has active TASK-010 implementation changes in the assigned worktree; multi-agent wait timed out with no final status and gh pr list found no PR, so no nudge was sent this tick."
           }
         }
       ],
       "activationCommit": "70df1c5f9324dd3f9ff424f199ee1b8896a2e410",
       "dispatchState": "dispatched",
-      "lastObservedAt": "2026-07-06T06:27:42Z",
+      "lastObservedAt": "2026-07-06T06:29:36Z",
       "dispatchedAt": "2026-07-06T05:56:19Z"
     },
     {
@@ -1576,10 +1578,12 @@
       "workerNickname": "Goodall",
       "dispatchedAt": "2026-07-06T05:56:19Z",
       "dispatchBaseCommit": "70df1c5f9324dd3f9ff424f199ee1b8896a2e410",
-      "lastObservedAt": "2026-07-06T06:14:07Z",
+      "lastObservedAt": "2026-07-06T06:29:36Z",
       "worktreeObservation": {
-        "observedAt": "2026-07-06T06:14:07Z",
-        "status": "active_uncommitted_changes",
+        "observedAt": "2026-07-06T06:29:36Z",
+        "status": "active_uncommitted_changes_no_pr",
+        "workerWait": "timed_out_no_final_status",
+        "prSearch": "no_pr_for_head_branch",
         "files": [
           "src/config.ts",
           "src/index.ts",
@@ -1590,7 +1594,7 @@
           "src/transport/admin-provider-config.ts",
           "tests/integration/admin-provider-config.test.ts"
         ],
-        "note": "Goodall has active TASK-010 implementation changes in the assigned worktree; no PR or patch yet, so no nudge sent this tick."
+        "note": "Goodall has active TASK-010 implementation changes in the assigned worktree; multi-agent wait timed out with no final status and gh pr list found no PR, so no nudge was sent this tick."
       }
     },
     {
@@ -1895,8 +1899,8 @@
     "mode": "codex_thread_heartbeat",
     "cadence": "5m",
     "status": "worker_monitoring",
-    "lastCheckedAt": "2026-07-06T06:27:42Z",
-    "nextCheckDueAt": "2026-07-06T06:32:42Z",
+    "lastCheckedAt": "2026-07-06T06:29:36Z",
+    "nextCheckDueAt": "2026-07-06T06:34:36Z",
     "schedulerRef": "postgram-admin-wave-005-wdd-heartbeat",
     "fallbackPrompt": "Run one bounded WDD controller heartbeat for /Users/ivo.toby/workspace/postgram, epic EPIC-admin-configuration-frontend, active wave WAVE-005. Use subagent-pr-orchestration. Read orchestration.json and controller-state.md; TASK-007 / PR #83 is MERGED and pushed. Inspect worker Goodall (019f35ff-a193-7ae0-a4b8-1ec53faabb74) and worktree /Users/ivo.toby/workspace/postgram/.worktrees/TASK-010-provider-config-apply for TASK-010. If TASK-010 has a PR or patch, start review; if not, keep no_pr unless deliverables are stale. Stop when WAVE-005 is ready for wdd-reconcile-wave; after reconciliation continue to WAVE-006 per Ivo finish-all-waves instruction."
   },
@@ -2066,8 +2070,8 @@
       "mode": "codex_thread_heartbeat",
       "cadence": "5m",
       "status": "worker_monitoring",
-      "lastCheckedAt": "2026-07-06T06:27:42Z",
-      "nextCheckDueAt": "2026-07-06T06:32:42Z",
+      "lastCheckedAt": "2026-07-06T06:29:36Z",
+      "nextCheckDueAt": "2026-07-06T06:34:36Z",
       "schedulerRef": "postgram-admin-wave-005-wdd-heartbeat",
       "fallbackPrompt": "Run one bounded WDD controller heartbeat for /Users/ivo.toby/workspace/postgram, epic EPIC-admin-configuration-frontend, active wave WAVE-005. Use subagent-pr-orchestration. Read orchestration.json and controller-state.md; TASK-007 / PR #83 is MERGED and pushed. Inspect worker Goodall (019f35ff-a193-7ae0-a4b8-1ec53faabb74) and worktree /Users/ivo.toby/workspace/postgram/.worktrees/TASK-010-provider-config-apply for TASK-010. If TASK-010 has a PR or patch, start review; if not, keep no_pr unless deliverables are stale. Stop when WAVE-005 is ready for wdd-reconcile-wave; after reconciliation continue to WAVE-006 per Ivo finish-all-waves instruction."
     },

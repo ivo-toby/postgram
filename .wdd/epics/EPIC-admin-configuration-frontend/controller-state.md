@@ -57,9 +57,9 @@ Cadence: 5 minutes
 
 Status: worker_monitoring
 
-Last check: 2026-07-06T06:27:42Z
+Last check: 2026-07-06T06:29:36Z
 
-Next check due: 2026-07-06T06:32:42Z
+Next check due: 2026-07-06T06:34:36Z
 
 Scheduler reference: `postgram-admin-wave-005-wdd-heartbeat`
 
@@ -249,6 +249,11 @@ after reconciliation continue to WAVE-006 per Ivo finish-all-waves instruction.
   parse, and diff checks, pushed refreshed branch `f0e889e`, and merged
   TASK-007 into the epic branch in `16985ef`. TASK-010 remains in progress with
   no PR or patch.
+- WAVE-005 2026-07-06T06:29:36Z observation: Goodall did not return a final
+  status within the bounded wait; `gh pr list --head
+  codex/task/TASK-010-provider-config-apply` returned no PR. The TASK-010
+  worktree still has active uncommitted provider-config changes in the expected
+  files, so the bundle remains `no_pr` and no nudge was sent this tick.
 
 ## WAVE-001 Reconciled State
 
@@ -710,9 +715,13 @@ after reconciliation continue to WAVE-006 per Ivo finish-all-waves instruction.
 - 2026-07-06T06:27:42Z: Confirmed GitHub marked PR #83 `MERGED` at
   2026-07-06T06:27:29Z after the epic branch push. TASK-010 remains
   active/uncommitted with no PR or patch.
+- 2026-07-06T06:29:36Z: Goodall did not return a final status during the bounded
+  wait, no TASK-010 PR exists for the head branch, and the assigned worktree
+  remains active/uncommitted in expected provider-config files. Gate remains
+  `no_pr`; next check due 2026-07-06T06:34:36Z.
 
 ## Next Action
 
-Next WAVE-005 heartbeat is due at 2026-07-06T06:32:42Z. Inspect Goodall's
+Next WAVE-005 heartbeat is due at 2026-07-06T06:34:36Z. Inspect Goodall's
 TASK-010 worker and worktree. If TASK-010 has a PR or patch, start review;
 otherwise keep `no_pr` unless the exact deliverables are stale.

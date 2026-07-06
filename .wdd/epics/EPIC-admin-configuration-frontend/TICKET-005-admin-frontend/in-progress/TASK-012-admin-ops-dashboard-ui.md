@@ -18,7 +18,7 @@ assigned_model_class: implementationComplex
 review_model_class: review
 branch: codex/task/TASK-012-admin-ops-dashboard-ui
 worker_worktree: /Users/ivo.toby/workspace/postgram/.worktrees/TASK-012-admin-ops-dashboard-ui
-worktree_status: pending_creation
+worktree_status: clean_pushed
 pr: null
 worker_thread_id: null
 review_thread_id: null
@@ -110,8 +110,8 @@ codex/task/TASK-012-admin-ops-dashboard-ui
 ## Worker Worktree
 
 `/Users/ivo.toby/workspace/postgram/.worktrees/TASK-012-admin-ops-dashboard-ui`
-assigned for WAVE-008 activation; pending creation from the pushed epic
-activation checkpoint.
+assigned for WAVE-008 activation; created from pushed epic activation head
+`7e5c49c` and pushed to origin.
 
 ## PR / Patch Reference
 

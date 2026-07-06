@@ -651,13 +651,12 @@ Progress:
 - TASK-012-admin-ops-dashboard-ui moved to `in-progress/`; dedicated branch
   `codex/task/TASK-012-admin-ops-dashboard-ui` and worktree
   `/Users/ivo.toby/workspace/postgram/.worktrees/TASK-012-admin-ops-dashboard-ui`
-  reserved.
+  created and pushed from activation head `7e5c49c`.
 - TASK-013-admin-config-ui moved to `in-progress/`; dedicated branch
   `codex/task/TASK-013-admin-config-ui` and worktree
   `/Users/ivo.toby/workspace/postgram/.worktrees/TASK-013-admin-config-ui`
-  reserved.
-- Worker dispatch is pending until activation checkpoint `f4bf3d2` metadata is
-  pushed and worktrees are created from that pushed epic head.
+  created and pushed from activation head `7e5c49c`.
+- Worker dispatch is pending.
 
 Stop condition:
 

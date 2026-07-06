@@ -99,8 +99,9 @@ workers, and update monitoring.
 - Bundle branch: `codex/task/TASK-014-admin-job-foundation`.
 - Bundle worktree:
   `/Users/ivo.toby/workspace/postgram/.worktrees/TASK-014-admin-job-foundation`.
-- Current gate: activation artifacts pending commit/push; then create fresh
-  isolated worktrees before dispatch.
+- Activation commit: `e46eb9a10233fcbadf446cf81d13e8a60f7ab942`.
+- Current gate: create fresh isolated worktrees from the pushed activation
+  commit before dispatch.
 
 ## Last Reconciled Wave
 
@@ -1142,11 +1143,11 @@ workers, and update monitoring.
 - 2026-07-06T11:39:24Z: Activated WAVE-006 as a hybrid wave with
   TASK-008-admin-key-audit-stats-api and TASK-014-admin-job-foundation. Moved
   both task files to `in-progress/` and recorded pending branch/worktree
-  assignments. Activation artifacts must be pushed before task worktrees are
-  created.
+  assignments. Activation artifacts were pushed in commit `e46eb9a`; task
+  branches/worktrees must be created from that pushed state.
 
 ## Next Action
 
-Push the WAVE-006 activation artifact commit, create/verify the two task
-branches and isolated worktrees from the pushed epic branch, dispatch workers,
-and update monitoring to the active WAVE-006 heartbeat.
+Create/verify the two task branches and isolated worktrees from pushed
+activation commit `e46eb9a`, dispatch workers, and update monitoring to the
+active WAVE-006 heartbeat.

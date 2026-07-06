@@ -981,7 +981,7 @@
           "sharedContextReconciliation": "queued"
         }
       ],
-      "activationCommit": "pending_activation_commit",
+      "activationCommit": "e46eb9a10233fcbadf446cf81d13e8a60f7ab942",
       "dispatchState": "pending_worktree_creation",
       "lastObservedAt": "2026-07-06T11:39:24Z"
     },
@@ -2179,7 +2179,7 @@
       }
     ],
     "dispatchState": "pending_worktree_creation",
-    "activationCommit": "pending_activation_commit",
+    "activationCommit": "e46eb9a10233fcbadf446cf81d13e8a60f7ab942",
     "lastObservedAt": "2026-07-06T11:39:24Z"
   },
   "currentGates": {
@@ -3035,7 +3035,7 @@
       }
     },
     "activationArtifact": {
-      "commit": "pending_activation_commit",
+      "commit": "e46eb9a10233fcbadf446cf81d13e8a60f7ab942",
       "requiredBeforeTaskWorktrees": true,
       "wave": "WAVE-006",
       "syncedAt": "2026-07-06T11:39:24Z"
@@ -3149,7 +3149,7 @@
       }
     ],
     "dispatchState": "pending_worktree_creation",
-    "activationCommit": "pending_activation_commit",
+    "activationCommit": "e46eb9a10233fcbadf446cf81d13e8a60f7ab942",
     "lastObservedAt": "2026-07-06T11:39:24Z"
   }
 }

@@ -21,7 +21,7 @@ assigned_model_class: implementationComplex
 review_model_class: review
 branch: codex/task/TASK-010-provider-config-apply
 worker_worktree: /Users/ivo.toby/workspace/postgram/.worktrees/TASK-010-provider-config-apply
-worktree_status: clean_pushed
+worktree_status: active_uncommitted
 pr: null
 worker_thread_id: 019f35ff-a193-7ae0-a4b8-1ec53faabb74
 review_thread_id: null
@@ -201,6 +201,10 @@ Keep provider construction logic centralized to avoid env/DB drift.
 ## Verification Evidence
 
 - Not run yet.
+- 2026-07-06T06:33:47Z controller observation: Goodall did not return a final
+  status during the bounded wait, no PR exists for
+  `codex/task/TASK-010-provider-config-apply`, and the assigned worktree still
+  has active uncommitted changes in expected provider-config files.
 
 ## Review Feedback
 

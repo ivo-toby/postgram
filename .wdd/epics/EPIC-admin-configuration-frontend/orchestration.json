@@ -2030,7 +2030,7 @@
       "assignedModel": "implementationComplex",
       "reviewModel": "review",
       "branch": "codex/task/TASK-012-admin-ops-dashboard-ui",
-      "workerThreadId": null,
+      "workerThreadId": "019f3879-c7a0-7851-b455-5fe3749adc2b",
       "reviewThreadId": null,
       "workerWorktree": "/Users/ivo.toby/workspace/postgram/.worktrees/TASK-012-admin-ops-dashboard-ui",
       "worktreeStatus": "clean_pushed",
@@ -2046,7 +2046,7 @@
         ],
         "evidence": null
       },
-      "currentGate": "pending_worker_dispatch"
+      "currentGate": "no_pr"
     },
     {
       "id": "TASK-013-admin-config-ui",
@@ -2066,7 +2066,7 @@
       "assignedModel": "implementationComplex",
       "reviewModel": "review",
       "branch": "codex/task/TASK-013-admin-config-ui",
-      "workerThreadId": null,
+      "workerThreadId": "019f387a-3f1d-74a0-9949-5a318a43e494",
       "reviewThreadId": null,
       "workerWorktree": "/Users/ivo.toby/workspace/postgram/.worktrees/TASK-013-admin-config-ui",
       "worktreeStatus": "clean_pushed",
@@ -2082,7 +2082,7 @@
         ],
         "evidence": null
       },
-      "currentGate": "pending_worker_dispatch"
+      "currentGate": "no_pr"
     },
     {
       "id": "TASK-014-admin-job-foundation",
@@ -2377,9 +2377,9 @@
   "monitoring": {
     "mode": "adaptive",
     "cadence": "15m",
-    "status": "wave_008_activation_pushed_pending_worker_dispatch",
-    "lastCheckedAt": "2026-07-06T17:24:55Z",
-    "nextCheckDueAt": "2026-07-06T17:39:55Z",
+    "status": "wave_008_workers_dispatched_no_pr",
+    "lastCheckedAt": "2026-07-06T17:29:45Z",
+    "nextCheckDueAt": "2026-07-06T17:44:45Z",
     "schedulerRef": "postgram-admin-wave-005-wdd-heartbeat",
     "schedulerName": "postgram-admin-wave-008-wdd-heartbeat",
     "fallbackPrompt": "WAVE-008 is active. Read .wdd/epics/EPIC-admin-configuration-frontend/orchestration.json and controller-state.md, inspect TASK-012-admin-ops-dashboard-ui and TASK-013-admin-config-ui workers and worktrees, update gates, PR/review refs, feedback, branch freshness, verification, shared-context reconciliation, and monitoring timestamps. If a worker has produced a PR or patch, move that bundle to review/reviewer orchestration; if no PR or patch exists, keep no_pr and nudge exact missing deliverables only if needed. Stop when WAVE-008 bundles are merged, blocked, cancelled, or ready for wdd-reconcile-wave. After WAVE-008 is reconciled, continue to WAVE-009 per Ivo finish-all-waves instruction and push to GitHub between tasks/waves."
@@ -2421,11 +2421,11 @@
         "branch": "codex/task/TASK-012-admin-ops-dashboard-ui",
         "worktree": "/Users/ivo.toby/workspace/postgram/.worktrees/TASK-012-admin-ops-dashboard-ui",
         "worktreeStatus": "clean_pushed",
-        "workerThreadId": null,
-        "workerNickname": null,
+        "workerThreadId": "019f3879-c7a0-7851-b455-5fe3749adc2b",
+        "workerNickname": "Sagan",
         "reviewThreadId": null,
         "reviewNickname": null,
-        "currentGate": "pending_worker_dispatch",
+        "currentGate": "no_pr",
         "branchFreshness": "current_at_activation",
         "pr": null,
         "latestCommit": null,
@@ -2438,8 +2438,21 @@
         "activatedAt": "2026-07-06T17:17:56Z",
         "cleanupState": "not_started",
         "sharedContextReconciliation": "not_started",
-        "lastObservedAt": "2026-07-06T17:24:55Z",
-        "branchPushedAt": "2026-07-06T17:24:55Z"
+        "lastObservedAt": "2026-07-06T17:29:45Z",
+        "branchPushedAt": "2026-07-06T17:24:55Z",
+        "dispatchedAt": "2026-07-06T17:29:45Z",
+        "dispatchBaseCommit": "dacb6440e23d9f75e0a26a529aa54e986bbee697",
+        "worktreeObservation": {
+          "observedAt": "2026-07-06T17:29:45Z",
+          "taskId": "TASK-012-admin-ops-dashboard-ui",
+          "status": "worker_dispatched_no_pr",
+          "workerStatus": "running",
+          "branchHead": "dacb6440e23d9f75e0a26a529aa54e986bbee697",
+          "worktreeStatus": "clean_pushed",
+          "branchFreshness": "current_at_activation",
+          "pr": null,
+          "coordinationNote": "Worker dispatched; await PR or patch reference."
+        }
       },
       {
         "id": "WAVE-008-admin-config-ui",
@@ -2449,11 +2462,11 @@
         "branch": "codex/task/TASK-013-admin-config-ui",
         "worktree": "/Users/ivo.toby/workspace/postgram/.worktrees/TASK-013-admin-config-ui",
         "worktreeStatus": "clean_pushed",
-        "workerThreadId": null,
-        "workerNickname": null,
+        "workerThreadId": "019f387a-3f1d-74a0-9949-5a318a43e494",
+        "workerNickname": "Parfit",
         "reviewThreadId": null,
         "reviewNickname": null,
-        "currentGate": "pending_worker_dispatch",
+        "currentGate": "no_pr",
         "branchFreshness": "current_at_activation",
         "pr": null,
         "latestCommit": null,
@@ -2466,15 +2479,28 @@
         "activatedAt": "2026-07-06T17:17:56Z",
         "cleanupState": "not_started",
         "sharedContextReconciliation": "not_started",
-        "lastObservedAt": "2026-07-06T17:24:55Z",
-        "branchPushedAt": "2026-07-06T17:24:55Z"
+        "lastObservedAt": "2026-07-06T17:29:45Z",
+        "branchPushedAt": "2026-07-06T17:24:55Z",
+        "dispatchedAt": "2026-07-06T17:29:45Z",
+        "dispatchBaseCommit": "dacb6440e23d9f75e0a26a529aa54e986bbee697",
+        "worktreeObservation": {
+          "observedAt": "2026-07-06T17:29:45Z",
+          "taskId": "TASK-013-admin-config-ui",
+          "status": "worker_dispatched_no_pr",
+          "workerStatus": "running",
+          "branchHead": "dacb6440e23d9f75e0a26a529aa54e986bbee697",
+          "worktreeStatus": "clean_pushed",
+          "branchFreshness": "current_at_activation",
+          "pr": null,
+          "coordinationNote": "Worker dispatched; await PR or patch reference."
+        }
       }
     ],
-    "dispatchState": "pending_worker_dispatch",
+    "dispatchState": "dispatched",
     "activationCommit": "f4bf3d2d9efd1c4423c5cf6b67f6f10b22d8ce49",
-    "workerDispatchStartedAt": null,
-    "dispatchedAt": null,
-    "lastObservedAt": "2026-07-06T17:17:56Z"
+    "workerDispatchStartedAt": "2026-07-06T17:29:45Z",
+    "dispatchedAt": "2026-07-06T17:29:45Z",
+    "lastObservedAt": "2026-07-06T17:29:45Z"
   },
   "currentGates": {
     "epicBranch": {
@@ -2527,8 +2553,8 @@
       "WAVE-006-admin-job-foundation": "reconciled",
       "WAVE-007-admin-auth-ui": "reconciled",
       "WAVE-007-maintenance-admin-api": "reconciled",
-      "WAVE-008-admin-ops-dashboard-ui": "pending_worker_dispatch",
-      "WAVE-008-admin-config-ui": "pending_worker_dispatch"
+      "WAVE-008-admin-ops-dashboard-ui": "no_pr",
+      "WAVE-008-admin-config-ui": "no_pr"
     },
     "waveCompletion": {
       "WAVE-001": "done",
@@ -2547,9 +2573,9 @@
     "monitoring": {
       "mode": "adaptive",
       "cadence": "15m",
-      "status": "wave_008_activation_pushed_pending_worker_dispatch",
-      "lastCheckedAt": "2026-07-06T17:24:55Z",
-      "nextCheckDueAt": "2026-07-06T17:39:55Z",
+      "status": "wave_008_workers_dispatched_no_pr",
+      "lastCheckedAt": "2026-07-06T17:29:45Z",
+      "nextCheckDueAt": "2026-07-06T17:44:45Z",
       "schedulerRef": "postgram-admin-wave-005-wdd-heartbeat",
       "schedulerName": "postgram-admin-wave-008-wdd-heartbeat",
       "fallbackPrompt": "WAVE-008 is active. Read .wdd/epics/EPIC-admin-configuration-frontend/orchestration.json and controller-state.md, inspect TASK-012-admin-ops-dashboard-ui and TASK-013-admin-config-ui workers and worktrees, update gates, PR/review refs, feedback, branch freshness, verification, shared-context reconciliation, and monitoring timestamps. If a worker has produced a PR or patch, move that bundle to review/reviewer orchestration; if no PR or patch exists, keep no_pr and nudge exact missing deliverables only if needed. Stop when WAVE-008 bundles are merged, blocked, cancelled, or ready for wdd-reconcile-wave. After WAVE-008 is reconciled, continue to WAVE-009 per Ivo finish-all-waves instruction and push to GitHub between tasks/waves."

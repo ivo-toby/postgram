@@ -104,11 +104,11 @@ Mode: adaptive
 
 Cadence: 15m
 
-Status: wave_008_activation_pushed_pending_worker_dispatch
+Status: wave_008_workers_dispatched_no_pr
 
-Last check: 2026-07-06T17:24:55Z
+Last check: 2026-07-06T17:29:45Z
 
-Next check due: 2026-07-06T17:39:55Z
+Next check due: 2026-07-06T17:44:45Z
 
 Scheduler reference: `postgram-admin-wave-005-wdd-heartbeat`
 
@@ -139,8 +139,7 @@ to GitHub between tasks/waves.
 - WAVE-008 tasks: TASK-012-admin-ops-dashboard-ui and
   TASK-013-admin-config-ui.
 - Confirmation: Ivo via Codex finish-all-waves request on 2026-07-06.
-- Current gate: push activation artifacts, create/push task branches and
-  worktrees, then dispatch workers.
+- Current gate: workers dispatched; no PR or patch yet.
 
 ## Last Reconciled Wave
 
@@ -185,8 +184,8 @@ to GitHub between tasks/waves.
 | TASK-009-settings-secret-store | TICKET-004-runtime-configuration | codex/task/TASK-009-settings-secret-store | cleaned_up | reconciled | PR #81 follow-up REVIEW_PASS, final branch freshness passed at `ca9c96f`, merged locally into epic branch in `b63ad08`; worktree cleaned up during WAVE-004 reconciliation |
 | TASK-010-provider-config-apply | TICKET-004-runtime-configuration | codex/task/TASK-010-provider-config-apply | cleaned_up | reconciled | REVIEW_PASS; final branch freshness passed at `515cfa5`; merged locally into epic branch in `f5efbc0`; PR #84 merged at 2026-07-06T11:31:10Z; WAVE-005 reconciled |
 | TASK-011-admin-auth-ui | TICKET-005-admin-frontend | codex/task/TASK-011-admin-auth-ui | cleaned_up | reconciled | Lorentz REVIEW_PASS; refreshed branch head `344bab8`; post-refresh AdminAuth tests/typecheck/diff/merge-tree/JQ passed; merged locally in `4e77a6b`; PR #87 merged at 2026-07-06T15:48:11Z; shared context reconciled |
-| TASK-012-admin-ops-dashboard-ui | TICKET-005-admin-frontend | codex/task/TASK-012-admin-ops-dashboard-ui | clean_pushed | pending_worker_dispatch | `npm --prefix ui run test -- --run src/components/AdminOps.test.tsx`; `npm --prefix ui run typecheck` |
-| TASK-013-admin-config-ui | TICKET-005-admin-frontend | codex/task/TASK-013-admin-config-ui | clean_pushed | pending_worker_dispatch | `npm --prefix ui run test -- --run src/components/AdminConfig.test.tsx`; `npm --prefix ui run typecheck` |
+| TASK-012-admin-ops-dashboard-ui | TICKET-005-admin-frontend | codex/task/TASK-012-admin-ops-dashboard-ui | clean_pushed | no_pr | Worker Sagan `019f3879-c7a0-7851-b455-5fe3749adc2b`; `npm --prefix ui run test -- --run src/components/AdminOps.test.tsx`; `npm --prefix ui run typecheck` |
+| TASK-013-admin-config-ui | TICKET-005-admin-frontend | codex/task/TASK-013-admin-config-ui | clean_pushed | no_pr | Worker Parfit `019f387a-3f1d-74a0-9949-5a318a43e494`; `npm --prefix ui run test -- --run src/components/AdminConfig.test.tsx`; `npm --prefix ui run typecheck` |
 | TASK-014-admin-job-foundation | TICKET-006-maintenance-jobs | codex/task/TASK-014-admin-job-foundation | cleaned_up | reconciled | Lorentz REVIEW_PASS; freshness current at task head `0e08630`; post-merge tests/typecheck/touched-file ESLint passed; merged locally into epic branch in `c5edbfc`; WAVE-006 reconciled and worktree cleaned up |
 | TASK-015-maintenance-admin-api | TICKET-006-maintenance-jobs | codex/task/TASK-015-maintenance-admin-api | cleaned_up | reconciled | Lorentz REVIEW_PASS; final freshness passed at task head `ea88af4`; post-merge contract tests 4/4, CLI integration 37/37, typecheck, scoped ESLint, JSON parse, and diff check passed; merged locally in `78f0f43`; PR #88 merged at 2026-07-06T17:02:28Z; shared context reconciled |
 | TASK-016-maintenance-admin-ui | TICKET-006-maintenance-jobs | codex/task/TASK-016-maintenance-admin-ui | not_created | planned | `npm --prefix ui run test -- --run src/components/AdminMaintenance.test.tsx`; `npm --prefix ui run typecheck` |
@@ -232,6 +231,8 @@ to GitHub between tasks/waves.
 - WAVE-008 activation checkpoint: `f4bf3d2d9efd1c4423c5cf6b67f6f10b22d8ce49`.
 - WAVE-008 worktree status: created, clean, and pushed from activation head
   `7e5c49c`.
+- WAVE-008 workers: Sagan (`019f3879-c7a0-7851-b455-5fe3749adc2b`) for
+  TASK-012 and Parfit (`019f387a-3f1d-74a0-9949-5a318a43e494`) for TASK-013.
 - WAVE-002 branch freshness: current at merge after task branch freshness merge
   `16122c0`.
 - WAVE-003 bundle branch: `codex/task/TASK-005-admin-session-routes`.
@@ -1482,8 +1483,15 @@ to GitHub between tasks/waves.
   from pushed epic activation head `7e5c49c`. TASK-012 and TASK-013 worktrees
   are clean, on their assigned branches, and contain the active task files plus
   current orchestration/controller artifacts. Worker dispatch remains pending.
+- 2026-07-06T17:29:45Z: Dispatched Sagan
+  (`019f3879-c7a0-7851-b455-5fe3749adc2b`) for
+  TASK-012-admin-ops-dashboard-ui and Parfit
+  (`019f387a-3f1d-74a0-9949-5a318a43e494`) for
+  TASK-013-admin-config-ui. Both gates are `no_pr`; monitor again at
+  2026-07-06T17:44:45Z unless a worker returns sooner.
 
 ## Next Action
 
-Next action: dispatch TASK-012 and TASK-013 workers in their assigned
-worktrees, record worker thread IDs, and keep monitoring active.
+Next action: monitor Sagan and Parfit for PR or patch output. If a worker
+finishes, move that bundle to review orchestration; otherwise keep `no_pr` and
+nudge only if the worktree is inactive or stale.

@@ -20,9 +20,9 @@ branch: codex/task/TASK-012-admin-ops-dashboard-ui
 worker_worktree: /Users/ivo.toby/workspace/postgram/.worktrees/TASK-012-admin-ops-dashboard-ui
 worktree_status: clean_pushed
 pr: null
-worker_thread_id: null
+worker_thread_id: 019f3879-c7a0-7851-b455-5fe3749adc2b
 review_thread_id: null
-current_gate: pending_worker_dispatch
+current_gate: no_pr
 branch_freshness: current_at_activation
 verification:
   - npm --prefix ui run test -- --run src/components/AdminOps.test.tsx
@@ -112,6 +112,9 @@ codex/task/TASK-012-admin-ops-dashboard-ui
 `/Users/ivo.toby/workspace/postgram/.worktrees/TASK-012-admin-ops-dashboard-ui`
 assigned for WAVE-008 activation; created from pushed epic activation head
 `7e5c49c` and pushed to origin.
+
+Worker Sagan (`019f3879-c7a0-7851-b455-5fe3749adc2b`) dispatched at
+2026-07-06T17:29:45Z. Await PR or patch reference.
 
 ## PR / Patch Reference
 

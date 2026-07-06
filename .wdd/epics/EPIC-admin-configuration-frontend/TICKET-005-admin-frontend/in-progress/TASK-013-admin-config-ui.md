@@ -20,9 +20,9 @@ branch: codex/task/TASK-013-admin-config-ui
 worker_worktree: /Users/ivo.toby/workspace/postgram/.worktrees/TASK-013-admin-config-ui
 worktree_status: clean_pushed
 pr: null
-worker_thread_id: null
+worker_thread_id: 019f387a-3f1d-74a0-9949-5a318a43e494
 review_thread_id: null
-current_gate: pending_worker_dispatch
+current_gate: no_pr
 branch_freshness: current_at_activation
 verification:
   - npm --prefix ui run test -- --run src/components/AdminConfig.test.tsx
@@ -107,6 +107,9 @@ codex/task/TASK-013-admin-config-ui
 `/Users/ivo.toby/workspace/postgram/.worktrees/TASK-013-admin-config-ui`
 assigned for WAVE-008 activation; created from pushed epic activation head
 `7e5c49c` and pushed to origin.
+
+Worker Parfit (`019f387a-3f1d-74a0-9949-5a318a43e494`) dispatched at
+2026-07-06T17:29:45Z. Await PR or patch reference.
 
 ## PR / Patch Reference
 

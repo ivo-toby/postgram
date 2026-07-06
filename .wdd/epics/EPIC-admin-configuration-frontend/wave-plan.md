@@ -656,7 +656,9 @@ Progress:
   `codex/task/TASK-013-admin-config-ui` and worktree
   `/Users/ivo.toby/workspace/postgram/.worktrees/TASK-013-admin-config-ui`
   created and pushed from activation head `7e5c49c`.
-- Worker dispatch is pending.
+- Workers dispatched at 2026-07-06T17:29:45Z: Sagan for
+  TASK-012-admin-ops-dashboard-ui and Parfit for TASK-013-admin-config-ui.
+  Both bundles are in `no_pr` monitoring.
 
 Stop condition:
 

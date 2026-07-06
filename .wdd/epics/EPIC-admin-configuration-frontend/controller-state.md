@@ -80,7 +80,9 @@ TASK-013-admin-config-ui. TASK-012 shipped in PR #89 after Schrodinger
 targeted UI checks, merged it into the epic branch in `ef54876`, pushed the
 epic branch, confirmed GitHub marked PR #89 `MERGED` at
 2026-07-06T18:54:38Z, and removed the clean TASK-012 worktree. TASK-013
-remains active with Parfit and has no PR or patch yet.
+shipped in draft PR #90 after Parfit returned `DONE_WITH_CONCERNS`; Schrodinger
+review is requested, and the PR is currently `DIRTY` with TASK-012/AdminAuth/
+AdminDashboard/adminApi merge conflicts that must be resolved before merge.
 
 WAVE-004 is done and reconciled. PR #81/TASK-009 and PR #82/TASK-006 are
 merged, shared context is reconciled, and both WAVE-004 worktrees are cleaned
@@ -106,13 +108,13 @@ up.
 
 Mode: adaptive
 
-Cadence: 15m
+Cadence: 5m
 
-Status: wave_008_task012_merged_cleaned_up_task013_active_no_pr_recent_activity
+Status: wave_008_task013_reviewing_pr90_dirty
 
-Last check: 2026-07-06T19:30:01Z
+Last check: 2026-07-06T19:45:01Z
 
-Next check due: 2026-07-06T19:45:01Z
+Next check due: 2026-07-06T19:50:01Z
 
 Scheduler reference: `postgram-admin-wave-005-wdd-heartbeat`
 
@@ -122,24 +124,25 @@ Fallback prompt:
 
 ```text
 WAVE-008 is active. Read .wdd/epics/EPIC-admin-configuration-frontend/orchestration.json
-and controller-state.md. TASK-012 / PR #89 is MERGED at
-2026-07-06T18:54:38Z in merge commit
-ef54876a27164d3a91ba60d32f9e23b71d9cdf38 and its clean pushed worktree was
-removed. Inspect worker Parfit (019f387a-3f1d-74a0-9949-5a318a43e494) and
-assigned worktree /Users/ivo.toby/workspace/postgram/.worktrees/TASK-013-admin-config-ui
-on branch codex/task/TASK-013-admin-config-ui for bundle
-WAVE-008-admin-config-ui / TASK-013-admin-config-ui. Last observed at
-2026-07-06T19:30:01Z: no PR exists, the worktree has active uncommitted config
-UI/API changes, git diff --check passes, and recent AdminConfig file activity
-means no nudge was sent. If TASK-013 has produced a PR or patch, move it to
-review/reviewer orchestration; if no PR or patch exists, keep no_pr and nudge
-exact missing deliverables only if the worktree is inactive or stale. If review
-reports P1/P2, route feedback to Parfit or a fresh fix worker. If review
-passes, refresh stale task branch against codex/epic/admin-configuration-frontend,
-rerun required freshness verification, then merge or mark merge_ready according
-to policy. Stop when WAVE-008 bundles are merged, blocked, cancelled, or ready
-for wdd-reconcile-wave. After WAVE-008 is reconciled, continue to WAVE-009 per
-Ivo finish-all-waves instruction and push to GitHub between tasks/waves.
+and controller-state.md. TASK-012 / PR #89 is MERGED and cleaned up. TASK-013 /
+PR #90 is OPEN draft and DIRTY at head
+fe1a454f545f815c35978e3c600fd101eae2893f after Parfit DONE_WITH_CONCERNS.
+Schrodinger review was requested in submission
+019f38f7-8d65-74e3-8a30-5e4edc7c1b32 and was still pending at
+2026-07-06T19:45:01Z. Branch divergence is
+origin/codex/epic/admin-configuration-frontend...HEAD = 16 2; diff-check
+passes; merge-tree conflicts in the TASK-013 review file, AdminAuth
+test/component, AdminDashboard add/add, and adminApi. Inspect PR #90, reviewer
+Schrodinger (019f38ab-a97f-7462-84dc-5537e1efe934), worker Parfit
+(019f387a-3f1d-74a0-9949-5a318a43e494), and worktree
+/Users/ivo.toby/workspace/postgram/.worktrees/TASK-013-admin-config-ui. If
+review reports P1/P2, route feedback to Parfit or a fresh fix worker. If review
+passes, refresh the dirty task branch against codex/epic/admin-configuration-frontend,
+resolve conflicts, rerun required verification, then merge or mark merge_ready
+according to policy. Stop when WAVE-008 bundles are merged, blocked, cancelled,
+or ready for wdd-reconcile-wave. After WAVE-008 is reconciled, continue to
+WAVE-009 per Ivo finish-all-waves instruction and push to GitHub between
+tasks/waves.
 ```
 
 ## Active Wave Strategy
@@ -152,8 +155,8 @@ Ivo finish-all-waves instruction and push to GitHub between tasks/waves.
 - WAVE-008 tasks: TASK-012-admin-ops-dashboard-ui and
   TASK-013-admin-config-ui.
 - Confirmation: Ivo via Codex finish-all-waves request on 2026-07-06.
-- Current gate: TASK-012 merged and cleaned up; TASK-013 no_pr with active
-  uncommitted work.
+- Current gate: TASK-012 merged and cleaned up; TASK-013 reviewing PR #90 with
+  dirty branch freshness/product merge conflicts.
 
 ## Last Reconciled Wave
 
@@ -199,7 +202,7 @@ Ivo finish-all-waves instruction and push to GitHub between tasks/waves.
 | TASK-010-provider-config-apply | TICKET-004-runtime-configuration | codex/task/TASK-010-provider-config-apply | cleaned_up | reconciled | REVIEW_PASS; final branch freshness passed at `515cfa5`; merged locally into epic branch in `f5efbc0`; PR #84 merged at 2026-07-06T11:31:10Z; WAVE-005 reconciled |
 | TASK-011-admin-auth-ui | TICKET-005-admin-frontend | codex/task/TASK-011-admin-auth-ui | cleaned_up | reconciled | Lorentz REVIEW_PASS; refreshed branch head `344bab8`; post-refresh AdminAuth tests/typecheck/diff/merge-tree/JQ passed; merged locally in `4e77a6b`; PR #87 merged at 2026-07-06T15:48:11Z; shared context reconciled |
 | TASK-012-admin-ops-dashboard-ui | TICKET-005-admin-frontend | codex/task/TASK-012-admin-ops-dashboard-ui | cleaned_up | merged | PR #89 MERGED at 2026-07-06T18:54:38Z; Schrodinger REVIEW_PASS; final freshness passed at `298804f`; merged locally in `ef54876`; AdminOps/AdminAuth UI tests and typecheck passed |
-| TASK-013-admin-config-ui | TICKET-005-admin-frontend | codex/task/TASK-013-admin-config-ui | active_uncommitted | no_pr | Worker Parfit `019f387a-3f1d-74a0-9949-5a318a43e494`; tracked `git diff --check` passed; behind epic by 15 controller/TASK-012 merge, closeout, and monitor checkpoints; recent AdminConfig edits observed; non-blocking TASK-012 shell integration note routed |
+| TASK-013-admin-config-ui | TICKET-005-admin-frontend | codex/task/TASK-013-admin-config-ui | clean_pushed | reviewing | PR #90 open/draft at `fe1a454`; Parfit DONE_WITH_CONCERNS; worker verification passed; Schrodinger review requested in `019f38f7-8d65-74e3-8a30-5e4edc7c1b32`; branch dirty with TASK-013 WDD, AdminAuth, AdminDashboard, and adminApi conflicts |
 | TASK-014-admin-job-foundation | TICKET-006-maintenance-jobs | codex/task/TASK-014-admin-job-foundation | cleaned_up | reconciled | Lorentz REVIEW_PASS; freshness current at task head `0e08630`; post-merge tests/typecheck/touched-file ESLint passed; merged locally into epic branch in `c5edbfc`; WAVE-006 reconciled and worktree cleaned up |
 | TASK-015-maintenance-admin-api | TICKET-006-maintenance-jobs | codex/task/TASK-015-maintenance-admin-api | cleaned_up | reconciled | Lorentz REVIEW_PASS; final freshness passed at task head `ea88af4`; post-merge contract tests 4/4, CLI integration 37/37, typecheck, scoped ESLint, JSON parse, and diff check passed; merged locally in `78f0f43`; PR #88 merged at 2026-07-06T17:02:28Z; shared context reconciled |
 | TASK-016-maintenance-admin-ui | TICKET-006-maintenance-jobs | codex/task/TASK-016-maintenance-admin-ui | not_created | planned | `npm --prefix ui run test -- --run src/components/AdminMaintenance.test.tsx`; `npm --prefix ui run typecheck` |
@@ -1598,10 +1601,22 @@ Ivo finish-all-waves instruction and push to GitHub between tasks/waves.
   missing-deliverable nudge was sent. TASK-013 is behind the epic branch by 15
   controller/TASK-012 merge, closeout, and monitor checkpoints at observation
   time and needs freshness before review/merge.
+- 2026-07-06T19:45:01Z: Parfit returned `DONE_WITH_CONCERNS` and opened draft
+  PR #90 at head `fe1a454` after feature commit `d229df8`. Worker evidence
+  reports AdminConfig focused tests, UI typecheck, repo typecheck,
+  provider-config integration tests, full UI test run, UI build with existing
+  Vite chunk warning, scoped eslint/prettier/diff-check, and codex review all
+  passed after worker P1/P2 fixes. Controller verified PR #90 is open/draft and
+  `DIRTY`; branch divergence is `16 2`; `git diff --check` passes; merge-tree
+  conflicts in the TASK-013 review task file, AdminAuth test/component,
+  AdminDashboard add/add, and adminApi. Schrodinger review was requested in
+  submission `019f38f7-8d65-74e3-8a30-5e4edc7c1b32`; no review result returned
+  during the bounded wait.
 
 ## Next Action
 
-Next action: monitor Parfit for TASK-013 PR or patch output. If Parfit opens a
-PR or patch, move TASK-013 into review orchestration. If there is still no PR,
-keep `no_pr` and avoid duplicate nudges unless the worktree becomes inactive or
-stale.
+Next action: poll Schrodinger review for PR #90. If review reports P1/P2,
+route feedback to Parfit or a fresh fix worker. If review passes, refresh PR
+#90 against the latest epic branch, resolve the AdminAuth/AdminDashboard/adminApi
+conflicts, rerun required verification, and merge only after branch freshness is
+current.

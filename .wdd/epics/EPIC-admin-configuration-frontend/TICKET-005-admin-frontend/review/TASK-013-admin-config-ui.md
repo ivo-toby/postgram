@@ -6,7 +6,7 @@ ticket: TICKET-005-admin-frontend
 wave: WAVE-008
 slug: admin-config-ui
 title: Admin Config UI
-status: in_progress
+status: review
 depends_on:
   - TASK-010-provider-config-apply
   - TASK-011-admin-auth-ui
@@ -18,22 +18,27 @@ assigned_model_class: implementationComplex
 review_model_class: review
 branch: codex/task/TASK-013-admin-config-ui
 worker_worktree: /Users/ivo.toby/workspace/postgram/.worktrees/TASK-013-admin-config-ui
-worktree_status: active_uncommitted
-pr: null
+worktree_status: clean_pushed
+pr: https://github.com/ivo-toby/postgram/pull/90
 worker_thread_id: 019f387a-3f1d-74a0-9949-5a318a43e494
-review_thread_id: null
-current_gate: no_pr
-branch_freshness: behind_epic_by_15_controller_task012_merge_closeout_and_monitor_checkpoints
+review_thread_id: 019f38ab-a97f-7462-84dc-5537e1efe934
+current_gate: reviewing
+branch_freshness: dirty_product_conflicts_needs_freshness_refresh
 verification:
   - npm --prefix ui run test -- --run src/components/AdminConfig.test.tsx
   - npm --prefix ui run typecheck
+  - npm run typecheck
+  - npm test -- tests/integration/admin-provider-config.test.ts
+  - npm --prefix ui test -- --run
+  - npm --prefix ui run build
+  - git diff --check
 ---
 
 # TASK-013-admin-config-ui: Admin Config UI
 
 ## Status
 
-in_progress
+reviewing
 
 ## Parent Ticket
 
@@ -109,7 +114,7 @@ assigned for WAVE-008 activation; created from pushed epic activation head
 `7e5c49c` and pushed to origin.
 
 Worker Parfit (`019f387a-3f1d-74a0-9949-5a318a43e494`) dispatched at
-2026-07-06T17:29:45Z. Await PR or patch reference.
+2026-07-06T17:29:45Z. Draft PR opened for review.
 
 Controller observed active uncommitted implementation work at
 2026-07-06T17:47:01Z with no PR yet. The task branch is behind the epic branch
@@ -150,9 +155,23 @@ and `AdminConfig.test.tsx` edits from this heartbeat window and `git diff
 by 15 controller/TASK-012 merge, closeout, and monitor checkpoints at
 observation time and will need freshness verification before review/merge.
 
+Parfit returned `DONE_WITH_CONCERNS` at 2026-07-06T19:45:01Z with draft PR #90
+at head `fe1a454f545f815c35978e3c600fd101eae2893f` after feature commit
+`d229df88131089c36b92d451c6adef4325d21e3a`. Worker evidence reports targeted
+AdminConfig/UI/backend/provider-config verification passed, full UI test run
+passed, UI build passed with the existing Vite chunk-size warning, scoped
+lint/prettier/diff-check passed, and `codex review --uncommitted` passed after
+worker P1/P2 fixes. Controller verified PR #90 is open/draft and `DIRTY`;
+branch divergence is `16 2`; branch diff whitespace passes; merge-tree
+conflicts in this review task file, `ui/src/components/AdminAuth.test.tsx`,
+`ui/src/components/admin/AdminAuth.tsx`, `ui/src/components/admin/AdminDashboard.tsx`,
+and `ui/src/lib/adminApi.ts`. Schrodinger review was requested in submission
+`019f38f7-8d65-74e3-8a30-5e4edc7c1b32`; no review result returned during the
+bounded wait.
+
 ## PR / Patch Reference
 
-None yet.
+Draft PR #90: https://github.com/ivo-toby/postgram/pull/90
 
 ## RED-GREEN TDD Plan
 
@@ -206,10 +225,10 @@ maintenance UI if useful.
 
 ## Task-Level Definition of Done
 
-- [ ] Configuration UI is implemented and covered.
-- [ ] Secret values are never displayed.
-- [ ] Dangerous provider/dimension changes are clearly warned.
-- [ ] UI typecheck passes.
+- [x] Configuration UI is implemented and covered.
+- [x] Secret values are never displayed.
+- [x] Dangerous provider/dimension changes are clearly warned.
+- [x] UI typecheck passes.
 
 ## Validation Steps
 
@@ -218,13 +237,33 @@ maintenance UI if useful.
 
 ## Verification Evidence
 
-- Not run yet.
+- Worker PASS `npm --prefix ui run test -- --run src/components/AdminConfig.test.tsx`
+  (22 tests).
+- Worker PASS `npm --prefix ui run typecheck`.
+- Worker PASS `npm run typecheck`.
+- Worker PASS `npm test -- tests/integration/admin-provider-config.test.ts`
+  (39 tests).
+- Worker PASS `npm --prefix ui test -- --run` (105 tests).
+- Worker PASS `npm --prefix ui run build` with the existing Vite chunk-size
+  warning.
+- Worker PASS scoped eslint for `tests/integration/admin-provider-config.test.ts`.
+- Worker PASS scoped prettier check plus `git diff --check`.
+- Worker PASS `codex review --uncommitted` after worker P1/P2 fixes.
+- Controller PASS `git diff --check origin/codex/epic/admin-configuration-frontend...HEAD`.
+- Controller BLOCKED freshness: PR #90 is `DIRTY`; merge-tree conflicts in
+  the TASK-013 review file, `AdminAuth` test/component, `AdminDashboard`, and
+  `adminApi`.
 
 ## Review Feedback
 
 ### P1
 
 - None.
+
+### Pending Review
+
+- Schrodinger review requested at 2026-07-06T19:45:01Z in submission
+  `019f38f7-8d65-74e3-8a30-5e4edc7c1b32`.
 
 ### P2
 
@@ -236,4 +275,6 @@ maintenance UI if useful.
 
 ## Completion Notes
 
-- None yet.
+- PR #90 is ready for review but cannot merge until the dirty task branch is
+  refreshed against the epic branch and the TASK-012/AdminDashboard/AdminAuth
+  conflicts are resolved.

@@ -2277,11 +2277,11 @@
     "mode": "codex_thread_heartbeat",
     "cadence": "5m",
     "status": "monitoring_wave_006_ready_for_reconciliation",
-    "lastCheckedAt": "2026-07-06T13:51:23Z",
-    "nextCheckDueAt": "2026-07-06T13:56:23Z",
+    "lastCheckedAt": "2026-07-06T13:55:12Z",
+    "nextCheckDueAt": "2026-07-06T14:00:12Z",
     "schedulerRef": "postgram-admin-wave-005-wdd-heartbeat",
     "schedulerName": "postgram-admin-wave-006-wdd-heartbeat",
-    "fallbackPrompt": "Run one bounded WDD reconciliation handoff heartbeat for /Users/ivo.toby/workspace/postgram, epic EPIC-admin-configuration-frontend, active wave WAVE-006. Use the wdd-reconcile-wave skill. Start in /Users/ivo.toby/workspace/postgram on branch codex/epic/admin-configuration-frontend. Read .wdd/epics/EPIC-admin-configuration-frontend/orchestration.json and controller-state.md. Confirm WAVE-006 bundles TASK-008-admin-key-audit-stats-api and TASK-014-admin-job-foundation are merged into the epic branch; TASK-008 merged in 13465ebb44db1f98183f47fbaa1c6d90e6a23c80 and TASK-014 merged locally in c5edbfca7114a2b8b523e4bdc1fa634fb51f4a6e after Lorentz REVIEW_PASS. Confirm PR #85 is MERGED and PR #86 is MERGED after the epic branch push, task files are in done/, currentGates.workerDispatch entries are merged, WAVE-006 waveCompletion is ready_for_reconciliation, branch freshness is current_at_merge, cleanup is cleanup_deferred for TASK-014, blocking feedback is empty, and shared-context reconciliation is queued. Run wdd-reconcile-wave for WAVE-006, reconcile admin key/audit/stats and admin job foundation decisions into shared context and downstream tasks, update orchestration.json and controller-state.md, clean up WAVE-006 worktrees if safe, then continue to WAVE-007 per Ivo finish-all-waves instruction after reconciliation is pushed."
+    "fallbackPrompt": "Run one bounded WDD reconciliation handoff heartbeat for /Users/ivo.toby/workspace/postgram, epic EPIC-admin-configuration-frontend, active wave WAVE-006. Use the wdd-reconcile-wave skill. Start in /Users/ivo.toby/workspace/postgram on branch codex/epic/admin-configuration-frontend. Read .wdd/epics/EPIC-admin-configuration-frontend/orchestration.json and controller-state.md. Confirm WAVE-006 bundles TASK-008-admin-key-audit-stats-api and TASK-014-admin-job-foundation are merged into the epic branch; TASK-008 merged in 13465ebb44db1f98183f47fbaa1c6d90e6a23c80 and PR #85 is MERGED, TASK-014 merged locally in c5edbfca7114a2b8b523e4bdc1fa634fb51f4a6e after Lorentz REVIEW_PASS and PR #86 is MERGED at 2026-07-06T13:54:55Z, closeout commit 30df62e is pushed. Verify task files are in done/, currentGates.workerDispatch entries are merged, WAVE-006 waveCompletion is ready_for_reconciliation, branch freshness is current_at_merge, cleanup is cleanup_deferred for TASK-014, blocking feedback is empty, and shared-context reconciliation is queued. Run wdd-reconcile-wave for WAVE-006, reconcile admin key/audit/stats and admin job foundation decisions into shared context and downstream tasks, update orchestration.json and controller-state.md, clean up WAVE-006 worktrees if safe, then continue to WAVE-007 per Ivo finish-all-waves instruction after reconciliation is pushed."
   },
   "sharedContext": {
     "index": "shared-context/index.md",
@@ -2425,18 +2425,18 @@
         "activatedAt": "2026-07-06T11:39:24Z",
         "cleanupState": "cleanup_deferred",
         "sharedContextReconciliation": "queued",
-        "lastObservedAt": "2026-07-06T13:51:23Z",
+        "lastObservedAt": "2026-07-06T13:55:12Z",
         "branchPushedAt": "2026-07-06T11:44:24Z",
         "dispatchedAt": "2026-07-06T11:49:24Z",
         "dispatchBaseCommit": "0d41c5304ec5895db334af1ad9ab54bb6a2db0d3",
         "worktreeObservation": {
-          "observedAt": "2026-07-06T13:51:23Z",
+          "observedAt": "2026-07-06T13:55:12Z",
           "taskId": "TASK-014-admin-job-foundation",
           "status": "merged_locally_ready_for_reconciliation",
           "workerStatus": "DONE_FIX_PUSHED",
           "reviewStatus": "REVIEW_PASS",
           "pr": "https://github.com/ivo-toby/postgram/pull/86",
-          "prState": "OPEN_DRAFT_CLEAN_PENDING_EPIC_PUSH",
+          "prState": "MERGED",
           "prNumber": 86,
           "prHead": "0e0863071dd4ff7ca8d308eab15fa6f7e6547dea",
           "reviewThreadId": "019f322c-02e7-7590-8b8e-ebdd1e9c52ac",
@@ -2458,7 +2458,9 @@
             "tests/integration/admin-job-service.test.ts"
           ],
           "verification": "Post-merge verification passed: admin-job-service integration tests (5), admin-api contract tests (3), npm run typecheck, scoped ESLint, git diff --check HEAD^..HEAD, and orchestration JSON parse.",
-          "coordinationNote": "TASK-014 merged locally into the epic branch in c5edbfca7114a2b8b523e4bdc1fa634fb51f4a6e after Lorentz REVIEW_PASS. Push the epic branch, confirm PR #86 MERGED, then reconcile WAVE-006."
+          "coordinationNote": "TASK-014 is merged locally and remote PR #86 is confirmed MERGED at 2026-07-06T13:54:55Z. WAVE-006 is ready for reconciliation; TASK-014 cleanup remains deferred to reconciliation.",
+          "remotePrMergedAt": "2026-07-06T13:54:55Z",
+          "closeoutCommit": "30df62e"
         },
         "taskBranchHead": "0e0863071dd4ff7ca8d308eab15fa6f7e6547dea",
         "mergeCommit": "c5edbfca7114a2b8b523e4bdc1fa634fb51f4a6e",
@@ -2477,12 +2479,15 @@
             "fixedHead": "0e0863071dd4ff7ca8d308eab15fa6f7e6547dea",
             "summary": "Anscombe refreshed PR #86 against the epic branch and preserved diagnostics, keys/audit/stats, jobs, and provider-config route registration. Controller verification passed and Lorentz follow-up returned REVIEW_PASS."
           }
-        ]
+        ],
+        "remotePrState": "MERGED",
+        "remotePrMergedAt": "2026-07-06T13:54:55Z",
+        "closeoutCommit": "30df62e"
       }
     ],
     "dispatchState": "dispatched",
     "activationCommit": "e46eb9a10233fcbadf446cf81d13e8a60f7ab942",
-    "lastObservedAt": "2026-07-06T13:51:23Z",
+    "lastObservedAt": "2026-07-06T13:55:12Z",
     "workerDispatchStartedAt": "2026-07-06T11:49:24Z",
     "dispatchedAt": "2026-07-06T11:49:24Z"
   },
@@ -2546,11 +2551,11 @@
       "mode": "codex_thread_heartbeat",
       "cadence": "5m",
       "status": "monitoring_wave_006_ready_for_reconciliation",
-      "lastCheckedAt": "2026-07-06T13:51:23Z",
-      "nextCheckDueAt": "2026-07-06T13:56:23Z",
+      "lastCheckedAt": "2026-07-06T13:55:12Z",
+      "nextCheckDueAt": "2026-07-06T14:00:12Z",
       "schedulerRef": "postgram-admin-wave-005-wdd-heartbeat",
       "schedulerName": "postgram-admin-wave-006-wdd-heartbeat",
-      "fallbackPrompt": "Run one bounded WDD reconciliation handoff heartbeat for /Users/ivo.toby/workspace/postgram, epic EPIC-admin-configuration-frontend, active wave WAVE-006. Use the wdd-reconcile-wave skill. Start in /Users/ivo.toby/workspace/postgram on branch codex/epic/admin-configuration-frontend. Read .wdd/epics/EPIC-admin-configuration-frontend/orchestration.json and controller-state.md. Confirm WAVE-006 bundles TASK-008-admin-key-audit-stats-api and TASK-014-admin-job-foundation are merged into the epic branch; TASK-008 merged in 13465ebb44db1f98183f47fbaa1c6d90e6a23c80 and TASK-014 merged locally in c5edbfca7114a2b8b523e4bdc1fa634fb51f4a6e after Lorentz REVIEW_PASS. Confirm PR #85 is MERGED and PR #86 is MERGED after the epic branch push, task files are in done/, currentGates.workerDispatch entries are merged, WAVE-006 waveCompletion is ready_for_reconciliation, branch freshness is current_at_merge, cleanup is cleanup_deferred for TASK-014, blocking feedback is empty, and shared-context reconciliation is queued. Run wdd-reconcile-wave for WAVE-006, reconcile admin key/audit/stats and admin job foundation decisions into shared context and downstream tasks, update orchestration.json and controller-state.md, clean up WAVE-006 worktrees if safe, then continue to WAVE-007 per Ivo finish-all-waves instruction after reconciliation is pushed."
+      "fallbackPrompt": "Run one bounded WDD reconciliation handoff heartbeat for /Users/ivo.toby/workspace/postgram, epic EPIC-admin-configuration-frontend, active wave WAVE-006. Use the wdd-reconcile-wave skill. Start in /Users/ivo.toby/workspace/postgram on branch codex/epic/admin-configuration-frontend. Read .wdd/epics/EPIC-admin-configuration-frontend/orchestration.json and controller-state.md. Confirm WAVE-006 bundles TASK-008-admin-key-audit-stats-api and TASK-014-admin-job-foundation are merged into the epic branch; TASK-008 merged in 13465ebb44db1f98183f47fbaa1c6d90e6a23c80 and PR #85 is MERGED, TASK-014 merged locally in c5edbfca7114a2b8b523e4bdc1fa634fb51f4a6e after Lorentz REVIEW_PASS and PR #86 is MERGED at 2026-07-06T13:54:55Z, closeout commit 30df62e is pushed. Verify task files are in done/, currentGates.workerDispatch entries are merged, WAVE-006 waveCompletion is ready_for_reconciliation, branch freshness is current_at_merge, cleanup is cleanup_deferred for TASK-014, blocking feedback is empty, and shared-context reconciliation is queued. Run wdd-reconcile-wave for WAVE-006, reconcile admin key/audit/stats and admin job foundation decisions into shared context and downstream tasks, update orchestration.json and controller-state.md, clean up WAVE-006 worktrees if safe, then continue to WAVE-007 per Ivo finish-all-waves instruction after reconciliation is pushed."
     },
     "review": {
       "WAVE-001-admin-feasibility-gate": {

@@ -643,8 +643,8 @@ Activation rule:
 
 - Activate after WAVE-007 reconciliation.
 - Ready after WAVE-007 reconciliation on 2026-07-06.
-- Activated at 2026-07-06T17:17:56Z after WAVE-007 reconciliation checkpoint
-  `27f4903` was pushed.
+- Activated at 2026-07-06T17:17:56Z in checkpoint `f4bf3d2` after WAVE-007
+  reconciliation checkpoint `27f4903` was pushed.
 
 Progress:
 
@@ -656,8 +656,8 @@ Progress:
   `codex/task/TASK-013-admin-config-ui` and worktree
   `/Users/ivo.toby/workspace/postgram/.worktrees/TASK-013-admin-config-ui`
   reserved.
-- Worker dispatch is pending until the activation checkpoint is pushed and
-  worktrees are created from that pushed epic head.
+- Worker dispatch is pending until activation checkpoint `f4bf3d2` metadata is
+  pushed and worktrees are created from that pushed epic head.
 
 Stop condition:
 

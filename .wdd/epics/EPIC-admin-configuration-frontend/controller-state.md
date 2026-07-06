@@ -75,8 +75,8 @@ contract.
 WAVE-008 is active after WAVE-007 reconciliation was pushed in `27f4903`. Its
 hybrid bundles are TASK-012-admin-ops-dashboard-ui and
 TASK-013-admin-config-ui. Task files have moved to `in-progress/`, dedicated
-branches and worktree paths are reserved, and the activation checkpoint is
-pending push before worker dispatch.
+branches and worktree paths are reserved, and activation checkpoint `f4bf3d2`
+is the required base before worker dispatch.
 
 WAVE-004 is done and reconciled. PR #81/TASK-009 and PR #82/TASK-006 are
 merged, shared context is reconciled, and both WAVE-004 worktrees are cleaned
@@ -229,7 +229,9 @@ to GitHub between tasks/waves.
   `/Users/ivo.toby/workspace/postgram/.worktrees/TASK-012-admin-ops-dashboard-ui`
   and `codex/task/TASK-013-admin-config-ui` at
   `/Users/ivo.toby/workspace/postgram/.worktrees/TASK-013-admin-config-ui`.
-- WAVE-008 worktree status: pending creation after activation checkpoint push.
+- WAVE-008 activation checkpoint: `f4bf3d2d9efd1c4423c5cf6b67f6f10b22d8ce49`.
+- WAVE-008 worktree status: pending creation from activation checkpoint
+  `f4bf3d2`.
 - WAVE-002 branch freshness: current at merge after task branch freshness merge
   `16122c0`.
 - WAVE-003 bundle branch: `codex/task/TASK-005-admin-session-routes`.
@@ -1474,11 +1476,11 @@ to GitHub between tasks/waves.
 - 2026-07-06T17:17:56Z: Started WAVE-008 after WAVE-007 reconciliation
   checkpoint `27f4903` was pushed. TASK-012-admin-ops-dashboard-ui and
   TASK-013-admin-config-ui moved to `in-progress/`; dedicated task branch and
-  worktree assignments are recorded. Activation checkpoint is pending push
-  before branch/worktree creation and worker dispatch.
+  worktree assignments are recorded. Activation checkpoint `f4bf3d2` is the
+  required base before branch/worktree creation and worker dispatch.
 
 ## Next Action
 
-Next action: push the WAVE-008 activation checkpoint, create and push the
-TASK-012 and TASK-013 task branches/worktrees from that epic head, dispatch both
-workers, and keep monitoring active.
+Next action: push the WAVE-008 activation checkpoint metadata, create and push
+the TASK-012 and TASK-013 task branches/worktrees from activation head
+`f4bf3d2`, dispatch both workers, and keep monitoring active.

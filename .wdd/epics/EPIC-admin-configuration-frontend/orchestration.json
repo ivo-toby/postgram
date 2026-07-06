@@ -2469,7 +2469,7 @@
       }
     ],
     "dispatchState": "pending_worker_dispatch",
-    "activationCommit": null,
+    "activationCommit": "f4bf3d2d9efd1c4423c5cf6b67f6f10b22d8ce49",
     "workerDispatchStartedAt": null,
     "dispatchedAt": null,
     "lastObservedAt": "2026-07-06T17:17:56Z"
@@ -2482,8 +2482,8 @@
       "verifiedAt": "2026-07-05T11:36:08Z"
     },
     "activationArtifactsSynced": {
-      "status": "pending_commit",
-      "commit": null,
+      "status": "synced_to_epic_branch",
+      "commit": "f4bf3d2d9efd1c4423c5cf6b67f6f10b22d8ce49",
       "requiredBeforeTaskWorktrees": true,
       "wave": "WAVE-008",
       "syncedAt": "2026-07-06T17:17:56Z"
@@ -3793,7 +3793,7 @@
       }
     },
     "activationArtifact": {
-      "commit": null,
+      "commit": "f4bf3d2d9efd1c4423c5cf6b67f6f10b22d8ce49",
       "requiredBeforeTaskWorktrees": true,
       "wave": "WAVE-008",
       "syncedAt": "2026-07-06T17:17:56Z"

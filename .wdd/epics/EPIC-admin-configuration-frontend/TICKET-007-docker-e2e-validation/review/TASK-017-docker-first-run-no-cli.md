@@ -20,8 +20,8 @@ assigned_model_class: implementationComplex
 review_model_class: review
 branch: codex/task/TASK-017-docker-first-run-no-cli
 worker_worktree: /Users/ivo.toby/workspace/postgram/.worktrees/TASK-017-docker-first-run-no-cli
-worktree_status: ready_for_review
-pr: null
+worktree_status: clean_pushed
+pr: https://github.com/ivo-toby/postgram/pull/92
 worker_thread_id: null
 review_thread_id: null
 current_gate: ready_for_review
@@ -123,7 +123,7 @@ codex/task/TASK-017-docker-first-run-no-cli
 
 ## PR / Patch Reference
 
-Draft PR pending branch push.
+Draft PR: https://github.com/ivo-toby/postgram/pull/92
 
 WAVE-010 activation recorded at 2026-07-06T21:51:22Z. The controller assigned
 branch `codex/task/TASK-017-docker-first-run-no-cli` and the isolated worktree

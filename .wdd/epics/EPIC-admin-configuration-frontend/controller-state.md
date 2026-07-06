@@ -28,8 +28,11 @@ TASK-007 passed Lorentz review, was refreshed against the latest epic branch,
 merged locally into the epic branch in `16985ef`, and PR #83 is merged on
 GitHub. Goodall completed TASK-010, opened draft PR #84, moved the task file to
 `review/`, and pushed branch head `6cf5001`. The controller requested Lorentz
-review for PR #84. The PR is `DIRTY` and the TASK-010 branch is 27 commits
-behind the epic branch, so branch freshness remains required before merge.
+review for PR #84. Lorentz returned `REVIEW_BLOCKED` with one P2 branch
+freshness blocker: the stale branch now has product-code conflicts in
+`src/index.ts` and `src/transport/admin.ts`, plus the TASK-010 review file.
+Feedback was routed to Goodall. PR #84 remains `DIRTY`, and the TASK-010 branch
+is 28 commits behind and 2 commits ahead of the epic branch.
 
 WAVE-004 is done and reconciled. PR #81/TASK-009 and PR #82/TASK-006 are
 merged, shared context is reconciled, and both WAVE-004 worktrees are cleaned
@@ -57,11 +60,11 @@ Mode: codex_thread_heartbeat
 
 Cadence: 5 minutes
 
-Status: reviewing_task_010
+Status: needs_fixes_task_010
 
-Last check: 2026-07-06T11:07:00Z
+Last check: 2026-07-06T11:14:24Z
 
-Next check due: 2026-07-06T11:12:00Z
+Next check due: 2026-07-06T11:19:24Z
 
 Scheduler reference: `postgram-admin-wave-005-wdd-heartbeat`
 
@@ -73,17 +76,19 @@ epic EPIC-admin-configuration-frontend, active wave WAVE-005. Use the
 subagent-pr-orchestration skill. Start in /Users/ivo.toby/workspace/postgram on
 branch codex/epic/admin-configuration-frontend. Read
 .wdd/epics/EPIC-admin-configuration-frontend/orchestration.json and
-controller-state.md. TASK-007 / PR #83 is MERGED and pushed. Inspect worker
-Goodall (019f35ff-a193-7ae0-a4b8-1ec53faabb74) and worktree
+controller-state.md. TASK-007 / PR #83 is MERGED and pushed. PR #84 / TASK-010
+is REVIEW_BLOCKED after Lorentz found P2 branch freshness product-code
+conflicts in src/index.ts and src/transport/admin.ts plus the TASK-010 review
+file. Feedback was routed to Goodall
+(019f35ff-a193-7ae0-a4b8-1ec53faabb74). Inspect Goodall and
 /Users/ivo.toby/workspace/postgram/.worktrees/TASK-010-provider-config-apply on
-branch codex/task/TASK-010-provider-config-apply for
-WAVE-005-provider-config-apply / TASK-010-provider-config-apply. If Goodall has
-produced a PR or patch, move TASK-010 to review/reviewer orchestration; if no
-PR or patch exists, keep no_pr and nudge exact missing deliverables only if the
-worktree is inactive or stale. Stop when WAVE-005 bundles are merged, blocked,
-cancelled, or ready for wdd-reconcile-wave. After WAVE-005 is reconciled,
-continue to the next wave per Ivo's finish-all-waves instruction and push to
-GitHub between tasks/waves.
+branch codex/task/TASK-010-provider-config-apply. If Goodall pushed fixes,
+verify git diff --check, branch freshness, required tests, PR #84 state, and
+request or run follow-up review. If no fix is present, keep needs_fixes and
+nudge exact missing deliverables only if stale. Stop when WAVE-005 bundles are
+merged, blocked, cancelled, or ready for wdd-reconcile-wave. After WAVE-005 is
+reconciled, continue to the next wave per Ivo finish-all-waves instruction and
+push to GitHub between tasks/waves.
 ```
 
 ## Active Wave Strategy
@@ -134,7 +139,7 @@ GitHub between tasks/waves.
 | TASK-007-admin-api-shell-diagnostics | TICKET-003-admin-api-foundation | codex/task/TASK-007-admin-api-shell-diagnostics | clean_pushed | merged | REVIEW_PASS; freshness verification passed at `f0e889e`; merged locally into epic branch in `16985ef`; cleanup deferred until WAVE-005 reconciliation |
 | TASK-008-admin-key-audit-stats-api | TICKET-003-admin-api-foundation | codex/task/TASK-008-admin-key-audit-stats-api | not_created | planned | `npm test -- tests/contract/admin-key-audit-stats.test.ts`; `npm test -- tests/integration/key-service.test.ts`; `npm run typecheck` |
 | TASK-009-settings-secret-store | TICKET-004-runtime-configuration | codex/task/TASK-009-settings-secret-store | cleaned_up | reconciled | PR #81 follow-up REVIEW_PASS, final branch freshness passed at `ca9c96f`, merged locally into epic branch in `b63ad08`; worktree cleaned up during WAVE-004 reconciliation |
-| TASK-010-provider-config-apply | TICKET-004-runtime-configuration | codex/task/TASK-010-provider-config-apply | clean_pushed | reviewing | Goodall opened draft PR #84 at `6cf5001`; Lorentz review requested; worker verification reported passed; controller diff check passed; PR is DIRTY and branch freshness is stale pending refresh before merge |
+| TASK-010-provider-config-apply | TICKET-004-runtime-configuration | codex/task/TASK-010-provider-config-apply | clean_pushed | needs_fixes | Lorentz returned `REVIEW_BLOCKED` with one P2 branch freshness/product-code conflict; `git merge-tree` conflicts in `src/index.ts`, `src/transport/admin.ts`, and the TASK-010 review file; feedback routed to Goodall for branch refresh and post-refresh verification |
 | TASK-011-admin-auth-ui | TICKET-005-admin-frontend | codex/task/TASK-011-admin-auth-ui | not_created | planned | `npm --prefix ui run test -- --run src/components/AdminAuth.test.tsx`; `npm --prefix ui run typecheck` |
 | TASK-012-admin-ops-dashboard-ui | TICKET-005-admin-frontend | codex/task/TASK-012-admin-ops-dashboard-ui | not_created | planned | `npm --prefix ui run test -- --run src/components/AdminOps.test.tsx`; `npm --prefix ui run typecheck` |
 | TASK-013-admin-config-ui | TICKET-005-admin-frontend | codex/task/TASK-013-admin-config-ui | not_created | planned | `npm --prefix ui run test -- --run src/components/AdminConfig.test.tsx`; `npm --prefix ui run typecheck` |
@@ -416,6 +421,15 @@ GitHub between tasks/waves.
   `019f322c-02e7-7590-8b8e-ebdd1e9c52ac`. PR #84 reports
   `mergeStateStatus=DIRTY` and branch divergence is `27 2`, so freshness refresh
   and post-refresh verification remain required before merge.
+- WAVE-005 2026-07-06T11:14:24Z observation: Lorentz returned
+  `REVIEW_BLOCKED` for PR #84 with one P2 blocker and no P1/P3 findings. The
+  provider-config implementation review passed on substance, but `git
+  merge-tree` conflicts in `src/index.ts`, `src/transport/admin.ts`, and the
+  TASK-010 review task file. Controller confirmed divergence is `28 2`,
+  `git diff --check` passes, and feedback was routed to Goodall to refresh the
+  task branch while preserving both TASK-007 diagnostics/extraction wiring and
+  TASK-010 provider-config wiring. Gate is `needs_fixes`; next check due
+  2026-07-06T11:19:24Z.
 
 ## WAVE-001 Reconciled State
 
@@ -1062,11 +1076,16 @@ GitHub between tasks/waves.
   branch. Lorentz review was requested. Gate is now `reviewing`; PR #84 remains
   `DIRTY` and branch freshness must be repaired before merge. Next check due
   2026-07-06T11:12:00Z.
+- 2026-07-06T11:14:24Z: Lorentz returned `REVIEW_BLOCKED` for PR #84 with one
+  P2 branch freshness blocker. Controller reproduced the product-code conflicts
+  in `src/index.ts` and `src/transport/admin.ts` plus the TASK-010 review file,
+  confirmed divergence is `28 2`, and routed the exact refresh/conflict fix to
+  Goodall. Gate is now `needs_fixes`; next check due 2026-07-06T11:19:24Z.
 
 ## Next Action
 
-Next WAVE-005 heartbeat is due at 2026-07-06T11:12:00Z. Inspect PR #84 and
-Lorentz's review thread. If review reports P1/P2, route feedback to Goodall or
-a fresh fix worker. If review passes, refresh the stale task branch against
-`codex/epic/admin-configuration-frontend`, rerun freshness verification, then
-merge or mark merge-ready according to policy.
+Next WAVE-005 heartbeat is due at 2026-07-06T11:19:24Z. Inspect Goodall and the
+TASK-010 worktree. If the refresh fix is pushed, verify branch freshness,
+`git diff --check`, required tests, and PR #84 state, then request or run a
+follow-up review. If no fix is present, keep `needs_fixes` and nudge only if the
+worktree or worker is stale.

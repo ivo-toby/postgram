@@ -572,8 +572,7 @@ Stop condition:
 Progress:
 
 - TASK-011 passed Lorentz review, was refreshed against the epic branch, merged
-  locally in `4e77a6b`, and is awaiting epic branch push / PR #87 remote merge
-  confirmation before worktree cleanup.
+  locally in `4e77a6b`, marked merged remotely as PR #87, and cleaned up.
 - TASK-015 remains active with no PR yet.
 
 ### WAVE-008

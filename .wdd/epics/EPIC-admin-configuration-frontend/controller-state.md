@@ -64,11 +64,12 @@ are TASK-011-admin-auth-ui and TASK-015-maintenance-admin-api. Task files are
 in `in-progress/`, dedicated task branches and worktrees were created and
 pushed at `848b902`, and workers Meitner and Helmholtz were dispatched at
 2026-07-06T14:11:59Z. TASK-011 shipped in PR #87, Lorentz returned
-`REVIEW_PASS`, the task branch was refreshed to `344bab8`, and TASK-011 merged
-locally into the epic branch in `4e77a6b`. PR #87 is awaiting epic branch push
-confirmation before worktree cleanup. TASK-015 remains active with no PR yet
-and no nudge is needed because Helmholtz's worktree still has current
-task-owned maintenance API changes.
+`REVIEW_PASS`, the task branch was refreshed to `344bab8`, TASK-011 merged
+locally into the epic branch in `4e77a6b`, GitHub marked PR #87 `MERGED` at
+2026-07-06T15:48:11Z after the epic branch push, and the clean TASK-011
+worktree was removed. TASK-015 remains active with no PR yet and no nudge is
+needed because Helmholtz's worktree still has current task-owned maintenance
+API changes.
 
 WAVE-004 is done and reconciled. PR #81/TASK-009 and PR #82/TASK-006 are
 merged, shared context is reconciled, and both WAVE-004 worktrees are cleaned
@@ -96,11 +97,11 @@ Mode: adaptive
 
 Cadence: 15m
 
-Status: wave_007_task011_merged_pending_remote_task015_active_no_pr
+Status: wave_007_task011_merged_cleaned_up_task015_active_no_pr
 
-Last check: 2026-07-06T15:38:25Z
+Last check: 2026-07-06T15:48:11Z
 
-Next check due: 2026-07-06T15:53:25Z
+Next check due: 2026-07-06T16:03:11Z
 
 Scheduler reference: `postgram-admin-wave-005-wdd-heartbeat`
 
@@ -109,10 +110,9 @@ Scheduler name: `postgram-admin-wave-007-wdd-heartbeat`
 Fallback prompt:
 
 ```text
-WAVE-007 TASK-011 is locally merged after Lorentz REVIEW_PASS and awaits epic
-branch push / PR #87 remote merge confirmation and cleanup; TASK-015 Helmholtz
-remains active with no PR yet. Confirm remote PR state, clean up TASK-011 if
-safe, then continue monitoring TASK-015.
+WAVE-007 TASK-011 PR #87 is merged and its worktree is cleaned up. Continue
+monitoring Helmholtz/TASK-015 for PR or patch handoff; if no PR exists, keep
+no_pr and nudge only if the worktree is inactive or stale.
 ```
 
 ## Active Wave Strategy
@@ -124,8 +124,8 @@ safe, then continue monitoring TASK-015.
 - WAVE-007 strategy: full / parallel / risk_based / adaptive.
 - WAVE-007 tasks: TASK-011-admin-auth-ui and TASK-015-maintenance-admin-api.
 - Confirmation: Ivo via Codex finish-all-waves request on 2026-07-06.
-- Current gate: TASK-011 is locally merged pending remote PR confirmation and
-  cleanup; monitor TASK-015 for PR or patch handoff.
+- Current gate: TASK-011 is merged and cleaned up; monitor TASK-015 for PR or
+  patch handoff.
 
 ## Last Reconciled Wave
 
@@ -165,7 +165,7 @@ safe, then continue monitoring TASK-015.
 | TASK-008-admin-key-audit-stats-api | TICKET-003-admin-api-foundation | codex/task/TASK-008-admin-key-audit-stats-api | cleaned_up | reconciled | REVIEW_PASS; freshness current at task head `281681b`; post-merge tests/typecheck/touched-file ESLint passed; merged locally into epic branch in `13465eb`; WAVE-006 reconciled |
 | TASK-009-settings-secret-store | TICKET-004-runtime-configuration | codex/task/TASK-009-settings-secret-store | cleaned_up | reconciled | PR #81 follow-up REVIEW_PASS, final branch freshness passed at `ca9c96f`, merged locally into epic branch in `b63ad08`; worktree cleaned up during WAVE-004 reconciliation |
 | TASK-010-provider-config-apply | TICKET-004-runtime-configuration | codex/task/TASK-010-provider-config-apply | cleaned_up | reconciled | REVIEW_PASS; final branch freshness passed at `515cfa5`; merged locally into epic branch in `f5efbc0`; PR #84 merged at 2026-07-06T11:31:10Z; WAVE-005 reconciled |
-| TASK-011-admin-auth-ui | TICKET-005-admin-frontend | codex/task/TASK-011-admin-auth-ui | cleanup_deferred | merged | Lorentz REVIEW_PASS; refreshed branch head `344bab8`; post-refresh AdminAuth tests/typecheck/diff/merge-tree/JQ passed; merged locally in `4e77a6b`; post-merge AdminAuth tests and UI typecheck passed after `npm --prefix ui ci`; PR #87 pending remote merge confirmation |
+| TASK-011-admin-auth-ui | TICKET-005-admin-frontend | codex/task/TASK-011-admin-auth-ui | cleaned_up | merged | Lorentz REVIEW_PASS; refreshed branch head `344bab8`; post-refresh AdminAuth tests/typecheck/diff/merge-tree/JQ passed; merged locally in `4e77a6b`; post-merge AdminAuth tests and UI typecheck passed after `npm --prefix ui ci`; PR #87 merged at 2026-07-06T15:48:11Z and worktree cleaned up |
 | TASK-012-admin-ops-dashboard-ui | TICKET-005-admin-frontend | codex/task/TASK-012-admin-ops-dashboard-ui | not_created | planned | `npm --prefix ui run test -- --run src/components/AdminOps.test.tsx`; `npm --prefix ui run typecheck` |
 | TASK-013-admin-config-ui | TICKET-005-admin-frontend | codex/task/TASK-013-admin-config-ui | not_created | planned | `npm --prefix ui run test -- --run src/components/AdminConfig.test.tsx`; `npm --prefix ui run typecheck` |
 | TASK-014-admin-job-foundation | TICKET-006-maintenance-jobs | codex/task/TASK-014-admin-job-foundation | cleaned_up | reconciled | Lorentz REVIEW_PASS; freshness current at task head `0e08630`; post-merge tests/typecheck/touched-file ESLint passed; merged locally into epic branch in `c5edbfc`; WAVE-006 reconciled and worktree cleaned up |
@@ -1358,9 +1358,13 @@ safe, then continue monitoring TASK-015.
   timed out without final status, the worktree has active expected maintenance
   API changes, and tracked `git diff --check` passed. Monitoring cadence
   returned to 15 minutes while only TASK-015 is in no-PR worker-watch state.
+- 2026-07-06T15:48:11Z: Pushed the TASK-011 closeout commit `418b432`; GitHub
+  marked PR #87 `MERGED` at 2026-07-06T15:48:11Z with merge commit `4e77a6b`.
+  The TASK-011 worktree was clean at task head `344bab8`, so controller removed
+  `/Users/ivo.toby/workspace/postgram/.worktrees/TASK-011-admin-auth-ui` and
+  ran `git worktree prune`. WAVE-007 remains active only on TASK-015.
 
 ## Next Action
 
-Next action: push the TASK-011 closeout state, confirm GitHub marks PR #87
-merged, clean up the TASK-011 worktree if it is still clean, then continue
-monitoring Helmholtz/TASK-015 for PR or patch handoff.
+Next action: monitor Helmholtz/TASK-015 for PR or patch handoff. Keep `no_pr`
+while the worktree is active; nudge only if it becomes inactive or stale.

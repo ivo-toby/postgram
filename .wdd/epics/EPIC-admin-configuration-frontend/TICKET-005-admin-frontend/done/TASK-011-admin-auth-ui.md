@@ -18,7 +18,7 @@ assigned_model_class: implementationComplex
 review_model_class: review
 branch: codex/task/TASK-011-admin-auth-ui
 worker_worktree: /Users/ivo.toby/workspace/postgram/.worktrees/TASK-011-admin-auth-ui
-worktree_status: cleanup_deferred
+worktree_status: cleaned_up
 pr: https://github.com/ivo-toby/postgram/pull/87
 worker_thread_id: 019f37c5-29ec-7ec3-b6fd-6aba64df3dc9
 review_thread_id: 019f322c-02e7-7590-8b8e-ebdd1e9c52ac
@@ -110,8 +110,7 @@ codex/task/TASK-011-admin-auth-ui
 
 ## Worker Worktree
 
-Cleanup deferred at `/Users/ivo.toby/workspace/postgram/.worktrees/TASK-011-admin-auth-ui`
-until the epic branch push confirms PR #87 is merged.
+Cleaned up after PR #87 was confirmed merged.
 
 ## PR / Patch Reference
 
@@ -230,6 +229,11 @@ Keep admin auth UI separate from current API-key login.
   branch, reran focused AdminAuth tests, UI typecheck, branch diff check,
   merge-tree, and WDD orchestration JSON parse successfully, then merged
   TASK-011 locally into the epic branch.
+- 2026-07-06T15:48:11Z: Epic branch push marked PR #87 `MERGED` with merge
+  commit `4e77a6b5362160f854d36b4283157c658a9096e2`. The worker worktree was
+  clean at task branch head `344bab8ed51c76eb18ee6b8d2dbd020d70bec329`;
+  controller removed it with `git worktree remove` and ran
+  `git worktree prune`.
 
 ## Review Feedback
 

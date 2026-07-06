@@ -122,9 +122,9 @@ Clean and pushed at `/Users/ivo.toby/workspace/postgram/.worktrees/TASK-015-main
 
 ## PR / Patch Reference
 
-https://github.com/ivo-toby/postgram/pull/88
+Draft PR: https://github.com/ivo-toby/postgram/pull/88
 
-Implementation commit before branch refresh: `faab7e0`
+Implementation head before WDD handoff commits: `faab7e0`
 (`feat(admin): add maintenance job APIs`).
 
 ## RED-GREEN TDD Plan

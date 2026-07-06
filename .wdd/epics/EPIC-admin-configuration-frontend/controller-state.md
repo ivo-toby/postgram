@@ -70,7 +70,10 @@ locally into the epic branch in `4e77a6b`, GitHub marked PR #87 `MERGED` at
 worktree was removed. TASK-015 shipped in draft PR #88 after Helmholtz
 returned `DONE`. Lorentz returned `REVIEW_BLOCKED` with one P2 branch
 freshness blocker: PR #88 is `DIRTY` and merge-tree conflicts in the WDD
-TASK-015 review file. Feedback has been routed to Helmholtz.
+TASK-015 review file. Helmholtz refreshed the branch, pushed PR #88 to
+`86c4966`, and controller freshness verification passed; Lorentz follow-up
+review returned `REVIEW_PASS` with no findings. Final branch freshness must be
+rechecked after this controller checkpoint advances the epic branch.
 
 WAVE-004 is done and reconciled. PR #81/TASK-009 and PR #82/TASK-006 are
 merged, shared context is reconciled, and both WAVE-004 worktrees are cleaned
@@ -98,11 +101,11 @@ Mode: adaptive
 
 Cadence: 5m
 
-Status: wave_007_task015_freshness_fix_in_progress_conflicted
+Status: wave_007_task015_review_passed_pending_final_freshness
 
-Last check: 2026-07-06T16:48:00Z
+Last check: 2026-07-06T16:58:48Z
 
-Next check due: 2026-07-06T16:53:00Z
+Next check due: 2026-07-06T17:03:48Z
 
 Scheduler reference: `postgram-admin-wave-005-wdd-heartbeat`
 
@@ -111,9 +114,10 @@ Scheduler name: `postgram-admin-wave-007-wdd-heartbeat`
 Fallback prompt:
 
 ```text
-WAVE-007 TASK-015 PR #88 has P2 freshness feedback routed. Helmholtz appears
-to be resolving the WDD task-file conflict in the worker worktree; poll for
-completed fix/pushed head and rerun freshness/review gates.
+WAVE-007 TASK-015 PR #88 follow-up review passed at head
+86c49664de429d0c41505dd169d6a1e3a45dd025. Commit/push controller checkpoint if
+needed, refresh final branch freshness against the latest epic branch, rerun
+required verification, then merge or mark merge_ready.
 ```
 
 ## Active Wave Strategy
@@ -125,8 +129,8 @@ completed fix/pushed head and rerun freshness/review gates.
 - WAVE-007 strategy: full / parallel / risk_based / adaptive.
 - WAVE-007 tasks: TASK-011-admin-auth-ui and TASK-015-maintenance-admin-api.
 - Confirmation: Ivo via Codex finish-all-waves request on 2026-07-06.
-- Current gate: TASK-011 is merged and cleaned up; monitor TASK-015 for PR or
-  patch handoff.
+- Current gate: TASK-011 is merged and cleaned up; TASK-015 follow-up review
+  passed and final branch freshness is pending.
 
 ## Last Reconciled Wave
 
@@ -170,7 +174,7 @@ completed fix/pushed head and rerun freshness/review gates.
 | TASK-012-admin-ops-dashboard-ui | TICKET-005-admin-frontend | codex/task/TASK-012-admin-ops-dashboard-ui | not_created | planned | `npm --prefix ui run test -- --run src/components/AdminOps.test.tsx`; `npm --prefix ui run typecheck` |
 | TASK-013-admin-config-ui | TICKET-005-admin-frontend | codex/task/TASK-013-admin-config-ui | not_created | planned | `npm --prefix ui run test -- --run src/components/AdminConfig.test.tsx`; `npm --prefix ui run typecheck` |
 | TASK-014-admin-job-foundation | TICKET-006-maintenance-jobs | codex/task/TASK-014-admin-job-foundation | cleaned_up | reconciled | Lorentz REVIEW_PASS; freshness current at task head `0e08630`; post-merge tests/typecheck/touched-file ESLint passed; merged locally into epic branch in `c5edbfc`; WAVE-006 reconciled and worktree cleaned up |
-| TASK-015-maintenance-admin-api | TICKET-006-maintenance-jobs | codex/task/TASK-015-maintenance-admin-api | clean_pushed_needs_freshness_fix | needs_fixes | Lorentz REVIEW_BLOCKED with one P2 branch-freshness blocker; PR #88 is `DIRTY` with WDD task-file merge-tree conflict; no product-code P1/P2; feedback routed to Helmholtz in submission `019f3852-f2bc-7651-a502-e31ae60ac612` |
+| TASK-015-maintenance-admin-api | TICKET-006-maintenance-jobs | codex/task/TASK-015-maintenance-admin-api | clean_pushed | review_passed_pending_final_freshness | Helmholtz pushed freshness fix head `86c4966`; PR #88 is `CLEAN`; controller freshness verification passed (`0 3`, merge-tree tree `a96b5a5`, contract 4/4, CLI 37/37, typecheck); Lorentz follow-up returned `REVIEW_PASS` with no findings; final freshness recheck is pending after controller checkpoint |
 | TASK-016-maintenance-admin-ui | TICKET-006-maintenance-jobs | codex/task/TASK-016-maintenance-admin-ui | not_created | planned | `npm --prefix ui run test -- --run src/components/AdminMaintenance.test.tsx`; `npm --prefix ui run typecheck` |
 | TASK-017-docker-first-run-no-cli | TICKET-007-docker-e2e-validation | codex/task/TASK-017-docker-first-run-no-cli | not_created | planned | `docker compose config`; `npm run typecheck`; `npm --prefix ui run build` |
 | TASK-018-security-epic-validation | TICKET-007-docker-e2e-validation | codex/task/TASK-018-security-epic-validation | not_created | planned | broad backend, frontend, Docker, and smoke validation |
@@ -1415,9 +1419,27 @@ completed fix/pushed head and rerun freshness/review gates.
   TASK-015 file in conflict. PR #88 remains open/draft/`DIRTY` at head
   `4a3e99d`, and Helmholtz has not returned final fix status yet. Controller
   did not modify the worker worktree. Next check due 2026-07-06T16:53:00Z.
+- 2026-07-06T16:54:23Z: Helmholtz returned `DONE` for the freshness fix and
+  pushed PR #88 to head `86c4966`. GitHub now reports PR #88 open/draft and
+  `CLEAN`. Controller verification passed from the clean TASK-015 worktree:
+  `origin/codex/epic/admin-configuration-frontend...HEAD = 0 3`,
+  `git diff --check` passed, merge-tree passed with tree `a96b5a5`,
+  `admin-maintenance-api` contract tests passed 4/4, `cli-admin` integration
+  tests passed 37/37, and `npm run typecheck` passed. Lorentz follow-up review
+  was requested in submission `019f3859-e887-7200-acde-34619e5018f4`. Gate is
+  `reviewing`; next check due 2026-07-06T16:59:23Z.
+- 2026-07-06T16:58:48Z: Lorentz follow-up review returned `REVIEW_PASS` for
+  PR #88 at head `86c4966`, with no P1/P2/P3 findings. The previous P2
+  freshness/WDD task-file conflict is resolved. Reviewer evidence confirms PR
+  #88 is `CLEAN`, divergence is `0 3`, merge-tree and diff check pass, changes
+  since blocked head `4a3e99d` are WDD/control artifacts only, route
+  registration remains additive, admin-maintenance API contract tests pass
+  4/4, and the worktree stayed clean. Gate is
+  `review_passed_pending_final_freshness`; next check due
+  2026-07-06T17:03:48Z.
 
 ## Next Action
 
-Next action: poll Helmholtz/TASK-015 for completion of the freshness fix. Do
-not touch the worker worktree while conflict resolution is active; when a new
-head is pushed, rerun freshness verification and request follow-up review.
+Next action: commit and push this controller checkpoint, refresh TASK-015
+against the new epic head if needed, rerun final freshness verification, then
+merge or mark merge_ready according to policy.

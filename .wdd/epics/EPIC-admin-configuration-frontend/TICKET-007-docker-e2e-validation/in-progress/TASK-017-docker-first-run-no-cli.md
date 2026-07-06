@@ -20,12 +20,12 @@ assigned_model_class: implementationComplex
 review_model_class: review
 branch: codex/task/TASK-017-docker-first-run-no-cli
 worker_worktree: /Users/ivo.toby/workspace/postgram/.worktrees/TASK-017-docker-first-run-no-cli
-worktree_status: pending_creation
+worktree_status: clean_pushed
 pr: null
 worker_thread_id: null
 review_thread_id: null
-current_gate: pending_worktree
-branch_freshness: not_started
+current_gate: ready_for_dispatch
+branch_freshness: current
 verification:
   - docker compose config
   - npm run typecheck
@@ -127,8 +127,9 @@ None yet.
 
 WAVE-010 activation recorded at 2026-07-06T21:51:22Z. The controller assigned
 branch `codex/task/TASK-017-docker-first-run-no-cli` and the isolated worktree
-path above; task branch/worktree creation and worker dispatch follow only after
-this activation checkpoint is pushed to the epic branch.
+path above. At 2026-07-06T21:54:35Z the task branch/worktree were created from
+the pushed epic activation checkpoint, verified clean/current, and the task
+branch was pushed to GitHub.
 
 ## RED-GREEN TDD Plan
 
@@ -197,8 +198,10 @@ Keep docs honest about emergency CLI fallback and public exposure risks.
 
 ## Verification Evidence
 
-- Activation pending task branch/worktree creation from the pushed epic
-  checkpoint.
+- Activation verification passed: task branch/worktree created from pushed
+  epic checkpoint `d43f7df`, in-progress TASK-017 file present, orchestration
+  activeWave present, branch divergence from epic was `0 0`, and the task
+  branch was pushed to origin.
 
 ## Review Feedback
 

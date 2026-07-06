@@ -3,7 +3,7 @@ id: EPIC-admin-configuration-frontend-CONTROLLER
 kind: controller_state
 epic: EPIC-admin-configuration-frontend
 active_wave: WAVE-010
-status: wave_010_activation_pending_push
+status: wave_010_ready_for_dispatch
 updated_at: 2026-07-06
 ---
 
@@ -109,8 +109,9 @@ reconciliation checkpoint `8b7f6c3` was pushed. TASK-017-docker-first-run-no-cli
 has moved to `in-progress/`; the controller assigned branch
 `codex/task/TASK-017-docker-first-run-no-cli` and worktree
 `/Users/ivo.toby/workspace/postgram/.worktrees/TASK-017-docker-first-run-no-cli`.
-Activation artifacts are pending push before task branch/worktree creation and
-worker dispatch.
+Activation artifacts were pushed, and the TASK-017 task branch/worktree were
+created from pushed epic checkpoint `d43f7df`, verified current, and pushed to
+GitHub. Worker dispatch is next.
 
 WAVE-004 is done and reconciled. PR #81/TASK-009 and PR #82/TASK-006 are
 merged, shared context is reconciled, and both WAVE-004 worktrees are cleaned
@@ -138,7 +139,7 @@ Mode: adaptive
 
 Cadence: 15m
 
-Status: wave_010_activation_pending_push
+Status: wave_010_ready_for_dispatch
 
 Last check: 2026-07-06T21:51:22Z
 
@@ -182,8 +183,8 @@ push to GitHub between tasks/waves.
 - WAVE-010 strategy: full / bundled / risk_based / adaptive.
 - WAVE-010 task: TASK-017-docker-first-run-no-cli.
 - Confirmation: Ivo via Codex finish-all-waves request on 2026-07-06.
-- Current gate: activation artifacts pending push before task branch/worktree
-  creation.
+- Current gate: TASK-017 worktree is clean/pushed and ready for worker
+  dispatch.
 
 ## Last Reconciled Wave
 
@@ -240,7 +241,7 @@ push to GitHub between tasks/waves.
 | TASK-014-admin-job-foundation | TICKET-006-maintenance-jobs | codex/task/TASK-014-admin-job-foundation | cleaned_up | reconciled | Lorentz REVIEW_PASS; freshness current at task head `0e08630`; post-merge tests/typecheck/touched-file ESLint passed; merged locally into epic branch in `c5edbfc`; WAVE-006 reconciled and worktree cleaned up |
 | TASK-015-maintenance-admin-api | TICKET-006-maintenance-jobs | codex/task/TASK-015-maintenance-admin-api | cleaned_up | reconciled | Lorentz REVIEW_PASS; final freshness passed at task head `ea88af4`; post-merge contract tests 4/4, CLI integration 37/37, typecheck, scoped ESLint, JSON parse, and diff check passed; merged locally in `78f0f43`; PR #88 merged at 2026-07-06T17:02:28Z; shared context reconciled |
 | TASK-016-maintenance-admin-ui | TICKET-006-maintenance-jobs | codex/task/TASK-016-maintenance-admin-ui | cleaned_up | reconciled | Hypatia REVIEW_PASS; final task head `1885b64`; freshness `0 3`; AdminMaintenance 9/9, AdminOps/AdminConfig/AdminAuth 49/49, UI typecheck passed; merged in `10b2738`; PR #91 MERGED at 2026-07-06T21:37:31Z; WAVE-009 shared context reconciled |
-| TASK-017-docker-first-run-no-cli | TICKET-007-docker-e2e-validation | codex/task/TASK-017-docker-first-run-no-cli | pending_creation | pending_worktree | Activation assigned branch/worktree at 2026-07-06T21:51:22Z; activation checkpoint must be pushed before worktree creation |
+| TASK-017-docker-first-run-no-cli | TICKET-007-docker-e2e-validation | codex/task/TASK-017-docker-first-run-no-cli | clean_pushed | ready_for_dispatch | Branch/worktree created from pushed activation checkpoint `d43f7df`; divergence from epic was `0 0`; task branch pushed |
 | TASK-018-security-epic-validation | TICKET-007-docker-e2e-validation | codex/task/TASK-018-security-epic-validation | not_created | planned | broad backend, frontend, Docker, and smoke validation |
 
 ## Branch And Worktree State
@@ -1779,9 +1780,14 @@ push to GitHub between tasks/waves.
   `/Users/ivo.toby/workspace/postgram/.worktrees/TASK-017-docker-first-run-no-cli`.
   Activation artifacts must be pushed before creating the task branch/worktree
   and dispatching the worker.
+- 2026-07-06T21:54:35Z: Pushed activation checkpoint `d43f7df`, created
+  `codex/task/TASK-017-docker-first-run-no-cli` and worktree
+  `/Users/ivo.toby/workspace/postgram/.worktrees/TASK-017-docker-first-run-no-cli`
+  from that checkpoint, pushed the task branch to origin, and verified the
+  in-progress TASK-017 file plus orchestration/controller artifacts exist in
+  the worker worktree. Branch divergence from the epic branch is `0 0`.
 
 ## Next Action
 
-Next action: push WAVE-010 activation artifacts, create and verify the TASK-017
-task branch/worktree from that pushed epic checkpoint, then dispatch the worker
-and update monitoring.
+Next action: dispatch the TASK-017 worker, record its thread id, and update
+monitoring.

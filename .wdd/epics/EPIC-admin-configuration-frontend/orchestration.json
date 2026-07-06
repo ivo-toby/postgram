@@ -2477,28 +2477,30 @@
       "workerThreadId": null,
       "reviewThreadId": null,
       "workerWorktree": "/Users/ivo.toby/workspace/postgram/.worktrees/TASK-017-docker-first-run-no-cli",
-      "worktreeStatus": "pending_creation",
+      "worktreeStatus": "clean_pushed",
       "pr": null,
       "latestCommit": null,
-      "branchFreshness": "not_started",
+      "branchFreshness": "current",
       "blockingFeedback": [],
       "verification": {
-        "result": "activation_pending_worktree_creation",
+        "result": "worktree_created_branch_pushed_ready_for_dispatch",
+        "checkedAt": "2026-07-06T21:54:35Z",
         "commands": [
-          "docker compose config",
-          "npm run typecheck",
-          "npm --prefix ui run typecheck",
-          "npm --prefix ui run build"
+          "git worktree add -b codex/task/TASK-017-docker-first-run-no-cli .worktrees/TASK-017-docker-first-run-no-cli origin/codex/epic/admin-configuration-frontend",
+          "git -C .worktrees/TASK-017-docker-first-run-no-cli status --short --branch",
+          "git -C .worktrees/TASK-017-docker-first-run-no-cli rev-list --left-right --count origin/codex/epic/admin-configuration-frontend...HEAD",
+          "git -C .worktrees/TASK-017-docker-first-run-no-cli push -u origin codex/task/TASK-017-docker-first-run-no-cli"
         ],
-        "evidence": "WAVE-010 activation assigned branch and worktree. Task branch/worktree creation follows after activation checkpoint is pushed.",
-        "checkedAt": "2026-07-06T21:51:22Z"
+        "evidence": "Task branch/worktree created from pushed epic activation checkpoint d43f7df, in-progress TASK-017 file and orchestration state verified, branch divergence from epic was 0 0, and task branch was pushed to origin."
       },
-      "currentGate": "pending_worktree",
+      "currentGate": "ready_for_dispatch",
       "readyAt": "2026-07-06T21:42:32Z",
       "bundle": "WAVE-010-docker-first-run-no-cli",
       "activatedAt": "2026-07-06T21:51:22Z",
       "sharedContextReconciliation": "not_started",
-      "cleanupState": "not_started"
+      "cleanupState": "not_started",
+      "branchPushedAt": "2026-07-06T21:54:35Z",
+      "worktreeCreatedAt": "2026-07-06T21:54:35Z"
     },
     {
       "id": "TASK-018-security-epic-validation",
@@ -2545,8 +2547,8 @@
   "monitoring": {
     "mode": "adaptive",
     "cadence": "15m",
-    "status": "wave_010_activation_pending_push",
-    "lastCheckedAt": "2026-07-06T21:51:22Z",
+    "status": "wave_010_ready_for_dispatch",
+    "lastCheckedAt": "2026-07-06T21:54:35Z",
     "nextCheckDueAt": "2026-07-06T22:06:22Z",
     "schedulerRef": "postgram-admin-wave-005-wdd-heartbeat",
     "schedulerName": "postgram-admin-wave-010-wdd-heartbeat",
@@ -2588,35 +2590,42 @@
         ],
         "branch": "codex/task/TASK-017-docker-first-run-no-cli",
         "worktree": "/Users/ivo.toby/workspace/postgram/.worktrees/TASK-017-docker-first-run-no-cli",
-        "worktreeStatus": "pending_creation",
+        "worktreeStatus": "clean_pushed",
         "workerThreadId": null,
         "workerNickname": null,
         "reviewThreadId": null,
         "reviewNickname": null,
-        "currentGate": "pending_worktree",
-        "branchFreshness": "not_started",
+        "currentGate": "ready_for_dispatch",
+        "branchFreshness": "current",
         "pr": null,
         "latestCommit": null,
         "blockingFeedback": [],
         "verification": {
-          "result": "activation_pending_worktree_creation",
-          "checkedAt": "2026-07-06T21:51:22Z",
+          "result": "worktree_created_branch_pushed_ready_for_dispatch",
+          "checkedAt": "2026-07-06T21:54:35Z",
           "commands": [
-            "git status --short --branch",
-            "git rev-list --left-right --count origin/codex/epic/admin-configuration-frontend...HEAD"
+            "git worktree add -b codex/task/TASK-017-docker-first-run-no-cli .worktrees/TASK-017-docker-first-run-no-cli origin/codex/epic/admin-configuration-frontend",
+            "git -C .worktrees/TASK-017-docker-first-run-no-cli status --short --branch",
+            "git -C .worktrees/TASK-017-docker-first-run-no-cli rev-list --left-right --count origin/codex/epic/admin-configuration-frontend...HEAD",
+            "git -C .worktrees/TASK-017-docker-first-run-no-cli push -u origin codex/task/TASK-017-docker-first-run-no-cli"
           ],
-          "evidence": "Activation artifacts prepared on the epic branch before task branch/worktree creation."
+          "evidence": "Task branch/worktree created from pushed epic activation checkpoint d43f7df, in-progress TASK-017 file and orchestration state verified, branch divergence from epic was 0 0, and task branch was pushed to origin."
         },
         "activatedAt": "2026-07-06T21:51:22Z",
         "cleanupState": "not_started",
         "sharedContextReconciliation": "not_started",
-        "lastObservedAt": "2026-07-06T21:51:22Z"
+        "lastObservedAt": "2026-07-06T21:54:35Z",
+        "branchPushedAt": "2026-07-06T21:54:35Z",
+        "worktreeCreatedAt": "2026-07-06T21:54:35Z"
       }
     ],
-    "dispatchState": "activation_pending_push",
+    "dispatchState": "ready_for_dispatch",
     "activatedFromCommit": "8b7f6c38723d9ff27f95cf2aa2cb9ac639b98242",
-    "lastObservedAt": "2026-07-06T21:51:22Z",
-    "waveCompletion": "in_progress"
+    "lastObservedAt": "2026-07-06T21:54:35Z",
+    "waveCompletion": "in_progress",
+    "activationCommit": "d43f7dff1a8e693d26d0efb51556de4ae2eb08e2",
+    "branchPushedAt": "2026-07-06T21:54:35Z",
+    "worktreeCreatedAt": "2026-07-06T21:54:35Z"
   },
   "currentGates": {
     "epicBranch": {
@@ -2626,10 +2635,12 @@
       "verifiedAt": "2026-07-05T11:36:08Z"
     },
     "activationArtifactsSynced": {
-      "status": "pending_push",
+      "status": "synced_to_epic_branch",
+      "commit": "d43f7dff1a8e693d26d0efb51556de4ae2eb08e2",
       "requiredBeforeTaskWorktrees": true,
       "wave": "WAVE-010",
-      "updatedAt": "2026-07-06T21:51:22Z"
+      "syncedAt": "2026-07-06T21:51:22Z",
+      "updatedAt": "2026-07-06T21:54:35Z"
     },
     "waveStrategyConfirmation": {
       "WAVE-001": "confirmed_by_ivo_2026-07-05",
@@ -2658,7 +2669,7 @@
       "WAVE-008-admin-ops-dashboard-ui": "cleaned_up",
       "WAVE-008-admin-config-ui": "cleaned_up",
       "WAVE-009-maintenance-admin-ui": "cleaned_up",
-      "WAVE-010-docker-first-run-no-cli": "pending_creation"
+      "WAVE-010-docker-first-run-no-cli": "clean_pushed"
     },
     "workerDispatch": {
       "WAVE-001-admin-feasibility-gate": "reconciled",
@@ -2675,7 +2686,7 @@
       "WAVE-008-admin-ops-dashboard-ui": "reconciled",
       "WAVE-008-admin-config-ui": "reconciled",
       "WAVE-009-maintenance-admin-ui": "reconciled",
-      "WAVE-010-docker-first-run-no-cli": "pending_worktree"
+      "WAVE-010-docker-first-run-no-cli": "ready_for_dispatch"
     },
     "waveCompletion": {
       "WAVE-001": "done",
@@ -2696,8 +2707,8 @@
     "monitoring": {
       "mode": "adaptive",
       "cadence": "15m",
-      "status": "wave_010_activation_pending_push",
-      "lastCheckedAt": "2026-07-06T21:51:22Z",
+      "status": "wave_010_ready_for_dispatch",
+      "lastCheckedAt": "2026-07-06T21:54:35Z",
       "nextCheckDueAt": "2026-07-06T22:06:22Z",
       "schedulerRef": "postgram-admin-wave-005-wdd-heartbeat",
       "schedulerName": "postgram-admin-wave-010-wdd-heartbeat",
@@ -3087,7 +3098,7 @@
       "WAVE-008-admin-ops-dashboard-ui": "current_at_merge",
       "WAVE-008-admin-config-ui": "current_at_merge",
       "WAVE-009-maintenance-admin-ui": "current_at_merge",
-      "WAVE-010-docker-first-run-no-cli": "not_started"
+      "WAVE-010-docker-first-run-no-cli": "current"
     },
     "merge": {
       "WAVE-001-admin-feasibility-gate": {
@@ -4102,13 +4113,15 @@
         "evidence": "WAVE-009 reconciled after PR #91 was confirmed MERGED. Shared context records the AdminMaintenance dashboard panel, maintenance dry-run/apply and job-polling client contract, preview-before-apply, recent step-up, scoped idempotency, safe job-summary rendering, llm-extraction edge-prune constraint, and TASK-017/TASK-018 Docker/security handoffs. TASK-016 worktree was already cleaned up."
       },
       "WAVE-010-docker-first-run-no-cli": {
-        "result": "activation_pending_worktree_creation",
-        "checkedAt": "2026-07-06T21:51:22Z",
+        "result": "worktree_created_branch_pushed_ready_for_dispatch",
+        "checkedAt": "2026-07-06T21:54:35Z",
         "commands": [
-          "git status --short --branch",
-          "git rev-list --left-right --count origin/codex/epic/admin-configuration-frontend...HEAD"
+          "git worktree add -b codex/task/TASK-017-docker-first-run-no-cli .worktrees/TASK-017-docker-first-run-no-cli origin/codex/epic/admin-configuration-frontend",
+          "git -C .worktrees/TASK-017-docker-first-run-no-cli status --short --branch",
+          "git -C .worktrees/TASK-017-docker-first-run-no-cli rev-list --left-right --count origin/codex/epic/admin-configuration-frontend...HEAD",
+          "git -C .worktrees/TASK-017-docker-first-run-no-cli push -u origin codex/task/TASK-017-docker-first-run-no-cli"
         ],
-        "evidence": "Activation artifacts prepared on the epic branch before task branch/worktree creation."
+        "evidence": "Task branch/worktree created from pushed epic activation checkpoint d43f7df, in-progress TASK-017 file and orchestration state verified, branch divergence from epic was 0 0, and task branch was pushed to origin."
       }
     },
     "feedback": {
@@ -4305,9 +4318,11 @@
       }
     },
     "activationArtifact": {
+      "commit": "d43f7dff1a8e693d26d0efb51556de4ae2eb08e2",
       "requiredBeforeTaskWorktrees": true,
       "wave": "WAVE-010",
-      "updatedAt": "2026-07-06T21:51:22Z"
+      "syncedAt": "2026-07-06T21:51:22Z",
+      "updatedAt": "2026-07-06T21:54:35Z"
     }
   },
   "lastReconciledWave": {

@@ -98,11 +98,11 @@ Mode: adaptive
 
 Cadence: 5m
 
-Status: wave_007_task015_pr88_review_requested_dirty
+Status: wave_007_task015_pr88_review_pending_dirty
 
-Last check: 2026-07-06T16:36:00Z
+Last check: 2026-07-06T16:40:31Z
 
-Next check due: 2026-07-06T16:41:00Z
+Next check due: 2026-07-06T16:45:31Z
 
 Scheduler reference: `postgram-admin-wave-005-wdd-heartbeat`
 
@@ -111,9 +111,9 @@ Scheduler name: `postgram-admin-wave-007-wdd-heartbeat`
 Fallback prompt:
 
 ```text
-WAVE-007 TASK-015 PR #88 is open/draft/DIRTY and Lorentz review is requested.
-Poll review; route any P1/P2 to Helmholtz. Branch freshness conflict must be
-fixed before merge.
+WAVE-007 TASK-015 PR #88 is open/draft/DIRTY and Lorentz review is still
+pending. Poll review; route any P1/P2 to Helmholtz. If review passes, refresh
+dirty branch before merge.
 ```
 
 ## Active Wave Strategy
@@ -1395,6 +1395,11 @@ fixed before merge.
   conflict in the WDD TASK-015 review file. Lorentz review was requested in
   submission `019f384a-790e-7d12-8bee-29d351519b3b`. Gate is `reviewing`;
   branch freshness must be resolved before merge.
+- 2026-07-06T16:40:31Z: PR #88 remains open/draft at head `4a3e99d`; GitHub
+  still reports merge state `DIRTY` and no review decision. Lorentz poll timed
+  out without a final review result, so no feedback was routed. Epic checkout
+  and TASK-015 worktree are clean. Gate remains `reviewing`; branch freshness
+  conflict must be fixed before merge. Next check due 2026-07-06T16:45:31Z.
 
 ## Next Action
 

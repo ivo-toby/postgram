@@ -6,7 +6,7 @@ ticket: TICKET-003-admin-api-foundation
 wave: WAVE-005
 slug: admin-api-shell-diagnostics
 title: Admin API Shell And Diagnostics
-status: review
+status: done
 depends_on:
   - TASK-005-admin-session-routes
   - TASK-006-admin-mfa-step-up
@@ -22,8 +22,8 @@ worktree_status: clean_pushed
 pr: https://github.com/ivo-toby/postgram/pull/83
 worker_thread_id: 019f35ff-5f3c-7cc0-aa6e-78941a3fd7fd
 review_thread_id: 019f322c-02e7-7590-8b8e-ebdd1e9c52ac
-current_gate: review_passed_pending_merge
-branch_freshness: current_at_freshness_refresh
+current_gate: merged
+branch_freshness: current_at_merge
 verification:
   - npm test -- tests/contract/admin-api.test.ts
   - npm run typecheck
@@ -33,7 +33,7 @@ verification:
 
 ## Status
 
-review
+done
 
 ## Parent Ticket
 
@@ -126,6 +126,10 @@ Lorentz returned `REVIEW_PASS` with no P1/P2/P3 findings after verifying the
 diagnostics shell, redaction, admin-session/MFA guard composition, and branch
 mergeability.
 
+Merged locally into `codex/epic/admin-configuration-frontend` at commit
+`16985ef684213569ec6748065b390c9ab5e89b1a` after refreshing the task branch
+against the latest epic branch.
+
 ## RED-GREEN TDD Plan
 
 ### RED
@@ -200,6 +204,8 @@ Keep route response shapes reusable for frontend API client.
   `jq empty .wdd/epics/EPIC-admin-configuration-frontend/orchestration.json`,
   `git diff --check --cached`, `npm test -- tests/contract/admin-api.test.ts`,
   and `npm run typecheck`.
+- Epic checkout post-merge verification passed:
+  `npm test -- tests/contract/admin-api.test.ts` and `npm run typecheck`.
 
 ## Review Feedback
 

@@ -23,7 +23,7 @@ pr: null
 worker_thread_id: 019f387a-3f1d-74a0-9949-5a318a43e494
 review_thread_id: null
 current_gate: no_pr
-branch_freshness: behind_epic_by_3_controller_checkpoints
+branch_freshness: behind_epic_by_4_controller_checkpoints
 verification:
   - npm --prefix ui run test -- --run src/components/AdminConfig.test.tsx
   - npm --prefix ui run typecheck
@@ -125,6 +125,14 @@ Controller observed continued active uncommitted implementation work at
 2026-07-06T18:17:01Z with no PR yet. The task branch is behind the epic branch
 by three controller monitoring checkpoints and will need freshness verification
 before merge.
+
+Controller observed continued active implementation work at
+2026-07-06T18:28:44Z with no PR or patch yet. The task branch is behind the
+epic branch by four controller monitoring checkpoints. A non-blocking
+coordination note from TASK-012 review was routed to Parfit in submission
+`019f38b0-6b70-7d33-9982-3c0a54b43f3f`: TASK-013 should integrate with the
+TASK-012 `AdminDashboard` shell wiring and avoid reviving the older placeholder
+`AdminShell` shape when reconciling overlapping AdminAuth/adminApi changes.
 
 ## PR / Patch Reference
 

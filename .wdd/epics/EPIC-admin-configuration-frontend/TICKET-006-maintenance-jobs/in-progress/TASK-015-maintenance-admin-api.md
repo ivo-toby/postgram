@@ -205,6 +205,14 @@ Keep command-specific logic typed and bounded rather than generic.
   `tests/contract/admin-maintenance-api.test.ts`. Tracked `git diff --check`
   passed; the branch is four controller checkpoints behind the epic branch and
   must refresh before review or merge.
+- 2026-07-06T15:29:25Z: Helmholtz was still running with no PR or patch. The
+  worktree remains active/uncommitted with expected maintenance service,
+  transport, CLI, admin-job-service, and contract/integration test changes,
+  with recent edits to `src/services/admin-job-service.ts`,
+  `src/transport/admin-maintenance.ts`, and
+  `tests/contract/admin-maintenance-api.test.ts`. Tracked `git diff --check`
+  passed; the branch is five controller checkpoints behind the epic branch and
+  must refresh before review or merge.
 
 ## Review Feedback
 

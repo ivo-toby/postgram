@@ -24,7 +24,7 @@ pr: null
 worker_thread_id: 019f3748-036a-7422-9f84-ab790313375f
 review_thread_id: null
 current_gate: no_pr
-branch_freshness: behind_epic_controller_checkpoint
+branch_freshness: behind_epic_controller_checkpoints
 verification:
   - npm test -- tests/contract/admin-key-audit-stats.test.ts
   - npm test -- tests/integration/key-service.test.ts
@@ -126,6 +126,12 @@ no PR, and active uncommitted changes in expected TASK-008 areas:
 `tests/contract/admin-key-audit-stats.test.ts`. `git diff --check` passed. The
 task branch is one controller checkpoint behind the epic branch and must be
 refreshed before review or merge.
+
+Controller heartbeat at 2026-07-06T12:25:24Z observed Maxwell still running,
+no PR, and active uncommitted changes in expected TASK-008 areas, now including
+`src/auth/key-service.ts`. Tracked `git diff --check` passed. The task branch
+is two controller checkpoints behind the epic branch and must be refreshed
+before review or merge.
 
 ## PR / Patch Reference
 

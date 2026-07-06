@@ -25,7 +25,7 @@ pr: null
 worker_thread_id: 019f3748-041f-7540-b336-12c285848008
 review_thread_id: null
 current_gate: no_pr
-branch_freshness: behind_epic_controller_checkpoint
+branch_freshness: behind_epic_controller_checkpoints
 verification:
   - npm test -- tests/integration/admin-job-service.test.ts
   - npm run typecheck
@@ -126,6 +126,12 @@ no PR, and active uncommitted changes in expected TASK-014 areas:
 service, transport, and integration test. `git diff --check` passed. The task
 branch is one controller checkpoint behind the epic branch and must be
 refreshed before review or merge.
+
+Controller heartbeat at 2026-07-06T12:25:24Z observed Anscombe still running,
+no PR, and active uncommitted changes in the same expected TASK-014 areas.
+Tracked `git diff --check` passed. The task branch is two controller
+checkpoints behind the epic branch and must be refreshed before review or
+merge.
 
 ## PR / Patch Reference
 

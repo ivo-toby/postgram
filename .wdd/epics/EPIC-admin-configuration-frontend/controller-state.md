@@ -70,9 +70,9 @@ Cadence: 5 minutes
 
 Status: monitoring_wave_006_workers_active_no_pr
 
-Last check: 2026-07-06T12:10:24Z
+Last check: 2026-07-06T12:25:24Z
 
-Next check due: 2026-07-06T12:25:24Z
+Next check due: 2026-07-06T12:40:24Z
 
 Scheduler reference: `postgram-admin-wave-005-wdd-heartbeat`
 
@@ -150,13 +150,13 @@ if needed.
 | TASK-005-admin-session-routes | TICKET-002-admin-auth-foundation | codex/task/TASK-005-admin-session-routes | cleaned_up | reconciled | REVIEW_PASS; freshness verification passed; merged in `ecfe9ac`; PR #80 merged; WAVE-003 reconciled |
 | TASK-006-admin-mfa-step-up | TICKET-002-admin-auth-foundation | codex/task/TASK-006-admin-mfa-step-up | cleaned_up | reconciled | REVIEW_PASS; final branch freshness passed at `8c04680`; merged locally into epic branch in `6666508`; worktree cleaned up during WAVE-004 reconciliation |
 | TASK-007-admin-api-shell-diagnostics | TICKET-003-admin-api-foundation | codex/task/TASK-007-admin-api-shell-diagnostics | cleaned_up | reconciled | REVIEW_PASS; freshness verification passed at `f0e889e`; merged locally into epic branch in `16985ef`; PR #83 merged; WAVE-005 reconciled |
-| TASK-008-admin-key-audit-stats-api | TICKET-003-admin-api-foundation | codex/task/TASK-008-admin-key-audit-stats-api | active_uncommitted | no_pr | Worker running; no PR; active expected changes; `git diff --check` passed; branch is one controller checkpoint behind epic and needs freshness refresh before review or merge |
+| TASK-008-admin-key-audit-stats-api | TICKET-003-admin-api-foundation | codex/task/TASK-008-admin-key-audit-stats-api | active_uncommitted | no_pr | Worker running; no PR; active expected changes including `src/auth/key-service.ts`; tracked `git diff --check` passed; branch is two controller checkpoints behind epic and needs freshness refresh before review or merge |
 | TASK-009-settings-secret-store | TICKET-004-runtime-configuration | codex/task/TASK-009-settings-secret-store | cleaned_up | reconciled | PR #81 follow-up REVIEW_PASS, final branch freshness passed at `ca9c96f`, merged locally into epic branch in `b63ad08`; worktree cleaned up during WAVE-004 reconciliation |
 | TASK-010-provider-config-apply | TICKET-004-runtime-configuration | codex/task/TASK-010-provider-config-apply | cleaned_up | reconciled | REVIEW_PASS; final branch freshness passed at `515cfa5`; merged locally into epic branch in `f5efbc0`; PR #84 merged at 2026-07-06T11:31:10Z; WAVE-005 reconciled |
 | TASK-011-admin-auth-ui | TICKET-005-admin-frontend | codex/task/TASK-011-admin-auth-ui | not_created | planned | `npm --prefix ui run test -- --run src/components/AdminAuth.test.tsx`; `npm --prefix ui run typecheck` |
 | TASK-012-admin-ops-dashboard-ui | TICKET-005-admin-frontend | codex/task/TASK-012-admin-ops-dashboard-ui | not_created | planned | `npm --prefix ui run test -- --run src/components/AdminOps.test.tsx`; `npm --prefix ui run typecheck` |
 | TASK-013-admin-config-ui | TICKET-005-admin-frontend | codex/task/TASK-013-admin-config-ui | not_created | planned | `npm --prefix ui run test -- --run src/components/AdminConfig.test.tsx`; `npm --prefix ui run typecheck` |
-| TASK-014-admin-job-foundation | TICKET-006-maintenance-jobs | codex/task/TASK-014-admin-job-foundation | active_uncommitted | no_pr | Worker running; no PR; active expected changes; `git diff --check` passed; branch is one controller checkpoint behind epic and needs freshness refresh before review or merge |
+| TASK-014-admin-job-foundation | TICKET-006-maintenance-jobs | codex/task/TASK-014-admin-job-foundation | active_uncommitted | no_pr | Worker running; no PR; active expected changes; tracked `git diff --check` passed; branch is two controller checkpoints behind epic and needs freshness refresh before review or merge |
 | TASK-015-maintenance-admin-api | TICKET-006-maintenance-jobs | codex/task/TASK-015-maintenance-admin-api | not_created | planned | `npm test -- tests/contract/admin-maintenance-api.test.ts`; `npm test -- tests/integration/cli-admin.test.ts`; `npm run typecheck` |
 | TASK-016-maintenance-admin-ui | TICKET-006-maintenance-jobs | codex/task/TASK-016-maintenance-admin-ui | not_created | planned | `npm --prefix ui run test -- --run src/components/AdminMaintenance.test.tsx`; `npm --prefix ui run typecheck` |
 | TASK-017-docker-first-run-no-cli | TICKET-007-docker-e2e-validation | codex/task/TASK-017-docker-first-run-no-cli | not_created | planned | `docker compose config`; `npm run typecheck`; `npm --prefix ui run build` |
@@ -1180,9 +1180,14 @@ if needed.
   branches are one controller checkpoint behind the epic branch. Controller
   sent non-blocking coordination notes to both workers because both are editing
   `src/transport/admin.ts`.
+- 2026-07-06T12:25:24Z: Heartbeat observed both WAVE-006 workers still running
+  with no PRs yet. Maxwell has added `src/auth/key-service.ts` to the expected
+  TASK-008 surface; Anscombe's expected TASK-014 surface is unchanged. Tracked
+  diffs pass `git diff --check`; both task branches are two controller
+  checkpoints behind the epic branch and must refresh before review or merge.
 
 ## Next Action
 
-Next heartbeat is due at 2026-07-06T12:25:24Z. Inspect Maxwell and Anscombe,
+Next heartbeat is due at 2026-07-06T12:40:24Z. Inspect Maxwell and Anscombe,
 advance any PR or patch to review, or keep no_pr if they are still actively
 working.

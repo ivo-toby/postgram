@@ -6,7 +6,7 @@ ticket: TICKET-005-admin-frontend
 wave: WAVE-008
 slug: admin-config-ui
 title: Admin Config UI
-status: in_progress
+status: review
 depends_on:
   - TASK-010-provider-config-apply
   - TASK-011-admin-auth-ui
@@ -18,11 +18,11 @@ assigned_model_class: implementationComplex
 review_model_class: review
 branch: codex/task/TASK-013-admin-config-ui
 worker_worktree: /Users/ivo.toby/workspace/postgram/.worktrees/TASK-013-admin-config-ui
-worktree_status: clean_pushed
-pr: null
+worktree_status: pushed_for_review
+pr: https://github.com/ivo-toby/postgram/pull/90
 worker_thread_id: 019f387a-3f1d-74a0-9949-5a318a43e494
 review_thread_id: null
-current_gate: no_pr
+current_gate: review
 branch_freshness: current_at_activation
 verification:
   - npm --prefix ui run test -- --run src/components/AdminConfig.test.tsx
@@ -33,7 +33,7 @@ verification:
 
 ## Status
 
-in_progress
+review
 
 ## Parent Ticket
 
@@ -109,11 +109,11 @@ assigned for WAVE-008 activation; created from pushed epic activation head
 `7e5c49c` and pushed to origin.
 
 Worker Parfit (`019f387a-3f1d-74a0-9949-5a318a43e494`) dispatched at
-2026-07-06T17:29:45Z. Await PR or patch reference.
+2026-07-06T17:29:45Z. Draft PR opened for review.
 
 ## PR / Patch Reference
 
-None yet.
+https://github.com/ivo-toby/postgram/pull/90
 
 ## RED-GREEN TDD Plan
 
@@ -167,10 +167,10 @@ maintenance UI if useful.
 
 ## Task-Level Definition of Done
 
-- [ ] Configuration UI is implemented and covered.
-- [ ] Secret values are never displayed.
-- [ ] Dangerous provider/dimension changes are clearly warned.
-- [ ] UI typecheck passes.
+- [x] Configuration UI is implemented and covered.
+- [x] Secret values are never displayed.
+- [x] Dangerous provider/dimension changes are clearly warned.
+- [x] UI typecheck passes.
 
 ## Validation Steps
 
@@ -179,17 +179,34 @@ maintenance UI if useful.
 
 ## Verification Evidence
 
-- Not run yet.
+- `npm --prefix ui run test -- --run src/components/AdminConfig.test.tsx`
+  passed, 22 tests.
+- `npm --prefix ui run typecheck` passed.
+- `npm run typecheck` passed.
+- `npm test -- tests/integration/admin-provider-config.test.ts` passed, 39
+  tests.
+- `npm --prefix ui test -- --run` passed, 13 files / 105 tests.
+- `npm --prefix ui run build` passed with the existing Vite large-chunk
+  warning.
+- `npx eslint tests/integration/admin-provider-config.test.ts` passed.
+- `npx prettier --check ui/src/components/admin/AdminConfig.tsx ui/src/components/admin/AdminDashboard.tsx ui/src/components/AdminConfig.test.tsx ui/src/components/AdminAuth.test.tsx ui/src/components/admin/AdminAuth.tsx ui/src/lib/adminApi.ts src/transport/admin-provider-config.ts tests/integration/admin-provider-config.test.ts && git diff --check`
+  passed.
+- `codex review --uncommitted` passed after fixes with no P0/P1/P2 findings.
 
 ## Review Feedback
 
 ### P1
 
-- None.
+- Fixed: validation success now refreshes provider configuration so DB-backed
+  connection validation freshness metadata is visible before apply unlocks.
 
 ### P2
 
-- None.
+- Fixed: provider secret rotation clears stale apply results before refreshing
+  provider state.
+- Fixed earlier review findings for session-expiry routing from the config
+  panel, setting draft locking during secret refresh, connection-validation
+  apply gating, and validation failure apply gating.
 
 ### P3
 
@@ -197,4 +214,14 @@ maintenance UI if useful.
 
 ## Completion Notes
 
-- None yet.
+- Added `AdminConfig` under the active `AdminDashboard` shell shape from
+  TASK-012/PR #89 rather than reviving the older `AdminShell` placeholder.
+- Added additive provider-config methods/types to `ui/src/lib/adminApi.ts`
+  while preserving same-origin cookie, in-memory CSRF, and no Authorization
+  header behavior.
+- Provider secrets are write-only in the UI: replacement fields are blank on
+  load, only safe redacted metadata is rendered, and tests assert no
+  localStorage/sessionStorage persistence.
+- Provider apply distinguishes pending/applied settings, blocks reembed-class
+  changes from harmless apply, warns on restart/reembed impacts, and requires
+  fresh connection validation for relevant provider URLs.

@@ -6,7 +6,7 @@ ticket: TICKET-003-admin-api-foundation
 wave: WAVE-005
 slug: admin-api-shell-diagnostics
 title: Admin API Shell And Diagnostics
-status: in_progress
+status: review
 depends_on:
   - TASK-005-admin-session-routes
   - TASK-006-admin-mfa-step-up
@@ -19,11 +19,11 @@ review_model_class: review
 branch: codex/task/TASK-007-admin-api-shell-diagnostics
 worker_worktree: /Users/ivo.toby/workspace/postgram/.worktrees/TASK-007-admin-api-shell-diagnostics
 worktree_status: clean_pushed
-pr: null
+pr: https://github.com/ivo-toby/postgram/pull/83
 worker_thread_id: 019f35ff-5f3c-7cc0-aa6e-78941a3fd7fd
-review_thread_id: null
-current_gate: no_pr
-branch_freshness: current_at_dispatch
+review_thread_id: 019f322c-02e7-7590-8b8e-ebdd1e9c52ac
+current_gate: reviewing
+branch_freshness: current_at_review_request
 verification:
   - npm test -- tests/contract/admin-api.test.ts
   - npm run typecheck
@@ -33,7 +33,7 @@ verification:
 
 ## Status
 
-in_progress
+review
 
 ## Parent Ticket
 
@@ -116,7 +116,11 @@ Verified and dispatched at 2026-07-06T05:56:19Z with worker Wegener
 
 ## PR / Patch Reference
 
-None yet.
+Draft PR: https://github.com/ivo-toby/postgram/pull/83
+
+Review requested from Lorentz (`019f322c-02e7-7590-8b8e-ebdd1e9c52ac`) at
+2026-07-06T06:14:07Z with submission
+`019f3611-2a16-72d3-bd90-db911948d8c3`.
 
 ## RED-GREEN TDD Plan
 
@@ -160,10 +164,10 @@ Keep route response shapes reusable for frontend API client.
 
 ## Task-Level Definition of Done
 
-- [ ] Admin diagnostics API exists.
-- [ ] Ordinary bearer auth is rejected.
-- [ ] Responses are redacted.
-- [ ] Contract tests pass.
+- [x] Admin diagnostics API exists.
+- [x] Ordinary bearer auth is rejected.
+- [x] Responses are redacted.
+- [x] Contract tests pass.
 
 ## Validation Steps
 
@@ -172,7 +176,17 @@ Keep route response shapes reusable for frontend API client.
 
 ## Verification Evidence
 
-- Not run yet.
+- RED: `npm test -- tests/contract/admin-api.test.ts` failed before
+  implementation with diagnostics routes returning `404` instead of the
+  expected success or authorization responses.
+- GREEN: `npm test -- tests/contract/admin-api.test.ts` passed (3 tests).
+- Adjacent focused contracts:
+  `npm test -- tests/contract/admin-auth-routes.test.ts tests/contract/admin-mfa-routes.test.ts tests/contract/admin-api.test.ts`
+  passed (18 tests).
+- `npm run typecheck` passed.
+- `npx eslint src/index.ts src/transport/admin.ts src/services/admin-diagnostics-service.ts tests/contract/admin-api.test.ts`
+  passed.
+- `git diff --check` passed.
 
 ## Review Feedback
 
@@ -190,4 +204,13 @@ Keep route response shapes reusable for frontend API client.
 
 ## Completion Notes
 
-- None yet.
+- Added active-admin guarded read-only diagnostics endpoints under
+  `/admin/api/diagnostics/*` for health, queue, embedding models, and coarse
+  runtime config status.
+- Diagnostics compose `createAdminSessionMiddleware({ pool, enforceCsrf: false
+  })` with `createActiveAdminMiddleware()`, so pending-MFA sessions receive
+  `403` and ordinary API-key/MCP OAuth bearer tokens receive `401`.
+- Config status returns only aggregate setting/secret counts by state,
+  classification, purpose, and validation status. It does not return secret
+  names, plaintext, ciphertext, token prefixes, or arbitrary validation
+  metadata.

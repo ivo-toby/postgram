@@ -26,7 +26,7 @@ pr: null
 worker_thread_id: 019f35ff-a193-7ae0-a4b8-1ec53faabb74
 review_thread_id: null
 current_gate: no_pr
-branch_freshness: current_at_dispatch
+branch_freshness: stale_pending_refresh_before_review
 verification:
   - npm test -- tests/integration/admin-provider-config.test.ts
   - npm test -- tests/unit/config.test.ts
@@ -240,6 +240,15 @@ Keep provider construction logic centralized to avoid env/DB drift.
   `src/services/admin-provider-config-service.ts` and
   `tests/integration/admin-provider-config.test.ts`. No nudge was sent because
   visible implementation work is ongoing.
+- 2026-07-06T08:07:23Z controller observation: Goodall still had no final
+  status and no PR for `codex/task/TASK-010-provider-config-apply`; the assigned
+  worktree remained active/uncommitted, now including provider construction
+  changes in `src/services/embeddings/providers.ts` and
+  `src/services/llm-provider.ts`. Recent local mtimes on provider service,
+  provider construction, and integration test files show visible implementation
+  work, so no nudge was sent. `git rev-list --left-right --count
+  origin/codex/epic/admin-configuration-frontend...HEAD` returned `15 0`;
+  refresh the task branch against the epic branch before review or merge.
 
 ## Review Feedback
 

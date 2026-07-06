@@ -719,6 +719,12 @@ Progress:
   `needs_fixes` until PR #90 refreshes against the latest epic branch and
   integrates `AdminConfig` into the merged TASK-012 operations dashboard shell
   without dropping existing operations panels.
+- 2026-07-06T19:57:31Z controller poll: PR #90 still has unchanged head
+  `fe1a454` and remains `DIRTY`, but Parfit's assigned worktree is active in
+  merge-conflict resolution across TASK-013 WDD metadata, AdminAuth,
+  AdminDashboard, and adminApi. No duplicate nudge was sent. Final freshness
+  against latest epic head `4901173` is still required before follow-up review
+  or merge.
 
 Stop condition:
 

@@ -18,7 +18,7 @@ assigned_model_class: implementationComplex
 review_model_class: review
 branch: codex/task/TASK-013-admin-config-ui
 worker_worktree: /Users/ivo.toby/workspace/postgram/.worktrees/TASK-013-admin-config-ui
-worktree_status: clean_pushed
+worktree_status: merge_conflict_resolution_in_progress
 pr: https://github.com/ivo-toby/postgram/pull/90
 worker_thread_id: 019f387a-3f1d-74a0-9949-5a318a43e494
 review_thread_id: 019f38ab-a97f-7462-84dc-5537e1efe934
@@ -184,6 +184,16 @@ panels. Feedback was routed to Parfit in submission
 AdminConfig/AdminOps/AdminAuth UI tests, UI typecheck, root typecheck,
 branch-freshness, merge-tree, and diff-check before pushing PR #90.
 
+Controller observed at 2026-07-06T19:57:31Z that PR #90 still has unchanged
+head `fe1a454f545f815c35978e3c600fd101eae2893f` and remains `DIRTY`. Parfit
+did not return during the bounded poll, but the assigned worktree is active in
+merge-conflict resolution with unmerged paths in this review file,
+`ui/src/components/AdminAuth.test.tsx`, `ui/src/components/admin/AdminAuth.tsx`,
+`ui/src/components/admin/AdminDashboard.tsx`, and `ui/src/lib/adminApi.ts`.
+The in-progress merge is against `deab942`, while latest epic is `4901173`; the
+final pushed fix must still refresh against latest epic before follow-up review
+or merge.
+
 ## PR / Patch Reference
 
 Draft PR #90: https://github.com/ivo-toby/postgram/pull/90
@@ -282,6 +292,8 @@ maintenance UI if useful.
   a refresh against the latest epic branch. The fix must preserve the TASK-012
   operations dashboard panels while integrating `AdminConfig`. Routed to Parfit
   in submission `019f38fd-830e-7743-889d-ab73a8729989`.
+- 2026-07-06T19:57:31Z follow-up: no new PR head yet; Parfit worktree is
+  actively resolving the expected conflicts, so no duplicate nudge was sent.
 
 ### P3
 

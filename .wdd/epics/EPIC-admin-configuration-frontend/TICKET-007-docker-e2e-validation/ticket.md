@@ -4,7 +4,7 @@ kind: ticket
 epic: EPIC-admin-configuration-frontend
 slug: docker-e2e-validation
 title: Docker And End-To-End Validation
-status: planned
+status: review
 task_count: 2
 depends_on:
   - TASK-012-admin-ops-dashboard-ui
@@ -52,8 +52,8 @@ bootstrap, configuration, API-key creation, diagnostics, and safe maintenance.
 
 | Task | Status | Wave | Summary |
 |------|--------|------|---------|
-| TASK-017-docker-first-run-no-cli | todo | WAVE-010 | Verify and document clean Docker first-run no-CLI path |
-| TASK-018-security-epic-validation | todo | WAVE-011 | Run security review, broad validation, and final handoff prep |
+| TASK-017-docker-first-run-no-cli | done | WAVE-010 | Verify and document clean Docker first-run no-CLI path |
+| TASK-018-security-epic-validation | review | WAVE-011 | Run security review, broad validation, and final handoff prep |
 
 ## Dependencies
 
@@ -82,5 +82,6 @@ bootstrap, configuration, API-key creation, diagnostics, and safe maintenance.
 ## Completion Criteria
 
 - [ ] All child tasks have resolved review and verification gates.
-- [ ] Shared context updates were reconciled.
-- [ ] Ticket status matches child task state.
+- [x] Shared context updates were reconciled through WAVE-010; TASK-018
+      controller reconciliation remains after review.
+- [x] Ticket status matches child task state.

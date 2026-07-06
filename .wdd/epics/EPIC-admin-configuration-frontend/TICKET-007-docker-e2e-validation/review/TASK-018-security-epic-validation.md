@@ -6,7 +6,7 @@ ticket: TICKET-007-docker-e2e-validation
 wave: WAVE-011
 slug: security-epic-validation
 title: Security And Epic Validation
-status: in-progress
+status: review
 depends_on:
   - TASK-017-docker-first-run-no-cli
 conflict_domains:
@@ -20,11 +20,11 @@ assigned_model_class: epicValidation
 review_model_class: review
 branch: codex/task/TASK-018-security-epic-validation
 worker_worktree: /Users/ivo.toby/workspace/postgram/.worktrees/TASK-018-security-epic-validation
-worktree_status: clean_pushed
-pr: null
+worktree_status: review_ready
+pr: pending
 worker_thread_id: null
 review_thread_id: null
-current_gate: dispatch_pending
+current_gate: review_ready
 branch_freshness: current_at_activation
 verification:
   - npm run typecheck
@@ -42,7 +42,7 @@ verification:
 
 ## Status
 
-in-progress
+review
 
 ## Parent Ticket
 
@@ -126,7 +126,7 @@ codex/task/TASK-018-security-epic-validation
 
 ## PR / Patch Reference
 
-None yet.
+Pending draft PR creation against `codex/epic/admin-configuration-frontend`.
 
 ## RED-GREEN TDD Plan
 
@@ -191,10 +191,10 @@ Keep final artifacts concise and evidence-based.
 
 ## Task-Level Definition of Done
 
-- [ ] Security review has no unresolved P1/P2 findings.
-- [ ] Broad verification evidence is recorded.
-- [ ] Hypothesis result is explicit.
-- [ ] Final WDD validation artifacts are ready.
+- [x] Security review has no unresolved P1/P2 findings.
+- [x] Broad verification evidence is recorded.
+- [x] Hypothesis result is explicit.
+- [x] Final WDD validation artifacts are ready.
 
 ## Validation Steps
 
@@ -212,7 +212,50 @@ Keep final artifacts concise and evidence-based.
 
 ## Verification Evidence
 
-- Not run yet.
+Fresh TASK-018 validation on 2026-07-06 UTC:
+
+- Pre-edit worktree/branch preflight: confirmed cwd
+  `/Users/ivo.toby/workspace/postgram/.worktrees/TASK-018-security-epic-validation`,
+  branch `codex/task/TASK-018-security-epic-validation`, and presence of the
+  task file, `orchestration.json`, and `controller-state.md`.
+- `git fetch origin`: passed.
+- `git rev-list --left-right --count origin/codex/epic/admin-configuration-frontend...HEAD`:
+  reported `1 0` before TASK-018 artifact commits.
+- `git merge-tree --write-tree origin/codex/epic/admin-configuration-frontend HEAD`:
+  returned tree `80b719f3f2e9fdf46aae650b26c478235ac3e436`.
+- `npm ci`: completed. Initial production audit found runtime dependency
+  advisories; fixed with non-force `npm audit fix`.
+- `npm --prefix ui ci`: completed. Initial production audit found
+  markdown/linkify advisories; fixed with non-force `npm --prefix ui audit fix`.
+- `npm audit --omit=dev --audit-level=high`: passed after lockfile refresh,
+  0 vulnerabilities.
+- `npm --prefix ui audit --omit=dev --audit-level=high`: passed after
+  lockfile refresh, 0 vulnerabilities.
+- Dependency-fix evidence: root runtime tree now uses
+  `@hono/node-server@1.19.14`, `hono@4.12.28`, `fast-uri@3.1.3`, and
+  `path-to-regexp@8.4.2`; UI markdown runtime tree now uses
+  `markdown-it@14.3.0` and `linkify-it@5.0.2`.
+- `npm run typecheck`: passed, including `@ivotoby/postgram-cli` typecheck.
+- `npm test`: passed, 45 test files and 491 tests.
+- `npm run build`: passed.
+- `npm --prefix ui run typecheck`: passed.
+- `npm --prefix ui run test -- --run`: passed, 15 test files and 125 tests.
+- `npm --prefix ui run build`: passed with the existing Vite large-chunk
+  warning.
+- `docker compose config >/tmp/task018-docker-compose-config.yml`: passed.
+- `jq empty .wdd/epics/EPIC-admin-configuration-frontend/orchestration.json`:
+  passed.
+- `git diff --check`: passed.
+- `npm run lint`: failed with 22 existing repo-wide lint errors outside
+  TASK-018 product changes: older unsafe assignments, async test helpers
+  without `await`, missing `react-hooks/exhaustive-deps` rule setup, UI
+  floating promises/unnecessary assertions, `tailwind.config.js` `require`
+  globals, and `ui/vite.config.ts` project-service inclusion.
+- Full `npm audit --audit-level=high`: exited 0 with remaining moderate/low
+  dev-tooling advisories only.
+- Full `npm --prefix ui audit --audit-level=high`: failed on dev-tooling
+  Vitest/Vite/esbuild advisories that require a breaking
+  `npm audit fix --force`; production audit is clean.
 
 ## Review Feedback
 
@@ -226,8 +269,28 @@ Keep final artifacts concise and evidence-based.
 
 ### P3
 
-- None.
+- Repo-wide `npm run lint` remains blocked by existing lint baseline unrelated
+  to TASK-018 product behavior.
+- Full UI dev dependency audit remains blocked by Vitest/Vite/esbuild
+  dev-tooling advisories requiring a breaking toolchain upgrade; production
+  audit is clean.
 
 ## Completion Notes
 
-- None yet.
+- Final security review found no unresolved P1/P2 security issue in the admin
+  auth/session/MFA/CSRF/bootstrap/secrets/admin API/maintenance/frontend
+  storage/Docker surfaces.
+- Applied narrowly scoped production audit fixes through non-force lockfile
+  updates in `package-lock.json` and `ui/package-lock.json`.
+- Reviewed WAVE-010 Docker gates: clean-volume browser smoke evidence, legacy
+  `POSTGRES_PASSWORD` upgrade preservation, OpenAI provider default
+  preservation, admin key fail-closed behavior, Config secret redaction after
+  restart, browser storage non-persistence, and emergency `pgm-admin` fallback
+  wording.
+- Hypothesis result: proven for the supported happy path. The browser Admin UI
+  covers bootstrap, MFA, provider configuration, API-key creation, dashboard
+  inspection, and safe maintenance dry-runs without normal `pgm-admin` use;
+  advanced/emergency CLI operations remain intentionally outside the normal
+  path.
+- Created `epic-validation.md` and `final-pr.md`; updated
+  `validation-checklist.md`, `wave-plan.md`, and TICKET-007 state.

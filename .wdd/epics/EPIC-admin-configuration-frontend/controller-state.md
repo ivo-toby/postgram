@@ -3,7 +3,7 @@ id: EPIC-admin-configuration-frontend-CONTROLLER
 kind: controller_state
 epic: EPIC-admin-configuration-frontend
 active_wave: WAVE-011
-status: wave_011_activation_pending_worktree
+status: wave_011_review_ready
 updated_at: 2026-07-06
 ---
 
@@ -136,12 +136,16 @@ and TASK-018 final validation gates. TASK-018 is ready to start as WAVE-011.
 
 WAVE-011 activation started at 2026-07-06T23:11:02Z after WAVE-010
 reconciliation checkpoint `202b422` was pushed. TASK-018-security-epic-validation
-has moved to `in-progress/`; the controller assigned branch
+has moved to `review/`; the controller assigned branch
 `codex/task/TASK-018-security-epic-validation` and worktree
 `/Users/ivo.toby/workspace/postgram/.worktrees/TASK-018-security-epic-validation`.
 Activation artifacts were pushed in `0ed8c61`; the TASK-018 task branch and
 worktree were created from that checkpoint, pushed to GitHub, and verified
-current with the epic branch. The bundle is pending worker dispatch.
+current with the epic branch. The worker completed final security/epic
+validation with no unresolved P1/P2 findings, fixed production audit findings
+with non-force lockfile updates, created `epic-validation.md` and
+`final-pr.md`, and recorded broad verification evidence. The bundle is ready
+for controller review once the draft PR is created.
 
 WAVE-004 is done and reconciled. PR #81/TASK-009 and PR #82/TASK-006 are
 merged, shared context is reconciled, and both WAVE-004 worktrees are cleaned
@@ -161,7 +165,7 @@ up.
 | WAVE-008 | TASK-012, TASK-013 | full / hybrid / risk_based / adaptive | done | confirmed by Ivo via finish-all-waves request on 2026-07-06 |
 | WAVE-009 | TASK-016 | full / bundled / risk_based / adaptive | done | confirmed by Ivo via finish-all-waves request on 2026-07-06 |
 | WAVE-010 | TASK-017 | full / bundled / risk_based / adaptive | done | confirmed by Ivo via finish-all-waves request on 2026-07-06 |
-| WAVE-011 | TASK-018 | full / bundled / risk_based / adaptive | in_progress | confirmed by Ivo via finish-all-waves request on 2026-07-06 |
+| WAVE-011 | TASK-018 | full / bundled / risk_based / adaptive | review | confirmed by Ivo via finish-all-waves request on 2026-07-06 |
 
 ## Monitoring
 
@@ -169,11 +173,11 @@ Mode: adaptive
 
 Cadence: 5m
 
-Status: wave_011_worktree_ready_pending_dispatch
+Status: wave_011_review_ready_pending_pr
 
 Last check: 2026-07-06T23:11:02Z
 
-Next check due: 2026-07-06T23:26:02Z
+Next check due: after TASK-018 draft PR creation
 
 Scheduler reference: `postgram-admin-wave-005-wdd-heartbeat`
 
@@ -214,8 +218,8 @@ finish-all-waves instruction.
 - WAVE-011 strategy: full / bundled / risk_based / adaptive.
 - WAVE-011 task: TASK-018-security-epic-validation.
 - Confirmation: Ivo via Codex finish-all-waves request on 2026-07-06.
-- Current gate: TASK-018 branch/worktree are clean, pushed, current with the
-  epic branch, and pending worker dispatch.
+- Current gate: TASK-018 validation artifacts are ready for review; draft PR
+  creation is pending.
 
 ## Last Reconciled Wave
 
@@ -276,7 +280,7 @@ finish-all-waves instruction.
 | TASK-015-maintenance-admin-api | TICKET-006-maintenance-jobs | codex/task/TASK-015-maintenance-admin-api | cleaned_up | reconciled | Lorentz REVIEW_PASS; final freshness passed at task head `ea88af4`; post-merge contract tests 4/4, CLI integration 37/37, typecheck, scoped ESLint, JSON parse, and diff check passed; merged locally in `78f0f43`; PR #88 merged at 2026-07-06T17:02:28Z; shared context reconciled |
 | TASK-016-maintenance-admin-ui | TICKET-006-maintenance-jobs | codex/task/TASK-016-maintenance-admin-ui | cleaned_up | reconciled | Hypatia REVIEW_PASS; final task head `1885b64`; freshness `0 3`; AdminMaintenance 9/9, AdminOps/AdminConfig/AdminAuth 49/49, UI typecheck passed; merged in `10b2738`; PR #91 MERGED at 2026-07-06T21:37:31Z; WAVE-009 shared context reconciled |
 | TASK-017-docker-first-run-no-cli | TICKET-007-docker-e2e-validation | codex/task/TASK-017-docker-first-run-no-cli | cleaned_up | reconciled | Dewey REVIEW_PASS; final freshness passed at task head `38bfe21`; merged in `ce0bb83`; PR #92 MERGED at 2026-07-06T22:56:32Z; post-merge Docker/tests/typechecks/UI build passed; WAVE-010 reconciled |
-| TASK-018-security-epic-validation | TICKET-007-docker-e2e-validation | codex/task/TASK-018-security-epic-validation | clean_pushed | dispatch_pending | broad backend, frontend, Docker, and smoke validation with WAVE-010 Docker upgrade/no-CLI gates |
+| TASK-018-security-epic-validation | TICKET-007-docker-e2e-validation | codex/task/TASK-018-security-epic-validation | review_ready | review_ready_pending_pr | final security, Docker/no-CLI, audit, and epic validation passed with non-blocking lint/dev-audit concerns; WDD handoff artifacts prepared |
 
 ## Branch And Worktree State
 

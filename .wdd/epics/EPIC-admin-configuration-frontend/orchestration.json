@@ -2564,8 +2564,8 @@
     {
       "id": "TASK-018-security-epic-validation",
       "ticket": "TICKET-007-docker-e2e-validation",
-      "path": "TICKET-007-docker-e2e-validation/in-progress/TASK-018-security-epic-validation.md",
-      "status": "in-progress",
+      "path": "TICKET-007-docker-e2e-validation/review/TASK-018-security-epic-validation.md",
+      "status": "review",
       "dependsOn": [
         "TASK-017-docker-first-run-no-cli"
       ],
@@ -2584,12 +2584,12 @@
       "reviewThreadId": null,
       "workerWorktree": "/Users/ivo.toby/workspace/postgram/.worktrees/TASK-018-security-epic-validation",
       "worktreeStatus": "clean_pushed",
-      "pr": null,
+      "pr": "pending",
       "latestCommit": null,
       "branchFreshness": "current_at_activation",
       "blockingFeedback": [],
       "verification": {
-        "result": "not_run",
+        "result": "passed_with_concerns",
         "commands": [
           "npm run typecheck",
           "npm test",
@@ -2599,16 +2599,21 @@
           "npm --prefix ui run test -- --run",
           "npm --prefix ui run build",
           "docker compose config",
-          "git diff --check"
+          "git diff --check",
+          "jq empty .wdd/epics/EPIC-admin-configuration-frontend/orchestration.json",
+          "npm audit --omit=dev --audit-level=high",
+          "npm --prefix ui audit --omit=dev --audit-level=high",
+          "npm audit --audit-level=high",
+          "npm --prefix ui audit --audit-level=high"
         ],
-        "evidence": null
+        "evidence": "TASK-018 validation ran on 2026-07-06 UTC. Production audit findings were fixed with non-force lockfile updates; root production audit and UI production audit both passed with 0 vulnerabilities. npm run typecheck passed, npm test passed 45 files / 491 tests, npm run build passed, UI typecheck passed, UI tests passed 15 files / 125 tests, UI build passed with existing Vite chunk-size warning, docker compose config passed, orchestration JSON parse passed, and git diff --check passed. Security review found no unresolved P1/P2 across admin auth/session/MFA/CSRF/bootstrap/secrets/admin APIs/maintenance/frontend storage/Docker surfaces. Non-blocking concerns: repo-wide npm run lint still fails on existing baseline, and full UI dev audit requires a breaking Vitest/Vite toolchain upgrade while production audit is clean."
       },
-      "currentGate": "dispatch_pending",
+      "currentGate": "review_ready",
       "readyAt": "2026-07-06T22:58:32Z",
       "bundle": "WAVE-011-security-epic-validation",
       "activatedAt": "2026-07-06T23:11:02Z",
-      "cleanupState": "not_started",
-      "sharedContextReconciliation": "not_started",
+      "cleanupState": "review_pending",
+      "sharedContextReconciliation": "task_artifacts_updated",
       "branchPushedAt": "2026-07-06T23:11:02Z",
       "worktreeCreatedAt": "2026-07-06T23:11:02Z"
     }
@@ -2616,9 +2621,9 @@
   "monitoring": {
     "mode": "adaptive",
     "cadence": "15m",
-    "status": "wave_011_worktree_ready_pending_dispatch",
+    "status": "wave_011_review_ready_pending_pr",
     "lastCheckedAt": "2026-07-06T23:11:02Z",
-    "nextCheckDueAt": "2026-07-06T23:26:02Z",
+    "nextCheckDueAt": null,
     "schedulerRef": "postgram-admin-wave-005-wdd-heartbeat",
     "schedulerName": "postgram-admin-wave-011-wdd-heartbeat",
     "fallbackPrompt": "Run one bounded WDD controller heartbeat for /Users/ivo.toby/workspace/postgram, epic EPIC-admin-configuration-frontend, active wave WAVE-011. Use the subagent-pr-orchestration skill. Start in /Users/ivo.toby/workspace/postgram on branch codex/epic/admin-configuration-frontend. Read .wdd/epics/EPIC-admin-configuration-frontend/orchestration.json and controller-state.md, then inspect worker TBD and assigned worktree /Users/ivo.toby/workspace/postgram/.worktrees/TASK-018-security-epic-validation on branch codex/task/TASK-018-security-epic-validation for bundle WAVE-011-security-epic-validation / TASK-018-security-epic-validation. Update gates, branch freshness, verification, PR or patch refs, reviewer refs, feedback, shared-context reconciliation status, and monitoring timestamps. If the worker has produced a PR or patch, move TASK-018 to review/reviewer orchestration; if no PR or patch exists, keep no_pr and nudge exact missing deliverables only if needed. If review reports P1/P2, route feedback to the worker or a fresh fix worker. If review passes, refresh stale task branch against codex/epic/admin-configuration-frontend, rerun required freshness verification, then merge or mark merge_ready according to policy. Stop when WAVE-011 is merged, blocked, cancelled, or ready for wdd-reconcile-wave. After WAVE-011 is reconciled, proceed to wdd-epic-validation and final PR per Ivo's finish-all-waves instruction.",
@@ -2664,13 +2669,13 @@
         "workerNickname": null,
         "reviewThreadId": null,
         "reviewNickname": null,
-        "currentGate": "dispatch_pending",
+        "currentGate": "review_ready",
         "branchFreshness": "current_at_activation",
-        "pr": null,
+        "pr": "pending",
         "latestCommit": null,
         "blockingFeedback": [],
         "verification": {
-          "result": "not_run",
+          "result": "passed_with_concerns",
           "commands": [
             "npm run typecheck",
             "npm test",
@@ -2680,23 +2685,28 @@
             "npm --prefix ui run test -- --run",
             "npm --prefix ui run build",
             "docker compose config",
-            "git diff --check"
+            "git diff --check",
+            "jq empty .wdd/epics/EPIC-admin-configuration-frontend/orchestration.json",
+            "npm audit --omit=dev --audit-level=high",
+            "npm --prefix ui audit --omit=dev --audit-level=high",
+            "npm audit --audit-level=high",
+            "npm --prefix ui audit --audit-level=high"
           ],
-          "evidence": null
+          "evidence": "TASK-018 validation ran on 2026-07-06 UTC. Production audit findings were fixed with non-force lockfile updates; root production audit and UI production audit both passed with 0 vulnerabilities. npm run typecheck passed, npm test passed 45 files / 491 tests, npm run build passed, UI typecheck passed, UI tests passed 15 files / 125 tests, UI build passed with existing Vite chunk-size warning, docker compose config passed, orchestration JSON parse passed, and git diff --check passed. Security review found no unresolved P1/P2 across admin auth/session/MFA/CSRF/bootstrap/secrets/admin APIs/maintenance/frontend storage/Docker surfaces. Non-blocking concerns: repo-wide npm run lint still fails on existing baseline, and full UI dev audit requires a breaking Vitest/Vite toolchain upgrade while production audit is clean."
         },
         "activatedAt": "2026-07-06T23:11:02Z",
-        "cleanupState": "not_started",
-        "sharedContextReconciliation": "not_started",
+        "cleanupState": "review_pending",
+        "sharedContextReconciliation": "task_artifacts_updated",
         "lastObservedAt": "2026-07-06T23:11:02Z",
         "branchPushedAt": "2026-07-06T23:11:02Z",
         "worktreeCreatedAt": "2026-07-06T23:11:02Z"
       }
     ],
-    "dispatchState": "worktree_ready_pending_dispatch",
+    "dispatchState": "review_ready_pending_pr",
     "activatedFromCommit": "202b422",
     "activationCommit": "0ed8c61af3cb272c54cbbb69a4fe8978f787a1e3",
     "lastObservedAt": "2026-07-06T23:11:02Z",
-    "waveCompletion": "in_progress",
+    "waveCompletion": "review_ready",
     "branchPushedAt": "2026-07-06T23:11:02Z",
     "worktreeCreatedAt": "2026-07-06T23:11:02Z"
   },
@@ -2761,7 +2771,7 @@
       "WAVE-008-admin-config-ui": "reconciled",
       "WAVE-009-maintenance-admin-ui": "reconciled",
       "WAVE-010-docker-first-run-no-cli": "reconciled",
-      "WAVE-011-security-epic-validation": "dispatch_pending"
+      "WAVE-011-security-epic-validation": "review_ready"
     },
     "waveCompletion": {
       "WAVE-001": "done",
@@ -2774,7 +2784,7 @@
       "WAVE-008": "done",
       "WAVE-009": "done",
       "WAVE-010": "done",
-      "WAVE-011": "in_progress"
+      "WAVE-011": "review_ready"
     },
     "nextWave": {
       "id": null,
@@ -2783,9 +2793,9 @@
     "monitoring": {
       "mode": "adaptive",
       "cadence": "15m",
-      "status": "wave_011_worktree_ready_pending_dispatch",
+      "status": "wave_011_review_ready_pending_pr",
       "lastCheckedAt": "2026-07-06T23:11:02Z",
-      "nextCheckDueAt": "2026-07-06T23:26:02Z",
+      "nextCheckDueAt": null,
       "schedulerRef": "postgram-admin-wave-005-wdd-heartbeat",
       "schedulerName": "postgram-admin-wave-011-wdd-heartbeat",
       "fallbackPrompt": "Run one bounded WDD controller heartbeat for /Users/ivo.toby/workspace/postgram, epic EPIC-admin-configuration-frontend, active wave WAVE-011. Use the subagent-pr-orchestration skill. Start in /Users/ivo.toby/workspace/postgram on branch codex/epic/admin-configuration-frontend. Read .wdd/epics/EPIC-admin-configuration-frontend/orchestration.json and controller-state.md, then inspect worker TBD and assigned worktree /Users/ivo.toby/workspace/postgram/.worktrees/TASK-018-security-epic-validation on branch codex/task/TASK-018-security-epic-validation for bundle WAVE-011-security-epic-validation / TASK-018-security-epic-validation. Update gates, branch freshness, verification, PR or patch refs, reviewer refs, feedback, shared-context reconciliation status, and monitoring timestamps. If the worker has produced a PR or patch, move TASK-018 to review/reviewer orchestration; if no PR or patch exists, keep no_pr and nudge exact missing deliverables only if needed. If review reports P1/P2, route feedback to the worker or a fresh fix worker. If review passes, refresh stale task branch against codex/epic/admin-configuration-frontend, rerun required freshness verification, then merge or mark merge_ready according to policy. Stop when WAVE-011 is merged, blocked, cancelled, or ready for wdd-reconcile-wave. After WAVE-011 is reconciled, proceed to wdd-epic-validation and final PR per Ivo's finish-all-waves instruction.",
@@ -4307,8 +4317,8 @@
         "reconciledAt": "2026-07-06T22:58:32Z"
       },
       "WAVE-011-security-epic-validation": {
-        "result": "not_run",
-        "checkedAt": "2026-07-06T23:11:02Z",
+        "result": "passed_with_concerns",
+        "checkedAt": "2026-07-06T23:24:43Z",
         "commands": [
           "npm run typecheck",
           "npm test",
@@ -4318,9 +4328,14 @@
           "npm --prefix ui run test -- --run",
           "npm --prefix ui run build",
           "docker compose config",
-          "git diff --check"
+          "git diff --check",
+          "jq empty .wdd/epics/EPIC-admin-configuration-frontend/orchestration.json",
+          "npm audit --omit=dev --audit-level=high",
+          "npm --prefix ui audit --omit=dev --audit-level=high",
+          "npm audit --audit-level=high",
+          "npm --prefix ui audit --audit-level=high"
         ],
-        "evidence": null
+        "evidence": "TASK-018 validation completed with no unresolved P1/P2 security findings. Production audit findings were fixed by non-force lockfile updates. Passed: npm run typecheck, npm test (45 files / 491 tests), npm run build, UI typecheck, UI tests (15 files / 125 tests), UI build with existing Vite chunk-size warning, docker compose config, orchestration JSON parse, git diff --check, and root/UI production audits with 0 vulnerabilities. Non-blocking concerns: npm run lint still fails on existing repo-wide baseline, and full UI dev audit requires a breaking Vitest/Vite upgrade while production audit is clean."
       }
     },
     "feedback": {
@@ -4572,9 +4587,9 @@
       "WAVE-011-security-epic-validation": {
         "blocking": [],
         "lastObservedAt": "2026-07-06T23:11:02Z",
-        "status": "dispatch_pending",
+        "status": "review_ready_pending_pr",
         "workerThreadId": null,
-        "nudge": "not_needed_dispatch_pending"
+        "nudge": "not_needed_review_ready_pending_pr"
       }
     },
     "activationArtifact": {

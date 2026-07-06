@@ -227,6 +227,13 @@ Keep provider construction logic centralized to avoid env/DB drift.
   `src/services/admin-provider-config-service.ts` and
   `tests/integration/admin-provider-config.test.ts`. No nudge was sent because
   visible implementation work is ongoing.
+- 2026-07-06T07:37:07Z controller observation: Goodall still had no final
+  status and no PR for `codex/task/TASK-010-provider-config-apply`; the assigned
+  worktree remained active/uncommitted, with recent local mtimes on
+  `src/services/admin-provider-config-service.ts`,
+  `src/transport/admin-provider-config.ts`, and
+  `tests/integration/admin-provider-config.test.ts`. No nudge was sent because
+  visible implementation work is ongoing.
 
 ## Review Feedback
 

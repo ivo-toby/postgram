@@ -20,12 +20,12 @@ assigned_model_class: epicValidation
 review_model_class: review
 branch: codex/task/TASK-018-security-epic-validation
 worker_worktree: /Users/ivo.toby/workspace/postgram/.worktrees/TASK-018-security-epic-validation
-worktree_status: pending_creation
+worktree_status: clean_pushed
 pr: null
 worker_thread_id: null
 review_thread_id: null
-current_gate: pending_worktree
-branch_freshness: pending
+current_gate: dispatch_pending
+branch_freshness: current_at_activation
 verification:
   - npm run typecheck
   - npm test

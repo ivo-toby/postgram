@@ -2190,10 +2190,10 @@
       "workerThreadId": "019f37c5-7084-7920-916a-7fd9ac7d8cb6",
       "reviewThreadId": "019f322c-02e7-7590-8b8e-ebdd1e9c52ac",
       "workerWorktree": "/Users/ivo.toby/workspace/postgram/.worktrees/TASK-015-maintenance-admin-api",
-      "worktreeStatus": "clean_pushed_needs_freshness_fix",
+      "worktreeStatus": "active_freshness_conflict_resolution",
       "pr": "https://github.com/ivo-toby/postgram/pull/88",
       "latestCommit": "4a3e99dce019370137d9461f62201bc7a05fb7fd",
-      "branchFreshness": "stale_dirty_needs_freshness_refresh",
+      "branchFreshness": "refresh_in_progress_conflicted",
       "blockingFeedback": [
         {
           "priority": "P2",
@@ -2209,8 +2209,8 @@
         }
       ],
       "verification": {
-        "result": "review_blocked_branch_freshness_conflict_feedback_routed",
-        "checkedAt": "2026-07-06T16:45:31Z",
+        "result": "needs_fixes_feedback_routed_fix_in_progress_conflicted",
+        "checkedAt": "2026-07-06T16:48:00Z",
         "commands": [
           "gh pr view 88 --json number,url,state,isDraft,title,headRefName,headRefOid,baseRefName,mergeStateStatus,reviewDecision,updatedAt,createdAt,author,commits,files,statusCheckRollup",
           "git status --short --branch",
@@ -2220,11 +2220,11 @@
           "git merge-tree --write-tree origin/codex/epic/admin-configuration-frontend HEAD",
           "multi_agent_v1.send_input reviewer Lorentz"
         ],
-        "evidence": "Lorentz returned REVIEW_BLOCKED for PR #88 with one P2 blocker: PR #88 remains DIRTY and merge-tree conflicts in the WDD TASK-015 review task file. No product-code conflict and no additional P1/P2 implementation findings were reported. Lorentz verification passed admin-maintenance contract tests (4), cli-admin integration tests (37), and typecheck; branch diff whitespace passed; worktree remained clean. Controller routed exact freshness feedback to Helmholtz in submission 019f3852-f2bc-7651-a502-e31ae60ac612."
+        "evidence": "After feedback routing, the TASK-015 worker worktree showed active freshness-fix work in progress: detached HEAD c91fb8261b92cccaa1046a6772b847da33e51433, staged deletion of the in-progress TASK-015 file, and an unresolved conflict in the review TASK-015 file. PR #88 is still OPEN/draft/DIRTY at head 4a3e99dce019370137d9461f62201bc7a05fb7fd. Helmholtz did not return a final fix status during the bounded poll. Controller did not modify the worker worktree."
       },
       "currentGate": "needs_fixes",
       "workerNickname": "Helmholtz",
-      "lastObservedAt": "2026-07-06T16:45:31Z",
+      "lastObservedAt": "2026-07-06T16:48:00Z",
       "reviewNickname": "Lorentz"
     },
     {
@@ -2347,12 +2347,12 @@
   "monitoring": {
     "mode": "adaptive",
     "cadence": "5m",
-    "status": "wave_007_task015_pr88_needs_freshness_fix",
-    "lastCheckedAt": "2026-07-06T16:45:31Z",
-    "nextCheckDueAt": "2026-07-06T16:50:31Z",
+    "status": "wave_007_task015_freshness_fix_in_progress_conflicted",
+    "lastCheckedAt": "2026-07-06T16:48:00Z",
+    "nextCheckDueAt": "2026-07-06T16:53:00Z",
     "schedulerRef": "postgram-admin-wave-005-wdd-heartbeat",
     "schedulerName": "postgram-admin-wave-007-wdd-heartbeat",
-    "fallbackPrompt": "WAVE-007 TASK-015 PR #88 has Lorentz REVIEW_BLOCKED with one P2 branch-freshness/WDD task-file conflict. Feedback is routed to Helmholtz; poll for refreshed PR head and rerun review/freshness gates."
+    "fallbackPrompt": "WAVE-007 TASK-015 PR #88 has P2 freshness feedback routed. Helmholtz appears to be resolving the WDD task-file conflict in the worker worktree; poll for completed fix/pushed head and rerun freshness/review gates."
   },
   "sharedContext": {
     "index": "shared-context/index.md",
@@ -2439,13 +2439,13 @@
         ],
         "branch": "codex/task/TASK-015-maintenance-admin-api",
         "worktree": "/Users/ivo.toby/workspace/postgram/.worktrees/TASK-015-maintenance-admin-api",
-        "worktreeStatus": "clean_pushed_needs_freshness_fix",
+        "worktreeStatus": "active_freshness_conflict_resolution",
         "workerThreadId": "019f37c5-7084-7920-916a-7fd9ac7d8cb6",
         "workerNickname": "Helmholtz",
         "reviewThreadId": "019f322c-02e7-7590-8b8e-ebdd1e9c52ac",
         "reviewNickname": "Lorentz",
         "currentGate": "needs_fixes",
-        "branchFreshness": "stale_dirty_needs_freshness_refresh",
+        "branchFreshness": "refresh_in_progress_conflicted",
         "pr": "https://github.com/ivo-toby/postgram/pull/88",
         "latestCommit": "4a3e99dce019370137d9461f62201bc7a05fb7fd",
         "blockingFeedback": [
@@ -2463,8 +2463,8 @@
           }
         ],
         "verification": {
-          "result": "review_blocked_branch_freshness_conflict_feedback_routed",
-          "checkedAt": "2026-07-06T16:45:31Z",
+          "result": "needs_fixes_feedback_routed_fix_in_progress_conflicted",
+          "checkedAt": "2026-07-06T16:48:00Z",
           "commands": [
             "gh pr view 88 --json number,url,state,isDraft,title,headRefName,headRefOid,baseRefName,mergeStateStatus,reviewDecision,updatedAt,createdAt,author,commits,files,statusCheckRollup",
             "git status --short --branch",
@@ -2474,25 +2474,25 @@
             "git merge-tree --write-tree origin/codex/epic/admin-configuration-frontend HEAD",
             "multi_agent_v1.send_input reviewer Lorentz"
           ],
-          "evidence": "Lorentz returned REVIEW_BLOCKED for PR #88 with one P2 blocker: PR #88 remains DIRTY and merge-tree conflicts in the WDD TASK-015 review task file. No product-code conflict and no additional P1/P2 implementation findings were reported. Lorentz verification passed admin-maintenance contract tests (4), cli-admin integration tests (37), and typecheck; branch diff whitespace passed; worktree remained clean. Controller routed exact freshness feedback to Helmholtz in submission 019f3852-f2bc-7651-a502-e31ae60ac612."
+          "evidence": "After feedback routing, the TASK-015 worker worktree showed active freshness-fix work in progress: detached HEAD c91fb8261b92cccaa1046a6772b847da33e51433, staged deletion of the in-progress TASK-015 file, and an unresolved conflict in the review TASK-015 file. PR #88 is still OPEN/draft/DIRTY at head 4a3e99dce019370137d9461f62201bc7a05fb7fd. Helmholtz did not return a final fix status during the bounded poll. Controller did not modify the worker worktree."
         },
         "activatedAt": "2026-07-06T14:08:16Z",
         "cleanupState": "not_started",
         "sharedContextReconciliation": "queued",
-        "lastObservedAt": "2026-07-06T16:45:31Z",
+        "lastObservedAt": "2026-07-06T16:48:00Z",
         "branchPushedAt": "2026-07-06T14:11:59Z",
         "dispatchedAt": "2026-07-06T14:11:59Z",
         "dispatchBaseCommit": "848b902c5f4829ff78529256c3a9181423c5a150",
         "worktreeObservation": {
-          "observedAt": "2026-07-06T16:45:31Z",
+          "observedAt": "2026-07-06T16:48:00Z",
           "taskId": "TASK-015-maintenance-admin-api",
-          "status": "review_blocked_feedback_routed",
+          "status": "feedback_fix_in_progress_conflicted",
           "workerStatus": "DONE",
           "pr": "https://github.com/ivo-toby/postgram/pull/88",
           "prState": "OPEN_DRAFT_DIRTY",
           "prNumber": 88,
           "prHead": "4a3e99dce019370137d9461f62201bc7a05fb7fd",
-          "worktreeStatus": "clean_pushed",
+          "worktreeStatus": "active_freshness_conflict_resolution",
           "branchHead": "4a3e99dce019370137d9461f62201bc7a05fb7fd",
           "branchDivergence": "origin/codex/epic/admin-configuration-frontend...HEAD = 1 3; PR #88 is dirty and needs freshness refresh before merge.",
           "branchFreshness": "stale_dirty_needs_freshness_refresh",
@@ -2514,7 +2514,7 @@
           "reviewThreadId": "019f322c-02e7-7590-8b8e-ebdd1e9c52ac",
           "reviewNickname": "Lorentz",
           "reviewSubmissionId": "019f384a-790e-7d12-8bee-29d351519b3b",
-          "coordinationNote": "Await Helmholtz freshness fix push, then rerun controller freshness verification and follow-up review.",
+          "coordinationNote": "Helmholtz appears to be resolving the branch freshness conflict. Do not modify the worker worktree; poll for a pushed fix or final status.",
           "reviewResult": "REVIEW_BLOCKED",
           "blockingFeedback": [
             {
@@ -2530,7 +2530,11 @@
               "summary": "PR #88 is DIRTY and merge-tree conflicts in the WDD TASK-015 review task file. Lorentz found no product-code P1/P2 issues. Refresh against latest epic branch, preserve TASK-015 review/PR metadata, rerun freshness and targeted tests, and push updated PR #88."
             }
           ],
-          "feedbackSubmissionId": "019f3852-f2bc-7651-a502-e31ae60ac612"
+          "feedbackSubmissionId": "019f3852-f2bc-7651-a502-e31ae60ac612",
+          "localHead": "c91fb8261b92cccaa1046a6772b847da33e51433",
+          "conflictFiles": [
+            ".wdd/epics/EPIC-admin-configuration-frontend/TICKET-006-maintenance-jobs/review/TASK-015-maintenance-admin-api.md"
+          ]
         },
         "reviewRequestedAt": "2026-07-06T16:36:00Z",
         "reviewSubmissionId": "019f384a-790e-7d12-8bee-29d351519b3b"
@@ -2540,7 +2544,7 @@
     "activationCommit": "848b902c5f4829ff78529256c3a9181423c5a150",
     "workerDispatchStartedAt": "2026-07-06T14:11:59Z",
     "dispatchedAt": "2026-07-06T14:11:59Z",
-    "lastObservedAt": "2026-07-06T16:45:31Z"
+    "lastObservedAt": "2026-07-06T16:48:00Z"
   },
   "currentGates": {
     "epicBranch": {
@@ -2576,7 +2580,7 @@
       "WAVE-006-admin-key-audit-stats-api": "cleaned_up",
       "WAVE-006-admin-job-foundation": "cleaned_up",
       "WAVE-007-admin-auth-ui": "cleaned_up",
-      "WAVE-007-maintenance-admin-api": "clean_pushed_needs_freshness_fix"
+      "WAVE-007-maintenance-admin-api": "active_freshness_conflict_resolution"
     },
     "workerDispatch": {
       "WAVE-001-admin-feasibility-gate": "reconciled",
@@ -2607,12 +2611,12 @@
     "monitoring": {
       "mode": "adaptive",
       "cadence": "5m",
-      "status": "wave_007_task015_pr88_needs_freshness_fix",
-      "lastCheckedAt": "2026-07-06T16:45:31Z",
-      "nextCheckDueAt": "2026-07-06T16:50:31Z",
+      "status": "wave_007_task015_freshness_fix_in_progress_conflicted",
+      "lastCheckedAt": "2026-07-06T16:48:00Z",
+      "nextCheckDueAt": "2026-07-06T16:53:00Z",
       "schedulerRef": "postgram-admin-wave-005-wdd-heartbeat",
       "schedulerName": "postgram-admin-wave-007-wdd-heartbeat",
-      "fallbackPrompt": "WAVE-007 TASK-015 PR #88 has Lorentz REVIEW_BLOCKED with one P2 branch-freshness/WDD task-file conflict. Feedback is routed to Helmholtz; poll for refreshed PR head and rerun review/freshness gates."
+      "fallbackPrompt": "WAVE-007 TASK-015 PR #88 has P2 freshness feedback routed. Helmholtz appears to be resolving the WDD task-file conflict in the worker worktree; poll for completed fix/pushed head and rerun freshness/review gates."
     },
     "review": {
       "WAVE-001-admin-feasibility-gate": {
@@ -2927,7 +2931,7 @@
       "WAVE-006-admin-key-audit-stats-api": "current_at_merge",
       "WAVE-006-admin-job-foundation": "current_at_merge",
       "WAVE-007-admin-auth-ui": "current_at_merge",
-      "WAVE-007-maintenance-admin-api": "stale_dirty_needs_freshness_refresh"
+      "WAVE-007-maintenance-admin-api": "refresh_in_progress_conflicted"
     },
     "merge": {
       "WAVE-001-admin-feasibility-gate": {
@@ -3177,12 +3181,12 @@
         "checkedAt": "2026-07-06T15:48:11Z"
       },
       "WAVE-007-maintenance-admin-api": {
-        "status": "OPEN_DRAFT_DIRTY_REVIEW_BLOCKED",
+        "status": "OPEN_DRAFT_DIRTY_FIX_IN_PROGRESS_LOCAL_CONFLICT",
         "pr": "https://github.com/ivo-toby/postgram/pull/88",
         "number": 88,
         "headRefOid": "4a3e99dce019370137d9461f62201bc7a05fb7fd",
         "mergeStateStatus": "DIRTY",
-        "checkedAt": "2026-07-06T16:45:31Z",
+        "checkedAt": "2026-07-06T16:48:00Z",
         "reviewSubmissionId": "019f384a-790e-7d12-8bee-29d351519b3b",
         "reviewDecision": "",
         "feedbackSubmissionId": "019f3852-f2bc-7651-a502-e31ae60ac612"
@@ -3717,8 +3721,8 @@
         "evidence": "Lorentz returned REVIEW_PASS for PR #87 with no P1/P2/P3 findings. Controller refreshed the TASK-011 branch against the latest epic branch (task head 344bab8ed51c76eb18ee6b8d2dbd020d70bec329), reran focused AdminAuth tests, UI typecheck, branch diff check, merge-tree, and orchestration JSON parse successfully, then merged TASK-011 locally into the epic branch in 4e77a6b5362160f854d36b4283157c658a9096e2. Post-merge AdminAuth tests and UI typecheck passed in the epic checkout after installing missing ui dependencies with npm --prefix ui ci; git diff --check HEAD^..HEAD and orchestration JSON parse passed. PR #87 remains pending remote MERGED confirmation until the epic branch push. Epic branch push marked PR #87 MERGED at 2026-07-06T15:48:11Z; the clean TASK-011 worktree was removed and pruned."
       },
       "WAVE-007-maintenance-admin-api": {
-        "result": "review_blocked_branch_freshness_conflict_feedback_routed",
-        "checkedAt": "2026-07-06T16:45:31Z",
+        "result": "needs_fixes_feedback_routed_fix_in_progress_conflicted",
+        "checkedAt": "2026-07-06T16:48:00Z",
         "commands": [
           "gh pr view 88 --json number,url,state,isDraft,title,headRefName,headRefOid,baseRefName,mergeStateStatus,reviewDecision,updatedAt,createdAt,author,commits,files,statusCheckRollup",
           "git status --short --branch",
@@ -3728,7 +3732,7 @@
           "git merge-tree --write-tree origin/codex/epic/admin-configuration-frontend HEAD",
           "multi_agent_v1.send_input reviewer Lorentz"
         ],
-        "evidence": "Lorentz returned REVIEW_BLOCKED for PR #88 with one P2 blocker: PR #88 remains DIRTY and merge-tree conflicts in the WDD TASK-015 review task file. No product-code conflict and no additional P1/P2 implementation findings were reported. Lorentz verification passed admin-maintenance contract tests (4), cli-admin integration tests (37), and typecheck; branch diff whitespace passed; worktree remained clean. Controller routed exact freshness feedback to Helmholtz in submission 019f3852-f2bc-7651-a502-e31ae60ac612."
+        "evidence": "After feedback routing, the TASK-015 worker worktree showed active freshness-fix work in progress: detached HEAD c91fb8261b92cccaa1046a6772b847da33e51433, staged deletion of the in-progress TASK-015 file, and an unresolved conflict in the review TASK-015 file. PR #88 is still OPEN/draft/DIRTY at head 4a3e99dce019370137d9461f62201bc7a05fb7fd. Helmholtz did not return a final fix status during the bounded poll. Controller did not modify the worker worktree."
       }
     },
     "feedback": {
@@ -3817,7 +3821,9 @@
           }
         ],
         "routedAt": "2026-07-06T16:45:31Z",
-        "feedbackSubmissionId": "019f3852-f2bc-7651-a502-e31ae60ac612"
+        "feedbackSubmissionId": "019f3852-f2bc-7651-a502-e31ae60ac612",
+        "fixStatus": "worker_active_conflict_resolution_observed",
+        "fixObservedAt": "2026-07-06T16:48:00Z"
       }
     },
     "activationArtifact": {

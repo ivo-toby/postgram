@@ -98,11 +98,11 @@ Mode: adaptive
 
 Cadence: 5m
 
-Status: wave_007_task015_pr88_needs_freshness_fix
+Status: wave_007_task015_freshness_fix_in_progress_conflicted
 
-Last check: 2026-07-06T16:45:31Z
+Last check: 2026-07-06T16:48:00Z
 
-Next check due: 2026-07-06T16:50:31Z
+Next check due: 2026-07-06T16:53:00Z
 
 Scheduler reference: `postgram-admin-wave-005-wdd-heartbeat`
 
@@ -111,9 +111,9 @@ Scheduler name: `postgram-admin-wave-007-wdd-heartbeat`
 Fallback prompt:
 
 ```text
-WAVE-007 TASK-015 PR #88 has Lorentz REVIEW_BLOCKED with one P2 branch
-freshness/WDD task-file conflict. Feedback is routed to Helmholtz; poll for
-refreshed PR head and rerun review/freshness gates.
+WAVE-007 TASK-015 PR #88 has P2 freshness feedback routed. Helmholtz appears
+to be resolving the WDD task-file conflict in the worker worktree; poll for
+completed fix/pushed head and rerun freshness/review gates.
 ```
 
 ## Active Wave Strategy
@@ -1409,9 +1409,15 @@ refreshed PR head and rerun review/freshness gates.
   against latest epic, preserve TASK-015 review/PR metadata, rerun freshness and
   targeted verification, and push PR #88. Gate is `needs_fixes`; next check due
   2026-07-06T16:50:31Z.
+- 2026-07-06T16:48:00Z: Final sweep observed Helmholtz actively working the
+  freshness fix. The TASK-015 worker worktree is detached at `c91fb82`, with
+  the old `in-progress/` task file staged for deletion and the `review/`
+  TASK-015 file in conflict. PR #88 remains open/draft/`DIRTY` at head
+  `4a3e99d`, and Helmholtz has not returned final fix status yet. Controller
+  did not modify the worker worktree. Next check due 2026-07-06T16:53:00Z.
 
 ## Next Action
 
-Next action: poll Helmholtz/TASK-015 for the freshness fix to PR #88. When a
-new head is pushed, rerun freshness verification and request follow-up review
-or merge if all gates pass.
+Next action: poll Helmholtz/TASK-015 for completion of the freshness fix. Do
+not touch the worker worktree while conflict resolution is active; when a new
+head is pushed, rerun freshness verification and request follow-up review.

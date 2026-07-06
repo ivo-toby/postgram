@@ -21,12 +21,12 @@ assigned_model_class: implementationComplex
 review_model_class: review
 branch: codex/task/TASK-015-maintenance-admin-api
 worker_worktree: /Users/ivo.toby/workspace/postgram/.worktrees/TASK-015-maintenance-admin-api
-worktree_status: clean_pushed_needs_freshness_fix
+worktree_status: active_freshness_conflict_resolution
 pr: https://github.com/ivo-toby/postgram/pull/88
 worker_thread_id: 019f37c5-7084-7920-916a-7fd9ac7d8cb6
 review_thread_id: 019f322c-02e7-7590-8b8e-ebdd1e9c52ac
 current_gate: needs_fixes
-branch_freshness: stale_dirty_needs_freshness_refresh
+branch_freshness: refresh_in_progress_conflicted
 verification:
   - npm test -- tests/contract/admin-maintenance-api.test.ts
   - npm test -- tests/integration/cli-admin.test.ts
@@ -262,6 +262,11 @@ Keep command-specific logic typed and bounded rather than generic.
   `019f3852-f2bc-7651-a502-e31ae60ac612`: refresh against the latest epic
   branch, preserve TASK-015 review/PR metadata, rerun freshness and targeted
   tests, and push the updated task branch.
+- 2026-07-06T16:48:00Z: Controller observed Helmholtz actively resolving the
+  freshness conflict. The worker worktree is detached at `c91fb82`, with the old
+  `in-progress/` task file staged for deletion and the `review/` TASK-015 file
+  in conflict. PR #88 remains open/draft/`DIRTY` at head `4a3e99d`; no final
+  fix status has returned yet.
 
 ## Review Feedback
 

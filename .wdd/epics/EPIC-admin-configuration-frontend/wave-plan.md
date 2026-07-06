@@ -864,6 +864,10 @@ Progress:
 - 2026-07-06T21:57:06Z: Bacon
   (`019f396f-3da8-7d11-94a0-3d84d26f490b`) was dispatched; current gate is
   `no_pr`.
+- 2026-07-06T22:14:02Z: Bacon remains active with uncommitted Docker/docs/
+  backend setup changes and smoke evidence files, no PR exists yet, and
+  `git diff --check` passes. Final branch freshness is required before
+  review/merge because the task branch is behind controller checkpoints.
 
 Stop condition:
 

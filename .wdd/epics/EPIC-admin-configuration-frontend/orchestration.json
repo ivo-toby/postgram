@@ -2477,10 +2477,10 @@
       "workerThreadId": "019f396f-3da8-7d11-94a0-3d84d26f490b",
       "reviewThreadId": null,
       "workerWorktree": "/Users/ivo.toby/workspace/postgram/.worktrees/TASK-017-docker-first-run-no-cli",
-      "worktreeStatus": "clean_pushed",
+      "worktreeStatus": "dirty_active_uncommitted_changes",
       "pr": null,
       "latestCommit": null,
-      "branchFreshness": "current",
+      "branchFreshness": "behind_epic_controller_checkpoints_final_refresh_required",
       "blockingFeedback": [],
       "verification": {
         "result": "worktree_created_branch_pushed_ready_for_dispatch",
@@ -2502,7 +2502,39 @@
       "branchPushedAt": "2026-07-06T21:54:35Z",
       "worktreeCreatedAt": "2026-07-06T21:54:35Z",
       "workerNickname": "Bacon",
-      "dispatchedAt": "2026-07-06T21:57:06Z"
+      "dispatchedAt": "2026-07-06T21:57:06Z",
+      "lastObservedAt": "2026-07-06T22:14:02Z",
+      "worktreeObservation": {
+        "observedAt": "2026-07-06T22:14:02Z",
+        "taskId": "TASK-017-docker-first-run-no-cli",
+        "status": "worker_active_no_pr",
+        "workerPoll": "wait_agent_timeout_30000",
+        "worktreeStatus": "dirty_active_uncommitted_changes",
+        "workerThreadId": "019f396f-3da8-7d11-94a0-3d84d26f490b",
+        "workerNickname": "Bacon",
+        "branch": "codex/task/TASK-017-docker-first-run-no-cli",
+        "branchFreshness": "behind_epic_controller_checkpoints_final_refresh_required",
+        "branchDivergence": "origin/codex/epic/admin-configuration-frontend...HEAD = 2 0; task branch is behind by controller monitoring checkpoints while worker has active uncommitted changes.",
+        "prState": "no_pr",
+        "changedFiles": [
+          ".env.example",
+          "Dockerfile",
+          "README.md",
+          "docker-compose.yml",
+          "docs/manual-test-plan.md",
+          "src/auth/admin-service.ts",
+          "src/index.ts",
+          "tests/integration/admin-auth-service.test.ts"
+        ],
+        "untrackedFiles": [
+          ".playwright-cli/",
+          "docker/postgram-ensure-secrets.sh",
+          "docker/postgram-entrypoint.sh",
+          "tests/unit/docker-first-run.test.ts"
+        ],
+        "diffCheck": "git diff --check passed in assigned worktree.",
+        "activityNote": "Worktree has active Docker/docs/backend setup changes and Playwright evidence files from the heartbeat window, so no missing-deliverable nudge was sent."
+      }
     },
     {
       "id": "TASK-018-security-epic-validation",
@@ -2549,13 +2581,13 @@
   "monitoring": {
     "mode": "adaptive",
     "cadence": "15m",
-    "status": "wave_010_no_pr_monitoring_active",
-    "lastCheckedAt": "2026-07-06T21:57:06Z",
-    "nextCheckDueAt": "2026-07-06T22:12:06Z",
+    "status": "wave_010_no_pr_worker_active",
+    "lastCheckedAt": "2026-07-06T22:14:02Z",
+    "nextCheckDueAt": "2026-07-06T22:29:02Z",
     "schedulerRef": "postgram-admin-wave-005-wdd-heartbeat",
     "schedulerName": "postgram-admin-wave-010-wdd-heartbeat",
-    "fallbackPrompt": "Run one bounded WDD controller heartbeat for /Users/ivo.toby/workspace/postgram, epic EPIC-admin-configuration-frontend, active wave WAVE-010. Use the subagent-pr-orchestration skill. Start in /Users/ivo.toby/workspace/postgram on branch codex/epic/admin-configuration-frontend. Read .wdd/epics/EPIC-admin-configuration-frontend/orchestration.json and controller-state.md, then inspect worker Bacon (019f396f-3da8-7d11-94a0-3d84d26f490b) and assigned worktree /Users/ivo.toby/workspace/postgram/.worktrees/TASK-017-docker-first-run-no-cli on branch codex/task/TASK-017-docker-first-run-no-cli for bundle WAVE-010-docker-first-run-no-cli / TASK-017-docker-first-run-no-cli. Update gates, branch freshness, verification, PR or patch refs, reviewer refs, feedback, shared-context reconciliation status, and monitoring timestamps. If the worker has produced a PR or patch, move TASK-017 to review/reviewer orchestration; if no PR or patch exists, keep no_pr and nudge exact missing deliverables only if needed. If review reports P1/P2, route feedback to Bacon or a fresh fix worker. If review passes, refresh stale task branch against codex/epic/admin-configuration-frontend, rerun required freshness verification, then merge or mark merge_ready according to policy. Stop when WAVE-010 is merged, blocked, cancelled, or ready for wdd-reconcile-wave. After WAVE-010 is reconciled, continue to WAVE-011 per Ivo's finish-all-waves instruction and push to GitHub between tasks/waves.",
-    "automationUpdateResult": "updated_in_app"
+    "fallbackPrompt": "Run one bounded WDD controller heartbeat for /Users/ivo.toby/workspace/postgram, epic EPIC-admin-configuration-frontend, active wave WAVE-010. Use the subagent-pr-orchestration skill. Start in /Users/ivo.toby/workspace/postgram on branch codex/epic/admin-configuration-frontend. Read .wdd/epics/EPIC-admin-configuration-frontend/orchestration.json and controller-state.md, then inspect worker Bacon (019f396f-3da8-7d11-94a0-3d84d26f490b) and assigned worktree /Users/ivo.toby/workspace/postgram/.worktrees/TASK-017-docker-first-run-no-cli on branch codex/task/TASK-017-docker-first-run-no-cli for bundle WAVE-010-docker-first-run-no-cli / TASK-017-docker-first-run-no-cli. Update gates, branch freshness, verification, PR or patch refs, reviewer refs, feedback, shared-context reconciliation status, and monitoring timestamps. If the worker has produced a PR or patch, move TASK-017 to review/reviewer orchestration; if no PR or patch exists, keep no_pr and nudge exact missing deliverables only if the worktree is inactive or stale. If review reports P1/P2, route feedback to Bacon or a fresh fix worker. If review passes, refresh stale task branch against codex/epic/admin-configuration-frontend, rerun required freshness verification, then merge or mark merge_ready according to policy. Stop when WAVE-010 is merged, blocked, cancelled, or ready for wdd-reconcile-wave. After WAVE-010 is reconciled, continue to WAVE-011 per Ivo's finish-all-waves instruction and push to GitHub between tasks/waves.",
+    "automationUpdateResult": "verified_in_app"
   },
   "sharedContext": {
     "index": "shared-context/index.md",
@@ -2592,13 +2624,13 @@
         ],
         "branch": "codex/task/TASK-017-docker-first-run-no-cli",
         "worktree": "/Users/ivo.toby/workspace/postgram/.worktrees/TASK-017-docker-first-run-no-cli",
-        "worktreeStatus": "clean_pushed",
+        "worktreeStatus": "dirty_active_uncommitted_changes",
         "workerThreadId": "019f396f-3da8-7d11-94a0-3d84d26f490b",
         "workerNickname": "Bacon",
         "reviewThreadId": null,
         "reviewNickname": null,
         "currentGate": "no_pr",
-        "branchFreshness": "current",
+        "branchFreshness": "behind_epic_controller_checkpoints_final_refresh_required",
         "pr": null,
         "latestCommit": null,
         "blockingFeedback": [],
@@ -2616,28 +2648,46 @@
         "activatedAt": "2026-07-06T21:51:22Z",
         "cleanupState": "not_started",
         "sharedContextReconciliation": "not_started",
-        "lastObservedAt": "2026-07-06T21:57:06Z",
+        "lastObservedAt": "2026-07-06T22:14:02Z",
         "branchPushedAt": "2026-07-06T21:54:35Z",
         "worktreeCreatedAt": "2026-07-06T21:54:35Z",
         "dispatchedAt": "2026-07-06T21:57:06Z",
         "worktreeObservation": {
-          "observedAt": "2026-07-06T21:57:06Z",
+          "observedAt": "2026-07-06T22:14:02Z",
           "taskId": "TASK-017-docker-first-run-no-cli",
-          "status": "worker_dispatched_no_pr",
-          "worktreeStatus": "clean_pushed",
+          "status": "worker_active_no_pr",
+          "workerPoll": "wait_agent_timeout_30000",
+          "worktreeStatus": "dirty_active_uncommitted_changes",
           "workerThreadId": "019f396f-3da8-7d11-94a0-3d84d26f490b",
           "workerNickname": "Bacon",
           "branch": "codex/task/TASK-017-docker-first-run-no-cli",
-          "branchFreshness": "current_at_dispatch",
-          "branchDivergence": "origin/codex/epic/admin-configuration-frontend...HEAD = 0 0 before dispatch.",
+          "branchFreshness": "behind_epic_controller_checkpoints_final_refresh_required",
+          "branchDivergence": "origin/codex/epic/admin-configuration-frontend...HEAD = 2 0; task branch is behind by controller monitoring checkpoints while worker has active uncommitted changes.",
           "prState": "no_pr",
-          "coordinationNote": "Worker dispatched after activation and worktree-ready checkpoints were pushed. First controller heartbeat should inspect worker status and PR/patch output."
+          "changedFiles": [
+            ".env.example",
+            "Dockerfile",
+            "README.md",
+            "docker-compose.yml",
+            "docs/manual-test-plan.md",
+            "src/auth/admin-service.ts",
+            "src/index.ts",
+            "tests/integration/admin-auth-service.test.ts"
+          ],
+          "untrackedFiles": [
+            ".playwright-cli/",
+            "docker/postgram-ensure-secrets.sh",
+            "docker/postgram-entrypoint.sh",
+            "tests/unit/docker-first-run.test.ts"
+          ],
+          "diffCheck": "git diff --check passed in assigned worktree.",
+          "activityNote": "Worktree has active Docker/docs/backend setup changes and Playwright evidence files from the heartbeat window, so no missing-deliverable nudge was sent."
         }
       }
     ],
     "dispatchState": "no_pr",
     "activatedFromCommit": "8b7f6c38723d9ff27f95cf2aa2cb9ac639b98242",
-    "lastObservedAt": "2026-07-06T21:57:06Z",
+    "lastObservedAt": "2026-07-06T22:14:02Z",
     "waveCompletion": "in_progress",
     "activationCommit": "d43f7dff1a8e693d26d0efb51556de4ae2eb08e2",
     "branchPushedAt": "2026-07-06T21:54:35Z",
@@ -2687,7 +2737,7 @@
       "WAVE-008-admin-ops-dashboard-ui": "cleaned_up",
       "WAVE-008-admin-config-ui": "cleaned_up",
       "WAVE-009-maintenance-admin-ui": "cleaned_up",
-      "WAVE-010-docker-first-run-no-cli": "clean_pushed"
+      "WAVE-010-docker-first-run-no-cli": "dirty_active_uncommitted_changes"
     },
     "workerDispatch": {
       "WAVE-001-admin-feasibility-gate": "reconciled",
@@ -2725,13 +2775,13 @@
     "monitoring": {
       "mode": "adaptive",
       "cadence": "15m",
-      "status": "wave_010_no_pr_monitoring_active",
-      "lastCheckedAt": "2026-07-06T21:57:06Z",
-      "nextCheckDueAt": "2026-07-06T22:12:06Z",
+      "status": "wave_010_no_pr_worker_active",
+      "lastCheckedAt": "2026-07-06T22:14:02Z",
+      "nextCheckDueAt": "2026-07-06T22:29:02Z",
       "schedulerRef": "postgram-admin-wave-005-wdd-heartbeat",
       "schedulerName": "postgram-admin-wave-010-wdd-heartbeat",
-      "fallbackPrompt": "Run one bounded WDD controller heartbeat for /Users/ivo.toby/workspace/postgram, epic EPIC-admin-configuration-frontend, active wave WAVE-010. Use the subagent-pr-orchestration skill. Start in /Users/ivo.toby/workspace/postgram on branch codex/epic/admin-configuration-frontend. Read .wdd/epics/EPIC-admin-configuration-frontend/orchestration.json and controller-state.md, then inspect worker Bacon (019f396f-3da8-7d11-94a0-3d84d26f490b) and assigned worktree /Users/ivo.toby/workspace/postgram/.worktrees/TASK-017-docker-first-run-no-cli on branch codex/task/TASK-017-docker-first-run-no-cli for bundle WAVE-010-docker-first-run-no-cli / TASK-017-docker-first-run-no-cli. Update gates, branch freshness, verification, PR or patch refs, reviewer refs, feedback, shared-context reconciliation status, and monitoring timestamps. If the worker has produced a PR or patch, move TASK-017 to review/reviewer orchestration; if no PR or patch exists, keep no_pr and nudge exact missing deliverables only if needed. If review reports P1/P2, route feedback to Bacon or a fresh fix worker. If review passes, refresh stale task branch against codex/epic/admin-configuration-frontend, rerun required freshness verification, then merge or mark merge_ready according to policy. Stop when WAVE-010 is merged, blocked, cancelled, or ready for wdd-reconcile-wave. After WAVE-010 is reconciled, continue to WAVE-011 per Ivo's finish-all-waves instruction and push to GitHub between tasks/waves.",
-      "automationUpdateResult": "updated_in_app"
+      "fallbackPrompt": "Run one bounded WDD controller heartbeat for /Users/ivo.toby/workspace/postgram, epic EPIC-admin-configuration-frontend, active wave WAVE-010. Use the subagent-pr-orchestration skill. Start in /Users/ivo.toby/workspace/postgram on branch codex/epic/admin-configuration-frontend. Read .wdd/epics/EPIC-admin-configuration-frontend/orchestration.json and controller-state.md, then inspect worker Bacon (019f396f-3da8-7d11-94a0-3d84d26f490b) and assigned worktree /Users/ivo.toby/workspace/postgram/.worktrees/TASK-017-docker-first-run-no-cli on branch codex/task/TASK-017-docker-first-run-no-cli for bundle WAVE-010-docker-first-run-no-cli / TASK-017-docker-first-run-no-cli. Update gates, branch freshness, verification, PR or patch refs, reviewer refs, feedback, shared-context reconciliation status, and monitoring timestamps. If the worker has produced a PR or patch, move TASK-017 to review/reviewer orchestration; if no PR or patch exists, keep no_pr and nudge exact missing deliverables only if the worktree is inactive or stale. If review reports P1/P2, route feedback to Bacon or a fresh fix worker. If review passes, refresh stale task branch against codex/epic/admin-configuration-frontend, rerun required freshness verification, then merge or mark merge_ready according to policy. Stop when WAVE-010 is merged, blocked, cancelled, or ready for wdd-reconcile-wave. After WAVE-010 is reconciled, continue to WAVE-011 per Ivo's finish-all-waves instruction and push to GitHub between tasks/waves.",
+      "automationUpdateResult": "verified_in_app"
     },
     "review": {
       "WAVE-001-admin-feasibility-gate": {
@@ -3118,7 +3168,7 @@
       "WAVE-008-admin-ops-dashboard-ui": "current_at_merge",
       "WAVE-008-admin-config-ui": "current_at_merge",
       "WAVE-009-maintenance-admin-ui": "current_at_merge",
-      "WAVE-010-docker-first-run-no-cli": "current_at_dispatch"
+      "WAVE-010-docker-first-run-no-cli": "behind_epic_controller_checkpoints_final_refresh_required"
     },
     "merge": {
       "WAVE-001-admin-feasibility-gate": {
@@ -4335,11 +4385,12 @@
       },
       "WAVE-010-docker-first-run-no-cli": {
         "blocking": [],
-        "lastObservedAt": "2026-07-06T21:57:06Z",
+        "lastObservedAt": "2026-07-06T22:14:02Z",
         "workerThreadId": "019f396f-3da8-7d11-94a0-3d84d26f490b",
         "workerNickname": "Bacon",
         "status": "no_pr",
-        "nudge": "not_needed_worker_just_dispatched"
+        "nudge": "not_needed_worker_active",
+        "observation": "Worker has active uncommitted Docker/docs/backend setup changes, untracked smoke support/evidence files, no PR, and git diff --check passes."
       }
     },
     "activationArtifact": {

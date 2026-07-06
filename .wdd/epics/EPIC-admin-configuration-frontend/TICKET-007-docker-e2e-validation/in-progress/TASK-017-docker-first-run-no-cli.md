@@ -20,12 +20,12 @@ assigned_model_class: implementationComplex
 review_model_class: review
 branch: codex/task/TASK-017-docker-first-run-no-cli
 worker_worktree: /Users/ivo.toby/workspace/postgram/.worktrees/TASK-017-docker-first-run-no-cli
-worktree_status: clean_pushed
+worktree_status: dirty_active_uncommitted_changes
 pr: null
 worker_thread_id: 019f396f-3da8-7d11-94a0-3d84d26f490b
 review_thread_id: null
 current_gate: no_pr
-branch_freshness: current_at_dispatch
+branch_freshness: behind_epic_controller_checkpoints_final_refresh_required
 verification:
   - docker compose config
   - npm run typecheck
@@ -206,6 +206,14 @@ Keep docs honest about emergency CLI fallback and public exposure risks.
   activeWave present, branch divergence from epic was `0 0`, and the task
   branch was pushed to origin.
 - 2026-07-06T21:57:06Z worker dispatched; current gate is `no_pr`.
+- 2026-07-06T22:14:02Z controller heartbeat: Bacon did not return during a
+  30-second bounded wait and `gh pr list --head
+  codex/task/TASK-017-docker-first-run-no-cli --base
+  codex/epic/admin-configuration-frontend` returned no PR. The assigned
+  worktree has active uncommitted Docker/docs/backend setup changes plus
+  untracked smoke-support/evidence files, `git diff --check` passes, and no
+  nudge was sent. Branch freshness is behind the epic branch by controller
+  monitoring checkpoints (`2 0`) and must be refreshed before review/merge.
 
 ## Review Feedback
 

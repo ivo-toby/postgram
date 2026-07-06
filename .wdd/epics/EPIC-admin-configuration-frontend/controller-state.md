@@ -3,7 +3,7 @@ id: EPIC-admin-configuration-frontend-CONTROLLER
 kind: controller_state
 epic: EPIC-admin-configuration-frontend
 active_wave: WAVE-010
-status: wave_010_no_pr_monitoring_active
+status: wave_010_no_pr_worker_active
 updated_at: 2026-07-06
 ---
 
@@ -112,7 +112,10 @@ has moved to `in-progress/`; the controller assigned branch
 Activation artifacts were pushed, and the TASK-017 task branch/worktree were
 created from pushed epic checkpoint `d43f7df`, verified current, and pushed to
 GitHub. Bacon (`019f396f-3da8-7d11-94a0-3d84d26f490b`) was dispatched at
-2026-07-06T21:57:06Z. Current gate is `no_pr`.
+2026-07-06T21:57:06Z. At the 2026-07-06T22:14:02Z heartbeat, Bacon remained
+active with uncommitted Docker/docs/backend setup changes, untracked smoke
+support/evidence files, no PR yet, and a clean `git diff --check`. Current
+gate remains `no_pr`; final branch freshness is required before review/merge.
 
 WAVE-004 is done and reconciled. PR #81/TASK-009 and PR #82/TASK-006 are
 merged, shared context is reconciled, and both WAVE-004 worktrees are cleaned
@@ -140,17 +143,17 @@ Mode: adaptive
 
 Cadence: 15m
 
-Status: wave_010_no_pr_monitoring_active
+Status: wave_010_no_pr_worker_active
 
-Last check: 2026-07-06T21:57:06Z
+Last check: 2026-07-06T22:14:02Z
 
-Next check due: 2026-07-06T22:12:06Z
+Next check due: 2026-07-06T22:29:02Z
 
 Scheduler reference: `postgram-admin-wave-005-wdd-heartbeat`
 
 Scheduler name: `postgram-admin-wave-010-wdd-heartbeat`
 
-Automation update: updated_in_app
+Automation update: verified_in_app
 
 Fallback prompt:
 
@@ -168,8 +171,8 @@ freshness, verification, PR or patch refs, reviewer refs, feedback,
 shared-context reconciliation status, and monitoring timestamps. If the worker
 has produced a PR or patch, move TASK-017 to review/reviewer orchestration; if
 no PR or patch exists, keep no_pr and nudge exact missing deliverables only if
-needed. If review reports P1/P2, route feedback to Bacon or a fresh fix
-worker. If review passes, refresh stale task branch against
+the worktree is inactive or stale. If review reports P1/P2, route feedback to
+Bacon or a fresh fix worker. If review passes, refresh stale task branch against
 codex/epic/admin-configuration-frontend, rerun required freshness verification,
 then merge or mark merge_ready according to policy. Stop when WAVE-010 is
 merged, blocked, cancelled, or ready for wdd-reconcile-wave. After WAVE-010 is
@@ -185,7 +188,7 @@ push to GitHub between tasks/waves.
 - WAVE-010 strategy: full / bundled / risk_based / adaptive.
 - WAVE-010 task: TASK-017-docker-first-run-no-cli.
 - Confirmation: Ivo via Codex finish-all-waves request on 2026-07-06.
-- Current gate: TASK-017 worker Bacon is dispatched; no PR or patch yet.
+- Current gate: TASK-017 worker Bacon is active; no PR or patch yet.
 
 ## Last Reconciled Wave
 
@@ -242,7 +245,7 @@ push to GitHub between tasks/waves.
 | TASK-014-admin-job-foundation | TICKET-006-maintenance-jobs | codex/task/TASK-014-admin-job-foundation | cleaned_up | reconciled | Lorentz REVIEW_PASS; freshness current at task head `0e08630`; post-merge tests/typecheck/touched-file ESLint passed; merged locally into epic branch in `c5edbfc`; WAVE-006 reconciled and worktree cleaned up |
 | TASK-015-maintenance-admin-api | TICKET-006-maintenance-jobs | codex/task/TASK-015-maintenance-admin-api | cleaned_up | reconciled | Lorentz REVIEW_PASS; final freshness passed at task head `ea88af4`; post-merge contract tests 4/4, CLI integration 37/37, typecheck, scoped ESLint, JSON parse, and diff check passed; merged locally in `78f0f43`; PR #88 merged at 2026-07-06T17:02:28Z; shared context reconciled |
 | TASK-016-maintenance-admin-ui | TICKET-006-maintenance-jobs | codex/task/TASK-016-maintenance-admin-ui | cleaned_up | reconciled | Hypatia REVIEW_PASS; final task head `1885b64`; freshness `0 3`; AdminMaintenance 9/9, AdminOps/AdminConfig/AdminAuth 49/49, UI typecheck passed; merged in `10b2738`; PR #91 MERGED at 2026-07-06T21:37:31Z; WAVE-009 shared context reconciled |
-| TASK-017-docker-first-run-no-cli | TICKET-007-docker-e2e-validation | codex/task/TASK-017-docker-first-run-no-cli | clean_pushed | no_pr | Bacon dispatched at 2026-07-06T21:57:06Z; branch divergence from epic was `0 0`; no PR or patch yet |
+| TASK-017-docker-first-run-no-cli | TICKET-007-docker-e2e-validation | codex/task/TASK-017-docker-first-run-no-cli | dirty_active_uncommitted_changes | no_pr | Bacon active at 2026-07-06T22:14:02Z with Docker/docs/backend setup changes; `git diff --check` passed; no PR or patch yet; final freshness required |
 | TASK-018-security-epic-validation | TICKET-007-docker-e2e-validation | codex/task/TASK-018-security-epic-validation | not_created | planned | broad backend, frontend, Docker, and smoke validation |
 
 ## Branch And Worktree State
@@ -1791,6 +1794,13 @@ push to GitHub between tasks/waves.
   (`019f396f-3da8-7d11-94a0-3d84d26f490b`) to TASK-017 after the task branch was
   fast-forwarded to checkpoint `9b88c02` and verified current with the epic
   branch. Monitoring is active at a 15-minute cadence with gate `no_pr`.
+- 2026-07-06T22:14:02Z: Bacon did not return during a 30-second bounded wait
+  and no PR exists for `codex/task/TASK-017-docker-first-run-no-cli` against the
+  epic branch. The worktree has active uncommitted Docker/docs/backend setup
+  changes plus untracked smoke-support/evidence files; `git diff --check`
+  passed. The branch is behind the epic branch by two controller monitoring
+  checkpoints (`2 0`), so final freshness is required before review/merge. No
+  missing-deliverable nudge was sent because the worktree is active.
 
 ## Next Action
 

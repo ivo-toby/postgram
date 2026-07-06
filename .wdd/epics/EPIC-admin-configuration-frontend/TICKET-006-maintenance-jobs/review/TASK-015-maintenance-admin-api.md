@@ -21,12 +21,12 @@ assigned_model_class: implementationComplex
 review_model_class: review
 branch: codex/task/TASK-015-maintenance-admin-api
 worker_worktree: /Users/ivo.toby/workspace/postgram/.worktrees/TASK-015-maintenance-admin-api
-worktree_status: active_freshness_conflict_resolution
+worktree_status: draft_pr_open
 pr: https://github.com/ivo-toby/postgram/pull/88
 worker_thread_id: 019f37c5-7084-7920-916a-7fd9ac7d8cb6
 review_thread_id: 019f322c-02e7-7590-8b8e-ebdd1e9c52ac
-current_gate: needs_fixes
-branch_freshness: refresh_in_progress_conflicted
+current_gate: reviewing
+branch_freshness: rebased_on_origin_epic_97f9d53
 verification:
   - npm test -- tests/contract/admin-maintenance-api.test.ts
   - npm test -- tests/integration/cli-admin.test.ts
@@ -124,6 +124,9 @@ Clean and pushed at `/Users/ivo.toby/workspace/postgram/.worktrees/TASK-015-main
 
 https://github.com/ivo-toby/postgram/pull/88
 
+Implementation commit before branch refresh: `faab7e0`
+(`feat(admin): add maintenance job APIs`).
+
 ## RED-GREEN TDD Plan
 
 ### RED
@@ -162,10 +165,10 @@ Keep command-specific logic typed and bounded rather than generic.
 
 ## Task-Level Definition of Done
 
-- [ ] Approved maintenance endpoints are covered.
-- [ ] Dry-run/apply and step-up are enforced.
-- [ ] CLI regressions pass where services are shared.
-- [ ] No raw SQL or shell execution is exposed.
+- [x] Approved maintenance endpoints are covered.
+- [x] Dry-run/apply and step-up are enforced.
+- [x] CLI regressions pass where services are shared.
+- [x] No raw SQL or shell execution is exposed.
 
 ## Validation Steps
 
@@ -233,6 +236,10 @@ Keep command-specific logic typed and bounded rather than generic.
   against `origin/codex/epic/admin-configuration-frontend` after TASK-011
   closeout. No nudge sent because the worktree still shows active task-owned
   work; refresh branch freshness before review or merge.
+- 2026-07-06T16:31:25Z: Required review loop completed clean after fixing
+  all P0/P1/P2 findings. Final `codex review --uncommitted` reported no
+  actionable correctness issues; review-run targeted contract/integration
+  tests, focused lint, and diff whitespace checks passed.
 - 2026-07-06T16:32:01Z: Worktree is clean at local commit
   `faab7e0a71bba506f19e6b59911ac7df1f7742f1`
   (`feat(admin): add maintenance job APIs`) and was current with
@@ -245,6 +252,13 @@ Keep command-specific logic typed and bounded rather than generic.
   `019f3847-8b09-7863-b57d-b14ba6490702` to move the task file to `review/`
   if complete, push the task branch, open a draft PR or provide a patch, and
   return a final status token with verification evidence.
+- 2026-07-06T16:33:50Z: Branch rebased onto
+  `origin/codex/epic/admin-configuration-frontend` at `b9d5f34`; implementation
+  commit is `faab7e0`. Fresh post-rebase verification passed:
+  `npm test -- tests/contract/admin-maintenance-api.test.ts` (4/4 tests),
+  `npm test -- tests/integration/cli-admin.test.ts` (37/37 tests),
+  `npm run typecheck`, focused `npx eslint` on touched files, and
+  `git diff --check HEAD~1..HEAD`.
 - 2026-07-06T16:36:00Z: Helmholtz returned `DONE` and opened draft PR #88 at
   head `4a3e99dce019370137d9461f62201bc7a05fb7fd`. Worker-reported
   verification passed: `admin-maintenance-api` contract tests (4/4),
@@ -272,13 +286,33 @@ Keep command-specific logic typed and bounded rather than generic.
 
 ### P1
 
-- None.
+- Earlier review: maintenance execution was synchronous in the request path.
+  Fixed by creating/running admin jobs asynchronously and returning `202`
+  job responses.
+- Earlier review: CLI `--type <type> --only-failed` behavior regressed during
+  service extraction. Fixed by preserving `onlyFailed` as an additional
+  predicate and adding CLI regression coverage.
 
 ### P2
 
-- `P2-task015-branch-freshness-wdd-task-file-conflict`: PR #88 is dirty and
-  merge-tree conflicts in the WDD TASK-015 review file. Routed to Helmholtz in
-  submission `019f3852-f2bc-7651-a502-e31ae60ac612`.
+- `P2-task015-branch-freshness-wdd-task-file-conflict`: PR #88 was dirty and
+  merge-tree conflicted in the WDD TASK-015 review file. Addressed by rebasing
+  the task branch onto `origin/codex/epic/admin-configuration-frontend` at
+  `97f9d53` and preserving TASK-015 review/PR metadata.
+- Earlier review: `--no-edges-only` used an unqualified `id` in the edge
+  subquery. Fixed by qualifying `entities.id`.
+- Earlier review: apply endpoints lacked server-side dry-run proof. Fixed with
+  required fresh matching `previewJobId` evidence.
+- Earlier review: preview freshness and consumption needed stricter controls.
+  Fixed with `finishedAt`-based freshness, idempotent retry preservation, and
+  atomic preview consumption through the admin job service.
+- Earlier review: cancellation handling needed to avoid destructive work after
+  queued cancellation while preserving committed mutation results after
+  execution starts. Fixed with pre-execution cancellation, after-execution
+  success summaries, and regression coverage.
+- Earlier review: web edge pruning exposed CLI's broad `source: "any"` selector.
+  Fixed by restricting browser admin prune requests to the approved
+  `llm-extraction` source.
 
 ### P3
 
@@ -286,4 +320,18 @@ Keep command-specific logic typed and bounded rather than generic.
 
 ## Completion Notes
 
-- None yet.
+- Added typed admin maintenance service functions for re-extract, re-embed, and
+  constrained edge-prune previews/apply operations.
+- Added `/admin/api/maintenance/*/{dry-run,apply}` routes using admin
+  session/CSRF, active MFA, recent step-up for apply, dry-run preview evidence,
+  idempotency, admin jobs, progress, cancellation/status behavior, and safe
+  result summaries.
+- Added structured mutation audit rows with `audit_log.admin_user_id` for web
+  admin mutations; CLI continues to share the same service boundary without
+  pretending to have a browser admin actor.
+- Refactored `pgm-admin` reembed/reextract/prune-edges to use the shared
+  service; preserved combined `--type` + `--only-failed` behavior and added
+  dry-run/id support where needed.
+- No raw SQL, CLI passthrough, generic purge, provider secrets, ciphertext,
+  token prefixes, provider response bodies, or arbitrary validation metadata are
+  exposed through maintenance responses or job results.

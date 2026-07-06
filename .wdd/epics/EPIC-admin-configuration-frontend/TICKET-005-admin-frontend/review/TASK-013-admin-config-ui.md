@@ -18,12 +18,12 @@ assigned_model_class: implementationComplex
 review_model_class: review
 branch: codex/task/TASK-013-admin-config-ui
 worker_worktree: /Users/ivo.toby/workspace/postgram/.worktrees/TASK-013-admin-config-ui
-worktree_status: pushed_for_review
+worktree_status: clean_pushed
 pr: https://github.com/ivo-toby/postgram/pull/90
 worker_thread_id: 019f387a-3f1d-74a0-9949-5a318a43e494
 review_thread_id: 019f38ab-a97f-7462-84dc-5537e1efe934
-current_gate: review
-branch_freshness: refreshed_against_epic_verified
+current_gate: reviewing
+branch_freshness: current_for_followup_review
 verification:
   - git rev-list --left-right --count origin/codex/epic/admin-configuration-frontend...HEAD
   - git merge-tree --write-tree origin/codex/epic/admin-configuration-frontend HEAD
@@ -197,6 +197,15 @@ The in-progress merge is against `deab942`, while latest epic is `4901173`; the
 final pushed fix must still refresh against latest epic before follow-up review
 or merge.
 
+Parfit pushed the freshness/product integration fix at
+2026-07-06T20:04:35Z; PR #90 is now at head
+`57799dd8a4a61c1292db20e7ef68ed407644dfe1` and GitHub reports it `CLEAN`.
+Controller verification at 2026-07-06T20:06:22Z passed branch divergence
+`0 7`, merge-tree, diff-check, AdminConfig tests 22/22, AdminOps tests 11/11,
+AdminAuth tests 16/16, UI typecheck, and root typecheck. Schrodinger follow-up
+review was requested in submission `019f3909-49a4-7902-bf82-5ea9a1c7468d` and
+is pending.
+
 ## PR / Patch Reference
 
 Draft PR #90: https://github.com/ivo-toby/postgram/pull/90
@@ -322,6 +331,9 @@ maintenance UI if useful.
   `019f38fd-830e-7743-889d-ab73a8729989`.
 - 2026-07-06T19:57:31Z follow-up: no new PR head yet; Parfit worktree is
   actively resolving the expected conflicts, so no duplicate nudge was sent.
+- 2026-07-06T20:06:22Z follow-up: resolved pending Schrodinger review at head
+  `57799dd`; branch freshness, merge-tree, diff-check, AdminConfig/AdminOps/
+  AdminAuth UI tests, UI typecheck, and root typecheck passed.
 
 ### P3
 

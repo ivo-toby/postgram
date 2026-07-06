@@ -725,6 +725,12 @@ Progress:
   AdminDashboard, and adminApi. No duplicate nudge was sent. Final freshness
   against latest epic head `4901173` is still required before follow-up review
   or merge.
+- 2026-07-06T20:06:22Z controller verification: PR #90 was pushed to head
+  `57799dd` and GitHub reports it `CLEAN`. Controller verification passed
+  branch freshness `0 7`, merge-tree, diff-check, AdminConfig tests 22/22,
+  AdminOps tests 11/11, AdminAuth tests 16/16, UI typecheck, and root
+  typecheck. Schrodinger follow-up review was requested in submission
+  `019f3909-49a4-7902-bf82-5ea9a1c7468d`.
 
 Stop condition:
 

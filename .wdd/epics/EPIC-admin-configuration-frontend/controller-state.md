@@ -58,9 +58,9 @@ Cadence: 15 minutes
 
 Status: worker_monitoring_no_pr
 
-Last check: 2026-07-06T10:37:54Z
+Last check: 2026-07-06T10:52:54Z
 
-Next check due: 2026-07-06T10:52:54Z
+Next check due: 2026-07-06T11:07:54Z
 
 Scheduler reference: `postgram-admin-wave-005-wdd-heartbeat`
 
@@ -395,6 +395,16 @@ GitHub between tasks/waves.
   remain inside this monitoring cadence, so no nudge was sent. The task branch
   is still at `e73a57d` and is now 25 commits behind the epic branch at
   `50dbf0b`; refresh remains required before review or merge.
+- WAVE-005 2026-07-06T10:52:54Z observation: PR #83 remains `MERGED` and
+  `gh pr list` returned no TASK-010 PR. Goodall's thread remains active in a
+  final uncommitted review pass (`019f3708-a5ce-7053-97df-8703bcfbb90c`) with
+  no final status token yet. The assigned worktree remains active/uncommitted
+  in the expected provider-config/provider-construction file set, including the
+  applied-values migration. `git diff --check` passed, and fresh local mtimes on
+  the provider-config service and integration test show activity inside this
+  monitoring cadence, so no nudge was sent. The task branch is still at
+  `e73a57d` and is now 26 commits behind the epic branch at `84f4787`; refresh
+  remains required before review or merge.
 
 ## WAVE-001 Reconciled State
 
@@ -1028,10 +1038,17 @@ GitHub between tasks/waves.
   was sent. The task branch remains stale relative to the epic branch and must
   refresh before review or merge. Gate remains `no_pr`; next check due
   2026-07-06T10:52:54Z.
+- 2026-07-06T10:52:54Z: Goodall still had no final status and no TASK-010 PR.
+  The assigned worktree remains active/uncommitted with provider-config service
+  and integration-test mtimes inside this monitoring cadence; Goodall's thread
+  is active in final uncommitted review, so no nudge was sent. `git diff
+  --check` passed. The task branch remains stale relative to the epic branch
+  and must refresh before review or merge. Gate remains `no_pr`; next check due
+  2026-07-06T11:07:54Z.
 
 ## Next Action
 
-Next WAVE-005 heartbeat is due at 2026-07-06T10:52:54Z. Inspect Goodall's
+Next WAVE-005 heartbeat is due at 2026-07-06T11:07:54Z. Inspect Goodall's
 TASK-010 worker and worktree. If TASK-010 has a PR or patch, start review;
 otherwise keep `no_pr` unless the exact deliverables are stale or the worktree
 has gone inactive. Enforce a branch refresh against

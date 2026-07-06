@@ -23,7 +23,7 @@ pr: null
 worker_thread_id: 019f37c5-29ec-7ec3-b6fd-6aba64df3dc9
 review_thread_id: null
 current_gate: no_pr
-branch_freshness: behind_epic_controller_checkpoint
+branch_freshness: behind_epic_controller_checkpoints
 verification:
   - npm --prefix ui run test -- --run src/components/AdminAuth.test.tsx
   - npm --prefix ui run typecheck
@@ -186,6 +186,13 @@ Keep admin auth UI separate from current API-key login.
   `ui/nginx.conf`, and `ui/vite.config.ts`. Tracked `git diff --check`
   passed; the branch is one controller checkpoint behind the epic branch and
   must refresh before review or merge.
+- 2026-07-06T14:44:25Z: Meitner was still running with no PR or patch. The
+  worktree has active uncommitted changes in the same expected frontend auth
+  areas, with current-tick edits to `ui/src/App.tsx`,
+  `ui/src/components/AdminAuth.test.tsx`, and
+  `ui/src/components/admin/AdminAuth.tsx`. Tracked `git diff --check` passed;
+  the branch is two controller checkpoints behind the epic branch and must
+  refresh before review or merge.
 
 ## Review Feedback
 

@@ -26,7 +26,7 @@ pr: null
 worker_thread_id: 019f37c5-7084-7920-916a-7fd9ac7d8cb6
 review_thread_id: null
 current_gate: no_pr
-branch_freshness: behind_epic_controller_checkpoint
+branch_freshness: behind_epic_controller_checkpoints
 verification:
   - npm test -- tests/contract/admin-maintenance-api.test.ts
   - npm test -- tests/integration/cli-admin.test.ts
@@ -187,6 +187,11 @@ Keep command-specific logic typed and bounded rather than generic.
   `tests/contract/admin-maintenance-api.test.ts`. Tracked `git diff --check`
   passed; the branch is one controller checkpoint behind the epic branch and
   must refresh before review or merge.
+- 2026-07-06T14:44:25Z: Helmholtz was still running with no PR or patch. The
+  worktree has active uncommitted changes in the same expected backend
+  maintenance API areas, with recent service, transport, and contract-test
+  activity. Tracked `git diff --check` passed; the branch is two controller
+  checkpoints behind the epic branch and must refresh before review or merge.
 
 ## Review Feedback
 

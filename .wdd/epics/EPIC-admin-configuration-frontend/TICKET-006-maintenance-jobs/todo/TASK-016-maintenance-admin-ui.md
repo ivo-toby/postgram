@@ -9,6 +9,8 @@ title: Maintenance Admin UI
 status: todo
 depends_on:
   - TASK-011-admin-auth-ui
+  - TASK-012-admin-ops-dashboard-ui
+  - TASK-013-admin-config-ui
   - TASK-015-maintenance-admin-api
 conflict_domains:
   - ui/src/components/**
@@ -26,6 +28,7 @@ current_gate: not_started
 branch_freshness: unknown
 verification:
   - npm --prefix ui run test -- --run src/components/AdminMaintenance.test.tsx
+  - npm --prefix ui run test -- --run src/components/AdminOps.test.tsx src/components/AdminConfig.test.tsx src/components/AdminAuth.test.tsx
   - npm --prefix ui run typecheck
 ---
 
@@ -68,6 +71,8 @@ and result review flows.
 
 - `ui/src/components/admin/*`
 - `ui/src/lib/adminApi.ts`
+- `ui/src/components/admin/AdminDashboard.tsx`
+- `ui/src/components/admin/AdminConfig.tsx`
 - `src/transport/admin-maintenance.ts`
 - `ui/src/components/CleanupBasketDrawer.tsx`
 - `ui/src/components/tasks/BulkActionBar.tsx`
@@ -81,12 +86,15 @@ and result review flows.
 ## Likely Files / Areas
 
 - `ui/src/components/admin/AdminMaintenance.tsx`
+- `ui/src/components/admin/AdminDashboard.tsx`
 - `ui/src/lib/adminApi.ts`
 - `ui/src/components/AdminMaintenance.test.tsx`
 
 ## Dependencies
 
 - TASK-011-admin-auth-ui
+- TASK-012-admin-ops-dashboard-ui
+- TASK-013-admin-config-ui
 - TASK-015-maintenance-admin-api
 
 ## Conflict Domains
@@ -132,6 +140,13 @@ Share confirmation/progress components with config UI if useful.
 - Preserve dense operational layout for repeated use.
 - Extend the WAVE-007 admin API client in `ui/src/lib/adminApi.ts`; do not add
   a parallel admin auth store or localStorage-backed admin credential path.
+- Build into the WAVE-008 `AdminDashboard` shell. Add maintenance navigation or
+  panels without dropping health, queue, stats, config/models/jobs, API keys,
+  audit, or the `AdminConfig` Config tab.
+- Preserve the WAVE-008 shared admin client contract: same-origin cookie
+  requests, in-memory CSRF, no admin bearer header, and no localStorage
+  persistence for admin, API-key, TOTP, bootstrap, provider secret, or job
+  secret-derived material.
 - Use the WAVE-007 maintenance API routes:
   `/admin/api/maintenance/reextract/dry-run`,
   `/admin/api/maintenance/reextract/apply`,
@@ -149,6 +164,9 @@ Share confirmation/progress components with config UI if useful.
   material from job payloads/results.
 - Web edge-prune UI must keep the reviewed `llm-extraction` source constraint;
   do not expose CLI's broader `any` source selector.
+- If edits touch `AdminDashboard` or `ui/src/lib/adminApi.ts`, include
+  AdminOps/AdminConfig/AdminAuth regression checks in freshness evidence so the
+  WAVE-008 dashboard/config panels stay intact.
 
 ## Durable Memory Notes To Consider
 
@@ -164,6 +182,7 @@ Share confirmation/progress components with config UI if useful.
 ## Validation Steps
 
 - `npm --prefix ui run test -- --run src/components/AdminMaintenance.test.tsx`
+- `npm --prefix ui run test -- --run src/components/AdminOps.test.tsx src/components/AdminConfig.test.tsx src/components/AdminAuth.test.tsx`
 - `npm --prefix ui run typecheck`
 
 ## Verification Evidence

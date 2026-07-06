@@ -616,7 +616,7 @@ Drift notes:
 
 ### WAVE-008
 
-Status: ready_for_reconciliation
+Status: done
 
 Tasks:
 
@@ -739,6 +739,12 @@ Progress:
   task file to `done/`, removed the clean TASK-013 worktree, and pushed the
   epic branch. GitHub marked PR #90 `MERGED` at 2026-07-06T20:15:58Z. WAVE-008
   is ready for reconciliation.
+- 2026-07-06T20:18:32Z reconciliation: WAVE-008 shared context now records the
+  `AdminDashboard` operations shell, `AdminConfig` Config-tab integration,
+  shared `adminApi` client consumption, UI secret redaction/write-only
+  controls, validation/apply warnings, and downstream TASK-016/TASK-017/TASK-018
+  handoffs. TASK-012/TASK-013 are done, PR #89/#90 are merged, and both
+  worktrees are cleaned up.
 
 Stop condition:
 
@@ -749,7 +755,7 @@ Stop condition:
 
 ### WAVE-009
 
-Status: planned
+Status: ready_to_start
 
 Tasks:
 
@@ -762,8 +768,8 @@ Recommended strategy:
 - Review mode: risk_based
 - Monitoring mode: adaptive
 - Confidence: high
-- Requires user confirmation: yes
-- Confirmed by: null
+- Requires user confirmation: no
+- Confirmed by: Ivo via Codex finish-all-waves request on 2026-07-06
 
 Rationale:
 
@@ -774,6 +780,7 @@ Rationale:
 Activation rule:
 
 - Activate after WAVE-008 reconciliation.
+- Ready after WAVE-008 reconciliation on 2026-07-06.
 
 Stop condition:
 

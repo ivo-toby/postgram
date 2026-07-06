@@ -402,6 +402,69 @@ Carry-forward test expectations:
   idempotent apply retry display, job polling/progress, cancellation/error
   state, and safe result rendering.
 
+## WAVE-008 Verification Evidence
+
+TASK-012 and TASK-013 merged after Schrodinger `REVIEW_PASS` with no remaining
+P1/P2 findings.
+
+TASK-012 passed before merge after final freshness head `298804f`:
+
+- `git rev-list --left-right --count origin/codex/epic/admin-configuration-frontend...HEAD`
+  reported `0 5`.
+- `git merge-tree --write-tree origin/codex/epic/admin-configuration-frontend HEAD`
+- `git diff --check origin/codex/epic/admin-configuration-frontend...HEAD`
+- `npm --prefix ui run test -- --run src/components/AdminOps.test.tsx` (11
+  tests)
+- `npm --prefix ui run test -- --run src/components/AdminAuth.test.tsx` (16
+  tests)
+- `npm --prefix ui run typecheck`
+
+TASK-013 passed before merge after final freshness head `2efc58f`:
+
+- `git rev-list --left-right --count origin/codex/epic/admin-configuration-frontend...HEAD`
+  reported `0 8`.
+- `git merge-tree --write-tree origin/codex/epic/admin-configuration-frontend HEAD`
+- `git diff --check origin/codex/epic/admin-configuration-frontend...HEAD`
+- `npm --prefix ui run test -- --run src/components/AdminConfig.test.tsx` (22
+  tests)
+- `npm --prefix ui run test -- --run src/components/AdminOps.test.tsx` (11
+  tests)
+- `npm --prefix ui run test -- --run src/components/AdminAuth.test.tsx` (16
+  tests)
+- `npm --prefix ui run typecheck`
+- `npm run typecheck`
+- `jq empty .wdd/epics/EPIC-admin-configuration-frontend/orchestration.json`
+- `git diff --check HEAD^..HEAD`
+
+Coverage added:
+
+- Admin operations dashboard rendering for health, queue, stats,
+  config/models/jobs, API keys, and audit panels through the shared admin API
+  client.
+- API-key create/list/revoke UI flows, one-time plaintext key display, step-up
+  prompt behavior, and no localStorage persistence for key/admin credential
+  material.
+- Provider configuration form behavior for pending/applied values, validation,
+  apply, restart/reembed warnings, stale-validation blocking, step-up prompts,
+  redacted secret state, and blank/write-only provider secret inputs.
+- Regression coverage that the AdminConfig UI is integrated into the
+  AdminDashboard shell without dropping the existing operations panels.
+
+Carry-forward test expectations:
+
+- TASK-016 should add focused maintenance UI tests for dry-run preview gating,
+  apply requiring recent step-up and a fresh matching preview, scoped
+  idempotency-key retry display, job polling/progress, cancellation/error
+  states, and safe result rendering.
+- TASK-016 should keep AdminOps/AdminAuth/AdminConfig regression coverage in
+  its freshness checks when touching the shared dashboard shell or admin API
+  client.
+- TASK-017 should run a clean-volume Docker/browser smoke that exercises
+  bootstrap, login/MFA, Config tab redaction/write-only behavior, API-key
+  creation, dashboard status, and one safe maintenance preview after TASK-016.
+- TASK-018 should include broad UI storage assertions and final security review
+  for dashboard/config/maintenance surfaces.
+
 ## Durable Memory
 
 ### Docker First-Run Must Be Tested, Not Assumed

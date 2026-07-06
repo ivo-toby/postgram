@@ -89,6 +89,10 @@ handoff preparation.
 - `.wdd/epics/EPIC-admin-configuration-frontend/epic-validation.md`
 - `.wdd/epics/EPIC-admin-configuration-frontend/final-pr.md`
 - `README.md`
+- `ui/src/components/admin/AdminDashboard.tsx`
+- `ui/src/components/admin/AdminConfig.tsx`
+- `ui/src/components/admin/AdminMaintenance.tsx`
+- `ui/src/lib/adminApi.ts`
 
 ## Dependencies
 
@@ -136,6 +140,21 @@ Keep final artifacts concise and evidence-based.
 
 - Treat this as a validation and review task, not a feature-building task.
 - Include exact verification evidence in completion notes.
+- Include the WAVE-008 frontend admin surfaces in the final security review:
+  `AdminDashboard`, `AdminConfig`, API-key UI, audit/stats/status panels, and
+  the shared `ui/src/lib/adminApi.ts` client.
+- Confirm browser storage does not contain admin session tokens, bootstrap
+  tokens, TOTP seeds, provider secrets, one-time API-key plaintext, auth
+  headers, or reusable token prefixes after auth, dashboard, config, and
+  maintenance UI flows.
+- Validate provider-config redaction/write-only behavior, stale-validation
+  apply blocking, restart/reembed warnings, one-time API-key plaintext display,
+  preview-before-apply maintenance controls, step-up gating, safe job summary
+  rendering, and preservation of all dashboard panels after TASK-016.
+- Treat the Docker no-CLI claim as proven only if TASK-017 recorded a
+  clean-volume browser smoke for bootstrap/login/MFA, Config tab redaction,
+  API-key creation, dashboard status, and a safe maintenance dry-run without
+  normal `pgm-admin` use.
 
 ## Durable Memory Notes To Consider
 

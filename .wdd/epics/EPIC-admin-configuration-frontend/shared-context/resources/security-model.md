@@ -460,6 +460,49 @@ Carry-forward security gates:
 - TASK-016 must make preview-before-apply and step-up-before-apply explicit in
   the UI, poll job status, and display only safe job summaries.
 
+## WAVE-008 Reconciled Admin Dashboard And Config UI Controls
+
+TASK-012 completed the browser operations dashboard UI in PR #89.
+
+Implemented dashboard controls:
+
+- The dashboard uses the shared admin API client with same-origin cookie
+  requests and in-memory CSRF; it does not add admin bearer headers or a
+  localStorage-backed admin credential path.
+- API-key creation keeps plaintext key material to the one-time create
+  response/display flow. List, audit, stats, and dashboard state do not render
+  key hashes, reusable prefixes, or plaintext keys after creation.
+- Audit, stats, health, queue, model/config status, and job views consume safe
+  aggregate/redacted backend responses.
+
+TASK-013 completed the provider configuration UI in PR #90.
+
+Implemented config UI controls:
+
+- `AdminConfig` is mounted inside the protected `AdminDashboard` shell, so it
+  inherits the active-admin UI boundary and shared CSRF client behavior.
+- Provider secret inputs remain blank and write-only on load and after
+  validation/apply. UI state does not persist plaintext secrets, ciphertext,
+  auth headers, token prefixes, provider response bodies, bootstrap tokens,
+  TOTP seeds, session tokens, or admin bearer credentials in localStorage.
+- Apply controls are blocked unless current validation evidence exists. Stale
+  validation, restart-required, and reembed-required states remain visible
+  before apply.
+- Step-up prompts are used for secret writes and apply through the shared admin
+  auth UI flow.
+
+Carry-forward security gates:
+
+- TASK-016 must add maintenance controls to the existing dashboard without
+  weakening the browser-storage, CSRF, step-up, preview-before-apply, or safe
+  job-summary invariants.
+- TASK-017 Docker smoke should include a browser-level check that admin config
+  secrets stay redacted/write-only after restart and that no normal
+  `pgm-admin` usage is required for the supported happy path.
+- TASK-018 should explicitly review the WAVE-008 UI surfaces for localStorage
+  secret/session leakage, one-time API-key plaintext behavior, provider secret
+  redaction, stale-validation gating, and preserved dashboard panel access.
+
 ## OAuth/OIDC Boundary
 
 Existing OAuth/DCR is for native remote MCP connectors. It lets external clients

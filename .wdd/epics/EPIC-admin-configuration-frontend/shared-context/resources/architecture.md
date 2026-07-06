@@ -308,6 +308,44 @@ Future architecture implications:
   around shared services; they should not add CLI passthrough, raw SQL, or
   synchronous long-running request handlers.
 
+## WAVE-008 Implemented Admin Dashboard And Config UI Boundaries
+
+PR #89 added the shared operations dashboard shell:
+
+- `ui/src/components/admin/AdminDashboard.tsx` owns the admin operations shell
+  and panel navigation for operational status, config/models/jobs, API keys,
+  and audit surfaces.
+- `ui/src/components/admin/AdminApiKeys.tsx` and
+  `ui/src/components/admin/AdminAudit.tsx` consume the WAVE-006 key/audit/stats
+  contracts through the shared admin API client.
+- `ui/src/lib/adminApi.ts` is still the only browser admin client; it now
+  includes diagnostics, model/config status, job, API-key, audit, and stats
+  methods without adding another auth store.
+
+PR #90 added provider configuration UI inside that same shell:
+
+- `ui/src/components/admin/AdminConfig.tsx` is mounted into the
+  `AdminDashboard` Config panel, preserving the TASK-012 operations shell
+  rather than reviving a second placeholder shell.
+- `ui/src/lib/adminApi.ts` now includes provider-config read, save, secret,
+  validate, and apply methods that use the same cookie/CSRF client behavior.
+- `src/transport/admin-provider-config.ts` and its integration tests received
+  focused adjustments while preserving the existing backend provider-config
+  contract.
+
+Future architecture implications:
+
+- TASK-016 should add maintenance UI to the existing `AdminDashboard` shell and
+  shared `adminApi` client. It should not replace the shell or drop the
+  existing health, queue, stats, config/models/jobs, API-key, audit, or Config
+  panels.
+- TASK-017 should validate the real browser admin shell in Docker, including
+  bootstrap/login/MFA, the Config panel, API-key creation, operational status,
+  and at least one safe maintenance dry-run once TASK-016 lands.
+- Any future admin frontend work should treat `AdminDashboard` plus
+  `ui/src/lib/adminApi.ts` as the integration point unless a new reviewed
+  shell boundary is explicitly planned.
+
 ## Open Architecture Questions
 
 - Can extraction provider settings be hot-reloaded safely after the first

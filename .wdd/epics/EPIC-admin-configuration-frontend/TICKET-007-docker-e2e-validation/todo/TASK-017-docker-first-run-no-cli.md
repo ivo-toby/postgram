@@ -29,6 +29,7 @@ branch_freshness: unknown
 verification:
   - docker compose config
   - npm run typecheck
+  - npm --prefix ui run typecheck
   - npm --prefix ui run build
 ---
 
@@ -76,6 +77,8 @@ and maintenance require no normal `pgm-admin` usage or manual env-file edits.
 - `docs/manual-test-plan.md`
 - `Dockerfile`
 - `ui/Dockerfile`
+- `ui/src/components/admin/AdminDashboard.tsx`
+- `ui/src/components/admin/AdminConfig.tsx`
 
 ### Shared Context References
 
@@ -147,6 +150,18 @@ Keep docs honest about emergency CLI fallback and public exposure risks.
 - The clean-volume smoke should prove setup fails closed when required admin
   encryption keys are absent or invalid, and succeeds when the documented
   Docker/operator path provides them.
+- WAVE-008 added the real browser admin shell and Config tab. The smoke path
+  should exercise the protected `AdminDashboard`, the `AdminConfig` provider
+  configuration panel, API-key creation from the admin UI, and dashboard
+  health/queue/stats/config-model/jobs/audit visibility rather than only
+  backend routes.
+- Provider secrets configured through the UI must remain write-only/redacted
+  after reload/restart. Do not document any Docker path that requires putting
+  provider plaintext, TOTP seeds, session tokens, or bootstrap tokens into
+  browser storage or database backups.
+- After TASK-016 lands, include one safe maintenance dry-run from the admin UI
+  and prove job polling works without normal `pgm-admin` usage. Keep emergency
+  `pgm-admin` recovery documented separately from the supported happy path.
 
 ## Durable Memory Notes To Consider
 
@@ -165,6 +180,7 @@ Keep docs honest about emergency CLI fallback and public exposure risks.
 - `docker compose config`
 - Clean-volume Docker smoke command set from the task evidence
 - `npm run typecheck`
+- `npm --prefix ui run typecheck`
 - `npm --prefix ui run build`
 
 ## Verification Evidence

@@ -290,6 +290,45 @@ Maintenance route contract:
 - Job payloads/results use safe summaries only and continue to use
   `/admin/api/jobs` and `/admin/api/jobs/:jobId` for progress/status.
 
+## WAVE-008 Implemented Admin UI Client Consumption
+
+TASK-012 consumed the existing business-admin API contracts from the frontend:
+
+- `ui/src/lib/adminApi.ts` provides shared browser methods for diagnostics,
+  models/config status, jobs, API-key management, audit, and stats.
+- The client continues to use the HttpOnly `pgm_admin_session` cookie,
+  same-origin credentials, in-memory CSRF, and `X-CSRF-Token` for unsafe
+  methods. It does not introduce admin bearer headers.
+- API-key create/revoke flows preserve recent step-up behavior and one-time
+  plaintext key display semantics from the backend contract.
+- Audit and stats rendering consume redacted/safe response shapes; key hashes,
+  reusable prefixes, and secret-looking audit details stay out of UI state.
+
+TASK-013 consumed the provider-config API inside the same frontend shell:
+
+- `AdminConfig` calls `/admin/api/provider-config` for redacted state,
+  pending/applied settings, validation state, env fallback status, and apply
+  warnings.
+- It calls `PUT /admin/api/provider-config` for pending non-secret settings,
+  `PUT /admin/api/provider-config/secrets` for write-only secrets,
+  `POST /admin/api/provider-config/validate` for validation, and
+  `POST /admin/api/provider-config/apply` for apply.
+- Secret inputs remain blank/write-only on readback and validation/apply; UI
+  state may track whether a secret is configured but must not persist or render
+  plaintext, ciphertext, auth headers, reusable token prefixes, or provider
+  response bodies.
+- Apply UI must respect stale-validation, `restartRequired`, and
+  `reembedRequired` API state rather than hiding those impacts.
+
+Handoff contract:
+
+- TASK-016 should add maintenance dry-run/apply/job-status methods to
+  `ui/src/lib/adminApi.ts` and mount UI into the existing `AdminDashboard`
+  shell.
+- TASK-016 must preserve the WAVE-008 dashboard panels when adding maintenance
+  navigation and should keep all destructive operations behind preview,
+  step-up, idempotency, and job polling flows.
+
 ## Response Shape
 
 Use the existing app error response style where practical:

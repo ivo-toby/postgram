@@ -86,6 +86,15 @@ configuration, maintenance jobs, or Docker behavior.
   `/admin/api/maintenance/{reextract,reembed,prune-edges}/{dry-run,apply}`.
   Dry-runs and applies create admin jobs, apply requires recent step-up plus
   matching fresh preview evidence, and job summaries remain redacted safe JSON.
+- Admin operations and configuration UI are now implemented in the protected
+  admin shell. `AdminDashboard` owns the shared operations navigation, and
+  `AdminConfig` is mounted into that shell instead of creating a separate admin
+  surface. Future admin UI tasks must extend this shell and shared admin API
+  client without dropping health, queue, stats, config/models/jobs, API keys,
+  audit, or config panels.
+- Provider configuration UI keeps provider secrets write-only and blank on
+  load, uses in-memory CSRF through the shared admin client, blocks apply until
+  current validation evidence exists, and surfaces restart/reembed impacts.
 
 ## Key Warnings
 
@@ -346,6 +355,46 @@ configuration, maintenance jobs, or Docker behavior.
   - TASK-016 must call the concrete maintenance dry-run/apply endpoints, require
     preview-before-apply UI flow, prompt step-up before apply, poll
     `/admin/api/jobs/:jobId`, and render only safe job summaries.
+
+### WAVE-008 Admin Ops Dashboard And Config UI
+
+- Status: merged and reconciled on 2026-07-06.
+- PRs: https://github.com/ivo-toby/postgram/pull/89 and
+  https://github.com/ivo-toby/postgram/pull/90, merged at
+  2026-07-06T18:54:38Z and 2026-07-06T20:15:58Z.
+- Merge commits: `ef54876` for TASK-012 admin ops dashboard UI and `9974b29`
+  for TASK-013 admin config UI.
+- Reviews: Schrodinger `REVIEW_PASS`; both tasks required branch freshness
+  fixes, and TASK-013 also resolved the dashboard-shell integration blocker.
+- Implemented admin ops UI contract:
+  - `ui/src/components/admin/AdminDashboard.tsx` is the shared operations
+    shell for admin status, configuration/model/job visibility, API keys, and
+    audit.
+  - `ui/src/components/admin/AdminApiKeys.tsx` and
+    `ui/src/components/admin/AdminAudit.tsx` consume the existing key/audit
+    admin APIs through `ui/src/lib/adminApi.ts`.
+  - One-time API-key plaintext is shown only in the create flow and remains
+    unrecoverable after dismissal/reload.
+- Implemented admin config UI contract:
+  - `ui/src/components/admin/AdminConfig.tsx` is mounted inside the
+    `AdminDashboard` Config tab rather than introducing a second admin shell.
+  - The UI consumes `/admin/api/provider-config/*` for redacted read, pending
+    save, secret write, validation, and apply.
+  - Provider secret inputs stay blank/write-only on load and after validation;
+    the UI does not store admin/session/bootstrap/TOTP/provider secret material
+    in localStorage.
+  - Apply is gated on current validation evidence and visible
+    restart/reembed warnings.
+- Carry-forward gates:
+  - TASK-016 must extend the WAVE-008 `AdminDashboard` shell and shared
+    `adminApi` client for maintenance dry-run/apply/job polling. It must not
+    replace or drop the WAVE-008 health, queue, stats, config/models/jobs, API
+    keys, audit, or Config panels.
+  - TASK-017 Docker smoke must exercise the browser admin shell, the Config
+    tab, and at least one safe maintenance preview without relying on normal
+    `pgm-admin` usage.
+  - TASK-018 final validation must include browser-storage checks for the
+    dashboard/config UI and provider secret redaction/write-only behavior.
 
 ## Recent Durable Memory
 

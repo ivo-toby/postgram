@@ -802,6 +802,10 @@ Progress:
 - 2026-07-06T21:11:02Z heartbeat: no PR exists yet; Singer remains active in
   expected maintenance UI/client files with fresh `AdminMaintenance` file
   activity, branch freshness is current, and no nudge was sent.
+- 2026-07-06T21:26:02Z heartbeat: Singer returned `DONE` and opened draft PR
+  #91. Controller verified PR #91 was clean/current before the review
+  checkpoint and requested Hypatia review; final branch freshness refresh is
+  required before merge.
 
 Stop condition:
 

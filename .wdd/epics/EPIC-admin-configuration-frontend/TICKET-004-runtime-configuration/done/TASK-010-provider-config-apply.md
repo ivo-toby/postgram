@@ -6,7 +6,7 @@ ticket: TICKET-004-runtime-configuration
 wave: WAVE-005
 slug: provider-config-apply
 title: Provider Config Apply
-status: review
+status: done
 depends_on:
   - TASK-009-settings-secret-store
 conflict_domains:
@@ -21,12 +21,12 @@ assigned_model_class: implementationComplex
 review_model_class: review
 branch: codex/task/TASK-010-provider-config-apply
 worker_worktree: /Users/ivo.toby/workspace/postgram/.worktrees/TASK-010-provider-config-apply
-worktree_status: refreshed_pushed
+worktree_status: cleaned_up
 pr: https://github.com/ivo-toby/postgram/pull/84
 worker_thread_id: 019f35ff-a193-7ae0-a4b8-1ec53faabb74
-review_thread_id: 019f3708-a5ce-7053-97df-8703bcfbb90c
-current_gate: review
-branch_freshness: refreshed_with_origin_codex_epic_admin_configuration_frontend
+review_thread_id: 019f322c-02e7-7590-8b8e-ebdd1e9c52ac
+current_gate: merged
+branch_freshness: current_at_merge
 verification:
   - npm test -- tests/integration/admin-provider-config.test.ts
   - npm test -- tests/unit/config.test.ts
@@ -37,7 +37,7 @@ verification:
 
 ## Status
 
-review
+done
 
 ## Parent Ticket
 
@@ -136,6 +136,14 @@ Verified and dispatched at 2026-07-06T05:56:19Z with worker Goodall
 
 https://github.com/ivo-toby/postgram/pull/84
 
+Lorentz (`019f322c-02e7-7590-8b8e-ebdd1e9c52ac`) returned follow-up
+`REVIEW_PASS` after Goodall resolved the P2 branch-freshness/product-conflict
+blocker in commit `515cfa5a16b213f4fda78a0c536fb1806daf8b68`.
+
+Merged locally into `codex/epic/admin-configuration-frontend` at commit
+`f5efbc0eef0394abb22576221f50491eab86660a`. GitHub marked PR #84 `MERGED` at
+2026-07-06T11:31:10Z after the closeout checkpoint was pushed.
+
 ## RED-GREEN TDD Plan
 
 ### RED
@@ -226,6 +234,9 @@ Keep provider construction logic centralized to avoid env/DB drift.
 - GREEN: `npm test -- tests/contract/admin-auth-routes.test.ts tests/contract/admin-mfa-routes.test.ts tests/contract/admin-api.test.ts` passed, 18 tests.
 - GREEN: `npm run typecheck` passed.
 - GREEN: targeted lint passed with `npx eslint src/index.ts src/transport/admin.ts src/services/admin-diagnostics-service.ts src/config.ts src/services/admin-settings-service.ts src/services/embeddings/providers.ts src/services/llm-provider.ts src/services/admin-provider-config-service.ts src/transport/admin-provider-config.ts tests/unit/config.test.ts tests/integration/admin-provider-config.test.ts tests/contract/admin-api.test.ts`.
+- REVIEW_PASS: Lorentz follow-up review passed after the branch-freshness fix;
+  controller verified final divergence, merge-tree, orchestration JSON, 42
+  provider-config/admin-api tests, and typecheck before local merge.
 
 ## Review Feedback
 
@@ -250,3 +261,5 @@ Keep provider construction logic centralized to avoid env/DB drift.
 - Runtime settings and secrets use `admin_runtime_settings`, `admin_runtime_secrets`, and `ADMIN_SETTINGS_ENCRYPTION_KEY`; secret validation metadata remains `{}` on save and readback.
 - DB-applied provider base URLs are treated as attacker-controlled input. The validation and runtime egress policy rejects unsafe schemes, query strings, fragments, credentials, private/link-local/metadata/reserved IPs, unsafe hostnames, and redirects, with local-provider exceptions scoped to local hosts.
 - Apply semantics preserve env fallback until DB settings are explicitly applied, preserve last-applied values while pending edits exist, make restart-required and reembed-required states explicit, and block embedding identity changes that require reembedding.
+- The clean, pushed WAVE-005 task worktree was removed during wave
+  reconciliation on 2026-07-06.

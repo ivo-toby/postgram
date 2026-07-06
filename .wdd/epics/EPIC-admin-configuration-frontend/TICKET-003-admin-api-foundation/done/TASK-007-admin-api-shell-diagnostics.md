@@ -18,7 +18,7 @@ assigned_model_class: implementationComplex
 review_model_class: review
 branch: codex/task/TASK-007-admin-api-shell-diagnostics
 worker_worktree: /Users/ivo.toby/workspace/postgram/.worktrees/TASK-007-admin-api-shell-diagnostics
-worktree_status: clean_pushed
+worktree_status: cleaned_up
 pr: https://github.com/ivo-toby/postgram/pull/83
 worker_thread_id: 019f35ff-5f3c-7cc0-aa6e-78941a3fd7fd
 review_thread_id: 019f322c-02e7-7590-8b8e-ebdd1e9c52ac
@@ -234,3 +234,5 @@ Keep route response shapes reusable for frontend API client.
   classification, purpose, and validation status. It does not return secret
   names, plaintext, ciphertext, token prefixes, or arbitrary validation
   metadata.
+- The clean, pushed WAVE-005 task worktree was removed during wave
+  reconciliation on 2026-07-06.

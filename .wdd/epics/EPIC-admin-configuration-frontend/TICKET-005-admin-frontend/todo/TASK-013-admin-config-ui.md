@@ -140,6 +140,16 @@ maintenance UI if useful.
   another credential prompt.
 - Tests should prove provider secret inputs are write-only, remain blank on
   load, and are not stored in localStorage or other browser persistence.
+- Use the WAVE-005 provider-config API contract:
+  `GET /admin/api/provider-config`, `PUT /admin/api/provider-config`,
+  `PUT /admin/api/provider-config/secrets`,
+  `POST /admin/api/provider-config/validate`, and
+  `POST /admin/api/provider-config/apply`.
+- Render pending versus applied provider state from the API. Pending edits must
+  not look active until validation/apply succeeds.
+- Surface `restartRequired` and `reembedRequired` states from the API. Do not
+  present embedding identity or dimension changes as a normal apply path when
+  the API says reembedding is required.
 
 ## Durable Memory Notes To Consider
 

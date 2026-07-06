@@ -3,7 +3,7 @@ id: EPIC-admin-configuration-frontend-RESOURCE-security-model
 kind: shared_context_resource
 epic: EPIC-admin-configuration-frontend
 resource: security-model
-updated_at: 2026-07-05
+updated_at: 2026-07-06
 ---
 
 # Shared Context Resource: Security Model
@@ -322,6 +322,54 @@ Carry-forward security gates:
   define/test the egress/SSRF policy before running connection tests.
 - UI tasks must never store admin session tokens, bootstrap tokens, TOTP seeds,
   provider secrets, or admin bearer credentials in localStorage.
+
+## WAVE-005 Reconciled Diagnostics And Provider Config Controls
+
+TASK-007 and TASK-010 completed the first privileged admin API shell and
+provider-config apply controls in PR #83 and PR #84.
+
+Implemented diagnostics controls:
+
+- `/admin/api/diagnostics/*` routes require active-MFA admin sessions and reject
+  pending-MFA sessions.
+- Ordinary Postgram API-key bearer tokens and MCP OAuth bearer tokens do not
+  authorize diagnostics.
+- Config-status diagnostics return aggregate counts only. They do not reveal
+  secret names, plaintext, ciphertext, token prefixes, or arbitrary secret
+  validation metadata.
+
+Implemented provider-config controls:
+
+- Provider-config routes use the existing admin session/CSRF boundary; secret
+  writes and apply require recent step-up.
+- Provider-config mutations write structured `audit_log.admin_user_id`
+  attribution.
+- Provider secrets remain write-only. Secret validation metadata remains `{}` on
+  save/readback, and validation failures are summarized without provider bodies,
+  tokens, auth headers, or reusable prefixes.
+- Provider base URLs are attacker-controlled admin input. Save/validation now
+  rejects unsafe schemes, credentials, query strings, fragments, private,
+  reserved, link-local, metadata, and other unsafe host/IP forms before
+  provider connection tests or runtime use.
+- Connection tests refuse redirects and use redacted errors.
+- DB-applied provider URLs use guarded runtime fetch behavior to protect against
+  DNS rebinding and redirect drift. Env fallback URLs remain operator-controlled
+  deployment inputs rather than admin-configured UI inputs.
+- Apply requires current validation evidence and rejects stale validation when
+  settings or related secrets changed after validation.
+- Embedding identity changes that require reembedding are reported as
+  `reembedRequired` and blocked from simple provider apply.
+
+Carry-forward security gates:
+
+- TASK-008 key create/revoke endpoints must require recent step-up and must
+  preserve one-time plaintext API-key display only in the create response.
+- TASK-014/TASK-015 job and maintenance payloads must not store provider
+  plaintext, ciphertext, token prefixes, auth headers, or arbitrary validation
+  metadata in job inputs/results.
+- TASK-013 UI must keep provider secret fields blank on load, avoid
+  localStorage/browser persistence for secret material, and surface
+  restart/reembed warnings from the provider-config API before apply.
 
 ## OAuth/OIDC Boundary
 

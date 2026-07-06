@@ -140,6 +140,15 @@ Extract duplicated CLI logic into services only where it reduces drift.
   attribution; do not rely on free-form JSON details as the only actor record.
 - Key create/revoke must compose the active-MFA admin gate with recent step-up.
   One-time plaintext key display remains create-response-only.
+- Extend the existing WAVE-005 `/admin/api/*` admin transport rather than
+  adding a parallel route family. Keep `/admin/api/diagnostics/*` working with
+  active-MFA sessions while adding key, audit, and stats routes.
+- New tests should include a regression that diagnostics routes still reject
+  ordinary API-key/MCP OAuth bearer tokens and pending-MFA sessions after key,
+  audit, and stats endpoints are registered.
+- Reuse WAVE-005 redaction posture for stats and audit responses: no API key
+  hashes, plaintext keys, token prefixes, provider secrets, or arbitrary
+  provider validation metadata.
 
 ## Durable Memory Notes To Consider
 

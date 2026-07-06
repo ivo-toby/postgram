@@ -3,7 +3,7 @@ id: EPIC-admin-configuration-frontend-RESOURCE-architecture
 kind: shared_context_resource
 epic: EPIC-admin-configuration-frontend
 resource: architecture
-updated_at: 2026-07-05
+updated_at: 2026-07-06
 ---
 
 # Shared Context Resource: Architecture
@@ -185,11 +185,59 @@ Architecture implication:
 - TASK-014 and later maintenance work can rely on structured
   `audit_log.admin_user_id` for admin actor attribution.
 
+## WAVE-005 Implemented Admin API And Provider Config Boundaries
+
+PR #83 added the first read-only admin diagnostics service and routes:
+
+- `src/services/admin-diagnostics-service.ts` owns safe diagnostics projection
+  for health, queue, embedding model, and runtime config status.
+- `src/transport/admin.ts` registers `/admin/api/diagnostics/*` inside the
+  existing admin transport.
+- Diagnostics compose session proof with active-MFA proof but do not require
+  CSRF or step-up because they are read-only.
+- Config diagnostics are intentionally aggregate-only so later ops dashboards
+  cannot accidentally depend on secret names or arbitrary validation metadata.
+
+PR #84 added the provider configuration service and focused route module:
+
+- `src/services/admin-provider-config-service.ts` owns provider setting reads,
+  pending saves, secret writes, validation, connection tests, apply, runtime
+  resolution, and DB-over-env overlay behavior.
+- `src/transport/admin-provider-config.ts` registers
+  `/admin/api/provider-config/*` from the existing admin transport instead of
+  creating a second admin namespace.
+- `src/db/migrations/012_admin_settings_applied_values.sql` extends runtime
+  settings with applied-value tracking so pending edits can coexist with the
+  last applied runtime state.
+- `src/index.ts` passes provider-config runtime options alongside diagnostics
+  options when registering admin routes.
+
+Runtime configuration implication:
+
+- Env settings remain bootstrap/fallback values until an admin DB value is
+  explicitly applied.
+- Last-applied DB values continue to drive runtime behavior while pending edits
+  wait for validation/apply.
+- Provider base URLs from DB-backed settings use the reviewed egress policy and
+  guarded fetch path at runtime; operator-controlled env fallback remains the
+  existing deployment boundary.
+- The first implementation reports restart-required and reembed-required
+  impacts rather than pretending all provider changes can hot-reload.
+
+Future architecture implications:
+
+- TASK-008 should add API-key/audit/stats routes beside diagnostics/provider
+  config in the same admin transport and keep response shapes typed.
+- TASK-014 should add job persistence without overloading provider-config apply
+  for long-running migration or maintenance work.
+- TASK-013 should consume the provider-config routes as the source of truth for
+  redacted secret state, validation state, and apply warnings.
+
 ## Open Architecture Questions
 
-- Can extraction provider settings be hot-reloaded safely in the first
-  implementation, or should the UI initially mark them restart-required until a
-  worker reload service is proven?
+- Can extraction provider settings be hot-reloaded safely after the first
+  provider-config implementation, or should the UI continue to mark them
+  restart-required until a worker reload service is proven?
 - Should the UI and backend continue as separate Docker services, or should the
   backend serve the built UI for simpler deployment?
 - What is the Docker-secret generation and persistence path for

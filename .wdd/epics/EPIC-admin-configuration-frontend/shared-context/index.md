@@ -2,7 +2,7 @@
 id: EPIC-admin-configuration-frontend-SHARED-CONTEXT
 kind: shared_context_index
 epic: EPIC-admin-configuration-frontend
-updated_at: 2026-07-05
+updated_at: 2026-07-06
 ---
 
 # Shared Context: EPIC-admin-configuration-frontend
@@ -60,6 +60,13 @@ configuration, maintenance jobs, or Docker behavior.
 - Provider/config applies use explicit save/validate/apply states. Extraction
   tuning can reload the worker once implemented; embedding identity changes are
   migration-sensitive and require dedicated dry-run/apply jobs.
+- Admin diagnostics are now implemented under `/admin/api/diagnostics/*` for
+  active-MFA admin sessions only, with aggregate-only config-status redaction.
+- Provider configuration is now implemented under
+  `/admin/api/provider-config/*`, with DB-backed pending/applied values,
+  write-only encrypted secrets, explicit validation/apply, SSRF-aware provider
+  URL policy, recent step-up for secret writes/apply, and explicit
+  restart/reembed impacts.
 
 ## Key Warnings
 
@@ -191,6 +198,46 @@ configuration, maintenance jobs, or Docker behavior.
   - TASK-011/TASK-013 frontend work must treat admin sessions as cookie/CSRF
     state, keep secret fields write-only, and never persist admin session,
     bootstrap, TOTP, or provider secret material in localStorage.
+
+### WAVE-005 Admin API Diagnostics And Provider Config Apply
+
+- Status: merged and reconciled on 2026-07-06.
+- PRs: https://github.com/ivo-toby/postgram/pull/83 and
+  https://github.com/ivo-toby/postgram/pull/84, merged at
+  2026-07-06T06:27:29Z and 2026-07-06T11:31:10Z.
+- Merge commits: `16985ef` for TASK-007 diagnostics and `f5efbc0` for
+  TASK-010 provider config apply.
+- Reviews: Lorentz `REVIEW_PASS`; TASK-010 required one P2 freshness fix after
+  TASK-007 merged, resolved at task head `515cfa5`.
+- Implemented admin API diagnostics contract:
+  - `/admin/api/diagnostics/health`, `/queue`, `/models`, and
+    `/config-status` live in the existing admin transport.
+  - Diagnostics require active-MFA admin sessions and reject pending-MFA
+    sessions plus ordinary API-key/MCP OAuth bearer credentials.
+  - Config-status returns aggregate counts only for runtime settings/secrets.
+- Implemented provider configuration contract:
+  - `/admin/api/provider-config` supports redacted read, pending setting save,
+    provider secret write, validate, and apply.
+  - `src/services/admin-provider-config-service.ts` owns DB-over-env runtime
+    resolution, validation freshness, connection tests, apply, and guarded
+    runtime fetches for DB-applied provider URLs.
+  - `src/db/migrations/012_admin_settings_applied_values.sql` stores
+    last-applied values so pending edits do not change runtime behavior before
+    apply.
+  - Provider base URLs are treated as attacker-controlled admin input; unsafe
+    schemes, credentials, query strings, fragments, private/reserved/link-local
+    hosts, metadata endpoints, redirects, and DNS rebinding are rejected.
+  - Secret writes and provider apply require recent step-up and structured
+    `audit_log.admin_user_id` attribution.
+- Carry-forward gates:
+  - TASK-008 should extend the same admin transport and preserve diagnostics
+    coexistence, active-MFA access, step-up for key create/revoke, one-time
+    plaintext key display, and bearer rejection.
+  - TASK-014/TASK-015 job and maintenance APIs must not persist provider
+    plaintext, ciphertext, token prefixes, auth headers, or arbitrary
+    validation metadata in job payloads or results.
+  - TASK-013 should consume provider-config route warnings and keep secret
+    fields write-only and blank on load.
 
 ## Recent Durable Memory
 

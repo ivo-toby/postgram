@@ -3,7 +3,7 @@ id: EPIC-admin-configuration-frontend-RESOURCE-api-contracts
 kind: shared_context_resource
 epic: EPIC-admin-configuration-frontend
 resource: api-contracts
-updated_at: 2026-07-05
+updated_at: 2026-07-06
 ---
 
 # Shared Context Resource: API Contracts
@@ -133,6 +133,69 @@ Service contract:
   routes belong under `/admin/api/*`, reject ordinary API-key/MCP OAuth bearer
   credentials, use the admin session cookie plus CSRF, and require step-up for
   secret writes.
+
+## WAVE-005 Implemented Diagnostics And Provider Config Routes
+
+TASK-007 added the first read-only business-admin diagnostics contract in PR
+#83.
+
+Implemented diagnostics endpoints:
+
+- `GET /admin/api/diagnostics/health` returns safe service health metadata.
+- `GET /admin/api/diagnostics/queue` returns safe enrichment queue status.
+- `GET /admin/api/diagnostics/models` returns embedding model diagnostics.
+- `GET /admin/api/diagnostics/config-status` returns aggregate runtime
+  settings and secret counts by state/classification/purpose/status.
+
+Diagnostics authorization contract:
+
+- Diagnostics routes are read-only, so they do not require CSRF or step-up.
+- They still require a valid admin session plus active MFA via
+  `createAdminSessionMiddleware({ enforceCsrf: false })` and
+  `createActiveAdminMiddleware()`.
+- Pending-MFA sessions receive `403`.
+- Ordinary Postgram API-key bearer tokens and MCP OAuth bearer tokens receive
+  `401`.
+- Config status responses must remain aggregate-only. They must not expose
+  secret names, plaintext, ciphertext, token prefixes, auth headers, or
+  arbitrary validation metadata.
+
+TASK-010 added provider configuration routes in PR #84.
+
+Implemented provider config endpoints:
+
+- `GET /admin/api/provider-config` reads redacted provider settings, secret
+  metadata, env fallback state, pending/applied state, validation state, and
+  apply warnings.
+- `PUT /admin/api/provider-config` saves pending non-secret provider settings.
+- `PUT /admin/api/provider-config/secrets` writes provider secrets.
+- `POST /admin/api/provider-config/validate` validates settings and optional
+  provider connectivity.
+- `POST /admin/api/provider-config/apply` applies the validated pending
+  provider configuration.
+
+Provider config authorization contract:
+
+- All provider config routes live under the same `/admin/api/*` browser-session
+  boundary and reject ordinary bearer credentials.
+- Mutations require CSRF.
+- Secret writes and apply require `createActiveAdminMiddleware({ requireStepUp:
+  true })`.
+- Provider config mutations write structured admin actor attribution through
+  `audit_log.admin_user_id`.
+
+Provider config response contract:
+
+- Secret inputs are write-only. Reads return configured/provider/purpose/status
+  and timestamps only.
+- Validation and connection-test failures must be redacted; provider response
+  bodies, tokens, auth headers, and reusable prefixes must not be persisted or
+  returned.
+- Apply responses must make `restartRequired` and `reembedRequired` impacts
+  explicit. Embedding identity changes are refused by simple apply and must
+  flow through the migration/job path.
+- Pending edits do not supersede last-applied DB values until apply succeeds;
+  env values remain fallback when no DB value is applied.
 
 ## Response Shape
 

@@ -145,6 +145,13 @@ creating an overbroad abstraction.
   keys/secret names and redacted metadata. Do not store plaintext secrets,
   ciphertext, token prefixes, or arbitrary secret validation metadata in job
   payloads or result summaries.
+- Treat WAVE-005 provider configuration as pending/applied state: pending
+  provider edits are not runtime state until validation/apply succeeds, and
+  jobs that need provider/runtime context should reference applied values or
+  safe setting identifiers only.
+- Job status routes should live under the existing `/admin/api/*` transport and
+  coexist with diagnostics and provider-config routes without changing their
+  auth/CSRF behavior.
 
 ## Durable Memory Notes To Consider
 

@@ -3,7 +3,7 @@ id: EPIC-admin-configuration-frontend-RESOURCE-testing-validation
 kind: shared_context_resource
 epic: EPIC-admin-configuration-frontend
 resource: testing-validation
-updated_at: 2026-07-05
+updated_at: 2026-07-06
 ---
 
 # Shared Context Resource: Testing And Validation
@@ -242,6 +242,56 @@ Carry-forward test expectations:
   provider URL/egress/SSRF policy tests before connection-test behavior.
 - TASK-011 and TASK-013 must assert that admin session, bootstrap, TOTP, and
   provider secret material are not written to localStorage.
+
+## WAVE-005 Verification Evidence
+
+TASK-007 and TASK-010 merged after Lorentz `REVIEW_PASS` with no remaining
+P1/P2 findings.
+
+TASK-007 passed before merge after task-branch freshness merge `f0e889e`:
+
+- `git diff --check`
+- `jq empty .wdd/epics/EPIC-admin-configuration-frontend/orchestration.json`
+- `npm test -- tests/contract/admin-api.test.ts` (3 tests)
+- `npm run typecheck`
+- focused ESLint for diagnostics/admin route files
+
+TASK-010 passed before merge after task-branch freshness merge `515cfa5`:
+
+- `git diff --check`
+- `git merge-tree --write-tree origin/codex/epic/admin-configuration-frontend HEAD`
+- `jq empty .wdd/epics/EPIC-admin-configuration-frontend/orchestration.json`
+- `npm test -- tests/integration/admin-provider-config.test.ts` (39 tests)
+- `npm test -- tests/unit/config.test.ts` (26 tests)
+- `npm test -- tests/integration/admin-settings-service.test.ts` (8 tests)
+- `npm test -- tests/contract/admin-auth-routes.test.ts tests/contract/admin-mfa-routes.test.ts tests/contract/admin-api.test.ts` (18 tests)
+- `npm test -- tests/integration/admin-provider-config.test.ts tests/contract/admin-api.test.ts` (42 tests)
+- `npm run typecheck`
+- targeted ESLint for provider-config/admin route files
+
+Coverage added:
+
+- Diagnostics success for active MFA admin sessions and denial for pending-MFA
+  sessions, ordinary API-key bearer tokens, and MCP OAuth bearer tokens.
+- Diagnostics config-status redaction with aggregate runtime settings/secrets
+  counts only.
+- Provider config redacted reads, invalid setting batch rejection, URL
+  egress/SSRF policy, redirect refusal, DNS-rebind protection, connection
+  validation freshness, stored-secret redaction/decryption failure behavior,
+  DB-over-env runtime resolution, pending-edit isolation, zero-version applied
+  rows, explicit restart/reembed impacts, and simple-apply rejection for
+  embedding identity changes.
+- Provider-config route contract for admin session, CSRF, recent step-up on
+  secret writes/apply, and ordinary bearer rejection.
+
+Carry-forward test expectations:
+
+- TASK-008 must include diagnostics coexistence when adding key/audit/stats
+  routes and must preserve ordinary bearer rejection for all new admin routes.
+- TASK-014 should prove job result payloads do not store provider secret
+  material or arbitrary provider validation metadata.
+- TASK-013 UI tests should consume provider-config API warnings and prove secret
+  inputs stay blank/write-only across load, validate, and apply flows.
 
 ## Durable Memory
 

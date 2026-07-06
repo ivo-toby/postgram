@@ -4,7 +4,7 @@ kind: wave_plan
 epic: EPIC-admin-configuration-frontend
 status: in_progress
 created_at: 2026-07-05
-updated_at: 2026-07-05
+updated_at: 2026-07-06
 ---
 
 # Wave Plan: EPIC-admin-configuration-frontend
@@ -19,10 +19,10 @@ updated_at: 2026-07-05
 | TASK-004-admin-auth-persistence | TICKET-002-admin-auth-foundation | TASK-001, TASK-002 | migrations, `src/auth/**`, admin auth services, integration tests | done |
 | TASK-005-admin-session-routes | TICKET-002-admin-auth-foundation | TASK-004 | admin routes, cookies, CSRF, lockout, auth contract tests | done |
 | TASK-006-admin-mfa-step-up | TICKET-002-admin-auth-foundation | TASK-004, TASK-005 | MFA tables, TOTP service, step-up middleware, sensitive action gates | done |
-| TASK-007-admin-api-shell-diagnostics | TICKET-003-admin-api-foundation | TASK-005, TASK-006 | admin transport, diagnostics routes, admin middleware | in_progress |
+| TASK-007-admin-api-shell-diagnostics | TICKET-003-admin-api-foundation | TASK-005, TASK-006 | admin transport, diagnostics routes, admin middleware | done |
 | TASK-008-admin-key-audit-stats-api | TICKET-003-admin-api-foundation | TASK-007 | key service, audit querying, stats service, admin API contracts | todo |
 | TASK-009-settings-secret-store | TICKET-004-runtime-configuration | TASK-003, TASK-005 | settings migrations, secret encryption, config service | done |
-| TASK-010-provider-config-apply | TICKET-004-runtime-configuration | TASK-009 | provider lifecycle, validation flows, config tests, worker reload semantics | in_progress |
+| TASK-010-provider-config-apply | TICKET-004-runtime-configuration | TASK-009 | provider lifecycle, validation flows, config tests, worker reload semantics | done |
 | TASK-011-admin-auth-ui | TICKET-005-admin-frontend | TASK-006 | React auth shell, admin session client, MFA UI, UI routing | todo |
 | TASK-012-admin-ops-dashboard-ui | TICKET-005-admin-frontend | TASK-008, TASK-011 | API key UI, audit/stats/health pages, admin API client | todo |
 | TASK-013-admin-config-ui | TICKET-005-admin-frontend | TASK-010, TASK-011 | runtime config UI, secret redaction, provider validation UI | todo |
@@ -376,7 +376,7 @@ Drift notes:
 
 ### WAVE-005
 
-Status: in_progress
+Status: done
 
 Tasks:
 
@@ -411,10 +411,55 @@ Stop condition:
 - Read-only diagnostics route tests pass.
 - Provider validation/apply tests pass.
 - Shared context records any changes that require restart rather than hot reload.
+- Wave reconciliation completed on 2026-07-06.
+
+Completion evidence:
+
+- TASK-007 shipped in PR #83 and merged into the epic branch in
+  `16985ef684213569ec6748065b390c9ab5e89b1a`; GitHub marked PR #83
+  `MERGED` at 2026-07-06T06:27:29Z.
+- TASK-010 shipped in PR #84 and merged into the epic branch in
+  `f5efbc0eef0394abb22576221f50491eab86660a`; GitHub marked PR #84
+  `MERGED` at 2026-07-06T11:31:10Z after the freshness fix commit
+  `515cfa5a16b213f4fda78a0c536fb1806daf8b68`.
+- Lorentz returned REVIEW_PASS for both bundles. TASK-010's P2 freshness
+  blocker was resolved by refreshing against the latest epic branch while
+  preserving both TASK-007 diagnostics wiring and TASK-010 provider-config
+  wiring.
+- Controller verification passed for the merged wave: TASK-007 admin API
+  contract tests, TASK-010 provider-config/admin-api tests, typecheck, JSON
+  parsing, and diff whitespace checks.
+
+Reconciled decisions:
+
+- `/admin/api/diagnostics/*` is the read-only diagnostics namespace and
+  requires an active-MFA admin session. Pending-MFA sessions receive `403`;
+  ordinary API-key and MCP OAuth bearer tokens receive `401`.
+- `/admin/api/provider-config/*` is the provider configuration namespace.
+  Secret writes and provider apply require recent step-up.
+- Provider runtime configuration uses DB-backed pending and applied values.
+  Pending edits do not change runtime state until validation/apply succeeds,
+  and env fallback remains the operator-controlled baseline.
+- Admin-configured provider URLs are attacker-controlled input and must pass
+  the egress/SSRF policy before save/runtime use.
+- Restart-required and reembed-required outcomes are explicit API state. The
+  first implementation does not add a new required Docker runtime value beyond
+  the existing `ADMIN_SETTINGS_ENCRYPTION_KEY`.
+
+Drift notes:
+
+- TASK-008 should extend the same `/admin/api/*` admin transport and preserve
+  the diagnostics route contract while adding key, audit, and stats routes.
+- TASK-014 and TASK-015 must not store provider secrets, ciphertext, token
+  prefixes, arbitrary validation metadata, or provider response bodies in job
+  payloads/results.
+- TASK-013 should consume the provider-config API's pending/applied,
+  restart-required, and reembed-required state rather than inventing UI-only
+  lifecycle rules.
 
 ### WAVE-006
 
-Status: planned
+Status: ready_to_start
 
 Tasks:
 
@@ -429,7 +474,7 @@ Recommended strategy:
 - Monitoring mode: adaptive
 - Confidence: medium
 - Requires user confirmation: yes
-- Confirmed by: null
+- Confirmed by: Ivo via Codex finish-all-waves request on 2026-07-06
 
 Rationale:
 

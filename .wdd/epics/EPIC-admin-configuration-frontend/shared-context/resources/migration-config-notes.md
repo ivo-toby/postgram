@@ -3,7 +3,7 @@ id: EPIC-admin-configuration-frontend-RESOURCE-migration-config-notes
 kind: shared_context_resource
 epic: EPIC-admin-configuration-frontend
 resource: migration-config-notes
-updated_at: 2026-07-05
+updated_at: 2026-07-06
 ---
 
 # Shared Context Resource: Migration And Configuration Notes
@@ -306,6 +306,50 @@ Future migration reminders:
   `audit_log.admin_user_id`, admin auth tables, and runtime settings/secrets.
 - TASK-017 must document and smoke-test the Docker/operator path for
   `ADMIN_MFA_SECRET_KEY` and `ADMIN_SETTINGS_ENCRYPTION_KEY`.
+
+## WAVE-005 Provider Config Apply Migration And Runtime Rules
+
+PR #84 added `src/db/migrations/012_admin_settings_applied_values.sql`.
+
+Schema changes:
+
+- `admin_runtime_settings.applied_value` stores the last value that was
+  successfully applied.
+- `admin_runtime_settings.applied_version` tracks the applied setting version.
+- `admin_runtime_settings.applied_at` records the apply timestamp.
+
+Runtime-setting invariants:
+
+- Saving a setting creates or updates the pending value only; it does not
+  silently change runtime behavior.
+- Last-applied DB values remain active while pending edits wait for validation
+  and apply.
+- Backfilled or externally-applied rows with `applied_value` remain active even
+  when `applied_version` is zero.
+- Env values remain fallback values when no DB value is applied.
+- Applied DB provider settings and encrypted stored secrets override env values
+  only after validation/apply succeeds.
+
+Provider validation and apply invariants:
+
+- Provider base URLs must pass the egress/SSRF policy before connection testing
+  and before DB-applied runtime fetches use them.
+- URL validation and connection validation become stale when relevant settings
+  or related provider secrets change.
+- Apply refuses stale validation evidence and refuses embedding identity changes
+  that require reembedding.
+- Stored provider secrets require `ADMIN_SETTINGS_ENCRYPTION_KEY` for runtime
+  use. Missing or wrong keys fail closed when a stored required secret is
+  active, while env fallback remains available for settings that are not
+  DB-applied.
+- The first implementation reports restart-required/reembed-required states
+  explicitly; it does not claim a complete worker hot-reload implementation.
+
+Docker/config implication:
+
+- TASK-010 introduced no new required runtime environment value. The existing
+  `ADMIN_SETTINGS_ENCRYPTION_KEY` remains the installation key that TASK-017
+  must document and smoke-test for the no-normal-CLI setup path.
 
 ## Docker Notes
 

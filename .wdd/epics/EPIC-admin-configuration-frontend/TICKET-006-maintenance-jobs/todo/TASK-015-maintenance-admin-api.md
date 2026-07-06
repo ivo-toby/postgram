@@ -150,6 +150,10 @@ Keep command-specific logic typed and bounded rather than generic.
   settings service redacted metadata only; do not expose or persist provider
   secrets, ciphertext, token prefixes, or arbitrary validation metadata in
   maintenance responses or job results.
+- If an operation needs provider/runtime configuration, read WAVE-005 applied
+  provider state rather than pending edits. Maintenance dry-run and apply
+  responses must make restart-required or reembed-required implications clear
+  without copying provider secrets or unsafe validation metadata into jobs.
 
 ## Durable Memory Notes To Consider
 

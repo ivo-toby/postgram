@@ -2643,14 +2643,14 @@
   "monitoring": {
     "mode": "inactive",
     "cadence": null,
-    "status": "stopped_wave_011_reconciled",
-    "lastCheckedAt": "2026-07-06T23:50:02Z",
+    "status": "stopped_epic_validation_passed",
+    "lastCheckedAt": "2026-07-06T23:56:58Z",
     "nextCheckDueAt": null,
     "schedulerRef": "postgram-admin-wave-005-wdd-heartbeat",
     "schedulerName": "postgram-admin-wave-011-reconcile-heartbeat",
     "fallbackPrompt": null,
     "automationUpdateResult": "will_delete_after_final_pr",
-    "updatedAt": "2026-07-06T23:50:02Z"
+    "updatedAt": "2026-07-06T23:56:58Z"
   },
   "sharedContext": {
     "index": "shared-context/index.md",
@@ -2744,19 +2744,19 @@
     },
     "nextWave": {
       "id": null,
-      "status": "none_remaining_epic_validation_ready"
+      "status": "none_remaining_final_pr_ready"
     },
     "monitoring": {
       "mode": "inactive",
       "cadence": null,
-      "status": "stopped_wave_011_reconciled",
-      "lastCheckedAt": "2026-07-06T23:50:02Z",
+      "status": "stopped_epic_validation_passed",
+      "lastCheckedAt": "2026-07-06T23:56:58Z",
       "nextCheckDueAt": null,
       "schedulerRef": "postgram-admin-wave-005-wdd-heartbeat",
       "schedulerName": "postgram-admin-wave-011-reconcile-heartbeat",
       "fallbackPrompt": null,
       "automationUpdateResult": "will_delete_after_final_pr",
-      "updatedAt": "2026-07-06T23:50:02Z"
+      "updatedAt": "2026-07-06T23:56:58Z"
     },
     "review": {
       "WAVE-001-admin-feasibility-gate": {
@@ -4616,7 +4616,9 @@
       "wave": "WAVE-011",
       "syncedAt": "2026-07-06T23:11:02Z",
       "updatedAt": "2026-07-06T23:11:02Z"
-    }
+    },
+    "epicValidation": "passed",
+    "finalPr": "ready_to_create"
   },
   "lastReconciledWave": {
     "id": "WAVE-011",
@@ -4639,8 +4641,60 @@
   "lastMergedWave": "WAVE-011",
   "lastStartedWave": "WAVE-011",
   "epicValidation": {
-    "status": "ready",
+    "status": "passed",
     "readyAt": "2026-07-06T23:50:02Z",
-    "source": "WAVE-011 reconciliation"
-  }
+    "validatedAt": "2026-07-06T23:56:58Z",
+    "source": "wdd-epic-validation after WAVE-011 reconciliation",
+    "result": "passed_with_non_blocking_concerns",
+    "evidence": {
+      "checkedAt": "2026-07-06T23:56:58Z",
+      "result": "passed",
+      "commands": [
+        "jq empty .wdd/epics/EPIC-admin-configuration-frontend/orchestration.json",
+        "git diff --check",
+        "! rg -n '^(<{7}|={7}|>{7})' .wdd/epics/EPIC-admin-configuration-frontend",
+        "npm audit --omit=dev --audit-level=high",
+        "npm --prefix ui audit --omit=dev --audit-level=high",
+        "npm run typecheck",
+        "npm --prefix ui run typecheck",
+        "git rev-list --left-right --count origin/main...HEAD",
+        "gh pr list --repo ivo-toby/postgram --head codex/epic/admin-configuration-frontend --base main --json number,url,state,title,isDraft",
+        "git worktree list --porcelain | sed -n '/TASK-018/,+3p'"
+      ],
+      "evidence": "Post-reconciliation epic validation passed. Orchestration JSON parsed, WDD conflict-marker scan passed, diff whitespace passed, root/UI production audits reported 0 vulnerabilities, root/UI typechecks passed, TASK-018 worktree is cleaned up, and no existing final PR from the epic branch to main exists. The epic branch is 0 behind and 233 ahead of origin/main."
+    },
+    "nonBlockingConcerns": [
+      "npm run lint still fails on existing repo-wide lint baseline unrelated to the admin epic product behavior.",
+      "Full UI audit still has dev-tooling advisories that require a breaking Vitest/Vite upgrade; production audit is clean.",
+      "Full root audit still has moderate/low dev-tooling advisories; production audit is clean."
+    ]
+  },
+  "finalPr": {
+    "status": "ready_to_create",
+    "base": "main",
+    "head": "codex/epic/admin-configuration-frontend",
+    "title": "feat: add safe admin configuration frontend",
+    "draft": true,
+    "readyAt": "2026-07-06T23:56:58Z",
+    "url": null,
+    "createdAt": null,
+    "validationEvidence": {
+      "checkedAt": "2026-07-06T23:56:58Z",
+      "result": "passed",
+      "commands": [
+        "jq empty .wdd/epics/EPIC-admin-configuration-frontend/orchestration.json",
+        "git diff --check",
+        "! rg -n '^(<{7}|={7}|>{7})' .wdd/epics/EPIC-admin-configuration-frontend",
+        "npm audit --omit=dev --audit-level=high",
+        "npm --prefix ui audit --omit=dev --audit-level=high",
+        "npm run typecheck",
+        "npm --prefix ui run typecheck",
+        "git rev-list --left-right --count origin/main...HEAD",
+        "gh pr list --repo ivo-toby/postgram --head codex/epic/admin-configuration-frontend --base main --json number,url,state,title,isDraft",
+        "git worktree list --porcelain | sed -n '/TASK-018/,+3p'"
+      ],
+      "evidence": "Post-reconciliation epic validation passed. Orchestration JSON parsed, WDD conflict-marker scan passed, diff whitespace passed, root/UI production audits reported 0 vulnerabilities, root/UI typechecks passed, TASK-018 worktree is cleaned up, and no existing final PR from the epic branch to main exists. The epic branch is 0 behind and 233 ahead of origin/main."
+    }
+  },
+  "updatedAt": "2026-07-06T23:56:58Z"
 }

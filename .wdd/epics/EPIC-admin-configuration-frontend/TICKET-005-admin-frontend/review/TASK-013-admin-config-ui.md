@@ -174,6 +174,19 @@ and `ui/src/lib/adminApi.ts`. Schrodinger review was requested in submission
 `019f38f7-8d65-74e3-8a30-5e4edc7c1b32`; no review result returned during the
 bounded wait.
 
+Schrodinger returned `REVIEW_BLOCKED` during the 2026-07-06T19:45:01Z
+controller tick with one blocking P2 and no additional product/security P1/P2
+findings. PR #90 remains `DIRTY` at head
+`fe1a454f545f815c35978e3c600fd101eae2893f`; the task branch must refresh
+against the latest `origin/codex/epic/admin-configuration-frontend` and resolve
+the WDD/AdminAuth/AdminDashboard/adminApi conflicts. The product integration
+fix must integrate `AdminConfig` into the TASK-012 operations dashboard shell
+without dropping health, queue, stats, config/models/jobs, API keys, or audit
+panels. Feedback was routed to Parfit in submission
+`019f38fd-830e-7743-889d-ab73a8729989`; required verification is
+AdminConfig/AdminOps/AdminAuth UI tests, UI typecheck, root typecheck,
+branch-freshness, merge-tree, and diff-check before pushing PR #90.
+
 ## PR / Patch Reference
 
 Draft PR #90: https://github.com/ivo-toby/postgram/pull/90
@@ -284,13 +297,14 @@ maintenance UI if useful.
 - Schrodinger returned `REVIEW_BLOCKED` for submission
   `019f38f7-8d65-74e3-8a30-5e4edc7c1b32` with one P2 freshness/product
   integration blocker and no additional product/security P1/P2 findings.
-
 ### P2
 
 - Fixed in follow-up: refresh TASK-013 against the latest epic branch, resolve
   PR #90 `DIRTY` conflicts, and integrate `AdminConfig` into the TASK-012
   `AdminDashboard` shell without dropping health, queue, stats, config status,
   models, jobs, API keys, or audit panels.
+  Original blocker was routed to Parfit in submission
+  `019f38fd-830e-7743-889d-ab73a8729989`.
 
 ### P3
 

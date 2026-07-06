@@ -2492,12 +2492,12 @@
   "monitoring": {
     "mode": "adaptive",
     "cadence": "5m",
-    "status": "wave_008_task013_reviewing_pr90_dirty",
+    "status": "wave_008_task013_needs_fixes_pr90_freshness_integration",
     "lastCheckedAt": "2026-07-06T19:45:01Z",
     "nextCheckDueAt": "2026-07-06T19:50:01Z",
     "schedulerRef": "postgram-admin-wave-005-wdd-heartbeat",
     "schedulerName": "postgram-admin-wave-008-wdd-heartbeat",
-    "fallbackPrompt": "WAVE-008 is active. Read .wdd/epics/EPIC-admin-configuration-frontend/orchestration.json and controller-state.md. TASK-012 / PR #89 is MERGED and cleaned up. TASK-013 / PR #90 is OPEN draft and DIRTY at head fe1a454f545f815c35978e3c600fd101eae2893f after Parfit DONE_WITH_CONCERNS. Schrodinger review was requested in submission 019f38f7-8d65-74e3-8a30-5e4edc7c1b32 and was still pending at 2026-07-06T19:45:01Z. Branch divergence is origin/codex/epic/admin-configuration-frontend...HEAD = 16 2; diff-check passes; merge-tree conflicts in the TASK-013 review file, AdminAuth test/component, AdminDashboard add/add, and adminApi. Inspect PR #90, reviewer Schrodinger (019f38ab-a97f-7462-84dc-5537e1efe934), worker Parfit (019f387a-3f1d-74a0-9949-5a318a43e494), and worktree /Users/ivo.toby/workspace/postgram/.worktrees/TASK-013-admin-config-ui. If review reports P1/P2, route feedback to Parfit or a fresh fix worker. If review passes, refresh the dirty task branch against codex/epic/admin-configuration-frontend, resolve conflicts, rerun required verification, then merge or mark merge_ready according to policy. Stop when WAVE-008 bundles are merged, blocked, cancelled, or ready for wdd-reconcile-wave. After WAVE-008 is reconciled, continue to WAVE-009 per Ivo finish-all-waves instruction and push to GitHub between tasks/waves.",
+    "fallbackPrompt": "WAVE-008 is active. Read .wdd/epics/EPIC-admin-configuration-frontend/orchestration.json and controller-state.md. TASK-012 / PR #89 is MERGED and cleaned up. TASK-013 / PR #90 is OPEN draft and in needs_fixes after Schrodinger REVIEW_BLOCKED with one P2 at head fe1a454f545f815c35978e3c600fd101eae2893f: refresh against latest origin/codex/epic/admin-configuration-frontend and resolve WDD/AdminAuth/AdminDashboard/adminApi conflicts, integrating AdminConfig into the TASK-012 operations dashboard shell without dropping health, queue, stats, config/models/jobs, API keys, or audit panels. Feedback was routed to Parfit (019f387a-3f1d-74a0-9949-5a318a43e494) in submission 019f38fd-830e-7743-889d-ab73a8729989. If Parfit pushed a fix, verify rev-list freshness, merge-tree cleanliness, diff-check, AdminConfig/AdminOps/AdminAuth UI tests, UI typecheck, root typecheck, then request/follow follow-up review. If no fix exists, keep needs_fixes and avoid duplicate nudges unless stale. Stop when WAVE-008 bundles are merged, blocked, cancelled, or ready for wdd-reconcile-wave. After WAVE-008 is reconciled, continue to WAVE-009 per Ivo finish-all-waves instruction and push to GitHub between tasks/waves.",
     "verifiedAt": "2026-07-06T19:45:01Z",
     "automationUpdateResult": "updated"
   },
@@ -2677,25 +2677,37 @@
         "workerNickname": "Parfit",
         "reviewThreadId": "019f38ab-a97f-7462-84dc-5537e1efe934",
         "reviewNickname": "Schrodinger",
-        "currentGate": "reviewing",
+        "currentGate": "needs_fixes",
         "branchFreshness": "dirty_product_conflicts_needs_freshness_refresh",
         "pr": "https://github.com/ivo-toby/postgram/pull/90",
         "latestCommit": "fe1a454f545f815c35978e3c600fd101eae2893f",
-        "blockingFeedback": [],
+        "blockingFeedback": [
+          {
+            "priority": "P2",
+            "id": "P2-task013-branch-freshness-product-integration",
+            "status": "routed_to_worker",
+            "owner": "Parfit",
+            "workerThreadId": "019f387a-3f1d-74a0-9949-5a318a43e494",
+            "reviewer": "Schrodinger",
+            "reviewThreadId": "019f38ab-a97f-7462-84dc-5537e1efe934",
+            "reviewedAt": "2026-07-06T19:45:01Z",
+            "routedAt": "2026-07-06T19:45:01Z",
+            "routedSubmissionId": "019f38fd-830e-7743-889d-ab73a8729989",
+            "reviewedHead": "fe1a454f545f815c35978e3c600fd101eae2893f",
+            "summary": "Refresh PR #90 against the latest epic branch and resolve WDD/AdminAuth/AdminDashboard/adminApi conflicts. Integrate AdminConfig into the TASK-012 operations dashboard shell without dropping health, queue, stats, config/models/jobs, API keys, or audit panels; rerun AdminConfig/AdminOps/AdminAuth UI tests plus UI/root typecheck before push."
+          }
+        ],
         "verification": {
-          "result": "worker_done_with_concerns_review_requested_branch_dirty",
+          "result": "review_blocked_p2_freshness_feedback_routed",
           "checkedAt": "2026-07-06T19:45:01Z",
           "commands": [
-            "gh pr view 90 --json number,url,state,isDraft,title,headRefName,headRefOid,baseRefName,mergeStateStatus,reviewDecision,updatedAt,createdAt,author,commits,files,statusCheckRollup",
-            "git status --short --branch",
-            "git rev-parse HEAD",
-            "git rev-list --left-right --count origin/codex/epic/admin-configuration-frontend...HEAD",
-            "git diff --check origin/codex/epic/admin-configuration-frontend...HEAD",
-            "git merge-tree --write-tree origin/codex/epic/admin-configuration-frontend HEAD",
-            "multi_agent_v1.send_input Schrodinger",
-            "multi_agent_v1.wait_agent Schrodinger timeout 30000"
+            "gh pr view 90 --json number,url,state,isDraft,headRefOid,mergeStateStatus,reviewDecision,updatedAt,reviews",
+            "multi_agent_v1.wait_agent Schrodinger timeout 10000",
+            "multi_agent_v1.send_input Parfit",
+            "jq empty .wdd/epics/EPIC-admin-configuration-frontend/orchestration.json",
+            "git diff --check"
           ],
-          "evidence": "Parfit returned DONE_WITH_CONCERNS and opened draft PR #90 at head fe1a454f545f815c35978e3c600fd101eae2893f. GitHub reports PR #90 OPEN draft and DIRTY. Worker evidence passed targeted AdminConfig/UI/backend/provider-config checks, broad UI test run, typechecks, build with existing Vite chunk warning, scoped lint/prettier/diff-check, and codex review after P1/P2 fixes. Controller verified the task worktree is clean and pushed, branch divergence is origin/codex/epic/admin-configuration-frontend...HEAD = 16 2, branch diff whitespace passes, and merge-tree exits 1 with conflicts in the TASK-013 review file, AdminAuth test/component, AdminDashboard add/add, and adminApi. Schrodinger review was requested in submission 019f38f7-8d65-74e3-8a30-5e4edc7c1b32; no review result returned during the bounded wait."
+          "evidence": "Schrodinger returned REVIEW_BLOCKED for PR #90 at head fe1a454f545f815c35978e3c600fd101eae2893f with one P2: the branch is still DIRTY and needs a freshness/product integration refresh. No additional product/security P1/P2 findings were found. The required fix was routed to Parfit in submission 019f38fd-830e-7743-889d-ab73a8729989: refresh against the latest epic branch, preserve TASK-012 AdminDashboard operations panels, integrate AdminConfig into that shell, resolve WDD/AdminAuth/AdminDashboard/adminApi conflicts, rerun AdminConfig/AdminOps/AdminAuth UI tests plus UI/root typecheck, and push PR #90."
         },
         "activatedAt": "2026-07-06T17:17:56Z",
         "cleanupState": "not_started",
@@ -2707,7 +2719,7 @@
         "worktreeObservation": {
           "observedAt": "2026-07-06T19:45:01Z",
           "taskId": "TASK-013-admin-config-ui",
-          "status": "pr_open_review_requested_branch_dirty",
+          "status": "review_blocked_needs_fixes",
           "workerStatus": "DONE_WITH_CONCERNS",
           "workerPoll": "completed_done_with_concerns_notification",
           "pr": "https://github.com/ivo-toby/postgram/pull/90",
@@ -2739,11 +2751,30 @@
           ],
           "diffCheck": "git diff --check origin/codex/epic/admin-configuration-frontend...HEAD passed.",
           "workerVerification": "AdminConfig focused tests, UI typecheck, repo typecheck, provider-config integration tests, full UI test run, UI build with existing Vite warning, scoped eslint, prettier/diff-check, and codex review all passed per worker report.",
-          "reviewStatus": "requested",
+          "reviewStatus": "REVIEW_BLOCKED",
           "reviewThreadId": "019f38ab-a97f-7462-84dc-5537e1efe934",
           "reviewNickname": "Schrodinger",
           "reviewSubmissionId": "019f38f7-8d65-74e3-8a30-5e4edc7c1b32",
-          "coordinationNote": "Review requested with explicit DIRTY/product merge conflict context. Final freshness is required before merge; reviewer may still provide product/security findings against the submitted PR."
+          "coordinationNote": "Parfit must refresh PR #90 against the latest epic branch and integrate AdminConfig into the merged TASK-012 operations dashboard shell before merge can proceed.",
+          "reviewResult": "REVIEW_BLOCKED",
+          "productSecurityReview": "No additional P1/P2 findings in the submitted TASK-013 diff; security posture passed for redacted/write-only secrets, no browser persistence, CSRF/same-origin client behavior, step-up, stale validation/apply guards, and restart/reembed warnings.",
+          "blockingFeedback": [
+            {
+              "priority": "P2",
+              "id": "P2-task013-branch-freshness-product-integration",
+              "status": "routed_to_worker",
+              "owner": "Parfit",
+              "workerThreadId": "019f387a-3f1d-74a0-9949-5a318a43e494",
+              "reviewer": "Schrodinger",
+              "reviewThreadId": "019f38ab-a97f-7462-84dc-5537e1efe934",
+              "reviewedAt": "2026-07-06T19:45:01Z",
+              "routedAt": "2026-07-06T19:45:01Z",
+              "routedSubmissionId": "019f38fd-830e-7743-889d-ab73a8729989",
+              "reviewedHead": "fe1a454f545f815c35978e3c600fd101eae2893f",
+              "summary": "Refresh PR #90 against the latest epic branch and resolve WDD/AdminAuth/AdminDashboard/adminApi conflicts. Integrate AdminConfig into the TASK-012 operations dashboard shell without dropping health, queue, stats, config/models/jobs, API keys, or audit panels; rerun AdminConfig/AdminOps/AdminAuth UI tests plus UI/root typecheck before push."
+            }
+          ],
+          "feedbackRoutedSubmissionId": "019f38fd-830e-7743-889d-ab73a8729989"
         },
         "nonBlockingFeedback": [
           {
@@ -2769,14 +2800,18 @@
           "headRefOid": "fe1a454f545f815c35978e3c600fd101eae2893f",
           "baseRefName": "codex/epic/admin-configuration-frontend",
           "mergeStateStatus": "DIRTY",
-          "reviewDecision": "",
+          "reviewDecision": "REVIEW_BLOCKED",
           "createdAt": "2026-07-06T19:38:14Z",
-          "updatedAt": "2026-07-06T19:39:10Z"
+          "updatedAt": "2026-07-06T19:39:10Z",
+          "checkedAt": "2026-07-06T19:45:01Z"
         },
         "reviewRequestedAt": "2026-07-06T19:45:01Z",
         "reviewStartedAt": "2026-07-06T19:45:01Z",
         "reviewSubmissionId": "019f38f7-8d65-74e3-8a30-5e4edc7c1b32",
-        "reviewResult": "pending"
+        "reviewResult": "REVIEW_BLOCKED",
+        "feedbackRoutedAt": "2026-07-06T19:45:01Z",
+        "feedbackSubmissionId": "019f38fd-830e-7743-889d-ab73a8729989",
+        "reviewedAt": "2026-07-06T19:45:01Z"
       }
     ],
     "dispatchState": "dispatched",
@@ -2837,7 +2872,7 @@
       "WAVE-007-admin-auth-ui": "reconciled",
       "WAVE-007-maintenance-admin-api": "reconciled",
       "WAVE-008-admin-ops-dashboard-ui": "merged",
-      "WAVE-008-admin-config-ui": "reviewing"
+      "WAVE-008-admin-config-ui": "needs_fixes"
     },
     "waveCompletion": {
       "WAVE-001": "done",
@@ -3182,8 +3217,8 @@
         "blockingFeedback": []
       },
       "WAVE-008-admin-config-ui": {
-        "status": "requested",
-        "result": "pending",
+        "status": "blocked",
+        "result": "REVIEW_BLOCKED",
         "pr": "https://github.com/ivo-toby/postgram/pull/90",
         "latestCommit": "fe1a454f545f815c35978e3c600fd101eae2893f",
         "featureCommit": "d229df88131089c36b92d451c6adef4325d21e3a",
@@ -3193,8 +3228,24 @@
         "workerNickname": "Parfit",
         "requestedAt": "2026-07-06T19:45:01Z",
         "submissionId": "019f38f7-8d65-74e3-8a30-5e4edc7c1b32",
-        "blockingFeedback": [],
-        "branchFreshness": "dirty_product_conflicts_needs_freshness_refresh"
+        "blockingFeedback": [
+          {
+            "priority": "P2",
+            "id": "P2-task013-branch-freshness-product-integration",
+            "status": "routed_to_worker",
+            "owner": "Parfit",
+            "workerThreadId": "019f387a-3f1d-74a0-9949-5a318a43e494",
+            "reviewer": "Schrodinger",
+            "reviewThreadId": "019f38ab-a97f-7462-84dc-5537e1efe934",
+            "reviewedAt": "2026-07-06T19:45:01Z",
+            "routedAt": "2026-07-06T19:45:01Z",
+            "routedSubmissionId": "019f38fd-830e-7743-889d-ab73a8729989",
+            "reviewedHead": "fe1a454f545f815c35978e3c600fd101eae2893f",
+            "summary": "Refresh PR #90 against the latest epic branch and resolve WDD/AdminAuth/AdminDashboard/adminApi conflicts. Integrate AdminConfig into the TASK-012 operations dashboard shell without dropping health, queue, stats, config/models/jobs, API keys, or audit panels; rerun AdminConfig/AdminOps/AdminAuth UI tests plus UI/root typecheck before push."
+          }
+        ],
+        "branchFreshness": "dirty_product_conflicts_needs_freshness_refresh",
+        "reviewedAt": "2026-07-06T19:45:01Z"
       }
     },
     "branchFreshness": {
@@ -3516,9 +3567,10 @@
         "headRefOid": "fe1a454f545f815c35978e3c600fd101eae2893f",
         "baseRefName": "codex/epic/admin-configuration-frontend",
         "mergeStateStatus": "DIRTY",
-        "reviewDecision": "",
+        "reviewDecision": "REVIEW_BLOCKED",
         "createdAt": "2026-07-06T19:38:14Z",
-        "updatedAt": "2026-07-06T19:39:10Z"
+        "updatedAt": "2026-07-06T19:39:10Z",
+        "checkedAt": "2026-07-06T19:45:01Z"
       }
     },
     "cleanup": {
@@ -4103,19 +4155,16 @@
         "evidence": "Schrodinger returned REVIEW_PASS for PR #89 with no P1/P2. Controller refreshed TASK-012 against the latest epic checkpoint 07e760b, pushed task branch head 298804f17ae15956135149300558c26c55691e79, verified final divergence 0 5, merge-tree clean, branch diff whitespace, AdminOps tests 11/11, AdminAuth tests 16/16, and UI typecheck. TASK-012 merged into the epic branch in ef54876a27164d3a91ba60d32f9e23b71d9cdf38, the epic branch push marked PR #89 MERGED at 2026-07-06T18:54:38Z, and the clean pushed TASK-012 worktree was removed."
       },
       "WAVE-008-admin-config-ui": {
-        "result": "worker_done_with_concerns_review_requested_branch_dirty",
+        "result": "review_blocked_p2_freshness_feedback_routed",
         "checkedAt": "2026-07-06T19:45:01Z",
         "commands": [
-          "gh pr view 90 --json number,url,state,isDraft,title,headRefName,headRefOid,baseRefName,mergeStateStatus,reviewDecision,updatedAt,createdAt,author,commits,files,statusCheckRollup",
-          "git status --short --branch",
-          "git rev-parse HEAD",
-          "git rev-list --left-right --count origin/codex/epic/admin-configuration-frontend...HEAD",
-          "git diff --check origin/codex/epic/admin-configuration-frontend...HEAD",
-          "git merge-tree --write-tree origin/codex/epic/admin-configuration-frontend HEAD",
-          "multi_agent_v1.send_input Schrodinger",
-          "multi_agent_v1.wait_agent Schrodinger timeout 30000"
+          "gh pr view 90 --json number,url,state,isDraft,headRefOid,mergeStateStatus,reviewDecision,updatedAt,reviews",
+          "multi_agent_v1.wait_agent Schrodinger timeout 10000",
+          "multi_agent_v1.send_input Parfit",
+          "jq empty .wdd/epics/EPIC-admin-configuration-frontend/orchestration.json",
+          "git diff --check"
         ],
-        "evidence": "Parfit returned DONE_WITH_CONCERNS and opened draft PR #90 at head fe1a454f545f815c35978e3c600fd101eae2893f. GitHub reports PR #90 OPEN draft and DIRTY. Worker evidence passed targeted AdminConfig/UI/backend/provider-config checks, broad UI test run, typechecks, build with existing Vite chunk warning, scoped lint/prettier/diff-check, and codex review after P1/P2 fixes. Controller verified the task worktree is clean and pushed, branch divergence is origin/codex/epic/admin-configuration-frontend...HEAD = 16 2, branch diff whitespace passes, and merge-tree exits 1 with conflicts in the TASK-013 review file, AdminAuth test/component, AdminDashboard add/add, and adminApi. Schrodinger review was requested in submission 019f38f7-8d65-74e3-8a30-5e4edc7c1b32; no review result returned during the bounded wait."
+        "evidence": "Schrodinger returned REVIEW_BLOCKED for PR #90 at head fe1a454f545f815c35978e3c600fd101eae2893f with one P2: the branch is still DIRTY and needs a freshness/product integration refresh. No additional product/security P1/P2 findings were found. The required fix was routed to Parfit in submission 019f38fd-830e-7743-889d-ab73a8729989: refresh against the latest epic branch, preserve TASK-012 AdminDashboard operations panels, integrate AdminConfig into that shell, resolve WDD/AdminAuth/AdminDashboard/adminApi conflicts, rerun AdminConfig/AdminOps/AdminAuth UI tests plus UI/root typecheck, and push PR #90."
       }
     },
     "feedback": {
@@ -4251,7 +4300,22 @@
         "mergedAt": "2026-07-06T18:54:38Z"
       },
       "WAVE-008-admin-config-ui": {
-        "blocking": [],
+        "blocking": [
+          {
+            "priority": "P2",
+            "id": "P2-task013-branch-freshness-product-integration",
+            "status": "routed_to_worker",
+            "owner": "Parfit",
+            "workerThreadId": "019f387a-3f1d-74a0-9949-5a318a43e494",
+            "reviewer": "Schrodinger",
+            "reviewThreadId": "019f38ab-a97f-7462-84dc-5537e1efe934",
+            "reviewedAt": "2026-07-06T19:45:01Z",
+            "routedAt": "2026-07-06T19:45:01Z",
+            "routedSubmissionId": "019f38fd-830e-7743-889d-ab73a8729989",
+            "reviewedHead": "fe1a454f545f815c35978e3c600fd101eae2893f",
+            "summary": "Refresh PR #90 against the latest epic branch and resolve WDD/AdminAuth/AdminDashboard/adminApi conflicts. Integrate AdminConfig into the TASK-012 operations dashboard shell without dropping health, queue, stats, config/models/jobs, API keys, or audit panels; rerun AdminConfig/AdminOps/AdminAuth UI tests plus UI/root typecheck before push."
+          }
+        ],
         "nonBlockingCoordination": [
           {
             "priority": "P3",
@@ -4266,7 +4330,7 @@
             "summary": "TASK-013 should integrate with the TASK-012 AdminDashboard shell wiring in AdminAuth.tsx and avoid reviving the older placeholder AdminShell shape when it finalizes overlapping AdminAuth.tsx/adminApi.ts edits."
           }
         ],
-        "fixStatus": "review_requested_branch_dirty",
+        "fixStatus": "needs_fixes_routed",
         "lastObservedAt": "2026-07-06T19:45:01Z",
         "mergeConflicts": [
           ".wdd/epics/EPIC-admin-configuration-frontend/TICKET-005-admin-frontend/review/TASK-013-admin-config-ui.md",
@@ -4274,7 +4338,8 @@
           "ui/src/components/admin/AdminAuth.tsx",
           "ui/src/components/admin/AdminDashboard.tsx",
           "ui/src/lib/adminApi.ts"
-        ]
+        ],
+        "reviewResult": "REVIEW_BLOCKED"
       }
     },
     "activationArtifact": {

@@ -25,9 +25,9 @@ TASK-007-admin-api-shell-diagnostics and TASK-010-provider-config-apply.
 Activation artifacts were pushed in `70df1c5`; both task branches/worktrees
 were created from that commit, pushed to GitHub, verified, and dispatched.
 TASK-007 passed Lorentz review, was refreshed against the latest epic branch,
-and merged locally into the epic branch in `16985ef`. Goodall owns TASK-010 and
-has active uncommitted implementation changes in the assigned worktree, but no
-PR or patch yet.
+merged locally into the epic branch in `16985ef`, and PR #83 is merged on
+GitHub. Goodall owns TASK-010 and has active uncommitted implementation changes
+in the assigned worktree, but no PR or patch yet.
 
 WAVE-004 is done and reconciled. PR #81/TASK-009 and PR #82/TASK-006 are
 merged, shared context is reconciled, and both WAVE-004 worktrees are cleaned
@@ -57,9 +57,9 @@ Cadence: 5 minutes
 
 Status: worker_monitoring
 
-Last check: 2026-07-06T06:24:15Z
+Last check: 2026-07-06T06:27:42Z
 
-Next check due: 2026-07-06T06:29:15Z
+Next check due: 2026-07-06T06:32:42Z
 
 Scheduler reference: `postgram-admin-wave-005-wdd-heartbeat`
 
@@ -69,8 +69,8 @@ Fallback prompt:
 Run one bounded WDD controller heartbeat for /Users/ivo.toby/workspace/postgram,
 epic EPIC-admin-configuration-frontend, active wave WAVE-005. Use
 subagent-pr-orchestration. Read orchestration.json and controller-state.md;
-TASK-007 / PR #83 is locally merged at 16985ef and pushed state should be
-confirmed. Inspect worker Goodall (019f35ff-a193-7ae0-a4b8-1ec53faabb74) and
+TASK-007 / PR #83 is MERGED and pushed. Inspect worker Goodall
+(019f35ff-a193-7ae0-a4b8-1ec53faabb74) and
 worktree /Users/ivo.toby/workspace/postgram/.worktrees/TASK-010-provider-config-apply
 for TASK-010. If TASK-010 has a PR or patch, start review; if not, keep no_pr
 unless deliverables are stale. Stop when WAVE-005 is ready for wdd-reconcile-wave;
@@ -478,7 +478,8 @@ after reconciliation continue to WAVE-006 per Ivo finish-all-waves instruction.
   `npm test -- tests/contract/admin-api.test.ts`, and `npm run typecheck`; all
   passed. The epic checkout post-merge `admin-api` contract test and typecheck
   also passed. TASK-007 merged locally into the epic branch in `16985ef`;
-  cleanup is deferred until WAVE-005 reconciliation.
+  PR #83 was marked `MERGED` by GitHub at 2026-07-06T06:27:29Z; cleanup is
+  deferred until WAVE-005 reconciliation.
 - WAVE-005 TASK-010 progress observation: Goodall's worktree has active
   uncommitted changes in expected provider-config areas; no controller
   verification was run against uncommitted worker code.
@@ -706,10 +707,12 @@ after reconciliation continue to WAVE-006 per Ivo finish-all-waves instruction.
   refreshed TASK-007 against the latest epic branch, pushed task branch
   `f0e889e`, merged TASK-007 into the epic branch in `16985ef`, moved the task
   file to `done/`, and left TASK-010 as the only active WAVE-005 bundle.
+- 2026-07-06T06:27:42Z: Confirmed GitHub marked PR #83 `MERGED` at
+  2026-07-06T06:27:29Z after the epic branch push. TASK-010 remains
+  active/uncommitted with no PR or patch.
 
 ## Next Action
 
-Next WAVE-005 heartbeat is due at 2026-07-06T06:29:15Z. Confirm PR #83 remote
-state after the epic branch push, then inspect Goodall's TASK-010 worker and
-worktree. If TASK-010 has a PR or patch, start review; otherwise keep `no_pr`
-unless the exact deliverables are stale.
+Next WAVE-005 heartbeat is due at 2026-07-06T06:32:42Z. Inspect Goodall's
+TASK-010 worker and worktree. If TASK-010 has a PR or patch, start review;
+otherwise keep `no_pr` unless the exact deliverables are stale.

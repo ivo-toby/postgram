@@ -756,7 +756,7 @@
           "sharedContextReconciliation": "queued",
           "dispatchedAt": "2026-07-06T05:56:19Z",
           "dispatchBaseCommit": "70df1c5f9324dd3f9ff424f199ee1b8896a2e410",
-          "lastObservedAt": "2026-07-06T06:24:15Z",
+          "lastObservedAt": "2026-07-06T06:27:42Z",
           "reviewRequestedAt": "2026-07-06T06:14:07Z",
           "reviewSubmissionId": "019f3611-2a16-72d3-bd90-db911948d8c3",
           "workerHead": "f1c19665f763481fe90786f93dc91efed40f0171",
@@ -765,7 +765,10 @@
           "localMergeCommit": "16985ef684213569ec6748065b390c9ab5e89b1a",
           "reviewResult": "REVIEW_PASS",
           "reviewedAt": "2026-07-06T06:24:15Z",
-          "mergedAt": "2026-07-06T06:24:15Z"
+          "mergedAt": "2026-07-06T06:24:15Z",
+          "remotePrState": "MERGED",
+          "remotePrMergedAt": "2026-07-06T06:27:29Z",
+          "closeoutCommit": "bc21b4d"
         },
         {
           "id": "WAVE-005-provider-config-apply",
@@ -810,7 +813,7 @@
       ],
       "activationCommit": "70df1c5f9324dd3f9ff424f199ee1b8896a2e410",
       "dispatchState": "dispatched",
-      "lastObservedAt": "2026-07-06T06:24:15Z",
+      "lastObservedAt": "2026-07-06T06:27:42Z",
       "dispatchedAt": "2026-07-06T05:56:19Z"
     },
     {
@@ -1401,7 +1404,7 @@
       "workerNickname": "Wegener",
       "dispatchedAt": "2026-07-06T05:56:19Z",
       "dispatchBaseCommit": "70df1c5f9324dd3f9ff424f199ee1b8896a2e410",
-      "lastObservedAt": "2026-07-06T06:24:15Z",
+      "lastObservedAt": "2026-07-06T06:27:42Z",
       "reviewNickname": "Lorentz",
       "reviewRequestedAt": "2026-07-06T06:14:07Z",
       "reviewSubmissionId": "019f3611-2a16-72d3-bd90-db911948d8c3",
@@ -1411,7 +1414,10 @@
       "localMergeCommit": "16985ef684213569ec6748065b390c9ab5e89b1a",
       "reviewResult": "REVIEW_PASS",
       "reviewedAt": "2026-07-06T06:24:15Z",
-      "mergedAt": "2026-07-06T06:24:15Z"
+      "mergedAt": "2026-07-06T06:24:15Z",
+      "remotePrState": "MERGED",
+      "remotePrMergedAt": "2026-07-06T06:27:29Z",
+      "closeoutCommit": "bc21b4d"
     },
     {
       "id": "TASK-008-admin-key-audit-stats-api",
@@ -1889,10 +1895,10 @@
     "mode": "codex_thread_heartbeat",
     "cadence": "5m",
     "status": "worker_monitoring",
-    "lastCheckedAt": "2026-07-06T06:24:15Z",
-    "nextCheckDueAt": "2026-07-06T06:29:15Z",
+    "lastCheckedAt": "2026-07-06T06:27:42Z",
+    "nextCheckDueAt": "2026-07-06T06:32:42Z",
     "schedulerRef": "postgram-admin-wave-005-wdd-heartbeat",
-    "fallbackPrompt": "Run one bounded WDD controller heartbeat for /Users/ivo.toby/workspace/postgram, epic EPIC-admin-configuration-frontend, active wave WAVE-005. Use subagent-pr-orchestration. Read orchestration.json and controller-state.md; TASK-007 / PR #83 is locally merged at 16985ef and pushed state should be confirmed. Inspect worker Goodall (019f35ff-a193-7ae0-a4b8-1ec53faabb74) and worktree /Users/ivo.toby/workspace/postgram/.worktrees/TASK-010-provider-config-apply for TASK-010. If TASK-010 has a PR or patch, start review; if not, keep no_pr unless deliverables are stale. Stop when WAVE-005 is ready for wdd-reconcile-wave; after reconciliation continue to WAVE-006 per Ivo finish-all-waves instruction."
+    "fallbackPrompt": "Run one bounded WDD controller heartbeat for /Users/ivo.toby/workspace/postgram, epic EPIC-admin-configuration-frontend, active wave WAVE-005. Use subagent-pr-orchestration. Read orchestration.json and controller-state.md; TASK-007 / PR #83 is MERGED and pushed. Inspect worker Goodall (019f35ff-a193-7ae0-a4b8-1ec53faabb74) and worktree /Users/ivo.toby/workspace/postgram/.worktrees/TASK-010-provider-config-apply for TASK-010. If TASK-010 has a PR or patch, start review; if not, keep no_pr unless deliverables are stale. Stop when WAVE-005 is ready for wdd-reconcile-wave; after reconciliation continue to WAVE-006 per Ivo finish-all-waves instruction."
   },
   "sharedContext": {
     "index": "shared-context/index.md",
@@ -2060,10 +2066,10 @@
       "mode": "codex_thread_heartbeat",
       "cadence": "5m",
       "status": "worker_monitoring",
-      "lastCheckedAt": "2026-07-06T06:24:15Z",
-      "nextCheckDueAt": "2026-07-06T06:29:15Z",
+      "lastCheckedAt": "2026-07-06T06:27:42Z",
+      "nextCheckDueAt": "2026-07-06T06:32:42Z",
       "schedulerRef": "postgram-admin-wave-005-wdd-heartbeat",
-      "fallbackPrompt": "Run one bounded WDD controller heartbeat for /Users/ivo.toby/workspace/postgram, epic EPIC-admin-configuration-frontend, active wave WAVE-005. Use subagent-pr-orchestration. Read orchestration.json and controller-state.md; TASK-007 / PR #83 is locally merged at 16985ef and pushed state should be confirmed. Inspect worker Goodall (019f35ff-a193-7ae0-a4b8-1ec53faabb74) and worktree /Users/ivo.toby/workspace/postgram/.worktrees/TASK-010-provider-config-apply for TASK-010. If TASK-010 has a PR or patch, start review; if not, keep no_pr unless deliverables are stale. Stop when WAVE-005 is ready for wdd-reconcile-wave; after reconciliation continue to WAVE-006 per Ivo finish-all-waves instruction."
+      "fallbackPrompt": "Run one bounded WDD controller heartbeat for /Users/ivo.toby/workspace/postgram, epic EPIC-admin-configuration-frontend, active wave WAVE-005. Use subagent-pr-orchestration. Read orchestration.json and controller-state.md; TASK-007 / PR #83 is MERGED and pushed. Inspect worker Goodall (019f35ff-a193-7ae0-a4b8-1ec53faabb74) and worktree /Users/ivo.toby/workspace/postgram/.worktrees/TASK-010-provider-config-apply for TASK-010. If TASK-010 has a PR or patch, start review; if not, keep no_pr unless deliverables are stale. Stop when WAVE-005 is ready for wdd-reconcile-wave; after reconciliation continue to WAVE-006 per Ivo finish-all-waves instruction."
     },
     "review": {
       "WAVE-001-admin-feasibility-gate": {
@@ -2293,7 +2299,7 @@
         "reconciliationSummary": "WAVE-004 reconciled MFA/step-up decisions into shared context and downstream task briefs; TASK-006 worktree cleaned up."
       },
       "WAVE-005-admin-api-shell-diagnostics": {
-        "status": "merged_local_pending_push",
+        "status": "merged_pending_wave_completion",
         "commit": "16985ef684213569ec6748065b390c9ab5e89b1a",
         "taskBranchHead": "f0e889ed286c00aaad121095f8499ba8bc26f8bd",
         "workerHead": "f1c19665f763481fe90786f93dc91efed40f0171",
@@ -2302,7 +2308,11 @@
         "cleanupState": "cleanup_deferred",
         "reviewResult": "REVIEW_PASS",
         "branchFreshness": "current_at_merge",
-        "pr": "https://github.com/ivo-toby/postgram/pull/83"
+        "pr": "https://github.com/ivo-toby/postgram/pull/83",
+        "remotePrState": "MERGED",
+        "remotePrMergedAt": "2026-07-06T06:27:29Z",
+        "remoteBasePushedAt": "2026-07-06T06:27:29Z",
+        "closeoutCommit": "bc21b4d"
       }
     },
     "sharedContextReconciliation": {
@@ -2378,19 +2388,21 @@
         "remoteBasePushedAt": "2026-07-05T18:13:59Z"
       },
       "WAVE-005-admin-api-shell-diagnostics": {
-        "state": "MERGED_LOCAL_PENDING_PUSH",
+        "state": "MERGED",
         "isDraft": true,
         "url": "https://github.com/ivo-toby/postgram/pull/83",
         "number": 83,
-        "checkedAt": "2026-07-06T06:24:15Z",
+        "checkedAt": "2026-07-06T06:27:42Z",
         "headRef": "codex/task/TASK-007-admin-api-shell-diagnostics",
         "headSha": "f0e889ed286c00aaad121095f8499ba8bc26f8bd",
         "reviewedHead": "f1c19665f763481fe90786f93dc91efed40f0171",
         "baseRef": "codex/epic/admin-configuration-frontend",
-        "mergeStateStatus": "CLEAN_AT_LOCAL_MERGE",
+        "mergeStateStatus": "MERGED_BY_BASE_PUSH",
         "reviewDecision": "REVIEW_PASS",
         "localMergeCommit": "16985ef684213569ec6748065b390c9ab5e89b1a",
-        "mergedAt": "2026-07-06T06:24:15Z"
+        "mergedAt": "2026-07-06T06:27:29Z",
+        "remoteBasePushedAt": "2026-07-06T06:27:29Z",
+        "closeoutCommit": "bc21b4d"
       }
     },
     "cleanup": {

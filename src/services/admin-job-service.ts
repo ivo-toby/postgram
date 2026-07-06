@@ -274,6 +274,18 @@ function fingerprintJobRequest(input: {
     .digest('hex');
 }
 
+function previewJobIdForApply(
+  mode: AdminJobMode,
+  requestedScope: JsonObject
+): string | null {
+  if (mode !== 'apply') {
+    return null;
+  }
+
+  const previewJobId = requestedScope.previewJobId;
+  return typeof previewJobId === 'string' ? previewJobId : null;
+}
+
 function requireJobId(jobId: string): string {
   if (!UUID_PATTERN.test(jobId)) {
     throw validationError('Invalid admin job ID', {
@@ -752,6 +764,7 @@ export function createAdminJob(
         requestedScope,
         requestSummary
       });
+      const previewJobId = previewJobIdForApply(mode, requestedScope);
       const now = input.now ?? new Date();
       const client = await pool.connect();
 
@@ -787,6 +800,37 @@ export function createAdminJob(
               created: false,
               job: mapJob(existingRow)
             };
+          }
+        }
+
+        if (previewJobId) {
+          await client.query('SELECT pg_advisory_xact_lock(hashtext($1))', [
+            `admin-job-preview:${operation}:${input.actorAdminUserId}:${previewJobId}`
+          ]);
+          const existingPreviewApply = await client.query<AdminJobRow>(
+            `
+              SELECT *
+              FROM admin_jobs
+              WHERE operation = $1
+                AND mode = 'apply'
+                AND created_by_admin_user_id = $2
+                AND requested_scope->>'previewJobId' = $3
+              ORDER BY created_at DESC, id DESC
+              LIMIT 1
+              FOR UPDATE
+            `,
+            [operation, input.actorAdminUserId, previewJobId]
+          );
+          const existingPreviewRow = existingPreviewApply.rows[0];
+          if (existingPreviewRow) {
+            throw new AppError(
+              ErrorCode.CONFLICT,
+              'Admin job preview has already been used',
+              {
+                previewJobId,
+                jobId: existingPreviewRow.id
+              }
+            );
           }
         }
 
@@ -897,6 +941,36 @@ export function getAdminJob(
       return job;
     })(),
     (error) => toAppError(error, 'Failed to get admin job')
+  );
+}
+
+export function getAdminJobByIdempotencyKey(
+  pool: Pool,
+  idempotencyKey: string
+): ServiceResult<AdminJobRecord | null> {
+  return ResultAsync.fromPromise(
+    (async () => {
+      const normalized = normalizeIdempotencyKey(idempotencyKey);
+      if (!normalized) {
+        throw validationError('Invalid admin job idempotency key', {
+          field: 'idempotencyKey'
+        });
+      }
+
+      const result = await pool.query<AdminJobRow>(
+        `
+          SELECT *
+          FROM admin_jobs
+          WHERE idempotency_key = $1
+          ORDER BY created_at DESC
+          LIMIT 1
+        `,
+        [normalized]
+      );
+      const row = result.rows[0];
+      return row ? mapJob(row) : null;
+    })(),
+    (error) => toAppError(error, 'Failed to get admin job by idempotency key')
   );
 }
 

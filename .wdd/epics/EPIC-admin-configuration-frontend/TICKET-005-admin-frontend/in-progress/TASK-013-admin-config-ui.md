@@ -23,7 +23,7 @@ pr: null
 worker_thread_id: 019f387a-3f1d-74a0-9949-5a318a43e494
 review_thread_id: null
 current_gate: no_pr
-branch_freshness: behind_epic_by_4_controller_checkpoints
+branch_freshness: behind_epic_by_14_controller_task012_merge_and_closeout_checkpoints
 verification:
   - npm --prefix ui run test -- --run src/components/AdminConfig.test.tsx
   - npm --prefix ui run typecheck
@@ -133,6 +133,14 @@ coordination note from TASK-012 review was routed to Parfit in submission
 `019f38b0-6b70-7d33-9982-3c0a54b43f3f`: TASK-013 should integrate with the
 TASK-012 `AdminDashboard` shell wiring and avoid reviving the older placeholder
 `AdminShell` shape when reconciling overlapping AdminAuth/adminApi changes.
+
+Controller observed continued active implementation work at
+2026-07-06T19:15:01Z with no PR or patch yet. The TASK-013 worktree has
+uncommitted config UI/API changes, `git diff --check` passes, and
+`AdminConfig.tsx` plus `AdminConfig.test.tsx` had fresh edits around
+2026-07-06T19:13Z. No nudge was sent because the worktree is active. The task
+branch is behind the epic branch by 14 controller/TASK-012 merge and closeout
+checkpoints and will need freshness verification before review/merge.
 
 ## PR / Patch Reference
 

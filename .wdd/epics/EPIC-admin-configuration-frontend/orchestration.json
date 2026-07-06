@@ -2121,15 +2121,23 @@
       "worktreeStatus": "active_uncommitted",
       "pr": null,
       "latestCommit": null,
-      "branchFreshness": "behind_epic_by_13_controller_and_task012_merge_checkpoints",
+      "branchFreshness": "behind_epic_by_14_controller_task012_merge_and_closeout_checkpoints",
       "blockingFeedback": [],
       "verification": {
-        "result": "no_pr_active_uncommitted_diff_check_passed",
+        "result": "no_pr_active_uncommitted_recent_activity_diff_check_passed",
+        "checkedAt": "2026-07-06T19:15:01Z",
         "commands": [
+          "multi_agent_v1.wait_agent Parfit timeout 30000",
+          "gh pr list --head codex/task/TASK-013-admin-config-ui --json number,url,state,isDraft,headRefOid,mergeStateStatus,updatedAt,title",
+          "git status --short --branch",
+          "git rev-parse HEAD",
+          "git diff --name-only",
           "git diff --check",
-          "gh pr list --head codex/task/TASK-013-admin-config-ui"
+          "git rev-list --left-right --count origin/codex/epic/admin-configuration-frontend...HEAD",
+          "stat modified TASK-013 touched files",
+          "find . -path './.git' -prune -o -type f -mmin -30 -print"
         ],
-        "evidence": "No PR exists yet; Parfit worktree remains active with uncommitted changes and git diff --check passes. Branch freshness refresh is required before review/merge."
+        "evidence": "Parfit did not return a final status during the bounded wait and GitHub has no PR for codex/task/TASK-013-admin-config-ui. The TASK-013 worktree remains active with uncommitted and untracked config UI/API files; git diff --check passes. Recent file activity was observed on AdminConfig.tsx and AdminConfig.test.tsx at about 2026-07-06T19:13Z, so no stale-work nudge was sent. Branch divergence is origin/codex/epic/admin-configuration-frontend...HEAD = 14 0 and freshness refresh is required before review/merge."
       },
       "currentGate": "no_pr",
       "nonBlockingCoordination": [
@@ -2147,16 +2155,16 @@
         }
       ],
       "worktreeObservation": {
-        "observedAt": "2026-07-06T18:55:02Z",
+        "observedAt": "2026-07-06T19:15:01Z",
         "taskId": "TASK-013-admin-config-ui",
-        "status": "active_uncommitted_no_pr",
+        "status": "active_uncommitted_no_pr_recent_activity",
         "workerStatus": "running_no_final_status",
         "workerPoll": "timed_out_no_final_status",
         "pr": null,
         "branchHead": "815bb7f235bd2181c1ccb93cab3bf666cad7dff8",
-        "branchDivergence": "origin/codex/epic/admin-configuration-frontend...HEAD = 13 0; task branch is behind controller checkpoints plus the merged TASK-012 checkpoint and will need freshness refresh before review/merge.",
+        "branchDivergence": "origin/codex/epic/admin-configuration-frontend...HEAD = 14 0; task branch is behind controller checkpoints plus TASK-012 merge/closeout and will need freshness refresh before review/merge.",
         "worktreeStatus": "active_uncommitted",
-        "branchFreshness": "behind_epic_by_13_controller_and_task012_merge_checkpoints",
+        "branchFreshness": "behind_epic_by_14_controller_task012_merge_and_closeout_checkpoints",
         "files": [
           "src/transport/admin-provider-config.ts",
           "tests/integration/admin-provider-config.test.ts",
@@ -2168,7 +2176,8 @@
           "ui/src/components/admin/AdminDashboard.tsx"
         ],
         "diffCheck": "git diff --check passed in the worker worktree; untracked new AdminConfig files remain present as expected for in-progress UI work.",
-        "coordinationNote": "Worker remains active with uncommitted config UI/API changes and no PR or patch. No missing-deliverable nudge sent."
+        "recentActivity": "AdminConfig.tsx and AdminConfig.test.tsx were modified around 2026-07-06T19:13Z, inside this heartbeat window.",
+        "coordinationNote": "Worker remains active with uncommitted config UI/API changes and no PR or patch. No missing-deliverable nudge sent because the worktree has fresh activity."
       }
     },
     {
@@ -2464,13 +2473,13 @@
   "monitoring": {
     "mode": "adaptive",
     "cadence": "15m",
-    "status": "wave_008_task012_merged_cleaned_up_task013_active_no_pr",
-    "lastCheckedAt": "2026-07-06T18:55:02Z",
-    "nextCheckDueAt": "2026-07-06T19:10:02Z",
+    "status": "wave_008_task012_merged_cleaned_up_task013_active_no_pr_recent_activity",
+    "lastCheckedAt": "2026-07-06T19:15:01Z",
+    "nextCheckDueAt": "2026-07-06T19:30:01Z",
     "schedulerRef": "postgram-admin-wave-005-wdd-heartbeat",
     "schedulerName": "postgram-admin-wave-008-wdd-heartbeat",
-    "fallbackPrompt": "WAVE-008 is active. Read .wdd/epics/EPIC-admin-configuration-frontend/orchestration.json and controller-state.md. TASK-012 / PR #89 is MERGED at 2026-07-06T18:54:38Z in merge commit ef54876a27164d3a91ba60d32f9e23b71d9cdf38 and its clean pushed worktree was removed. Inspect worker Parfit (019f387a-3f1d-74a0-9949-5a318a43e494) and assigned worktree /Users/ivo.toby/workspace/postgram/.worktrees/TASK-013-admin-config-ui on branch codex/task/TASK-013-admin-config-ui for bundle WAVE-008-admin-config-ui / TASK-013-admin-config-ui. If TASK-013 has produced a PR or patch, move it to review/reviewer orchestration; if no PR or patch exists, keep no_pr and nudge exact missing deliverables only if the worktree is inactive or stale. If review reports P1/P2, route feedback to Parfit or a fresh fix worker. If review passes, refresh stale task branch against codex/epic/admin-configuration-frontend, rerun required freshness verification, then merge or mark merge_ready according to policy. Stop when WAVE-008 bundles are merged, blocked, cancelled, or ready for wdd-reconcile-wave. After WAVE-008 is reconciled, continue to WAVE-009 per Ivo finish-all-waves instruction and push to GitHub between tasks/waves.",
-    "verifiedAt": "2026-07-06T18:55:02Z",
+    "fallbackPrompt": "WAVE-008 is active. Read .wdd/epics/EPIC-admin-configuration-frontend/orchestration.json and controller-state.md. TASK-012 / PR #89 is MERGED at 2026-07-06T18:54:38Z in merge commit ef54876a27164d3a91ba60d32f9e23b71d9cdf38 and its clean pushed worktree was removed. Inspect worker Parfit (019f387a-3f1d-74a0-9949-5a318a43e494) and assigned worktree /Users/ivo.toby/workspace/postgram/.worktrees/TASK-013-admin-config-ui on branch codex/task/TASK-013-admin-config-ui for bundle WAVE-008-admin-config-ui / TASK-013-admin-config-ui. Last observed at 2026-07-06T19:15:01Z: no PR exists, the worktree has active uncommitted config UI/API changes, git diff --check passes, and recent AdminConfig file activity means no nudge was sent. If TASK-013 has produced a PR or patch, move it to review/reviewer orchestration; if no PR or patch exists, keep no_pr and nudge exact missing deliverables only if the worktree is inactive or stale. If review reports P1/P2, route feedback to Parfit or a fresh fix worker. If review passes, refresh stale task branch against codex/epic/admin-configuration-frontend, rerun required freshness verification, then merge or mark merge_ready according to policy. Stop when WAVE-008 bundles are merged, blocked, cancelled, or ready for wdd-reconcile-wave. After WAVE-008 is reconciled, continue to WAVE-009 per Ivo finish-all-waves instruction and push to GitHub between tasks/waves.",
+    "verifiedAt": "2026-07-06T19:15:01Z",
     "automationUpdateResult": "updated"
   },
   "sharedContext": {
@@ -2650,40 +2659,44 @@
         "reviewThreadId": null,
         "reviewNickname": null,
         "currentGate": "no_pr",
-        "branchFreshness": "behind_epic_by_13_controller_and_task012_merge_checkpoints",
+        "branchFreshness": "behind_epic_by_14_controller_task012_merge_and_closeout_checkpoints",
         "pr": null,
         "latestCommit": null,
         "blockingFeedback": [],
         "verification": {
-          "result": "no_pr_active_uncommitted_diff_check_passed",
+          "result": "no_pr_active_uncommitted_recent_activity_diff_check_passed",
+          "checkedAt": "2026-07-06T19:15:01Z",
           "commands": [
-            "multi_agent_v1.wait_agent Parfit timeout 10000",
+            "multi_agent_v1.wait_agent Parfit timeout 30000",
             "gh pr list --head codex/task/TASK-013-admin-config-ui --json number,url,state,isDraft,headRefOid,mergeStateStatus,updatedAt,title",
             "git status --short --branch",
+            "git rev-parse HEAD",
             "git diff --name-only",
             "git diff --check",
-            "git rev-list --left-right --count origin/codex/epic/admin-configuration-frontend...HEAD"
+            "git rev-list --left-right --count origin/codex/epic/admin-configuration-frontend...HEAD",
+            "stat modified TASK-013 touched files",
+            "find . -path './.git' -prune -o -type f -mmin -30 -print"
           ],
-          "evidence": "Parfit did not return a final status during the bounded wait, GitHub has no PR for codex/task/TASK-013-admin-config-ui, the TASK-013 worktree has active uncommitted and untracked config UI/API files, git diff --check passes, and the branch is behind origin/codex/epic/admin-configuration-frontend by 13 commits after TASK-012 merge/closeout activity."
+          "evidence": "Parfit did not return a final status during the bounded wait and GitHub has no PR for codex/task/TASK-013-admin-config-ui. The TASK-013 worktree remains active with uncommitted and untracked config UI/API files; git diff --check passes. Recent file activity was observed on AdminConfig.tsx and AdminConfig.test.tsx at about 2026-07-06T19:13Z, so no stale-work nudge was sent. Branch divergence is origin/codex/epic/admin-configuration-frontend...HEAD = 14 0 and freshness refresh is required before review/merge."
         },
         "activatedAt": "2026-07-06T17:17:56Z",
         "cleanupState": "not_started",
         "sharedContextReconciliation": "not_started",
-        "lastObservedAt": "2026-07-06T18:55:02Z",
+        "lastObservedAt": "2026-07-06T19:15:01Z",
         "branchPushedAt": "2026-07-06T17:24:55Z",
         "dispatchedAt": "2026-07-06T17:29:45Z",
         "dispatchBaseCommit": "dacb6440e23d9f75e0a26a529aa54e986bbee697",
         "worktreeObservation": {
-          "observedAt": "2026-07-06T18:55:02Z",
+          "observedAt": "2026-07-06T19:15:01Z",
           "taskId": "TASK-013-admin-config-ui",
-          "status": "active_uncommitted_no_pr",
+          "status": "active_uncommitted_no_pr_recent_activity",
           "workerStatus": "running_no_final_status",
           "workerPoll": "timed_out_no_final_status",
           "pr": null,
           "branchHead": "815bb7f235bd2181c1ccb93cab3bf666cad7dff8",
-          "branchDivergence": "origin/codex/epic/admin-configuration-frontend...HEAD = 13 0; task branch is behind controller checkpoints plus the merged TASK-012 checkpoint and will need freshness refresh before review/merge.",
+          "branchDivergence": "origin/codex/epic/admin-configuration-frontend...HEAD = 14 0; task branch is behind controller checkpoints plus TASK-012 merge/closeout and will need freshness refresh before review/merge.",
           "worktreeStatus": "active_uncommitted",
-          "branchFreshness": "behind_epic_by_13_controller_and_task012_merge_checkpoints",
+          "branchFreshness": "behind_epic_by_14_controller_task012_merge_and_closeout_checkpoints",
           "files": [
             "src/transport/admin-provider-config.ts",
             "tests/integration/admin-provider-config.test.ts",
@@ -2695,7 +2708,8 @@
             "ui/src/components/admin/AdminDashboard.tsx"
           ],
           "diffCheck": "git diff --check passed in the worker worktree; untracked new AdminConfig files remain present as expected for in-progress UI work.",
-          "coordinationNote": "Worker remains active with uncommitted config UI/API changes and no PR or patch. No missing-deliverable nudge sent."
+          "recentActivity": "AdminConfig.tsx and AdminConfig.test.tsx were modified around 2026-07-06T19:13Z, inside this heartbeat window.",
+          "coordinationNote": "Worker remains active with uncommitted config UI/API changes and no PR or patch. No missing-deliverable nudge sent because the worktree has fresh activity."
         },
         "nonBlockingFeedback": [
           {
@@ -2717,7 +2731,7 @@
     "activationCommit": "f4bf3d2d9efd1c4423c5cf6b67f6f10b22d8ce49",
     "workerDispatchStartedAt": "2026-07-06T17:29:45Z",
     "dispatchedAt": "2026-07-06T17:29:45Z",
-    "lastObservedAt": "2026-07-06T18:55:02Z"
+    "lastObservedAt": "2026-07-06T19:15:01Z"
   },
   "currentGates": {
     "epicBranch": {
@@ -2790,13 +2804,13 @@
     "monitoring": {
       "mode": "adaptive",
       "cadence": "15m",
-      "status": "wave_008_task012_merged_cleaned_up_task013_active_no_pr",
-      "lastCheckedAt": "2026-07-06T18:55:02Z",
-      "nextCheckDueAt": "2026-07-06T19:10:02Z",
+      "status": "wave_008_task012_merged_cleaned_up_task013_active_no_pr_recent_activity",
+      "lastCheckedAt": "2026-07-06T19:15:01Z",
+      "nextCheckDueAt": "2026-07-06T19:30:01Z",
       "schedulerRef": "postgram-admin-wave-005-wdd-heartbeat",
       "schedulerName": "postgram-admin-wave-008-wdd-heartbeat",
-      "fallbackPrompt": "WAVE-008 is active. Read .wdd/epics/EPIC-admin-configuration-frontend/orchestration.json and controller-state.md. TASK-012 / PR #89 is MERGED at 2026-07-06T18:54:38Z in merge commit ef54876a27164d3a91ba60d32f9e23b71d9cdf38 and its clean pushed worktree was removed. Inspect worker Parfit (019f387a-3f1d-74a0-9949-5a318a43e494) and assigned worktree /Users/ivo.toby/workspace/postgram/.worktrees/TASK-013-admin-config-ui on branch codex/task/TASK-013-admin-config-ui for bundle WAVE-008-admin-config-ui / TASK-013-admin-config-ui. If TASK-013 has produced a PR or patch, move it to review/reviewer orchestration; if no PR or patch exists, keep no_pr and nudge exact missing deliverables only if the worktree is inactive or stale. If review reports P1/P2, route feedback to Parfit or a fresh fix worker. If review passes, refresh stale task branch against codex/epic/admin-configuration-frontend, rerun required freshness verification, then merge or mark merge_ready according to policy. Stop when WAVE-008 bundles are merged, blocked, cancelled, or ready for wdd-reconcile-wave. After WAVE-008 is reconciled, continue to WAVE-009 per Ivo finish-all-waves instruction and push to GitHub between tasks/waves.",
-      "verifiedAt": "2026-07-06T18:55:02Z",
+      "fallbackPrompt": "WAVE-008 is active. Read .wdd/epics/EPIC-admin-configuration-frontend/orchestration.json and controller-state.md. TASK-012 / PR #89 is MERGED at 2026-07-06T18:54:38Z in merge commit ef54876a27164d3a91ba60d32f9e23b71d9cdf38 and its clean pushed worktree was removed. Inspect worker Parfit (019f387a-3f1d-74a0-9949-5a318a43e494) and assigned worktree /Users/ivo.toby/workspace/postgram/.worktrees/TASK-013-admin-config-ui on branch codex/task/TASK-013-admin-config-ui for bundle WAVE-008-admin-config-ui / TASK-013-admin-config-ui. Last observed at 2026-07-06T19:15:01Z: no PR exists, the worktree has active uncommitted config UI/API changes, git diff --check passes, and recent AdminConfig file activity means no nudge was sent. If TASK-013 has produced a PR or patch, move it to review/reviewer orchestration; if no PR or patch exists, keep no_pr and nudge exact missing deliverables only if the worktree is inactive or stale. If review reports P1/P2, route feedback to Parfit or a fresh fix worker. If review passes, refresh stale task branch against codex/epic/admin-configuration-frontend, rerun required freshness verification, then merge or mark merge_ready according to policy. Stop when WAVE-008 bundles are merged, blocked, cancelled, or ready for wdd-reconcile-wave. After WAVE-008 is reconciled, continue to WAVE-009 per Ivo finish-all-waves instruction and push to GitHub between tasks/waves.",
+      "verifiedAt": "2026-07-06T19:15:01Z",
       "automationUpdateResult": "updated"
     },
     "review": {
@@ -3129,7 +3143,7 @@
       "WAVE-007-admin-auth-ui": "current_at_merge",
       "WAVE-007-maintenance-admin-api": "current_at_merge",
       "WAVE-008-admin-ops-dashboard-ui": "current_at_merge",
-      "WAVE-008-admin-config-ui": "behind_epic_by_13_controller_and_task012_merge_checkpoints"
+      "WAVE-008-admin-config-ui": "behind_epic_by_14_controller_task012_merge_and_closeout_checkpoints"
     },
     "merge": {
       "WAVE-001-admin-feasibility-gate": {
@@ -4008,17 +4022,20 @@
         "evidence": "Schrodinger returned REVIEW_PASS for PR #89 with no P1/P2. Controller refreshed TASK-012 against the latest epic checkpoint 07e760b, pushed task branch head 298804f17ae15956135149300558c26c55691e79, verified final divergence 0 5, merge-tree clean, branch diff whitespace, AdminOps tests 11/11, AdminAuth tests 16/16, and UI typecheck. TASK-012 merged into the epic branch in ef54876a27164d3a91ba60d32f9e23b71d9cdf38, the epic branch push marked PR #89 MERGED at 2026-07-06T18:54:38Z, and the clean pushed TASK-012 worktree was removed."
       },
       "WAVE-008-admin-config-ui": {
-        "result": "no_pr_active_uncommitted_diff_check_passed",
-        "checkedAt": "2026-07-06T18:55:02Z",
+        "result": "no_pr_active_uncommitted_recent_activity_diff_check_passed",
+        "checkedAt": "2026-07-06T19:15:01Z",
         "commands": [
-          "multi_agent_v1.wait_agent Parfit timeout 10000",
+          "multi_agent_v1.wait_agent Parfit timeout 30000",
           "gh pr list --head codex/task/TASK-013-admin-config-ui --json number,url,state,isDraft,headRefOid,mergeStateStatus,updatedAt,title",
           "git status --short --branch",
+          "git rev-parse HEAD",
           "git diff --name-only",
           "git diff --check",
-          "git rev-list --left-right --count origin/codex/epic/admin-configuration-frontend...HEAD"
+          "git rev-list --left-right --count origin/codex/epic/admin-configuration-frontend...HEAD",
+          "stat modified TASK-013 touched files",
+          "find . -path './.git' -prune -o -type f -mmin -30 -print"
         ],
-        "evidence": "No TASK-013 PR or patch exists yet. Parfit did not return a final status during the bounded wait; worktree remains active with uncommitted changes; git diff --check passes; branch divergence is 13 0 and freshness refresh is required before review/merge."
+        "evidence": "Parfit did not return a final status during the bounded wait and GitHub has no PR for codex/task/TASK-013-admin-config-ui. The TASK-013 worktree remains active with uncommitted and untracked config UI/API files; git diff --check passes. Recent file activity was observed on AdminConfig.tsx and AdminConfig.test.tsx at about 2026-07-06T19:13Z, so no stale-work nudge was sent. Branch divergence is origin/codex/epic/admin-configuration-frontend...HEAD = 14 0 and freshness refresh is required before review/merge."
       }
     },
     "feedback": {
@@ -4169,8 +4186,8 @@
             "summary": "TASK-013 should integrate with the TASK-012 AdminDashboard shell wiring in AdminAuth.tsx and avoid reviving the older placeholder AdminShell shape when it finalizes overlapping AdminAuth.tsx/adminApi.ts edits."
           }
         ],
-        "fixStatus": "no_pr_active_uncommitted",
-        "lastObservedAt": "2026-07-06T18:55:02Z"
+        "fixStatus": "no_pr_active_uncommitted_recent_activity",
+        "lastObservedAt": "2026-07-06T19:15:01Z"
       }
     },
     "activationArtifact": {

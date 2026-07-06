@@ -108,11 +108,11 @@ Mode: adaptive
 
 Cadence: 15m
 
-Status: wave_008_task012_merged_cleaned_up_task013_active_no_pr
+Status: wave_008_task012_merged_cleaned_up_task013_active_no_pr_recent_activity
 
-Last check: 2026-07-06T18:55:02Z
+Last check: 2026-07-06T19:15:01Z
 
-Next check due: 2026-07-06T19:10:02Z
+Next check due: 2026-07-06T19:30:01Z
 
 Scheduler reference: `postgram-admin-wave-005-wdd-heartbeat`
 
@@ -128,16 +128,18 @@ ef54876a27164d3a91ba60d32f9e23b71d9cdf38 and its clean pushed worktree was
 removed. Inspect worker Parfit (019f387a-3f1d-74a0-9949-5a318a43e494) and
 assigned worktree /Users/ivo.toby/workspace/postgram/.worktrees/TASK-013-admin-config-ui
 on branch codex/task/TASK-013-admin-config-ui for bundle
-WAVE-008-admin-config-ui / TASK-013-admin-config-ui. If TASK-013 has produced a
-PR or patch, move it to review/reviewer orchestration; if no PR or patch exists,
-keep no_pr and nudge exact missing deliverables only if the worktree is inactive
-or stale. If review reports P1/P2, route feedback to Parfit or a fresh fix
-worker. If review passes, refresh stale task branch against
-codex/epic/admin-configuration-frontend, rerun required freshness verification,
-then merge or mark merge_ready according to policy. Stop when WAVE-008 bundles
-are merged, blocked, cancelled, or ready for wdd-reconcile-wave. After WAVE-008
-is reconciled, continue to WAVE-009 per Ivo finish-all-waves instruction and
-push to GitHub between tasks/waves.
+WAVE-008-admin-config-ui / TASK-013-admin-config-ui. Last observed at
+2026-07-06T19:15:01Z: no PR exists, the worktree has active uncommitted config
+UI/API changes, git diff --check passes, and recent AdminConfig file activity
+means no nudge was sent. If TASK-013 has produced a PR or patch, move it to
+review/reviewer orchestration; if no PR or patch exists, keep no_pr and nudge
+exact missing deliverables only if the worktree is inactive or stale. If review
+reports P1/P2, route feedback to Parfit or a fresh fix worker. If review
+passes, refresh stale task branch against codex/epic/admin-configuration-frontend,
+rerun required freshness verification, then merge or mark merge_ready according
+to policy. Stop when WAVE-008 bundles are merged, blocked, cancelled, or ready
+for wdd-reconcile-wave. After WAVE-008 is reconciled, continue to WAVE-009 per
+Ivo finish-all-waves instruction and push to GitHub between tasks/waves.
 ```
 
 ## Active Wave Strategy
@@ -197,7 +199,7 @@ push to GitHub between tasks/waves.
 | TASK-010-provider-config-apply | TICKET-004-runtime-configuration | codex/task/TASK-010-provider-config-apply | cleaned_up | reconciled | REVIEW_PASS; final branch freshness passed at `515cfa5`; merged locally into epic branch in `f5efbc0`; PR #84 merged at 2026-07-06T11:31:10Z; WAVE-005 reconciled |
 | TASK-011-admin-auth-ui | TICKET-005-admin-frontend | codex/task/TASK-011-admin-auth-ui | cleaned_up | reconciled | Lorentz REVIEW_PASS; refreshed branch head `344bab8`; post-refresh AdminAuth tests/typecheck/diff/merge-tree/JQ passed; merged locally in `4e77a6b`; PR #87 merged at 2026-07-06T15:48:11Z; shared context reconciled |
 | TASK-012-admin-ops-dashboard-ui | TICKET-005-admin-frontend | codex/task/TASK-012-admin-ops-dashboard-ui | cleaned_up | merged | PR #89 MERGED at 2026-07-06T18:54:38Z; Schrodinger REVIEW_PASS; final freshness passed at `298804f`; merged locally in `ef54876`; AdminOps/AdminAuth UI tests and typecheck passed |
-| TASK-013-admin-config-ui | TICKET-005-admin-frontend | codex/task/TASK-013-admin-config-ui | active_uncommitted | no_pr | Worker Parfit `019f387a-3f1d-74a0-9949-5a318a43e494`; tracked `git diff --check` passed; behind epic by 13 controller/TASK-012 merge checkpoints; non-blocking TASK-012 shell integration note routed |
+| TASK-013-admin-config-ui | TICKET-005-admin-frontend | codex/task/TASK-013-admin-config-ui | active_uncommitted | no_pr | Worker Parfit `019f387a-3f1d-74a0-9949-5a318a43e494`; tracked `git diff --check` passed; behind epic by 14 controller/TASK-012 merge and closeout checkpoints; recent AdminConfig edits observed; non-blocking TASK-012 shell integration note routed |
 | TASK-014-admin-job-foundation | TICKET-006-maintenance-jobs | codex/task/TASK-014-admin-job-foundation | cleaned_up | reconciled | Lorentz REVIEW_PASS; freshness current at task head `0e08630`; post-merge tests/typecheck/touched-file ESLint passed; merged locally into epic branch in `c5edbfc`; WAVE-006 reconciled and worktree cleaned up |
 | TASK-015-maintenance-admin-api | TICKET-006-maintenance-jobs | codex/task/TASK-015-maintenance-admin-api | cleaned_up | reconciled | Lorentz REVIEW_PASS; final freshness passed at task head `ea88af4`; post-merge contract tests 4/4, CLI integration 37/37, typecheck, scoped ESLint, JSON parse, and diff check passed; merged locally in `78f0f43`; PR #88 merged at 2026-07-06T17:02:28Z; shared context reconciled |
 | TASK-016-maintenance-admin-ui | TICKET-006-maintenance-jobs | codex/task/TASK-016-maintenance-admin-ui | not_created | planned | `npm --prefix ui run test -- --run src/components/AdminMaintenance.test.tsx`; `npm --prefix ui run typecheck` |
@@ -1578,6 +1580,15 @@ push to GitHub between tasks/waves.
   pruned. TASK-013 remains active with no PR or patch; `git diff --check`
   passes and its branch is behind the epic branch by 13 controller/TASK-012
   merge checkpoints.
+- 2026-07-06T19:15:01Z: Bounded poll found TASK-013 still active with no PR or
+  patch. Parfit did not return a final status during the 30-second wait, GitHub
+  has no PR for `codex/task/TASK-013-admin-config-ui`, and the worker worktree
+  remains uncommitted with config UI/API changes plus untracked AdminConfig
+  files. `git diff --check` passes. Recent file activity was observed around
+  2026-07-06T19:13Z on `AdminConfig.tsx` and `AdminConfig.test.tsx`, so no
+  missing-deliverable nudge was sent. TASK-013 is behind the epic branch by 14
+  controller/TASK-012 merge and closeout checkpoints and needs freshness before
+  review/merge.
 
 ## Next Action
 

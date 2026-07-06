@@ -694,6 +694,11 @@ Progress:
   typecheck, then merged into the epic branch in `ef54876`. GitHub marked
   PR #89 `MERGED` at 2026-07-06T18:54:38Z and the clean TASK-012 worktree was
   removed. TASK-013 remains active with no PR or patch.
+- 2026-07-06T19:15:01Z controller poll: TASK-013 remains active with Parfit
+  and no PR or patch. The worktree has fresh AdminConfig edits from this
+  heartbeat window, `git diff --check` passes, and no nudge was sent. TASK-013
+  will need freshness refresh before review/merge because the epic branch is 14
+  checkpoints ahead.
 
 Stop condition:
 

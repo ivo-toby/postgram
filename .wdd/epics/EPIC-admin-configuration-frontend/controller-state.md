@@ -2,8 +2,8 @@
 id: EPIC-admin-configuration-frontend-CONTROLLER
 kind: controller_state
 epic: EPIC-admin-configuration-frontend
-active_wave: null
-status: ready_for_next_wave
+active_wave: WAVE-008
+status: monitoring
 updated_at: 2026-07-06
 ---
 
@@ -70,7 +70,13 @@ branch was refreshed to `ea88af4`, TASK-015 merged locally into the epic branch
 in `78f0f43`, GitHub marked PR #88 `MERGED` at 2026-07-06T17:02:28Z, and the
 clean TASK-015 worktree was removed. Shared context now records the WAVE-007
 admin auth UI client/shell contract and the job-backed maintenance admin API
-contract. WAVE-008 is ready to start.
+contract.
+
+WAVE-008 is active after WAVE-007 reconciliation was pushed in `27f4903`. Its
+hybrid bundles are TASK-012-admin-ops-dashboard-ui and
+TASK-013-admin-config-ui. Task files have moved to `in-progress/`, dedicated
+branches and worktree paths are reserved, and the activation checkpoint is
+pending push before worker dispatch.
 
 WAVE-004 is done and reconciled. PR #81/TASK-009 and PR #82/TASK-006 are
 merged, shared context is reconciled, and both WAVE-004 worktrees are cleaned
@@ -87,46 +93,54 @@ up.
 | WAVE-005 | TASK-007, TASK-010 | full / hybrid / risk_based / adaptive | done | confirmed by Ivo via finish-all-waves request on 2026-07-06 |
 | WAVE-006 | TASK-008, TASK-014 | full / hybrid / risk_based / adaptive | done | confirmed by Ivo via finish-all-waves request on 2026-07-06 |
 | WAVE-007 | TASK-011, TASK-015 | full / parallel / risk_based / adaptive | done | confirmed by Ivo via finish-all-waves request on 2026-07-06 |
-| WAVE-008 | TASK-012, TASK-013 | full / hybrid / risk_based / adaptive | ready_to_start | confirmed by Ivo via finish-all-waves request on 2026-07-06 |
+| WAVE-008 | TASK-012, TASK-013 | full / hybrid / risk_based / adaptive | in_progress | confirmed by Ivo via finish-all-waves request on 2026-07-06 |
 | WAVE-009 | TASK-016 | full / bundled / risk_based / adaptive | planned | required |
 | WAVE-010 | TASK-017 | full / bundled / risk_based / adaptive | planned | required |
 | WAVE-011 | TASK-018 | full / bundled / risk_based / adaptive | planned | not required |
 
 ## Monitoring
 
-Mode: inactive
+Mode: adaptive
 
-Cadence: stopped
+Cadence: 15m
 
-Status: wave_007_reconciled_ready_for_wave_008_start
+Status: wave_008_activation_pushed_pending_worker_dispatch
 
-Last check: 2026-07-06T17:07:31Z
+Last check: 2026-07-06T17:17:56Z
 
-Next check due: none
+Next check due: 2026-07-06T17:32:56Z
 
 Scheduler reference: `postgram-admin-wave-005-wdd-heartbeat`
 
-Scheduler name: `postgram-admin-wave-007-reconcile-heartbeat`
+Scheduler name: `postgram-admin-wave-008-wdd-heartbeat`
 
 Fallback prompt:
 
 ```text
-WAVE-007 reconciliation is complete and pushed once this checkpoint lands. Start
-WAVE-008 with wdd-start-wave, then dispatch TASK-012-admin-ops-dashboard-ui and
-TASK-013-admin-config-ui per finish-all-waves instruction.
+WAVE-008 is active. Read .wdd/epics/EPIC-admin-configuration-frontend/orchestration.json
+and controller-state.md, inspect TASK-012-admin-ops-dashboard-ui and
+TASK-013-admin-config-ui workers and worktrees, update gates, PR/review refs,
+feedback, branch freshness, verification, shared-context reconciliation, and
+monitoring timestamps. If a worker has produced a PR or patch, move that bundle
+to review/reviewer orchestration; if no PR or patch exists, keep no_pr and
+nudge exact missing deliverables only if needed. Stop when WAVE-008 bundles are
+merged, blocked, cancelled, or ready for wdd-reconcile-wave. After WAVE-008 is
+reconciled, continue to WAVE-009 per Ivo finish-all-waves instruction and push
+to GitHub between tasks/waves.
 ```
 
 ## Active Wave Strategy
 
-- Active wave: none.
+- Active wave: WAVE-008.
 - Last active wave: WAVE-007.
 - WAVE-007 outcome: done and reconciled.
-- Next wave after WAVE-007: WAVE-008.
+- Next wave after WAVE-008: WAVE-009.
 - WAVE-008 strategy: full / hybrid / risk_based / adaptive.
 - WAVE-008 tasks: TASK-012-admin-ops-dashboard-ui and
   TASK-013-admin-config-ui.
 - Confirmation: Ivo via Codex finish-all-waves request on 2026-07-06.
-- Current gate: WAVE-008 is ready to start.
+- Current gate: push activation artifacts, create/push task branches and
+  worktrees, then dispatch workers.
 
 ## Last Reconciled Wave
 
@@ -171,8 +185,8 @@ TASK-013-admin-config-ui per finish-all-waves instruction.
 | TASK-009-settings-secret-store | TICKET-004-runtime-configuration | codex/task/TASK-009-settings-secret-store | cleaned_up | reconciled | PR #81 follow-up REVIEW_PASS, final branch freshness passed at `ca9c96f`, merged locally into epic branch in `b63ad08`; worktree cleaned up during WAVE-004 reconciliation |
 | TASK-010-provider-config-apply | TICKET-004-runtime-configuration | codex/task/TASK-010-provider-config-apply | cleaned_up | reconciled | REVIEW_PASS; final branch freshness passed at `515cfa5`; merged locally into epic branch in `f5efbc0`; PR #84 merged at 2026-07-06T11:31:10Z; WAVE-005 reconciled |
 | TASK-011-admin-auth-ui | TICKET-005-admin-frontend | codex/task/TASK-011-admin-auth-ui | cleaned_up | reconciled | Lorentz REVIEW_PASS; refreshed branch head `344bab8`; post-refresh AdminAuth tests/typecheck/diff/merge-tree/JQ passed; merged locally in `4e77a6b`; PR #87 merged at 2026-07-06T15:48:11Z; shared context reconciled |
-| TASK-012-admin-ops-dashboard-ui | TICKET-005-admin-frontend | codex/task/TASK-012-admin-ops-dashboard-ui | not_created | planned | `npm --prefix ui run test -- --run src/components/AdminOps.test.tsx`; `npm --prefix ui run typecheck` |
-| TASK-013-admin-config-ui | TICKET-005-admin-frontend | codex/task/TASK-013-admin-config-ui | not_created | planned | `npm --prefix ui run test -- --run src/components/AdminConfig.test.tsx`; `npm --prefix ui run typecheck` |
+| TASK-012-admin-ops-dashboard-ui | TICKET-005-admin-frontend | codex/task/TASK-012-admin-ops-dashboard-ui | pending_creation | pending_worker_dispatch | `npm --prefix ui run test -- --run src/components/AdminOps.test.tsx`; `npm --prefix ui run typecheck` |
+| TASK-013-admin-config-ui | TICKET-005-admin-frontend | codex/task/TASK-013-admin-config-ui | pending_creation | pending_worker_dispatch | `npm --prefix ui run test -- --run src/components/AdminConfig.test.tsx`; `npm --prefix ui run typecheck` |
 | TASK-014-admin-job-foundation | TICKET-006-maintenance-jobs | codex/task/TASK-014-admin-job-foundation | cleaned_up | reconciled | Lorentz REVIEW_PASS; freshness current at task head `0e08630`; post-merge tests/typecheck/touched-file ESLint passed; merged locally into epic branch in `c5edbfc`; WAVE-006 reconciled and worktree cleaned up |
 | TASK-015-maintenance-admin-api | TICKET-006-maintenance-jobs | codex/task/TASK-015-maintenance-admin-api | cleaned_up | reconciled | Lorentz REVIEW_PASS; final freshness passed at task head `ea88af4`; post-merge contract tests 4/4, CLI integration 37/37, typecheck, scoped ESLint, JSON parse, and diff check passed; merged locally in `78f0f43`; PR #88 merged at 2026-07-06T17:02:28Z; shared context reconciled |
 | TASK-016-maintenance-admin-ui | TICKET-006-maintenance-jobs | codex/task/TASK-016-maintenance-admin-ui | not_created | planned | `npm --prefix ui run test -- --run src/components/AdminMaintenance.test.tsx`; `npm --prefix ui run typecheck` |
@@ -210,6 +224,12 @@ TASK-013-admin-config-ui per finish-all-waves instruction.
   dispatch.
 - Controller checkout rule: workers must not switch branches in the controller
   checkout.
+- WAVE-008 branch/worktree assignments:
+  `codex/task/TASK-012-admin-ops-dashboard-ui` at
+  `/Users/ivo.toby/workspace/postgram/.worktrees/TASK-012-admin-ops-dashboard-ui`
+  and `codex/task/TASK-013-admin-config-ui` at
+  `/Users/ivo.toby/workspace/postgram/.worktrees/TASK-013-admin-config-ui`.
+- WAVE-008 worktree status: pending creation after activation checkpoint push.
 - WAVE-002 branch freshness: current at merge after task branch freshness merge
   `16122c0`.
 - WAVE-003 bundle branch: `codex/task/TASK-005-admin-session-routes`.
@@ -1451,10 +1471,14 @@ TASK-013-admin-config-ui per finish-all-waves instruction.
   `postgram-admin-wave-005-wdd-heartbeat` was updated to scheduler name
   `postgram-admin-wave-007-reconcile-heartbeat` with a WAVE-007
   `wdd-reconcile-wave` handoff prompt.
+- 2026-07-06T17:17:56Z: Started WAVE-008 after WAVE-007 reconciliation
+  checkpoint `27f4903` was pushed. TASK-012-admin-ops-dashboard-ui and
+  TASK-013-admin-config-ui moved to `in-progress/`; dedicated task branch and
+  worktree assignments are recorded. Activation checkpoint is pending push
+  before branch/worktree creation and worker dispatch.
 
 ## Next Action
 
-Next action: start WAVE-008 with `wdd-start-wave`, dispatch
-TASK-012-admin-ops-dashboard-ui and TASK-013-admin-config-ui from fresh
-worktrees, and continue the finish-all-waves sequence after the activation
-checkpoint is pushed.
+Next action: push the WAVE-008 activation checkpoint, create and push the
+TASK-012 and TASK-013 task branches/worktrees from that epic head, dispatch both
+workers, and keep monitoring active.

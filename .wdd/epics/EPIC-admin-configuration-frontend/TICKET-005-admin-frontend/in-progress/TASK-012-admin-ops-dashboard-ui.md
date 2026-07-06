@@ -6,7 +6,7 @@ ticket: TICKET-005-admin-frontend
 wave: WAVE-008
 slug: admin-ops-dashboard-ui
 title: Admin Ops Dashboard UI
-status: todo
+status: in_progress
 depends_on:
   - TASK-008-admin-key-audit-stats-api
   - TASK-011-admin-auth-ui
@@ -17,13 +17,13 @@ conflict_domains:
 assigned_model_class: implementationComplex
 review_model_class: review
 branch: codex/task/TASK-012-admin-ops-dashboard-ui
-worker_worktree: null
-worktree_status: unassigned
+worker_worktree: /Users/ivo.toby/workspace/postgram/.worktrees/TASK-012-admin-ops-dashboard-ui
+worktree_status: pending_creation
 pr: null
 worker_thread_id: null
 review_thread_id: null
-current_gate: not_started
-branch_freshness: unknown
+current_gate: pending_worker_dispatch
+branch_freshness: current_at_activation
 verification:
   - npm --prefix ui run test -- --run src/components/AdminOps.test.tsx
   - npm --prefix ui run typecheck
@@ -33,7 +33,7 @@ verification:
 
 ## Status
 
-todo
+in_progress
 
 ## Parent Ticket
 
@@ -109,7 +109,9 @@ codex/task/TASK-012-admin-ops-dashboard-ui
 
 ## Worker Worktree
 
-None assigned yet.
+`/Users/ivo.toby/workspace/postgram/.worktrees/TASK-012-admin-ops-dashboard-ui`
+assigned for WAVE-008 activation; pending creation from the pushed epic
+activation checkpoint.
 
 ## PR / Patch Reference
 

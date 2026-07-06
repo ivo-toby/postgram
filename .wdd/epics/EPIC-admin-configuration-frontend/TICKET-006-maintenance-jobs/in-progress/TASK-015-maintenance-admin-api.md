@@ -26,7 +26,7 @@ pr: null
 worker_thread_id: 019f37c5-7084-7920-916a-7fd9ac7d8cb6
 review_thread_id: null
 current_gate: no_pr
-branch_freshness: behind_epic_controller_checkpoints
+branch_freshness: behind_epic_controller_checkpoints_11
 verification:
   - npm test -- tests/contract/admin-maintenance-api.test.ts
   - npm test -- tests/integration/cli-admin.test.ts
@@ -224,6 +224,15 @@ Keep command-specific logic typed and bounded rather than generic.
   Tracked `git diff --check` passed; branch divergence was `6 0` before the
   TASK-011 closeout push. No nudge sent because the worktree still shows
   active task-owned work.
+- 2026-07-06T16:08:16Z: Helmholtz was still running with no PR or patch after
+  direct worker polling timed out without final status. The worktree remains
+  active/uncommitted in expected maintenance API files, with recent heartbeat
+  window edits to `src/transport/admin-maintenance.ts` and
+  `tests/contract/admin-maintenance-api.test.ts`. Tracked `git diff --check`
+  passed, no staged files were present, and branch divergence was `11 0`
+  against `origin/codex/epic/admin-configuration-frontend` after TASK-011
+  closeout. No nudge sent because the worktree still shows active task-owned
+  work; refresh branch freshness before review or merge.
 
 ## Review Feedback
 

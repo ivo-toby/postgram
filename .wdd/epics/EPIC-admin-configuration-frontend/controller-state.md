@@ -99,9 +99,9 @@ Cadence: 15m
 
 Status: wave_007_task011_merged_cleaned_up_task015_active_no_pr
 
-Last check: 2026-07-06T15:48:11Z
+Last check: 2026-07-06T16:08:16Z
 
-Next check due: 2026-07-06T16:03:11Z
+Next check due: 2026-07-06T16:23:16Z
 
 Scheduler reference: `postgram-admin-wave-005-wdd-heartbeat`
 
@@ -169,7 +169,7 @@ no_pr and nudge only if the worktree is inactive or stale.
 | TASK-012-admin-ops-dashboard-ui | TICKET-005-admin-frontend | codex/task/TASK-012-admin-ops-dashboard-ui | not_created | planned | `npm --prefix ui run test -- --run src/components/AdminOps.test.tsx`; `npm --prefix ui run typecheck` |
 | TASK-013-admin-config-ui | TICKET-005-admin-frontend | codex/task/TASK-013-admin-config-ui | not_created | planned | `npm --prefix ui run test -- --run src/components/AdminConfig.test.tsx`; `npm --prefix ui run typecheck` |
 | TASK-014-admin-job-foundation | TICKET-006-maintenance-jobs | codex/task/TASK-014-admin-job-foundation | cleaned_up | reconciled | Lorentz REVIEW_PASS; freshness current at task head `0e08630`; post-merge tests/typecheck/touched-file ESLint passed; merged locally into epic branch in `c5edbfc`; WAVE-006 reconciled and worktree cleaned up |
-| TASK-015-maintenance-admin-api | TICKET-006-maintenance-jobs | codex/task/TASK-015-maintenance-admin-api | active_uncommitted | no_pr | Helmholtz still running; no PR at 2026-07-06T15:38:25Z; active backend maintenance API changes observed; tracked `git diff --check` passed; branch freshness refresh required before review/merge |
+| TASK-015-maintenance-admin-api | TICKET-006-maintenance-jobs | codex/task/TASK-015-maintenance-admin-api | active_uncommitted | no_pr | Helmholtz still running; no PR at 2026-07-06T16:08:16Z; active backend maintenance API changes observed with recent maintenance transport/test edits; tracked `git diff --check` passed; branch is `11 0` behind epic and freshness refresh is required before review/merge |
 | TASK-016-maintenance-admin-ui | TICKET-006-maintenance-jobs | codex/task/TASK-016-maintenance-admin-ui | not_created | planned | `npm --prefix ui run test -- --run src/components/AdminMaintenance.test.tsx`; `npm --prefix ui run typecheck` |
 | TASK-017-docker-first-run-no-cli | TICKET-007-docker-e2e-validation | codex/task/TASK-017-docker-first-run-no-cli | not_created | planned | `docker compose config`; `npm run typecheck`; `npm --prefix ui run build` |
 | TASK-018-security-epic-validation | TICKET-007-docker-e2e-validation | codex/task/TASK-018-security-epic-validation | not_created | planned | broad backend, frontend, Docker, and smoke validation |
@@ -1363,6 +1363,16 @@ no_pr and nudge only if the worktree is inactive or stale.
   The TASK-011 worktree was clean at task head `344bab8`, so controller removed
   `/Users/ivo.toby/workspace/postgram/.worktrees/TASK-011-admin-auth-ui` and
   ran `git worktree prune`. WAVE-007 remains active only on TASK-015.
+- 2026-07-06T16:08:16Z: Bounded poll found Helmholtz still running on TASK-015
+  with no PR or patch. Direct worker poll timed out without final status. The
+  TASK-015 worktree remains active/uncommitted in expected maintenance API
+  files; `src/transport/admin-maintenance.ts` and
+  `tests/contract/admin-maintenance-api.test.ts` were edited within the
+  heartbeat window. No staged files were present, tracked `git diff --check`
+  passed, and branch divergence is `11 0` against the epic branch after
+  TASK-011 closeout. No nudge was sent because the worktree is active; branch
+  freshness refresh remains required before review or merge. Next check due
+  2026-07-06T16:23:16Z.
 
 ## Next Action
 

@@ -6,7 +6,7 @@ ticket: TICKET-007-docker-e2e-validation
 wave: WAVE-011
 slug: security-epic-validation
 title: Security And Epic Validation
-status: review
+status: done
 depends_on:
   - TASK-017-docker-first-run-no-cli
 conflict_domains:
@@ -24,8 +24,8 @@ worktree_status: review_ready
 pr: https://github.com/ivo-toby/postgram/pull/93
 worker_thread_id: 019f39b8-b83d-7350-b93e-c037b63ab845
 review_thread_id: 019f398f-98c3-7350-be3f-1cb4af8aab75
-current_gate: review_passed_freshness_verified
-branch_freshness: current_after_refresh
+current_gate: merged
+branch_freshness: current_at_merge
 verification:
   - npm run typecheck
   - npm test
@@ -42,7 +42,7 @@ verification:
 
 ## Status
 
-review
+done
 
 ## Parent Ticket
 
@@ -302,3 +302,8 @@ Fresh TASK-018 validation on 2026-07-06 UTC:
 - Opened draft PR #93 against `codex/epic/admin-configuration-frontend`.
 - Dewey returned `REVIEW_PASS` on PR #93 head `b9a19e9`; final branch
   freshness was refreshed against the epic branch before merge.
+- Final task refresh commit `1a890e2` had divergence `0 3`, merge-tree clean,
+  diff-check clean, orchestration JSON parse clean, root/UI production audits
+  clean, and docker-first-run unit tests 5/5.
+- TASK-018 merged into the epic branch in
+  `1b7c89157f17812a62d8137d0e3b14019336f688`.

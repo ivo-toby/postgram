@@ -3,7 +3,7 @@ id: EPIC-admin-configuration-frontend-CONTROLLER
 kind: controller_state
 epic: EPIC-admin-configuration-frontend
 active_wave: WAVE-011
-status: wave_011_review_pending_dirty_branch
+status: wave_011_ready_for_reconciliation
 updated_at: 2026-07-06
 ---
 
@@ -155,9 +155,12 @@ merge. Dewey (`019f398f-98c3-7350-be3f-1cb4af8aab75`) was requested for
 review in submission `019f39ca-0519-7b52-b809-b87323bb4ec5`, then updated to
 the final `b9a19e9` head in submission
 `019f39cd-142a-7630-a41c-fb3c1433e979`. Dewey returned `REVIEW_PASS` for PR
-#93 at head `b9a19e9` with no P1/P2 findings. Current gate is
-`review_passed_freshness_pending`; final freshness remains required before
-merge.
+#93 at head `b9a19e9` with no P1/P2 findings. The task branch was refreshed
+against epic checkpoint `1bd737d` in `1a890e2`; final freshness passed with
+divergence `0 3`, clean merge-tree, clean diff-check, clean production audits,
+and docker-first-run unit tests 5/5. TASK-018 merged into the epic branch in
+`1b7c89157f17812a62d8137d0e3b14019336f688`. WAVE-011 is ready for
+reconciliation.
 
 WAVE-004 is done and reconciled. PR #81/TASK-009 and PR #82/TASK-006 are
 merged, shared context is reconciled, and both WAVE-004 worktrees are cleaned
@@ -185,49 +188,39 @@ Mode: adaptive
 
 Cadence: 5m
 
-Status: wave_011_review_pending_dirty_branch
+Status: wave_011_ready_for_reconciliation
 
-Last check: 2026-07-06T23:33:02Z
+Last check: 2026-07-06T23:47:08Z
 
-Next check due: 2026-07-06T23:38:02Z
+Next check due: 2026-07-06T23:52:08Z
 
 Scheduler reference: `postgram-admin-wave-005-wdd-heartbeat`
 
 Scheduler name: `postgram-admin-wave-011-wdd-heartbeat`
 
-Automation update: updated_in_app_5m
+Automation update: pending_reconciliation_handoff
 
 Fallback prompt:
 
 ```text
-Run one bounded WDD controller heartbeat for /Users/ivo.toby/workspace/postgram,
-epic EPIC-admin-configuration-frontend, active wave WAVE-011. Use the
-subagent-pr-orchestration skill. Start in /Users/ivo.toby/workspace/postgram on
-branch codex/epic/admin-configuration-frontend. Read
+Run one bounded WDD reconciliation handoff heartbeat for
+/Users/ivo.toby/workspace/postgram, epic EPIC-admin-configuration-frontend,
+active wave WAVE-011. Use the wdd-reconcile-wave skill. Start in
+/Users/ivo.toby/workspace/postgram on branch
+codex/epic/admin-configuration-frontend. Read
 .wdd/epics/EPIC-admin-configuration-frontend/orchestration.json and
-controller-state.md, then inspect draft PR #93
-(https://github.com/ivo-toby/postgram/pull/93) for
-WAVE-011-security-epic-validation / TASK-018-security-epic-validation, reviewer
-Dewey (`019f398f-98c3-7350-be3f-1cb4af8aab75`), worker Ramanujan
-(`019f39b8-b83d-7350-b93e-c037b63ab845`), and assigned worktree
-/Users/ivo.toby/workspace/postgram/.worktrees/TASK-018-security-epic-validation
-on branch codex/task/TASK-018-security-epic-validation. Current observation:
-PR #93 is OPEN draft at head `b9a19e946a1efa7e907e333556a4679ad2c12acf` after
-Ramanujan `DONE_WITH_CONCERNS`, GitHub reports `DIRTY`, and merge-tree
-conflicts are WDD/controller artifacts (`TASK-018` review task file,
-`controller-state.md`, `orchestration.json`); final branch freshness refresh
-against codex/epic/admin-configuration-frontend is required before merge.
-Review was requested from Dewey in submission
-`019f39ca-0519-7b52-b809-b87323bb4ec5`, then updated to latest head in
-submission `019f39cd-142a-7630-a41c-fb3c1433e979`, and was pending during the
-bounded wait. If Dewey reports P1/P2, route feedback to Ramanujan or a fresh
-fix worker. If review passes, refresh the stale task branch against
-codex/epic/admin-configuration-frontend, resolve WDD/controller conflicts while
-preserving TASK-018 validation evidence and PR #93 metadata, rerun required
-freshness verification, then merge or mark merge_ready according to policy.
-Stop when WAVE-011 is merged, blocked, cancelled, or ready for
-wdd-reconcile-wave. After WAVE-011 is reconciled, proceed to
-wdd-epic-validation and final PR per Ivo's finish-all-waves instruction.
+controller-state.md. Confirm WAVE-011 bundle TASK-018-security-epic-validation
+is merged into the epic branch in merge commit
+`1b7c89157f17812a62d8137d0e3b14019336f688`; PR #93 is merged or locally merged
+after Dewey `REVIEW_PASS`; task file is in `done/`;
+currentGates.workerDispatch is merged; WAVE-011 waveCompletion is
+ready_for_reconciliation; branch freshness is current_at_merge; cleanup is
+cleanup_deferred; blocking feedback is empty; and shared-context reconciliation
+is queued. Run wdd-reconcile-wave for WAVE-011, reconcile final security/epic
+validation decisions into shared context and final handoff artifacts, update
+orchestration.json and controller-state.md, clean up the TASK-018 worktree if
+safe, push the reconciliation checkpoint, then proceed to wdd-epic-validation
+and wdd-final-pr per Ivo's finish-all-waves instruction.
 ```
 
 ## Active Wave Strategy
@@ -238,8 +231,8 @@ wdd-epic-validation and final PR per Ivo's finish-all-waves instruction.
 - WAVE-011 strategy: full / bundled / risk_based / adaptive.
 - WAVE-011 task: TASK-018-security-epic-validation.
 - Confirmation: Ivo via Codex finish-all-waves request on 2026-07-06.
-- Current gate: PR #93 is in review with Dewey; final branch freshness is
-  pending because WDD/controller artifacts conflict with the epic checkpoint.
+- Current gate: TASK-018 merged locally into the epic branch; WAVE-011 is
+  ready for wdd-reconcile-wave.
 
 ## Last Reconciled Wave
 
@@ -300,7 +293,7 @@ wdd-epic-validation and final PR per Ivo's finish-all-waves instruction.
 | TASK-015-maintenance-admin-api | TICKET-006-maintenance-jobs | codex/task/TASK-015-maintenance-admin-api | cleaned_up | reconciled | Lorentz REVIEW_PASS; final freshness passed at task head `ea88af4`; post-merge contract tests 4/4, CLI integration 37/37, typecheck, scoped ESLint, JSON parse, and diff check passed; merged locally in `78f0f43`; PR #88 merged at 2026-07-06T17:02:28Z; shared context reconciled |
 | TASK-016-maintenance-admin-ui | TICKET-006-maintenance-jobs | codex/task/TASK-016-maintenance-admin-ui | cleaned_up | reconciled | Hypatia REVIEW_PASS; final task head `1885b64`; freshness `0 3`; AdminMaintenance 9/9, AdminOps/AdminConfig/AdminAuth 49/49, UI typecheck passed; merged in `10b2738`; PR #91 MERGED at 2026-07-06T21:37:31Z; WAVE-009 shared context reconciled |
 | TASK-017-docker-first-run-no-cli | TICKET-007-docker-e2e-validation | codex/task/TASK-017-docker-first-run-no-cli | cleaned_up | reconciled | Dewey REVIEW_PASS; final freshness passed at task head `38bfe21`; merged in `ce0bb83`; PR #92 MERGED at 2026-07-06T22:56:32Z; post-merge Docker/tests/typechecks/UI build passed; WAVE-010 reconciled |
-| TASK-018-security-epic-validation | TICKET-007-docker-e2e-validation | codex/task/TASK-018-security-epic-validation | clean_pushed | review_passed_freshness_pending | PR #93 open at `b9a19e9`; Ramanujan `DONE_WITH_CONCERNS`; Dewey `REVIEW_PASS`; branch is `DIRTY` on WDD/controller artifacts and needs final freshness before merge |
+| TASK-018-security-epic-validation | TICKET-007-docker-e2e-validation | codex/task/TASK-018-security-epic-validation | cleanup_deferred | merged | Dewey `REVIEW_PASS`; final freshness passed at `1a890e2`; merged locally in `1b7c891`; post-merge diff-check, orchestration JSON parse, production audits, and docker-first-run unit tests 5/5 passed; WAVE-011 ready for reconciliation |
 
 ## Branch And Worktree State
 
@@ -337,9 +330,8 @@ wdd-epic-validation and final PR per Ivo's finish-all-waves instruction.
   `codex/task/TASK-018-security-epic-validation` at
   `/Users/ivo.toby/workspace/postgram/.worktrees/TASK-018-security-epic-validation`.
 - WAVE-011 activation checkpoint: `0ed8c61af3cb272c54cbbb69a4fe8978f787a1e3`.
-- WAVE-011 worktree status: clean, pushed, and in review at PR #93 head
-  `b9a19e9`; branch freshness is stale/dirty only on WDD controller artifacts
-  and must be refreshed before merge.
+- WAVE-011 worktree status: clean/pushed at refreshed task head `1a890e2`;
+  cleanup is deferred until WAVE-011 reconciliation.
 - WAVE-008 branch/worktree assignments:
   `codex/task/TASK-012-admin-ops-dashboard-ui` at
   `/Users/ivo.toby/workspace/postgram/.worktrees/TASK-012-admin-ops-dashboard-ui`
@@ -1935,10 +1927,18 @@ wdd-epic-validation and final PR per Ivo's finish-all-waves instruction.
   `epic-validation.md` and the root dev-audit caveat in `final-pr.md`. Final
   branch freshness remains pending because PR #93 is dirty only on
   WDD/controller artifacts.
+- 2026-07-06T23:47:08Z: Refreshed TASK-018 against epic checkpoint `1bd737d`,
+  resolved the WDD/controller artifact conflicts, fixed Dewey's two P3 polish
+  notes, and pushed task branch head `1a890e2`. Final freshness verification
+  passed: divergence `0 3`, merge-tree clean, branch diff-check clean,
+  orchestration JSON parse clean, root/UI production audits clean, and
+  docker-first-run unit tests 5/5. GitHub reported PR #93 `CLEAN`, and
+  TASK-018 merged locally into the epic branch in `1b7c891`. Post-merge
+  diff-check, orchestration JSON parse, root/UI production audits, and
+  docker-first-run unit tests passed. WAVE-011 is ready for reconciliation.
 
 ## Next Action
 
-Next action: refresh the task branch against the epic branch, resolve the
-WDD/controller conflicts while preserving TASK-018 evidence and PR metadata,
-rerun required freshness verification, merge TASK-018, reconcile WAVE-011, then
-proceed to epic validation/final PR.
+Next action: run `wdd-reconcile-wave` for WAVE-011, clean up the TASK-018
+worktree if safe, push the reconciliation checkpoint, then proceed to
+`wdd-epic-validation` and `wdd-final-pr`.

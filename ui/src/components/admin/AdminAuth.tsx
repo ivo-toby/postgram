@@ -8,7 +8,7 @@ import {
   type AdminMfaEnrollmentResponse,
   type AdminSession,
   type AdminStepUp,
-  type AdminUser
+  type AdminUser,
 } from '../../lib/adminApi.ts';
 import AdminDashboard from './AdminDashboard.tsx';
 
@@ -40,8 +40,7 @@ function isActiveMfaSession(response: AdminAuthResponse): boolean {
 }
 
 function modeForPendingMfa(response: AdminAuthResponse): AuthMode {
-  return response.user.status === 'pending_mfa' ||
-    response.state === 'mfa_required'
+  return response.user.status === 'pending_mfa' || response.state === 'mfa_required'
     ? 'mfa_enroll'
     : 'mfa_challenge';
 }
@@ -51,7 +50,7 @@ function stateFromAuth(response: AdminAuthResponse): AuthState {
     mode: isActiveMfaSession(response) ? 'active' : modeForPendingMfa(response),
     user: response.user,
     session: response.session,
-    ...(response.stepUp ? { stepUp: response.stepUp } : {})
+    ...(response.stepUp ? { stepUp: response.stepUp } : {}),
   };
 }
 
@@ -72,8 +71,7 @@ function isInvalidAdminSession(error: AdminApiError): boolean {
 export default function AdminAuth({ onBack }: AdminAuthProps) {
   const api = useMemo(() => createAdminApiClient(), []);
   const [state, setState] = useState<AuthState>({ mode: 'loading' });
-  const [enrollment, setEnrollment] =
-    useState<AdminMfaEnrollmentResponse | null>(null);
+  const [enrollment, setEnrollment] = useState<AdminMfaEnrollmentResponse | null>(null);
   const [logoutError, setLogoutError] = useState<string | undefined>();
 
   useEffect(() => {
@@ -82,7 +80,7 @@ export default function AdminAuth({ onBack }: AdminAuthProps) {
     async function load() {
       const [bootstrap, current] = await Promise.allSettled([
         api.getBootstrapStatus(),
-        api.current()
+        api.current(),
       ]);
 
       if (cancelled) {
@@ -95,10 +93,7 @@ export default function AdminAuth({ onBack }: AdminAuthProps) {
       }
 
       if (bootstrap.status === 'rejected') {
-        setState({
-          mode: 'misconfigured',
-          error: 'Admin bootstrap status is unavailable'
-        });
+        setState({ mode: 'misconfigured', error: 'Admin bootstrap status is unavailable' });
         return;
       }
 
@@ -114,11 +109,11 @@ export default function AdminAuth({ onBack }: AdminAuthProps) {
       }
     }
 
-    load().catch((error) => {
+    load().catch(error => {
       if (!cancelled) {
         setState({
           mode: 'misconfigured',
-          error: messageForError(error, 'Admin auth is unavailable')
+          error: messageForError(error, 'Admin auth is unavailable'),
         });
       }
     });
@@ -138,7 +133,7 @@ export default function AdminAuth({ onBack }: AdminAuthProps) {
     setState({
       mode: 'login',
       bootstrapState: 'configured',
-      error: 'Admin session expired. Sign in again.'
+      error: 'Admin session expired. Sign in again.',
     });
     return true;
   }
@@ -173,15 +168,12 @@ export default function AdminAuth({ onBack }: AdminAuthProps) {
             </div>
           ) : null}
           {state.mode === 'loading' ? (
-            <StatusPanel
-              title="Admin session"
-              message="Checking admin session"
-            />
+            <StatusPanel title="Admin session" message="Checking admin session" />
           ) : state.mode === 'bootstrap' ? (
             <BootstrapPanel
               api={api}
               error={state.error}
-              onComplete={(response) => {
+              onComplete={response => {
                 setEnrollment(null);
                 setLogoutError(undefined);
                 setState(stateFromAuth(response));
@@ -191,7 +183,7 @@ export default function AdminAuth({ onBack }: AdminAuthProps) {
             <LoginPanel
               api={api}
               error={state.error}
-              onComplete={(response) => {
+              onComplete={response => {
                 setEnrollment(null);
                 setLogoutError(undefined);
                 setState(stateFromAuth(response));
@@ -204,7 +196,7 @@ export default function AdminAuth({ onBack }: AdminAuthProps) {
               enrollment={enrollment}
               onEnrollment={setEnrollment}
               onSessionExpired={handleUnauthorizedSession}
-              onComplete={(response) => {
+              onComplete={response => {
                 setEnrollment(null);
                 setLogoutError(undefined);
                 setState(stateFromAuth(response));
@@ -215,7 +207,7 @@ export default function AdminAuth({ onBack }: AdminAuthProps) {
               api={api}
               user={state.user}
               onSessionExpired={handleUnauthorizedSession}
-              onComplete={(response) => {
+              onComplete={response => {
                 setEnrollment(null);
                 setLogoutError(undefined);
                 setState(stateFromAuth(response));
@@ -227,7 +219,7 @@ export default function AdminAuth({ onBack }: AdminAuthProps) {
               user={state.user}
               session={state.session}
               stepUp={state.stepUp}
-              onAuthUpdate={(response) => {
+              onAuthUpdate={response => {
                 setEnrollment(null);
                 setLogoutError(undefined);
                 setState(stateFromAuth(response));
@@ -242,9 +234,7 @@ export default function AdminAuth({ onBack }: AdminAuthProps) {
           ) : (
             <StatusPanel
               title="Admin setup unavailable"
-              message={
-                state.error ?? 'Admin bootstrap status is misconfigured.'
-              }
+              message={state.error ?? 'Admin bootstrap status is misconfigured.'}
             />
           )}
         </div>
@@ -257,7 +247,7 @@ function AdminHeader({
   mode,
   user,
   onBack,
-  onLogout
+  onLogout,
 }: {
   mode: AuthMode;
   user?: AdminUser;
@@ -268,12 +258,8 @@ function AdminHeader({
     <header className="flex h-12 shrink-0 items-center gap-3 border-b border-gray-800 bg-gray-900 px-4">
       <img src="/logo-mark.png" alt="" className="h-7 w-7" />
       <div className="min-w-0">
-        <p className="text-sm font-semibold tracking-wide text-white">
-          Postgram Admin
-        </p>
-        <p className="text-[11px] uppercase text-gray-500">
-          {mode.replace('_', ' ')}
-        </p>
+        <p className="text-sm font-semibold tracking-wide text-white">Postgram Admin</p>
+        <p className="text-[11px] uppercase text-gray-500">{mode.replace('_', ' ')}</p>
       </div>
       <div className="flex-1" />
       {onBack ? (
@@ -286,9 +272,7 @@ function AdminHeader({
         </button>
       ) : null}
       {user ? (
-        <span className="hidden truncate text-xs text-gray-400 sm:block">
-          {user.email}
-        </span>
+        <span className="hidden truncate text-xs text-gray-400 sm:block">{user.email}</span>
       ) : null}
       {onLogout ? (
         <button
@@ -343,7 +327,7 @@ function StatusPanel({ title, message }: { title: string; message: string }) {
 function BootstrapPanel({
   api,
   error,
-  onComplete
+  onComplete,
 }: {
   api: AdminApiClient;
   error?: string;
@@ -361,14 +345,12 @@ function BootstrapPanel({
     setSubmitting(true);
     setSubmitError(undefined);
     try {
-      onComplete(
-        await api.setupBootstrap({
-          bootstrapToken,
-          email,
-          password,
-          ...(displayName.trim() ? { displayName: displayName.trim() } : {})
-        })
-      );
+      onComplete(await api.setupBootstrap({
+        bootstrapToken,
+        email,
+        password,
+        ...(displayName.trim() ? { displayName: displayName.trim() } : {}),
+      }));
     } catch (submitFailure) {
       setSubmitError(messageForError(submitFailure, 'Unable to create admin'));
     } finally {
@@ -380,8 +362,7 @@ function BootstrapPanel({
     <section className={panelClassName()}>
       <h1 className="text-lg font-semibold text-white">First admin setup</h1>
       <p className="mt-1 text-sm text-gray-400">
-        Create the first admin after obtaining the bootstrap token from the
-        local operator channel.
+        Create the first admin after obtaining the bootstrap token from the local operator channel.
       </p>
       <form onSubmit={handleSubmit} className="mt-5 flex flex-col gap-3">
         <ErrorBanner message={submitError} />
@@ -391,7 +372,7 @@ function BootstrapPanel({
             className={inputClassName()}
             type="password"
             value={bootstrapToken}
-            onChange={(event) => setBootstrapToken(event.target.value)}
+            onChange={event => setBootstrapToken(event.target.value)}
             autoComplete="one-time-code"
             required
           />
@@ -402,7 +383,7 @@ function BootstrapPanel({
             className={inputClassName()}
             type="email"
             value={email}
-            onChange={(event) => setEmail(event.target.value)}
+            onChange={event => setEmail(event.target.value)}
             autoComplete="username"
             required
           />
@@ -413,7 +394,7 @@ function BootstrapPanel({
             className={inputClassName()}
             type="text"
             value={displayName}
-            onChange={(event) => setDisplayName(event.target.value)}
+            onChange={event => setDisplayName(event.target.value)}
             autoComplete="name"
           />
         </label>
@@ -423,16 +404,12 @@ function BootstrapPanel({
             className={inputClassName()}
             type="password"
             value={password}
-            onChange={(event) => setPassword(event.target.value)}
+            onChange={event => setPassword(event.target.value)}
             autoComplete="new-password"
             required
           />
         </label>
-        <button
-          type="submit"
-          className={primaryButtonClassName()}
-          disabled={submitting}
-        >
+        <button type="submit" className={primaryButtonClassName()} disabled={submitting}>
           Create admin
         </button>
       </form>
@@ -443,7 +420,7 @@ function BootstrapPanel({
 function LoginPanel({
   api,
   error,
-  onComplete
+  onComplete,
 }: {
   api: AdminApiClient;
   error?: string;
@@ -470,9 +447,7 @@ function LoginPanel({
   return (
     <section className={panelClassName()}>
       <h1 className="text-lg font-semibold text-white">Admin sign in</h1>
-      <p className="mt-1 text-sm text-gray-400">
-        Use the admin account. Postgram API keys are not admin credentials.
-      </p>
+      <p className="mt-1 text-sm text-gray-400">Use the admin account. Postgram API keys are not admin credentials.</p>
       <form onSubmit={handleSubmit} className="mt-5 flex flex-col gap-3">
         <ErrorBanner message={submitError} />
         <label className={labelClassName()}>
@@ -481,7 +456,7 @@ function LoginPanel({
             className={inputClassName()}
             type="email"
             value={email}
-            onChange={(event) => setEmail(event.target.value)}
+            onChange={event => setEmail(event.target.value)}
             autoComplete="username"
             required
           />
@@ -492,16 +467,12 @@ function LoginPanel({
             className={inputClassName()}
             type="password"
             value={password}
-            onChange={(event) => setPassword(event.target.value)}
+            onChange={event => setPassword(event.target.value)}
             autoComplete="current-password"
             required
           />
         </label>
-        <button
-          type="submit"
-          className={primaryButtonClassName()}
-          disabled={submitting}
-        >
+        <button type="submit" className={primaryButtonClassName()} disabled={submitting}>
           Sign in
         </button>
       </form>
@@ -515,7 +486,7 @@ function MfaEnrollmentPanel({
   enrollment,
   onEnrollment,
   onSessionExpired,
-  onComplete
+  onComplete,
 }: {
   api: AdminApiClient;
   user: AdminUser;
@@ -537,9 +508,7 @@ function MfaEnrollmentPanel({
       if (onSessionExpired(enrollFailure)) {
         return;
       }
-      setError(
-        messageForError(enrollFailure, 'Unable to begin MFA enrollment')
-      );
+      setError(messageForError(enrollFailure, 'Unable to begin MFA enrollment'));
     } finally {
       setLoading(false);
     }
@@ -568,9 +537,7 @@ function MfaEnrollmentPanel({
   return (
     <section className={panelClassName()}>
       <h1 className="text-lg font-semibold text-white">MFA enrollment</h1>
-      <p className="mt-1 text-sm text-gray-400">
-        {user.email} needs verified MFA before admin navigation is enabled.
-      </p>
+      <p className="mt-1 text-sm text-gray-400">{user.email} needs verified MFA before admin navigation is enabled.</p>
       <div className="mt-5 flex flex-col gap-3">
         <ErrorBanner message={error} />
         {!enrollment ? (
@@ -586,9 +553,7 @@ function MfaEnrollmentPanel({
           <form onSubmit={verifyEnrollment} className="flex flex-col gap-3">
             <div className="rounded-md border border-gray-800 bg-gray-950 p-3">
               <p className="text-xs uppercase text-gray-500">TOTP seed</p>
-              <p className="mt-1 break-all font-mono text-sm text-gray-100">
-                {enrollment.secret}
-              </p>
+              <p className="mt-1 break-all font-mono text-sm text-gray-100">{enrollment.secret}</p>
               <a
                 className="mt-2 block break-all text-xs text-blue-300 hover:text-blue-200"
                 href={enrollment.otpauthUrl}
@@ -603,15 +568,11 @@ function MfaEnrollmentPanel({
                 inputMode="numeric"
                 pattern="[0-9]{6}"
                 value={code}
-                onChange={(event) => setCode(event.target.value)}
+                onChange={event => setCode(event.target.value)}
                 required
               />
             </label>
-            <button
-              type="submit"
-              className={primaryButtonClassName()}
-              disabled={loading}
-            >
+            <button type="submit" className={primaryButtonClassName()} disabled={loading}>
               Verify MFA
             </button>
           </form>
@@ -625,7 +586,7 @@ function MfaChallengePanel({
   api,
   user,
   onSessionExpired,
-  onComplete
+  onComplete,
 }: {
   api: AdminApiClient;
   user: AdminUser;
@@ -646,9 +607,7 @@ function MfaChallengePanel({
       if (onSessionExpired(challengeFailure)) {
         return;
       }
-      setError(
-        messageForError(challengeFailure, 'Unable to verify MFA challenge')
-      );
+      setError(messageForError(challengeFailure, 'Unable to verify MFA challenge'));
     } finally {
       setSubmitting(false);
     }
@@ -657,9 +616,7 @@ function MfaChallengePanel({
   return (
     <section className={panelClassName()}>
       <h1 className="text-lg font-semibold text-white">MFA challenge</h1>
-      <p className="mt-1 text-sm text-gray-400">
-        {user.email} must complete MFA before admin navigation is available.
-      </p>
+      <p className="mt-1 text-sm text-gray-400">{user.email} must complete MFA before admin navigation is available.</p>
       <form onSubmit={handleSubmit} className="mt-5 flex flex-col gap-3">
         <ErrorBanner message={error} />
         <label className={labelClassName()}>
@@ -669,15 +626,11 @@ function MfaChallengePanel({
             inputMode="numeric"
             pattern="[0-9]{6}"
             value={code}
-            onChange={(event) => setCode(event.target.value)}
+            onChange={event => setCode(event.target.value)}
             required
           />
         </label>
-        <button
-          type="submit"
-          className={primaryButtonClassName()}
-          disabled={submitting}
-        >
+        <button type="submit" className={primaryButtonClassName()} disabled={submitting}>
           Verify code
         </button>
       </form>

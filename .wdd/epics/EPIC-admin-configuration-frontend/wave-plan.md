@@ -659,6 +659,59 @@ Progress:
 - Workers dispatched at 2026-07-06T17:29:45Z: Sagan for
   TASK-012-admin-ops-dashboard-ui and Parfit for TASK-013-admin-config-ui.
   Both bundles are in `no_pr` monitoring.
+- 2026-07-06T17:47:01Z controller poll: both workers are active with
+  uncommitted implementation changes and no PRs yet. Both tracked diffs pass
+  `git diff --check`; both branches are behind the epic branch by one
+  controller monitoring checkpoint.
+- 2026-07-06T18:02:01Z controller poll: both workers remain active with no PRs
+  yet. Both tracked diffs pass `git diff --check`; both branches are behind
+  the epic branch by two controller monitoring checkpoints.
+- 2026-07-06T18:17:01Z controller poll: both workers remain active with no PRs
+  yet. Both tracked diffs pass `git diff --check`; both branches are behind
+  the epic branch by three controller monitoring checkpoints.
+- 2026-07-06T18:24:15Z controller poll: Sagan completed TASK-012 and opened
+  draft PR #89 at head `b9a1043`; Schrodinger was assigned to review. PR #89 is
+  `DIRTY` against the epic branch and must refresh before merge. TASK-013
+  remains active with Parfit and no PR or patch yet.
+- 2026-07-06T18:28:44Z review result: Schrodinger returned `REVIEW_BLOCKED`
+  for PR #89 with one P2 branch-freshness/WDD task-file conflict only;
+  product/security review passed. Feedback was routed to Sagan for refresh and
+  a non-blocking TASK-013 dashboard-shell integration note was routed to Parfit.
+- 2026-07-06T18:38:02Z controller poll: Sagan pushed TASK-012 fix attempt
+  `928ea35`, but controller verification still finds PR #89 stale against
+  current epic head `cb1c1ae` with the WDD task-file merge-tree conflict. The
+  freshness P2 remains open and was rerouted to Sagan. TASK-013 remains active
+  with no PR or patch.
+- 2026-07-06T18:45:07Z controller poll: Sagan pushed TASK-012 head `3933ff2`.
+  PR #89 is GitHub `CLEAN` and merge-tree passes; Schrodinger follow-up review
+  was requested with final controller-checkpoint freshness still required
+  before merge. TASK-013 remains active with no PR or patch.
+- 2026-07-06T18:48:29Z review result: Schrodinger returned `REVIEW_PASS` for
+  PR #89 at `3933ff2`; final freshness remains required before merge.
+- 2026-07-06T18:55:02Z controller merge: TASK-012 was refreshed against the
+  latest epic checkpoint, pushed at final task head `298804f`, verified with
+  branch freshness, merge-tree, diff-check, AdminOps/AdminAuth UI tests, and UI
+  typecheck, then merged into the epic branch in `ef54876`. GitHub marked
+  PR #89 `MERGED` at 2026-07-06T18:54:38Z and the clean TASK-012 worktree was
+  removed. TASK-013 remains active with no PR or patch.
+- 2026-07-06T19:15:01Z controller poll: TASK-013 remains active with Parfit
+  and no PR or patch. The worktree has fresh AdminConfig edits from this
+  heartbeat window, `git diff --check` passes, and no nudge was sent. TASK-013
+  will need freshness refresh before review/merge because the epic branch is 14
+  checkpoints ahead.
+- 2026-07-06T19:30:01Z controller poll: TASK-013 remains active with Parfit
+  and no PR or patch. The worktree has fresh AdminConfig edits from this
+  heartbeat window, `git diff --check` passes, and no nudge was sent. TASK-013
+  will need freshness refresh before review/merge because the epic branch is 15
+  checkpoints ahead at observation time.
+- 2026-07-06T19:45:01Z controller review handoff: Parfit returned
+  `DONE_WITH_CONCERNS` and opened draft PR #90 at `fe1a454`. Worker evidence
+  passed targeted AdminConfig/UI/backend checks, broad UI tests, typechecks,
+  build with the existing Vite warning, scoped lint/prettier/diff-check, and
+  codex review after worker P1/P2 fixes. Controller requested Schrodinger
+  review in submission `019f38f7-8d65-74e3-8a30-5e4edc7c1b32`. PR #90 is
+  `DIRTY`; merge-tree conflicts in TASK-013 WDD metadata, AdminAuth
+  test/component, AdminDashboard, and adminApi must be resolved before merge.
 
 Stop condition:
 

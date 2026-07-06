@@ -2015,8 +2015,8 @@
     {
       "id": "TASK-012-admin-ops-dashboard-ui",
       "ticket": "TICKET-005-admin-frontend",
-      "path": "TICKET-005-admin-frontend/in-progress/TASK-012-admin-ops-dashboard-ui.md",
-      "status": "in_progress",
+      "path": "TICKET-005-admin-frontend/done/TASK-012-admin-ops-dashboard-ui.md",
+      "status": "done",
       "dependsOn": [
         "TASK-008-admin-key-audit-stats-api",
         "TASK-011-admin-auth-ui"
@@ -2031,28 +2031,77 @@
       "reviewModel": "review",
       "branch": "codex/task/TASK-012-admin-ops-dashboard-ui",
       "workerThreadId": "019f3879-c7a0-7851-b455-5fe3749adc2b",
-      "reviewThreadId": null,
+      "reviewThreadId": "019f38ab-a97f-7462-84dc-5537e1efe934",
       "workerWorktree": "/Users/ivo.toby/workspace/postgram/.worktrees/TASK-012-admin-ops-dashboard-ui",
-      "worktreeStatus": "clean_pushed",
-      "pr": null,
-      "latestCommit": null,
-      "branchFreshness": "current_at_activation",
+      "worktreeStatus": "cleaned_up",
+      "pr": "https://github.com/ivo-toby/postgram/pull/89",
+      "latestCommit": "298804f17ae15956135149300558c26c55691e79",
+      "branchFreshness": "current_at_merge",
       "blockingFeedback": [],
       "verification": {
-        "result": "not_run",
+        "result": "review_passed_freshness_verified_merged_cleaned_up",
+        "checkedAt": "2026-07-06T18:55:02Z",
         "commands": [
+          "git merge --no-ff origin/codex/epic/admin-configuration-frontend -m \"chore: refresh task 012 after review pass\"",
+          "git rev-list --left-right --count origin/codex/epic/admin-configuration-frontend...HEAD",
+          "git merge-tree --write-tree origin/codex/epic/admin-configuration-frontend HEAD",
+          "git diff --check origin/codex/epic/admin-configuration-frontend...HEAD",
           "npm --prefix ui run test -- --run src/components/AdminOps.test.tsx",
-          "npm --prefix ui run typecheck"
+          "npm --prefix ui run test -- --run src/components/AdminAuth.test.tsx",
+          "npm --prefix ui run typecheck",
+          "git push origin codex/task/TASK-012-admin-ops-dashboard-ui",
+          "git merge --no-ff origin/codex/task/TASK-012-admin-ops-dashboard-ui -m \"merge: task 012 admin ops dashboard ui\"",
+          "git push origin codex/epic/admin-configuration-frontend",
+          "gh pr view 89 --json number,url,state,isDraft,mergedAt,headRefOid,mergeCommit,baseRefName,reviewDecision,mergeStateStatus",
+          "git worktree remove /Users/ivo.toby/workspace/postgram/.worktrees/TASK-012-admin-ops-dashboard-ui",
+          "git worktree prune --verbose"
         ],
-        "evidence": null
+        "evidence": "Schrodinger returned REVIEW_PASS for PR #89 with no P1/P2. Controller refreshed TASK-012 against the latest epic checkpoint 07e760b, pushed task branch head 298804f17ae15956135149300558c26c55691e79, verified final divergence 0 5, merge-tree clean, branch diff whitespace, AdminOps tests 11/11, AdminAuth tests 16/16, and UI typecheck. TASK-012 merged into the epic branch in ef54876a27164d3a91ba60d32f9e23b71d9cdf38, the epic branch push marked PR #89 MERGED at 2026-07-06T18:54:38Z, and the clean pushed TASK-012 worktree was removed."
       },
-      "currentGate": "no_pr"
+      "currentGate": "merged",
+      "reviewNickname": "Schrodinger",
+      "reviewResult": "REVIEW_PASS",
+      "reviewedAt": "2026-07-06T18:48:29Z",
+      "mergedAt": "2026-07-06T18:55:02Z",
+      "mergeCommit": "ef54876a27164d3a91ba60d32f9e23b71d9cdf38",
+      "cleanupState": "cleaned_up",
+      "cleanupEvidence": "Worker worktree was clean at task head 298804f17ae15956135149300558c26c55691e79; ran git worktree remove and git worktree prune.",
+      "sharedContextReconciliation": "queued_for_wave_reconciliation",
+      "prState": {
+        "status": "MERGED",
+        "state": "MERGED",
+        "pr": "https://github.com/ivo-toby/postgram/pull/89",
+        "number": 89,
+        "isDraft": true,
+        "headRefOid": "298804f17ae15956135149300558c26c55691e79",
+        "reviewedHead": "3933ff20aa3f4f45929efdef6ad1a51556fba845",
+        "baseRef": "codex/epic/admin-configuration-frontend",
+        "mergeCommit": "ef54876a27164d3a91ba60d32f9e23b71d9cdf38",
+        "mergedAt": "2026-07-06T18:54:38Z",
+        "checkedAt": "2026-07-06T18:55:02Z",
+        "reviewDecision": "REVIEW_PASS",
+        "mergeStateStatus": "UNKNOWN_AFTER_REMOTE_MERGE"
+      },
+      "resolvedFeedback": [
+        {
+          "priority": "P2",
+          "id": "P2-task012-branch-freshness-wdd-task-file-conflict",
+          "status": "resolved_merged",
+          "owner": "Sagan",
+          "workerThreadId": "019f3879-c7a0-7851-b455-5fe3749adc2b",
+          "reviewer": "Schrodinger",
+          "reviewThreadId": "019f38ab-a97f-7462-84dc-5537e1efe934",
+          "resolvedAt": "2026-07-06T18:55:02Z",
+          "fixedHead": "298804f17ae15956135149300558c26c55691e79",
+          "summary": "Final freshness refresh passed, PR #89 merged, and the clean TASK-012 worktree was removed."
+        }
+      ]
     },
     {
       "id": "TASK-013-admin-config-ui",
       "ticket": "TICKET-005-admin-frontend",
-      "path": "TICKET-005-admin-frontend/in-progress/TASK-013-admin-config-ui.md",
-      "status": "in_progress",
+      "path": "TICKET-005-admin-frontend/review/TASK-013-admin-config-ui.md",
+      "status": "review",
       "dependsOn": [
         "TASK-010-provider-config-apply",
         "TASK-011-admin-auth-ui"
@@ -2067,22 +2116,88 @@
       "reviewModel": "review",
       "branch": "codex/task/TASK-013-admin-config-ui",
       "workerThreadId": "019f387a-3f1d-74a0-9949-5a318a43e494",
-      "reviewThreadId": null,
+      "reviewThreadId": "019f38ab-a97f-7462-84dc-5537e1efe934",
       "workerWorktree": "/Users/ivo.toby/workspace/postgram/.worktrees/TASK-013-admin-config-ui",
       "worktreeStatus": "clean_pushed",
-      "pr": null,
-      "latestCommit": null,
-      "branchFreshness": "current_at_activation",
+      "pr": "https://github.com/ivo-toby/postgram/pull/90",
+      "latestCommit": "fe1a454f545f815c35978e3c600fd101eae2893f",
+      "branchFreshness": "dirty_product_conflicts_needs_freshness_refresh",
       "blockingFeedback": [],
       "verification": {
-        "result": "not_run",
+        "result": "worker_done_with_concerns_review_requested_branch_dirty",
+        "checkedAt": "2026-07-06T19:45:01Z",
         "commands": [
-          "npm --prefix ui run test -- --run src/components/AdminConfig.test.tsx",
-          "npm --prefix ui run typecheck"
+          "gh pr view 90 --json number,url,state,isDraft,title,headRefName,headRefOid,baseRefName,mergeStateStatus,reviewDecision,updatedAt,createdAt,author,commits,files,statusCheckRollup",
+          "git status --short --branch",
+          "git rev-parse HEAD",
+          "git rev-list --left-right --count origin/codex/epic/admin-configuration-frontend...HEAD",
+          "git diff --check origin/codex/epic/admin-configuration-frontend...HEAD",
+          "git merge-tree --write-tree origin/codex/epic/admin-configuration-frontend HEAD",
+          "multi_agent_v1.send_input Schrodinger",
+          "multi_agent_v1.wait_agent Schrodinger timeout 30000"
         ],
-        "evidence": null
+        "evidence": "Parfit returned DONE_WITH_CONCERNS and opened draft PR #90 at head fe1a454f545f815c35978e3c600fd101eae2893f. GitHub reports PR #90 OPEN draft and DIRTY. Worker evidence passed targeted AdminConfig/UI/backend/provider-config checks, broad UI test run, typechecks, build with existing Vite chunk warning, scoped lint/prettier/diff-check, and codex review after P1/P2 fixes. Controller verified the task worktree is clean and pushed, branch divergence is origin/codex/epic/admin-configuration-frontend...HEAD = 16 2, branch diff whitespace passes, and merge-tree exits 1 with conflicts in the TASK-013 review file, AdminAuth test/component, AdminDashboard add/add, and adminApi. Schrodinger review was requested in submission 019f38f7-8d65-74e3-8a30-5e4edc7c1b32; no review result returned during the bounded wait."
       },
-      "currentGate": "no_pr"
+      "currentGate": "reviewing",
+      "nonBlockingCoordination": [
+        {
+          "priority": "P3",
+          "id": "P3-task013-dashboard-shell-integration",
+          "status": "routed_non_blocking_coordination",
+          "owner": "Parfit",
+          "workerThreadId": "019f387a-3f1d-74a0-9949-5a318a43e494",
+          "reviewer": "Schrodinger",
+          "reviewThreadId": "019f38ab-a97f-7462-84dc-5537e1efe934",
+          "routedAt": "2026-07-06T18:28:44Z",
+          "routedSubmissionId": "019f38b0-6b70-7d33-9982-3c0a54b43f3f",
+          "summary": "TASK-013 should integrate with the TASK-012 AdminDashboard shell wiring in AdminAuth.tsx and avoid reviving the older placeholder AdminShell shape when it finalizes overlapping adminApi/AdminAuth changes."
+        }
+      ],
+      "worktreeObservation": {
+        "observedAt": "2026-07-06T19:45:01Z",
+        "taskId": "TASK-013-admin-config-ui",
+        "status": "pr_open_review_requested_branch_dirty",
+        "workerStatus": "DONE_WITH_CONCERNS",
+        "workerPoll": "completed_done_with_concerns_notification",
+        "pr": "https://github.com/ivo-toby/postgram/pull/90",
+        "prNumber": 90,
+        "prState": "OPEN_DRAFT_DIRTY",
+        "prHead": "fe1a454f545f815c35978e3c600fd101eae2893f",
+        "featureCommit": "d229df88131089c36b92d451c6adef4325d21e3a",
+        "branchHead": "fe1a454f545f815c35978e3c600fd101eae2893f",
+        "branchDivergence": "origin/codex/epic/admin-configuration-frontend...HEAD = 16 2; PR #90 is DIRTY and requires freshness/conflict resolution before merge.",
+        "worktreeStatus": "clean_pushed",
+        "branchFreshness": "dirty_product_conflicts_needs_freshness_refresh",
+        "files": [
+          ".wdd/epics/EPIC-admin-configuration-frontend/TICKET-005-admin-frontend/review/TASK-013-admin-config-ui.md",
+          "src/transport/admin-provider-config.ts",
+          "tests/integration/admin-provider-config.test.ts",
+          "ui/src/components/AdminAuth.test.tsx",
+          "ui/src/components/AdminConfig.test.tsx",
+          "ui/src/components/admin/AdminAuth.tsx",
+          "ui/src/components/admin/AdminConfig.tsx",
+          "ui/src/components/admin/AdminDashboard.tsx",
+          "ui/src/lib/adminApi.ts"
+        ],
+        "mergeConflicts": [
+          ".wdd/epics/EPIC-admin-configuration-frontend/TICKET-005-admin-frontend/review/TASK-013-admin-config-ui.md",
+          "ui/src/components/AdminAuth.test.tsx",
+          "ui/src/components/admin/AdminAuth.tsx",
+          "ui/src/components/admin/AdminDashboard.tsx",
+          "ui/src/lib/adminApi.ts"
+        ],
+        "diffCheck": "git diff --check origin/codex/epic/admin-configuration-frontend...HEAD passed.",
+        "workerVerification": "AdminConfig focused tests, UI typecheck, repo typecheck, provider-config integration tests, full UI test run, UI build with existing Vite warning, scoped eslint, prettier/diff-check, and codex review all passed per worker report.",
+        "reviewStatus": "requested",
+        "reviewThreadId": "019f38ab-a97f-7462-84dc-5537e1efe934",
+        "reviewNickname": "Schrodinger",
+        "reviewSubmissionId": "019f38f7-8d65-74e3-8a30-5e4edc7c1b32",
+        "coordinationNote": "Review requested with explicit DIRTY/product merge conflict context. Final freshness is required before merge; reviewer may still provide product/security findings against the submitted PR."
+      },
+      "reviewNickname": "Schrodinger",
+      "reviewRequestedAt": "2026-07-06T19:45:01Z",
+      "reviewSubmissionId": "019f38f7-8d65-74e3-8a30-5e4edc7c1b32",
+      "reviewResult": "pending"
     },
     {
       "id": "TASK-014-admin-job-foundation",
@@ -2376,13 +2491,15 @@
   ],
   "monitoring": {
     "mode": "adaptive",
-    "cadence": "15m",
-    "status": "wave_008_workers_dispatched_no_pr",
-    "lastCheckedAt": "2026-07-06T17:29:45Z",
-    "nextCheckDueAt": "2026-07-06T17:44:45Z",
+    "cadence": "5m",
+    "status": "wave_008_task013_reviewing_pr90_dirty",
+    "lastCheckedAt": "2026-07-06T19:45:01Z",
+    "nextCheckDueAt": "2026-07-06T19:50:01Z",
     "schedulerRef": "postgram-admin-wave-005-wdd-heartbeat",
     "schedulerName": "postgram-admin-wave-008-wdd-heartbeat",
-    "fallbackPrompt": "WAVE-008 is active. Read .wdd/epics/EPIC-admin-configuration-frontend/orchestration.json and controller-state.md, inspect TASK-012-admin-ops-dashboard-ui and TASK-013-admin-config-ui workers and worktrees, update gates, PR/review refs, feedback, branch freshness, verification, shared-context reconciliation, and monitoring timestamps. If a worker has produced a PR or patch, move that bundle to review/reviewer orchestration; if no PR or patch exists, keep no_pr and nudge exact missing deliverables only if needed. Stop when WAVE-008 bundles are merged, blocked, cancelled, or ready for wdd-reconcile-wave. After WAVE-008 is reconciled, continue to WAVE-009 per Ivo finish-all-waves instruction and push to GitHub between tasks/waves."
+    "fallbackPrompt": "WAVE-008 is active. Read .wdd/epics/EPIC-admin-configuration-frontend/orchestration.json and controller-state.md. TASK-012 / PR #89 is MERGED and cleaned up. TASK-013 / PR #90 is OPEN draft and DIRTY at head fe1a454f545f815c35978e3c600fd101eae2893f after Parfit DONE_WITH_CONCERNS. Schrodinger review was requested in submission 019f38f7-8d65-74e3-8a30-5e4edc7c1b32 and was still pending at 2026-07-06T19:45:01Z. Branch divergence is origin/codex/epic/admin-configuration-frontend...HEAD = 16 2; diff-check passes; merge-tree conflicts in the TASK-013 review file, AdminAuth test/component, AdminDashboard add/add, and adminApi. Inspect PR #90, reviewer Schrodinger (019f38ab-a97f-7462-84dc-5537e1efe934), worker Parfit (019f387a-3f1d-74a0-9949-5a318a43e494), and worktree /Users/ivo.toby/workspace/postgram/.worktrees/TASK-013-admin-config-ui. If review reports P1/P2, route feedback to Parfit or a fresh fix worker. If review passes, refresh the dirty task branch against codex/epic/admin-configuration-frontend, resolve conflicts, rerun required verification, then merge or mark merge_ready according to policy. Stop when WAVE-008 bundles are merged, blocked, cancelled, or ready for wdd-reconcile-wave. After WAVE-008 is reconciled, continue to WAVE-009 per Ivo finish-all-waves instruction and push to GitHub between tasks/waves.",
+    "verifiedAt": "2026-07-06T19:45:01Z",
+    "automationUpdateResult": "updated"
   },
   "sharedContext": {
     "index": "shared-context/index.md",
@@ -2420,39 +2537,133 @@
         ],
         "branch": "codex/task/TASK-012-admin-ops-dashboard-ui",
         "worktree": "/Users/ivo.toby/workspace/postgram/.worktrees/TASK-012-admin-ops-dashboard-ui",
-        "worktreeStatus": "clean_pushed",
+        "worktreeStatus": "cleaned_up",
         "workerThreadId": "019f3879-c7a0-7851-b455-5fe3749adc2b",
         "workerNickname": "Sagan",
-        "reviewThreadId": null,
-        "reviewNickname": null,
-        "currentGate": "no_pr",
-        "branchFreshness": "current_at_activation",
-        "pr": null,
-        "latestCommit": null,
+        "reviewThreadId": "019f38ab-a97f-7462-84dc-5537e1efe934",
+        "reviewNickname": "Schrodinger",
+        "currentGate": "merged",
+        "branchFreshness": "current_at_merge",
+        "pr": "https://github.com/ivo-toby/postgram/pull/89",
+        "latestCommit": "298804f17ae15956135149300558c26c55691e79",
         "blockingFeedback": [],
         "verification": {
-          "result": "not_run",
-          "commands": [],
-          "evidence": null
+          "result": "review_passed_freshness_verified_merged_cleaned_up",
+          "checkedAt": "2026-07-06T18:55:02Z",
+          "commands": [
+            "git merge --no-ff origin/codex/epic/admin-configuration-frontend -m \"chore: refresh task 012 after review pass\"",
+            "git rev-list --left-right --count origin/codex/epic/admin-configuration-frontend...HEAD",
+            "git merge-tree --write-tree origin/codex/epic/admin-configuration-frontend HEAD",
+            "git diff --check origin/codex/epic/admin-configuration-frontend...HEAD",
+            "npm --prefix ui run test -- --run src/components/AdminOps.test.tsx",
+            "npm --prefix ui run test -- --run src/components/AdminAuth.test.tsx",
+            "npm --prefix ui run typecheck",
+            "git push origin codex/task/TASK-012-admin-ops-dashboard-ui",
+            "git merge --no-ff origin/codex/task/TASK-012-admin-ops-dashboard-ui -m \"merge: task 012 admin ops dashboard ui\"",
+            "git push origin codex/epic/admin-configuration-frontend",
+            "gh pr view 89 --json number,url,state,isDraft,mergedAt,headRefOid,mergeCommit,baseRefName,reviewDecision,mergeStateStatus",
+            "git worktree remove /Users/ivo.toby/workspace/postgram/.worktrees/TASK-012-admin-ops-dashboard-ui",
+            "git worktree prune --verbose"
+          ],
+          "evidence": "Schrodinger returned REVIEW_PASS for PR #89 with no P1/P2. Controller refreshed TASK-012 against the latest epic checkpoint 07e760b, pushed task branch head 298804f17ae15956135149300558c26c55691e79, verified final divergence 0 5, merge-tree clean, branch diff whitespace, AdminOps tests 11/11, AdminAuth tests 16/16, and UI typecheck. TASK-012 merged into the epic branch in ef54876a27164d3a91ba60d32f9e23b71d9cdf38, the epic branch push marked PR #89 MERGED at 2026-07-06T18:54:38Z, and the clean pushed TASK-012 worktree was removed."
         },
         "activatedAt": "2026-07-06T17:17:56Z",
-        "cleanupState": "not_started",
-        "sharedContextReconciliation": "not_started",
-        "lastObservedAt": "2026-07-06T17:29:45Z",
+        "cleanupState": "cleaned_up",
+        "sharedContextReconciliation": "queued_for_wave_reconciliation",
+        "lastObservedAt": "2026-07-06T18:55:02Z",
         "branchPushedAt": "2026-07-06T17:24:55Z",
         "dispatchedAt": "2026-07-06T17:29:45Z",
         "dispatchBaseCommit": "dacb6440e23d9f75e0a26a529aa54e986bbee697",
         "worktreeObservation": {
-          "observedAt": "2026-07-06T17:29:45Z",
+          "observedAt": "2026-07-06T18:55:02Z",
           "taskId": "TASK-012-admin-ops-dashboard-ui",
-          "status": "worker_dispatched_no_pr",
-          "workerStatus": "running",
-          "branchHead": "dacb6440e23d9f75e0a26a529aa54e986bbee697",
-          "worktreeStatus": "clean_pushed",
-          "branchFreshness": "current_at_activation",
-          "pr": null,
-          "coordinationNote": "Worker dispatched; await PR or patch reference."
-        }
+          "status": "merged_cleaned_up",
+          "workerStatus": "DONE",
+          "workerPoll": "completed_done",
+          "pr": "https://github.com/ivo-toby/postgram/pull/89",
+          "prState": "MERGED",
+          "prNumber": 89,
+          "prHead": "298804f17ae15956135149300558c26c55691e79",
+          "implementationCommit": "82008b9be1e5f3d9bec7e1a1a0b138d98b55cea3",
+          "prCreatedAt": "2026-07-06T18:18:55Z",
+          "prUpdatedAt": "2026-07-06T18:19:54Z",
+          "reviewStatus": "REVIEW_PASS",
+          "reviewThreadId": "019f38ab-a97f-7462-84dc-5537e1efe934",
+          "reviewNickname": "Schrodinger",
+          "worktreeStatus": "cleaned_up",
+          "branchHead": "298804f17ae15956135149300558c26c55691e79",
+          "branchDivergence": "origin/codex/epic/admin-configuration-frontend...HEAD = 0 5 before local merge; current_at_merge.",
+          "branchFreshness": "current_at_merge",
+          "files": [
+            ".wdd/epics/EPIC-admin-configuration-frontend/TICKET-005-admin-frontend/done/TASK-012-admin-ops-dashboard-ui.md",
+            "ui/src/components/AdminAuth.test.tsx",
+            "ui/src/components/AdminOps.test.tsx",
+            "ui/src/components/admin/AdminApiKeys.tsx",
+            "ui/src/components/admin/AdminAudit.tsx",
+            "ui/src/components/admin/AdminAuth.tsx",
+            "ui/src/components/admin/AdminDashboard.tsx",
+            "ui/src/lib/adminApi.ts"
+          ],
+          "diffCheck": "git diff --check passed before merge and git diff --check HEAD^..HEAD passed after local merge.",
+          "coordinationNote": "TASK-012 merged in ef54876, PR #89 is MERGED, and the clean task worktree was removed. TASK-013 remains active with the non-blocking shell integration note."
+        },
+        "reviewRequestedAt": "2026-07-06T18:24:15Z",
+        "reviewStartedAt": "2026-07-06T18:24:15Z",
+        "prState": {
+          "status": "MERGED",
+          "state": "MERGED",
+          "pr": "https://github.com/ivo-toby/postgram/pull/89",
+          "number": 89,
+          "isDraft": true,
+          "headRefOid": "298804f17ae15956135149300558c26c55691e79",
+          "reviewedHead": "3933ff20aa3f4f45929efdef6ad1a51556fba845",
+          "baseRef": "codex/epic/admin-configuration-frontend",
+          "mergeCommit": "ef54876a27164d3a91ba60d32f9e23b71d9cdf38",
+          "mergedAt": "2026-07-06T18:54:38Z",
+          "checkedAt": "2026-07-06T18:55:02Z",
+          "reviewDecision": "REVIEW_PASS",
+          "mergeStateStatus": "UNKNOWN_AFTER_REMOTE_MERGE"
+        },
+        "reviewResult": "REVIEW_PASS",
+        "reviewedAt": "2026-07-06T18:48:29Z",
+        "feedbackRoutedAt": "2026-07-06T18:28:44Z",
+        "feedbackSubmissionId": "019f38b0-2985-71d2-a649-aaa0d3e3872c",
+        "nonBlockingFeedback": [
+          {
+            "priority": "P3",
+            "id": "P3-task013-dashboard-shell-integration",
+            "status": "routed_non_blocking_coordination",
+            "owner": "Parfit",
+            "workerThreadId": "019f387a-3f1d-74a0-9949-5a318a43e494",
+            "reviewer": "Schrodinger",
+            "reviewThreadId": "019f38ab-a97f-7462-84dc-5537e1efe934",
+            "routedAt": "2026-07-06T18:28:44Z",
+            "routedSubmissionId": "019f38b0-6b70-7d33-9982-3c0a54b43f3f",
+            "summary": "TASK-013 should integrate with the TASK-012 AdminDashboard shell wiring in AdminAuth.tsx and avoid reviving the older placeholder AdminShell shape when it finalizes overlapping adminApi/AdminAuth changes."
+          }
+        ],
+        "feedbackReroutedAt": "2026-07-06T18:38:02Z",
+        "feedbackRerouteSubmissionId": "019f38b9-7ca4-7ba2-8073-5465eaae09f1",
+        "followupReviewRequestedAt": "2026-07-06T18:45:07Z",
+        "followupReviewSubmissionId": "019f38be-d551-7aa0-a2ca-e51e626c929f",
+        "resolvedFeedback": [
+          {
+            "priority": "P2",
+            "id": "P2-task012-branch-freshness-wdd-task-file-conflict",
+            "status": "resolved_merged",
+            "owner": "Sagan",
+            "workerThreadId": "019f3879-c7a0-7851-b455-5fe3749adc2b",
+            "reviewer": "Schrodinger",
+            "reviewThreadId": "019f38ab-a97f-7462-84dc-5537e1efe934",
+            "resolvedAt": "2026-07-06T18:55:02Z",
+            "fixedHead": "298804f17ae15956135149300558c26c55691e79",
+            "summary": "Final freshness refresh passed, PR #89 merged, and the clean TASK-012 worktree was removed."
+          }
+        ],
+        "reviewPassedAt": "2026-07-06T18:48:29Z",
+        "mergedAt": "2026-07-06T18:55:02Z",
+        "mergeCommit": "ef54876a27164d3a91ba60d32f9e23b71d9cdf38",
+        "cleanupEvidence": "Worker worktree was clean at task head 298804f17ae15956135149300558c26c55691e79; ran git worktree remove and git worktree prune."
       },
       {
         "id": "WAVE-008-admin-config-ui",
@@ -2464,43 +2675,115 @@
         "worktreeStatus": "clean_pushed",
         "workerThreadId": "019f387a-3f1d-74a0-9949-5a318a43e494",
         "workerNickname": "Parfit",
-        "reviewThreadId": null,
-        "reviewNickname": null,
-        "currentGate": "no_pr",
-        "branchFreshness": "current_at_activation",
-        "pr": null,
-        "latestCommit": null,
+        "reviewThreadId": "019f38ab-a97f-7462-84dc-5537e1efe934",
+        "reviewNickname": "Schrodinger",
+        "currentGate": "reviewing",
+        "branchFreshness": "dirty_product_conflicts_needs_freshness_refresh",
+        "pr": "https://github.com/ivo-toby/postgram/pull/90",
+        "latestCommit": "fe1a454f545f815c35978e3c600fd101eae2893f",
         "blockingFeedback": [],
         "verification": {
-          "result": "not_run",
-          "commands": [],
-          "evidence": null
+          "result": "worker_done_with_concerns_review_requested_branch_dirty",
+          "checkedAt": "2026-07-06T19:45:01Z",
+          "commands": [
+            "gh pr view 90 --json number,url,state,isDraft,title,headRefName,headRefOid,baseRefName,mergeStateStatus,reviewDecision,updatedAt,createdAt,author,commits,files,statusCheckRollup",
+            "git status --short --branch",
+            "git rev-parse HEAD",
+            "git rev-list --left-right --count origin/codex/epic/admin-configuration-frontend...HEAD",
+            "git diff --check origin/codex/epic/admin-configuration-frontend...HEAD",
+            "git merge-tree --write-tree origin/codex/epic/admin-configuration-frontend HEAD",
+            "multi_agent_v1.send_input Schrodinger",
+            "multi_agent_v1.wait_agent Schrodinger timeout 30000"
+          ],
+          "evidence": "Parfit returned DONE_WITH_CONCERNS and opened draft PR #90 at head fe1a454f545f815c35978e3c600fd101eae2893f. GitHub reports PR #90 OPEN draft and DIRTY. Worker evidence passed targeted AdminConfig/UI/backend/provider-config checks, broad UI test run, typechecks, build with existing Vite chunk warning, scoped lint/prettier/diff-check, and codex review after P1/P2 fixes. Controller verified the task worktree is clean and pushed, branch divergence is origin/codex/epic/admin-configuration-frontend...HEAD = 16 2, branch diff whitespace passes, and merge-tree exits 1 with conflicts in the TASK-013 review file, AdminAuth test/component, AdminDashboard add/add, and adminApi. Schrodinger review was requested in submission 019f38f7-8d65-74e3-8a30-5e4edc7c1b32; no review result returned during the bounded wait."
         },
         "activatedAt": "2026-07-06T17:17:56Z",
         "cleanupState": "not_started",
         "sharedContextReconciliation": "not_started",
-        "lastObservedAt": "2026-07-06T17:29:45Z",
+        "lastObservedAt": "2026-07-06T19:45:01Z",
         "branchPushedAt": "2026-07-06T17:24:55Z",
         "dispatchedAt": "2026-07-06T17:29:45Z",
         "dispatchBaseCommit": "dacb6440e23d9f75e0a26a529aa54e986bbee697",
         "worktreeObservation": {
-          "observedAt": "2026-07-06T17:29:45Z",
+          "observedAt": "2026-07-06T19:45:01Z",
           "taskId": "TASK-013-admin-config-ui",
-          "status": "worker_dispatched_no_pr",
-          "workerStatus": "running",
-          "branchHead": "dacb6440e23d9f75e0a26a529aa54e986bbee697",
+          "status": "pr_open_review_requested_branch_dirty",
+          "workerStatus": "DONE_WITH_CONCERNS",
+          "workerPoll": "completed_done_with_concerns_notification",
+          "pr": "https://github.com/ivo-toby/postgram/pull/90",
+          "prNumber": 90,
+          "prState": "OPEN_DRAFT_DIRTY",
+          "prHead": "fe1a454f545f815c35978e3c600fd101eae2893f",
+          "featureCommit": "d229df88131089c36b92d451c6adef4325d21e3a",
+          "branchHead": "fe1a454f545f815c35978e3c600fd101eae2893f",
+          "branchDivergence": "origin/codex/epic/admin-configuration-frontend...HEAD = 16 2; PR #90 is DIRTY and requires freshness/conflict resolution before merge.",
           "worktreeStatus": "clean_pushed",
-          "branchFreshness": "current_at_activation",
-          "pr": null,
-          "coordinationNote": "Worker dispatched; await PR or patch reference."
-        }
+          "branchFreshness": "dirty_product_conflicts_needs_freshness_refresh",
+          "files": [
+            ".wdd/epics/EPIC-admin-configuration-frontend/TICKET-005-admin-frontend/review/TASK-013-admin-config-ui.md",
+            "src/transport/admin-provider-config.ts",
+            "tests/integration/admin-provider-config.test.ts",
+            "ui/src/components/AdminAuth.test.tsx",
+            "ui/src/components/AdminConfig.test.tsx",
+            "ui/src/components/admin/AdminAuth.tsx",
+            "ui/src/components/admin/AdminConfig.tsx",
+            "ui/src/components/admin/AdminDashboard.tsx",
+            "ui/src/lib/adminApi.ts"
+          ],
+          "mergeConflicts": [
+            ".wdd/epics/EPIC-admin-configuration-frontend/TICKET-005-admin-frontend/review/TASK-013-admin-config-ui.md",
+            "ui/src/components/AdminAuth.test.tsx",
+            "ui/src/components/admin/AdminAuth.tsx",
+            "ui/src/components/admin/AdminDashboard.tsx",
+            "ui/src/lib/adminApi.ts"
+          ],
+          "diffCheck": "git diff --check origin/codex/epic/admin-configuration-frontend...HEAD passed.",
+          "workerVerification": "AdminConfig focused tests, UI typecheck, repo typecheck, provider-config integration tests, full UI test run, UI build with existing Vite warning, scoped eslint, prettier/diff-check, and codex review all passed per worker report.",
+          "reviewStatus": "requested",
+          "reviewThreadId": "019f38ab-a97f-7462-84dc-5537e1efe934",
+          "reviewNickname": "Schrodinger",
+          "reviewSubmissionId": "019f38f7-8d65-74e3-8a30-5e4edc7c1b32",
+          "coordinationNote": "Review requested with explicit DIRTY/product merge conflict context. Final freshness is required before merge; reviewer may still provide product/security findings against the submitted PR."
+        },
+        "nonBlockingFeedback": [
+          {
+            "priority": "P3",
+            "id": "P3-task013-dashboard-shell-integration",
+            "status": "routed_non_blocking_coordination",
+            "owner": "Parfit",
+            "workerThreadId": "019f387a-3f1d-74a0-9949-5a318a43e494",
+            "reviewer": "Schrodinger",
+            "reviewThreadId": "019f38ab-a97f-7462-84dc-5537e1efe934",
+            "routedAt": "2026-07-06T18:28:44Z",
+            "routedSubmissionId": "019f38b0-6b70-7d33-9982-3c0a54b43f3f",
+            "summary": "TASK-013 should integrate with the TASK-012 AdminDashboard shell wiring in AdminAuth.tsx and avoid reviving the older placeholder AdminShell shape when it finalizes overlapping adminApi/AdminAuth changes."
+          }
+        ],
+        "prState": {
+          "number": 90,
+          "url": "https://github.com/ivo-toby/postgram/pull/90",
+          "state": "OPEN",
+          "isDraft": true,
+          "title": "feat(admin): add provider configuration UI",
+          "headRefName": "codex/task/TASK-013-admin-config-ui",
+          "headRefOid": "fe1a454f545f815c35978e3c600fd101eae2893f",
+          "baseRefName": "codex/epic/admin-configuration-frontend",
+          "mergeStateStatus": "DIRTY",
+          "reviewDecision": "",
+          "createdAt": "2026-07-06T19:38:14Z",
+          "updatedAt": "2026-07-06T19:39:10Z"
+        },
+        "reviewRequestedAt": "2026-07-06T19:45:01Z",
+        "reviewStartedAt": "2026-07-06T19:45:01Z",
+        "reviewSubmissionId": "019f38f7-8d65-74e3-8a30-5e4edc7c1b32",
+        "reviewResult": "pending"
       }
     ],
     "dispatchState": "dispatched",
     "activationCommit": "f4bf3d2d9efd1c4423c5cf6b67f6f10b22d8ce49",
     "workerDispatchStartedAt": "2026-07-06T17:29:45Z",
     "dispatchedAt": "2026-07-06T17:29:45Z",
-    "lastObservedAt": "2026-07-06T17:29:45Z"
+    "lastObservedAt": "2026-07-06T19:45:01Z"
   },
   "currentGates": {
     "epicBranch": {
@@ -2538,7 +2821,7 @@
       "WAVE-006-admin-job-foundation": "cleaned_up",
       "WAVE-007-admin-auth-ui": "cleaned_up",
       "WAVE-007-maintenance-admin-api": "cleaned_up",
-      "WAVE-008-admin-ops-dashboard-ui": "clean_pushed",
+      "WAVE-008-admin-ops-dashboard-ui": "cleaned_up",
       "WAVE-008-admin-config-ui": "clean_pushed"
     },
     "workerDispatch": {
@@ -2553,8 +2836,8 @@
       "WAVE-006-admin-job-foundation": "reconciled",
       "WAVE-007-admin-auth-ui": "reconciled",
       "WAVE-007-maintenance-admin-api": "reconciled",
-      "WAVE-008-admin-ops-dashboard-ui": "no_pr",
-      "WAVE-008-admin-config-ui": "no_pr"
+      "WAVE-008-admin-ops-dashboard-ui": "merged",
+      "WAVE-008-admin-config-ui": "reviewing"
     },
     "waveCompletion": {
       "WAVE-001": "done",
@@ -2572,13 +2855,15 @@
     },
     "monitoring": {
       "mode": "adaptive",
-      "cadence": "15m",
-      "status": "wave_008_workers_dispatched_no_pr",
-      "lastCheckedAt": "2026-07-06T17:29:45Z",
-      "nextCheckDueAt": "2026-07-06T17:44:45Z",
+      "cadence": "5m",
+      "status": "wave_008_task013_reviewing_pr90_dirty",
+      "lastCheckedAt": "2026-07-06T19:45:01Z",
+      "nextCheckDueAt": "2026-07-06T19:50:01Z",
       "schedulerRef": "postgram-admin-wave-005-wdd-heartbeat",
       "schedulerName": "postgram-admin-wave-008-wdd-heartbeat",
-      "fallbackPrompt": "WAVE-008 is active. Read .wdd/epics/EPIC-admin-configuration-frontend/orchestration.json and controller-state.md, inspect TASK-012-admin-ops-dashboard-ui and TASK-013-admin-config-ui workers and worktrees, update gates, PR/review refs, feedback, branch freshness, verification, shared-context reconciliation, and monitoring timestamps. If a worker has produced a PR or patch, move that bundle to review/reviewer orchestration; if no PR or patch exists, keep no_pr and nudge exact missing deliverables only if needed. Stop when WAVE-008 bundles are merged, blocked, cancelled, or ready for wdd-reconcile-wave. After WAVE-008 is reconciled, continue to WAVE-009 per Ivo finish-all-waves instruction and push to GitHub between tasks/waves."
+      "fallbackPrompt": "WAVE-008 is active. Read .wdd/epics/EPIC-admin-configuration-frontend/orchestration.json and controller-state.md. TASK-012 / PR #89 is MERGED and cleaned up. TASK-013 / PR #90 is OPEN draft and DIRTY at head fe1a454f545f815c35978e3c600fd101eae2893f after Parfit DONE_WITH_CONCERNS. Schrodinger review was requested in submission 019f38f7-8d65-74e3-8a30-5e4edc7c1b32 and was still pending at 2026-07-06T19:45:01Z. Branch divergence is origin/codex/epic/admin-configuration-frontend...HEAD = 16 2; diff-check passes; merge-tree conflicts in the TASK-013 review file, AdminAuth test/component, AdminDashboard add/add, and adminApi. Inspect PR #90, reviewer Schrodinger (019f38ab-a97f-7462-84dc-5537e1efe934), worker Parfit (019f387a-3f1d-74a0-9949-5a318a43e494), and worktree /Users/ivo.toby/workspace/postgram/.worktrees/TASK-013-admin-config-ui. If review reports P1/P2, route feedback to Parfit or a fresh fix worker. If review passes, refresh the dirty task branch against codex/epic/admin-configuration-frontend, resolve conflicts, rerun required verification, then merge or mark merge_ready according to policy. Stop when WAVE-008 bundles are merged, blocked, cancelled, or ready for wdd-reconcile-wave. After WAVE-008 is reconciled, continue to WAVE-009 per Ivo finish-all-waves instruction and push to GitHub between tasks/waves.",
+      "verifiedAt": "2026-07-06T19:45:01Z",
+      "automationUpdateResult": "updated"
     },
     "review": {
       "WAVE-001-admin-feasibility-gate": {
@@ -2882,6 +3167,34 @@
         ],
         "mergedAt": "2026-07-06T17:02:28Z",
         "mergeCommit": "78f0f43e3a79fe5211a57bffc0d0c3929951a5fb"
+      },
+      "WAVE-008-admin-ops-dashboard-ui": {
+        "status": "passed",
+        "result": "REVIEW_PASS",
+        "pr": "https://github.com/ivo-toby/postgram/pull/89",
+        "latestCommit": "298804f17ae15956135149300558c26c55691e79",
+        "reviewedHead": "3933ff20aa3f4f45929efdef6ad1a51556fba845",
+        "reviewThreadId": "019f38ab-a97f-7462-84dc-5537e1efe934",
+        "reviewNickname": "Schrodinger",
+        "workerThreadId": "019f3879-c7a0-7851-b455-5fe3749adc2b",
+        "workerNickname": "Sagan",
+        "reviewedAt": "2026-07-06T18:48:29Z",
+        "blockingFeedback": []
+      },
+      "WAVE-008-admin-config-ui": {
+        "status": "requested",
+        "result": "pending",
+        "pr": "https://github.com/ivo-toby/postgram/pull/90",
+        "latestCommit": "fe1a454f545f815c35978e3c600fd101eae2893f",
+        "featureCommit": "d229df88131089c36b92d451c6adef4325d21e3a",
+        "reviewThreadId": "019f38ab-a97f-7462-84dc-5537e1efe934",
+        "reviewNickname": "Schrodinger",
+        "workerThreadId": "019f387a-3f1d-74a0-9949-5a318a43e494",
+        "workerNickname": "Parfit",
+        "requestedAt": "2026-07-06T19:45:01Z",
+        "submissionId": "019f38f7-8d65-74e3-8a30-5e4edc7c1b32",
+        "blockingFeedback": [],
+        "branchFreshness": "dirty_product_conflicts_needs_freshness_refresh"
       }
     },
     "branchFreshness": {
@@ -2896,8 +3209,8 @@
       "WAVE-006-admin-job-foundation": "current_at_merge",
       "WAVE-007-admin-auth-ui": "current_at_merge",
       "WAVE-007-maintenance-admin-api": "current_at_merge",
-      "WAVE-008-admin-ops-dashboard-ui": "current_at_activation",
-      "WAVE-008-admin-config-ui": "current_at_activation"
+      "WAVE-008-admin-ops-dashboard-ui": "current_at_merge",
+      "WAVE-008-admin-config-ui": "dirty_product_conflicts_needs_freshness_refresh"
     },
     "merge": {
       "WAVE-001-admin-feasibility-gate": {
@@ -3033,6 +3346,25 @@
         "remotePrMergeCommit": "4e77a6b5362160f854d36b4283157c658a9096e2",
         "remoteBasePushedAt": "2026-07-06T15:48:11Z",
         "closeoutCommit": "418b4328cb01585412d706f456a2fa942a11d4e1"
+      },
+      "WAVE-008-admin-ops-dashboard-ui": {
+        "status": "merged_remote_confirmed",
+        "commit": "ef54876a27164d3a91ba60d32f9e23b71d9cdf38",
+        "taskBranchHead": "298804f17ae15956135149300558c26c55691e79",
+        "reviewedHead": "3933ff20aa3f4f45929efdef6ad1a51556fba845",
+        "freshnessMergeCommit": "298804f17ae15956135149300558c26c55691e79",
+        "mergedAt": "2026-07-06T18:55:02Z",
+        "cleanupState": "cleaned_up",
+        "reviewResult": "REVIEW_PASS",
+        "branchFreshness": "current_at_merge",
+        "pr": "https://github.com/ivo-toby/postgram/pull/89",
+        "remotePrState": "MERGED",
+        "remotePrMergedAt": "2026-07-06T18:54:38Z",
+        "remotePrUrl": "https://github.com/ivo-toby/postgram/pull/89",
+        "remotePrHead": "298804f17ae15956135149300558c26c55691e79",
+        "remotePrMergeCommit": "ef54876a27164d3a91ba60d32f9e23b71d9cdf38",
+        "remoteBasePushedAt": "2026-07-06T18:54:38Z",
+        "note": "Final freshness passed after refreshing the task branch against epic checkpoint 07e760b; PR #89 was marked MERGED after the epic branch push, and the clean task worktree was removed."
       }
     },
     "sharedContextReconciliation": {
@@ -3047,7 +3379,7 @@
       "WAVE-007-admin-auth-ui": "completed",
       "WAVE-007-maintenance-admin-api": "completed",
       "WAVE-007": "completed",
-      "WAVE-008-admin-ops-dashboard-ui": "not_started",
+      "WAVE-008-admin-ops-dashboard-ui": "not_started_worker_proposed_none",
       "WAVE-008-admin-config-ui": "not_started"
     },
     "prState": {
@@ -3158,6 +3490,35 @@
         "mergedAt": "2026-07-06T17:02:28Z",
         "checkedAt": "2026-07-06T17:02:56Z",
         "reviewDecision": "REVIEW_PASS"
+      },
+      "WAVE-008-admin-ops-dashboard-ui": {
+        "status": "MERGED",
+        "state": "MERGED",
+        "pr": "https://github.com/ivo-toby/postgram/pull/89",
+        "number": 89,
+        "isDraft": true,
+        "headRefOid": "298804f17ae15956135149300558c26c55691e79",
+        "reviewedHead": "3933ff20aa3f4f45929efdef6ad1a51556fba845",
+        "baseRef": "codex/epic/admin-configuration-frontend",
+        "mergeCommit": "ef54876a27164d3a91ba60d32f9e23b71d9cdf38",
+        "mergedAt": "2026-07-06T18:54:38Z",
+        "checkedAt": "2026-07-06T18:55:02Z",
+        "reviewDecision": "REVIEW_PASS",
+        "mergeStateStatus": "UNKNOWN_AFTER_REMOTE_MERGE"
+      },
+      "WAVE-008-admin-config-ui": {
+        "number": 90,
+        "url": "https://github.com/ivo-toby/postgram/pull/90",
+        "state": "OPEN",
+        "isDraft": true,
+        "title": "feat(admin): add provider configuration UI",
+        "headRefName": "codex/task/TASK-013-admin-config-ui",
+        "headRefOid": "fe1a454f545f815c35978e3c600fd101eae2893f",
+        "baseRefName": "codex/epic/admin-configuration-frontend",
+        "mergeStateStatus": "DIRTY",
+        "reviewDecision": "",
+        "createdAt": "2026-07-06T19:38:14Z",
+        "updatedAt": "2026-07-06T19:39:10Z"
       }
     },
     "cleanup": {
@@ -3216,6 +3577,13 @@
         "worktree": "/Users/ivo.toby/workspace/postgram/.worktrees/TASK-015-maintenance-admin-api",
         "cleanedAt": "2026-07-06T17:02:56Z",
         "condition": "PR #88 merged and task branch/worktree clean and fully pushed before removal."
+      },
+      "WAVE-008-admin-ops-dashboard-ui": {
+        "status": "cleaned_up",
+        "cleanedAt": "2026-07-06T18:55:02Z",
+        "worktree": "/Users/ivo.toby/workspace/postgram/.worktrees/TASK-012-admin-ops-dashboard-ui",
+        "condition": "PR #89 merged and task branch/worktree clean and fully pushed before removal.",
+        "evidence": "Worker worktree was clean at task head 298804f17ae15956135149300558c26c55691e79; ran git worktree remove and git worktree prune."
       }
     },
     "worker": {
@@ -3713,6 +4081,41 @@
           "git worktree prune --verbose"
         ],
         "evidence": "Lorentz follow-up returned REVIEW_PASS with no findings. Final freshness was refreshed with controller checkpoint commit b97cc61, task branch head ea88af4185fc2ec2a968da882da43f2e84e28850 was current against origin/codex/epic/admin-configuration-frontend (0 4), branch diff whitespace and merge-tree passed, admin-maintenance API contract tests passed 4/4, CLI admin integration tests passed 37/37, typecheck passed, scoped ESLint passed, and TASK-015 merged into the epic branch in 78f0f43e3a79fe5211a57bffc0d0c3929951a5fb. PR #88 is MERGED at 2026-07-06T17:02:28Z and the clean pushed worktree was removed."
+      },
+      "WAVE-008-admin-ops-dashboard-ui": {
+        "result": "review_passed_freshness_verified_merged_cleaned_up",
+        "checkedAt": "2026-07-06T18:55:02Z",
+        "commands": [
+          "git merge --no-ff origin/codex/epic/admin-configuration-frontend -m \"chore: refresh task 012 after review pass\"",
+          "git rev-list --left-right --count origin/codex/epic/admin-configuration-frontend...HEAD",
+          "git merge-tree --write-tree origin/codex/epic/admin-configuration-frontend HEAD",
+          "git diff --check origin/codex/epic/admin-configuration-frontend...HEAD",
+          "npm --prefix ui run test -- --run src/components/AdminOps.test.tsx",
+          "npm --prefix ui run test -- --run src/components/AdminAuth.test.tsx",
+          "npm --prefix ui run typecheck",
+          "git push origin codex/task/TASK-012-admin-ops-dashboard-ui",
+          "git merge --no-ff origin/codex/task/TASK-012-admin-ops-dashboard-ui -m \"merge: task 012 admin ops dashboard ui\"",
+          "git push origin codex/epic/admin-configuration-frontend",
+          "gh pr view 89 --json number,url,state,isDraft,mergedAt,headRefOid,mergeCommit,baseRefName,reviewDecision,mergeStateStatus",
+          "git worktree remove /Users/ivo.toby/workspace/postgram/.worktrees/TASK-012-admin-ops-dashboard-ui",
+          "git worktree prune --verbose"
+        ],
+        "evidence": "Schrodinger returned REVIEW_PASS for PR #89 with no P1/P2. Controller refreshed TASK-012 against the latest epic checkpoint 07e760b, pushed task branch head 298804f17ae15956135149300558c26c55691e79, verified final divergence 0 5, merge-tree clean, branch diff whitespace, AdminOps tests 11/11, AdminAuth tests 16/16, and UI typecheck. TASK-012 merged into the epic branch in ef54876a27164d3a91ba60d32f9e23b71d9cdf38, the epic branch push marked PR #89 MERGED at 2026-07-06T18:54:38Z, and the clean pushed TASK-012 worktree was removed."
+      },
+      "WAVE-008-admin-config-ui": {
+        "result": "worker_done_with_concerns_review_requested_branch_dirty",
+        "checkedAt": "2026-07-06T19:45:01Z",
+        "commands": [
+          "gh pr view 90 --json number,url,state,isDraft,title,headRefName,headRefOid,baseRefName,mergeStateStatus,reviewDecision,updatedAt,createdAt,author,commits,files,statusCheckRollup",
+          "git status --short --branch",
+          "git rev-parse HEAD",
+          "git rev-list --left-right --count origin/codex/epic/admin-configuration-frontend...HEAD",
+          "git diff --check origin/codex/epic/admin-configuration-frontend...HEAD",
+          "git merge-tree --write-tree origin/codex/epic/admin-configuration-frontend HEAD",
+          "multi_agent_v1.send_input Schrodinger",
+          "multi_agent_v1.wait_agent Schrodinger timeout 30000"
+        ],
+        "evidence": "Parfit returned DONE_WITH_CONCERNS and opened draft PR #90 at head fe1a454f545f815c35978e3c600fd101eae2893f. GitHub reports PR #90 OPEN draft and DIRTY. Worker evidence passed targeted AdminConfig/UI/backend/provider-config checks, broad UI test run, typechecks, build with existing Vite chunk warning, scoped lint/prettier/diff-check, and codex review after P1/P2 fixes. Controller verified the task worktree is clean and pushed, branch divergence is origin/codex/epic/admin-configuration-frontend...HEAD = 16 2, branch diff whitespace passes, and merge-tree exits 1 with conflicts in the TASK-013 review file, AdminAuth test/component, AdminDashboard add/add, and adminApi. Schrodinger review was requested in submission 019f38f7-8d65-74e3-8a30-5e4edc7c1b32; no review result returned during the bounded wait."
       }
     },
     "feedback": {
@@ -3814,10 +4217,64 @@
         "mergedAt": "2026-07-06T17:02:28Z"
       },
       "WAVE-008-admin-ops-dashboard-ui": {
-        "blocking": []
+        "blocking": [],
+        "resolved": [
+          {
+            "priority": "P2",
+            "id": "P2-task012-branch-freshness-wdd-task-file-conflict",
+            "status": "resolved_merged",
+            "owner": "Sagan",
+            "workerThreadId": "019f3879-c7a0-7851-b455-5fe3749adc2b",
+            "reviewer": "Schrodinger",
+            "reviewThreadId": "019f38ab-a97f-7462-84dc-5537e1efe934",
+            "resolvedAt": "2026-07-06T18:55:02Z",
+            "fixedHead": "298804f17ae15956135149300558c26c55691e79",
+            "summary": "Final freshness refresh passed, PR #89 merged, and the clean TASK-012 worktree was removed."
+          }
+        ],
+        "nonBlocking": [
+          {
+            "priority": "P3",
+            "id": "P3-task013-dashboard-shell-integration",
+            "status": "routed_non_blocking_coordination",
+            "owner": "Parfit",
+            "workerThreadId": "019f387a-3f1d-74a0-9949-5a318a43e494",
+            "reviewer": "Schrodinger",
+            "reviewThreadId": "019f38ab-a97f-7462-84dc-5537e1efe934",
+            "routedAt": "2026-07-06T18:28:44Z",
+            "routedSubmissionId": "019f38b0-6b70-7d33-9982-3c0a54b43f3f",
+            "summary": "TASK-013 should integrate with the TASK-012 AdminDashboard shell wiring in AdminAuth.tsx and avoid reviving the older placeholder AdminShell shape when it finalizes overlapping AdminAuth.tsx/adminApi.ts edits."
+          }
+        ],
+        "fixStatus": "resolved_merged",
+        "reviewPassedAt": "2026-07-06T18:48:29Z",
+        "mergedAt": "2026-07-06T18:54:38Z"
       },
       "WAVE-008-admin-config-ui": {
-        "blocking": []
+        "blocking": [],
+        "nonBlockingCoordination": [
+          {
+            "priority": "P3",
+            "id": "P3-task013-dashboard-shell-integration",
+            "status": "routed_non_blocking_coordination",
+            "owner": "Parfit",
+            "workerThreadId": "019f387a-3f1d-74a0-9949-5a318a43e494",
+            "reviewer": "Schrodinger",
+            "reviewThreadId": "019f38ab-a97f-7462-84dc-5537e1efe934",
+            "routedAt": "2026-07-06T18:28:44Z",
+            "routedSubmissionId": "019f38b0-6b70-7d33-9982-3c0a54b43f3f",
+            "summary": "TASK-013 should integrate with the TASK-012 AdminDashboard shell wiring in AdminAuth.tsx and avoid reviving the older placeholder AdminShell shape when it finalizes overlapping AdminAuth.tsx/adminApi.ts edits."
+          }
+        ],
+        "fixStatus": "review_requested_branch_dirty",
+        "lastObservedAt": "2026-07-06T19:45:01Z",
+        "mergeConflicts": [
+          ".wdd/epics/EPIC-admin-configuration-frontend/TICKET-005-admin-frontend/review/TASK-013-admin-config-ui.md",
+          "ui/src/components/AdminAuth.test.tsx",
+          "ui/src/components/admin/AdminAuth.tsx",
+          "ui/src/components/admin/AdminDashboard.tsx",
+          "ui/src/lib/adminApi.ts"
+        ]
       }
     },
     "activationArtifact": {

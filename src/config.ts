@@ -162,7 +162,7 @@ const configSchema = z
       emptyToUndefined,
       z.string().min(1).default('http://localhost:11434')
     ),
-    EMBEDDING_PROVIDER: z.enum(['openai', 'ollama']).default('openai'),
+    EMBEDDING_PROVIDER: z.enum(['openai', 'ollama', 'openai-compatible']).default('openai'),
     EMBEDDING_MODEL: optionalString,
     EMBEDDING_DIMENSIONS: z.preprocess(
       emptyToUndefined,
@@ -173,6 +173,8 @@ const configSchema = z
   })
   .superRefine((cfg, ctx) => {
     const needsOpenAiForEmbedding = cfg.EMBEDDING_PROVIDER === 'openai';
+    const needsBaseUrlForOpenAiCompatibleEmbedding =
+      cfg.EMBEDDING_PROVIDER === 'openai-compatible' && !cfg.EMBEDDING_BASE_URL;
     const needsOpenAiForExtraction =
       cfg.EXTRACTION_ENABLED && cfg.EXTRACTION_PROVIDER === 'openai';
     const needsBaseUrlForOpenAiCompatible =
@@ -200,6 +202,14 @@ const configSchema = z
         code: z.ZodIssueCode.custom,
         path: ['EXTRACTION_BASE_URL'],
         message: 'EXTRACTION_BASE_URL is required for EXTRACTION_PROVIDER=openai-compatible'
+      });
+    }
+
+    if (needsBaseUrlForOpenAiCompatibleEmbedding) {
+      ctx.addIssue({
+        code: z.ZodIssueCode.custom,
+        path: ['EMBEDDING_BASE_URL'],
+        message: 'EMBEDDING_BASE_URL is required for EMBEDDING_PROVIDER=openai-compatible'
       });
     }
 

@@ -14,6 +14,36 @@ import {
 } from './extraction-service.js';
 import { getMemoryRole } from './memory-role-service.js';
 
+/**
+ * Signals that the upstream LLM API returned HTTP 429 (Too Many Requests).
+ * The worker treats this as a transient condition and leaves the entity in
+ * `pending` state so it will be retried in the next poll cycle after a
+ * back-off delay, rather than marking it permanently `failed`.
+ */
+export class RateLimitError extends Error {
+  constructor(message: string) {
+    super(message);
+    this.name = 'RateLimitError';
+  }
+}
+
+/**
+ * Returns true when an error originates from an HTTP 429 response.
+ * Matches the error message format produced by createOpenAiProvider and
+ * other providers in llm-provider.ts.
+ */
+function isRateLimitError(error: unknown): boolean {
+  if (error instanceof RateLimitError) return true;
+  if (error instanceof Error) {
+    return (
+      error.message.includes('429') ||
+      error.message.toLowerCase().includes('rate limit') ||
+      error.message.toLowerCase().includes('rate_limited')
+    );
+  }
+  return false;
+}
+
 type PendingEntityRow = {
   id: string;
   type: string;
@@ -297,6 +327,17 @@ export function createEnrichmentWorker(options: EnrichmentWorkerOptions) {
         throw error;
       }
 
+      if (isRateLimitError(error)) {
+        // 429 from the embedding API is transient — re-throw so the worker
+        // loop applies back-off. The entity stays 'pending' (the transaction
+        // was rolled back) and will be retried after the pause.
+        logger.warn(
+          { entityId: entity.id },
+          'enrichment deferred — embedding rate limit (429), will back off and retry'
+        );
+        throw error;
+      }
+
       logger.warn({ err: error, entityId: entity.id }, 'enrichment failed');
 
       await options.pool.query(
@@ -477,6 +518,15 @@ export function createEnrichmentWorker(options: EnrichmentWorkerOptions) {
               { entityId: entity.id, linkedSoFar: error.linkedSoFar },
               'extraction deferred — embeddings unavailable, will retry'
             );
+          } else if (isRateLimitError(error)) {
+            // 429 from the LLM API is transient — leave the entity pending
+            // so it is retried after the back-off delay. Throwing propagates
+            // out of processNextExtractionEntity so the caller knows to pause.
+            logger.warn(
+              { entityId: entity.id },
+              'extraction deferred — LLM rate limit (429), will back off and retry'
+            );
+            throw error;
           } else {
             logger.warn(
               { err: error, entityId: entity.id },
@@ -503,14 +553,24 @@ export function createEnrichmentWorker(options: EnrichmentWorkerOptions) {
   }
 
   return {
-    async runOnce(): Promise<number> {
+    async runOnce(): Promise<{ processed: number; rateLimited: boolean }> {
       let processed = 0;
+      let rateLimited = false;
 
       if (await hasPendingEnrichment()) {
         const activeModel = await embeddingService.getActiveModel(options.pool);
 
-        while (await processNextEnrichmentEntity(activeModel)) {
-          processed += 1;
+        try {
+          while (await processNextEnrichmentEntity(activeModel)) {
+            processed += 1;
+          }
+        } catch (error) {
+          if (isRateLimitError(error)) {
+            rateLimited = true;
+            return { processed, rateLimited };
+          } else {
+            throw error;
+          }
         }
       }
 
@@ -524,12 +584,21 @@ export function createEnrichmentWorker(options: EnrichmentWorkerOptions) {
           allowedVisibility: ['personal', 'work', 'shared'] as const
         };
 
-        while (await processNextExtractionEntity(extractionAuth)) {
-          processed += 1;
+        try {
+          while (await processNextExtractionEntity(extractionAuth)) {
+            processed += 1;
+          }
+        } catch (error) {
+          if (isRateLimitError(error)) {
+            rateLimited = true;
+            return { processed, rateLimited };
+          } else {
+            throw error;
+          }
         }
       }
 
-      return processed;
+      return { processed, rateLimited };
     }
   };
 }

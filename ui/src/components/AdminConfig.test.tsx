@@ -447,7 +447,7 @@ describe('AdminConfig', () => {
       />
     );
 
-    const stepUpInput = await screen.findByLabelText('Step-up code');
+    const stepUpInput = await screen.findByLabelText('MFA confirmation code');
     await user.type(stepUpInput, '123456');
     await user.type(
       screen.getByLabelText('OPENAI_API_KEY replacement'),
@@ -548,7 +548,7 @@ describe('AdminConfig', () => {
     expect(screen.getByText('Pending')).toBeInTheDocument();
     expect(screen.getByText('Applied')).toBeInTheDocument();
 
-    await user.type(screen.getByLabelText('Step-up code'), '123456');
+    await user.type(screen.getByLabelText('MFA confirmation code'), '123456');
     await user.click(
       screen.getByRole('button', { name: 'Validate and test connections' })
     );
@@ -900,7 +900,7 @@ describe('AdminConfig', () => {
     await user.clear(dimensionsInput);
     await user.type(dimensionsInput, '3072');
 
-    expect(screen.getAllByText('Migration-class setting')).toHaveLength(3);
+    expect(screen.getAllByTitle(/Migration-class setting/)).toHaveLength(3);
     await user.click(
       screen.getByRole('button', { name: 'Save pending settings' })
     );
@@ -941,7 +941,7 @@ describe('AdminConfig', () => {
       />
     );
 
-    await user.type(await screen.findByLabelText('Step-up code'), '123456');
+    await user.type(await screen.findByLabelText('MFA confirmation code'), '123456');
     await user.click(
       screen.getByRole('button', { name: 'Validate and test connections' })
     );
@@ -965,7 +965,7 @@ describe('AdminConfig', () => {
       />
     );
 
-    await user.type(await screen.findByLabelText('Step-up code'), '123456');
+    await user.type(await screen.findByLabelText('MFA confirmation code'), '123456');
     await user.type(
       screen.getByLabelText('OPENAI_API_KEY replacement'),
       'sk-rotated-after-expiry'
@@ -998,9 +998,9 @@ describe('AdminConfig', () => {
     await act(async () => {
       await Promise.resolve();
     });
-    expect(screen.getByText('Step-up fresh')).toBeInTheDocument();
+    expect(screen.getByText('MFA confirmed')).toBeInTheDocument();
     expect(
-      screen.getByPlaceholderText('Fresh step-up active')
+      screen.getByPlaceholderText('MFA confirmation active')
     ).toBeInTheDocument();
 
     act(() => {
@@ -1008,9 +1008,9 @@ describe('AdminConfig', () => {
       vi.advanceTimersByTime(1100);
     });
 
-    expect(screen.getByText('Step-up required')).toBeInTheDocument();
+    expect(screen.getByText('MFA confirmation required')).toBeInTheDocument();
     expect(
-      screen.getByPlaceholderText('Required before secret writes or apply')
+      screen.getByPlaceholderText('Use MFA before secret writes or apply')
     ).toBeInTheDocument();
   });
 

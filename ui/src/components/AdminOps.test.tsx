@@ -446,10 +446,10 @@ describe('Admin operations dashboard', () => {
     await user.type(screen.getByLabelText('API key name'), 'admin-beta');
     await user.click(screen.getByRole('button', { name: 'Create key' }));
 
-    expect(await screen.findByText('Recent step-up required')).toBeInTheDocument();
-    await user.type(screen.getByLabelText('Authenticator code for step-up'), '123456');
-    await user.click(screen.getByRole('button', { name: 'Verify step-up' }));
-    expect(await screen.findByText('Step-up refreshed')).toBeInTheDocument();
+    expect(await screen.findByText('Recent MFA confirmation required')).toBeInTheDocument();
+    await user.type(screen.getByLabelText('MFA confirmation code'), '123456');
+    await user.click(screen.getByRole('button', { name: 'Verify MFA' }));
+    expect(await screen.findByText('MFA confirmation refreshed')).toBeInTheDocument();
 
     await user.click(screen.getByRole('button', { name: 'Create key' }));
     expect(await screen.findByText('pgm-admin-beta-one-time-secret')).toBeInTheDocument();

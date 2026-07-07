@@ -13,6 +13,7 @@ import {
   type AdminMaintenanceReextractInput,
   type AdminStepUp
 } from '../../lib/adminApi.ts';
+import { HelpIcon, HelpLabel } from './AdminHelp.tsx';
 
 const ENTITY_TYPES: AdminEntityType[] = [
   'memory',
@@ -660,7 +661,7 @@ export default function AdminMaintenance({
       return true;
     }
     if (!stepUpCode.trim()) {
-      setError('Enter a step-up code before applying maintenance.');
+      setError('Enter an MFA confirmation code before applying maintenance.');
       return false;
     }
 
@@ -785,11 +786,11 @@ export default function AdminMaintenance({
           <h2 className="text-xl font-semibold text-white">Maintenance jobs</h2>
           <p className="mt-1 max-w-2xl text-sm text-gray-400">
             Run approved maintenance with a dry-run preview, explicit review,
-            recent step-up, and job progress polling.
+            recent MFA confirmation, and job progress polling.
           </p>
         </div>
         <span className={badgeClassName(stepUpIsFresh ? 'good' : 'warn')}>
-          {stepUpIsFresh ? 'Step-up fresh' : 'Step-up required for apply'}
+          {stepUpIsFresh ? 'MFA confirmed' : 'MFA confirmation required for apply'}
         </span>
       </div>
 
@@ -824,12 +825,17 @@ export default function AdminMaintenance({
 
       <div className="grid gap-4 lg:grid-cols-[minmax(0,1fr)_24rem]">
         <section className="rounded-lg border border-gray-800 bg-gray-900 p-4">
-          <h3 className="text-sm font-semibold text-white">Scope</h3>
+          <h3 className="inline-flex items-center gap-2 text-sm font-semibold text-white">
+            Scope
+            <HelpIcon label="The records a maintenance preview or apply job is allowed to inspect or change." />
+          </h3>
 
           {operation === 'prune-edges' ? (
             <div className="mt-4 grid gap-3 sm:grid-cols-2">
               <label className="flex flex-col gap-1 text-xs font-medium text-gray-300">
-                Confidence threshold
+                <HelpLabel help="Edges below this confidence are selected for pruning in the preview.">
+                  Confidence threshold
+                </HelpLabel>
                 <input
                   className={inputClassName()}
                   inputMode="decimal"
@@ -839,7 +845,9 @@ export default function AdminMaintenance({
                 />
               </label>
               <label className="flex flex-col gap-1 text-xs font-medium text-gray-300">
-                Relation
+                <HelpLabel help="Optional relation name filter for pruning LLM extraction edges.">
+                  Relation
+                </HelpLabel>
                 <input
                   className={inputClassName()}
                   disabled={requestControlsDisabled}
@@ -853,7 +861,9 @@ export default function AdminMaintenance({
           ) : (
             <div className="mt-4 grid gap-3 sm:grid-cols-2">
               <label className="flex flex-col gap-1 text-xs font-medium text-gray-300">
-                Scope
+                <HelpLabel help="Choose whether maintenance targets one entity, one type, failed queue rows, or all entities.">
+                  Scope
+                </HelpLabel>
                 <select
                   className={inputClassName()}
                   disabled={requestControlsDisabled}
@@ -870,7 +880,9 @@ export default function AdminMaintenance({
               </label>
               {scopeKind === 'type' ? (
                 <label className="flex flex-col gap-1 text-xs font-medium text-gray-300">
-                  Entity type
+                  <HelpLabel help="Entity type used when scope is set to Entity type.">
+                    Entity type
+                  </HelpLabel>
                   <select
                     className={inputClassName()}
                     disabled={requestControlsDisabled}
@@ -889,7 +901,9 @@ export default function AdminMaintenance({
               ) : null}
               {scopeKind === 'id' ? (
                 <label className="flex flex-col gap-1 text-xs font-medium text-gray-300">
-                  Entity ID
+                  <HelpLabel help="UUID of one entity to re-extract or re-embed.">
+                    Entity ID
+                  </HelpLabel>
                   <input
                     className={inputClassName()}
                     disabled={requestControlsDisabled}
@@ -912,7 +926,9 @@ export default function AdminMaintenance({
               {operation === 'reextract' ? (
                 <>
                   <label className="flex flex-col gap-1 text-xs font-medium text-gray-300">
-                    Limit
+                    <HelpLabel help="Optional cap for how many records the preview can include.">
+                      Limit
+                    </HelpLabel>
                     <input
                       className={inputClassName()}
                       inputMode="numeric"
@@ -988,6 +1004,10 @@ export default function AdminMaintenance({
             <h3 className="text-sm font-semibold text-white">
               Apply confirmation
             </h3>
+            <p className="mt-2 text-xs leading-5 text-gray-400">
+              Apply stays disabled until a dry-run succeeds, you review it,
+              and sensitive-action MFA confirmation is fresh.
+            </p>
             <label className="mt-3 flex items-start gap-2 text-sm text-gray-300">
               <input
                 className="mt-0.5 h-4 w-4 rounded border-gray-700 bg-gray-950 text-blue-600 focus:ring-blue-500 disabled:cursor-not-allowed"
@@ -999,7 +1019,9 @@ export default function AdminMaintenance({
               I reviewed the dry-run preview
             </label>
             <label className="mt-3 flex flex-col gap-1 text-xs font-medium text-gray-300">
-              Step-up code
+              <HelpLabel help="A fresh six-digit MFA code used to confirm this maintenance apply. It is not a separate secret.">
+                MFA confirmation code
+              </HelpLabel>
               <input
                 className={inputClassName()}
                 inputMode="numeric"
@@ -1008,7 +1030,7 @@ export default function AdminMaintenance({
                 value={stepUpCode}
                 onChange={(event) => setStepUpCode(event.target.value)}
                 placeholder={
-                  stepUpIsFresh ? 'Fresh step-up active' : 'Required for apply'
+                  stepUpIsFresh ? 'MFA confirmation active' : 'Required for apply'
                 }
               />
             </label>

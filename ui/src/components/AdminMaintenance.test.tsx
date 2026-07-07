@@ -445,7 +445,7 @@ describe('AdminMaintenance', () => {
     await user.click(screen.getByRole('button', { name: 'Run dry-run preview' }));
     expect(await screen.findByText('wouldMark')).toBeInTheDocument();
     await user.click(screen.getByLabelText('I reviewed the dry-run preview'));
-    await user.type(screen.getByLabelText('Step-up code'), '123456');
+    await user.type(screen.getByLabelText('MFA confirmation code'), '123456');
     await user.click(screen.getByRole('button', { name: 'Apply maintenance job' }));
 
     await waitFor(() => {

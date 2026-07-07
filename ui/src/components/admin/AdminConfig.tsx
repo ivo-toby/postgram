@@ -14,6 +14,7 @@ import {
   type AdminRuntimeSettingSnapshot,
   type AdminStepUp
 } from '../../lib/adminApi.ts';
+import { HelpIcon, HelpLabel } from './AdminHelp.tsx';
 
 const settingKeys = [
   'EXTRACTION_ENABLED',
@@ -730,7 +731,7 @@ export default function AdminConfig({
       return true;
     }
     if (!stepUpCode.trim()) {
-      setError('Enter a step-up code before sensitive changes.');
+      setError('Enter an MFA confirmation code before sensitive changes.');
       return false;
     }
 
@@ -962,7 +963,10 @@ export default function AdminConfig({
       <div className="flex flex-wrap items-start gap-3">
         <div>
           <h2 className="text-lg font-semibold text-white">
-            Provider configuration
+            <span className="inline-flex items-center gap-2">
+              Provider configuration
+              <HelpIcon label="Save provider settings as pending changes, validate them, then apply the validated set to runtime behavior." />
+            </span>
           </h2>
           <p className="mt-1 text-sm text-gray-400">
             Runtime provider settings are saved as pending changes until
@@ -1029,10 +1033,14 @@ export default function AdminConfig({
                   }
                   className="accent-blue-500"
                 />
-                Extraction enabled
+                <span className="inline-flex items-center gap-1.5">
+                  Extraction enabled
+                  <HelpIcon label="Turns relationship/entity extraction on for supported content. Leave off for embedding-only memory storage." />
+                </span>
               </label>
               <SettingInput
                 label="Extraction provider"
+                helpText="LLM provider used for graph/entity extraction when extraction is enabled."
                 value={settingsDraft.EXTRACTION_PROVIDER}
                 disabled={settingsInputsDisabled}
                 onChange={(value) =>
@@ -1041,12 +1049,14 @@ export default function AdminConfig({
               />
               <SettingInput
                 label="Extraction model"
+                helpText="Chat or completion model used by the extraction provider."
                 value={settingsDraft.EXTRACTION_MODEL}
                 disabled={settingsInputsDisabled}
                 onChange={(value) => updateSetting('EXTRACTION_MODEL', value)}
               />
               <SettingInput
                 label="Extraction base URL"
+                helpText="OpenAI-compatible chat-completions endpoint. Required only for openai-compatible extraction providers."
                 value={settingsDraft.EXTRACTION_BASE_URL}
                 disabled={settingsInputsDisabled}
                 onChange={(value) =>
@@ -1055,6 +1065,7 @@ export default function AdminConfig({
               />
               <SettingInput
                 label="Ollama base URL"
+                helpText="Host URL for Ollama when local Ollama extraction or embeddings are used from Docker."
                 value={settingsDraft.OLLAMA_BASE_URL}
                 disabled={settingsInputsDisabled}
                 onChange={(value) => updateSetting('OLLAMA_BASE_URL', value)}
@@ -1062,7 +1073,7 @@ export default function AdminConfig({
               <SettingInput
                 label="Embedding provider"
                 tone="danger"
-                helpText="Migration-class setting"
+                helpText="Migration-class setting. Changing provider can require re-embedding existing records."
                 value={settingsDraft.EMBEDDING_PROVIDER}
                 disabled={settingsInputsDisabled}
                 onChange={(value) => updateSetting('EMBEDDING_PROVIDER', value)}
@@ -1070,7 +1081,7 @@ export default function AdminConfig({
               <SettingInput
                 label="Embedding model"
                 tone="danger"
-                helpText="Migration-class setting"
+                helpText="Migration-class setting. The model must match the stored embedding dimensions."
                 value={settingsDraft.EMBEDDING_MODEL}
                 disabled={settingsInputsDisabled}
                 onChange={(value) => updateSetting('EMBEDDING_MODEL', value)}
@@ -1079,7 +1090,7 @@ export default function AdminConfig({
                 label="Embedding dimensions"
                 inputMode="numeric"
                 tone="danger"
-                helpText="Migration-class setting"
+                helpText="Migration-class setting. Dimension changes require an embedding migration."
                 value={settingsDraft.EMBEDDING_DIMENSIONS}
                 disabled={settingsInputsDisabled}
                 onChange={(value) =>
@@ -1088,6 +1099,7 @@ export default function AdminConfig({
               />
               <SettingInput
                 label="Embedding base URL"
+                helpText="Optional embedding endpoint. Use host.docker.internal for a service running on the Mac host."
                 value={settingsDraft.EMBEDDING_BASE_URL}
                 disabled={settingsInputsDisabled}
                 onChange={(value) => updateSetting('EMBEDDING_BASE_URL', value)}
@@ -1150,8 +1162,15 @@ export default function AdminConfig({
             <h3 className="text-sm font-semibold text-white">
               Sensitive changes
             </h3>
+            <p className="mt-2 text-xs leading-5 text-gray-400">
+              Secret writes, connection tests, and apply can ask for a fresh
+              MFA confirmation. Use the current six-digit code from your
+              authenticator app.
+            </p>
             <label className="mt-3 flex flex-col gap-1 text-xs font-medium text-gray-300">
-              Step-up code
+              <HelpLabel help="A fresh six-digit MFA code used to confirm sensitive admin actions. It expires quickly and is not another password.">
+                MFA confirmation code
+              </HelpLabel>
               <input
                 className={inputClassName()}
                 inputMode="numeric"
@@ -1161,19 +1180,19 @@ export default function AdminConfig({
                 onChange={(event) => setStepUpCode(event.target.value)}
                 placeholder={
                   stepUpIsFresh
-                    ? 'Fresh step-up active'
-                    : 'Required before secret writes or apply'
+                    ? 'MFA confirmation active'
+                    : 'Use MFA before secret writes or apply'
                 }
               />
             </label>
             <div className="mt-3 flex items-center gap-2 text-xs text-gray-400">
               <span className={badgeClassName(stepUpIsFresh ? 'good' : 'warn')}>
-                {stepUpIsFresh ? 'Step-up fresh' : 'Step-up required'}
+                {stepUpIsFresh ? 'MFA confirmed' : 'MFA confirmation required'}
               </span>
               <span>
                 {stepUp?.expiresAt
                   ? `Expires ${formatDate(stepUp.expiresAt)}`
-                  : 'No fresh step-up'}
+                  : 'No fresh MFA confirmation'}
               </span>
             </div>
           </section>
@@ -1317,13 +1336,7 @@ function SettingInput({
     >
       <span className="flex items-center gap-2">
         {label}
-        {helpText ? (
-          <span
-            className={badgeClassName(tone === 'danger' ? 'danger' : 'default')}
-          >
-            {helpText}
-          </span>
-        ) : null}
+        {helpText ? <HelpIcon label={helpText} /> : null}
       </span>
       <input
         className={inputClassName(tone)}
@@ -1454,7 +1467,9 @@ function SecretEditor({
         </dl>
       ) : null}
       <label className="mt-3 flex flex-col gap-1 text-xs font-medium text-gray-300">
-        {name} replacement
+        <HelpLabel help="Write-only replacement. After saving, Postgram stores encrypted secret material and shows only redacted metadata.">
+          {name} replacement
+        </HelpLabel>
         <input
           className={inputClassName()}
           type="password"

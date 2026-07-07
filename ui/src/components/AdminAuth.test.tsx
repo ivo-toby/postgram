@@ -455,6 +455,7 @@ describe('AdminAuth', () => {
     expect(screen.queryByRole('heading', { name: 'Operations dashboard' })).not.toBeInTheDocument();
 
     await user.click(screen.getByRole('button', { name: 'Begin enrollment' }));
+    expect(await screen.findByAltText('Authenticator QR code')).toBeInTheDocument();
     expect(await screen.findByText('JBSWY3DPEHPK3PXP')).toBeInTheDocument();
     await user.type(screen.getByLabelText('Authenticator code'), '123456');
     await user.click(screen.getByRole('button', { name: 'Verify MFA' }));

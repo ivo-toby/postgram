@@ -8,6 +8,7 @@ import {
   type AdminScope,
   type AdminVisibility,
 } from '../../lib/adminApi.ts';
+import { HelpLabel } from './AdminHelp.tsx';
 
 const KEY_PAGE_SIZE = 50;
 const DEFAULT_SCOPES: AdminScope[] = ['read'];
@@ -211,10 +212,10 @@ export default function AdminApiKeys({
       onAuthUpdate(response);
       setStepUpCode('');
       setStepUpRequired(false);
-      setStepUpSuccess('Step-up refreshed');
+      setStepUpSuccess('MFA confirmation refreshed');
     } catch (error) {
       if (!onSessionExpired(error)) {
-        setStepUpError(errorMessage(error, 'Unable to verify step-up'));
+        setStepUpError(errorMessage(error, 'Unable to verify MFA confirmation'));
       }
     } finally {
       setSubmittingStepUp(false);
@@ -311,7 +312,7 @@ export default function AdminApiKeys({
         >
           <div className="sm:col-span-2">
             <p className="text-xs font-semibold uppercase text-amber-200">
-              {stepUpRequired ? 'Recent step-up required' : stepUpSuccess}
+              {stepUpRequired ? 'Recent MFA confirmation required' : stepUpSuccess}
             </p>
             {stepUpError ? (
               <p className="mt-1 text-xs text-red-200">{stepUpError}</p>
@@ -320,7 +321,9 @@ export default function AdminApiKeys({
           {stepUpRequired ? (
             <>
               <label className="flex flex-col gap-1 text-xs font-medium text-gray-300">
-                Authenticator code for step-up
+                <HelpLabel help="Use the current six-digit code from your authenticator app to confirm API-key creation or revocation.">
+                  MFA confirmation code
+                </HelpLabel>
                 <input
                   className={inputClassName()}
                   inputMode="numeric"
@@ -335,7 +338,7 @@ export default function AdminApiKeys({
                 className={`${primaryButtonClassName()} self-end`}
                 disabled={submittingStepUp}
               >
-                Verify step-up
+                Verify MFA
               </button>
             </>
           ) : null}
@@ -344,7 +347,9 @@ export default function AdminApiKeys({
 
       <form onSubmit={handleCreate} className="mt-4 grid gap-3 lg:grid-cols-[1fr_1fr_auto]">
         <label className="flex flex-col gap-1 text-xs font-medium text-gray-300">
-          API key name
+          <HelpLabel help="Human-readable name used in admin lists and audit rows.">
+            API key name
+          </HelpLabel>
           <input
             className={inputClassName()}
             value={name}
@@ -353,7 +358,9 @@ export default function AdminApiKeys({
           />
         </label>
         <label className="flex flex-col gap-1 text-xs font-medium text-gray-300">
-          Client ID
+          <HelpLabel help="Optional stable client identity for key rotation. Leave blank unless multiple keys should share one client identity.">
+            Client ID
+          </HelpLabel>
           <input
             className={inputClassName()}
             value={clientId}
@@ -374,7 +381,11 @@ export default function AdminApiKeys({
           Create key
         </button>
         <fieldset className="flex flex-wrap gap-3 lg:col-span-3">
-          <legend className="basis-full text-xs font-medium text-gray-500">Scopes</legend>
+          <legend className="basis-full text-xs font-medium text-gray-500">
+            <HelpLabel help="Scopes decide which API operations the key can perform. Start with read unless a client needs writes or deletes.">
+              Scopes
+            </HelpLabel>
+          </legend>
           {SCOPE_OPTIONS.map(scope => (
             <label key={scope} className="flex items-center gap-2 text-xs text-gray-300">
               <input
@@ -388,7 +399,11 @@ export default function AdminApiKeys({
           ))}
         </fieldset>
         <fieldset className="flex flex-wrap gap-3 lg:col-span-3">
-          <legend className="basis-full text-xs font-medium text-gray-500">Allowed entity types</legend>
+          <legend className="basis-full text-xs font-medium text-gray-500">
+            <HelpLabel help="Restrict which entity types this key can access.">
+              Allowed entity types
+            </HelpLabel>
+          </legend>
           {ENTITY_TYPE_OPTIONS.map(type => (
             <label key={type} className="flex items-center gap-2 text-xs text-gray-300">
               <input
@@ -402,7 +417,11 @@ export default function AdminApiKeys({
           ))}
         </fieldset>
         <fieldset className="flex flex-wrap gap-3 lg:col-span-3">
-          <legend className="basis-full text-xs font-medium text-gray-500">Allowed visibility</legend>
+          <legend className="basis-full text-xs font-medium text-gray-500">
+            <HelpLabel help="Restrict which visibility buckets this key can access.">
+              Allowed visibility
+            </HelpLabel>
+          </legend>
           {VISIBILITY_OPTIONS.map(visibility => (
             <label key={visibility} className="flex items-center gap-2 text-xs text-gray-300">
               <input

@@ -1,4 +1,5 @@
 import { useEffect, useMemo, useState, type FormEvent } from 'react';
+import { toString as qrToString } from 'qrcode';
 import {
   createAdminApiClient,
   AdminApiError,
@@ -11,6 +12,7 @@ import {
   type AdminUser,
 } from '../../lib/adminApi.ts';
 import AdminDashboard from './AdminDashboard.tsx';
+import { HelpLabel } from './AdminHelp.tsx';
 
 type AuthMode =
   | 'loading'
@@ -153,14 +155,14 @@ export default function AdminAuth({ onBack }: AdminAuthProps) {
   }
 
   return (
-    <div className="flex min-h-full flex-col bg-gray-950 text-gray-100">
+    <div className="flex h-dvh flex-col bg-gray-950 text-gray-100">
       <AdminHeader
         mode={state.mode}
         user={state.user}
         onBack={onBack}
         onLogout={state.user ? handleLogout : undefined}
       />
-      <main className="flex flex-1 min-h-0 items-start justify-center px-4 py-8">
+      <main className="flex min-h-0 flex-1 items-start justify-center overflow-y-auto px-4 py-8">
         <div className="flex w-full flex-col items-center gap-3">
           {logoutError ? (
             <div className="w-full max-w-xl">
@@ -367,7 +369,9 @@ function BootstrapPanel({
       <form onSubmit={handleSubmit} className="mt-5 flex flex-col gap-3">
         <ErrorBanner message={submitError} />
         <label className={labelClassName()}>
-          Bootstrap token
+          <HelpLabel help="One-time setup token from the local server logs. It expires and is invalidated after the first admin is created.">
+            Bootstrap token
+          </HelpLabel>
           <input
             className={inputClassName()}
             type="password"
@@ -551,18 +555,28 @@ function MfaEnrollmentPanel({
           </button>
         ) : (
           <form onSubmit={verifyEnrollment} className="flex flex-col gap-3">
-            <div className="rounded-md border border-gray-800 bg-gray-950 p-3">
-              <p className="text-xs uppercase text-gray-500">TOTP seed</p>
-              <p className="mt-1 break-all font-mono text-sm text-gray-100">{enrollment.secret}</p>
-              <a
-                className="mt-2 block break-all text-xs text-blue-300 hover:text-blue-200"
-                href={enrollment.otpauthUrl}
-              >
-                Open authenticator setup URI
-              </a>
+            <div className="grid gap-3 rounded-md border border-gray-800 bg-gray-950 p-3 sm:grid-cols-[12rem_minmax(0,1fr)]">
+              <AuthenticatorQrCode otpauthUrl={enrollment.otpauthUrl} />
+              <div className="min-w-0">
+                <p className="text-xs uppercase text-gray-500">Authenticator setup</p>
+                <p className="mt-1 text-sm text-gray-300">
+                  Scan the QR code with your authenticator app. If scanning is
+                  not available, enter the setup code manually.
+                </p>
+                <p className="mt-3 text-xs uppercase text-gray-500">Setup code</p>
+                <p className="mt-1 break-all font-mono text-sm text-gray-100">{enrollment.secret}</p>
+                <a
+                  className="mt-2 block break-all text-xs text-blue-300 hover:text-blue-200"
+                  href={enrollment.otpauthUrl}
+                >
+                  Open authenticator setup URI
+                </a>
+              </div>
             </div>
             <label className={labelClassName()}>
-              Authenticator code
+              <HelpLabel help="Six-digit code from the authenticator app after scanning the QR code or entering the setup code.">
+                Authenticator code
+              </HelpLabel>
               <input
                 className={inputClassName()}
                 inputMode="numeric"
@@ -579,6 +593,63 @@ function MfaEnrollmentPanel({
         )}
       </div>
     </section>
+  );
+}
+
+function AuthenticatorQrCode({ otpauthUrl }: { otpauthUrl: string }) {
+  const [qrSvg, setQrSvg] = useState<string | null>(null);
+  const [error, setError] = useState<string | null>(null);
+
+  useEffect(() => {
+    let cancelled = false;
+
+    qrToString(otpauthUrl, {
+      color: {
+        dark: '#111827',
+        light: '#ffffff'
+      },
+      margin: 1,
+      type: 'svg',
+      width: 192
+    })
+      .then((svg) => {
+        if (!cancelled) {
+          setQrSvg(svg);
+          setError(null);
+        }
+      })
+      .catch(() => {
+        if (!cancelled) {
+          setQrSvg(null);
+          setError('QR code unavailable');
+        }
+      });
+
+    return () => {
+      cancelled = true;
+    };
+  }, [otpauthUrl]);
+
+  if (error) {
+    return (
+      <div className="flex aspect-square w-48 max-w-full items-center justify-center rounded-md border border-amber-500/30 bg-amber-500/10 p-3 text-center text-xs text-amber-100">
+        {error}
+      </div>
+    );
+  }
+
+  return (
+    <div className="flex aspect-square w-48 max-w-full items-center justify-center rounded-md bg-white p-2">
+      {qrSvg ? (
+        <img
+          alt="Authenticator QR code"
+          className="h-full w-full"
+          src={`data:image/svg+xml;utf8,${encodeURIComponent(qrSvg)}`}
+        />
+      ) : (
+        <span className="text-xs text-gray-500">Generating QR code</span>
+      )}
+    </div>
   );
 }
 

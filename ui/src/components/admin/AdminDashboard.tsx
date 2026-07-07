@@ -15,6 +15,7 @@ import {
 import AdminApiKeys from './AdminApiKeys.tsx';
 import AdminAudit from './AdminAudit.tsx';
 import AdminConfig from './AdminConfig.tsx';
+import AdminHelpPage, { HelpIcon } from './AdminHelp.tsx';
 import AdminMaintenance from './AdminMaintenance.tsx';
 
 type AdminDashboardProps = {
@@ -32,7 +33,7 @@ type ResourceState<T> = {
   loading: boolean;
 };
 
-type DashboardPanel = 'overview' | 'provider-config' | 'maintenance';
+type DashboardPanel = 'overview' | 'provider-config' | 'maintenance' | 'help';
 
 function pendingResource<T>(): ResourceState<T> {
   return {
@@ -111,15 +112,20 @@ function ErrorText({ message }: { message: string }) {
 }
 
 function InlineMetric({
+  help,
   label,
   value,
 }: {
+  help?: string;
   label: string;
   value: ReactNode;
 }) {
   return (
     <div className="rounded-md border border-gray-800 bg-gray-950 px-3 py-2">
-      <p className="text-[11px] uppercase text-gray-500">{label}</p>
+      <p className="flex items-center gap-1.5 text-[11px] uppercase text-gray-500">
+        <span>{label}</span>
+        {help ? <HelpIcon label={help} /> : null}
+      </p>
       <div className="mt-1 text-sm font-medium text-gray-100">{value}</div>
     </div>
   );
@@ -330,7 +336,9 @@ export default function AdminDashboard({
 
   const stepUpValue = useMemo(() => {
     if (stepUp?.fresh) {
-      return stepUp.expiresAt ? `Fresh until ${new Date(stepUp.expiresAt).toLocaleTimeString()}` : 'Fresh';
+      return stepUp.expiresAt
+        ? `Confirmed until ${new Date(stepUp.expiresAt).toLocaleTimeString()}`
+        : 'Confirmed';
     }
     return 'Required for sensitive actions';
   }, [stepUp]);
@@ -383,7 +391,11 @@ export default function AdminDashboard({
       <div className="grid gap-3 md:grid-cols-3">
         <InlineMetric label="Session" value={session.mfaVerified ? 'MFA verified' : 'MFA pending'} />
         <InlineMetric label="Expires" value={new Date(session.expiresAt).toLocaleString()} />
-        <InlineMetric label="Step-up" value={stepUpValue} />
+        <InlineMetric
+          help="MFA confirmation means re-entering your current six-digit authenticator code before sensitive actions."
+          label="MFA confirmation"
+          value={stepUpValue}
+        />
       </div>
 
       <nav className="flex flex-wrap gap-2 border-b border-gray-800 pb-3">
@@ -405,6 +417,12 @@ export default function AdminDashboard({
         >
           Maintenance
         </DashboardNavButton>
+        <DashboardNavButton
+          active={activePanel === 'help'}
+          onClick={() => setActivePanel('help')}
+        >
+          Help
+        </DashboardNavButton>
       </nav>
 
       {activePanel === 'provider-config' ? (
@@ -421,6 +439,8 @@ export default function AdminDashboard({
           onAuthUpdate={onAuthUpdate}
           onSessionExpired={onSessionExpired}
         />
+      ) : activePanel === 'help' ? (
+        <AdminHelpPage />
       ) : (
         <>
           <div className="grid gap-3 xl:grid-cols-2">

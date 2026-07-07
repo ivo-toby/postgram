@@ -208,7 +208,7 @@ Scheduler reference: `postgram-admin-wave-005-wdd-heartbeat`
 
 Scheduler name: `postgram-admin-wave-011-wdd-heartbeat`
 
-Automation update: will delete after final PR checkpoint push
+Automation update: deleted at 2026-07-07T00:00:50Z
 
 Fallback prompt:
 
@@ -1944,6 +1944,9 @@ None. WAVE-011 monitoring stopped after reconciliation; next phase is
   `codex/epic/admin-configuration-frontend` into `main` at
   https://github.com/ivo-toby/postgram/pull/94. PR head is
   `a7343934a2a451d80eb40db7941668e223ac857d`.
+- 2026-07-07T00:00:50Z: Deleted heartbeat automation
+  `postgram-admin-wave-005-wdd-heartbeat` after all waves were reconciled and
+  draft final PR #94 was open.
 
 ## Next Action
 

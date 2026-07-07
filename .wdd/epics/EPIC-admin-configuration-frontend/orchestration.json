@@ -2649,8 +2649,9 @@
     "schedulerRef": "postgram-admin-wave-005-wdd-heartbeat",
     "schedulerName": "postgram-admin-wave-011-reconcile-heartbeat",
     "fallbackPrompt": null,
-    "automationUpdateResult": "delete_after_final_checkpoint_push",
-    "updatedAt": "2026-07-06T23:59:09Z"
+    "automationUpdateResult": "deleted",
+    "updatedAt": "2026-07-07T00:00:50Z",
+    "automationDeletedAt": "2026-07-07T00:00:50Z"
   },
   "sharedContext": {
     "index": "shared-context/index.md",
@@ -2755,8 +2756,9 @@
       "schedulerRef": "postgram-admin-wave-005-wdd-heartbeat",
       "schedulerName": "postgram-admin-wave-011-reconcile-heartbeat",
       "fallbackPrompt": null,
-      "automationUpdateResult": "delete_after_final_checkpoint_push",
-      "updatedAt": "2026-07-06T23:59:09Z"
+      "automationUpdateResult": "deleted",
+      "updatedAt": "2026-07-07T00:00:50Z",
+      "automationDeletedAt": "2026-07-07T00:00:50Z"
     },
     "review": {
       "WAVE-001-admin-feasibility-gate": {
@@ -4713,5 +4715,5 @@
     "openedHeadRefOid": "a7343934a2a451d80eb40db7941668e223ac857d",
     "note": "PR head advances with WDD checkpoint commits; openedHeadRefOid records the head used at PR creation."
   },
-  "updatedAt": "2026-07-06T23:59:09Z"
+  "updatedAt": "2026-07-07T00:00:50Z"
 }

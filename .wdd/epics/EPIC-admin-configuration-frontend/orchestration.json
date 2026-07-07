@@ -4699,7 +4699,6 @@
     "state": "OPEN",
     "isDraft": true,
     "recordedAt": "2026-07-06T23:59:09Z",
-    "headRefOid": "a7343934a2a451d80eb40db7941668e223ac857d",
     "pr": {
       "number": 94,
       "url": "https://github.com/ivo-toby/postgram/pull/94",
@@ -4708,9 +4707,11 @@
       "base": "main",
       "head": "codex/epic/admin-configuration-frontend",
       "title": "feat: add safe admin configuration frontend",
-      "headRefOid": "a7343934a2a451d80eb40db7941668e223ac857d",
-      "createdAt": "2026-07-06T23:59:01Z"
-    }
+      "createdAt": "2026-07-06T23:59:01Z",
+      "openedHeadRefOid": "a7343934a2a451d80eb40db7941668e223ac857d"
+    },
+    "openedHeadRefOid": "a7343934a2a451d80eb40db7941668e223ac857d",
+    "note": "PR head advances with WDD checkpoint commits; openedHeadRefOid records the head used at PR creation."
   },
   "updatedAt": "2026-07-06T23:59:09Z"
 }

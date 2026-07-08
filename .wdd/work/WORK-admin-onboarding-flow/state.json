@@ -125,8 +125,8 @@
   "monitoring": {
     "mode": "manual",
     "cadence": "adaptive",
-    "status": "inactive",
-    "lastCheckedAt": null,
+    "status": "worker_dispatched",
+    "lastCheckedAt": "2026-07-08T10:32:00Z",
     "nextCheckDueAt": null,
     "schedulerRef": null,
     "fallbackPrompt": "Run wdd-run-work for WORK-admin-onboarding-flow. Read state.json and task files, inspect active worker or PR references, update gates, and stop when tasks are ready for wdd-finish-work."

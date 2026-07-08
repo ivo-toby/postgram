@@ -37,11 +37,11 @@
         ],
         "branch": "codex/task/WORK-admin-onboarding-flow-bundle",
         "workerWorktree": "/Users/ivo.toby/workspace/postgram/.worktrees/WORK-admin-onboarding-flow-bundle",
-        "worktreeStatus": "planned",
+        "worktreeStatus": "active",
         "cleanup": null,
         "workerThreadId": null,
         "reviewThreadId": null,
-        "currentGate": "ready_for_worktree"
+        "currentGate": "verification_passed_review_pending"
       }
     ],
     "overrideHistory": []
@@ -50,50 +50,76 @@
     {
       "id": "TASK-001-onboarding-state-api",
       "path": "tasks/TASK-001-onboarding-state-api.md",
-      "status": "todo",
+      "status": "review",
       "branch": "codex/task/WORK-admin-onboarding-flow-bundle",
       "workerThreadId": null,
       "workerWorktree": "/Users/ivo.toby/workspace/postgram/.worktrees/WORK-admin-onboarding-flow-bundle",
-      "worktreeStatus": "planned",
+      "worktreeStatus": "active",
       "cleanup": null,
-      "currentGate": "ready_for_worktree",
+      "currentGate": "verification_passed_review_pending",
       "risk": "high",
       "reviewRequired": true,
       "pr": null,
-      "latestCommit": null,
-      "verification": null
+      "latestCommit": "pending_final_commit",
+      "verification": {
+        "status": "passed",
+        "evidence": [
+          "RED: npx vitest run tests/contract/admin-onboarding-api.test.ts failed with expected 404s before implementation.",
+          "GREEN: npx vitest run tests/contract/admin-onboarding-api.test.ts passed: 3 tests.",
+          "npx tsc -p tsconfig.json --noEmit passed.",
+          "Manual review-style diff audit found no P0/P1/P2 issues; dedicated /codex review hook unavailable in this tool surface, so independent review remains pending for draft PR."
+        ]
+      }
     },
     {
       "id": "TASK-002-onboarding-guided-ui",
       "path": "tasks/TASK-002-onboarding-guided-ui.md",
-      "status": "todo",
+      "status": "review",
       "branch": "codex/task/WORK-admin-onboarding-flow-bundle",
       "workerThreadId": null,
       "workerWorktree": "/Users/ivo.toby/workspace/postgram/.worktrees/WORK-admin-onboarding-flow-bundle",
-      "worktreeStatus": "planned",
+      "worktreeStatus": "active",
       "cleanup": null,
-      "currentGate": "ready_for_worktree",
+      "currentGate": "verification_passed_review_pending",
       "risk": "high",
       "reviewRequired": true,
       "pr": null,
-      "latestCommit": null,
-      "verification": null
+      "latestCommit": "pending_final_commit",
+      "verification": {
+        "status": "passed",
+        "evidence": [
+          "RED: npm run test --prefix ui -- AdminOnboarding.test.tsx AdminAuth.test.tsx failed before implementation with missing AdminOnboarding module and absent automatic onboarding screen.",
+          "GREEN: npm run test --prefix ui -- AdminOnboarding.test.tsx AdminAuth.test.tsx passed: 19 tests.",
+          "Regression: npm run test --prefix ui -- AdminOnboarding.test.tsx AdminAuth.test.tsx AdminConfig.test.tsx AdminBackup.test.tsx AdminMaintenance.test.tsx AdminOps.test.tsx passed: 66 tests.",
+          "npm run typecheck --prefix ui passed.",
+          "Manual review-style diff audit found no P0/P1/P2 issues; dedicated /codex review hook unavailable in this tool surface, so independent review remains pending for draft PR."
+        ]
+      }
     },
     {
       "id": "TASK-003-onboarding-validation-docs",
       "path": "tasks/TASK-003-onboarding-validation-docs.md",
-      "status": "todo",
+      "status": "review",
       "branch": "codex/task/WORK-admin-onboarding-flow-bundle",
       "workerThreadId": null,
       "workerWorktree": "/Users/ivo.toby/workspace/postgram/.worktrees/WORK-admin-onboarding-flow-bundle",
-      "worktreeStatus": "planned",
+      "worktreeStatus": "active",
       "cleanup": null,
-      "currentGate": "ready_for_worktree",
+      "currentGate": "verification_passed_review_pending",
       "risk": "medium",
       "reviewRequired": true,
       "pr": null,
-      "latestCommit": null,
-      "verification": null
+      "latestCommit": "pending_final_commit",
+      "verification": {
+        "status": "passed",
+        "evidence": [
+          "README and Admin Help document server-side onboarding resume and warn not to use docker compose down -v because it removes pgdata.",
+          "npm run build passed.",
+          "npm run build --prefix ui passed with existing Vite large-chunk warning.",
+          "git diff --check passed.",
+          "Manual review-style diff audit found no P0/P1/P2 issues; dedicated /codex review hook unavailable in this tool surface, so independent review remains pending for draft PR."
+        ]
+      }
     }
   ],
   "monitoring": {

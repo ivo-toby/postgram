@@ -6,6 +6,7 @@ import {
   type AdminEmbeddingModel,
   type AdminHealth,
   type AdminJob,
+  type AdminOnboardingState,
   type AdminQueueStatus,
   type AdminSession,
   type AdminStats,
@@ -18,6 +19,9 @@ import AdminBackup from './AdminBackup.tsx';
 import AdminConfig from './AdminConfig.tsx';
 import AdminHelpPage, { HelpIcon } from './AdminHelp.tsx';
 import AdminMaintenance from './AdminMaintenance.tsx';
+import AdminOnboarding, {
+  type AdminOnboardingPanelTarget
+} from './AdminOnboarding.tsx';
 
 type AdminDashboardProps = {
   api: AdminApiClient;
@@ -36,6 +40,7 @@ type ResourceState<T> = {
 
 type DashboardPanel =
   | 'overview'
+  | 'onboarding'
   | 'provider-config'
   | 'maintenance'
   | 'backup'
@@ -339,6 +344,7 @@ export default function AdminDashboard({
   const [configStatus, setConfigStatus] = useState<ResourceState<AdminConfigStatus>>(() => pendingResource());
   const [stats, setStats] = useState<ResourceState<AdminStats>>(() => pendingResource());
   const [jobs, setJobs] = useState<ResourceState<AdminJob[]>>(() => pendingResource());
+  const [onboarding, setOnboarding] = useState<ResourceState<AdminOnboardingState>>(() => pendingResource());
 
   const stepUpValue = useMemo(() => {
     if (stepUp?.fresh) {
@@ -379,6 +385,16 @@ export default function AdminDashboard({
     void loadResource(() => api.getConfigStatus().then(response => response.configStatus), setConfigStatus, 'Unable to load config status');
     void loadResource(() => api.getStats().then(response => response.stats), setStats, 'Unable to load stats');
     void loadResource(() => api.listJobs().then(response => response.jobs), setJobs, 'Unable to load jobs');
+    void loadResource(
+      () => api.getOnboarding().then(response => response.onboarding),
+      state => {
+        setOnboarding(state);
+        if (!state.loading && !state.error && state.data?.status === 'in_progress') {
+          setActivePanel('onboarding');
+        }
+      },
+      'Unable to load onboarding'
+    );
 
     return () => {
       cancelled = true;
@@ -410,6 +426,12 @@ export default function AdminDashboard({
           onClick={() => setActivePanel('overview')}
         >
           Overview
+        </DashboardNavButton>
+        <DashboardNavButton
+          active={activePanel === 'onboarding'}
+          onClick={() => setActivePanel('onboarding')}
+        >
+          Onboarding
         </DashboardNavButton>
         <DashboardNavButton
           active={activePanel === 'provider-config'}
@@ -463,6 +485,24 @@ export default function AdminDashboard({
         />
       ) : activePanel === 'help' ? (
         <AdminHelpPage />
+      ) : activePanel === 'onboarding' ? (
+        onboarding.loading ? (
+          <Panel title="Admin onboarding">
+            <p className="mt-3 text-sm text-gray-500">Loading onboarding</p>
+          </Panel>
+        ) : onboarding.error ? (
+          <Panel title="Admin onboarding">
+            <ErrorText message={onboarding.error} />
+          </Panel>
+        ) : onboarding.data ? (
+          <AdminOnboarding
+            api={api}
+            onboarding={onboarding.data}
+            onOpenPanel={(panel: AdminOnboardingPanelTarget) => setActivePanel(panel)}
+            onSessionExpired={onSessionExpired}
+            onStateChange={state => setOnboarding(loadedResource(state))}
+          />
+        ) : null
       ) : (
         <>
           <div className="grid gap-3 xl:grid-cols-2">

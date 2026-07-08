@@ -252,6 +252,10 @@ function adminApi(overrides: Partial<AdminApiClient> = {}): AdminApiClient {
       }
     })),
     logout: vi.fn(),
+    getOnboarding: vi.fn(),
+    updateOnboarding: vi.fn(),
+    skipOnboarding: vi.fn(),
+    completeOnboarding: vi.fn(),
     getProviderConfig: vi.fn(async () => providerResponse()),
     saveProviderConfig: vi.fn(async () => providerResponse()),
     saveProviderSecret: vi.fn(async ({ name }) => ({

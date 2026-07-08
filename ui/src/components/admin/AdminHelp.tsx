@@ -86,6 +86,21 @@ export default function AdminHelpPage() {
           </p>
         </HelpSection>
 
+        <HelpSection title="Onboarding resume">
+          <p>
+            After an active MFA login, Postgram opens onboarding until it is
+            completed or deliberately skipped. The current step is saved in
+            Postgres, so refresh, logout/login, browser close, and ordinary
+            container restart resume from the server-side progress.
+          </p>
+          <p>
+            Keep the Docker pgdata volume when testing resume behavior. Use
+            docker compose restart or docker compose up -d --build. Do not use
+            docker compose down -v unless you intentionally want to delete the
+            Postgres volume and reset the install.
+          </p>
+        </HelpSection>
+
         <HelpSection title="Embeddings and extraction">
           <p>
             Embeddings turn text into numeric vectors so Postgram can find

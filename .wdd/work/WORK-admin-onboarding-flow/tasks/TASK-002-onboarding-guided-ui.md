@@ -4,7 +4,7 @@ kind: micro_task
 work: WORK-admin-onboarding-flow
 slug: onboarding-guided-ui
 title: Onboarding Guided UI
-status: todo
+status: review
 depends_on:
   - TASK-001-onboarding-state-api
 conflict_domains:
@@ -16,8 +16,8 @@ conflict_domains:
 risk: high
 review_required: true
 branch: codex/task/WORK-admin-onboarding-flow-bundle
-worker_worktree: null
-current_gate: not_started
+worker_worktree: /Users/ivo.toby/workspace/postgram/.worktrees/WORK-admin-onboarding-flow-bundle
+current_gate: verification_passed_review_pending
 verification:
   - npm run test --prefix ui -- AdminOnboarding.test.tsx AdminAuth.test.tsx AdminConfig.test.tsx AdminBackup.test.tsx AdminMaintenance.test.tsx AdminOps.test.tsx
   - npm run typecheck --prefix ui
@@ -87,10 +87,15 @@ resumes from persisted progress after interruption.
 
 ## Done
 
-- [ ] Objective is complete.
-- [ ] Verification evidence is recorded.
+- [x] Objective is complete.
+- [x] Verification evidence is recorded.
 - [ ] Required review is complete or explicitly not required.
 
 ## Evidence
 
-- Not run yet.
+- 2026-07-08: Bundle worker started; UI work is waiting for the onboarding API contract to go red/green first.
+- 2026-07-08 RED: `npm run test --prefix ui -- AdminOnboarding.test.tsx AdminAuth.test.tsx` failed as expected before UI implementation: missing `AdminOnboarding` module and no automatic onboarding screen.
+- 2026-07-08 GREEN: `npm run test --prefix ui -- AdminOnboarding.test.tsx AdminAuth.test.tsx` passed: 19 tests.
+- 2026-07-08 regression: `npm run test --prefix ui -- AdminOnboarding.test.tsx AdminAuth.test.tsx AdminConfig.test.tsx AdminBackup.test.tsx AdminMaintenance.test.tsx AdminOps.test.tsx` passed: 66 tests.
+- 2026-07-08: `npm run typecheck --prefix ui` passed.
+- 2026-07-08: Manual review-style diff audit found no P0/P1/P2 issues; dedicated `/codex` review hook was unavailable in this tool surface, so review remains pending for the draft PR.

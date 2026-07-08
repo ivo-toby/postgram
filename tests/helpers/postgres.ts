@@ -65,6 +65,7 @@ export async function createTestDatabase(): Promise<TestDatabase> {
 export async function resetTestDatabase(pool: Pool): Promise<void> {
   await pool.query(`
     TRUNCATE TABLE
+      admin_onboarding_state,
       admin_job_events,
       admin_jobs,
       admin_runtime_secrets,

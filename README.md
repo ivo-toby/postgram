@@ -376,6 +376,34 @@ Then open `http://127.0.0.1:3000/admin`, create the first admin user, and
 complete MFA enrollment. The bootstrap token is stored hash-only in Postgres,
 expires after 24 hours, and is invalidated after the first admin is created.
 
+After active MFA login, the Admin dashboard opens a guided onboarding flow until
+it is completed or deliberately skipped. The guide explains the setup path in
+plain operator language:
+
+- what bootstrap, admin login, and MFA confirmation protect
+- how provider settings, embedding dimensions, extraction models, and
+  write-only provider secrets fit together
+- when to validate and apply saved provider configuration
+- why backup/restore is staged before switch-over
+- how maintenance dry-runs, re-extraction, re-embedding, and edge pruning work
+
+Onboarding progress is stored server-side in Postgres. Refreshing the browser,
+closing the tab, logging out and back in, or restarting the Docker containers
+resumes at the latest saved step as long as the existing `pgdata` volume is
+preserved. The Onboarding tab remains available from the dashboard after skip
+or completion.
+
+For local Docker testing, preserve the database volume:
+
+```bash
+docker compose up -d --build
+docker compose restart mcp-server postgram-ui
+```
+
+Do not use `docker compose down -v` when testing onboarding resume behavior.
+That command removes named volumes, including the `pgdata` Postgres volume, and
+will reset the server-side onboarding state along with the database.
+
 ### 4. Check health
 
 ```bash
@@ -391,6 +419,7 @@ Expected:
 
 Use the Admin dashboard in the browser for the supported happy path:
 
+- Onboarding tab: resume, skip, or complete the Docker-first setup guide.
 - Config tab: save provider settings and write-only provider secrets.
 - Overview tab: create Postgram API keys, inspect health, queue, stats,
   config/model/job status, and audit rows.

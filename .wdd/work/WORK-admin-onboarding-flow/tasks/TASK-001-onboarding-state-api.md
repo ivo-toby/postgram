@@ -4,7 +4,7 @@ kind: micro_task
 work: WORK-admin-onboarding-flow
 slug: onboarding-state-api
 title: Onboarding State API
-status: todo
+status: review
 depends_on: []
 conflict_domains:
   - src/db/migrations/**
@@ -15,8 +15,8 @@ conflict_domains:
 risk: high
 review_required: true
 branch: codex/task/WORK-admin-onboarding-flow-bundle
-worker_worktree: null
-current_gate: not_started
+worker_worktree: /Users/ivo.toby/workspace/postgram/.worktrees/WORK-admin-onboarding-flow-bundle
+current_gate: verification_passed_review_pending
 verification:
   - npx vitest run tests/contract/admin-onboarding-api.test.ts
   - npx tsc -p tsconfig.json --noEmit
@@ -76,10 +76,14 @@ load, update, skip, complete, and resume onboarding progress.
 
 ## Done
 
-- [ ] Objective is complete.
-- [ ] Verification evidence is recorded.
+- [x] Objective is complete.
+- [x] Verification evidence is recorded.
 - [ ] Required review is complete or explicitly not required.
 
 ## Evidence
 
-- Not run yet.
+- 2026-07-08: Bundle worker started on `codex/task/WORK-admin-onboarding-flow-bundle`; first backend RED test added in `tests/contract/admin-onboarding-api.test.ts`.
+- 2026-07-08 RED: `npx vitest run tests/contract/admin-onboarding-api.test.ts` failed with expected 404s before the onboarding API existed.
+- 2026-07-08 GREEN: `npx vitest run tests/contract/admin-onboarding-api.test.ts` passed: 3 tests.
+- 2026-07-08: `npx tsc -p tsconfig.json --noEmit` passed.
+- 2026-07-08: Manual review-style diff audit found no P0/P1/P2 issues; dedicated `/codex` review hook was unavailable in this tool surface, so review remains pending for the draft PR.

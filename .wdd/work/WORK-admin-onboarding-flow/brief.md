@@ -4,7 +4,7 @@ kind: work_packet
 profile: micro
 slug: admin-onboarding-flow
 title: Admin Onboarding Flow
-status: planned
+status: done
 created_at: 2026-07-08
 updated_at: 2026-07-08
 target_branch: codex/epic/admin-configuration-frontend
@@ -98,14 +98,14 @@ work touches persistence, auth-adjacent admin routes, and first-run UX.
 
 ## Definition of Done
 
-- [ ] Scope is complete.
-- [ ] Onboarding progress persists server-side and resumes after reload/login.
-- [ ] The UI guides a fresh operator through setup in plain language.
-- [ ] Operators can skip or mark onboarding complete deliberately.
-- [ ] Existing Postgres volume preservation is documented for local testing.
-- [ ] Verification evidence is recorded.
-- [ ] Required review is complete.
-- [ ] Final handoff is ready.
+- [x] Scope is complete.
+- [x] Onboarding progress persists server-side and resumes after reload/login.
+- [x] The UI guides a fresh operator through setup in plain language.
+- [x] Operators can skip or mark onboarding complete deliberately.
+- [x] Existing Postgres volume preservation is documented for local testing.
+- [x] Verification evidence is recorded.
+- [x] Required review is complete.
+- [x] Final handoff is ready.
 
 ## Open Questions
 
@@ -118,3 +118,12 @@ work touches persistence, auth-adjacent admin routes, and first-run UX.
   - `TASK-001-onboarding-state-api`
   - `TASK-002-onboarding-guided-ui`
   - `TASK-003-onboarding-validation-docs`
+- PR #95: https://github.com/ivo-toby/postgram/pull/95
+- Merged locally into `codex/epic/admin-configuration-frontend` in
+  `e698d9ab317b60d822963d69b182bc57f16448ab`.
+- Follow-up review `019f430b-2835-7de3-94e2-b4774714b5eb` returned
+  `REVIEW_PASS` after fix commit
+  `75e0760dbcababf1c8e4f93bbbb598b90009915a`.
+- Controller verification passed: onboarding contract tests 5/5, admin UI tests
+  66/66, root typecheck, UI typecheck, freshness, merge-tree, and diff-check.
+- Bundle worktree was clean and removed after local merge.

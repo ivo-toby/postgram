@@ -37,11 +37,47 @@
         ],
         "branch": "codex/task/WORK-admin-onboarding-flow-bundle",
         "workerWorktree": "/Users/ivo.toby/workspace/postgram/.worktrees/WORK-admin-onboarding-flow-bundle",
-        "worktreeStatus": "active",
-        "cleanup": null,
+        "worktreeStatus": "cleaned_up",
+        "cleanup": {
+          "status": "cleaned_up",
+          "cleanedAt": "2026-07-08T18:47:48Z",
+          "path": "/Users/ivo.toby/workspace/postgram/.worktrees/WORK-admin-onboarding-flow-bundle"
+        },
         "workerThreadId": "019f42ef-3560-7172-816e-51f32932736a",
-        "reviewThreadId": null,
-        "currentGate": "verification_passed_review_pending"
+        "reviewThreadId": "019f430b-2835-7de3-94e2-b4774714b5eb",
+        "currentGate": "merged",
+        "pr": {
+          "number": 95,
+          "url": "https://github.com/ivo-toby/postgram/pull/95",
+          "status": "merged_locally_pending_push",
+          "headCommit": "75e0760dbcababf1c8e4f93bbbb598b90009915a",
+          "mergeCommit": "e698d9ab317b60d822963d69b182bc57f16448ab"
+        },
+        "review": {
+          "status": "passed",
+          "reviewerThreadId": "019f430b-2835-7de3-94e2-b4774714b5eb",
+          "previousReviewerThreadId": "019f4301-a6c9-71b1-9cb8-bfb95b9e98e4",
+          "fixWorkerThreadId": "019f4306-cfac-7bb3-b286-e8a3c5469011",
+          "evidence": "Popper found one P2; Averroes fixed it in 75e0760; Laplace returned REVIEW_PASS."
+        },
+        "verification": {
+          "status": "passed",
+          "evidence": [
+            "PR #95: https://github.com/ivo-toby/postgram/pull/95",
+            "Worker implementation: f4bd1dcdfbec06b251b76319437a3ac25438ccda; worker evidence: d62bd7488495028d2b80212ff3be278d12102416.",
+            "Branch freshness refresh: 58327c99f657cfcac97e287375652977340ac823.",
+            "Review P2 fix: 75e0760dbcababf1c8e4f93bbbb598b90009915a enforced ordered onboarding progress and terminal-state update rejection.",
+            "Merged locally into codex/epic/admin-configuration-frontend: e698d9ab317b60d822963d69b182bc57f16448ab.",
+            "Controller freshness: git rev-list --left-right --count origin/codex/epic/admin-configuration-frontend...HEAD => 0 5; merge-tree clean; diff-check clean.",
+            "npx vitest run tests/contract/admin-onboarding-api.test.ts passed: 5 tests.",
+            "npm run test --prefix ui -- AdminOnboarding.test.tsx AdminAuth.test.tsx AdminConfig.test.tsx AdminBackup.test.tsx AdminMaintenance.test.tsx AdminOps.test.tsx passed: 66 tests.",
+            "npx tsc -p tsconfig.json --noEmit passed.",
+            "npm run typecheck --prefix ui passed.",
+            "Worker evidence: npm run build passed; npm run build --prefix ui passed with existing Vite large-chunk warning.",
+            "Initial review by Popper 019f4301-a6c9-71b1-9cb8-bfb95b9e98e4 returned one P2; follow-up review by Laplace 019f430b-2835-7de3-94e2-b4774714b5eb returned REVIEW_PASS.",
+            "Cleanup: bundle worktree removed after clean pushed task branch was merged locally."
+          ]
+        }
       }
     ],
     "overrideHistory": []
@@ -50,85 +86,181 @@
     {
       "id": "TASK-001-onboarding-state-api",
       "path": "tasks/TASK-001-onboarding-state-api.md",
-      "status": "review",
+      "status": "done",
       "branch": "codex/task/WORK-admin-onboarding-flow-bundle",
       "workerThreadId": "019f42ef-3560-7172-816e-51f32932736a",
       "workerWorktree": "/Users/ivo.toby/workspace/postgram/.worktrees/WORK-admin-onboarding-flow-bundle",
-      "worktreeStatus": "active",
-      "cleanup": null,
-      "currentGate": "verification_passed_review_pending",
+      "worktreeStatus": "cleaned_up",
+      "cleanup": {
+        "status": "cleaned_up",
+        "cleanedAt": "2026-07-08T18:47:48Z",
+        "path": "/Users/ivo.toby/workspace/postgram/.worktrees/WORK-admin-onboarding-flow-bundle"
+      },
+      "currentGate": "merged",
       "risk": "high",
       "reviewRequired": true,
-      "pr": null,
-      "latestCommit": "f4bd1dc",
+      "pr": {
+        "number": 95,
+        "url": "https://github.com/ivo-toby/postgram/pull/95",
+        "status": "merged_locally_pending_push",
+        "headCommit": "75e0760dbcababf1c8e4f93bbbb598b90009915a",
+        "mergeCommit": "e698d9ab317b60d822963d69b182bc57f16448ab"
+      },
+      "latestCommit": "75e0760dbcababf1c8e4f93bbbb598b90009915a",
       "verification": {
         "status": "passed",
         "evidence": [
-          "RED: npx vitest run tests/contract/admin-onboarding-api.test.ts failed with expected 404s before implementation.",
-          "GREEN: npx vitest run tests/contract/admin-onboarding-api.test.ts passed: 3 tests.",
+          "PR #95: https://github.com/ivo-toby/postgram/pull/95",
+          "Worker implementation: f4bd1dcdfbec06b251b76319437a3ac25438ccda; worker evidence: d62bd7488495028d2b80212ff3be278d12102416.",
+          "Branch freshness refresh: 58327c99f657cfcac97e287375652977340ac823.",
+          "Review P2 fix: 75e0760dbcababf1c8e4f93bbbb598b90009915a enforced ordered onboarding progress and terminal-state update rejection.",
+          "Merged locally into codex/epic/admin-configuration-frontend: e698d9ab317b60d822963d69b182bc57f16448ab.",
+          "Controller freshness: git rev-list --left-right --count origin/codex/epic/admin-configuration-frontend...HEAD => 0 5; merge-tree clean; diff-check clean.",
+          "npx vitest run tests/contract/admin-onboarding-api.test.ts passed: 5 tests.",
+          "npm run test --prefix ui -- AdminOnboarding.test.tsx AdminAuth.test.tsx AdminConfig.test.tsx AdminBackup.test.tsx AdminMaintenance.test.tsx AdminOps.test.tsx passed: 66 tests.",
           "npx tsc -p tsconfig.json --noEmit passed.",
-          "Manual review-style diff audit found no P0/P1/P2 issues; dedicated /codex review hook unavailable in this tool surface, so independent review remains pending for draft PR."
+          "npm run typecheck --prefix ui passed.",
+          "Worker evidence: npm run build passed; npm run build --prefix ui passed with existing Vite large-chunk warning.",
+          "Initial review by Popper 019f4301-a6c9-71b1-9cb8-bfb95b9e98e4 returned one P2; follow-up review by Laplace 019f430b-2835-7de3-94e2-b4774714b5eb returned REVIEW_PASS.",
+          "Cleanup: bundle worktree removed after clean pushed task branch was merged locally."
         ]
+      },
+      "review": {
+        "status": "passed",
+        "reviewerThreadId": "019f430b-2835-7de3-94e2-b4774714b5eb",
+        "evidence": "Follow-up review returned REVIEW_PASS after P2 fix."
       }
     },
     {
       "id": "TASK-002-onboarding-guided-ui",
       "path": "tasks/TASK-002-onboarding-guided-ui.md",
-      "status": "review",
+      "status": "done",
       "branch": "codex/task/WORK-admin-onboarding-flow-bundle",
       "workerThreadId": "019f42ef-3560-7172-816e-51f32932736a",
       "workerWorktree": "/Users/ivo.toby/workspace/postgram/.worktrees/WORK-admin-onboarding-flow-bundle",
-      "worktreeStatus": "active",
-      "cleanup": null,
-      "currentGate": "verification_passed_review_pending",
+      "worktreeStatus": "cleaned_up",
+      "cleanup": {
+        "status": "cleaned_up",
+        "cleanedAt": "2026-07-08T18:47:48Z",
+        "path": "/Users/ivo.toby/workspace/postgram/.worktrees/WORK-admin-onboarding-flow-bundle"
+      },
+      "currentGate": "merged",
       "risk": "high",
       "reviewRequired": true,
-      "pr": null,
-      "latestCommit": "f4bd1dc",
+      "pr": {
+        "number": 95,
+        "url": "https://github.com/ivo-toby/postgram/pull/95",
+        "status": "merged_locally_pending_push",
+        "headCommit": "75e0760dbcababf1c8e4f93bbbb598b90009915a",
+        "mergeCommit": "e698d9ab317b60d822963d69b182bc57f16448ab"
+      },
+      "latestCommit": "75e0760dbcababf1c8e4f93bbbb598b90009915a",
       "verification": {
         "status": "passed",
         "evidence": [
-          "RED: npm run test --prefix ui -- AdminOnboarding.test.tsx AdminAuth.test.tsx failed before implementation with missing AdminOnboarding module and absent automatic onboarding screen.",
-          "GREEN: npm run test --prefix ui -- AdminOnboarding.test.tsx AdminAuth.test.tsx passed: 19 tests.",
-          "Regression: npm run test --prefix ui -- AdminOnboarding.test.tsx AdminAuth.test.tsx AdminConfig.test.tsx AdminBackup.test.tsx AdminMaintenance.test.tsx AdminOps.test.tsx passed: 66 tests.",
+          "PR #95: https://github.com/ivo-toby/postgram/pull/95",
+          "Worker implementation: f4bd1dcdfbec06b251b76319437a3ac25438ccda; worker evidence: d62bd7488495028d2b80212ff3be278d12102416.",
+          "Branch freshness refresh: 58327c99f657cfcac97e287375652977340ac823.",
+          "Review P2 fix: 75e0760dbcababf1c8e4f93bbbb598b90009915a enforced ordered onboarding progress and terminal-state update rejection.",
+          "Merged locally into codex/epic/admin-configuration-frontend: e698d9ab317b60d822963d69b182bc57f16448ab.",
+          "Controller freshness: git rev-list --left-right --count origin/codex/epic/admin-configuration-frontend...HEAD => 0 5; merge-tree clean; diff-check clean.",
+          "npx vitest run tests/contract/admin-onboarding-api.test.ts passed: 5 tests.",
+          "npm run test --prefix ui -- AdminOnboarding.test.tsx AdminAuth.test.tsx AdminConfig.test.tsx AdminBackup.test.tsx AdminMaintenance.test.tsx AdminOps.test.tsx passed: 66 tests.",
+          "npx tsc -p tsconfig.json --noEmit passed.",
           "npm run typecheck --prefix ui passed.",
-          "Manual review-style diff audit found no P0/P1/P2 issues; dedicated /codex review hook unavailable in this tool surface, so independent review remains pending for draft PR."
+          "Worker evidence: npm run build passed; npm run build --prefix ui passed with existing Vite large-chunk warning.",
+          "Initial review by Popper 019f4301-a6c9-71b1-9cb8-bfb95b9e98e4 returned one P2; follow-up review by Laplace 019f430b-2835-7de3-94e2-b4774714b5eb returned REVIEW_PASS.",
+          "Cleanup: bundle worktree removed after clean pushed task branch was merged locally."
         ]
+      },
+      "review": {
+        "status": "passed",
+        "reviewerThreadId": "019f430b-2835-7de3-94e2-b4774714b5eb",
+        "evidence": "Follow-up review returned REVIEW_PASS after P2 fix."
       }
     },
     {
       "id": "TASK-003-onboarding-validation-docs",
       "path": "tasks/TASK-003-onboarding-validation-docs.md",
-      "status": "review",
+      "status": "done",
       "branch": "codex/task/WORK-admin-onboarding-flow-bundle",
       "workerThreadId": "019f42ef-3560-7172-816e-51f32932736a",
       "workerWorktree": "/Users/ivo.toby/workspace/postgram/.worktrees/WORK-admin-onboarding-flow-bundle",
-      "worktreeStatus": "active",
-      "cleanup": null,
-      "currentGate": "verification_passed_review_pending",
+      "worktreeStatus": "cleaned_up",
+      "cleanup": {
+        "status": "cleaned_up",
+        "cleanedAt": "2026-07-08T18:47:48Z",
+        "path": "/Users/ivo.toby/workspace/postgram/.worktrees/WORK-admin-onboarding-flow-bundle"
+      },
+      "currentGate": "merged",
       "risk": "medium",
       "reviewRequired": true,
-      "pr": null,
-      "latestCommit": "f4bd1dc",
+      "pr": {
+        "number": 95,
+        "url": "https://github.com/ivo-toby/postgram/pull/95",
+        "status": "merged_locally_pending_push",
+        "headCommit": "75e0760dbcababf1c8e4f93bbbb598b90009915a",
+        "mergeCommit": "e698d9ab317b60d822963d69b182bc57f16448ab"
+      },
+      "latestCommit": "75e0760dbcababf1c8e4f93bbbb598b90009915a",
       "verification": {
         "status": "passed",
         "evidence": [
-          "README and Admin Help document server-side onboarding resume and warn not to use docker compose down -v because it removes pgdata.",
-          "npm run build passed.",
-          "npm run build --prefix ui passed with existing Vite large-chunk warning.",
-          "git diff --check passed.",
-          "Manual review-style diff audit found no P0/P1/P2 issues; dedicated /codex review hook unavailable in this tool surface, so independent review remains pending for draft PR."
+          "PR #95: https://github.com/ivo-toby/postgram/pull/95",
+          "Worker implementation: f4bd1dcdfbec06b251b76319437a3ac25438ccda; worker evidence: d62bd7488495028d2b80212ff3be278d12102416.",
+          "Branch freshness refresh: 58327c99f657cfcac97e287375652977340ac823.",
+          "Review P2 fix: 75e0760dbcababf1c8e4f93bbbb598b90009915a enforced ordered onboarding progress and terminal-state update rejection.",
+          "Merged locally into codex/epic/admin-configuration-frontend: e698d9ab317b60d822963d69b182bc57f16448ab.",
+          "Controller freshness: git rev-list --left-right --count origin/codex/epic/admin-configuration-frontend...HEAD => 0 5; merge-tree clean; diff-check clean.",
+          "npx vitest run tests/contract/admin-onboarding-api.test.ts passed: 5 tests.",
+          "npm run test --prefix ui -- AdminOnboarding.test.tsx AdminAuth.test.tsx AdminConfig.test.tsx AdminBackup.test.tsx AdminMaintenance.test.tsx AdminOps.test.tsx passed: 66 tests.",
+          "npx tsc -p tsconfig.json --noEmit passed.",
+          "npm run typecheck --prefix ui passed.",
+          "Worker evidence: npm run build passed; npm run build --prefix ui passed with existing Vite large-chunk warning.",
+          "Initial review by Popper 019f4301-a6c9-71b1-9cb8-bfb95b9e98e4 returned one P2; follow-up review by Laplace 019f430b-2835-7de3-94e2-b4774714b5eb returned REVIEW_PASS.",
+          "Cleanup: bundle worktree removed after clean pushed task branch was merged locally."
         ]
+      },
+      "review": {
+        "status": "passed",
+        "reviewerThreadId": "019f430b-2835-7de3-94e2-b4774714b5eb",
+        "evidence": "Follow-up review returned REVIEW_PASS after P2 fix."
       }
     }
   ],
   "monitoring": {
     "mode": "manual",
     "cadence": "adaptive",
-    "status": "worker_dispatched",
-    "lastCheckedAt": "2026-07-08T10:32:00Z",
+    "status": "stopped_done",
+    "lastCheckedAt": "2026-07-08T18:47:48Z",
     "nextCheckDueAt": null,
     "schedulerRef": null,
-    "fallbackPrompt": "Run wdd-run-work for WORK-admin-onboarding-flow. Read state.json and task files, inspect active worker or PR references, update gates, and stop when tasks are ready for wdd-finish-work."
+    "fallbackPrompt": null
+  },
+  "finish": {
+    "status": "done",
+    "finishedAt": "2026-07-08T18:47:48Z",
+    "result": "Admin onboarding micro-wave merged into codex/epic/admin-configuration-frontend and ready to push.",
+    "pr": {
+      "number": 95,
+      "url": "https://github.com/ivo-toby/postgram/pull/95",
+      "status": "merged_locally_pending_push"
+    },
+    "mergeCommit": "e698d9ab317b60d822963d69b182bc57f16448ab",
+    "evidence": [
+      "PR #95: https://github.com/ivo-toby/postgram/pull/95",
+      "Worker implementation: f4bd1dcdfbec06b251b76319437a3ac25438ccda; worker evidence: d62bd7488495028d2b80212ff3be278d12102416.",
+      "Branch freshness refresh: 58327c99f657cfcac97e287375652977340ac823.",
+      "Review P2 fix: 75e0760dbcababf1c8e4f93bbbb598b90009915a enforced ordered onboarding progress and terminal-state update rejection.",
+      "Merged locally into codex/epic/admin-configuration-frontend: e698d9ab317b60d822963d69b182bc57f16448ab.",
+      "Controller freshness: git rev-list --left-right --count origin/codex/epic/admin-configuration-frontend...HEAD => 0 5; merge-tree clean; diff-check clean.",
+      "npx vitest run tests/contract/admin-onboarding-api.test.ts passed: 5 tests.",
+      "npm run test --prefix ui -- AdminOnboarding.test.tsx AdminAuth.test.tsx AdminConfig.test.tsx AdminBackup.test.tsx AdminMaintenance.test.tsx AdminOps.test.tsx passed: 66 tests.",
+      "npx tsc -p tsconfig.json --noEmit passed.",
+      "npm run typecheck --prefix ui passed.",
+      "Worker evidence: npm run build passed; npm run build --prefix ui passed with existing Vite large-chunk warning.",
+      "Initial review by Popper 019f4301-a6c9-71b1-9cb8-bfb95b9e98e4 returned one P2; follow-up review by Laplace 019f430b-2835-7de3-94e2-b4774714b5eb returned REVIEW_PASS.",
+      "Cleanup: bundle worktree removed after clean pushed task branch was merged locally."
+    ]
   }
 }

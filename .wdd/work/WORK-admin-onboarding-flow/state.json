@@ -60,7 +60,7 @@
       "risk": "high",
       "reviewRequired": true,
       "pr": null,
-      "latestCommit": "pending_final_commit",
+      "latestCommit": "f4bd1dc",
       "verification": {
         "status": "passed",
         "evidence": [
@@ -84,7 +84,7 @@
       "risk": "high",
       "reviewRequired": true,
       "pr": null,
-      "latestCommit": "pending_final_commit",
+      "latestCommit": "f4bd1dc",
       "verification": {
         "status": "passed",
         "evidence": [
@@ -109,7 +109,7 @@
       "risk": "medium",
       "reviewRequired": true,
       "pr": null,
-      "latestCommit": "pending_final_commit",
+      "latestCommit": "f4bd1dc",
       "verification": {
         "status": "passed",
         "evidence": [

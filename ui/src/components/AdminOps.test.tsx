@@ -145,6 +145,28 @@ function adminOpsRoutes(input: {
 } = {}): MockRoute[] {
   return [
     {
+      path: '/admin/api/onboarding',
+      body: {
+        onboarding: {
+          status: 'completed',
+          currentStep: 'maintenance',
+          completedSteps: [
+            'setup',
+            'provider_config',
+            'secrets',
+            'validate_apply',
+            'backup_restore',
+            'maintenance',
+          ],
+          skippedAt: null,
+          completedAt: '2026-07-06T16:20:00.000Z',
+          updatedByAdminUserId: activeUser.id,
+          createdAt: '2026-07-06T16:00:00.000Z',
+          updatedAt: '2026-07-06T16:20:00.000Z',
+        },
+      },
+    },
+    {
       path: '/admin/api/diagnostics/health',
       status: input.healthStatus,
       body: input.healthStatus

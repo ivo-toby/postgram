@@ -56,6 +56,7 @@ import {
 } from './admin-backups.js';
 import { registerAdminJobRoutes } from './admin-jobs.js';
 import { registerAdminMaintenanceRoutes } from './admin-maintenance.js';
+import { registerAdminOnboardingRoutes } from './admin-onboarding.js';
 
 type AdminApp = Hono<{
   Variables: {
@@ -1000,5 +1001,6 @@ export function registerAdminRoutes(
   registerAdminJobRoutes(app, pool);
   registerAdminMaintenanceRoutes(app, pool);
   registerAdminBackupRoutes(app, pool, options);
+  registerAdminOnboardingRoutes(app, pool);
   registerAdminProviderConfigRoutes(app, pool, options);
 }

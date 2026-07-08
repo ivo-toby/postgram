@@ -194,6 +194,39 @@ export type AdminProviderApplyResponse = {
   };
 };
 
+export type AdminOnboardingStep =
+  | 'setup'
+  | 'provider_config'
+  | 'secrets'
+  | 'validate_apply'
+  | 'backup_restore'
+  | 'maintenance';
+
+export type AdminOnboardingStatus =
+  | 'completed'
+  | 'in_progress'
+  | 'skipped';
+
+export type AdminOnboardingState = {
+  status: AdminOnboardingStatus;
+  currentStep: AdminOnboardingStep;
+  completedSteps: AdminOnboardingStep[];
+  skippedAt: string | null;
+  completedAt: string | null;
+  updatedByAdminUserId: string | null;
+  createdAt: string;
+  updatedAt: string;
+};
+
+export type AdminOnboardingResponse = {
+  onboarding: AdminOnboardingState;
+};
+
+export type AdminUpdateOnboardingInput = {
+  currentStep?: AdminOnboardingStep;
+  completedSteps?: AdminOnboardingStep[];
+};
+
 export type AdminScope = 'read' | 'write' | 'delete' | 'sync';
 export type AdminEntityType =
   | 'document'
@@ -513,6 +546,12 @@ type AdminApiClient = {
   challengeMfa: (input: { code: string }) => Promise<AdminAuthResponse>;
   stepUp: (input: { code: string }) => Promise<AdminAuthResponse>;
   logout: () => Promise<{ ok: true }>;
+  getOnboarding: () => Promise<AdminOnboardingResponse>;
+  updateOnboarding: (
+    input: AdminUpdateOnboardingInput
+  ) => Promise<AdminOnboardingResponse>;
+  skipOnboarding: () => Promise<AdminOnboardingResponse>;
+  completeOnboarding: () => Promise<AdminOnboardingResponse>;
   getHealth: () => Promise<AdminHealthResponse>;
   getQueueStatus: () => Promise<AdminQueueResponse>;
   listModels: () => Promise<AdminModelsResponse>;
@@ -781,6 +820,31 @@ export function createAdminApiClient(): AdminApiClient {
       });
       csrfToken = null;
       return response;
+    },
+
+    getOnboarding() {
+      return request<AdminOnboardingResponse>('/admin/api/onboarding');
+    },
+
+    updateOnboarding(input) {
+      return request<AdminOnboardingResponse>('/admin/api/onboarding', {
+        method: 'PUT',
+        body: input,
+      });
+    },
+
+    skipOnboarding() {
+      return request<AdminOnboardingResponse>('/admin/api/onboarding/skip', {
+        method: 'POST',
+        body: {},
+      });
+    },
+
+    completeOnboarding() {
+      return request<AdminOnboardingResponse>('/admin/api/onboarding/complete', {
+        method: 'POST',
+        body: {},
+      });
     },
 
     getHealth() {

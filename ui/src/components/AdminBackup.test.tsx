@@ -41,6 +41,10 @@ function adminApi(overrides: Partial<AdminApiClient> = {}): AdminApiClient {
       }
     })),
     logout: vi.fn(),
+    getOnboarding: vi.fn(),
+    updateOnboarding: vi.fn(),
+    skipOnboarding: vi.fn(),
+    completeOnboarding: vi.fn(),
     getHealth: vi.fn(),
     getQueueStatus: vi.fn(),
     listModels: vi.fn(),

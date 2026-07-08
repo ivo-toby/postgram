@@ -44,6 +44,28 @@ const activeSession = {
 function adminOpsRoutes(): MockRoute[] {
   return [
     {
+      path: '/admin/api/onboarding',
+      body: {
+        onboarding: {
+          status: 'completed',
+          currentStep: 'maintenance',
+          completedSteps: [
+            'setup',
+            'provider_config',
+            'secrets',
+            'validate_apply',
+            'backup_restore',
+            'maintenance',
+          ],
+          skippedAt: null,
+          completedAt: '2026-07-06T16:20:00.000Z',
+          updatedByAdminUserId: 'admin-user-1',
+          createdAt: '2026-07-06T16:00:00.000Z',
+          updatedAt: '2026-07-06T16:20:00.000Z',
+        },
+      },
+    },
+    {
       path: '/admin/api/diagnostics/health',
       body: {
         health: {
@@ -587,6 +609,38 @@ describe('AdminAuth', () => {
     await user.click(screen.getByRole('button', { name: 'Verify code' }));
 
     expect(await screen.findByRole('heading', { name: 'Operations dashboard' })).toBeInTheDocument();
+  });
+
+  it('shows resumable onboarding after active MFA login when setup is incomplete', async () => {
+    mockFetch([
+      { path: '/admin/api/bootstrap/status', body: { state: 'configured' } },
+      {
+        path: '/admin/api/session/current',
+        body: { user: activeUser, session: activeSession },
+      },
+      {
+        path: '/admin/api/onboarding',
+        body: {
+          onboarding: {
+            status: 'in_progress',
+            currentStep: 'provider_config',
+            completedSteps: ['setup'],
+            skippedAt: null,
+            completedAt: null,
+            updatedByAdminUserId: 'admin-user-1',
+            createdAt: '2026-07-08T08:00:00.000Z',
+            updatedAt: '2026-07-08T08:10:00.000Z',
+          },
+        },
+      },
+      ...adminOpsRoutes(),
+    ]);
+
+    render(<AdminAuth />);
+
+    expect(await screen.findByRole('heading', { name: 'Admin onboarding' })).toBeInTheDocument();
+    expect(screen.getAllByText('Provider configuration').length).toBeGreaterThan(0);
+    expect(screen.getAllByText('Step 2 of 6').length).toBeGreaterThan(0);
   });
 
   it('keeps MFA challenge state when an authenticator code is invalid', async () => {

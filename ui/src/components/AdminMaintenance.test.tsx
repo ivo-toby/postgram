@@ -161,6 +161,28 @@ function adminApi(overrides: Partial<AdminApiClient> = {}): AdminApiClient {
       }
     })),
     logout: vi.fn(),
+    getOnboarding: vi.fn(async () => ({
+      onboarding: {
+        status: 'completed' as const,
+        currentStep: 'maintenance' as const,
+        completedSteps: [
+          'setup' as const,
+          'provider_config' as const,
+          'secrets' as const,
+          'validate_apply' as const,
+          'backup_restore' as const,
+          'maintenance' as const
+        ],
+        skippedAt: null,
+        completedAt: '2026-07-06T16:20:00.000Z',
+        updatedByAdminUserId: activeUser.id,
+        createdAt: '2026-07-06T16:00:00.000Z',
+        updatedAt: '2026-07-06T16:20:00.000Z'
+      }
+    })),
+    updateOnboarding: vi.fn(),
+    skipOnboarding: vi.fn(),
+    completeOnboarding: vi.fn(),
     getHealth: vi.fn(async () => ({
       health: {
         status: 'ok',

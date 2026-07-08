@@ -4,7 +4,7 @@ kind: micro_task
 work: WORK-admin-onboarding-flow
 slug: onboarding-validation-docs
 title: Onboarding Validation and Docs
-status: todo
+status: review
 depends_on:
   - TASK-001-onboarding-state-api
   - TASK-002-onboarding-guided-ui
@@ -15,8 +15,8 @@ conflict_domains:
 risk: medium
 review_required: true
 branch: codex/task/WORK-admin-onboarding-flow-bundle
-worker_worktree: null
-current_gate: not_started
+worker_worktree: /Users/ivo.toby/workspace/postgram/.worktrees/WORK-admin-onboarding-flow-bundle
+current_gate: verification_passed_review_pending
 verification:
   - npm run build
   - npm run build --prefix ui
@@ -77,10 +77,15 @@ locally without deleting the existing Postgres volume.
 
 ## Done
 
-- [ ] Objective is complete.
-- [ ] Verification evidence is recorded.
+- [x] Objective is complete.
+- [x] Verification evidence is recorded.
 - [ ] Required review is complete or explicitly not required.
 
 ## Evidence
 
-- Not run yet.
+- 2026-07-08: Bundle worker started; docs and broad validation will follow API/UI implementation.
+- 2026-07-08: README and Admin Help document server-side onboarding resume after refresh/logout/login/container restart and explicitly warn not to use `docker compose down -v` for resume testing because it removes the `pgdata` volume.
+- 2026-07-08: `npm run build` passed.
+- 2026-07-08: `npm run build --prefix ui` passed with existing Vite large-chunk warning.
+- 2026-07-08: `git diff --check` passed.
+- 2026-07-08: Manual review-style diff audit found no P0/P1/P2 issues; dedicated `/codex` review hook was unavailable in this tool surface, so review remains pending for the draft PR.

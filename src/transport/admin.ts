@@ -50,6 +50,10 @@ import {
   registerAdminProviderConfigRoutes,
   type AdminProviderConfigRouteOptions
 } from './admin-provider-config.js';
+import {
+  registerAdminBackupRoutes,
+  type AdminBackupRouteOptions
+} from './admin-backups.js';
 import { registerAdminJobRoutes } from './admin-jobs.js';
 import { registerAdminMaintenanceRoutes } from './admin-maintenance.js';
 
@@ -59,7 +63,8 @@ type AdminApp = Hono<{
   };
 }>;
 
-type AdminRouteOptions = AdminProviderConfigRouteOptions & {
+type AdminRouteOptions = AdminProviderConfigRouteOptions &
+  AdminBackupRouteOptions & {
   adminMfaSecretKey?: string | undefined;
   extractionEnabled?: boolean | undefined;
 };
@@ -994,5 +999,6 @@ export function registerAdminRoutes(
 
   registerAdminJobRoutes(app, pool);
   registerAdminMaintenanceRoutes(app, pool);
+  registerAdminBackupRoutes(app, pool, options);
   registerAdminProviderConfigRoutes(app, pool, options);
 }

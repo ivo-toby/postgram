@@ -155,14 +155,14 @@ export default function AdminAuth({ onBack }: AdminAuthProps) {
   }
 
   return (
-    <div className="flex h-dvh flex-col bg-gray-950 text-gray-100">
+    <div className="flex h-dvh min-h-0 flex-col bg-gray-950 text-gray-100">
       <AdminHeader
         mode={state.mode}
         user={state.user}
         onBack={onBack}
         onLogout={state.user ? handleLogout : undefined}
       />
-      <main className="flex min-h-0 flex-1 items-start justify-center overflow-y-auto px-4 py-8">
+      <main className="flex min-h-0 flex-1 items-start justify-center overflow-y-scroll overscroll-contain px-4 py-8 [scrollbar-gutter:stable]">
         <div className="flex w-full flex-col items-center gap-3">
           {logoutError ? (
             <div className="w-full max-w-xl">

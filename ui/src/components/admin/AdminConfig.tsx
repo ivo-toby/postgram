@@ -48,6 +48,45 @@ const providerUrlSettingKeys = [
   'EMBEDDING_BASE_URL'
 ] as const satisfies readonly AdminProviderConfigSettingKey[];
 
+const settingHelpText: Record<AdminProviderConfigSettingKey, string> = {
+  EXTRACTION_ENABLED:
+    'Turns graph/entity extraction on. When off, Postgram still stores memory text and embeddings but skips LLM relationship extraction.',
+  EXTRACTION_PROVIDER:
+    'LLM provider used for graph/entity extraction when extraction is enabled.',
+  EXTRACTION_MODEL:
+    'Chat or completion model used for extracting people, projects, tasks, and relationships from stored content.',
+  EXTRACTION_BASE_URL:
+    'Base URL for an OpenAI-compatible extraction provider. Leave unset for built-in OpenAI, Anthropic, or Ollama providers.',
+  OLLAMA_BASE_URL:
+    'Base URL for Ollama. From Docker on your Mac, host.docker.internal usually reaches Ollama running on the host.',
+  EMBEDDING_PROVIDER:
+    'Embeddings turn text into vectors for semantic search and graph similarity. Choose openai for hosted embeddings or ollama for local embeddings.',
+  EMBEDDING_MODEL:
+    'Model that generates embedding vectors. It must match the dimensions stored in Postgram, otherwise old and new vectors cannot be compared safely.',
+  EMBEDDING_DIMENSIONS:
+    'Number of numeric values produced by the embedding model. Changing this requires a re-embedding migration because existing vectors have the old size.',
+  EMBEDDING_BASE_URL:
+    'Optional dedicated embedding endpoint. Use this only when embeddings should call a different Ollama or compatible endpoint than OLLAMA_BASE_URL.'
+};
+
+const providerSecretHelpText: Record<AdminProviderSecretName, string> = {
+  OPENAI_API_KEY:
+    'Used for OpenAI embeddings and OpenAI extraction. It can also be the fallback credential for OpenAI-compatible settings unless a more specific key is set.',
+  ANTHROPIC_API_KEY:
+    'Used only when extraction provider is Anthropic. It is not used for embeddings.',
+  OLLAMA_API_KEY:
+    'Optional bearer token for Ollama endpoints that require authentication. Most local Mac Ollama installs leave this empty.',
+  EXTRACTION_API_KEY:
+    'Credential for a custom OpenAI-compatible extraction endpoint. Use this when EXTRACTION_BASE_URL points at a provider that is not OpenAI.',
+  EMBEDDING_API_KEY:
+    'Credential for a custom or protected embedding endpoint. Use this when EMBEDDING_BASE_URL or Ollama embeddings require bearer authentication.'
+};
+
+const embeddingProviderOptions = [
+  { value: 'openai', label: 'OpenAI' },
+  { value: 'ollama', label: 'Ollama' }
+];
+
 const maxBrowserTimeoutMs = 2_147_483_647;
 
 type ProviderUrlSettingKey = (typeof providerUrlSettingKeys)[number];
@@ -232,6 +271,45 @@ function validationTone(
     return 'danger';
   }
   return 'warn';
+}
+
+function validationLabel(status: string): string {
+  if (status === 'valid') {
+    return 'Valid';
+  }
+  if (status === 'invalid') {
+    return 'Invalid';
+  }
+  if (status === 'error') {
+    return 'Validation error';
+  }
+  return 'Not tested yet';
+}
+
+function validationStatusHelp(input: {
+  status: string;
+  message: string | null;
+}): string {
+  if (input.message) {
+    return input.message;
+  }
+  if (input.status === 'unvalidated') {
+    return 'This value has been saved or loaded, but Postgram has not tested it against provider/runtime validation yet.';
+  }
+  if (input.status === 'valid') {
+    return 'Postgram last validated this setting successfully.';
+  }
+  if (input.status === 'invalid') {
+    return 'Postgram checked this setting and found a configuration problem.';
+  }
+  return 'Postgram could not complete validation. Check provider availability and logs.';
+}
+
+function validationHelp(setting: AdminRuntimeSettingSnapshot): string {
+  return validationStatusHelp({
+    status: setting.validation.status,
+    message: setting.validation.message
+  });
 }
 
 function configSettingString(
@@ -969,8 +1047,9 @@ export default function AdminConfig({
             </span>
           </h2>
           <p className="mt-1 text-sm text-gray-400">
-            Runtime provider settings are saved as pending changes until
-            validation and apply succeed.
+            Save changes first, test them, then apply. Applied settings are
+            what Postgram is using; pending settings are saved changes waiting
+            for apply.
           </p>
         </div>
         <div className="flex-1" />
@@ -979,9 +1058,11 @@ export default function AdminConfig({
             pendingSettings.length > 0 ? 'warn' : 'good'
           )}
         >
-          Pending
+          {pendingSettings.length} waiting to apply
         </span>
-        <span className={badgeClassName('good')}>Applied</span>
+        <span className={badgeClassName('good')}>
+          {appliedSettings.length} active
+        </span>
       </div>
 
       <ErrorBanner message={error} />
@@ -1035,12 +1116,12 @@ export default function AdminConfig({
                 />
                 <span className="inline-flex items-center gap-1.5">
                   Extraction enabled
-                  <HelpIcon label="Turns relationship/entity extraction on for supported content. Leave off for embedding-only memory storage." />
+                  <HelpIcon label={settingHelpText.EXTRACTION_ENABLED} />
                 </span>
               </label>
               <SettingInput
                 label="Extraction provider"
-                helpText="LLM provider used for graph/entity extraction when extraction is enabled."
+                helpText={settingHelpText.EXTRACTION_PROVIDER}
                 value={settingsDraft.EXTRACTION_PROVIDER}
                 disabled={settingsInputsDisabled}
                 onChange={(value) =>
@@ -1049,14 +1130,14 @@ export default function AdminConfig({
               />
               <SettingInput
                 label="Extraction model"
-                helpText="Chat or completion model used by the extraction provider."
+                helpText={settingHelpText.EXTRACTION_MODEL}
                 value={settingsDraft.EXTRACTION_MODEL}
                 disabled={settingsInputsDisabled}
                 onChange={(value) => updateSetting('EXTRACTION_MODEL', value)}
               />
               <SettingInput
                 label="Extraction base URL"
-                helpText="OpenAI-compatible chat-completions endpoint. Required only for openai-compatible extraction providers."
+                helpText={settingHelpText.EXTRACTION_BASE_URL}
                 value={settingsDraft.EXTRACTION_BASE_URL}
                 disabled={settingsInputsDisabled}
                 onChange={(value) =>
@@ -1065,15 +1146,16 @@ export default function AdminConfig({
               />
               <SettingInput
                 label="Ollama base URL"
-                helpText="Host URL for Ollama when local Ollama extraction or embeddings are used from Docker."
+                helpText={settingHelpText.OLLAMA_BASE_URL}
                 value={settingsDraft.OLLAMA_BASE_URL}
                 disabled={settingsInputsDisabled}
                 onChange={(value) => updateSetting('OLLAMA_BASE_URL', value)}
               />
-              <SettingInput
+              <SettingSelect
                 label="Embedding provider"
                 tone="danger"
-                helpText="Migration-class setting. Changing provider can require re-embedding existing records."
+                helpText={settingHelpText.EMBEDDING_PROVIDER}
+                options={embeddingProviderOptions}
                 value={settingsDraft.EMBEDDING_PROVIDER}
                 disabled={settingsInputsDisabled}
                 onChange={(value) => updateSetting('EMBEDDING_PROVIDER', value)}
@@ -1081,7 +1163,7 @@ export default function AdminConfig({
               <SettingInput
                 label="Embedding model"
                 tone="danger"
-                helpText="Migration-class setting. The model must match the stored embedding dimensions."
+                helpText={settingHelpText.EMBEDDING_MODEL}
                 value={settingsDraft.EMBEDDING_MODEL}
                 disabled={settingsInputsDisabled}
                 onChange={(value) => updateSetting('EMBEDDING_MODEL', value)}
@@ -1090,7 +1172,7 @@ export default function AdminConfig({
                 label="Embedding dimensions"
                 inputMode="numeric"
                 tone="danger"
-                helpText="Migration-class setting. Dimension changes require an embedding migration."
+                helpText={settingHelpText.EMBEDDING_DIMENSIONS}
                 value={settingsDraft.EMBEDDING_DIMENSIONS}
                 disabled={settingsInputsDisabled}
                 onChange={(value) =>
@@ -1099,7 +1181,7 @@ export default function AdminConfig({
               />
               <SettingInput
                 label="Embedding base URL"
-                helpText="Optional embedding endpoint. Use host.docker.internal for a service running on the Mac host."
+                helpText={settingHelpText.EMBEDDING_BASE_URL}
                 value={settingsDraft.EMBEDDING_BASE_URL}
                 disabled={settingsInputsDisabled}
                 onChange={(value) => updateSetting('EMBEDDING_BASE_URL', value)}
@@ -1147,11 +1229,13 @@ export default function AdminConfig({
           </form>
 
           <SettingsStateTable
-            title="Applied provider settings"
+            title="Active provider settings"
+            description="These values are currently applied to runtime behavior, subject to any restart/reload note shown by the API."
             settings={appliedSettings.map((key) => config.settings[key])}
           />
           <SettingsStateTable
-            title="Pending provider settings detail"
+            title="Saved changes waiting to apply"
+            description="These values have been saved in the database but are not active until validation and apply succeed."
             settings={pendingSettings.map((key) => config.settings[key])}
           />
           <ValidationPanel validation={validation} />
@@ -1350,10 +1434,54 @@ function SettingInput({
   );
 }
 
+function SettingSelect({
+  label,
+  value,
+  tone = 'default',
+  helpText,
+  disabled = false,
+  options,
+  onChange
+}: {
+  label: string;
+  value: string;
+  tone?: 'default' | 'danger';
+  helpText?: string;
+  disabled?: boolean;
+  options: Array<{ value: string; label: string }>;
+  onChange: (value: string) => void;
+}) {
+  return (
+    <label
+      className={`flex flex-col gap-1 text-xs font-medium ${tone === 'danger' ? 'text-red-100' : 'text-gray-300'}`}
+    >
+      <span className="flex items-center gap-2">
+        {label}
+        {helpText ? <HelpIcon label={helpText} /> : null}
+      </span>
+      <select
+        className={inputClassName(tone)}
+        aria-label={label}
+        value={value}
+        disabled={disabled}
+        onChange={(event) => onChange(event.target.value)}
+      >
+        {options.map((option) => (
+          <option key={option.value} value={option.value}>
+            {option.label}
+          </option>
+        ))}
+      </select>
+    </label>
+  );
+}
+
 function SettingsStateTable({
+  description,
   title,
   settings
 }: {
+  description: string;
   title: string;
   settings: AdminRuntimeSettingSnapshot[];
 }) {
@@ -1367,6 +1495,7 @@ function SettingsStateTable({
           {settings.length}
         </span>
       </div>
+      <p className="mt-2 text-sm leading-6 text-gray-400">{description}</p>
       {settings.length === 0 ? (
         <p className="mt-3 text-sm text-gray-500">No settings in this state.</p>
       ) : (
@@ -1406,8 +1535,9 @@ function SettingsStateTable({
                       className={badgeClassName(
                         validationTone(setting.validation.status)
                       )}
+                      title={validationHelp(setting)}
                     >
-                      Validation: {setting.validation.status}
+                      {validationLabel(setting.validation.status)}
                     </span>
                   </td>
                   <td className="whitespace-nowrap py-2 pr-3">
@@ -1458,7 +1588,14 @@ function SecretEditor({
           <dd className="truncate text-gray-200">{metadata.purpose}</dd>
           <dt className="text-gray-500">Status</dt>
           <dd className="truncate text-gray-200">
-            {metadata.validation.status}
+            <span
+              title={validationStatusHelp({
+                status: metadata.validation.status,
+                message: metadata.validation.message
+              })}
+            >
+              {validationLabel(metadata.validation.status)}
+            </span>
           </dd>
           <dt className="text-gray-500">Updated</dt>
           <dd className="truncate text-gray-200">
@@ -1467,7 +1604,7 @@ function SecretEditor({
         </dl>
       ) : null}
       <label className="mt-3 flex flex-col gap-1 text-xs font-medium text-gray-300">
-        <HelpLabel help="Write-only replacement. After saving, Postgram stores encrypted secret material and shows only redacted metadata.">
+        <HelpLabel help={`${providerSecretHelpText[name]} This field is write-only: after saving, Postgram stores encrypted secret material and shows only metadata.`}>
           {name} replacement
         </HelpLabel>
         <input

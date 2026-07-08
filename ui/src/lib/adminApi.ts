@@ -433,6 +433,55 @@ export type AdminMaintenanceRunResponse = {
   reused?: boolean;
 };
 
+export type AdminBackupDownload = {
+  blob: Blob;
+  filename: string;
+};
+
+export type AdminBackupSwitchOverInstructions = {
+  dockerCompose: string[];
+  emergencyRollback: string[];
+};
+
+export type AdminBackupRestoreValidationResponse = {
+  restore: {
+    token: string;
+    expiresAt: string;
+    manifest: {
+      id: string | null;
+      generatedAt: string | null;
+      formatVersion: number;
+    };
+    sourceDatabase: {
+      name: string;
+      redactedUrl: string;
+    };
+    stagingDatabaseName: string;
+    validation: {
+      archive: 'passed';
+      pgRestoreList: 'passed';
+      entries: number;
+    };
+    switchOver: AdminBackupSwitchOverInstructions;
+  };
+};
+
+export type AdminBackupRestoreStageResponse = {
+  restore: {
+    status: 'staged';
+    stagingDatabaseName: string;
+    sourceDatabase: {
+      name: string;
+      redactedUrl: string;
+    };
+    verification: {
+      migrations: 'passed';
+      health: 'connected';
+    };
+    switchOver: AdminBackupSwitchOverInstructions;
+  };
+};
+
 export class AdminApiError extends Error {
   constructor(
     readonly status: number,
@@ -511,6 +560,14 @@ type AdminApiClient = {
     testConnections?: boolean;
   }) => Promise<AdminProviderValidationResponse>;
   applyProviderConfig: () => Promise<AdminProviderApplyResponse>;
+  downloadBackup: () => Promise<AdminBackupDownload>;
+  validateBackupRestore: (
+    file: File
+  ) => Promise<AdminBackupRestoreValidationResponse>;
+  stageBackupRestore: (input: {
+    restoreToken: string;
+    confirmation: 'RESTORE TO STAGING';
+  }) => Promise<AdminBackupRestoreStageResponse>;
 };
 
 function isUnsafeMethod(method: string): boolean {
@@ -590,6 +647,72 @@ export function createAdminApiClient(): AdminApiClient {
     });
     csrfToken = response.csrfToken;
     return response.csrfToken;
+  }
+
+  async function download<T extends AdminBackupDownload>(
+    path: string,
+    options: AdminRequestOptions = {}
+  ): Promise<T> {
+    const method = options.method ?? 'GET';
+    const headers: Record<string, string> = {};
+
+    if (options.body !== undefined) {
+      headers['Content-Type'] = 'application/json';
+    }
+
+    if (options.csrf !== false && isUnsafeMethod(method)) {
+      headers['X-CSRF-Token'] = csrfToken ?? await getCsrfToken();
+    }
+
+    const response = await fetch(path, {
+      method,
+      credentials: 'same-origin',
+      headers,
+      body: options.body !== undefined ? JSON.stringify(options.body) : undefined,
+    });
+
+    if (!response.ok) {
+      throw new AdminApiError(response.status, await parseError(response));
+    }
+
+    const disposition = response.headers.get('content-disposition') ?? '';
+    const filenameMatch = /filename="([^"]+)"/u.exec(disposition);
+    const blob = await response.blob();
+    return {
+      blob,
+      filename: filenameMatch?.[1] ?? 'postgram-backup.tar.gz',
+    } as T;
+  }
+
+  async function upload<T>(
+    path: string,
+    formData: FormData,
+    options: AdminRequestOptions = {}
+  ): Promise<T> {
+    const method = options.method ?? 'POST';
+    const headers: Record<string, string> = {};
+
+    if (options.csrf !== false && isUnsafeMethod(method)) {
+      headers['X-CSRF-Token'] = csrfToken ?? await getCsrfToken();
+    }
+
+    const response = await fetch(path, {
+      method,
+      credentials: 'same-origin',
+      headers,
+      body: formData,
+    });
+
+    if (!response.ok) {
+      throw new AdminApiError(response.status, await parseError(response));
+    }
+
+    const contentType = response.headers.get('content-type') ?? '';
+    if (!contentType.includes('application/json')) {
+      throw new AdminApiError(response.status, `Unexpected content-type: ${contentType}`);
+    }
+
+    return await response.json() as T;
   }
 
   return {
@@ -828,6 +951,35 @@ export function createAdminApiClient(): AdminApiClient {
         {
           method: 'POST',
           body: {},
+        }
+      );
+    },
+
+    downloadBackup() {
+      return download<AdminBackupDownload>('/admin/api/backups/download', {
+        method: 'POST',
+        body: {},
+      });
+    },
+
+    validateBackupRestore(file) {
+      const formData = new FormData();
+      formData.set('backup', file);
+      return upload<AdminBackupRestoreValidationResponse>(
+        '/admin/api/backups/restore/validate',
+        formData,
+        {
+          method: 'POST',
+        }
+      );
+    },
+
+    stageBackupRestore(input) {
+      return request<AdminBackupRestoreStageResponse>(
+        '/admin/api/backups/restore/stage',
+        {
+          method: 'POST',
+          body: input,
         }
       );
     },

@@ -291,6 +291,7 @@ function adminApi(overrides: Partial<AdminApiClient> = {}): AdminApiClient {
         appliedSettings: ['EXTRACTION_MODEL']
       }
     })),
+    downloadBackup: vi.fn(),
     ...overrides
   } as AdminApiClient;
 }
@@ -399,7 +400,7 @@ describe('AdminConfig', () => {
       await screen.findByRole('heading', { name: 'Provider configuration' })
     ).toBeInTheDocument();
     expect(screen.getByText('Pending provider settings')).toBeInTheDocument();
-    expect(screen.getByText('Applied provider settings')).toBeInTheDocument();
+    expect(screen.getByText('Active provider settings')).toBeInTheDocument();
 
     const secretInput = screen.getByLabelText(
       'OPENAI_API_KEY replacement'
@@ -409,7 +410,7 @@ describe('AdminConfig', () => {
     expect(screen.getByText('OPENAI_API_KEY')).toBeInTheDocument();
     expect(screen.getByText('Configured')).toBeInTheDocument();
     expect(screen.getByText('provider')).toBeInTheDocument();
-    expect(screen.getByText('valid')).toBeInTheDocument();
+    expect(screen.getAllByText('Valid').length).toBeGreaterThan(0);
 
     expect(screen.queryByText(unsafeValue)).not.toBeInTheDocument();
     expect(
@@ -545,8 +546,8 @@ describe('AdminConfig', () => {
     expect(screen.getByText('Re-embedding required')).toBeInTheDocument();
     expect(screen.getByText('EXTRACTION_MODEL')).toBeInTheDocument();
     expect(screen.getByText('EMBEDDING_DIMENSIONS')).toBeInTheDocument();
-    expect(screen.getByText('Pending')).toBeInTheDocument();
-    expect(screen.getByText('Applied')).toBeInTheDocument();
+    expect(screen.getAllByText(/waiting to apply/u).length).toBeGreaterThan(0);
+    expect(screen.getAllByText(/active/u).length).toBeGreaterThan(0);
 
     await user.type(screen.getByLabelText('MFA confirmation code'), '123456');
     await user.click(
@@ -900,7 +901,12 @@ describe('AdminConfig', () => {
     await user.clear(dimensionsInput);
     await user.type(dimensionsInput, '3072');
 
-    expect(screen.getAllByTitle(/Migration-class setting/)).toHaveLength(3);
+    expect(
+      screen.getByTitle(/Embeddings turn text into vectors/u)
+    ).toBeInTheDocument();
+    expect(
+      screen.getByTitle(/Number of numeric values produced/u)
+    ).toBeInTheDocument();
     await user.click(
       screen.getByRole('button', { name: 'Save pending settings' })
     );

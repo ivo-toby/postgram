@@ -283,6 +283,7 @@ function adminApi(overrides: Partial<AdminApiClient> = {}): AdminApiClient {
       metadata: { dryRun: true }
     })),
     applyPruneEdgesMaintenance: vi.fn(),
+    downloadBackup: vi.fn(),
     ...overrides
   } as AdminApiClient;
 }
@@ -362,6 +363,22 @@ describe('AdminMaintenance', () => {
 
     await user.click(screen.getByLabelText('I reviewed the dry-run preview'));
     expect(screen.getByRole('button', { name: 'Apply maintenance job' })).toBeEnabled();
+  });
+
+  it('disables extraction-only jobs when extraction is disabled', async () => {
+    const api = adminApi();
+
+    render(<AdminMaintenance api={api} extractionEnabled={false} />);
+
+    expect(
+      await screen.findByText(/Extraction is disabled/u)
+    ).toBeInTheDocument();
+    expect(screen.getByRole('button', { name: 'Re-extract' })).toBeDisabled();
+    expect(screen.getByRole('button', { name: 'Prune edges' })).toBeDisabled();
+    expect(screen.getByRole('button', { name: 'Re-embed' })).toBeEnabled();
+    expect(
+      screen.getByText(/Re-embed rebuilds vector chunks/u)
+    ).toBeInTheDocument();
   });
 
   it('uses step-up before apply, sends preview and idempotency evidence, then polls to completion', async () => {

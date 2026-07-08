@@ -30,6 +30,10 @@ import {
   type ProviderConfigFetch,
   type ProviderConfigSettingKey
 } from './services/admin-provider-config-service.js';
+import type {
+  AdminBackupCommandRunner,
+  AdminBackupRestoreVerifier
+} from './services/admin-backup-service.js';
 import { registerMcpRoutes } from './transport/mcp.js';
 import { registerAdminRoutes } from './transport/admin.js';
 import { registerOAuthRoutes } from './transport/oauth.js';
@@ -67,6 +71,13 @@ type AppOptions = {
   runtimeConfig?: AppConfig | undefined;
   providerConfigFetch?: ProviderConfigFetch | undefined;
   providerConfigDnsLookup?: ProviderConfigDnsLookup | undefined;
+  adminBackupCommandRunner?: AdminBackupCommandRunner | undefined;
+  adminBackupRestoreVerifier?: AdminBackupRestoreVerifier | undefined;
+  adminBackupPgDumpPath?: string | undefined;
+  adminBackupPgRestorePath?: string | undefined;
+  adminBackupCreatedbPath?: string | undefined;
+  adminBackupDropdbPath?: string | undefined;
+  adminBackupTarPath?: string | undefined;
   getHealthStatus?: () => Promise<HealthStatus> | HealthStatus;
 };
 
@@ -160,6 +171,28 @@ function describeHost(providerConfig: EmbeddingProviderConfig): string {
     : 'api.openai.com';
 }
 
+function printFirstRunBootstrapToken(input: {
+  plaintextToken: string;
+  expiresAt: string;
+}): void {
+  const message = [
+    '',
+    '============================================================',
+    'Postgram first admin setup',
+    '',
+    `Bootstrap token: ${input.plaintextToken}`,
+    `Expires at:      ${input.expiresAt}`,
+    '',
+    'Open http://127.0.0.1:3000/admin and paste this token.',
+    'This token is shown once. After restart, existing token',
+    'plaintext cannot be recovered from Postgram.',
+    '============================================================',
+    ''
+  ].join('\n');
+
+  console.warn(message);
+}
+
 export function createApp(
   options: AppOptions = {}
 ): Hono<{ Variables: AppVariables }> {
@@ -212,6 +245,13 @@ export function createApp(
         runtimeConfig: options.runtimeConfig,
         providerConfigFetch: options.providerConfigFetch,
         providerConfigDnsLookup: options.providerConfigDnsLookup,
+        backupCommandRunner: options.adminBackupCommandRunner,
+        backupRestoreVerifier: options.adminBackupRestoreVerifier,
+        pgDumpPath: options.adminBackupPgDumpPath,
+        pgRestorePath: options.adminBackupPgRestorePath,
+        createdbPath: options.adminBackupCreatedbPath,
+        dropdbPath: options.adminBackupDropdbPath,
+        tarPath: options.adminBackupTarPath,
         ...(options.extractionEnabled !== undefined
           ? { extractionEnabled: options.extractionEnabled }
           : {})
@@ -294,6 +334,10 @@ export async function startServer(): Promise<{
   }
   const bootstrapState = firstRunBootstrap.value;
   if (bootstrapState.status === 'created') {
+    printFirstRunBootstrapToken({
+      plaintextToken: bootstrapState.plaintextToken,
+      expiresAt: bootstrapState.token.expiresAt
+    });
     logger.warn(
       {
         bootstrapToken: bootstrapState.plaintextToken,

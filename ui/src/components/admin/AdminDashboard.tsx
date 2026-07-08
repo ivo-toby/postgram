@@ -14,6 +14,7 @@ import {
 } from '../../lib/adminApi.ts';
 import AdminApiKeys from './AdminApiKeys.tsx';
 import AdminAudit from './AdminAudit.tsx';
+import AdminBackup from './AdminBackup.tsx';
 import AdminConfig from './AdminConfig.tsx';
 import AdminHelpPage, { HelpIcon } from './AdminHelp.tsx';
 import AdminMaintenance from './AdminMaintenance.tsx';
@@ -33,7 +34,12 @@ type ResourceState<T> = {
   loading: boolean;
 };
 
-type DashboardPanel = 'overview' | 'provider-config' | 'maintenance' | 'help';
+type DashboardPanel =
+  | 'overview'
+  | 'provider-config'
+  | 'maintenance'
+  | 'backup'
+  | 'help';
 
 function pendingResource<T>(): ResourceState<T> {
   return {
@@ -418,6 +424,12 @@ export default function AdminDashboard({
           Maintenance
         </DashboardNavButton>
         <DashboardNavButton
+          active={activePanel === 'backup'}
+          onClick={() => setActivePanel('backup')}
+        >
+          Backup
+        </DashboardNavButton>
+        <DashboardNavButton
           active={activePanel === 'help'}
           onClick={() => setActivePanel('help')}
         >
@@ -434,6 +446,16 @@ export default function AdminDashboard({
         />
       ) : activePanel === 'maintenance' ? (
         <AdminMaintenance
+          api={api}
+          extractionEnabled={
+            queue.data ? queue.data.extraction !== null : null
+          }
+          initialStepUp={stepUp}
+          onAuthUpdate={onAuthUpdate}
+          onSessionExpired={onSessionExpired}
+        />
+      ) : activePanel === 'backup' ? (
+        <AdminBackup
           api={api}
           initialStepUp={stepUp}
           onAuthUpdate={onAuthUpdate}

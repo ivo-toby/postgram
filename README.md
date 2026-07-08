@@ -356,7 +356,17 @@ before provider secrets are configured.
 
 ### 3. Complete first admin setup
 
-Read the one-time bootstrap token from the trusted local operator channel:
+On first start, the API container prints a clear one-time bootstrap banner with
+the token:
+
+```text
+Postgram first admin setup
+Bootstrap token: ...
+Open http://127.0.0.1:3000/admin and paste this token.
+```
+
+If the console has scrolled, read the same one-time bootstrap token from the
+trusted local operator channel:
 
 ```bash
 docker compose logs mcp-server | grep 'admin first-run bootstrap token'
@@ -386,6 +396,13 @@ Use the Admin dashboard in the browser for the supported happy path:
   config/model/job status, and audit rows.
 - Maintenance tab: run safe dry-run previews and poll job status before any
   destructive apply.
+- Backup tab: download a gzipped archive containing a PostgreSQL custom dump
+  plus redacted runtime configuration. Restore is intentionally staged: inspect
+  the manifest and `pg_restore --list`, restore into a new database name, run
+  health checks, then switch over only after operator approval. If the restored
+  database misbehaves, roll back by restoring the previous `POSTGRES_DB` or
+  `DATABASE_URL` setting and restarting `mcp-server`/`postgram-ui`; the old
+  database is left untouched for this emergency path.
 
 Normal Docker setup and maintenance should not require `pgm-admin` after
 startup/bootstrap. The `pgm-admin` CLI remains documented below for emergency

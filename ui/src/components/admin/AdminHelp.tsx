@@ -52,17 +52,19 @@ export default function AdminHelpPage() {
       <div>
         <h2 className="text-xl font-semibold text-white">Admin help</h2>
         <p className="mt-1 max-w-3xl text-sm text-gray-400">
-          A short operator guide for the browser admin plane, bootstrap, MFA,
-          provider settings, API keys, and maintenance jobs.
+          A practical operator guide for Postgram administration. It assumes
+          comfort with services and credentials, but not with vector databases
+          or graph maintenance.
         </p>
       </div>
 
       <div className="grid gap-4 lg:grid-cols-2">
         <HelpSection title="Bootstrap and sign in">
           <p>
-            The bootstrap token is a one-time local setup token from the server
-            logs. It proves the person creating the first admin can read the
-            trusted local operator channel.
+            The bootstrap token is a one-time setup token printed by the API
+            container when the first admin is needed. It proves the person
+            creating the first admin can read the trusted local operator
+            channel.
           </p>
           <p>
             Admin sign-in is separate from Postgram API keys. API keys can call
@@ -76,21 +78,40 @@ export default function AdminHelpPage() {
             setup, scan the QR code or enter the setup code manually.
           </p>
           <p>
-            MFA confirmation means re-entering your current six-digit MFA code
+            MFA confirmation is the plain-English name for the previous
+            "step-up code": re-enter your current six-digit authenticator code
             before sensitive actions such as secret writes, API-key creation,
-            provider apply, or maintenance apply. It expires quickly by design.
+            provider apply, backup download, or maintenance apply. It expires
+            quickly by design.
           </p>
         </HelpSection>
 
-        <HelpSection title="Provider configuration">
+        <HelpSection title="Embeddings and extraction">
           <p>
-            Provider settings are saved as pending values first. Validate and
-            test connections before applying them to runtime behavior.
+            Embeddings turn text into numeric vectors so Postgram can find
+            related content by meaning, not just exact words. The embedding
+            provider, model, and dimensions must stay consistent with the
+            vectors already stored in the database.
           </p>
           <p>
-            Embedding provider, model, and dimensions are migration-class
-            settings. Changing them can require a planned re-embedding path
-            before apply is safe.
+            Extraction is separate. It uses an LLM to identify people, projects,
+            tasks, documents, and relationships, then stores those relationships
+            as graph edges. If extraction is off, graph extraction jobs are not
+            active.
+          </p>
+        </HelpSection>
+
+        <HelpSection title="Pending, active, and validation">
+          <p>
+            Editing Config creates saved changes waiting to apply. They are in
+            the database, but Postgram does not use them until validation and
+            apply succeed.
+          </p>
+          <p>
+            Active provider settings are what runtime behavior is currently
+            using. "Not tested yet" means Postgram has not validated the saved
+            value against runtime construction or provider connectivity since it
+            was saved.
           </p>
         </HelpSection>
 
@@ -99,6 +120,13 @@ export default function AdminHelpPage() {
             Secret fields are write-only. After saving, the UI shows metadata
             such as provider, purpose, validation status, and update time, but
             never shows the plaintext secret again.
+          </p>
+          <p>
+            Use OPENAI_API_KEY for OpenAI embeddings or extraction,
+            ANTHROPIC_API_KEY for Anthropic extraction, OLLAMA_API_KEY for a
+            protected Ollama endpoint, EXTRACTION_API_KEY for a custom
+            extraction endpoint, and EMBEDDING_API_KEY for a custom embedding
+            endpoint.
           </p>
         </HelpSection>
 
@@ -116,8 +144,29 @@ export default function AdminHelpPage() {
             until the preview succeeds and you explicitly confirm review.
           </p>
           <p>
+            Re-extract reruns LLM extraction. Re-embed rebuilds vector chunks.
+            Prune edges removes low-confidence edges created by LLM extraction.
             Apply jobs use idempotency so retries can reuse the same job rather
             than accidentally starting duplicate destructive work.
+          </p>
+        </HelpSection>
+
+        <HelpSection title="Backups and restore">
+          <p>
+            Backup download produces a gzipped archive with a PostgreSQL custom
+            dump, a manifest, and redacted runtime configuration. Store it like
+            sensitive data because it contains the database contents.
+          </p>
+          <p>
+            Restore is intentionally staged: validate the archive, inspect the
+            dump, restore into a new database name, run health checks, and only
+            then switch over after operator approval.
+          </p>
+          <p>
+            If the restored database has problems after switch-over, roll back
+            by restoring the previous POSTGRES_DB or DATABASE_URL setting and
+            restarting the API/UI services. The original database is left
+            untouched so this rollback does not need another restore.
           </p>
         </HelpSection>
       </div>

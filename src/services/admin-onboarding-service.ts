@@ -80,21 +80,83 @@ function toAppError(error: unknown, fallbackMessage: string): AppError {
   return new AppError(ErrorCode.INTERNAL, fallbackMessage);
 }
 
-function normalizeCompletedSteps(
+function progressValidationError(
+  message: string,
+  details: Record<string, unknown>
+): AppError {
+  return new AppError(ErrorCode.VALIDATION, message, details);
+}
+
+function validateCompletedStepPrefix(
   steps: readonly AdminOnboardingStep[]
 ): AdminOnboardingStep[] {
-  const normalized: AdminOnboardingStep[] = [];
-  for (const step of steps) {
+  const completedSteps: AdminOnboardingStep[] = [];
+
+  for (const [index, step] of steps.entries()) {
     if (!STEP_SET.has(step)) {
       throw new AppError(ErrorCode.VALIDATION, 'Invalid onboarding step', {
         step
       });
     }
-    if (!normalized.includes(step)) {
-      normalized.push(step);
+
+    const expectedStep = ADMIN_ONBOARDING_STEPS[index];
+    if (step !== expectedStep) {
+      throw progressValidationError(
+        'Completed onboarding steps must be an ordered prefix',
+        {
+          completedSteps: steps,
+          expectedPrefix: ADMIN_ONBOARDING_STEPS.slice(0, index + 1)
+        }
+      );
     }
+
+    completedSteps.push(step);
   }
-  return normalized;
+
+  return completedSteps;
+}
+
+function validateInProgressUpdate(input: {
+  persistedStatus: AdminOnboardingStatus;
+  currentStep: AdminOnboardingStep;
+  completedSteps: readonly AdminOnboardingStep[];
+}): {
+  currentStep: AdminOnboardingStep;
+  completedSteps: AdminOnboardingStep[];
+} {
+  if (input.persistedStatus !== 'in_progress') {
+    throw new AppError(
+      ErrorCode.CONFLICT,
+      'Admin onboarding is not in progress',
+      { status: input.persistedStatus }
+    );
+  }
+
+  const completedSteps = validateCompletedStepPrefix(input.completedSteps);
+  const expectedCurrentStep = ADMIN_ONBOARDING_STEPS[completedSteps.length];
+
+  if (!expectedCurrentStep) {
+    throw progressValidationError(
+      'Use the complete onboarding endpoint to finish onboarding',
+      { completedSteps }
+    );
+  }
+
+  if (input.currentStep !== expectedCurrentStep) {
+    throw progressValidationError(
+      'Current onboarding step must be the first incomplete step',
+      {
+        currentStep: input.currentStep,
+        expectedCurrentStep,
+        completedSteps
+      }
+    );
+  }
+
+  return {
+    currentStep: expectedCurrentStep,
+    completedSteps
+  };
 }
 
 async function ensureAdminOnboardingState(
@@ -192,10 +254,11 @@ export async function updateAdminOnboardingState(
     await client.query('BEGIN');
     await ensureAdminOnboardingState(client);
     const before = await readAdminOnboardingRow(client);
-    const currentStep = input.currentStep ?? before.current_step;
-    const completedSteps = normalizeCompletedSteps(
-      input.completedSteps ?? before.completed_steps
-    );
+    const { currentStep, completedSteps } = validateInProgressUpdate({
+      persistedStatus: before.status,
+      currentStep: input.currentStep ?? before.current_step,
+      completedSteps: input.completedSteps ?? before.completed_steps
+    });
 
     const result = await client.query<AdminOnboardingRow>(
       `

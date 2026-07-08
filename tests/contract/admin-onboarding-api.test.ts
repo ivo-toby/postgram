@@ -195,6 +195,56 @@ describe('admin onboarding API', () => {
     });
   }, 120_000);
 
+  it('rejects out-of-order onboarding progress', async () => {
+    if (!database) {
+      throw new Error('test database not initialized');
+    }
+
+    const admin = await createActiveAdminSession(database);
+    const app = createApp({ pool: database.pool });
+
+    const rejected = await app.request('/admin/api/onboarding', {
+      method: 'PUT',
+      headers: {
+        Cookie: admin.cookie,
+        'Content-Type': 'application/json',
+        'X-CSRF-Token': admin.csrfToken
+      },
+      body: JSON.stringify({
+        currentStep: 'backup_restore',
+        completedSteps: ['setup', 'backup_restore']
+      })
+    });
+    const rejectedBody = (await rejected.json()) as {
+      error: {
+        code: string;
+      };
+    };
+
+    expect(rejected.status).toBe(400);
+    expect(rejectedBody.error.code).toBe('VALIDATION');
+
+    const current = await app.request('/admin/api/onboarding', {
+      headers: {
+        Cookie: admin.cookie
+      }
+    });
+    const currentBody = (await current.json()) as {
+      onboarding: {
+        status: string;
+        currentStep: string;
+        completedSteps: string[];
+      };
+    };
+
+    expect(current.status).toBe(200);
+    expect(currentBody.onboarding).toMatchObject({
+      status: 'in_progress',
+      currentStep: 'setup',
+      completedSteps: []
+    });
+  }, 120_000);
+
   it('deliberately skips and completes onboarding with audit evidence', async () => {
     if (!database) {
       throw new Error('test database not initialized');
@@ -277,5 +327,98 @@ describe('admin onboarding API', () => {
       'admin.onboarding.skip',
       'admin.onboarding.complete'
     ]);
+  }, 120_000);
+
+  it('rejects progress updates after onboarding is skipped or completed', async () => {
+    if (!database) {
+      throw new Error('test database not initialized');
+    }
+
+    const admin = await createActiveAdminSession(database);
+    const app = createApp({ pool: database.pool });
+
+    const skipped = await app.request('/admin/api/onboarding/skip', {
+      method: 'POST',
+      headers: {
+        Cookie: admin.cookie,
+        'Content-Type': 'application/json',
+        'X-CSRF-Token': admin.csrfToken
+      },
+      body: JSON.stringify({})
+    });
+    expect(skipped.status).toBe(200);
+
+    const updateAfterSkip = await app.request('/admin/api/onboarding', {
+      method: 'PUT',
+      headers: {
+        Cookie: admin.cookie,
+        'Content-Type': 'application/json',
+        'X-CSRF-Token': admin.csrfToken
+      },
+      body: JSON.stringify({
+        currentStep: 'provider_config',
+        completedSteps: ['setup']
+      })
+    });
+    const skipError = (await updateAfterSkip.json()) as {
+      error: {
+        code: string;
+      };
+    };
+
+    expect(updateAfterSkip.status).toBe(409);
+    expect(skipError.error.code).toBe('CONFLICT');
+
+    const completed = await app.request('/admin/api/onboarding/complete', {
+      method: 'POST',
+      headers: {
+        Cookie: admin.cookie,
+        'Content-Type': 'application/json',
+        'X-CSRF-Token': admin.csrfToken
+      },
+      body: JSON.stringify({})
+    });
+    expect(completed.status).toBe(200);
+
+    const updateAfterComplete = await app.request('/admin/api/onboarding', {
+      method: 'PUT',
+      headers: {
+        Cookie: admin.cookie,
+        'Content-Type': 'application/json',
+        'X-CSRF-Token': admin.csrfToken
+      },
+      body: JSON.stringify({
+        currentStep: 'provider_config',
+        completedSteps: ['setup']
+      })
+    });
+    const completeError = (await updateAfterComplete.json()) as {
+      error: {
+        code: string;
+      };
+    };
+
+    expect(updateAfterComplete.status).toBe(409);
+    expect(completeError.error.code).toBe('CONFLICT');
+
+    const current = await app.request('/admin/api/onboarding', {
+      headers: {
+        Cookie: admin.cookie
+      }
+    });
+    const currentBody = (await current.json()) as {
+      onboarding: {
+        status: string;
+        currentStep: string;
+        completedSteps: string[];
+        completedAt: string | null;
+      };
+    };
+
+    expect(current.status).toBe(200);
+    expect(currentBody.onboarding.status).toBe('completed');
+    expect(currentBody.onboarding.completedAt).toMatch(
+      /^\d{4}-\d{2}-\d{2}T/
+    );
   }, 120_000);
 });

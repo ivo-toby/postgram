@@ -1,0 +1,108 @@
+{
+  "schemaVersion": 1,
+  "kind": "micro_wave_state",
+  "profile": "micro",
+  "work": {
+    "id": "WORK-admin-onboarding-flow",
+    "title": "Admin Onboarding Flow",
+    "targetBranch": "codex/epic/admin-configuration-frontend",
+    "baseBranch": "codex/work/admin-onboarding-flow"
+  },
+  "configuration": {
+    "reviewMode": "risk_based",
+    "monitoringMode": "adaptive",
+    "maxParallelTasks": 1
+  },
+  "strategy": {
+    "profile": "micro",
+    "executionMode": "bundled",
+    "reviewMode": "risk_based",
+    "monitoringMode": "adaptive",
+    "recommendedBy": "wdd-plan-work",
+    "confirmedBy": "ivo-2026-07-08",
+    "requiresUserConfirmation": false,
+    "confidence": "high",
+    "rationale": [
+      "The onboarding API, UI client types, dashboard wiring, and documentation are tightly coupled.",
+      "Bundled execution avoids conflicts in ui/src/lib/adminApi.ts and ui/src/components/admin/AdminDashboard.tsx.",
+      "Separate review is required because the work touches persistence, auth-adjacent admin routes, and first-run Docker UX."
+    ],
+    "bundleGroups": [
+      {
+        "id": "BUNDLE-001-admin-onboarding-flow",
+        "tasks": [
+          "TASK-001-onboarding-state-api",
+          "TASK-002-onboarding-guided-ui",
+          "TASK-003-onboarding-validation-docs"
+        ],
+        "branch": "codex/task/WORK-admin-onboarding-flow-bundle",
+        "workerWorktree": null,
+        "worktreeStatus": "unassigned",
+        "cleanup": null,
+        "workerThreadId": null,
+        "reviewThreadId": null,
+        "currentGate": "not_started"
+      }
+    ],
+    "overrideHistory": []
+  },
+  "tasks": [
+    {
+      "id": "TASK-001-onboarding-state-api",
+      "path": "tasks/TASK-001-onboarding-state-api.md",
+      "status": "todo",
+      "branch": "codex/task/WORK-admin-onboarding-flow-bundle",
+      "workerThreadId": null,
+      "workerWorktree": null,
+      "worktreeStatus": "unassigned",
+      "cleanup": null,
+      "currentGate": "not_started",
+      "risk": "high",
+      "reviewRequired": true,
+      "pr": null,
+      "latestCommit": null,
+      "verification": null
+    },
+    {
+      "id": "TASK-002-onboarding-guided-ui",
+      "path": "tasks/TASK-002-onboarding-guided-ui.md",
+      "status": "todo",
+      "branch": "codex/task/WORK-admin-onboarding-flow-bundle",
+      "workerThreadId": null,
+      "workerWorktree": null,
+      "worktreeStatus": "unassigned",
+      "cleanup": null,
+      "currentGate": "not_started",
+      "risk": "high",
+      "reviewRequired": true,
+      "pr": null,
+      "latestCommit": null,
+      "verification": null
+    },
+    {
+      "id": "TASK-003-onboarding-validation-docs",
+      "path": "tasks/TASK-003-onboarding-validation-docs.md",
+      "status": "todo",
+      "branch": "codex/task/WORK-admin-onboarding-flow-bundle",
+      "workerThreadId": null,
+      "workerWorktree": null,
+      "worktreeStatus": "unassigned",
+      "cleanup": null,
+      "currentGate": "not_started",
+      "risk": "medium",
+      "reviewRequired": true,
+      "pr": null,
+      "latestCommit": null,
+      "verification": null
+    }
+  ],
+  "monitoring": {
+    "mode": "manual",
+    "cadence": "adaptive",
+    "status": "inactive",
+    "lastCheckedAt": null,
+    "nextCheckDueAt": null,
+    "schedulerRef": null,
+    "fallbackPrompt": "Run wdd-run-work for WORK-admin-onboarding-flow. Read state.json and task files, inspect active worker or PR references, update gates, and stop when tasks are ready for wdd-finish-work."
+  }
+}

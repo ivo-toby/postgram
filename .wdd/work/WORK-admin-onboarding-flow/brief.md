@@ -119,8 +119,9 @@ work touches persistence, auth-adjacent admin routes, and first-run UX.
   - `TASK-002-onboarding-guided-ui`
   - `TASK-003-onboarding-validation-docs`
 - PR #95: https://github.com/ivo-toby/postgram/pull/95
-- Merged locally into `codex/epic/admin-configuration-frontend` in
-  `e698d9ab317b60d822963d69b182bc57f16448ab`.
+- Merged into `codex/epic/admin-configuration-frontend` in
+  `e698d9ab317b60d822963d69b182bc57f16448ab`; GitHub marked PR #95 merged at
+  2026-07-08T18:49:36Z.
 - Follow-up review `019f430b-2835-7de3-94e2-b4774714b5eb` returned
   `REVIEW_PASS` after fix commit
   `75e0760dbcababf1c8e4f93bbbb598b90009915a`.

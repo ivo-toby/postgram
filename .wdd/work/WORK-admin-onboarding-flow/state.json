@@ -49,9 +49,10 @@
         "pr": {
           "number": 95,
           "url": "https://github.com/ivo-toby/postgram/pull/95",
-          "status": "merged_locally_pending_push",
+          "status": "merged",
           "headCommit": "75e0760dbcababf1c8e4f93bbbb598b90009915a",
-          "mergeCommit": "e698d9ab317b60d822963d69b182bc57f16448ab"
+          "mergeCommit": "e698d9ab317b60d822963d69b182bc57f16448ab",
+          "mergedAt": "2026-07-08T18:49:36Z"
         },
         "review": {
           "status": "passed",
@@ -102,9 +103,10 @@
       "pr": {
         "number": 95,
         "url": "https://github.com/ivo-toby/postgram/pull/95",
-        "status": "merged_locally_pending_push",
+        "status": "merged",
         "headCommit": "75e0760dbcababf1c8e4f93bbbb598b90009915a",
-        "mergeCommit": "e698d9ab317b60d822963d69b182bc57f16448ab"
+        "mergeCommit": "e698d9ab317b60d822963d69b182bc57f16448ab",
+        "mergedAt": "2026-07-08T18:49:36Z"
       },
       "latestCommit": "75e0760dbcababf1c8e4f93bbbb598b90009915a",
       "verification": {
@@ -150,9 +152,10 @@
       "pr": {
         "number": 95,
         "url": "https://github.com/ivo-toby/postgram/pull/95",
-        "status": "merged_locally_pending_push",
+        "status": "merged",
         "headCommit": "75e0760dbcababf1c8e4f93bbbb598b90009915a",
-        "mergeCommit": "e698d9ab317b60d822963d69b182bc57f16448ab"
+        "mergeCommit": "e698d9ab317b60d822963d69b182bc57f16448ab",
+        "mergedAt": "2026-07-08T18:49:36Z"
       },
       "latestCommit": "75e0760dbcababf1c8e4f93bbbb598b90009915a",
       "verification": {
@@ -198,9 +201,10 @@
       "pr": {
         "number": 95,
         "url": "https://github.com/ivo-toby/postgram/pull/95",
-        "status": "merged_locally_pending_push",
+        "status": "merged",
         "headCommit": "75e0760dbcababf1c8e4f93bbbb598b90009915a",
-        "mergeCommit": "e698d9ab317b60d822963d69b182bc57f16448ab"
+        "mergeCommit": "e698d9ab317b60d822963d69b182bc57f16448ab",
+        "mergedAt": "2026-07-08T18:49:36Z"
       },
       "latestCommit": "75e0760dbcababf1c8e4f93bbbb598b90009915a",
       "verification": {
@@ -240,11 +244,12 @@
   "finish": {
     "status": "done",
     "finishedAt": "2026-07-08T18:47:48Z",
-    "result": "Admin onboarding micro-wave merged into codex/epic/admin-configuration-frontend and ready to push.",
+    "result": "Admin onboarding micro-wave merged into codex/epic/admin-configuration-frontend and pushed.",
     "pr": {
       "number": 95,
       "url": "https://github.com/ivo-toby/postgram/pull/95",
-      "status": "merged_locally_pending_push"
+      "status": "merged",
+      "mergedAt": "2026-07-08T18:49:36Z"
     },
     "mergeCommit": "e698d9ab317b60d822963d69b182bc57f16448ab",
     "evidence": [
@@ -252,7 +257,7 @@
       "Worker implementation: f4bd1dcdfbec06b251b76319437a3ac25438ccda; worker evidence: d62bd7488495028d2b80212ff3be278d12102416.",
       "Branch freshness refresh: 58327c99f657cfcac97e287375652977340ac823.",
       "Review P2 fix: 75e0760dbcababf1c8e4f93bbbb598b90009915a enforced ordered onboarding progress and terminal-state update rejection.",
-      "Merged locally into codex/epic/admin-configuration-frontend: e698d9ab317b60d822963d69b182bc57f16448ab.",
+      "Merged into codex/epic/admin-configuration-frontend and GitHub marked PR #95 merged at 2026-07-08T18:49:36Z: e698d9ab317b60d822963d69b182bc57f16448ab.",
       "Controller freshness: git rev-list --left-right --count origin/codex/epic/admin-configuration-frontend...HEAD => 0 5; merge-tree clean; diff-check clean.",
       "npx vitest run tests/contract/admin-onboarding-api.test.ts passed: 5 tests.",
       "npm run test --prefix ui -- AdminOnboarding.test.tsx AdminAuth.test.tsx AdminConfig.test.tsx AdminBackup.test.tsx AdminMaintenance.test.tsx AdminOps.test.tsx passed: 66 tests.",

@@ -91,4 +91,4 @@ locally without deleting the existing Postgres volume.
 - 2026-07-08: Manual review-style diff audit found no P0/P1/P2 issues; dedicated `/codex` review hook was unavailable in this tool surface, so review remains pending for the draft PR.
 - 2026-07-08: Follow-up review `019f430b-2835-7de3-94e2-b4774714b5eb` returned `REVIEW_PASS`.
 - 2026-07-08: Controller verification passed: freshness was current, merge-tree was clean, diff-check passed, root typecheck passed, and UI typecheck passed.
-- 2026-07-08: Merged locally into `codex/epic/admin-configuration-frontend` in `e698d9ab317b60d822963d69b182bc57f16448ab`.
+- 2026-07-08: Merged into `codex/epic/admin-configuration-frontend` in `e698d9ab317b60d822963d69b182bc57f16448ab`; GitHub marked PR #95 merged at 2026-07-08T18:49:36Z.

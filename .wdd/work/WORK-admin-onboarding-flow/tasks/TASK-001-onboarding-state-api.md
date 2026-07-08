@@ -91,4 +91,4 @@ load, update, skip, complete, and resume onboarding progress.
 - 2026-07-08: Fix `75e0760dbcababf1c8e4f93bbbb598b90009915a` enforced ordered-prefix progress, first-incomplete `currentStep`, and terminal-state update rejection.
 - 2026-07-08: Follow-up review `019f430b-2835-7de3-94e2-b4774714b5eb` returned `REVIEW_PASS`.
 - 2026-07-08: Controller verification passed: `npx vitest run tests/contract/admin-onboarding-api.test.ts` passed 5/5, freshness was current, merge-tree was clean, and diff-check passed.
-- 2026-07-08: Merged locally into `codex/epic/admin-configuration-frontend` in `e698d9ab317b60d822963d69b182bc57f16448ab`.
+- 2026-07-08: Merged into `codex/epic/admin-configuration-frontend` in `e698d9ab317b60d822963d69b182bc57f16448ab`; GitHub marked PR #95 merged at 2026-07-08T18:49:36Z.

@@ -1,5 +1,5 @@
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
-import { act, render, screen } from '@testing-library/react';
+import { act, render, screen, waitFor } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import App from '../App.tsx';
 import AdminAuth from './admin/AdminAuth.tsx';
@@ -639,8 +639,95 @@ describe('AdminAuth', () => {
     render(<AdminAuth />);
 
     expect(await screen.findByRole('heading', { name: 'Admin onboarding' })).toBeInTheDocument();
-    expect(screen.getAllByText('Provider configuration').length).toBeGreaterThan(0);
+    expect(screen.getAllByText('Provider settings').length).toBeGreaterThan(0);
     expect(screen.getAllByText('Step 2 of 6').length).toBeGreaterThan(0);
+  });
+
+  it('returns to overview after finishing onboarding', async () => {
+    const user = userEvent.setup();
+    const fetchMock = mockFetch([
+      { path: '/admin/api/bootstrap/status', body: { state: 'configured' } },
+      {
+        path: '/admin/api/session/current',
+        body: { user: activeUser, session: activeSession },
+      },
+      {
+        path: '/admin/api/onboarding',
+        body: {
+          onboarding: {
+            status: 'in_progress',
+            currentStep: 'maintenance',
+            completedSteps: [
+              'setup',
+              'provider_config',
+              'secrets',
+              'validate_apply',
+              'backup_restore',
+            ],
+            skippedAt: null,
+            completedAt: null,
+            updatedByAdminUserId: 'admin-user-1',
+            createdAt: '2026-07-08T08:00:00.000Z',
+            updatedAt: '2026-07-08T08:10:00.000Z',
+          },
+        },
+      },
+      ...adminOpsRoutes(),
+      {
+        path: '/admin/api/session/csrf',
+        body: { csrfToken: 'csrf-for-onboarding-complete' },
+      },
+      {
+        path: '/admin/api/onboarding/complete',
+        method: 'POST',
+        body: {
+          onboarding: {
+            status: 'completed',
+            currentStep: 'maintenance',
+            completedSteps: [
+              'setup',
+              'provider_config',
+              'secrets',
+              'validate_apply',
+              'backup_restore',
+              'maintenance',
+            ],
+            skippedAt: null,
+            completedAt: '2026-07-08T08:30:00.000Z',
+            updatedByAdminUserId: 'admin-user-1',
+            createdAt: '2026-07-08T08:00:00.000Z',
+            updatedAt: '2026-07-08T08:30:00.000Z',
+          },
+        },
+        assert: init => {
+          expect(init.headers).toMatchObject({
+            'Content-Type': 'application/json',
+            'X-CSRF-Token': 'csrf-for-onboarding-complete',
+          });
+        },
+      },
+    ]);
+
+    render(<AdminAuth />);
+
+    expect(
+      await screen.findByRole('heading', { name: 'Admin onboarding' })
+    ).toBeInTheDocument();
+    const finishButton = screen.getByRole('button', { name: 'Finish onboarding' });
+    expect(finishButton).toBeEnabled();
+    await user.click(finishButton);
+
+    await waitFor(() => {
+      expect(
+        fetchMock.mock.calls.some(
+          ([path, init]) =>
+            path === '/admin/api/onboarding/complete' &&
+            init?.method === 'POST'
+        )
+      ).toBe(true);
+    });
+    expect(await screen.findByRole('heading', { name: 'Health' })).toBeInTheDocument();
+    expect(screen.queryByRole('heading', { name: 'Admin onboarding' })).not.toBeInTheDocument();
   });
 
   it('keeps MFA challenge state when an authenticator code is invalid', async () => {

@@ -197,6 +197,8 @@ describe('admin provider config service', () => {
 
     const snapshot = await readProviderConfiguration(database.pool, {
       envConfig: env({
+        OPENAI_API_KEY: SECRET_PLAINTEXT,
+        ANTHROPIC_API_KEY: 'anthropic-env-secret-must-not-leak',
         OLLAMA_BASE_URL: 'http://localhost:11434'
       })
     });
@@ -223,7 +225,21 @@ describe('admin provider config service', () => {
         metadata: {}
       }
     });
+    expect(
+      (snapshot._unsafeUnwrap() as typeof snapshot extends { _unsafeUnwrap: () => infer T }
+        ? T & { envSecrets: Record<string, boolean> }
+        : never).envSecrets
+    ).toMatchObject({
+      OPENAI_API_KEY: true,
+      ANTHROPIC_API_KEY: true,
+      OLLAMA_API_KEY: false,
+      EXTRACTION_API_KEY: false,
+      EMBEDDING_API_KEY: false
+    });
     assertNoSecretLeak(snapshot._unsafeUnwrap());
+    expect(JSON.stringify(snapshot._unsafeUnwrap())).not.toContain(
+      'anthropic-env-secret-must-not-leak'
+    );
 
     const metadata = await getRuntimeSecretMetadata(
       database.pool,

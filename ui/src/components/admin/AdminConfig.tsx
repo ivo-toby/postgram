@@ -87,6 +87,13 @@ const embeddingProviderOptions = [
   { value: 'ollama', label: 'Ollama' }
 ];
 
+const extractionProviderOptions = [
+  { value: 'openai', label: 'OpenAI' },
+  { value: 'anthropic', label: 'Anthropic' },
+  { value: 'ollama', label: 'Ollama' },
+  { value: 'openai-compatible', label: 'OpenAI-compatible' }
+];
+
 const maxBrowserTimeoutMs = 2_147_483_647;
 
 type ProviderUrlSettingKey = (typeof providerUrlSettingKeys)[number];
@@ -139,6 +146,13 @@ function emptySettingsDraft(): ProviderSettingsDraft {
     EMBEDDING_DIMENSIONS: '',
     EMBEDDING_BASE_URL: ''
   };
+}
+
+function envSecretConfigured(
+  config: AdminProviderConfiguration,
+  name: AdminProviderSecretName
+): boolean {
+  return config.envSecrets?.[name] ?? false;
 }
 
 function stringValue(value: AdminJsonValue | undefined): string {
@@ -1119,9 +1133,10 @@ export default function AdminConfig({
                   <HelpIcon label={settingHelpText.EXTRACTION_ENABLED} />
                 </span>
               </label>
-              <SettingInput
+              <SettingSelect
                 label="Extraction provider"
                 helpText={settingHelpText.EXTRACTION_PROVIDER}
+                options={extractionProviderOptions}
                 value={settingsDraft.EXTRACTION_PROVIDER}
                 disabled={settingsInputsDisabled}
                 onChange={(value) =>
@@ -1291,6 +1306,7 @@ export default function AdminConfig({
                   key={name}
                   name={name}
                   metadata={config.secrets[name]}
+                  envConfigured={envSecretConfigured(config, name)}
                   value={secretDrafts[name]}
                   busy={busyAction !== null}
                   onChange={(value) => updateSecretDraft(name, value)}
@@ -1556,6 +1572,7 @@ function SettingsStateTable({
 function SecretEditor({
   name,
   metadata,
+  envConfigured,
   value,
   busy,
   onChange,
@@ -1563,6 +1580,7 @@ function SecretEditor({
 }: {
   name: AdminProviderSecretName;
   metadata: AdminRuntimeSecretMetadata | null;
+  envConfigured: boolean;
   value: string;
   busy: boolean;
   onChange: (value: string) => void;
@@ -1602,6 +1620,12 @@ function SecretEditor({
             {formatDate(metadata.updatedAt)}
           </dd>
         </dl>
+      ) : null}
+      {envConfigured ? (
+        <p className="mt-2 rounded-md border border-blue-500/30 bg-blue-500/10 px-2 py-1.5 text-xs leading-5 text-blue-100">
+          {name} is already available from environment. You do not need to
+          save it again unless you want a database override.
+        </p>
       ) : null}
       <label className="mt-3 flex flex-col gap-1 text-xs font-medium text-gray-300">
         <HelpLabel help={`${providerSecretHelpText[name]} This field is write-only: after saving, Postgram stores encrypted secret material and shows only metadata.`}>

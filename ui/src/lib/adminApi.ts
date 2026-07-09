@@ -124,6 +124,7 @@ export type AdminRuntimeSecretMetadata = {
 export type AdminProviderConfiguration = {
   settings: Record<AdminProviderConfigSettingKey, AdminRuntimeSettingSnapshot>;
   secrets: Record<AdminProviderSecretName, AdminRuntimeSecretMetadata | null>;
+  envSecrets?: Record<AdminProviderSecretName, boolean>;
   restartRequired: boolean;
   reembedRequired: boolean;
   egressPolicy: {

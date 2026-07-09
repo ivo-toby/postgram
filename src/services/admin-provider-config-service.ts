@@ -82,6 +82,7 @@ export type ProviderConfigSettingSnapshot = {
 export type ProviderConfigurationSnapshot = {
   settings: Record<ProviderConfigSettingKey, ProviderConfigSettingSnapshot>;
   secrets: Record<ProviderSecretName, RuntimeSecretMetadata | null>;
+  envSecrets: Record<ProviderSecretName, boolean>;
   restartRequired: boolean;
   reembedRequired: boolean;
   egressPolicy: {
@@ -256,6 +257,24 @@ const EMBEDDING_IDENTITY_KEYS = new Set<ProviderConfigSettingKey>([
   'EMBEDDING_MODEL',
   'EMBEDDING_DIMENSIONS'
 ]);
+
+function envSecretConfigured(
+  envConfig: AppConfig | undefined,
+  name: ProviderSecretName
+): boolean {
+  return Boolean(envConfig?.[name]);
+}
+
+function envSecretAvailability(
+  envConfig: AppConfig | undefined
+): Record<ProviderSecretName, boolean> {
+  return Object.fromEntries(
+    PROVIDER_SECRET_NAMES.map((name) => [
+      name,
+      envSecretConfigured(envConfig, name)
+    ])
+  ) as Record<ProviderSecretName, boolean>;
+}
 
 const LOCAL_PROVIDER_HOSTNAMES = new Set([
   'localhost',
@@ -1463,6 +1482,7 @@ export function readProviderConfiguration(
       const snapshotForRuntime = {
         settings,
         secrets,
+        envSecrets: envSecretAvailability(input.envConfig),
         restartRequired: settingsNeedingRestart.length > 0,
         reembedRequired: pendingSettings.some(
           (setting) => setting.reembedRequired

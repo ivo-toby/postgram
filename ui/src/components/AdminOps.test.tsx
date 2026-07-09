@@ -401,11 +401,16 @@ describe('Admin operations dashboard', () => {
     render(<AdminAuth />);
 
     expect(await screen.findByRole('heading', { name: 'Operations dashboard' })).toBeInTheDocument();
-    await user.type(screen.getByLabelText('API key name'), 'admin-alpha');
-    await user.type(screen.getByLabelText('Client ID'), 'codex-desktop');
-    await user.click(screen.getByLabelText('document'));
-    await user.click(screen.getByLabelText('work'));
-    await user.click(screen.getByRole('button', { name: 'Create key' }));
+    const createKeyForm = screen.getByRole('form', { name: 'Create API key' });
+    expect(within(createKeyForm).getByLabelText('API key name')).toBeInTheDocument();
+    expect(within(createKeyForm).getByLabelText('Client ID')).toBeInTheDocument();
+    expect(within(createKeyForm).getByText('Allowed entity types')).toBeInTheDocument();
+    expect(within(createKeyForm).getByText('Allowed visibility')).toBeInTheDocument();
+    await user.type(within(createKeyForm).getByLabelText('API key name'), 'admin-alpha');
+    await user.type(within(createKeyForm).getByLabelText('Client ID'), 'codex-desktop');
+    await user.click(within(createKeyForm).getByLabelText('document'));
+    await user.click(within(createKeyForm).getByLabelText('work'));
+    await user.click(within(createKeyForm).getByRole('button', { name: 'Create key' }));
 
     expect(await screen.findByText('One-time API key')).toBeInTheDocument();
     expect(screen.getByText('pgm-admin-alpha-one-time-secret')).toBeInTheDocument();

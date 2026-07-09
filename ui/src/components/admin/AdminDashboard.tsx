@@ -355,6 +355,13 @@ export default function AdminDashboard({
     return 'Required for sensitive actions';
   }, [stepUp]);
 
+  function handleOnboardingStateChange(state: AdminOnboardingState) {
+    setOnboarding(loadedResource(state));
+    if (state.status === 'completed') {
+      setActivePanel('overview');
+    }
+  }
+
   useEffect(() => {
     let cancelled = false;
 
@@ -497,10 +504,12 @@ export default function AdminDashboard({
         ) : onboarding.data ? (
           <AdminOnboarding
             api={api}
+            initialStepUp={stepUp}
             onboarding={onboarding.data}
+            onAuthUpdate={onAuthUpdate}
             onOpenPanel={(panel: AdminOnboardingPanelTarget) => setActivePanel(panel)}
             onSessionExpired={onSessionExpired}
-            onStateChange={state => setOnboarding(loadedResource(state))}
+            onStateChange={handleOnboardingStateChange}
           />
         ) : null
       ) : (

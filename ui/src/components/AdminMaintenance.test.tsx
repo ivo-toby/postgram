@@ -769,6 +769,7 @@ describe('AdminMaintenance', () => {
     await user.click(screen.getByRole('button', { name: 'Run dry-run preview' }));
     await user.click(await screen.findByLabelText('I reviewed the dry-run preview'));
     await user.click(screen.getByRole('button', { name: 'Apply maintenance job' }));
+    expect(await screen.findByText('Apply job started')).toBeInTheDocument();
     await act(async () => {
       vi.advanceTimersByTime(2_000);
     });

@@ -51,7 +51,7 @@ function checkboxClassName() {
 }
 
 function inputClassName() {
-  return 'rounded-md border border-gray-700 bg-gray-950 px-3 py-2 text-sm text-white placeholder-gray-600 outline-none focus:border-blue-500 focus:ring-1 focus:ring-blue-500';
+  return 'w-full rounded-md border border-gray-700 bg-gray-950 px-3 py-2 text-sm text-white placeholder-gray-600 outline-none focus:border-blue-500 focus:ring-1 focus:ring-blue-500';
 }
 
 function primaryButtonClassName() {
@@ -345,95 +345,113 @@ export default function AdminApiKeys({
         </form>
       ) : null}
 
-      <form onSubmit={handleCreate} className="mt-4 grid gap-3 lg:grid-cols-[1fr_1fr_auto]">
-        <label className="flex flex-col gap-1 text-xs font-medium text-gray-300">
-          <HelpLabel help="Human-readable name used in admin lists and audit rows.">
-            API key name
-          </HelpLabel>
-          <input
-            className={inputClassName()}
-            value={name}
-            onChange={event => setName(event.target.value)}
-            required
-          />
-        </label>
-        <label className="flex flex-col gap-1 text-xs font-medium text-gray-300">
-          <HelpLabel help="Optional stable client identity for key rotation. Leave blank unless multiple keys should share one client identity.">
-            Client ID
-          </HelpLabel>
-          <input
-            className={inputClassName()}
-            value={clientId}
-            onChange={event => setClientId(event.target.value)}
-          />
-        </label>
-        <button
-          type="submit"
-          className={`${primaryButtonClassName()} self-end`}
-          disabled={
-            creating ||
-            name.trim().length === 0 ||
-            selectedScopes.size === 0 ||
-            selectedTypes.size === 0 ||
-            selectedVisibility.size === 0
-          }
+      <form
+        aria-labelledby="admin-api-key-create-heading"
+        onSubmit={handleCreate}
+        className="mt-4 border-t border-gray-800 pt-4"
+      >
+        <h3
+          id="admin-api-key-create-heading"
+          className="text-xs font-semibold uppercase text-gray-400"
         >
-          Create key
-        </button>
-        <fieldset className="flex flex-wrap gap-3 lg:col-span-3">
-          <legend className="basis-full text-xs font-medium text-gray-500">
-            <HelpLabel help="Scopes decide which API operations the key can perform. Start with read unless a client needs writes or deletes.">
-              Scopes
+          Create API key
+        </h3>
+        <div className="mt-3 grid gap-3 lg:grid-cols-2">
+          <label className="flex flex-col gap-1 text-xs font-medium text-gray-300">
+            <HelpLabel help="Human-readable name used in admin lists and audit rows.">
+              API key name
             </HelpLabel>
-          </legend>
-          {SCOPE_OPTIONS.map(scope => (
-            <label key={scope} className="flex items-center gap-2 text-xs text-gray-300">
-              <input
-                type="checkbox"
-                className={checkboxClassName()}
-                checked={selectedScopes.has(scope)}
-                onChange={() => toggleScope(scope)}
-              />
-              {scope}
-            </label>
-          ))}
-        </fieldset>
-        <fieldset className="flex flex-wrap gap-3 lg:col-span-3">
-          <legend className="basis-full text-xs font-medium text-gray-500">
-            <HelpLabel help="Restrict which entity types this key can access.">
-              Allowed entity types
+            <input
+              className={inputClassName()}
+              value={name}
+              onChange={event => setName(event.target.value)}
+              required
+            />
+          </label>
+          <label className="flex flex-col gap-1 text-xs font-medium text-gray-300">
+            <HelpLabel help="Optional stable client identity for key rotation. Leave blank unless multiple keys should share one client identity.">
+              Client ID
             </HelpLabel>
-          </legend>
-          {ENTITY_TYPE_OPTIONS.map(type => (
-            <label key={type} className="flex items-center gap-2 text-xs text-gray-300">
-              <input
-                type="checkbox"
-                className={checkboxClassName()}
-                checked={selectedTypes.has(type)}
-                onChange={() => toggleType(type)}
-              />
-              {type}
-            </label>
-          ))}
-        </fieldset>
-        <fieldset className="flex flex-wrap gap-3 lg:col-span-3">
-          <legend className="basis-full text-xs font-medium text-gray-500">
-            <HelpLabel help="Restrict which visibility buckets this key can access.">
-              Allowed visibility
-            </HelpLabel>
-          </legend>
-          {VISIBILITY_OPTIONS.map(visibility => (
-            <label key={visibility} className="flex items-center gap-2 text-xs text-gray-300">
-              <input
-                type="checkbox"
-                className={checkboxClassName()}
-                checked={selectedVisibility.has(visibility)}
-                onChange={() => toggleVisibility(visibility)}
-              />
-              {visibility}
-            </label>
-          ))}
-        </fieldset>
+            <input
+              className={inputClassName()}
+              value={clientId}
+              onChange={event => setClientId(event.target.value)}
+            />
+          </label>
+        </div>
+
+        <div className="mt-4 grid gap-4 xl:grid-cols-3">
+          <fieldset className="flex flex-wrap gap-3">
+            <legend className="basis-full text-xs font-medium text-gray-500">
+              <HelpLabel help="Scopes decide which API operations the key can perform. Start with read unless a client needs writes or deletes.">
+                Scopes
+              </HelpLabel>
+            </legend>
+            {SCOPE_OPTIONS.map(scope => (
+              <label key={scope} className="flex items-center gap-2 text-xs text-gray-300">
+                <input
+                  type="checkbox"
+                  className={checkboxClassName()}
+                  checked={selectedScopes.has(scope)}
+                  onChange={() => toggleScope(scope)}
+                />
+                {scope}
+              </label>
+            ))}
+          </fieldset>
+          <fieldset className="flex flex-wrap gap-3">
+            <legend className="basis-full text-xs font-medium text-gray-500">
+              <HelpLabel help="Restrict which entity types this key can access.">
+                Allowed entity types
+              </HelpLabel>
+            </legend>
+            {ENTITY_TYPE_OPTIONS.map(type => (
+              <label key={type} className="flex items-center gap-2 text-xs text-gray-300">
+                <input
+                  type="checkbox"
+                  className={checkboxClassName()}
+                  checked={selectedTypes.has(type)}
+                  onChange={() => toggleType(type)}
+                />
+                {type}
+              </label>
+            ))}
+          </fieldset>
+          <fieldset className="flex flex-wrap gap-3">
+            <legend className="basis-full text-xs font-medium text-gray-500">
+              <HelpLabel help="Restrict which visibility buckets this key can access.">
+                Allowed visibility
+              </HelpLabel>
+            </legend>
+            {VISIBILITY_OPTIONS.map(visibility => (
+              <label key={visibility} className="flex items-center gap-2 text-xs text-gray-300">
+                <input
+                  type="checkbox"
+                  className={checkboxClassName()}
+                  checked={selectedVisibility.has(visibility)}
+                  onChange={() => toggleVisibility(visibility)}
+                />
+                {visibility}
+              </label>
+            ))}
+          </fieldset>
+        </div>
+
+        <div className="mt-4 flex justify-end border-t border-gray-800 pt-3">
+          <button
+            type="submit"
+            className={primaryButtonClassName()}
+            disabled={
+              creating ||
+              name.trim().length === 0 ||
+              selectedScopes.size === 0 ||
+              selectedTypes.size === 0 ||
+              selectedVisibility.size === 0
+            }
+          >
+            Create key
+          </button>
+        </div>
       </form>
 
       {createError ? (

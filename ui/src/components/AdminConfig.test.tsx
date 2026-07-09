@@ -216,6 +216,13 @@ function providerConfig(
       EXTRACTION_API_KEY: null,
       EMBEDDING_API_KEY: null
     },
+    envSecrets: {
+      OPENAI_API_KEY: false,
+      ANTHROPIC_API_KEY: false,
+      OLLAMA_API_KEY: false,
+      EXTRACTION_API_KEY: false,
+      EMBEDDING_API_KEY: false
+    },
     restartRequired: false,
     reembedRequired: false,
     egressPolicy: {
@@ -592,6 +599,74 @@ describe('AdminConfig', () => {
         }
       });
     });
+  });
+
+  it('uses select controls for providers and explains env-backed secrets', async () => {
+    const user = userEvent.setup();
+    const config = providerConfig({
+      secrets: {
+        OPENAI_API_KEY: null,
+        ANTHROPIC_API_KEY: null,
+        OLLAMA_API_KEY: null,
+        EXTRACTION_API_KEY: null,
+        EMBEDDING_API_KEY: null
+      },
+      envSecrets: {
+        OPENAI_API_KEY: true,
+        ANTHROPIC_API_KEY: true,
+        OLLAMA_API_KEY: false,
+        EXTRACTION_API_KEY: false,
+        EMBEDDING_API_KEY: false
+      }
+    });
+    const api = adminApi({
+      getProviderConfig: vi.fn(async () => providerResponse(config)),
+      saveProviderConfig: vi.fn(async () => providerResponse(config))
+    });
+
+    render(<AdminConfig api={api} />);
+
+    const extractionProvider = await screen.findByLabelText(
+      'Extraction provider'
+    );
+    expect(extractionProvider.tagName).toBe('SELECT');
+    await user.selectOptions(extractionProvider, 'anthropic');
+    await user.click(
+      screen.getByRole('button', { name: 'Save pending settings' })
+    );
+
+    await waitFor(() => {
+      expect(api.saveProviderConfig).toHaveBeenCalledWith({
+        settings: {
+          EXTRACTION_PROVIDER: 'anthropic'
+        }
+      });
+    });
+    expect(
+      screen.getByText(/OPENAI_API_KEY is already available from environment/i)
+    ).toBeInTheDocument();
+    expect(
+      screen.getByText(/ANTHROPIC_API_KEY is already available from environment/i)
+    ).toBeInTheDocument();
+  });
+
+  it('renders provider secrets when env secret availability is absent', async () => {
+    const { envSecrets: _envSecrets, ...configWithoutEnvSecrets } =
+      providerConfig();
+    const api = adminApi({
+      getProviderConfig: vi.fn(async () =>
+        providerResponse(configWithoutEnvSecrets)
+      )
+    });
+
+    render(<AdminConfig api={api} />);
+
+    expect(
+      await screen.findByLabelText('OPENAI_API_KEY replacement')
+    ).toBeInTheDocument();
+    expect(
+      screen.queryByText(/already available from environment/i)
+    ).not.toBeInTheDocument();
   });
 
   it('blocks apply while visible provider settings have unsaved draft edits', async () => {

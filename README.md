@@ -425,13 +425,16 @@ Use the Admin dashboard in the browser for the supported happy path:
   config/model/job status, and audit rows.
 - Maintenance tab: run safe dry-run previews and poll job status before any
   destructive apply.
-- Backup tab: download a gzipped archive containing a PostgreSQL custom dump
-  plus redacted runtime configuration. Restore is intentionally staged: inspect
-  the manifest and `pg_restore --list`, restore into a new database name, run
-  health checks, then switch over only after operator approval. If the restored
-  database misbehaves, roll back by restoring the previous `POSTGRES_DB` or
-  `DATABASE_URL` setting and restarting `mcp-server`/`postgram-ui`; the old
-  database is left untouched for this emergency path.
+- Backup tab: download a gzipped v2 archive containing a data-only PostgreSQL
+  custom dump plus redacted runtime configuration. Restore is intentionally
+  staged: the server rejects legacy v1/full-schema archives, accepts only
+  approved Postgram table-data entries from `pg_restore --list`, creates the
+  trusted schema from bundled migrations, and restores the accepted data into
+  a new database name. Health checks run before operator-approved switch-over.
+  If the restored database misbehaves, roll back by restoring the previous
+  `POSTGRES_DB` or `DATABASE_URL` setting and restarting
+  `mcp-server`/`postgram-ui`; the old database is left untouched for this
+  emergency path.
 
 Normal Docker setup and maintenance should not require `pgm-admin` after
 startup/bootstrap. The `pgm-admin` CLI remains documented below for emergency

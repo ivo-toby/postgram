@@ -168,14 +168,17 @@ export default function AdminHelpPage() {
 
         <HelpSection title="Backups and restore">
           <p>
-            Backup download produces a gzipped archive with a PostgreSQL custom
-            dump, a manifest, and redacted runtime configuration. Store it like
-            sensitive data because it contains the database contents.
+            Backup download produces a gzipped v2 archive with a data-only
+            PostgreSQL custom dump, a manifest, and redacted runtime
+            configuration. Store it like sensitive data because it contains the
+            database contents. Legacy v1 and full-schema archives are rejected.
           </p>
           <p>
-            Restore is intentionally staged: validate the archive, inspect the
-            dump, restore into a new database name, run health checks, and only
-            then switch over after operator approval.
+            Restore is intentionally staged: require exactly the approved
+            Postgram table-data entries, create the trusted schema from bundled
+            migrations, import the data into a new database name, run health
+            checks, and only then switch over after operator approval. Active or
+            unknown PostgreSQL objects never reach restore.
           </p>
           <p>
             If the restored database has problems after switch-over, roll back

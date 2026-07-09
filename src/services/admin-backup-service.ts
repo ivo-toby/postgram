@@ -74,6 +74,7 @@ export type ValidatedAdminBackupRestore = {
   expiresAt: string;
   rootDir: string;
   databaseDumpPath: string;
+  restoreListPath: string;
   stagingDatabaseName: string;
   manifest: {
     id: string | null;
@@ -109,6 +110,7 @@ export type StageAdminBackupRestoreInput = {
   createdbPath?: string | undefined;
   dropdbPath?: string | undefined;
   pgRestorePath?: string | undefined;
+  psqlPath?: string | undefined;
 };
 
 export type StagedAdminBackupRestore = {
@@ -148,6 +150,34 @@ const SAFE_RUNTIME_CONFIG_KEYS = [
   'EMBEDDING_DIMENSIONS',
   'EMBEDDING_BASE_URL'
 ] as const satisfies readonly (keyof AppConfig)[];
+
+const ADMIN_BACKUP_DATA_TABLES = [
+  'admin_auth_attempts',
+  'admin_bootstrap_tokens',
+  'admin_job_events',
+  'admin_jobs',
+  'admin_mfa_factors',
+  'admin_onboarding_state',
+  'admin_runtime_secrets',
+  'admin_runtime_settings',
+  'admin_sessions',
+  'admin_users',
+  'api_keys',
+  'audit_log',
+  'chunks',
+  'document_sources',
+  'edges',
+  'embedding_models',
+  'entities',
+  'oauth_authorization_codes',
+  'oauth_clients',
+  'oauth_tokens'
+] as const;
+
+const ADMIN_BACKUP_DATA_TABLE_SET = new Set<string>(ADMIN_BACKUP_DATA_TABLES);
+
+const PG_RESTORE_TABLE_DATA_ENTRY =
+  /^\d+;\s+\d+\s+\d+\s+TABLE DATA public ([a-z_][a-z0-9_]*) \S+$/u;
 
 function decodeUrlPart(value: string): string {
   return decodeURIComponent(value.replace(/\+/gu, '%20'));
@@ -349,9 +379,11 @@ export async function createAdminBackupArchive(
       command: input.pgDumpPath ?? 'pg_dump',
       args: [
         '--format=custom',
-        '--blobs',
+        '--data-only',
+        '--no-blobs',
         '--no-owner',
         '--no-acl',
+        '--exclude-table-data=public.schema_migrations',
         '--file',
         databaseDumpPath
       ],
@@ -359,15 +391,16 @@ export async function createAdminBackupArchive(
     });
 
     const manifest = {
-      formatVersion: 1,
+      formatVersion: 2,
       id: randomUUID(),
       generatedAt,
       product: 'postgram',
       contents: [
         {
           path: 'database.dump',
-          type: 'postgres_custom_dump',
-          validation: 'Run pg_restore --list before restore.'
+          type: 'postgres_custom_data_dump',
+          validation:
+            'Require a data-only pg_restore TOC containing only approved Postgram tables.'
         },
         {
           path: 'configuration.json',
@@ -378,9 +411,9 @@ export async function createAdminBackupArchive(
       restoreGuidance: {
         directRestore: false,
         recommendedFlow: [
-          'Validate manifest.json and pg_restore --list database.dump.',
+          'Validate manifest.json and the data-only pg_restore TOC for database.dump.',
           'Restore into a fresh staging database name.',
-          'Run Postgram migrations and health checks against the staged database.',
+          'Create the trusted schema from Postgram migrations, restore approved table data, and run health checks.',
           'After operator approval, switch the app to the staged database and archive the old database.'
         ]
       }
@@ -476,7 +509,7 @@ async function readAndValidateManifest(
       'Backup manifest is not a Postgram backup'
     );
   }
-  if (manifest.formatVersion !== 1) {
+  if (manifest.formatVersion !== 2) {
     throw new AppError(
       ErrorCode.VALIDATION,
       'Unsupported Postgram backup format version'
@@ -486,7 +519,7 @@ async function readAndValidateManifest(
     !hasArchivePath(
       manifest.contents,
       'database.dump',
-      'postgres_custom_dump'
+      'postgres_custom_data_dump'
     ) ||
     !hasArchivePath(
       manifest.contents,
@@ -504,18 +537,59 @@ async function readAndValidateManifest(
     id: typeof manifest.id === 'string' ? manifest.id : null,
     generatedAt:
       typeof manifest.generatedAt === 'string' ? manifest.generatedAt : null,
-    formatVersion: 1
+    formatVersion: 2
   };
 }
 
-function countPgRestoreListEntries(stdout: string | undefined): number {
-  if (!stdout) {
-    return 0;
-  }
-  return stdout
+function validatePgRestoreDataList(stdout: string | undefined): {
+  entries: number;
+  restoreList: string;
+} {
+  const restoreEntries = (stdout ?? '')
     .split('\n')
     .map((line) => line.trim())
-    .filter((line) => line.length > 0 && !line.startsWith(';')).length;
+    .filter((line) => line.length > 0 && !line.startsWith(';'));
+
+  if (restoreEntries.length === 0) {
+    throw new AppError(
+      ErrorCode.VALIDATION,
+      'Backup database dump has no restorable Postgram table data'
+    );
+  }
+
+  const approvedEntries = new Set<string>();
+  for (const entry of restoreEntries) {
+    const match = PG_RESTORE_TABLE_DATA_ENTRY.exec(entry);
+    const tableName = match?.[1];
+    if (!tableName || !ADMIN_BACKUP_DATA_TABLE_SET.has(tableName)) {
+      throw new AppError(
+        ErrorCode.VALIDATION,
+        'Backup database dump contains unsupported or active PostgreSQL objects'
+      );
+    }
+    if (approvedEntries.has(tableName)) {
+      throw new AppError(
+        ErrorCode.VALIDATION,
+        'Backup database dump contains duplicate table data entries'
+      );
+    }
+    approvedEntries.add(tableName);
+  }
+
+  if (
+    approvedEntries.size !== ADMIN_BACKUP_DATA_TABLES.length ||
+    ADMIN_BACKUP_DATA_TABLES.some((table) => !approvedEntries.has(table))
+  ) {
+    throw new AppError(
+      ErrorCode.VALIDATION,
+      'Backup database dump is missing required Postgram table data'
+    );
+  }
+
+  return {
+    entries: restoreEntries.length,
+    restoreList: `${restoreEntries.join('\n')}\n`
+  };
 }
 
 function formatStagingDatabaseName(now: Date, token: string): string {
@@ -560,6 +634,7 @@ export async function prepareAdminBackupRestore(
   const manifestPath = join(payloadDir, 'manifest.json');
   const configurationPath = join(payloadDir, 'configuration.json');
   const databaseDumpPath = join(payloadDir, 'database.dump');
+  const restoreListPath = join(rootDir, 'restore.list');
   const commandRunner = input.commandRunner ?? defaultCommandRunner;
 
   try {
@@ -589,6 +664,10 @@ export async function prepareAdminBackupRestore(
       args: ['--list', databaseDumpPath],
       env: process.env
     });
+    const validatedRestoreList = validatePgRestoreDataList(
+      pgRestoreList?.stdout
+    );
+    await writeFile(restoreListPath, validatedRestoreList.restoreList);
 
     const sourceDatabase = databaseDescriptorFromUrl(input.databaseUrl);
     const stagingDatabaseName = formatStagingDatabaseName(now, token);
@@ -600,13 +679,14 @@ export async function prepareAdminBackupRestore(
       expiresAt,
       rootDir,
       databaseDumpPath,
+      restoreListPath,
       stagingDatabaseName,
       manifest,
       sourceDatabase,
       validation: {
         archive: 'passed',
         pgRestoreList: 'passed',
-        entries: countPgRestoreListEntries(pgRestoreList?.stdout)
+        entries: validatedRestoreList.entries
       },
       switchOver: buildSwitchOverInstructions({
         sourceDatabase,
@@ -645,11 +725,29 @@ export async function stageAdminBackupRestore(
       args: [input.restore.stagingDatabaseName],
       env
     });
+    await input.verifier({
+      databaseUrl: stagingDatabaseUrl,
+      stagingDatabaseName: input.restore.stagingDatabaseName
+    });
+    await commandRunner({
+      command: input.psqlPath ?? 'psql',
+      args: [
+        '--dbname',
+        input.restore.stagingDatabaseName,
+        '--command',
+        `TRUNCATE TABLE ${ADMIN_BACKUP_DATA_TABLES.map((table) => `public.${table}`).join(', ')} RESTART IDENTITY CASCADE`
+      ],
+      env
+    });
     await commandRunner({
       command: input.pgRestorePath ?? 'pg_restore',
       args: [
+        '--data-only',
         '--no-owner',
         '--no-acl',
+        '--exit-on-error',
+        '--use-list',
+        input.restore.restoreListPath,
         '--dbname',
         input.restore.stagingDatabaseName,
         input.restore.databaseDumpPath

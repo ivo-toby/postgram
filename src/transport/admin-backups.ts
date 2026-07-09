@@ -24,6 +24,11 @@ import {
   type AdminBackupCommandRunner
 } from '../services/admin-backup-service.js';
 import {
+  ensureEmbeddingIdentityAgreement,
+  type ConfiguredEmbeddingIdentity
+} from '../services/embeddings/admin.js';
+import { resolveEmbeddingDefaults } from '../services/embeddings/providers.js';
+import {
   AppError,
   ErrorCode,
   toErrorResponse,
@@ -114,29 +119,48 @@ function cleanupOnStreamClose(
   stream.once('error', runCleanup);
 }
 
-async function defaultRestoreVerifier(input: {
-  databaseUrl: string;
-}): Promise<{
+export async function verifyAdminBackupRestore(
+  pool: Pool,
+  configuredEmbedding: ConfiguredEmbeddingIdentity
+): Promise<{
   migrations: 'passed';
   health: 'connected';
 }> {
-  const stagingPool = createPool(input.databaseUrl);
-  try {
-    await runMigrations(stagingPool);
-    const health = await checkDatabaseHealth(stagingPool);
-    if (health !== 'connected') {
-      throw new AppError(
-        ErrorCode.INTERNAL,
-        'Restored staging database health check failed'
-      );
-    }
-    return {
-      migrations: 'passed',
-      health: 'connected'
-    };
-  } finally {
-    await stagingPool.end();
+  await runMigrations(pool);
+  const mismatch = await ensureEmbeddingIdentityAgreement(
+    pool,
+    configuredEmbedding
+  );
+  if (mismatch) {
+    throw new AppError(ErrorCode.VALIDATION, mismatch.message, {
+      configured: mismatch.details.configured,
+      activeModel: mismatch.details.activeModel
+    });
   }
+  const health = await checkDatabaseHealth(pool);
+  if (health !== 'connected') {
+    throw new AppError(
+      ErrorCode.INTERNAL,
+      'Restored staging database health check failed'
+    );
+  }
+  return {
+    migrations: 'passed',
+    health: 'connected'
+  };
+}
+
+function createDefaultRestoreVerifier(
+  configuredEmbedding: ConfiguredEmbeddingIdentity
+): AdminBackupRestoreVerifier {
+  return async (input) => {
+    const stagingPool = createPool(input.databaseUrl);
+    try {
+      return await verifyAdminBackupRestore(stagingPool, configuredEmbedding);
+    } finally {
+      await stagingPool.end();
+    }
+  };
 }
 
 function cleanupExpiredRestoreTokens(nowMs = Date.now()): void {
@@ -381,11 +405,22 @@ export function registerAdminBackupRoutes(
 
       const admin = c.get('admin');
       const restore = takeRestoreToken(body.restoreToken, admin.user.id);
+      const embeddingDefaults = resolveEmbeddingDefaults(
+        options.runtimeConfig.EMBEDDING_PROVIDER,
+        options.runtimeConfig.EMBEDDING_MODEL,
+        options.runtimeConfig.EMBEDDING_DIMENSIONS
+      );
       const staged = await stageAdminBackupRestore({
         restore,
         databaseUrl: options.runtimeConfig.DATABASE_URL,
         commandRunner: options.backupCommandRunner,
-        verifier: options.backupRestoreVerifier ?? defaultRestoreVerifier,
+        verifier:
+          options.backupRestoreVerifier ??
+          createDefaultRestoreVerifier({
+            provider: options.runtimeConfig.EMBEDDING_PROVIDER,
+            model: embeddingDefaults.model,
+            dimensions: embeddingDefaults.dimensions
+          }),
         createdbPath: options.createdbPath,
         dropdbPath: options.dropdbPath,
         pgRestorePath: options.pgRestorePath

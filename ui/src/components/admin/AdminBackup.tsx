@@ -265,10 +265,10 @@ export default function AdminBackup({
         <div>
           <h2 className="text-xl font-semibold text-white">Backups</h2>
           <p className="mt-1 max-w-3xl text-sm leading-6 text-gray-400">
-            Download a gzipped backup archive containing a PostgreSQL custom
-            dump and redacted runtime configuration. Treat the archive as
-            sensitive because the database dump includes application data and
-            encrypted admin secrets.
+            Download a gzipped v2 backup archive containing a data-only
+            PostgreSQL custom dump and redacted runtime configuration. Treat
+            the archive as sensitive because the database dump includes
+            application data and encrypted admin secrets.
           </p>
         </div>
         <span className={badgeClassName(stepUpIsFresh ? 'good' : 'warn')}>
@@ -302,7 +302,8 @@ export default function AdminBackup({
             The archive contains <span className="font-mono">database.dump</span>,
             <span className="font-mono"> manifest.json</span>, and
             <span className="font-mono"> configuration.json</span>. The
-            manifest records how to validate the dump before any restore.
+            v2 manifest records the data-only restore policy. Legacy v1 and
+            full-schema archives are rejected.
           </p>
           <label className="mt-4 flex flex-col gap-1 text-xs font-medium text-gray-300">
             <HelpLabel help="Use the current six-digit authenticator code. Backup archives contain sensitive data, so downloads require fresh MFA confirmation.">
@@ -354,12 +355,14 @@ export default function AdminBackup({
             Restore backup
           </h3>
           <p className="mt-2 text-sm leading-6 text-gray-300">
-            Restore is staged deliberately: validate the archive, restore into a
-            new database name, run health checks, then switch the app over when
-            you are ready. The current database is left untouched for rollback.
+            Restore is staged deliberately: validate approved Postgram table
+            data, create a trusted schema from bundled migrations, import into a
+            new database name, and run health checks. Switch the app over only
+            when you are ready. The current database is left untouched for
+            rollback.
           </p>
           <label className="mt-4 flex flex-col gap-1 text-xs font-medium text-gray-300">
-            <HelpLabel help="Upload a Postgram backup tarball. Validation checks manifest.json, configuration.json, database.dump, and pg_restore --list before any database is created.">
+            <HelpLabel help="Upload a Postgram v2 backup tarball. Validation checks manifest.json, configuration.json, database.dump, and requires pg_restore --list to contain exactly the approved table-data entries before any database is created. Legacy v1, full-schema, active, and unknown objects are rejected.">
               Backup archive
             </HelpLabel>
             <input

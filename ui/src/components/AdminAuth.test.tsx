@@ -730,6 +730,30 @@ describe('AdminAuth', () => {
     expect(screen.queryByRole('heading', { name: 'Admin onboarding' })).not.toBeInTheDocument();
   });
 
+  it('keeps completed onboarding open when browsing completed steps', async () => {
+    const user = userEvent.setup();
+    mockFetch([
+      { path: '/admin/api/bootstrap/status', body: { state: 'configured' } },
+      {
+        path: '/admin/api/session/current',
+        body: { user: activeUser, session: activeSession },
+      },
+      ...adminOpsRoutes(),
+    ]);
+
+    render(<AdminAuth />);
+
+    expect(await screen.findByRole('heading', { name: 'Operations dashboard' })).toBeInTheDocument();
+    await user.click(screen.getByRole('button', { name: 'Onboarding' }));
+    expect(await screen.findByRole('heading', { name: 'Admin onboarding' })).toBeInTheDocument();
+
+    await user.click(screen.getByRole('button', { name: /Step 2\s+Provider settings\s+Done/u }));
+
+    expect(await screen.findByRole('heading', { name: 'Provider settings' })).toBeInTheDocument();
+    expect(screen.getByRole('heading', { name: 'Admin onboarding' })).toBeInTheDocument();
+    expect(screen.queryByRole('heading', { name: 'Health' })).not.toBeInTheDocument();
+  });
+
   it('keeps MFA challenge state when an authenticator code is invalid', async () => {
     const user = userEvent.setup();
     mockFetch([

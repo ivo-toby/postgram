@@ -356,8 +356,9 @@ export default function AdminDashboard({
   }, [stepUp]);
 
   function handleOnboardingStateChange(state: AdminOnboardingState) {
+    const wasCompleted = onboarding.data?.status === 'completed';
     setOnboarding(loadedResource(state));
-    if (state.status === 'completed') {
+    if (state.status === 'completed' && !wasCompleted) {
       setActivePanel('overview');
     }
   }

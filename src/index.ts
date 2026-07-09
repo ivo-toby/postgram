@@ -326,32 +326,6 @@ export async function startServer(): Promise<{
 
   await runMigrations(pool);
 
-  const firstRunBootstrap = await ensureFirstRunBootstrapToken(pool, {
-    ttlMs: FIRST_RUN_BOOTSTRAP_TOKEN_TTL_MS
-  });
-  if (firstRunBootstrap.isErr()) {
-    throw firstRunBootstrap.error;
-  }
-  const bootstrapState = firstRunBootstrap.value;
-  if (bootstrapState.status === 'created') {
-    printFirstRunBootstrapToken({
-      plaintextToken: bootstrapState.plaintextToken,
-      expiresAt: bootstrapState.token.expiresAt
-    });
-    logger.warn(
-      {
-        bootstrapToken: bootstrapState.plaintextToken,
-        expiresAt: bootstrapState.token.expiresAt
-      },
-      'admin first-run bootstrap token generated; use the local operator logs to complete setup'
-    );
-  } else if (bootstrapState.status === 'existing') {
-    logger.info(
-      { expiresAt: bootstrapState.token.expiresAt },
-      'admin first-run bootstrap token already exists; plaintext is not recoverable'
-    );
-  }
-
   const runtimeConfigResult = await resolveRuntimeProviderConfig(pool, {
     envConfig: config,
     encryptionKey: config.ADMIN_SETTINGS_ENCRYPTION_KEY
@@ -544,6 +518,32 @@ export async function startServer(): Promise<{
     },
     getHealthStatus: () => createHealthStatus(pool)
   });
+
+  const firstRunBootstrap = await ensureFirstRunBootstrapToken(pool, {
+    ttlMs: FIRST_RUN_BOOTSTRAP_TOKEN_TTL_MS
+  });
+  if (firstRunBootstrap.isErr()) {
+    throw firstRunBootstrap.error;
+  }
+  const bootstrapState = firstRunBootstrap.value;
+  if (bootstrapState.status === 'created') {
+    printFirstRunBootstrapToken({
+      plaintextToken: bootstrapState.plaintextToken,
+      expiresAt: bootstrapState.token.expiresAt
+    });
+    logger.warn(
+      {
+        bootstrapToken: bootstrapState.plaintextToken,
+        expiresAt: bootstrapState.token.expiresAt
+      },
+      'admin first-run bootstrap token generated; use the local operator logs to complete setup'
+    );
+  } else if (bootstrapState.status === 'existing') {
+    logger.info(
+      { expiresAt: bootstrapState.token.expiresAt },
+      'admin first-run bootstrap token already exists; plaintext is not recoverable'
+    );
+  }
 
   const server = serve({
     fetch: app.fetch,

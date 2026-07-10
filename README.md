@@ -349,6 +349,13 @@ The API binds to `127.0.0.1:3100` and the UI binds to `127.0.0.1:3000` by
 default. Use `POSTGRAM_API_PORT=<port>` or `UI_PORT=<port>` as shell overrides
 when running more than one local stack.
 
+To use an existing Postgres cluster with Compose, set `POSTGRES_HOST`,
+`POSTGRES_PORT`, `POSTGRES_DB`, and `POSTGRES_USER` on `mcp-server` in a Compose
+override and remove the `postgres` dependency, as in the operator examples. If
+that external cluster requires password auth, set `POSTGRES_PASSWORD` in `.env`;
+if it uses passwordless local auth, leave `POSTGRES_PASSWORD=` blank. You can
+also bypass the split settings entirely by setting `DATABASE_URL`.
+
 For embeddings, Compose preserves the OpenAI default when `OPENAI_API_KEY` is
 present. If no OpenAI key and no explicit `EMBEDDING_PROVIDER` are supplied, the
 container entrypoint chooses local Ollama embeddings so a clean stack can boot
@@ -369,12 +376,14 @@ If the console has scrolled, read the same one-time bootstrap token from the
 trusted local operator channel:
 
 ```bash
-docker compose logs mcp-server | grep 'admin first-run bootstrap token'
+docker compose logs mcp-server | grep 'admin first-run bootstrap token' | tail -n 1
 ```
 
 Then open `http://127.0.0.1:3000/admin`, create the first admin user, and
 complete MFA enrollment. The bootstrap token is stored hash-only in Postgres,
 expires after 24 hours, and is invalidated after the first admin is created.
+If you changed the Postgres target, copy the latest bootstrap-token log line;
+older lines may belong to a previous database and will be rejected.
 
 After active MFA login, the Admin dashboard opens a guided onboarding flow until
 it is completed or deliberately skipped. The guide explains the setup path in
@@ -466,6 +475,11 @@ those values outside database backups and browser storage.
 | Variable                      | Required    | Default | Description                                                                                                                    |
 | ----------------------------- | ----------- | ------- | ------------------------------------------------------------------------------------------------------------------------------ |
 | `DATABASE_URL`                | non-Compose | Docker secret file + Postgres env | Full Postgres connection string. Compose constructs it from the generated Postgres password secret when unset.                 |
+| `POSTGRES_HOST`               | no          | `postgres` | Compose Postgres host used when `DATABASE_URL` is unset. Override to `host.docker.internal` or another hostname for an existing cluster. |
+| `POSTGRES_PORT`               | no          | `5432`  | Compose Postgres port used when `DATABASE_URL` is unset.                                                                        |
+| `POSTGRES_DB`                 | no          | `postgram` | Compose Postgres database used when `DATABASE_URL` is unset.                                                                    |
+| `POSTGRES_USER`               | no          | `postgram` | Compose Postgres user used when `DATABASE_URL` is unset.                                                                        |
+| `POSTGRES_PASSWORD`           | no          | Docker secret file | Compose Postgres password used when `DATABASE_URL` is unset. For external hosts, an explicit blank value builds a passwordless URL. |
 | `ADMIN_MFA_SECRET_KEY`        | admin setup | Docker secret file | Stable 32+ character secret used to encrypt admin TOTP seeds. Compose generates and persists it in `postgram_secrets` when unset. |
 | `OPENAI_API_KEY`              | conditional |         | Required when `EMBEDDING_PROVIDER=openai` OR (`EXTRACTION_ENABLED=true` AND `EXTRACTION_PROVIDER=openai`). Optional otherwise. |
 | `ADMIN_SETTINGS_ENCRYPTION_KEY` | when saving admin-managed secrets | Docker secret file | 32-byte base64url installation key used to encrypt DB-backed provider secrets. Compose generates and persists it in `postgram_secrets` when unset. Keep it outside database backups. |

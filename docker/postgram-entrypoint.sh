@@ -48,13 +48,57 @@ if (decoded.length !== 32) {
 NODE
 }
 
+build_postgres_url() {
+  POSTGRAM_URL_USER="$1" \
+  POSTGRAM_URL_PASSWORD="$2" \
+  POSTGRAM_URL_HOST="$3" \
+  POSTGRAM_URL_PORT="$4" \
+  POSTGRAM_URL_DB="$5" \
+  node <<'NODE'
+const user = process.env.POSTGRAM_URL_USER ?? 'postgram';
+const password = process.env.POSTGRAM_URL_PASSWORD ?? '';
+const rawHost = process.env.POSTGRAM_URL_HOST ?? 'postgres';
+const port = process.env.POSTGRAM_URL_PORT ?? '5432';
+const database = process.env.POSTGRAM_URL_DB ?? 'postgram';
+
+const host =
+  rawHost.includes(':') && !rawHost.startsWith('[') ? `[${rawHost}]` : rawHost;
+const auth =
+  password.length > 0
+    ? `${encodeURIComponent(user)}:${encodeURIComponent(password)}`
+    : encodeURIComponent(user);
+
+process.stdout.write(
+  `postgres://${auth}@${host}:${port}/${encodeURIComponent(database)}`
+);
+NODE
+}
+
 if [ -z "${DATABASE_URL:-}" ]; then
-  postgres_password="$(read_secret_file "$SECRETS_DIR/postgres-password")"
   postgres_user="${POSTGRES_USER:-postgram}"
   postgres_db="${POSTGRES_DB:-postgram}"
   postgres_host="${POSTGRES_HOST:-postgres}"
   postgres_port="${POSTGRES_PORT:-5432}"
-  export DATABASE_URL="postgres://${postgres_user}:${postgres_password}@${postgres_host}:${postgres_port}/${postgres_db}"
+
+  if [ "${POSTGRES_PASSWORD+x}" = "x" ]; then
+    if [ -n "$POSTGRES_PASSWORD" ] || [ "$postgres_host" != "postgres" ]; then
+      postgres_password="$POSTGRES_PASSWORD"
+    else
+      postgres_password="$(read_secret_file "$SECRETS_DIR/postgres-password")"
+    fi
+  else
+    postgres_password="$(read_secret_file "$SECRETS_DIR/postgres-password")"
+  fi
+
+  DATABASE_URL="$(
+    build_postgres_url \
+      "$postgres_user" \
+      "$postgres_password" \
+      "$postgres_host" \
+      "$postgres_port" \
+      "$postgres_db"
+  )"
+  export DATABASE_URL
 fi
 
 if [ -z "${EMBEDDING_PROVIDER:-}" ]; then

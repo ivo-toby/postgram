@@ -80,7 +80,8 @@ Expected:
 
 ```bash
 COMPOSE_PROJECT_NAME=postgram-manual docker compose logs mcp-server \
-  | grep 'admin first-run bootstrap token'
+  | grep 'admin first-run bootstrap token' \
+  | tail -n 1
 ```
 
 Expected:

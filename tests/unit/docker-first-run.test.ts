@@ -128,6 +128,81 @@ describe('Docker first-run scripts', () => {
     }
   });
 
+  it('constructs a passwordless DATABASE_URL for an external Postgres host when POSTGRES_PASSWORD is explicitly blank', () => {
+    const secretsDir = makeSecretDir();
+    try {
+      writeFileSync(join(secretsDir, 'postgres-password'), 'generated-secret\n');
+      writeFileSync(
+        join(secretsDir, 'admin-mfa-secret-key'),
+        'stable-admin-mfa-secret-key-32-bytes\n'
+      );
+      writeFileSync(
+        join(secretsDir, 'admin-settings-encryption-key'),
+        '3ZowdtuLN12_15tV94qV3gMHnwv-gMZevpqvMjPDU5s\n'
+      );
+
+      const result = runShellScript(
+        'docker/postgram-entrypoint.sh',
+        [
+          process.execPath,
+          '-e',
+          "process.stdout.write(process.env.DATABASE_URL ?? '')"
+        ],
+        {
+          POSTGRAM_SECRETS_DIR: secretsDir,
+          POSTGRES_HOST: 'host.docker.internal',
+          POSTGRES_PASSWORD: ''
+        }
+      );
+
+      expect(result.status).toBe(0);
+      expect(result.stdout).toBe(
+        'postgres://postgram@host.docker.internal:5432/postgram'
+      );
+    } finally {
+      rmSync(secretsDir, { recursive: true, force: true });
+    }
+  });
+
+  it('uses an explicit POSTGRES_PASSWORD override when constructing DATABASE_URL for external Postgres', () => {
+    const secretsDir = makeSecretDir();
+    try {
+      writeFileSync(join(secretsDir, 'postgres-password'), 'generated-secret\n');
+      writeFileSync(
+        join(secretsDir, 'admin-mfa-secret-key'),
+        'stable-admin-mfa-secret-key-32-bytes\n'
+      );
+      writeFileSync(
+        join(secretsDir, 'admin-settings-encryption-key'),
+        '3ZowdtuLN12_15tV94qV3gMHnwv-gMZevpqvMjPDU5s\n'
+      );
+
+      const result = runShellScript(
+        'docker/postgram-entrypoint.sh',
+        [
+          process.execPath,
+          '-e',
+          "process.stdout.write(process.env.DATABASE_URL ?? '')"
+        ],
+        {
+          POSTGRAM_SECRETS_DIR: secretsDir,
+          POSTGRES_DB: 'postgram data',
+          POSTGRES_HOST: 'db.example.test',
+          POSTGRES_PASSWORD: 'p@ss/word#1',
+          POSTGRES_PORT: '6543',
+          POSTGRES_USER: 'postgram-user'
+        }
+      );
+
+      expect(result.status).toBe(0);
+      expect(result.stdout).toBe(
+        'postgres://postgram-user:p%40ss%2Fword%231@db.example.test:6543/postgram%20data'
+      );
+    } finally {
+      rmSync(secretsDir, { recursive: true, force: true });
+    }
+  });
+
   it('keeps the OpenAI embedding default when a legacy OPENAI_API_KEY override is present', () => {
     const secretsDir = makeSecretDir();
     try {

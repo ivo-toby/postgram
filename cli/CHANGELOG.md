@@ -1,3 +1,9 @@
+## [1.34.1](https://github.com/ivo-toby/postgram/compare/cli-v1.34.0...cli-v1.34.1) (2026-07-10)
+
+### Bug Fixes
+
+* **admin-pass:** docker external postgres bootstrap ([#96](https://github.com/ivo-toby/postgram/issues/96)) ([ca03c8e](https://github.com/ivo-toby/postgram/commit/ca03c8e123582a76f490ef0fea9b86626e54999c))
+
 ## [1.34.0](https://github.com/ivo-toby/postgram/compare/cli-v1.33.3...cli-v1.34.0) (2026-07-10)
 
 ### Features

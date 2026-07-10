@@ -6,6 +6,7 @@ import type { ContentfulStatusCode } from 'hono/utils/http-status';
 import type { Pool } from 'pg';
 
 import { createAuthMiddleware } from './auth/middleware.js';
+import { ensureFirstRunBootstrapToken } from './auth/admin-service.js';
 import type { AuthContext } from './auth/types.js';
 import { loadConfig } from './config.js';
 import type { AppConfig } from './config.js';
@@ -21,7 +22,20 @@ import {
 } from './services/embeddings/providers.js';
 import { ensureEmbeddingIdentityAgreement } from './services/embeddings/admin.js';
 import { createEnrichmentWorker } from './services/enrichment-worker.js';
+import {
+  createProviderPolicyFetch,
+  readAppliedProviderSettingKeys,
+  resolveRuntimeProviderConfig,
+  type ProviderConfigDnsLookup,
+  type ProviderConfigFetch,
+  type ProviderConfigSettingKey
+} from './services/admin-provider-config-service.js';
+import type {
+  AdminBackupCommandRunner,
+  AdminBackupRestoreVerifier
+} from './services/admin-backup-service.js';
 import { registerMcpRoutes } from './transport/mcp.js';
+import { registerAdminRoutes } from './transport/admin.js';
 import { registerOAuthRoutes } from './transport/oauth.js';
 import { registerRestRoutes } from './transport/rest.js';
 import { createLogger } from './util/logger.js';
@@ -46,12 +60,28 @@ type AppOptions = {
   pool?: Pool;
   embeddingService?: EmbeddingService | undefined;
   extractionEnabled?: boolean | undefined;
-  oauth?: {
-    enabled: boolean;
-    publicBaseUrl?: string | undefined;
-  } | undefined;
+  oauth?:
+    | {
+        enabled: boolean;
+        publicBaseUrl?: string | undefined;
+      }
+    | undefined;
+  adminMfaSecretKey?: string | undefined;
+  adminSettingsEncryptionKey?: string | undefined;
+  runtimeConfig?: AppConfig | undefined;
+  providerConfigFetch?: ProviderConfigFetch | undefined;
+  providerConfigDnsLookup?: ProviderConfigDnsLookup | undefined;
+  adminBackupCommandRunner?: AdminBackupCommandRunner | undefined;
+  adminBackupRestoreVerifier?: AdminBackupRestoreVerifier | undefined;
+  adminBackupPgDumpPath?: string | undefined;
+  adminBackupPgRestorePath?: string | undefined;
+  adminBackupCreatedbPath?: string | undefined;
+  adminBackupDropdbPath?: string | undefined;
+  adminBackupTarPath?: string | undefined;
   getHealthStatus?: () => Promise<HealthStatus> | HealthStatus;
 };
+
+const FIRST_RUN_BOOTSTRAP_TOKEN_TTL_MS = 24 * 60 * 60 * 1000;
 
 function getDefaultHealthStatus(): HealthStatus {
   return {
@@ -107,8 +137,60 @@ export function buildEmbeddingProviderConfig(
   };
 }
 
+export function createAppliedProviderPolicyFetch(input: {
+  settingKey: ProviderConfigSettingKey;
+  provider: 'ollama' | 'openai-compatible';
+  baseUrl: string;
+  appliedSettingKeys:
+    | ReadonlySet<ProviderConfigSettingKey>
+    | readonly ProviderConfigSettingKey[];
+  dnsLookup?: ProviderConfigDnsLookup | undefined;
+  fetchImpl?: ProviderConfigFetch | undefined;
+}): ProviderConfigFetch | undefined {
+  const applied =
+    'has' in input.appliedSettingKeys
+      ? input.appliedSettingKeys.has(input.settingKey)
+      : input.appliedSettingKeys.includes(input.settingKey);
+
+  if (!applied) {
+    return undefined;
+  }
+
+  return createProviderPolicyFetch({
+    settingKey: input.settingKey,
+    provider: input.provider,
+    baseUrl: input.baseUrl,
+    dnsLookup: input.dnsLookup,
+    fetchImpl: input.fetchImpl
+  });
+}
+
 function describeHost(providerConfig: EmbeddingProviderConfig): string {
-  return providerConfig.provider === 'ollama' ? providerConfig.baseUrl : 'api.openai.com';
+  return providerConfig.provider === 'ollama'
+    ? providerConfig.baseUrl
+    : 'api.openai.com';
+}
+
+function printFirstRunBootstrapToken(input: {
+  plaintextToken: string;
+  expiresAt: string;
+}): void {
+  const message = [
+    '',
+    '============================================================',
+    'Postgram first admin setup',
+    '',
+    `Bootstrap token: ${input.plaintextToken}`,
+    `Expires at:      ${input.expiresAt}`,
+    '',
+    'Open http://127.0.0.1:3000/admin and paste this token.',
+    'This token is shown once. After restart, existing token',
+    'plaintext cannot be recovered from Postgram.',
+    '============================================================',
+    ''
+  ].join('\n');
+
+  console.warn(message);
 }
 
 export function createApp(
@@ -154,6 +236,28 @@ export function createApp(
   });
 
   if (options.pool) {
+    registerAdminRoutes(
+      app as unknown as Parameters<typeof registerAdminRoutes>[0],
+      options.pool,
+      {
+        adminMfaSecretKey: options.adminMfaSecretKey,
+        adminSettingsEncryptionKey: options.adminSettingsEncryptionKey,
+        runtimeConfig: options.runtimeConfig,
+        providerConfigFetch: options.providerConfigFetch,
+        providerConfigDnsLookup: options.providerConfigDnsLookup,
+        backupCommandRunner: options.adminBackupCommandRunner,
+        backupRestoreVerifier: options.adminBackupRestoreVerifier,
+        pgDumpPath: options.adminBackupPgDumpPath,
+        pgRestorePath: options.adminBackupPgRestorePath,
+        createdbPath: options.adminBackupCreatedbPath,
+        dropdbPath: options.adminBackupDropdbPath,
+        tarPath: options.adminBackupTarPath,
+        ...(options.extractionEnabled !== undefined
+          ? { extractionEnabled: options.extractionEnabled }
+          : {})
+      }
+    );
+
     if (options.oauth?.enabled) {
       if (!options.oauth.publicBaseUrl) {
         throw new AppError(
@@ -175,9 +279,10 @@ export function createApp(
     });
     registerMcpRoutes(app, options.pool, {
       embeddingService: options.embeddingService,
-      resourceMetadataUrl: options.oauth?.enabled && options.oauth.publicBaseUrl
-        ? `${options.oauth.publicBaseUrl.replace(/\/$/, '')}/.well-known/oauth-protected-resource/mcp`
-        : undefined,
+      resourceMetadataUrl:
+        options.oauth?.enabled && options.oauth.publicBaseUrl
+          ? `${options.oauth.publicBaseUrl.replace(/\/$/, '')}/.well-known/oauth-protected-resource/mcp`
+          : undefined,
       ...(options.extractionEnabled !== undefined
         ? { extractionEnabled: options.extractionEnabled }
         : {})
@@ -221,9 +326,45 @@ export async function startServer(): Promise<{
 
   await runMigrations(pool);
 
-  const providerConfig = buildEmbeddingProviderConfig(config);
-  const embeddingProvider: EmbeddingProvider = createEmbeddingProvider(providerConfig);
-  const embeddingService = createEmbeddingService({ provider: embeddingProvider });
+  const runtimeConfigResult = await resolveRuntimeProviderConfig(pool, {
+    envConfig: config,
+    encryptionKey: config.ADMIN_SETTINGS_ENCRYPTION_KEY
+  });
+  if (runtimeConfigResult.isErr()) {
+    throw runtimeConfigResult.error;
+  }
+  const runtimeConfig = runtimeConfigResult.value;
+  const appliedProviderSettingsResult = await readAppliedProviderSettingKeys(
+    pool
+  );
+  if (appliedProviderSettingsResult.isErr()) {
+    throw appliedProviderSettingsResult.error;
+  }
+  const appliedProviderSettingKeys = new Set(
+    appliedProviderSettingsResult.value
+  );
+
+  let providerConfig = buildEmbeddingProviderConfig(runtimeConfig);
+  if (providerConfig.provider === 'ollama') {
+    const settingKey = runtimeConfig.EMBEDDING_BASE_URL
+      ? 'EMBEDDING_BASE_URL'
+      : 'OLLAMA_BASE_URL';
+    const fetchImpl = createAppliedProviderPolicyFetch({
+      settingKey,
+      provider: 'ollama',
+      baseUrl: providerConfig.baseUrl,
+      appliedSettingKeys: appliedProviderSettingKeys
+    });
+    providerConfig = {
+      ...providerConfig,
+      fetchImpl
+    };
+  }
+  const embeddingProvider: EmbeddingProvider =
+    createEmbeddingProvider(providerConfig);
+  const embeddingService = createEmbeddingService({
+    provider: embeddingProvider
+  });
 
   logger.info(
     {
@@ -263,12 +404,16 @@ export async function startServer(): Promise<{
     | ((prompt: string, schema?: object) => Promise<string>)
     | undefined;
   let callLlmFactory:
-    | ((provider: string | null, model: string | null) =>
-        (prompt: string, schema?: object) => Promise<string>)
+    | ((
+        provider: string | null,
+        model: string | null
+      ) => (prompt: string, schema?: object) => Promise<string>)
     | undefined;
-  if (config.EXTRACTION_ENABLED) {
+  if (runtimeConfig.EXTRACTION_ENABLED) {
     const { createLlmProvider } = await import('./services/llm-provider.js');
-    type ExtractionProvider = Parameters<typeof createLlmProvider>[0]['provider'];
+    type ExtractionProvider = Parameters<
+      typeof createLlmProvider
+    >[0]['provider'];
     const allowedProviders: readonly ExtractionProvider[] = [
       'openai',
       'anthropic',
@@ -276,26 +421,47 @@ export async function startServer(): Promise<{
       'openai-compatible'
     ];
     callLlmFactory = (providerOverride, modelOverride) => {
-      const provider: ExtractionProvider = providerOverride
-        && (allowedProviders as readonly string[]).includes(providerOverride)
-        ? (providerOverride as ExtractionProvider)
-        : config.EXTRACTION_PROVIDER;
+      const provider: ExtractionProvider =
+        providerOverride &&
+        (allowedProviders as readonly string[]).includes(providerOverride)
+          ? (providerOverride as ExtractionProvider)
+          : runtimeConfig.EXTRACTION_PROVIDER;
+      const fetchImpl =
+        provider === 'openai-compatible' && runtimeConfig.EXTRACTION_BASE_URL
+          ? createAppliedProviderPolicyFetch({
+              settingKey: 'EXTRACTION_BASE_URL',
+              provider,
+              baseUrl: runtimeConfig.EXTRACTION_BASE_URL,
+              appliedSettingKeys: appliedProviderSettingKeys
+            })
+          : provider === 'ollama'
+            ? createAppliedProviderPolicyFetch({
+                settingKey: 'OLLAMA_BASE_URL',
+                provider,
+                baseUrl: runtimeConfig.OLLAMA_BASE_URL,
+                appliedSettingKeys: appliedProviderSettingKeys
+              })
+            : undefined;
       return createLlmProvider({
         provider,
-        model: modelOverride ?? config.EXTRACTION_MODEL,
-        openaiApiKey: config.OPENAI_API_KEY,
-        extractionBaseUrl: config.EXTRACTION_BASE_URL,
-        extractionApiKey: config.EXTRACTION_API_KEY,
-        anthropicApiKey: config.ANTHROPIC_API_KEY,
-        ollamaBaseUrl: config.OLLAMA_BASE_URL,
-        ollamaApiKey: config.OLLAMA_API_KEY,
-        disableThinking: config.EXTRACTION_DISABLE_THINKING,
-        reasoningEffort: config.EXTRACTION_REASONING_EFFORT
+        model: modelOverride ?? runtimeConfig.EXTRACTION_MODEL,
+        openaiApiKey: runtimeConfig.OPENAI_API_KEY,
+        extractionBaseUrl: runtimeConfig.EXTRACTION_BASE_URL,
+        extractionApiKey: runtimeConfig.EXTRACTION_API_KEY,
+        anthropicApiKey: runtimeConfig.ANTHROPIC_API_KEY,
+        ollamaBaseUrl: runtimeConfig.OLLAMA_BASE_URL,
+        ollamaApiKey: runtimeConfig.OLLAMA_API_KEY,
+        disableThinking: runtimeConfig.EXTRACTION_DISABLE_THINKING,
+        reasoningEffort: runtimeConfig.EXTRACTION_REASONING_EFFORT,
+        fetchImpl
       });
     };
     callLlm = callLlmFactory(null, null);
     logger.info(
-      { provider: config.EXTRACTION_PROVIDER, model: config.EXTRACTION_MODEL },
+      {
+        provider: runtimeConfig.EXTRACTION_PROVIDER,
+        model: runtimeConfig.EXTRACTION_MODEL
+      },
       'LLM extraction enabled'
     );
   }
@@ -303,24 +469,25 @@ export async function startServer(): Promise<{
   const worker = createEnrichmentWorker({
     pool,
     embeddingService,
-    extractionEnabled: config.EXTRACTION_ENABLED,
-    extractionMemoryMode: config.EXTRACTION_MEMORY_MODE,
+    extractionEnabled: runtimeConfig.EXTRACTION_ENABLED,
+    extractionMemoryMode: runtimeConfig.EXTRACTION_MEMORY_MODE,
     callLlm,
     callLlmFactory,
     logger,
     autoCreate: {
-      enabled: config.EXTRACTION_AUTO_CREATE_ENTITIES,
-      types: config.EXTRACTION_AUTO_CREATE_TYPES,
-      minConfidence: config.EXTRACTION_AUTO_CREATE_MIN_CONFIDENCE,
-      minConfidenceByType: config.EXTRACTION_AUTO_CREATE_MIN_CONFIDENCE_BY_TYPE
+      enabled: runtimeConfig.EXTRACTION_AUTO_CREATE_ENTITIES,
+      types: runtimeConfig.EXTRACTION_AUTO_CREATE_TYPES,
+      minConfidence: runtimeConfig.EXTRACTION_AUTO_CREATE_MIN_CONFIDENCE,
+      minConfidenceByType:
+        runtimeConfig.EXTRACTION_AUTO_CREATE_MIN_CONFIDENCE_BY_TYPE
     },
-    extractionMatchMinSimilarity: config.EXTRACTION_MATCH_MIN_SIMILARITY,
-    extractionMinContentChars: config.EXTRACTION_MIN_CONTENT_CHARS,
-    extractionDebugLog: config.EXTRACTION_DEBUG_LOG,
+    extractionMatchMinSimilarity: runtimeConfig.EXTRACTION_MATCH_MIN_SIMILARITY,
+    extractionMinContentChars: runtimeConfig.EXTRACTION_MIN_CONTENT_CHARS,
+    extractionDebugLog: runtimeConfig.EXTRACTION_DEBUG_LOG,
     semanticNeighbors: {
-      enabled: config.EXTRACTION_SEMANTIC_NEIGHBORS_ENABLED,
-      maxNeighbors: config.EXTRACTION_SEMANTIC_NEIGHBORS_MAX,
-      minSimilarity: config.EXTRACTION_SEMANTIC_NEIGHBORS_MIN_SIMILARITY
+      enabled: runtimeConfig.EXTRACTION_SEMANTIC_NEIGHBORS_ENABLED,
+      maxNeighbors: runtimeConfig.EXTRACTION_SEMANTIC_NEIGHBORS_MAX,
+      minSimilarity: runtimeConfig.EXTRACTION_SEMANTIC_NEIGHBORS_MIN_SIMILARITY
     }
   });
   let workerActive = true;
@@ -341,13 +508,42 @@ export async function startServer(): Promise<{
   const app = createApp({
     pool,
     embeddingService,
-    extractionEnabled: config.EXTRACTION_ENABLED,
+    extractionEnabled: runtimeConfig.EXTRACTION_ENABLED,
+    adminMfaSecretKey: config.ADMIN_MFA_SECRET_KEY,
+    adminSettingsEncryptionKey: config.ADMIN_SETTINGS_ENCRYPTION_KEY,
+    runtimeConfig,
     oauth: {
-      enabled: config.OAUTH_ENABLED,
-      publicBaseUrl: config.PUBLIC_BASE_URL
+      enabled: runtimeConfig.OAUTH_ENABLED,
+      publicBaseUrl: runtimeConfig.PUBLIC_BASE_URL
     },
     getHealthStatus: () => createHealthStatus(pool)
   });
+
+  const firstRunBootstrap = await ensureFirstRunBootstrapToken(pool, {
+    ttlMs: FIRST_RUN_BOOTSTRAP_TOKEN_TTL_MS
+  });
+  if (firstRunBootstrap.isErr()) {
+    throw firstRunBootstrap.error;
+  }
+  const bootstrapState = firstRunBootstrap.value;
+  if (bootstrapState.status === 'created') {
+    printFirstRunBootstrapToken({
+      plaintextToken: bootstrapState.plaintextToken,
+      expiresAt: bootstrapState.token.expiresAt
+    });
+    logger.warn(
+      {
+        bootstrapToken: bootstrapState.plaintextToken,
+        expiresAt: bootstrapState.token.expiresAt
+      },
+      'admin first-run bootstrap token generated; use the local operator logs to complete setup'
+    );
+  } else if (bootstrapState.status === 'existing') {
+    logger.info(
+      { expiresAt: bootstrapState.token.expiresAt },
+      'admin first-run bootstrap token already exists; plaintext is not recoverable'
+    );
+  }
 
   const server = serve({
     fetch: app.fetch,
@@ -383,7 +579,9 @@ if (
     if (error instanceof AppError) {
       process.stderr.write(`${error.code}: ${error.message}\n`);
     } else {
-      process.stderr.write(`${error instanceof Error ? error.message : String(error)}\n`);
+      process.stderr.write(
+        `${error instanceof Error ? error.message : String(error)}\n`
+      );
     }
     process.exitCode = 1;
   });

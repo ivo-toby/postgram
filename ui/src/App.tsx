@@ -1,5 +1,6 @@
 import { useState, useCallback, useEffect, lazy, Suspense } from 'react';
 import LoginScreen from './components/LoginScreen.tsx';
+import AdminAuth from './components/admin/AdminAuth.tsx';
 import MainLayout from './components/MainLayout.tsx';
 import GraphCanvas from './components/GraphCanvas.tsx';
 import SearchBox from './components/SearchBox.tsx';
@@ -28,24 +29,33 @@ const PAGE_STORAGE_KEY = 'pgm_current_page';
 const SHOW_ARCHIVED_KEY = 'pgm_show_archived';
 const ALL_ENTITY_TYPES = ['document', 'memory', 'person', 'project', 'task', 'interaction'];
 
+type RegularPage = Exclude<Page, 'admin'>;
+
+function readStoredRegularPage(): RegularPage {
+  const saved = localStorage.getItem(PAGE_STORAGE_KEY);
+  if (saved === 'graph' || saved === 'projector' || saved === 'tasks') return saved;
+  return 'search';
+}
+
+function pageFromLocation(): Page {
+  if (window.location.pathname.startsWith('/admin')) return 'admin';
+  return readStoredRegularPage();
+}
+
 export default function App() {
   const [apiKey, setApiKey] = useState<string | null>(() => localStorage.getItem(STORAGE_KEY));
-  const [currentPage, setCurrentPage] = useState<Page>(() => {
-    const saved = localStorage.getItem(PAGE_STORAGE_KEY);
-    if (saved === 'graph' || saved === 'projector' || saved === 'tasks') return saved;
-    return 'search';
-  });
-  const [graphLoaded, setGraphLoaded] = useState(false);
-  const [rightOpen, setRightOpen] = useState(false);
-  const [selectedNodeId, setSelectedNodeId] = useState<string | null>(null);
-  const [focusNodeId, setFocusNodeId] = useState<string | null>(null);
-  const [depth, setDepth] = useState(1);
-  const [visibleTypes, setVisibleTypes] = useState<Set<string>>(new Set(ALL_ENTITY_TYPES));
-  const [visibleRelations, setVisibleRelations] = useState<Set<string>>(new Set<string>());
-  const [loadedRelations, setLoadedRelations] = useState<Set<string>>(new Set<string>());
-  const [showArchived, setShowArchived] = useState<boolean>(() => {
-    return localStorage.getItem(SHOW_ARCHIVED_KEY) === 'true';
-  });
+  const [currentPage, setCurrentPage] = useState<Page>(() => pageFromLocation());
+
+  useEffect(() => {
+    function handlePopState() {
+      setCurrentPage(pageFromLocation());
+    }
+
+    window.addEventListener('popstate', handlePopState);
+    return () => {
+      window.removeEventListener('popstate', handlePopState);
+    };
+  }, []);
 
   const handleLogout = useCallback(() => {
     localStorage.removeItem(STORAGE_KEY);
@@ -58,11 +68,63 @@ export default function App() {
   }, []);
 
   const handleNavigate = useCallback((page: Page) => {
+    if (page === 'admin') {
+      window.history.pushState({}, '', '/admin');
+      setCurrentPage('admin');
+      return;
+    }
+
     localStorage.setItem(PAGE_STORAGE_KEY, page);
     setCurrentPage(page);
   }, []);
 
-  const api = useApi({ apiKey: apiKey ?? '', onUnauthorized: handleLogout });
+  const handleAdminBack = useCallback(() => {
+    window.history.pushState({}, '', '/');
+    setCurrentPage(readStoredRegularPage());
+  }, []);
+
+  if (currentPage === 'admin') {
+    return <AdminAuth onBack={handleAdminBack} />;
+  }
+
+  if (!apiKey) {
+    return <LoginScreen onLogin={handleLogin} />;
+  }
+
+  return (
+    <AuthenticatedApp
+      apiKey={apiKey}
+      currentPage={currentPage}
+      onLogout={handleLogout}
+      onNavigate={handleNavigate}
+    />
+  );
+}
+
+function AuthenticatedApp({
+  apiKey,
+  currentPage,
+  onLogout,
+  onNavigate,
+}: {
+  apiKey: string;
+  currentPage: RegularPage;
+  onLogout: () => void;
+  onNavigate: (page: Page) => void;
+}) {
+  const [graphLoaded, setGraphLoaded] = useState(false);
+  const [rightOpen, setRightOpen] = useState(false);
+  const [selectedNodeId, setSelectedNodeId] = useState<string | null>(null);
+  const [focusNodeId, setFocusNodeId] = useState<string | null>(null);
+  const [depth, setDepth] = useState(1);
+  const [visibleTypes, setVisibleTypes] = useState<Set<string>>(new Set(ALL_ENTITY_TYPES));
+  const [visibleRelations, setVisibleRelations] = useState<Set<string>>(new Set<string>());
+  const [loadedRelations, setLoadedRelations] = useState<Set<string>>(new Set<string>());
+  const [showArchived, setShowArchived] = useState<boolean>(() => {
+    return localStorage.getItem(SHOW_ARCHIVED_KEY) === 'true';
+  });
+
+  const api = useApi({ apiKey, onUnauthorized: onLogout });
   const graphHook = useGraph();
   const searchHook = useSearch(api);
   const queueHook = useQueue(api);
@@ -121,11 +183,11 @@ export default function App() {
   }, [handleNodeClick]);
 
   const handleOpenInGraph = useCallback((nodeId: string) => {
-    handleNavigate('graph');
+    onNavigate('graph');
     setSelectedNodeId(nodeId);
     setRightOpen(true);
     setFocusNodeId(nodeId);
-  }, [handleNavigate]);
+  }, [onNavigate]);
 
   const handleStageClick = useCallback(() => {
     setRightOpen(false);
@@ -152,14 +214,10 @@ export default function App() {
     });
   }, [graphHook]);
 
-  if (!apiKey) {
-    return <LoginScreen onLogin={handleLogin} />;
-  }
-
   if (currentPage === 'search') {
     return (
       <div className="flex flex-col h-full bg-gray-950">
-        <TopBar onLogout={handleLogout} currentPage={currentPage} onNavigate={handleNavigate} />
+        <TopBar onLogout={onLogout} currentPage={currentPage} onNavigate={onNavigate} />
         <div className="flex-1 min-h-0">
           <SearchPage api={api} onOpenInGraph={handleOpenInGraph} />
         </div>
@@ -170,7 +228,7 @@ export default function App() {
   if (currentPage === 'projector') {
     return (
       <div className="flex flex-col h-full bg-gray-950">
-        <TopBar onLogout={handleLogout} currentPage={currentPage} onNavigate={handleNavigate} />
+        <TopBar onLogout={onLogout} currentPage={currentPage} onNavigate={onNavigate} />
         <div className="flex-1 min-h-0">
           <Suspense
             fallback={
@@ -189,7 +247,7 @@ export default function App() {
   if (currentPage === 'tasks') {
     return (
       <div className="flex flex-col h-full bg-gray-950">
-        <TopBar onLogout={handleLogout} currentPage={currentPage} onNavigate={handleNavigate} />
+        <TopBar onLogout={onLogout} currentPage={currentPage} onNavigate={onNavigate} />
         <div className="flex-1 min-h-0">
           <TasksPage api={api} />
         </div>
@@ -246,9 +304,9 @@ export default function App() {
 
   return (
     <MainLayout
-      onLogout={handleLogout}
+      onLogout={onLogout}
       currentPage={currentPage}
-      onNavigate={handleNavigate}
+      onNavigate={onNavigate}
       leftContent={leftContent}
       graphContent={
         <GraphCanvas

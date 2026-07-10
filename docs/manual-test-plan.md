@@ -8,12 +8,14 @@ feature set manually, outside the automated test suite.
 This plan covers:
 
 - Server startup and health
+- Browser admin first-run setup
+- Admin provider configuration, API-key creation, diagnostics, and maintenance
 - API key auth and access control
 - REST entity CRUD
 - Async enrichment and semantic search
 - Task management
 - Human CLI (`pgm`)
-- Admin CLI (`pgm-admin`)
+- Admin CLI (`pgm-admin`) emergency/operator reference
 - MCP transport
 - Talon migration
 - Backup and restore
@@ -23,7 +25,7 @@ This plan covers:
 - Node.js 22+
 - Docker and Docker Compose
 - `gpg`
-- An OpenAI API key
+- An OpenAI API key if you choose OpenAI-backed embeddings or extraction
 
 Optional but useful:
 
@@ -40,31 +42,31 @@ cd postgram
 npm install
 ```
 
-2. Create `.env`:
+2. Start the stack. For an isolated manual run, choose a project name and
+   non-conflicting host ports:
 
 ```bash
-cp .env.example .env
-```
-
-Set:
-
-```bash
-POSTGRES_PASSWORD=postgram
-OPENAI_API_KEY=<your-real-openai-key>
-LOG_LEVEL=info
-PORT=3100
-```
-
-3. Start the stack:
-
-```bash
+COMPOSE_PROJECT_NAME=postgram-manual \
+POSTGRAM_API_PORT=3100 \
+UI_PORT=3000 \
 docker compose up -d --build
 ```
 
-4. Wait for health:
+The first run creates a persistent `postgram_secrets` Docker volume with the
+Postgres password, `ADMIN_MFA_SECRET_KEY`, and
+`ADMIN_SETTINGS_ENCRYPTION_KEY`. No manual `.env` edit or normal `pgm-admin`
+command is required for the supported setup path.
+
+Upgrade note: if an existing Docker install already has `POSTGRES_PASSWORD` in
+`.env`, keep that value in place for the first upgraded start so the
+`postgram-secrets` init service seeds `postgram_secrets/postgres-password` from
+the existing database password.
+
+3. Wait for health:
 
 ```bash
 curl http://127.0.0.1:3100/health
+curl http://127.0.0.1:3000/health
 ```
 
 Expected:
@@ -74,34 +76,54 @@ Expected:
 - JSON contains `postgres: "connected"`
 - JSON contains an `embedding_model`
 
+4. Capture the first-run bootstrap token from local container logs:
+
+```bash
+COMPOSE_PROJECT_NAME=postgram-manual docker compose logs mcp-server \
+  | grep 'admin first-run bootstrap token'
+```
+
+Expected:
+
+- Log line includes `bootstrapToken`
+- The token starts with `pgm-admin-bootstrap-`
+- The log line includes an expiry timestamp
+
+5. Open `http://127.0.0.1:3000/admin`.
+
+Expected:
+
+- First admin setup form is shown
+- Setup requires the bootstrap token
+- Completing setup advances to MFA enrollment
+- Completing MFA opens the protected Operations dashboard
+
 ## Test Data Conventions
 
 Use the following names to keep the run readable:
 
+- Admin email: `manual-admin@example.com`
 - API key name: `manual-test`
 - Memory content: `manual test memory`
 - Task content: `manual test task`
 - MCP memory content: `mcp manual memory`
 - Backup directory: `/tmp/postgram-backups`
 
-## 1. Admin Key Management
+## 1. Admin Dashboard First-Run And Key Management
 
-Create a full-access key:
+From the protected Admin dashboard:
 
-```bash
-docker compose exec -T mcp-server \
-  node dist/cli/admin/pgm-admin.js key create \
-  --name manual-test \
-  --scopes read,write,delete \
-  --visibility personal,work,shared \
-  --json
-```
+1. Confirm the Overview panels show Health, Queue, Stats, Config status,
+   Models, Jobs, API keys, and Audit.
+2. Create an API key named `manual-test`.
+3. Copy the one-time plaintext key from the browser and dismiss the one-time
+   display.
 
 Expected:
 
-- JSON includes `plaintextKey`
-- JSON includes `record.id`
-- `record.isActive` is `true`
+- API key table lists `manual-test`
+- Plaintext key is shown only in the one-time create result
+- Reloading the page does not recover the plaintext key
 
 Export the key:
 
@@ -110,21 +132,38 @@ export PGM_API_URL=http://127.0.0.1:3100
 export PGM_API_KEY='<paste-plaintextKey-here>'
 ```
 
-List keys:
+Revoke and re-create a second key from the Admin dashboard later in this plan
+if you want to verify the revoke path explicitly.
+
+## 2. Admin Config And Maintenance Smoke
+
+From the Config tab:
+
+1. Save a provider secret such as `OPENAI_API_KEY`.
+2. Confirm the UI reports the secret as configured metadata.
+3. Restart the backend and UI containers.
+4. Reload `/admin`, return to Config, and confirm the provider secret input is
+   blank/write-only and the plaintext secret is absent from page text,
+   `localStorage`, and `sessionStorage`.
 
 ```bash
-docker compose exec -T mcp-server \
-  node dist/cli/admin/pgm-admin.js key list --json
+COMPOSE_PROJECT_NAME=postgram-manual docker compose restart mcp-server postgram-ui
 ```
+
+From the Maintenance tab:
+
+1. Run one dry-run preview, for example re-extract `memory`.
+2. Confirm the dry-run creates a job and the UI shows a terminal result.
+3. Confirm browser/network evidence includes
+   `/admin/api/jobs/<jobId>` polling.
 
 Expected:
 
-- The `manual-test` key appears
+- Dry-run preview completes without destructive apply
+- Job result summary contains safe selectors/counts only
+- Apply remains gated by preview review plus recent step-up
 
-Revoke and re-create a second key later in this plan if you want to verify the
-revoke path explicitly.
-
-## 2. REST Entity CRUD
+## 3. REST Entity CRUD
 
 Create an entity:
 
@@ -206,7 +245,7 @@ Expected:
 - HTTP `200`
 - `deleted: true`
 
-## 3. Async Enrichment And Search
+## 4. Async Enrichment And Search
 
 Create a fresh searchable memory:
 
@@ -249,7 +288,7 @@ Expected:
 - The entity appears
 - Response includes `chunk_content`, `similarity`, and `score`
 
-## 4. Task Management Over REST
+## 5. Task Management Over REST
 
 Create a task:
 
@@ -304,7 +343,7 @@ Expected:
 - Status becomes `done`
 - `metadata.completed_at` is present
 
-## 5. Human CLI (`pgm`)
+## 6. Human CLI (`pgm`)
 
 Store:
 
@@ -337,7 +376,11 @@ Expected:
 - All commands succeed
 - JSON payloads match the REST behavior
 
-## 6. Admin CLI (`pgm-admin`)
+## 7. Admin CLI (`pgm-admin`) Emergency Reference
+
+The normal Docker first-run path above should not use `pgm-admin`. Use this
+section only for emergency recovery, advanced maintenance, embedding migration,
+or direct operator inspection.
 
 Audit query:
 
@@ -373,7 +416,7 @@ Expected:
 
 - Returns `entityCounts`, `chunkCount`, `keyCount`, `databaseSizeBytes`, `uptimeSeconds`
 
-## 7. MCP Transport
+## 8. MCP Transport
 
 Create a minimal client script and run it:
 
@@ -425,7 +468,7 @@ Expected:
 - `store` returns structured content
 - `search` returns structured content
 
-## 8. Talon Migration
+## 9. Talon Migration
 
 Prepare a copy of a Talon SQLite database.
 
@@ -464,7 +507,7 @@ Expected:
 - Entities are created
 - Re-running does not duplicate already-imported items
 
-## 9. Backup And Restore
+## 10. Backup And Restore
 
 Create encrypted backup:
 
@@ -510,7 +553,7 @@ Expected:
 - Restore succeeds
 - Entity and chunk counts match the source DB
 
-## 10. Performance And Resource Checks
+## 11. Performance And Resource Checks
 
 Latency:
 
@@ -537,6 +580,8 @@ You can consider Phase 1 manually validated when all of the following are true:
 - Search works after async enrichment
 - Task operations work
 - CLI and admin CLI work
+- Admin UI first-run, Config redaction, API-key creation, dashboard panels, and
+  safe maintenance dry-run work
 - MCP tool listing and invocation work
 - Migration works
 - Backup and restore work

@@ -1,0 +1,702 @@
+---
+id: EPIC-admin-configuration-frontend-RESOURCE-security-model
+kind: shared_context_resource
+epic: EPIC-admin-configuration-frontend
+resource: security-model
+updated_at: 2026-07-06
+---
+
+# Shared Context Resource: Security Model
+
+## Purpose
+
+Seed the threat model and hard requirements for the admin frontend.
+
+## Summary
+
+The admin frontend is a high-value target because it can create API keys,
+change providers and secrets, trigger expensive jobs, mutate memory/graph data,
+and potentially affect every agent connected to the instance. Treat the admin
+plane like an operations console, not a convenience page.
+
+WAVE-001 inspected:
+
+- `docker-compose.yml`
+- `src/auth/*`
+- `src/transport/oauth.ts`
+- `src/index.ts`
+- `README.md`
+- Current UI API-key login/localStorage behavior
+
+The current application has ordinary `/api/*` bearer auth and optional MCP
+connector OAuth. Neither is an admin-login boundary. Admin auth, sessions,
+MFA, CSRF, bootstrap, and sensitive mutation controls must be new admin-plane
+constructs.
+
+## RED Findings Resolved By This Model
+
+- The seed model named bootstrap risk but did not choose a first
+  implementation posture.
+- The seed model did not define the trust boundaries between admin sessions,
+  API-key bearer auth, and MCP connector OAuth precisely enough for later
+  route work.
+- Later implementation tasks needed concrete review gates for bootstrap,
+  session cookies, CSRF, MFA, secrets, destructive operations, and Docker
+  exposure.
+
+## Threats To Cover
+
+- First-run takeover by a remote visitor before the real operator creates an
+  admin user.
+- Brute-force or credential-stuffing against the admin login.
+- Session theft or fixation.
+- CSRF against destructive admin endpoints.
+- XSS leading to admin action execution.
+- Ordinary API key or OAuth token being accepted as admin authority.
+- MFA bypass, reset abuse, or weak recovery path.
+- Secret disclosure through API responses, logs, browser storage, audit rows,
+  or backups.
+- Dangerous operation misuse: broad purge, reembedding, reextraction, edge
+  pruning, model migration, or memory grooming.
+- Long-running job confusion: repeated clicks, duplicate jobs, lost progress,
+  unclear partial failure, or hidden cost.
+- Public exposure through Docker/reverse proxy defaults.
+
+## Assets And Trust Boundaries
+
+Primary assets:
+
+- Admin user identities, password hashes, MFA factors, recovery/reset state,
+  and admin sessions.
+- Bootstrap token material and first-admin setup state.
+- Runtime provider settings and encrypted provider secrets.
+- Postgram API keys, OAuth connector tokens, and the source API keys from which
+  OAuth tokens derive authority.
+- Entity, chunk, edge, task, audit, and runtime settings data.
+- Long-running maintenance jobs and their progress/results.
+
+Trust boundaries:
+
+- Public browser to admin routes: untrusted until an admin session, CSRF token,
+  and any required step-up state are verified.
+- Browser admin session to ordinary `/api/*`: admin sessions do not imply
+  ordinary API-key access unless a specific admin operation creates or displays
+  an API key.
+- Ordinary API-key bearer auth to admin routes: must always be rejected.
+- MCP OAuth bearer auth to admin routes: must always be rejected.
+- Reverse proxy to backend: headers are not trusted for auth unless explicitly
+  configured and normalized by admin middleware in a later, reviewed design.
+- Backend to database: database mutations must preserve audit attribution and
+  redaction invariants.
+- Backend to provider APIs/Ollama/OpenAI-compatible endpoints: external calls
+  can fail, hang, leak prompts to configured providers, or create cost.
+- Docker host/local operator channel to browser setup: possession of the
+  bootstrap token proves local operator access; web reachability alone does
+  not.
+
+Attacker-controlled inputs include admin login fields, bootstrap token entry,
+MFA codes, CSRF-bearing forms, all admin JSON request bodies, query filters,
+provider/base URLs, model names, secrets, maintenance selectors, OAuth
+registration/authorize/token inputs, API keys, and entity content processed by
+maintenance jobs.
+
+## Hard Requirements
+
+- Admin auth must not use localStorage API keys.
+- Admin sessions should use HttpOnly, SameSite cookies with secure settings
+  when served over HTTPS.
+- Mutating admin endpoints must require CSRF protection.
+- Login, MFA, and sensitive mutation endpoints must be rate-limited.
+- Passwords must be hashed with Argon2id or an equivalently strong password
+  hashing strategy.
+- Password policy must reject obviously weak passwords.
+- MFA must be required for the supported production/admin posture.
+- Step-up auth or recent re-auth must protect secret changes, key creation,
+  key revocation, destructive maintenance, and broad data operations.
+- Ordinary API keys and OAuth access tokens must receive 401/403 on admin
+  endpoints.
+- Secrets must be write-only after storage and redacted in logs, audit, API
+  responses, and UI.
+- Every admin mutation must write an audit event with actor, operation, target,
+  request summary, result, and failure where appropriate.
+- Raw SQL and shell execution must not be web-exposed.
+
+## Chosen Bootstrap Posture
+
+WAVE-001 chooses a generated one-time bootstrap token delivered through a
+trusted local operator channel as the first implementation path.
+
+Required behavior:
+
+- On an unbootstrapped instance, the backend creates a high-entropy one-time
+  bootstrap token if no unexpired token exists.
+- Only a hash of the token is stored in the database or bootstrap state.
+- The plaintext token is displayed exactly through a trusted local channel,
+  initially container logs and/or a local-only operator command, not through
+  the public browser page.
+- The web setup flow requires the bootstrap token before creating the first
+  admin account.
+- First admin setup must enroll MFA before the account becomes fully active.
+- The bootstrap token is single-use, expires, is rate-limited, is audited, and
+  is invalidated once an admin account is active.
+- Once an active admin exists, bootstrap routes return locked/configured status
+  and cannot create another first admin.
+- If token generation/storage fails, the UI shows a locked/misconfigured state
+  rather than an unauthenticated setup form.
+- A future Docker task may add an explicit Docker secret/env override for
+  operators who do not want log-delivered bootstrap tokens, but public web
+  reachability alone must never be enough to claim setup.
+
+Rationale:
+
+- Loopback-only setup is not sufficient because a reverse proxy can expose the
+  setup page publicly.
+- A generated one-time token keeps the supported Docker path simple while
+  proving local operator control.
+- Hash-only storage keeps database backups from containing a usable bootstrap
+  token.
+- Requiring MFA in the first-admin flow avoids a weak no-MFA bootstrap gap that
+  later tasks would have to close under live admin access.
+
+Rejected as first implementation paths:
+
+- Browser-only "no admin exists, show setup wizard" because it is vulnerable to
+  public first-run takeover.
+- Permanent static default credentials because they create known-secret risk.
+- Treating an existing Postgram API key as bootstrap authority because API keys
+  are agent/user credentials, not admin identities.
+- Treating MCP connector OAuth authorization as admin login because that flow
+  intentionally inherits ordinary API-key authority.
+
+## Bootstrap Requirements
+
+The bootstrap implementation must prove:
+
+- Only the legitimate operator can create the first admin account.
+- Setup cannot be claimed remotely just because no admin exists yet.
+- The bootstrap token or equivalent secret expires or is invalidated after use.
+- Bootstrap attempts are logged and rate-limited.
+- The UI clearly signals whether the instance is unbootstrapped, locked,
+  configured, or misconfigured.
+
+Implementation notes for later workers:
+
+- Add a bootstrap status endpoint that reveals state only:
+  `unbootstrapped`, `locked`, `configured`, or `misconfigured`.
+- Do not return the bootstrap token from any HTTP endpoint.
+- Do not store the plaintext token in audit rows.
+- Rate-limit failed bootstrap attempts by IP and token hash bucket where
+  feasible, without logging the raw token.
+- Require password policy validation and MFA enrollment before marking the
+  first admin active.
+
+Implementation ownership split:
+
+- TASK-004 owns bootstrap token persistence and service contracts: hash-only
+  token storage, expiry, single-use consumption, invalidation after use, and
+  the atomic persistence contract that consumes the token while creating the
+  first admin in a non-active/pending-MFA state.
+- TASK-005 owns bootstrap route behavior: public status state, setup request
+  parsing, safe HTTP errors for missing/invalid/expired/used tokens, session
+  cookie behavior, CSRF semantics, and bearer-token denial on admin routes.
+- TASK-006 owns MFA completion and activation: TOTP enrollment/verification,
+  session MFA state, step-up helpers, and the testable transition proving the
+  first admin is not active until MFA is verified.
+
+## WAVE-002 Reconciled Auth Persistence
+
+TASK-004 implemented the persistence side of the admin auth boundary in PR #79
+and merged it in `0f96769`.
+
+Persisted security state:
+
+- Admin users start as `pending_mfa`; ordinary creation cannot create active
+  non-MFA admins.
+- Admin sessions store hash-only high-entropy tokens with expiry, revocation,
+  optional `mfa_verified_at`, and last-used tracking.
+- Bootstrap tokens are hash-only, expiring, single-use, and record failed
+  attempts without storing plaintext token material.
+- First-admin creation locks/serializes the setup path, consumes the bootstrap
+  token, creates a non-active `pending_mfa` admin, and invalidates remaining
+  bootstrap tokens in one transaction.
+- MFA factors are represented as TOTP records with pending/verified/disabled
+  states; TASK-006 owns secret encryption, verification, and activation flow.
+- Admin auth attempts record login/bootstrap/MFA/step-up attempt history for
+  later lockout/rate-limit and audit behavior.
+
+Carry-forward security gates:
+
+- TASK-005 route handlers must not leak username or bootstrap token validity in
+  HTTP errors.
+- TASK-005 must reject ordinary Postgram API-key bearer auth and MCP OAuth
+  bearer tokens on all admin routes.
+- TASK-005 may create sessions, but a pending-MFA first admin must not receive
+  full admin authority until TASK-006 verifies MFA and performs activation.
+- TASK-006 must transition first-admin state from `pending_mfa` to `active`
+  only after verified MFA enrollment/challenge, and must keep TOTP secrets
+  write-only/redacted.
+
+## WAVE-003 Reconciled Admin Session Routes
+
+TASK-005 implemented the admin HTTP session boundary in PR #80 and merged it in
+`ecfe9ac`.
+
+Implemented security behavior:
+
+- Admin auth routes live under `/admin/api/*` and are registered separately
+  from ordinary `/api/*` bearer routes and MCP OAuth routes.
+- Bootstrap status exposes only coarse state and never returns token material.
+- Bootstrap setup uses the TASK-004 `createFirstAdminWithBootstrapToken`
+  transaction and maps missing, invalid, expired, used, malformed, validation,
+  and rate-limited token failures to safe route errors without token-validity
+  leakage.
+- Login uses the TASK-004 password verifier and safe generic sign-in errors.
+  The service keeps the dummy Argon2 verification path for missing-user timing
+  resistance, and route-level lockout checks include a global failure budget as
+  well as identifier-specific checks.
+- Admin sessions are carried by the HttpOnly `pgm_admin_session` cookie with
+  SameSite `Lax`, `/admin` path scope, and environment-aware `Secure` behavior.
+- Mutating admin session routes require `X-CSRF-Token`; missing or invalid CSRF
+  receives `403`.
+- Session and bootstrap responses set no-store/no-cache headers and vary on
+  `Cookie`.
+- Ordinary Postgram API-key bearer tokens and MCP OAuth bearer tokens do not
+  satisfy admin session middleware.
+
+Carry-forward security gates:
+
+- A `pending_mfa` session created by bootstrap/setup or login is not full admin
+  authority. Until TASK-006 lands, it should be treated as setup/current/csrf/
+  logout-capable only.
+- TASK-006 must add the active-admin/MFA completion check and step-up helper.
+  Later business admin routes must compose that gate with the WAVE-003 session
+  and CSRF middleware.
+- If later proxy/TLS work changes trusted-header handling, it must retest
+  cookie `Secure` behavior; loopback HTTP remains for local development only.
+
+## WAVE-004 Reconciled MFA And Secret Controls
+
+TASK-006 and TASK-009 completed the MFA/step-up and settings/secret-store
+security foundations in PR #82 and PR #81.
+
+Implemented MFA controls:
+
+- TOTP factor seeds are encrypted before persistence using
+  `ADMIN_MFA_SECRET_KEY`; plaintext seeds are returned only during enrollment.
+- MFA verification is the only path that transitions the first bootstrap admin
+  from `pending_mfa` to `active`.
+- `admin_sessions.mfa_verified_at` is the step-up marker. The default freshness
+  window is ten minutes through `ADMIN_STEP_UP_TTL_MS`.
+- `createActiveAdminMiddleware` denies pending-MFA sessions, inactive users,
+  missing MFA verification, and stale step-up state when `requireStepUp` is
+  enabled.
+- MFA enrollment, verification, challenge, and step-up attempts are audited.
+  When `audit_log.admin_user_id` exists, MFA audit rows populate it
+  structurally instead of hiding actor attribution only in JSON details.
+- MFA verification and step-up routes have direct rate-limit regression
+  coverage.
+
+Implemented settings and secret controls:
+
+- `admin_runtime_settings` stores typed non-secret JSON values only. Secret-
+  shaped keys such as provider API keys are rejected from plain settings paths.
+- `admin_runtime_secrets` stores provider secrets as AES-256-GCM ciphertext,
+  nonce, auth tag, key version, provider, purpose, and validation status using
+  the installation key supplied through `ADMIN_SETTINGS_ENCRYPTION_KEY`.
+- Secret read/list paths return configured metadata only. They never return
+  plaintext, ciphertext, hashes, auth tags, reusable token prefixes, or
+  caller-provided validation metadata.
+- Secret validation metadata is normalized/redacted to `{}` before persistence
+  and on readback so provider responses, authorization headers, token prefixes,
+  or other attacker-supplied metadata cannot leak through redacted reads.
+- Settings and secret saves write admin audit rows with structured
+  `audit_log.admin_user_id` attribution where available.
+
+Carry-forward security gates:
+
+- Every privileged admin API added after WAVE-004 should compose
+  `createAdminSessionMiddleware` with `createActiveAdminMiddleware`. Secret
+  writes, key create/revoke, dangerous config apply, maintenance apply, and
+  migration jobs must require recent step-up.
+- TASK-010 must treat admin-configured provider URLs as attacker-controlled and
+  define/test the egress/SSRF policy before running connection tests.
+- UI tasks must never store admin session tokens, bootstrap tokens, TOTP seeds,
+  provider secrets, or admin bearer credentials in localStorage.
+
+## WAVE-005 Reconciled Diagnostics And Provider Config Controls
+
+TASK-007 and TASK-010 completed the first privileged admin API shell and
+provider-config apply controls in PR #83 and PR #84.
+
+Implemented diagnostics controls:
+
+- `/admin/api/diagnostics/*` routes require active-MFA admin sessions and reject
+  pending-MFA sessions.
+- Ordinary Postgram API-key bearer tokens and MCP OAuth bearer tokens do not
+  authorize diagnostics.
+- Config-status diagnostics return aggregate counts only. They do not reveal
+  secret names, plaintext, ciphertext, token prefixes, or arbitrary secret
+  validation metadata.
+
+Implemented provider-config controls:
+
+- Provider-config routes use the existing admin session/CSRF boundary; secret
+  writes and apply require recent step-up.
+- Provider-config mutations write structured `audit_log.admin_user_id`
+  attribution.
+- Provider secrets remain write-only. Secret validation metadata remains `{}` on
+  save/readback, and validation failures are summarized without provider bodies,
+  tokens, auth headers, or reusable prefixes.
+- Provider base URLs are attacker-controlled admin input. Save/validation now
+  rejects unsafe schemes, credentials, query strings, fragments, private,
+  reserved, link-local, metadata, and other unsafe host/IP forms before
+  provider connection tests or runtime use.
+- Connection tests refuse redirects and use redacted errors.
+- DB-applied provider URLs use guarded runtime fetch behavior to protect against
+  DNS rebinding and redirect drift. Env fallback URLs remain operator-controlled
+  deployment inputs rather than admin-configured UI inputs.
+- Apply requires current validation evidence and rejects stale validation when
+  settings or related secrets changed after validation.
+- Embedding identity changes that require reembedding are reported as
+  `reembedRequired` and blocked from simple provider apply.
+
+Carry-forward security gates:
+
+- TASK-008 key create/revoke endpoints must require recent step-up and must
+  preserve one-time plaintext API-key display only in the create response.
+- TASK-014/TASK-015 job and maintenance payloads must not store provider
+  plaintext, ciphertext, token prefixes, auth headers, or arbitrary validation
+  metadata in job inputs/results.
+- TASK-013 UI must keep provider secret fields blank on load, avoid
+  localStorage/browser persistence for secret material, and surface
+  restart/reembed warnings from the provider-config API before apply.
+
+## WAVE-006 Reconciled Key/Audit/Stats And Job Controls
+
+TASK-008 and TASK-014 completed the admin key/audit/stats surface and generic
+job foundation in PR #85 and PR #86.
+
+Implemented key/audit/stats controls:
+
+- Key create/revoke require admin session, CSRF, active MFA, and recent
+  step-up.
+- Key list, audit, and stats require active MFA and reject ordinary API-key/MCP
+  OAuth bearer credentials.
+- Plaintext API keys are returned only in the create response. Key hashes,
+  reusable prefixes, and plaintext are not returned by list/audit/stats.
+- Key create/revoke and stats/audit actions write structured
+  `audit_log.admin_user_id` attribution.
+- Audit query details are redacted for common secret aliases and
+  secret-looking values; audit self-observation rows from the admin audit API
+  are excluded from paginated query results.
+
+Implemented job controls:
+
+- Job create requires active MFA; apply-mode job create requires recent step-up
+  and a scoped idempotency key.
+- Job status routes are read-only and require active MFA.
+- Job requested scopes, request summaries, progress messages, and result
+  summaries are validated as bounded safe JSON.
+- Job summary safety rejects plaintext/ciphertext/auth headers/token
+  prefixes/API keys/passwords, arbitrary validation metadata, provider
+  metadata/body containers, private keys, credentials, and sensitive string
+  patterns.
+- Job lifecycle writes `admin_job_events` plus structured audit rows with admin
+  actor attribution.
+
+Carry-forward security gates:
+
+- TASK-011/TASK-012 must not place admin session, CSRF token, bootstrap token,
+  TOTP secret, provider secret, or one-time API-key plaintext into localStorage.
+  One-time API-key display must be explicitly copy-once and unrecoverable.
+- TASK-015 must use `admin-job-service` for maintenance dry-run/apply lifecycle
+  and preserve its safe-summary/idempotency/step-up controls. Concrete
+  maintenance operations must add operation-specific dry-run/apply
+  confirmation, cancellation, and audit tests.
+- TASK-016 must treat job output as redacted summaries only and must not expose
+  hidden provider response bodies or secret-derived metadata through progress
+  views.
+
+## WAVE-007 Reconciled Auth UI And Maintenance Controls
+
+TASK-011 completed the first browser admin auth UI in PR #87.
+
+Implemented UI security controls:
+
+- The frontend admin client uses the HttpOnly admin session cookie with
+  same-origin credentials and keeps CSRF state in memory.
+- The admin UI does not write admin session tokens, bootstrap tokens, TOTP
+  seeds, provider secrets, or admin bearer credentials to localStorage.
+- Invalid MFA codes no longer clear protected admin session state as if the
+  session expired; regression coverage keeps operators in the MFA flow.
+- The protected admin shell waits for active MFA session state before exposing
+  admin navigation.
+
+TASK-015 completed the first concrete destructive-maintenance API in PR #88.
+
+Implemented maintenance controls:
+
+- Dry-run routes require active MFA and create admin jobs rather than blocking
+  request handlers.
+- Apply routes require active MFA, recent step-up, a scoped idempotency key,
+  and a fresh matching preview job before destructive work starts.
+- Reextract, reembed, and constrained edge-prune operations share typed service
+  logic with `pgm-admin`; the web server does not shell out to the CLI.
+- Web edge pruning is limited to the reviewed `llm-extraction` source.
+- Apply jobs run asynchronously with job progress/status; queued cancellation is
+  honored before execution starts, while already-started mutation results are
+  reported as committed summaries.
+- Job payloads and result summaries remain safe JSON and do not store provider
+  plaintext, ciphertext, token prefixes, auth headers, provider response
+  bodies, or arbitrary validation metadata.
+- Web admin mutations write structured `audit_log.admin_user_id` attribution.
+
+Carry-forward security gates:
+
+- TASK-012 and TASK-013 should extend the existing in-memory-CSRF admin client
+  and must not introduce localStorage persistence for admin or secret material.
+- TASK-012 must treat API-key plaintext as one-time display only.
+- TASK-013 must keep provider secret inputs write-only and blank on load.
+- TASK-016 must make preview-before-apply and step-up-before-apply explicit in
+  the UI, poll job status, and display only safe job summaries.
+
+## WAVE-008 Reconciled Admin Dashboard And Config UI Controls
+
+TASK-012 completed the browser operations dashboard UI in PR #89.
+
+Implemented dashboard controls:
+
+- The dashboard uses the shared admin API client with same-origin cookie
+  requests and in-memory CSRF; it does not add admin bearer headers or a
+  localStorage-backed admin credential path.
+- API-key creation keeps plaintext key material to the one-time create
+  response/display flow. List, audit, stats, and dashboard state do not render
+  key hashes, reusable prefixes, or plaintext keys after creation.
+- Audit, stats, health, queue, model/config status, and job views consume safe
+  aggregate/redacted backend responses.
+
+TASK-013 completed the provider configuration UI in PR #90.
+
+Implemented config UI controls:
+
+- `AdminConfig` is mounted inside the protected `AdminDashboard` shell, so it
+  inherits the active-admin UI boundary and shared CSRF client behavior.
+- Provider secret inputs remain blank and write-only on load and after
+  validation/apply. UI state does not persist plaintext secrets, ciphertext,
+  auth headers, token prefixes, provider response bodies, bootstrap tokens,
+  TOTP seeds, session tokens, or admin bearer credentials in localStorage.
+- Apply controls are blocked unless current validation evidence exists. Stale
+  validation, restart-required, and reembed-required states remain visible
+  before apply.
+- Step-up prompts are used for secret writes and apply through the shared admin
+  auth UI flow.
+
+Carry-forward security gates:
+
+- TASK-016 must add maintenance controls to the existing dashboard without
+  weakening the browser-storage, CSRF, step-up, preview-before-apply, or safe
+  job-summary invariants.
+- TASK-017 Docker smoke should include a browser-level check that admin config
+  secrets stay redacted/write-only after restart and that no normal
+  `pgm-admin` usage is required for the supported happy path.
+- TASK-018 should explicitly review the WAVE-008 UI surfaces for localStorage
+  secret/session leakage, one-time API-key plaintext behavior, provider secret
+  redaction, stale-validation gating, and preserved dashboard panel access.
+
+## WAVE-009 Reconciled Maintenance UI Controls
+
+TASK-016 completed the browser maintenance admin UI in PR #91.
+
+Implemented maintenance UI controls:
+
+- `AdminMaintenance` is mounted in the existing protected `AdminDashboard`
+  shell and uses the shared admin API client with same-origin cookies and
+  in-memory CSRF.
+- The UI does not introduce admin bearer headers or localStorage-backed admin
+  credential state.
+- Reextract, reembed, and edge-prune flows enforce preview before apply.
+- Apply actions require recent step-up, a fresh matching preview job, and a
+  scoped idempotency key before calling destructive maintenance endpoints.
+- Request-shaping controls are locked while preview/apply jobs are non-terminal
+  so a user cannot silently change the target scope while polling continues.
+- Preview/apply progress is fetched from `/admin/api/jobs/:jobId`; transient
+  job-status failures are retryable and stale polling errors clear after a
+  successful refresh.
+- Reused/idempotent apply responses fetch the referenced job detail before
+  rendering result evidence.
+- Browser edge pruning remains constrained to the reviewed `llm-extraction`
+  source.
+- Maintenance result rendering uses safe summaries only and avoids provider
+  bodies, auth headers, token prefixes, ciphertext, arbitrary validation
+  metadata, and hidden secret-derived material.
+
+Carry-forward security gates:
+
+- TASK-017 must prove at least one safe maintenance dry-run and visible job
+  polling from the browser in the clean Docker first-run path without normal
+  `pgm-admin` usage.
+- TASK-018 must include maintenance UI security review for preview-before-apply,
+  recent step-up, scoped idempotency, job polling, safe result rendering,
+  browser-storage non-persistence, and the `llm-extraction` edge-prune
+  constraint.
+
+## WAVE-010 Reconciled Docker First-Run Security Controls
+
+TASK-017 completed the supported Docker first-run/no-normal-CLI path in PR #92.
+
+Implemented Docker/security controls:
+
+- Compose keeps backend/UI loopback defaults and still treats reverse-proxy
+  exposure as a deployment decision, not a security boundary.
+- A persistent `postgram_secrets` volume stores generated installation secrets
+  outside the database: `postgres-password`, `admin-mfa-secret-key`, and
+  `admin-settings-encryption-key`.
+- The app entrypoint loads required admin key material from secret files and
+  fails closed before binding if the keys are absent or invalid.
+- First-run bootstrap token generation remains server-side, hash-only after
+  generation, and displayed through the trusted operator log channel rather
+  than an unauthenticated HTTP response.
+- Browser smoke proved setup, MFA, dashboard access, API-key creation, Config
+  secret write/redaction after restart, and a safe maintenance dry-run/job poll
+  without normal `pgm-admin` usage.
+- The Admin Config tab kept provider secret inputs blank/write-only after
+  restart, and browser local/session storage remained empty for admin/session/
+  bootstrap/TOTP/provider secret material.
+- Existing Compose upgrades preserve database and embedding-provider behavior:
+  legacy `POSTGRES_PASSWORD` seeds the new Postgres secret when needed, and
+  `OPENAI_API_KEY` keeps implicit OpenAI provider selection when
+  `EMBEDDING_PROVIDER` is blank.
+
+Carry-forward security gates:
+
+- TASK-018 must keep the no-normal-CLI claim scoped to the supported happy path;
+  emergency `pgm-admin` recovery remains intentionally available.
+- TASK-018 must review Docker secret backup/restore and failure behavior,
+  legacy Compose upgrade behavior, provider default preservation, admin key
+  fail-closed behavior, and browser-storage non-persistence as final security
+  validation gates.
+
+## WAVE-011 Final Security Validation
+
+TASK-018 completed the final security and epic validation in PR #93.
+
+Final security result:
+
+- Dewey returned `REVIEW_PASS` with no P1/P2 findings.
+- Admin authority remains a cookie-session plus active-MFA boundary; ordinary
+  API-key bearer auth and MCP OAuth bearer auth do not authorize admin routes.
+- Unsafe admin methods require CSRF, and sensitive mutations require recent
+  TOTP step-up.
+- Provider secrets remain encrypted, write-only after save, and redacted from
+  reads, audit/job summaries, logs, and browser storage.
+- Maintenance applies require preview evidence, scoped idempotency, step-up,
+  jobs, and safe summaries.
+- The Docker happy path is validated for browser bootstrap, MFA, provider
+  secret entry, API-key creation, dashboard inspection, and safe maintenance
+  dry-run without normal `pgm-admin` use.
+- The no-normal-CLI claim is not broader than the supported happy path.
+  Emergency `pgm-admin` recovery and advanced operator flows remain outside
+  the browser admin surface.
+
+Non-blocking residual risks:
+
+- Lint remains noisy on an existing repo-wide baseline, so it is not yet a
+  reliable final gate.
+- Full dev dependency audits still contain tooling advisories; root/UI
+  production audits are clean.
+
+## OAuth/OIDC Boundary
+
+Existing OAuth/DCR is for native remote MCP connectors. It lets external clients
+obtain OAuth tokens that resolve to an API-key-derived `AuthContext`.
+
+Admin OAuth/OIDC login, if implemented, must be separate:
+
+- Different tables or clearly separate records.
+- Different routes and issuer/client semantics as needed.
+- Different session creation flow.
+- No path where MCP connector OAuth grants become admin sessions.
+
+## Admin Session And Mutation Controls
+
+Minimum session posture:
+
+- HttpOnly session cookie.
+- SameSite cookie policy. Use `Lax` as the default browser posture unless an
+  explicit cross-site deployment mode is designed and reviewed.
+- `Secure` cookies when the request is HTTPS or the deployment is configured
+  behind trusted TLS termination.
+- Server-side session records with expiry, rotation on login, revocation on
+  logout/password/MFA reset, and last-used tracking.
+- CSRF token required on every unsafe admin method.
+- Login, bootstrap, MFA, CSRF refresh, and step-up endpoints rate-limited.
+
+Step-up required for:
+
+- Provider secret changes.
+- API-key creation and revocation.
+- Bootstrap/admin-user recovery flows.
+- Destructive maintenance operations.
+- Embedding migrations and data purge.
+- Durable memory rewrite/archive actions.
+
+## Docker Exposure Requirements
+
+Current Compose defaults bind backend and UI to `127.0.0.1`, with optional
+`PORT_BIND_HOST=0.0.0.0` and `UI_BIND_HOST=0.0.0.0` exposure. That is a safer
+default, but it is not the admin security boundary.
+
+Later Docker/admin tasks must:
+
+- Keep loopback defaults unless a reviewed public/reverse-proxy deployment mode
+  is documented.
+- Document that reverse proxies can expose first-run setup and therefore still
+  require the bootstrap token.
+- Require TLS for production admin sessions.
+- Ensure admin cookie `Secure` behavior works behind the recommended proxy.
+- Ensure setup status pages do not leak secrets, provider tokens, environment
+  values, or whether a guessed token prefix was valid.
+
+## Security Review Gates
+
+Before implementation tasks are considered safe, tests/review must prove:
+
+- Public setup without a bootstrap token cannot create an admin.
+- Used, expired, or missing bootstrap tokens cannot create an admin.
+- First-admin setup creates at most a non-active/pending-MFA admin until TASK-006
+  verifies MFA and performs the active transition.
+- Ordinary API keys and MCP OAuth bearer tokens receive 401/403 from admin
+  routes.
+- Admin mutations reject missing/invalid CSRF tokens.
+- Session cookies are HttpOnly and have the expected SameSite/Secure behavior.
+- Login/bootstrap/MFA/step-up attempts are rate-limited or locked out.
+- Secrets are write-only and redacted from responses, logs, audit rows, and UI.
+- Sensitive mutations require step-up and write audit rows with admin actor
+  attribution.
+- Destructive operations require dry-run or explicit confirmation according to
+  the command inventory.
+
+## Open Security Questions
+
+- WAVE-003 implemented HMAC-signed CSRF tokens presented via `X-CSRF-Token` for
+  admin session routes. Later route design may replace this only with a
+  reviewed, cross-route migration and tests.
+- The exact MFA recovery/reset path is still open. Do not add a weak recovery
+  shortcut in the first implementation.
+- Trusted reverse-proxy header handling is still open and should not be assumed
+  until Docker/proxy deployment docs are updated.
+
+## Durable Memory
+
+### First-Run Bootstrap Is The Highest-Risk UX
+
+- Source task: epic creation
+- Source PR/branch: none
+- Status: planning
+- Summary: The first admin setup flow must prevent public takeover before any
+  admin user exists.
+- Why it matters: A web setup wizard that appears safe on localhost can become
+  dangerous when deployed behind a public reverse proxy.
+- Affected files or areas: Docker defaults, admin auth routes, setup UI,
+  documentation, deployment guidance.
+- Follow-up implications: Bootstrap design should be a first-wave gate.

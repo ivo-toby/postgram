@@ -7,6 +7,7 @@ export default defineConfig({
   server: {
     proxy: {
       '/api': 'http://localhost:3100',
+      '/admin/api': 'http://localhost:3100',
       '/health': 'http://localhost:3100',
     },
   },

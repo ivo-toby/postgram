@@ -4,6 +4,7 @@ export enum ErrorCode {
   VALIDATION = 'VALIDATION',
   UNAUTHORIZED = 'UNAUTHORIZED',
   FORBIDDEN = 'FORBIDDEN',
+  RATE_LIMITED = 'RATE_LIMITED',
   NOT_FOUND = 'NOT_FOUND',
   CONFLICT = 'CONFLICT',
   EMBEDDING_FAILED = 'EMBEDDING_FAILED',
@@ -34,6 +35,8 @@ export function toHttpStatus(code: ErrorCode): number {
       return 401;
     case ErrorCode.FORBIDDEN:
       return 403;
+    case ErrorCode.RATE_LIMITED:
+      return 429;
     case ErrorCode.NOT_FOUND:
       return 404;
     case ErrorCode.CONFLICT:

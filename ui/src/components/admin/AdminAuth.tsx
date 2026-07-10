@@ -37,6 +37,20 @@ type AdminAuthProps = {
   onBack?: () => void;
 };
 
+const ADMIN_PASSWORD_MIN_LENGTH = 12;
+const ADMIN_COMMON_WEAK_PASSWORDS = new Set([
+  'admin',
+  'password',
+  'password1',
+  'password12',
+  'password123',
+  'postgram',
+  'qwerty123',
+  'letmein123',
+]);
+const ADMIN_PASSWORD_POLICY_MESSAGE =
+  'Password must be at least 12 characters, include at least 3 of lowercase letters, uppercase letters, numbers, and symbols, and must not contain "password" or the email username';
+
 function isActiveMfaSession(response: AdminAuthResponse): boolean {
   return response.user.status === 'active' && response.session.mfaVerified;
 }
@@ -64,6 +78,29 @@ function messageForError(error: unknown, fallback: string): string {
     return error.message;
   }
   return fallback;
+}
+
+function validateAdminPasswordPolicy(password: string, email: string): string | undefined {
+  const lower = password.toLowerCase();
+  const emailLocalPart = email.trim().toLowerCase().split('@')[0] ?? '';
+  const categoryCount = [
+    /[a-z]/.test(password),
+    /[A-Z]/.test(password),
+    /\d/.test(password),
+    /[^A-Za-z0-9]/.test(password),
+  ].filter(Boolean).length;
+
+  if (
+    password.length < ADMIN_PASSWORD_MIN_LENGTH ||
+    ADMIN_COMMON_WEAK_PASSWORDS.has(lower) ||
+    lower.includes('password') ||
+    categoryCount < 3 ||
+    (emailLocalPart.length >= 3 && lower.includes(emailLocalPart))
+  ) {
+    return ADMIN_PASSWORD_POLICY_MESSAGE;
+  }
+
+  return undefined;
 }
 
 function isInvalidAdminSession(error: AdminApiError): boolean {
@@ -344,8 +381,14 @@ function BootstrapPanel({
 
   async function handleSubmit(event: FormEvent<HTMLFormElement>) {
     event.preventDefault();
-    setSubmitting(true);
     setSubmitError(undefined);
+    const passwordPolicyError = validateAdminPasswordPolicy(password, email);
+    if (passwordPolicyError) {
+      setSubmitError(passwordPolicyError);
+      return;
+    }
+
+    setSubmitting(true);
     try {
       onComplete(await api.setupBootstrap({
         bootstrapToken,

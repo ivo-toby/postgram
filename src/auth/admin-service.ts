@@ -159,6 +159,8 @@ const COMMON_WEAK_PASSWORDS = new Set([
   'qwerty123',
   'letmein123'
 ]);
+const PASSWORD_POLICY_MESSAGE =
+  'Password must be at least 12 characters, include at least 3 of lowercase letters, uppercase letters, numbers, and symbols, and must not contain "password" or the email username';
 
 function toAppError(error: unknown, fallbackMessage: string): AppError {
   if (error instanceof AppError) {
@@ -256,7 +258,7 @@ function validatePassword(password: string, email: string): void {
   ) {
     throw new AppError(
       ErrorCode.VALIDATION,
-      'Admin password does not meet policy',
+      PASSWORD_POLICY_MESSAGE,
       {
         field: 'password',
         minLength: MIN_PASSWORD_LENGTH

@@ -1,3 +1,9 @@
+## [1.34.0](https://github.com/ivo-toby/postgram/compare/cli-v1.33.3...cli-v1.34.0) (2026-07-10)
+
+### Features
+
+* safe admin configuration frontend ([#94](https://github.com/ivo-toby/postgram/issues/94)) ([28f11cd](https://github.com/ivo-toby/postgram/commit/28f11cdf7037246078e4c4376b3ddd14f1b5636d))
+
 ## [1.33.3](https://github.com/ivo-toby/postgram/compare/cli-v1.33.2...cli-v1.33.3) (2026-06-17)
 
 ### Bug Fixes

@@ -1,3 +1,9 @@
+## [1.35.0](https://github.com/ivo-toby/postgram/compare/cli-v1.34.1...cli-v1.35.0) (2026-07-12)
+
+### Features
+
+* publish Postgram to MCP Registry ([#99](https://github.com/ivo-toby/postgram/issues/99)) ([ceb09d2](https://github.com/ivo-toby/postgram/commit/ceb09d243281eeda19694c86ea35030d4ae6921d))
+
 ## [1.34.1](https://github.com/ivo-toby/postgram/compare/cli-v1.34.0...cli-v1.34.1) (2026-07-10)
 
 ### Bug Fixes

@@ -8,6 +8,7 @@ COPY src ./src
 RUN npm run build
 
 FROM node:22-alpine
+LABEL io.modelcontextprotocol.server.name="io.github.ivo-toby/postgram"
 WORKDIR /app
 LABEL org.opencontainers.image.source="https://github.com/ivo-toby/postgram" \
       org.opencontainers.image.licenses="AGPL-3.0-only"

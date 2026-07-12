@@ -9,10 +9,13 @@ RUN npm run build
 
 FROM node:22-alpine
 WORKDIR /app
+LABEL org.opencontainers.image.source="https://github.com/ivo-toby/postgram" \
+      org.opencontainers.image.licenses="AGPL-3.0-only"
 RUN apk add --no-cache postgresql17-client tini
 COPY --from=builder /app/dist ./dist
 COPY --from=builder /app/node_modules ./node_modules
 COPY --from=builder /app/package.json ./
+COPY LICENSE ./LICENSE
 COPY src/db/migrations ./dist/db/migrations
 COPY docker/postgram-entrypoint.sh ./docker-entrypoint.sh
 RUN chmod +x /app/dist/cli/admin/pgm-admin.js \

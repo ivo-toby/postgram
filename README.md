@@ -1208,6 +1208,34 @@ pushes (multi-arch `amd64` + `arm64`). Workflow:
 built-in `GITHUB_TOKEN`; no extra secret required, but repo `packages:write`
 permission must be enabled.
 
+## Licensing
+
+Postgram uses a deliberate multi-license structure:
+
+- The server, Admin CLI, and browser UI are licensed under the
+  [GNU Affero General Public License v3.0 only](LICENSE).
+- The published [`pgm` CLI](cli/), portable agent integrations under
+  [`skill/`](skill/) and [`templates/`](templates/), and browser extensions under
+  [`packages/browser-extension-chrome/`](packages/browser-extension-chrome/) and
+  [`packages/browser-extension-firefox/`](packages/browser-extension-firefox/)
+  are licensed under the MIT License.
+- Documentation prose in [`docs/`](docs/) and this README is licensed under
+  [Creative Commons Attribution 4.0 International](docs/LICENSE.md).
+- The code and documentation licenses do not grant rights to use Postgram names,
+  logos, or other brand identifiers as trademarks. See the
+  [trademark policy](TRADEMARKS.md).
+
+The AGPL permits commercial use. Its network copyleft requires operators of a
+modified Postgram service to offer the corresponding source to users who
+interact with that modified service over a network. See
+[`LICENSING.md`](LICENSING.md) for the exact path boundaries and practical
+examples.
+
+Contributions are welcome under the process in
+[`CONTRIBUTING.md`](CONTRIBUTING.md). Contributors must accept the
+[Postgram Contributor License Agreement](CONTRIBUTOR_LICENSE_AGREEMENT.md)
+before a contribution can be merged.
+
 ## Related Docs
 
 - [Phase 1 MVP spec](specs/001-phase1-mvp/spec.md)

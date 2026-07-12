@@ -41,6 +41,9 @@ const activeSession = {
   mfaVerified: true,
 };
 
+const ADMIN_PASSWORD_POLICY_MESSAGE =
+  'Password must be at least 12 characters, include at least 3 of lowercase letters, uppercase letters, numbers, and symbols, and must not contain "password" or the email username';
+
 function adminOpsRoutes(): MockRoute[] {
   return [
     {
@@ -386,6 +389,26 @@ describe('admin auth navigation', () => {
 });
 
 describe('AdminAuth', () => {
+  it('shows password policy feedback before submitting first-admin setup', async () => {
+    const user = userEvent.setup();
+    const fetchMock = mockFetch([
+      { path: '/admin/api/bootstrap/status', body: { state: 'unbootstrapped' } },
+      { path: '/admin/api/session/current', status: 401, body: { error: { message: 'Invalid admin session' } } },
+    ]);
+
+    render(<AdminAuth />);
+
+    expect(await screen.findByRole('heading', { name: 'First admin setup' })).toBeInTheDocument();
+
+    await user.type(screen.getByLabelText('Bootstrap token'), 'bootstrap-token-plaintext');
+    await user.type(screen.getByLabelText('Email'), 'admin@example.com');
+    await user.type(screen.getByLabelText('Password'), 'password123');
+    await user.click(screen.getByRole('button', { name: 'Create admin' }));
+
+    expect(screen.getByText(ADMIN_PASSWORD_POLICY_MESSAGE)).toBeInTheDocument();
+    expect(fetchMock.mock.calls.some(([path]) => path === '/admin/api/bootstrap/setup')).toBe(false);
+  });
+
   it('keeps first-admin setup pending until MFA is enrolled and verified without storing secrets', async () => {
     const user = userEvent.setup();
     const storageWrites = vi.spyOn(localStorage, 'setItem');

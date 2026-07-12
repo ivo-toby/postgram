@@ -10,7 +10,7 @@
     "directory": "packages/browser-extension-chrome"
   },
   "scripts": {
-    "package": "mkdir -p dist && zip -qr dist/postgram-web-clipper-chrome.zip manifest.json src -x '*.DS_Store'",
+    "package": "mkdir -p dist && zip -qr dist/postgram-web-clipper-chrome.zip manifest.json src LICENSE -x '*.DS_Store'",
     "validate": "node -e \"JSON.parse(require('fs').readFileSync('manifest.json','utf8')); console.log('manifest.json is valid JSON')\""
   }
 }

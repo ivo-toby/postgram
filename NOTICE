@@ -1,0 +1,15 @@
+Postgram
+Copyright (C) 2026 Ivo Toby
+
+The Postgram server, Admin CLI, and browser UI are licensed under the GNU
+Affero General Public License version 3 only. See LICENSE.
+
+The pgm CLI, browser extensions, portable agent skill, and agent templates are
+licensed under the MIT License. Their directories contain the applicable
+license text.
+
+Documentation prose is licensed under Creative Commons Attribution 4.0
+International. See docs/LICENSE.md and docs/LICENSE.
+
+No trademark rights in the Postgram name, logos, icons, or other brand
+identifiers are granted by these copyright licenses. See TRADEMARKS.md.

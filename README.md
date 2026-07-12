@@ -1208,6 +1208,21 @@ pushes (multi-arch `amd64` + `arm64`). Workflow:
 built-in `GITHUB_TOKEN`; no extra secret required, but repo `packages:write`
 permission must be enabled.
 
+### Official MCP Registry
+
+Postgram is published as `io.github.ivo-toby/postgram` in the
+[official MCP Registry](https://registry.modelcontextprotocol.io/). The
+registry metadata in [`server.json`](server.json) describes the public GHCR
+image and its Streamable HTTP endpoint.
+
+Registry releases are intentionally manual. After changing `server.json`, wait
+for the `docker-publish` workflow on `main` to finish, then run the
+`publish-mcp-registry` workflow. It verifies the official publisher download,
+pins the current multi-architecture `main` image by digest, validates the
+metadata, authenticates with GitHub OIDC, and publishes it. Increase the
+top-level `version` in `server.json` before publishing a metadata update; the
+registry treats each published version as immutable.
+
 ## Licensing
 
 Postgram uses a deliberate multi-license structure:

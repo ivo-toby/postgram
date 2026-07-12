@@ -1,11 +1,30 @@
 <p align="center">
-    <img src="assets/logo.png" alt="PostGram" width="400" />
-  </p>
+  <img src="assets/logo.png" alt="Postgram" width="260" />
+</p>
 
-Postgram is a self-hosted knowledge store for humans and agents. It gives you a
-single place to store memories, notes, people, projects, and tasks, then
-retrieve them over REST, MCP, and a CLI with semantic search and API-key-based
-access control.
+<h1 align="center">Postgram</h1>
+
+<p align="center">
+  <strong>A self-hosted productivity and knowledge backend for humans and AI agents.</strong>
+</p>
+
+<p align="center">
+  <a href="https://postgram.dev">Website</a> ·
+  <a href="https://postgram.dev/getting-started/quick-start/">Quick start</a> ·
+  <a href="https://postgram.dev/guides/mcp-integration/">MCP guide</a> ·
+  <a href="https://postgram.dev/reference/rest-api/">REST API</a> ·
+  <a href="https://www.youtube.com/watch?v=xr7u11gtYgM">Demo</a>
+</p>
+
+Postgram keeps the data you and your agents work from in one inspectable place:
+notes, documents, tasks, people, projects, interactions, decisions, and agent
+memory. Humans use the browser UI and CLI; agents use the same corpus over MCP,
+REST, or the CLI.
+
+It is more than an agent-memory layer. Postgram preserves typed source objects,
+supports GTD-style task management and Markdown folder sync, combines full-text
+and vector retrieval with a knowledge graph, and separates short-lived agent
+working context from durable memory.
 
 <table>
   <tr>
@@ -24,16 +43,130 @@ access control.
   </tr>
 </table>
 
-## What It Is
+## Why Postgram
 
-Postgram is a personal-scale knowledge backend built for:
+- **One private corpus across tools.** Give different agents and devices access
+  to the same data without tying it to one editor or hosted memory provider.
+- **Inspectable source data.** Store typed entities instead of opaque chat
+  summaries, then search, edit, link, archive, or delete them yourself.
+- **Search before graph expansion.** Hybrid retrieval finds relevant entities;
+  edge summaries tell an agent when related graph context is worth following.
+- **Working context is not durable memory.** Session context has its own scope
+  and lifecycle; grooming can archive it or distill selected context into
+  durable memory.
+- **Operator control.** Choose where PostgreSQL runs, which embedding and
+  extraction providers are allowed, who receives API keys, and what is kept.
 
-- human operators who want a searchable external memory
-- agent workflows that need durable shared context across sessions
-- local or single-VM deployments where simplicity matters more than massive scale
+Postgram is built for one person or a small trusted team running a local or
+single-VM deployment. It is not a hosted service or a multi-tenant SaaS
+platform. Knowledge extraction is optional, and the provided Docker Compose
+setup binds the raw API and UI ports to loopback by default.
 
-It is not a general SaaS platform. It is designed for one user or one small
-team running their own instance.
+## Quick Start (Docker Compose)
+
+You need Git, Docker, and Docker Compose. Node.js 22+ is needed only for local
+development or for installing the `pgm` CLI; `gpg` is needed only for encrypted
+CLI backups.
+
+1. Clone Postgram:
+
+   ```bash
+   git clone https://github.com/ivo-toby/postgram.git
+   cd postgram
+   ```
+
+2. Choose an embedding path before the first start. For the local default,
+   install and start Ollama on the Docker host, then pull Postgram's default
+   embedding model:
+
+   ```bash
+   ollama pull bge-m3
+   ```
+
+   For hosted OpenAI embeddings instead, create a `.env` file containing a real
+   key before starting Compose:
+
+   ```dotenv
+   OPENAI_API_KEY=<your-openai-key>
+   ```
+
+3. Start the stack:
+
+   ```bash
+   docker compose up -d --build
+   ```
+
+   The first run creates persistent Docker volumes for PostgreSQL and
+   installation secrets. No `.env` file is required for the default Compose
+   path.
+
+4. Read the one-time bootstrap token:
+
+   ```bash
+   docker compose logs mcp-server \
+     | grep 'Bootstrap token:' \
+     | tail -n 1
+   ```
+
+   The plaintext appears only in the original first-start logs. Capture it
+   before recreating the API container or discarding those logs.
+
+5. Open [http://127.0.0.1:3000/admin](http://127.0.0.1:3000/admin), paste the
+   token, create the first admin, enroll MFA, and follow the onboarding flow.
+
+6. Confirm the selected provider in the Admin **Config** tab. If you add or
+   change staged settings, save, validate, and apply them, then restart
+   `mcp-server` when Admin marks a restart as required:
+
+   ```bash
+   docker compose restart mcp-server
+   ```
+
+   When Ollama runs on the Docker host, its base URL is
+   `http://host.docker.internal:11434`. Optional LLM relationship extraction is
+   disabled by default and can use OpenAI, Anthropic, Ollama, or an
+   OpenAI-compatible endpoint. Changing the embedding provider, model, or
+   dimensions after the first start is migration work and is blocked from a
+   simple config apply.
+
+7. Check health, then create an API key in the Admin **Overview** tab. For the
+   smoke test below, allow `read` and `write`, the `memory` entity type, and
+   `personal` visibility:
+
+   ```bash
+   curl -fsS http://127.0.0.1:3100/health
+   ```
+
+   The response should include `"status":"ok"` and
+   `"postgres":"connected"`.
+
+8. Install the CLI and verify an authenticated write and search. Enrichment is
+   asynchronous, so wait for `pgm queue` to report no pending work before the
+   search:
+
+   ```bash
+   npm install -g @ivotoby/postgram-cli
+   export PGM_API_URL=http://127.0.0.1:3100
+   export PGM_API_KEY='<plaintext-api-key>'
+
+   pgm store "Postgram quick start is working" \
+     --type memory \
+     --visibility personal \
+     --tags quickstart
+   pgm queue
+   pgm search "quick start"
+   ```
+
+If embeddings are unreachable, Postgram still starts and accepts writes, but
+enrichment and search will fail until the provider is available. See the
+[full quick start](https://postgram.dev/getting-started/quick-start/) and
+[troubleshooting guide](https://postgram.dev/operations/troubleshooting/) for
+the longer path.
+
+For access from ChatGPT, Claude, or another remote MCP client, put Postgram
+behind HTTPS, enable OAuth, and follow the
+[MCP integration guide](https://postgram.dev/guides/mcp-integration/). Do not
+publish the loopback development ports directly to the internet.
 
 ## What It Does
 
@@ -41,20 +174,23 @@ Postgram provides:
 
 - durable storage for typed entities: `memory`, `person`, `project`, `task`,
   `interaction`, `document`
-- hybrid BM25 + vector search with async enrichment and BM25-only fallback
+- hybrid BM25 + vector search with asynchronous enrichment
 - knowledge graph with typed directional edges between entities
 - LLM-powered relationship extraction (OpenAI, Anthropic, or Ollama)
 - document sync from local markdown repos via manifest comparison
+- browser interfaces for knowledge work and guarded administration
+- UMAP and PCA projections of embedded entities
+- GTD-style capture, task organization, and Kanban views
 - scoped API-key authentication and visibility restrictions
 - a REST API for application and automation access
-- an MCP SSE endpoint for agent-native tool access
+- a Streamable HTTP MCP endpoint for agent-native tool access
 - a CLI (`pgm`) for humans and agents
 - a container-local admin CLI (`pgm-admin`)
 - Talon SQLite migration tooling
 - encrypted backup support
-- append-only audit logging for mutating and privileged operations
+- audit logging for mutating and privileged operations
 
-## Architecture
+## How It Works
 
 Postgram is a TypeScript Node.js application built around a service layer.
 
@@ -62,7 +198,7 @@ Main components:
 
 - PostgreSQL + `pgvector` for persistence and vector search
 - Hono for the HTTP server
-- MCP over SSE for agent-facing tool access
+- MCP over Streamable HTTP for agent-facing tool access
 - CLI/admin CLIs built with Commander
 - background enrichment worker for chunking, embeddings, and LLM extraction
 
@@ -157,8 +293,8 @@ Operators can also review durable memory quality without mutating the durable
 claim itself:
 
 ```bash
-pgm-admin memory groom-durable --dry-run --older-than 30d
-pgm-admin memory groom-durable --mode mark --yes --older-than 30d
+./bin/pgm-admin memory groom-durable --dry-run --older-than 30d
+./bin/pgm-admin memory groom-durable --mode mark --yes --older-than 30d
 ```
 
 Durable grooming selects active `durable_memory` rows, including legacy memory
@@ -171,8 +307,8 @@ merge duplicates.
 To actually clean the marked rows, apply the grooming labels:
 
 ```bash
-pgm-admin memory apply-durable-grooming --dry-run
-pgm-admin memory apply-durable-grooming --yes
+./bin/pgm-admin memory apply-durable-grooming --dry-run
+./bin/pgm-admin memory apply-durable-grooming --yes
 ```
 
 Apply mode defaults to `auto`: `needs_grooming` memories are rewritten from the
@@ -191,8 +327,9 @@ entities are retried up to 3 times with a 5-minute backoff.
 ### 3. Hybrid Search
 
 Search blends vector cosine similarity (60%) with BM25 keyword ranking (40%)
-transparently. When the embedding service is unavailable, search falls back to
-BM25-only mode. Results include:
+transparently. Search requires a reachable embedding provider; if that provider
+is unavailable, writes still succeed but enrichment and search fail until it
+recovers. Results include:
 
 - ranked results with blended scores
 - similarity scores
@@ -234,6 +371,11 @@ Supported providers:
 | Anthropic | `claude-haiku-4-5-20251001` | `ANTHROPIC_API_KEY`                                   |
 | Ollama    | `llama3.2`                  | `OLLAMA_BASE_URL` (default: `http://localhost:11434`) |
 
+These are configuration defaults, not model-quality recommendations. Graph
+extraction is a constrained structured-output task; validate the resulting
+edges on your own corpus before running a large backfill, especially with small
+local models.
+
 <p align="center">
   <img src="assets/embeddings.png" alt="Postgram embedding projection view" />
 </p>
@@ -274,9 +416,9 @@ Tasks are first-class entities with convenience operations for:
 The same service layer is exposed through:
 
 - REST API
-- MCP SSE endpoint
+- Streamable HTTP MCP endpoint
 - `pgm` CLI
-- `pgm-admin` CLI (`./bin/pgmadmin`)
+- `pgm-admin` CLI (`./bin/pgm-admin`)
 - Browser extensions for [Chrome](./packages/browser-extension-chrome) and
   [Firefox](./packages/browser-extension-firefox) — one-click web clipper
   that captures the current page or text selection via the REST API.
@@ -297,6 +439,11 @@ src/
   types/           Shared types
   util/            Errors, audit, logging
 
+ui/                User-facing web UI and Admin UI
+cli/               Published @ivotoby/postgram-cli package
+docker/            Container entrypoint and secret bootstrap scripts
+bin/               Local operator wrappers
+
 packages/
   browser-extension-chrome/   Chromium web clipper (MV3)
   browser-extension-firefox/  Firefox web clipper (MV3)
@@ -307,27 +454,22 @@ tests/
   unit/            Pure logic tests
 ```
 
-## Prerequisites
+## Requirements
 
-- Node.js 22+
-- Docker + Docker Compose
-- `gpg` (for encrypted backups)
+- Docker and Docker Compose for the recommended deployment
+- Node.js 22+ for the `pgm` CLI or local development
+- a reachable OpenAI or Ollama embedding provider for enrichment and search
 
 Optional:
 
 - OpenAI API key (for OpenAI embeddings or extraction)
 - Anthropic API key (for LLM extraction)
-- Ollama (for local LLM extraction)
+- Ollama (for local embeddings or LLM extraction)
+- `gpg` (for encrypted CLI backups)
 
-## Setup
+## Docker Setup Details
 
-### 1. Install dependencies
-
-```bash
-npm install
-```
-
-### 2. Start Docker Compose
+### 1. Start Docker Compose
 
 ```bash
 docker compose up -d --build
@@ -361,7 +503,7 @@ present. If no OpenAI key and no explicit `EMBEDDING_PROVIDER` are supplied, the
 container entrypoint chooses local Ollama embeddings so a clean stack can boot
 before provider secrets are configured.
 
-### 3. Complete first admin setup
+### 2. Complete first admin setup
 
 On first start, the API container prints a clear one-time bootstrap banner with
 the token:
@@ -376,7 +518,7 @@ If the console has scrolled, read the same one-time bootstrap token from the
 trusted local operator channel:
 
 ```bash
-docker compose logs mcp-server | grep 'admin first-run bootstrap token' | tail -n 1
+docker compose logs mcp-server | grep 'Bootstrap token:' | tail -n 1
 ```
 
 Then open `http://127.0.0.1:3000/admin`, create the first admin user, and
@@ -413,7 +555,7 @@ Do not use `docker compose down -v` when testing onboarding resume behavior.
 That command removes named volumes, including the `pgdata` Postgres volume, and
 will reset the server-side onboarding state along with the database.
 
-### 4. Check health
+### 3. Check health
 
 ```bash
 curl http://127.0.0.1:3100/health
@@ -424,7 +566,7 @@ Expected:
 - `status: "ok"`
 - `postgres: "connected"`
 
-### 5. Configure providers and create API keys
+### 4. Configure providers and create API keys
 
 Use the Admin dashboard in the browser for the supported happy path:
 
@@ -524,7 +666,7 @@ See [`specs/002-local-embeddings/quickstart.md`](specs/002-local-embeddings/quic
 | `LLM_REQUEST_TIMEOUT_MS`                       | no                              | `120000`                     | Hard cap per LLM call in milliseconds. Bump this when running slow local models (e.g. `gpt-oss:120b-cloud`).                                                                                                                                                                                                 |
 | `EXTRACTION_SEMANTIC_NEIGHBORS_ENABLED`        | no                              | `false`                      | Enable semantic neighbor linking (see below).                                                                                                                                                                                                                                                                |
 | `EXTRACTION_SEMANTIC_NEIGHBORS_MAX`            | no                              | `10`                         | Maximum number of neighbor edges to create per entity.                                                                                                                                                                                                                                                       |
-| `EXTRACTION_SEMANTIC_NEIGHBORS_MIN_SIMILARITY` | no                              | `0.65`                       | Minimum cosine similarity (0–1) for an entity to qualify as a neighbor. Raise to reduce noise; lower if you're finding too few neighbors. The right value depends on your embedding model's similarity distribution — use `./bin/pgm-admin link-neighbors --dry-run` to inspect actual scores before tuning. |
+| `EXTRACTION_SEMANTIC_NEIGHBORS_MIN_SIMILARITY` | no                              | `0.65`                       | Minimum cosine similarity (0–1) for an entity to qualify as a neighbor. Raise to reduce noise; lower if you're finding too few neighbors. The right value depends on your embedding model's similarity distribution — use `./bin/pgm-admin link-neighbors --all --dry-run` to inspect actual scores before tuning. |
 
 **Semantic neighbor linking**: the LLM extraction pass only finds entities that
 are explicitly named in the source content. It misses entities that are
@@ -590,13 +732,13 @@ works well as a weekly cron job that keeps the neighbor graph fresh as new
 entities are added. Example cron entry running every Sunday at 02:00:
 
 ```cron
-0 2 * * 0  DATABASE_URL=... pgm-admin link-neighbors --all
+0 2 * * 0 cd /path/to/postgram && ./bin/pgm-admin link-neighbors --all
 ```
 
 Or with Docker Compose:
 
 ```bash
-docker compose exec server pgm-admin link-neighbors --all
+docker compose exec mcp-server pgm-admin link-neighbors --all
 ```
 
 **Auto-created entities**: when `EXTRACTION_AUTO_CREATE_ENTITIES=true`,
@@ -639,7 +781,7 @@ docker compose exec postgres psql -U postgram -d postgram -c \
 
 ## Running The Server
 
-### Pre-built Docker image (recommended)
+### Pre-built Docker image
 
 Pull from GitHub Container Registry:
 
@@ -652,7 +794,6 @@ Images are multi-arch (`linux/amd64`, `linux/arm64`). Tags available:
 - `latest` — most recent build of `main`
 - `main` — same as `latest`, explicit branch name
 - `sha-<short>` — pinned to a specific commit
-- `v<major>.<minor>.<patch>` — semver tags when a release is cut
 
 The `docker-compose.yml` in this repo builds locally by default; to use the
 pre-built image instead, replace `build: .` with `image: ghcr.io/ivo-toby/postgram:latest`
@@ -775,7 +916,8 @@ http://127.0.0.1:3100/mcp
 
 Exposed tools:
 
-- `store`, `recall`, `search`, `update`, `delete`
+- `store`, `recall`, `search`, `update`, `delete`, `queue`
+- `store_session_context`, `groom_session_context`
 - `task_create`, `task_list`, `task_update`, `task_complete`
 - `sync_push`, `sync_status`
 - `link`, `unlink`, `expand`
@@ -802,22 +944,22 @@ Avoid expansion for direct facts already present in the compact result.
 The underlying API remains JSON; compacting and TOON happen only in MCP/CLI
 handlers.
 
-### Native Claude Connectors
+### Native Remote Connectors (ChatGPT and Claude)
 
-Claude Code can continue to connect with the existing static bearer API key
-flow. Claude Desktop, Claude Web, and mobile use the Connectors UI for remote
-MCP servers, where arbitrary static headers are not available. Enable OAuth so
-those clients can register and connect without `mcp-remote`:
+Local MCP clients can connect with a static bearer API key. ChatGPT accounts
+with custom-connector/developer-mode access and Claude's Connectors UI can
+connect to a public Postgram endpoint through OAuth, without storing a static
+API-key header in the client settings:
 
 ```bash
 OAUTH_ENABLED=true
 PUBLIC_BASE_URL=https://postgram.example.com
 ```
 
-Add `${PUBLIC_BASE_URL}/mcp` as the connector URL in Claude. Claude discovers
-`/.well-known/oauth-protected-resource/mcp`, registers itself through
+Add `${PUBLIC_BASE_URL}/mcp` as the connector URL in ChatGPT or Claude. The
+client discovers `/.well-known/oauth-protected-resource/mcp`, registers through
 `/oauth/register`, opens `/oauth/authorize`, and receives OAuth tokens from
-`/oauth/token`.
+`/oauth/token`. The endpoint must be reachable over public HTTPS.
 
 The authorize page asks for an existing Postgram API key once. Tokens issued
 from that approval inherit the API key's scopes, `client_id`, allowed entity
@@ -911,7 +1053,7 @@ provider configuration, API-key creation, status inspection, and safe
 maintenance dry-runs. `pgm-admin` remains available for emergency recovery,
 embedding migrations, raw SQL inspection, and advanced operator jobs.
 
-The easy CLI path uses the `bin/pgm` wrapper shipped in the repo. It runs
+The easy CLI path uses the `bin/pgm-admin` wrapper shipped in the repo. It runs
 `pgm-admin` via `docker exec` when the container is up, and falls back to
 `docker compose run --rm` when it isn't (useful for first-boot migrations
 or when the startup dimension gate is refusing to boot):
@@ -940,14 +1082,14 @@ Shell alias for daily use (add to `~/.bashrc` or `~/.zshrc` on your docker
 host):
 
 ```bash
-alias pgm-admin='/var/lib/docker/configs/postgram/bin/pgm-admin'
+alias pgm-admin='/path/to/postgram/bin/pgm-admin'
 # then just: pgm-admin stats
 ```
 
 Override with env if your service/container names differ:
 
 ```bash
-PGM_SERVICE=mcp-server PGM_CONTAINER=postgram-mcp-server-1 ./bin/pgm-admin stats
+PGM_SERVICE=mcp-server PGM_CONTAINER=my-postgram-mcp-server-1 ./bin/pgm-admin stats
 ```
 
 Direct equivalent without the wrapper (for reference):
@@ -997,7 +1139,7 @@ Main commands:
   Typical maintenance run targeting gaps without paying for the full graph:
 
   ```bash
-  pgm-admin improve-graph --type document --no-edges-only --provider ollama --model <model>
+  ./bin/pgm-admin improve-graph --type document --no-edges-only --provider ollama --model <model>
   ```
 
 - `prune-edges --below <threshold>` — delete edges with `confidence` below
@@ -1020,11 +1162,11 @@ Main commands:
   commands print the affected row count.
 
   ```bash
-  pgm-admin sql "SELECT id, type, extraction_status FROM entities LIMIT 5"
-  pgm-admin sql --json "SELECT COUNT(*) FROM edges WHERE source = 'llm-extraction'"
+  ./bin/pgm-admin sql "SELECT id, type, extraction_status FROM entities LIMIT 5"
+  ./bin/pgm-admin sql --json "SELECT COUNT(*) FROM edges WHERE source = 'llm-extraction'"
 
   # pipe multi-line SQL from a file
-  cat fix.sql | pgm-admin sql
+  cat fix.sql | ./bin/pgm-admin sql
   ```
 
 - `stats` — entity counts, chunk count, DB size
@@ -1043,7 +1185,7 @@ Entities that completed extraction but produced no edges are the primary signal
 of a silent failure:
 
 ```bash
-pgm-admin sql "
+./bin/pgm-admin sql "
   SELECT id, char_length(content) AS chars, created_at
   FROM entities
   WHERE type = 'document'
@@ -1063,10 +1205,10 @@ untouched:
 
 ```bash
 # Using the default extraction model
-pgm-admin reextract --type document --no-edges-only
+./bin/pgm-admin reextract --type document --no-edges-only
 
 # Using a local Ollama model (zero API cost)
-pgm-admin improve-graph --type document --no-edges-only --provider ollama --model <model>
+./bin/pgm-admin improve-graph --type document --no-edges-only --provider ollama --model <model>
 ```
 
 ### Full re-extraction pass
@@ -1075,10 +1217,10 @@ When you want to redo everything (e.g. after switching to a better model):
 
 ```bash
 # Wipe and redo — gives a clean slate
-pgm-admin reextract --all --clean-edges
+./bin/pgm-admin reextract --all --clean-edges
 
 # Or scope to documents only
-pgm-admin reextract --type document --clean-edges
+./bin/pgm-admin reextract --type document --clean-edges
 ```
 
 ### Confidence pruning
@@ -1086,8 +1228,8 @@ pgm-admin reextract --type document --clean-edges
 Remove low-confidence edges left behind by older or weaker models:
 
 ```bash
-pgm-admin prune-edges --below 0.5 --dry-run   # preview
-pgm-admin prune-edges --below 0.5             # apply
+./bin/pgm-admin prune-edges --below 0.5 --dry-run   # preview
+./bin/pgm-admin prune-edges --below 0.5             # apply
 ```
 
 ### Edge validation
@@ -1095,21 +1237,21 @@ pgm-admin prune-edges --below 0.5             # apply
 Run an LLM-as-judge pass to remove edges not supported by the source content:
 
 ```bash
-pgm-admin validate-edges --dry-run --limit 200
-pgm-admin validate-edges --limit 200
+./bin/pgm-admin validate-edges --dry-run --limit 200
+./bin/pgm-admin validate-edges --limit 200
 ```
 
 ### Monitoring queue progress
 
 ```bash
 pgm queue                              # via pgm CLI
-pgm-admin sql "SELECT extraction_status, COUNT(*) FROM entities GROUP BY 1"
+./bin/pgm-admin sql "SELECT extraction_status, COUNT(*) FROM entities GROUP BY 1"
 ```
 
 ## Talon Migration
 
 ```bash
-docker cp /path/to/talon.sqlite postgram-mcp-server-1:/tmp/talon.sqlite
+docker compose cp /path/to/talon.sqlite mcp-server:/tmp/talon.sqlite
 
 docker compose exec -T mcp-server \
   node dist/migrate-talon/index.js /tmp/talon.sqlite \
@@ -1138,22 +1280,18 @@ npx vitest run tests/contract/
 
 ## Current Status
 
-Implemented phases:
-
-- **Phase 1 MVP:** Entity CRUD, hybrid search, API key auth, enrichment worker,
-  REST + MCP + CLI, Talon migration, backup, audit logging
-- **Phase 1 Enhancements:** BM25+vector hybrid search, enrichment retry with
-  backoff, `pgm-admin reembed`, `pgm list`, startup validation
-- **Phase 2 Document Sync:** Push-based markdown sync with SHA-256 change detection,
-  `pgm sync` CLI, REST + MCP sync tools
-- **Phase 3 Knowledge Graph:** Edges table, `link`/`unlink`/`expand` tools,
-  LLM extraction pipeline (OpenAI/Anthropic/Ollama), graph-enhanced search
+Postgram is actively developed by one maintainer and used daily in a personal
+deployment. Entity storage, task management, Markdown sync, hybrid search,
+knowledge-graph traversal, memory lifecycles, OAuth, the user-facing web UI, and
+the guarded Admin UI are implemented. The project is deliberately optimized
+for personal and small-team self-hosting rather than multi-tenant scale.
 
 ## Notes And Limitations
 
 - Postgram is optimized for personal/small-team scale
-- Embeddings default to OpenAI (`text-embedding-3-small`) but can run fully
-  locally via Ollama — set `EMBEDDING_PROVIDER=ollama`
+- Non-Compose deployments default to OpenAI embeddings; Compose selects OpenAI
+  when a key is present and otherwise selects local Ollama. Search requires the
+  selected provider to be reachable.
 - LLM extraction is optional and disabled by default
 - Backup encryption requires `gpg`
 

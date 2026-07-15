@@ -278,11 +278,11 @@ MCP `mode` is `dry_run` or `archive`; promotion remains admin-only.
 
 For scheduled maintenance, run grooming from the host that has access to the
 Postgram container. This cron example assesses eligible session context for all
-client scopes every three days at 03:17 and appends JSON output to a log. Cron
-does not provide a TTY, so use `docker compose exec -T`:
+client scopes every three days at 03:17 and appends JSON output to a log. The
+wrapper detects that cron does not provide a TTY and runs non-interactively:
 
 ```cron
-17 3 */3 * * cd /path/to/postgram && docker compose exec -T mcp-server pgm-admin --json memory groom --all-clients --older-than 7d --mode promote --yes >> /var/log/postgram-memory-groom.log 2>&1
+17 3 */3 * * cd /path/to/postgram && ./bin/pgm-admin --json memory groom --all-clients --older-than 7d --mode promote --yes >> /var/log/postgram-memory-groom.log 2>&1
 ```
 
 Use `--mode archive --yes` instead if you want to archive eligible working
@@ -738,7 +738,7 @@ entities are added. Example cron entry running every Sunday at 02:00:
 Or with Docker Compose:
 
 ```bash
-docker compose exec mcp-server pgm-admin link-neighbors --all
+./bin/pgm-admin link-neighbors --all
 ```
 
 **Auto-created entities**: when `EXTRACTION_AUTO_CREATE_ENTITIES=true`,
@@ -1066,7 +1066,7 @@ For cron or other non-interactive automation, call Docker with `-T` so it does
 not try to allocate a TTY:
 
 ```bash
-docker compose exec -T mcp-server pgm-admin <command>
+docker compose exec -T mcp-server /app/docker-entrypoint.sh pgm-admin <command>
 ```
 
 Examples:
@@ -1075,8 +1075,16 @@ Examples:
 ./bin/pgm-admin key create --name local --scopes read,write,delete --visibility personal,work,shared
 ./bin/pgm-admin stats
 ./bin/pgm-admin embeddings migrate --target-dimensions 1024 --dry-run
+docker compose stop mcp-server
 ./bin/pgm-admin embeddings migrate --target-dimensions 1024 --yes
+docker compose up -d mcp-server
 ```
+
+For an embedding provider, model, or dimension change made in Admin, save,
+validate, and apply the target settings before running that migration sequence.
+The wrapper refuses `--yes` while `mcp-server` is running so the live enrichment
+worker cannot process the re-embedding queue with its previous in-memory
+provider. The dry-run is safe while the service is running.
 
 Shell alias for daily use (add to `~/.bashrc` or `~/.zshrc` on your docker
 host):
@@ -1095,10 +1103,15 @@ PGM_SERVICE=mcp-server PGM_CONTAINER=my-postgram-mcp-server-1 ./bin/pgm-admin st
 Direct equivalent without the wrapper (for reference):
 
 ```bash
-docker compose exec -T mcp-server pgm-admin <command>
+docker compose exec -T mcp-server /app/docker-entrypoint.sh pgm-admin <command>
 # or, when the container is down:
 docker compose run --rm mcp-server pgm-admin <command>
 ```
+
+The entrypoint is required for commands executed in an already-running
+container. It reconstructs Docker-managed values such as `DATABASE_URL`, which
+are exported for the server process but are not present in a plain
+`docker compose exec` environment.
 
 Main commands:
 

@@ -321,6 +321,128 @@ afterEach(() => {
 });
 
 describe('AdminConfig', () => {
+  it('guides operators through save, validate, apply, and restart without implying save is activation', async () => {
+    const user = userEvent.setup();
+    const pendingConfig = providerConfig({
+      restartRequired: true,
+      settings: {
+        ...providerConfig().settings,
+        EXTRACTION_MODEL: setting('EXTRACTION_MODEL', 'gpt-4.1', {
+          state: 'pending',
+          validation: {
+            status: 'unvalidated',
+            message: null,
+            metadata: {},
+            validatedAt: null
+          },
+          appliedAt: null
+        })
+      }
+    });
+    const restartedConfig = providerConfig({
+      restartRequired: true,
+      settings: {
+        ...providerConfig().settings,
+        EXTRACTION_MODEL: setting('EXTRACTION_MODEL', 'gpt-4.1', {
+          state: 'applied',
+          restartRequired: true,
+          appliedAt: '2026-07-06T16:30:00.000Z'
+        })
+      }
+    });
+    const getProviderConfig = vi
+      .fn()
+      .mockResolvedValueOnce(providerResponse())
+      // Non-URL settings remain marked unvalidated in the row; the successful
+      // aggregate validation response is what makes the pending set applyable.
+      .mockResolvedValueOnce(providerResponse(pendingConfig))
+      .mockResolvedValueOnce(providerResponse(restartedConfig));
+    const api = adminApi({
+      getProviderConfig,
+      saveProviderConfig: vi.fn(async () => providerResponse(pendingConfig)),
+      validateProviderConfig: vi.fn(async () => ({
+        validation: {
+          status: 'valid' as const,
+          restartRequired: true,
+          reembedRequired: false,
+          connectionTests: {},
+          runtime: { constructible: true, errors: [] },
+          embedding: { current: null, target: null }
+        }
+      }))
+    });
+
+    render(
+      <AdminConfig
+        api={api}
+        initialStepUp={{ fresh: true, expiresAt: '2999-01-01T00:00:00.000Z' }}
+      />
+    );
+
+    expect(
+      await screen.findByRole('heading', { name: 'Configuration progress' })
+    ).toBeInTheDocument();
+    expect(
+      screen.getByText('Configuration is up to date.')
+    ).toBeInTheDocument();
+    expect(
+      screen.getByText(
+        /database settings override matching provider values from \.env after restart/i
+      )
+    ).toBeInTheDocument();
+
+    const modelInput = screen.getByLabelText('Extraction model');
+    await user.clear(modelInput);
+    await user.type(modelInput, 'gpt-4.1');
+    expect(
+      screen.getByText(
+        /Next: save your draft. Saving does not activate it yet/i
+      )
+    ).toBeInTheDocument();
+
+    await user.click(
+      screen.getByRole('button', { name: 'Save pending settings' })
+    );
+    expect(
+      await screen.findByText(
+        'Changes saved. Next: validate and test the pending configuration.'
+      )
+    ).toBeInTheDocument();
+    expect(
+      screen.getByText(/Next: validate and test connections/i)
+    ).toBeInTheDocument();
+    expect(
+      screen.getByRole('button', { name: 'Apply provider configuration' })
+    ).toBeDisabled();
+
+    await user.click(
+      screen.getByRole('button', { name: 'Validate and test connections' })
+    );
+    expect(
+      await screen.findByText(
+        'Validation passed. Next: apply the pending configuration.'
+      )
+    ).toBeInTheDocument();
+    expect(
+      screen.getByText(/Next: apply the validated settings/i)
+    ).toBeInTheDocument();
+    expect(
+      screen.getByRole('button', { name: 'Apply provider configuration' })
+    ).toBeEnabled();
+
+    await user.click(
+      screen.getByRole('button', { name: 'Apply provider configuration' })
+    );
+    expect(
+      await screen.findByText(
+        'Settings applied. Restart mcp-server to activate them.'
+      )
+    ).toBeInTheDocument();
+    expect(
+      screen.getByText('docker compose restart mcp-server')
+    ).toBeInTheDocument();
+  });
+
   it('delegates expired admin sessions during config load to the parent shell', async () => {
     const expiredSession = new AdminApiError(401, 'Invalid admin session');
     const onSessionExpired = vi.fn(() => true);
@@ -514,7 +636,7 @@ describe('AdminConfig', () => {
       getProviderConfig: vi.fn(async () => providerResponse(config)),
       validateProviderConfig: vi.fn(async () => ({
         validation: {
-          status: 'requires_reembedding' as const,
+          status: 'invalid' as const,
           restartRequired: true,
           reembedRequired: true,
           connectionTests: {
@@ -555,6 +677,11 @@ describe('AdminConfig', () => {
 
     expect(await screen.findByText('Restart required')).toBeInTheDocument();
     expect(screen.getByText('Re-embedding required')).toBeInTheDocument();
+    expect(
+      screen.queryByText(
+        './bin/pgm-admin embeddings migrate --target-dimensions 3072 --dry-run'
+      )
+    ).not.toBeInTheDocument();
     expect(screen.getByText('EXTRACTION_MODEL')).toBeInTheDocument();
     expect(screen.getByText('EMBEDDING_DIMENSIONS')).toBeInTheDocument();
     expect(screen.getAllByText(/waiting to apply/u).length).toBeGreaterThan(0);
@@ -577,6 +704,191 @@ describe('AdminConfig', () => {
     expect(
       screen.getByRole('button', { name: 'Apply provider configuration' })
     ).toBeDisabled();
+    expect(
+      screen.getByText(
+        'Validation completed. Review the results before applying.'
+      )
+    ).toBeInTheDocument();
+    expect(
+      screen.queryByText(/Validation passed\. Next: apply/u)
+    ).not.toBeInTheDocument();
+  });
+
+  it('applies validated embedding settings before showing a worker-safe migration sequence', async () => {
+    const user = userEvent.setup();
+    const config = providerConfig({
+      restartRequired: true,
+      reembedRequired: true,
+      settings: {
+        ...providerConfig().settings,
+        EMBEDDING_PROVIDER: setting('EMBEDDING_PROVIDER', 'ollama', {
+          state: 'pending',
+          restartRequired: true,
+          reembedRequired: true,
+          appliedAt: null,
+          validation: {
+            status: 'unvalidated',
+            message: null,
+            metadata: {},
+            validatedAt: null
+          }
+        }),
+        EMBEDDING_MODEL: setting('EMBEDDING_MODEL', undefined),
+        EMBEDDING_DIMENSIONS: setting('EMBEDDING_DIMENSIONS', undefined)
+      }
+    });
+    const getProviderConfig = vi
+      .fn()
+      .mockResolvedValueOnce(providerResponse(config))
+      .mockResolvedValueOnce(providerResponse(config))
+      .mockRejectedValueOnce(new Error('Provider refresh unavailable'));
+    const api = adminApi({
+      getProviderConfig,
+      validateProviderConfig: vi.fn(async () => ({
+        validation: {
+          status: 'requires_reembedding' as const,
+          restartRequired: true,
+          reembedRequired: true,
+          connectionTests: {},
+          runtime: { constructible: true, errors: [] },
+          embedding: {
+            current: {
+              provider: 'openai',
+              model: 'text-embedding-3-small',
+              dimensions: 1536
+            },
+            target: {
+              provider: 'ollama',
+              model: 'bge-m3',
+              dimensions: 1024
+            }
+          }
+        }
+      })),
+      applyProviderConfig: vi.fn(async () => ({
+        result: {
+          applied: true as const,
+          restartRequired: true,
+          reembedRequired: true as const,
+          reload: {
+            extraction: 'unchanged' as const,
+            embedding: 'restart_required' as const
+          },
+          appliedSettings: ['EMBEDDING_PROVIDER' as const]
+        }
+      }))
+    });
+
+    render(
+      <AdminConfig
+        api={api}
+        initialStepUp={{ fresh: true, expiresAt: '2999-01-01T00:00:00.000Z' }}
+      />
+    );
+
+    expect(
+      await screen.findByText(/Next: validate and test connections/i)
+    ).toBeInTheDocument();
+    expect(
+      screen.queryByText(
+        './bin/pgm-admin embeddings migrate --target-dimensions 1024 --dry-run'
+      )
+    ).not.toBeInTheDocument();
+
+    await user.click(
+      screen.getByRole('button', { name: 'Validate and test connections' })
+    );
+    expect(
+      await screen.findByText(/Next: apply the validated settings/i)
+    ).toBeInTheDocument();
+    expect(
+      screen.getByRole('button', { name: 'Apply provider configuration' })
+    ).toBeEnabled();
+    expect(
+      screen.queryByText(
+        './bin/pgm-admin embeddings migrate --target-dimensions 1024 --dry-run'
+      )
+    ).not.toBeInTheDocument();
+
+    await user.click(
+      screen.getByRole('button', { name: 'Apply provider configuration' })
+    );
+    expect(
+      await screen.findByText(
+        './bin/pgm-admin embeddings migrate --target-dimensions 1024 --dry-run'
+      )
+    ).toBeInTheDocument();
+    expect(
+      screen.getByText('docker compose stop mcp-server')
+    ).toBeInTheDocument();
+    expect(
+      screen.getByText(
+        './bin/pgm-admin embeddings migrate --target-dimensions 1024 --yes'
+      )
+    ).toBeInTheDocument();
+    expect(
+      screen.getByText('docker compose up -d mcp-server')
+    ).toBeInTheDocument();
+    expect(
+      screen.getByText(/Provider refresh unavailable/u)
+    ).toBeInTheDocument();
+  });
+
+  it('keeps an applied embedding migration visible after another validation', async () => {
+    const user = userEvent.setup();
+    const config = providerConfig({
+      restartRequired: true,
+      reembedRequired: true,
+      settings: {
+        ...providerConfig().settings,
+        EMBEDDING_PROVIDER: setting('EMBEDDING_PROVIDER', 'ollama', {
+          restartRequired: true,
+          reembedRequired: true,
+          appliedAt: '2026-07-06T16:30:00.000Z'
+        }),
+        EMBEDDING_MODEL: setting('EMBEDDING_MODEL', 'bge-m3'),
+        EMBEDDING_DIMENSIONS: setting('EMBEDDING_DIMENSIONS', 1024)
+      }
+    });
+    const api = adminApi({
+      getProviderConfig: vi.fn(async () => providerResponse(config)),
+      validateProviderConfig: vi.fn(async () => ({
+        validation: {
+          status: 'valid' as const,
+          restartRequired: false,
+          reembedRequired: false,
+          connectionTests: {},
+          runtime: { constructible: true, errors: [] },
+          embedding: { current: null, target: null }
+        }
+      }))
+    });
+
+    render(
+      <AdminConfig
+        api={api}
+        initialStepUp={{ fresh: true, expiresAt: '2999-01-01T00:00:00.000Z' }}
+      />
+    );
+
+    expect(
+      await screen.findByText(
+        './bin/pgm-admin embeddings migrate --target-dimensions 1024 --dry-run'
+      )
+    ).toBeInTheDocument();
+
+    await user.click(
+      screen.getByRole('button', { name: 'Validate and test connections' })
+    );
+
+    await waitFor(() => {
+      expect(api.validateProviderConfig).toHaveBeenCalled();
+    });
+    expect(
+      screen.getByText(
+        './bin/pgm-admin embeddings migrate --target-dimensions 1024 --dry-run'
+      )
+    ).toBeInTheDocument();
   });
 
   it('saves only changed provider settings so unchanged embedding identity is not resubmitted', async () => {
@@ -646,7 +958,9 @@ describe('AdminConfig', () => {
       screen.getByText(/OPENAI_API_KEY is already available from environment/i)
     ).toBeInTheDocument();
     expect(
-      screen.getByText(/ANTHROPIC_API_KEY is already available from environment/i)
+      screen.getByText(
+        /ANTHROPIC_API_KEY is already available from environment/i
+      )
     ).toBeInTheDocument();
   });
 
@@ -878,6 +1192,72 @@ describe('AdminConfig', () => {
     });
   });
 
+  it('invalidates validation when pending values change during validation', async () => {
+    const user = userEvent.setup();
+    const pendingConfig = providerConfig({
+      restartRequired: true,
+      settings: {
+        ...providerConfig().settings,
+        EXTRACTION_MODEL: setting('EXTRACTION_MODEL', 'gpt-4o-mini', {
+          state: 'pending',
+          restartRequired: true,
+          appliedAt: null,
+          validation: {
+            status: 'unvalidated',
+            message: null,
+            metadata: {},
+            validatedAt: null
+          }
+        })
+      }
+    });
+    const concurrentlyChangedConfig = providerConfig({
+      restartRequired: true,
+      settings: {
+        ...providerConfig().settings,
+        EXTRACTION_MODEL: setting('EXTRACTION_MODEL', 'late-model', {
+          state: 'pending',
+          restartRequired: true,
+          appliedAt: null,
+          validation: {
+            status: 'unvalidated',
+            message: null,
+            metadata: {},
+            validatedAt: null
+          }
+        })
+      }
+    });
+    const getProviderConfig = vi
+      .fn()
+      .mockResolvedValueOnce(providerResponse(pendingConfig))
+      .mockResolvedValueOnce(providerResponse(concurrentlyChangedConfig));
+    const api = adminApi({ getProviderConfig });
+
+    render(
+      <AdminConfig
+        api={api}
+        initialStepUp={{ fresh: true, expiresAt: '2999-01-01T00:00:00.000Z' }}
+      />
+    );
+
+    await user.click(
+      await screen.findByRole('button', {
+        name: 'Validate and test connections'
+      })
+    );
+
+    expect(
+      await screen.findByText(
+        'Provider settings changed during validation. Validate the current pending configuration again.'
+      )
+    ).toBeInTheDocument();
+    expect(
+      screen.getByRole('button', { name: 'Apply provider configuration' })
+    ).toBeDisabled();
+    expect(screen.getByLabelText('Extraction model')).toHaveValue('late-model');
+  });
+
   it('blocks apply after provider validation reports runtime errors', async () => {
     const user = userEvent.setup();
     const pendingConfig = providerConfig({
@@ -887,6 +1267,12 @@ describe('AdminConfig', () => {
         EXTRACTION_MODEL: setting('EXTRACTION_MODEL', 'claude-3-5-haiku', {
           state: 'pending',
           restartRequired: true,
+          validation: {
+            status: 'unvalidated',
+            message: null,
+            metadata: {},
+            validatedAt: null
+          },
           appliedAt: null
         })
       }
@@ -926,7 +1312,7 @@ describe('AdminConfig', () => {
     const applyButton = await screen.findByRole('button', {
       name: 'Apply provider configuration'
     });
-    expect(applyButton).toBeEnabled();
+    expect(applyButton).toBeDisabled();
 
     await user.click(
       screen.getByRole('button', { name: 'Validate and test connections' })
@@ -999,7 +1385,7 @@ describe('AdminConfig', () => {
 
     await user.click(
       screen.getByLabelText(
-        'I understand embedding changes require migration before apply'
+        'I understand embedding changes require a controlled migration after apply'
       )
     );
     await user.click(
@@ -1026,7 +1412,10 @@ describe('AdminConfig', () => {
       />
     );
 
-    await user.type(await screen.findByLabelText('MFA confirmation code'), '123456');
+    await user.type(
+      await screen.findByLabelText('MFA confirmation code'),
+      '123456'
+    );
     await user.click(
       screen.getByRole('button', { name: 'Validate and test connections' })
     );
@@ -1050,7 +1439,10 @@ describe('AdminConfig', () => {
       />
     );
 
-    await user.type(await screen.findByLabelText('MFA confirmation code'), '123456');
+    await user.type(
+      await screen.findByLabelText('MFA confirmation code'),
+      '123456'
+    );
     await user.type(
       screen.getByLabelText('OPENAI_API_KEY replacement'),
       'sk-rotated-after-expiry'
@@ -1146,6 +1538,73 @@ describe('AdminConfig', () => {
       expect(getProviderConfig).toHaveBeenCalledTimes(2);
     });
     expect(await screen.findByText('0 pending')).toBeInTheDocument();
+  });
+
+  it('returns to validation when a concurrent save remains pending after apply', async () => {
+    const user = userEvent.setup();
+    const pendingConfig = providerConfig({
+      restartRequired: true,
+      settings: {
+        ...providerConfig().settings,
+        EXTRACTION_PROVIDER: setting('EXTRACTION_PROVIDER', 'anthropic', {
+          state: 'pending',
+          restartRequired: true,
+          appliedAt: null
+        })
+      }
+    });
+    const partiallyAppliedConfig = providerConfig({
+      restartRequired: true,
+      settings: {
+        ...providerConfig().settings,
+        EXTRACTION_PROVIDER: setting('EXTRACTION_PROVIDER', 'anthropic', {
+          restartRequired: true,
+          appliedAt: '2026-07-06T16:30:00.000Z'
+        }),
+        EXTRACTION_MODEL: setting('EXTRACTION_MODEL', 'late-model', {
+          state: 'pending',
+          restartRequired: true,
+          appliedAt: null,
+          validation: {
+            status: 'unvalidated',
+            message: null,
+            metadata: {},
+            validatedAt: null
+          }
+        })
+      }
+    });
+    const getProviderConfig = vi
+      .fn()
+      .mockResolvedValueOnce(providerResponse(pendingConfig))
+      .mockResolvedValueOnce(providerResponse(partiallyAppliedConfig));
+    const api = adminApi({ getProviderConfig });
+
+    render(
+      <AdminConfig
+        api={api}
+        initialStepUp={{ fresh: true, expiresAt: '2999-01-01T00:00:00.000Z' }}
+      />
+    );
+
+    await user.click(
+      await screen.findByRole('button', {
+        name: 'Apply provider configuration'
+      })
+    );
+
+    expect(
+      await screen.findByText(/Next: validate and test connections/i)
+    ).toBeInTheDocument();
+    expect(screen.getByText('1 pending')).toBeInTheDocument();
+    expect(
+      screen.getByRole('button', { name: 'Apply provider configuration' })
+    ).toBeDisabled();
+    expect(
+      screen.getByText(
+        'Settings applied, but newer pending changes remain. Validate and apply those changes before restarting or migrating.'
+      )
+    ).toBeInTheDocument();
   });
 
   it('reports successful apply separately when the follow-up provider refresh fails', async () => {

@@ -186,7 +186,7 @@ export type AdminProviderApplyResponse = {
   result: {
     applied: true;
     restartRequired: boolean;
-    reembedRequired: false;
+    reembedRequired: boolean;
     reload: {
       extraction: 'restart_required' | 'unchanged';
       embedding: 'restart_required' | 'unchanged';

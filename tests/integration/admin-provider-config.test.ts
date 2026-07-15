@@ -226,9 +226,13 @@ describe('admin provider config service', () => {
       }
     });
     expect(
-      (snapshot._unsafeUnwrap() as typeof snapshot extends { _unsafeUnwrap: () => infer T }
-        ? T & { envSecrets: Record<string, boolean> }
-        : never).envSecrets
+      (
+        snapshot._unsafeUnwrap() as typeof snapshot extends {
+          _unsafeUnwrap: () => infer T;
+        }
+          ? T & { envSecrets: Record<string, boolean> }
+          : never
+      ).envSecrets
     ).toMatchObject({
       OPENAI_API_KEY: true,
       ANTHROPIC_API_KEY: true,
@@ -2229,7 +2233,7 @@ describe('admin provider config service', () => {
     expect(pending.rows[0]?.state).toBe('pending');
   }, 120_000);
 
-  it('makes embedding reembedding requirements explicit and refuses simple apply for identity changes', async () => {
+  it('applies validated embedding settings before migration and reports the remaining work', async () => {
     if (!database) {
       throw new Error('test database not initialized');
     }
@@ -2240,8 +2244,7 @@ describe('admin provider config service', () => {
       settings: {
         EMBEDDING_PROVIDER: 'ollama',
         EMBEDDING_MODEL: 'bge-m3',
-        EMBEDDING_DIMENSIONS: 1024,
-        EMBEDDING_BASE_URL: 'http://host.docker.internal:11434'
+        EMBEDDING_DIMENSIONS: 1024
       }
     });
 
@@ -2275,13 +2278,50 @@ describe('admin provider config service', () => {
       dnsLookup: publicDns()
     });
 
-    expect(applied.isErr()).toBe(true);
-    expect(applied._unsafeUnwrapErr()).toMatchObject({
-      code: ErrorCode.CONFLICT,
-      message: 'Embedding provider changes require a reembedding migration'
+    expect(applied.isOk()).toBe(true);
+    expect(applied._unsafeUnwrap()).toMatchObject({
+      applied: true,
+      restartRequired: true,
+      reembedRequired: true,
+      reload: {
+        extraction: 'unchanged',
+        embedding: 'restart_required'
+      },
+      appliedSettings: [
+        'EMBEDDING_DIMENSIONS',
+        'EMBEDDING_MODEL',
+        'EMBEDDING_PROVIDER'
+      ]
     });
-    expect(applied._unsafeUnwrapErr().details).toMatchObject({
-      reembedRequired: true
+
+    const postApply = await readProviderConfiguration(database.pool, {
+      envConfig: env()
+    });
+    expect(postApply.isOk()).toBe(true);
+    expect(postApply._unsafeUnwrap()).toMatchObject({
+      restartRequired: true,
+      reembedRequired: true,
+      settings: {
+        EMBEDDING_PROVIDER: { state: 'applied', value: 'ollama' },
+        EMBEDDING_DIMENSIONS: { state: 'applied', value: 1024 }
+      }
+    });
+
+    await saveProviderConfiguration(database.pool, {
+      actorAdminUserId: actorId,
+      settings: {
+        EXTRACTION_MODEL: 'gpt-4.1-mini'
+      }
+    });
+    const unrelatedApply = await applyProviderConfiguration(database.pool, {
+      actorAdminUserId: actorId,
+      envConfig: env(),
+      dnsLookup: publicDns()
+    });
+    expect(unrelatedApply.isOk()).toBe(true);
+    expect(unrelatedApply._unsafeUnwrap()).toMatchObject({
+      reembedRequired: true,
+      appliedSettings: ['EXTRACTION_MODEL']
     });
   }, 120_000);
 

@@ -117,6 +117,14 @@ type ProviderSettingsDraft = {
 
 type SecretDrafts = Record<AdminProviderSecretName, string>;
 
+type ConfigurationWorkflowStage =
+  | 'save'
+  | 'validate'
+  | 'apply'
+  | 'restart'
+  | 'migrate'
+  | 'complete';
+
 type AdminConfigProps = {
   api?: AdminApiClient;
   initialStepUp?: AdminStepUp;
@@ -242,6 +250,16 @@ function jsonValuesEqual(
   right: AdminJsonValue | undefined
 ): boolean {
   return JSON.stringify(left ?? null) === JSON.stringify(right ?? null);
+}
+
+function pendingSettingsFingerprint(
+  config: AdminProviderConfiguration
+): string {
+  return JSON.stringify(
+    settingKeys
+      .filter((key) => config.settings[key].state === 'pending')
+      .map((key) => [key, config.settings[key].value])
+  );
 }
 
 function draftValueChanged(
@@ -571,6 +589,37 @@ function isStepUpFresh(
   return Number.isFinite(expiresAtMs) && expiresAtMs > nowMs;
 }
 
+function resolveConfigurationWorkflowStage(input: {
+  hasUnsavedDraft: boolean;
+  hasPendingSettings: boolean;
+  pendingSettingsValidated: boolean;
+  hasBlockingValidationFailure: boolean;
+  hasMissingConnectionValidation: boolean;
+  reembedRequired: boolean;
+  restartRequired: boolean;
+}): ConfigurationWorkflowStage {
+  if (input.hasUnsavedDraft) {
+    return 'save';
+  }
+  if (input.hasPendingSettings) {
+    if (
+      input.hasBlockingValidationFailure ||
+      input.hasMissingConnectionValidation ||
+      !input.pendingSettingsValidated
+    ) {
+      return 'validate';
+    }
+    return 'apply';
+  }
+  if (input.reembedRequired) {
+    return 'migrate';
+  }
+  if (input.restartRequired) {
+    return 'restart';
+  }
+  return 'complete';
+}
+
 export default function AdminConfig({
   api,
   initialStepUp,
@@ -707,21 +756,63 @@ export default function AdminConfig({
   const hasUnsavedDraft = changedDraftKeys.length > 0;
   const hasMigrationClassDraft = migrationDraftKeys.length > 0;
   const hasMissingConnectionValidation = missingConnectionValidation.length > 0;
+  const hasBlockingConnectionFailure = Object.values(
+    validation?.connectionTests ?? {}
+  ).some(
+    (connection) =>
+      connection?.status === 'invalid' || connection?.status === 'error'
+  );
   const hasBlockingValidationFailure =
-    validation?.status === 'invalid' || validation?.status === 'error';
+    validation?.status === 'invalid' ||
+    validation?.status === 'error' ||
+    hasBlockingConnectionFailure;
+  const pendingSettingsValidated =
+    validation?.status === 'valid' ||
+    validation?.status === 'requires_reembedding' ||
+    (Boolean(config) &&
+      pendingSettings.length > 0 &&
+      pendingSettings.every(
+        (key) => config?.settings[key].validation.status === 'valid'
+      ));
   const restartRequired =
     config?.restartRequired ||
     validation?.restartRequired ||
     applyResult?.restartRequired;
   const reembedRequired =
-    config?.reembedRequired || validation?.reembedRequired;
+    config?.reembedRequired ||
+    validation?.reembedRequired ||
+    applyResult?.reembedRequired;
+  const applyCompleted = applyResult !== null;
+  const hasPendingSettingsForWorkflow =
+    pendingSettings.length > 0 && !applyCompleted;
   const applyDisabled =
-    Boolean(reembedRequired) ||
+    applyCompleted ||
+    (hasPendingSettingsForWorkflow && !pendingSettingsValidated) ||
     hasBlockingValidationFailure ||
     hasMissingConnectionValidation ||
     hasUnsavedDraft ||
     busyAction !== null ||
     !config;
+  const workflowStage = resolveConfigurationWorkflowStage({
+    hasUnsavedDraft,
+    hasPendingSettings: hasPendingSettingsForWorkflow,
+    pendingSettingsValidated,
+    hasBlockingValidationFailure,
+    hasMissingConnectionValidation,
+    reembedRequired: Boolean(reembedRequired),
+    restartRequired: Boolean(restartRequired)
+  });
+  const configuredEmbeddingDimensions = config
+    ? stringValue(config.settings.EMBEDDING_DIMENSIONS.value)
+    : '';
+  const configuredEmbeddingProvider = config
+    ? stringValue(config.settings.EMBEDDING_PROVIDER.value)
+    : '';
+  const targetEmbeddingDimensions = String(
+    validation?.embedding.target?.dimensions ??
+      (configuredEmbeddingDimensions ||
+        (configuredEmbeddingProvider === 'ollama' ? 1024 : 1536))
+  );
   const stepUpIsFresh = isStepUpFresh(stepUp, stepUpClockMs);
   const settingsInputsDisabled = busyAction !== null;
 
@@ -852,7 +943,9 @@ export default function AdminConfig({
       setMigrationAcknowledged(false);
       setValidation(null);
       setApplyResult(null);
-      setNotice('Pending provider settings saved.');
+      setNotice(
+        'Changes saved. Next: validate and test the pending configuration.'
+      );
     } catch (saveError) {
       if (routeSessionExpiry(saveError)) {
         return;
@@ -876,21 +969,52 @@ export default function AdminConfig({
       if (!(await ensureStepUp())) {
         return;
       }
+      const validationFingerprint = config
+        ? pendingSettingsFingerprint(config)
+        : null;
       const response = await client.validateProviderConfig({
         testConnections: true
       });
-      setValidation(response.validation);
       setApplyResult(null);
       try {
         const refreshed = await client.getProviderConfig();
         setConfig(refreshed.config);
         setSettingsDraft(draftFromConfig(refreshed.config));
         setMigrationAcknowledged(false);
-        setNotice('Provider validation completed.');
+        if (
+          validationFingerprint === null ||
+          pendingSettingsFingerprint(refreshed.config) !== validationFingerprint
+        ) {
+          setValidation(null);
+          setNotice(
+            'Provider settings changed during validation. Validate the current pending configuration again.'
+          );
+          return;
+        }
+        setValidation(response.validation);
+        if (
+          response.validation.status === 'valid' &&
+          !response.validation.reembedRequired
+        ) {
+          setNotice(
+            'Validation passed. Next: apply the pending configuration.'
+          );
+        } else if (
+          response.validation.status === 'requires_reembedding'
+        ) {
+          setNotice(
+            'Validation passed. Next: apply the pending configuration; the controlled embedding migration follows apply.'
+          );
+        } else {
+          setNotice(
+            'Validation completed. Review the results before applying.'
+          );
+        }
       } catch (refreshError) {
         if (routeSessionExpiry(refreshError)) {
           return;
         }
+        setValidation(null);
         setNotice(
           `Provider validation completed, but provider state could not be refreshed: ${messageForError(refreshError, 'refresh unavailable')}`
         );
@@ -961,10 +1085,6 @@ export default function AdminConfig({
   }
 
   async function handleApply() {
-    if (reembedRequired) {
-      setError('Simple apply is blocked while re-embedding is required.');
-      return;
-    }
     if (hasUnsavedDraft) {
       setError('Save or discard draft changes before applying.');
       return;
@@ -995,7 +1115,23 @@ export default function AdminConfig({
         setConfig(refreshed.config);
         setSettingsDraft(draftFromConfig(refreshed.config));
         setMigrationAcknowledged(false);
-        setNotice('Provider configuration apply completed.');
+        const hasRemainingPendingSettings = settingKeys.some(
+          (key) => refreshed.config.settings[key].state === 'pending'
+        );
+        if (hasRemainingPendingSettings) {
+          setApplyResult(null);
+          setNotice(
+            'Settings applied, but newer pending changes remain. Validate and apply those changes before restarting or migrating.'
+          );
+        } else {
+          setNotice(
+            response.result.reembedRequired
+              ? 'Settings applied. Next: stop mcp-server, migrate embeddings, and start it again.'
+              : response.result.restartRequired
+                ? 'Settings applied. Restart mcp-server to activate them.'
+                : 'Settings applied and active.'
+          );
+        }
       } catch (refreshError) {
         if (routeSessionExpiry(refreshError)) {
           return;
@@ -1061,9 +1197,9 @@ export default function AdminConfig({
             </span>
           </h2>
           <p className="mt-1 text-sm text-gray-400">
-            Save changes first, test them, then apply. Applied settings are
-            what Postgram is using; pending settings are saved changes waiting
-            for apply.
+            Save changes first, test them, then apply. Applied settings are what
+            Postgram is using; pending settings are saved changes waiting for
+            apply.
           </p>
         </div>
         <div className="flex-1" />
@@ -1085,6 +1221,11 @@ export default function AdminConfig({
           {notice}
         </div>
       ) : null}
+
+      <ConfigurationProgress
+        stage={workflowStage}
+        targetEmbeddingDimensions={targetEmbeddingDimensions}
+      />
 
       <ImpactWarnings
         restartRequired={Boolean(restartRequired)}
@@ -1213,7 +1354,8 @@ export default function AdminConfig({
                     setMigrationAcknowledged(event.target.checked)
                   }
                 />
-                I understand embedding changes require migration before apply
+                I understand embedding changes require a controlled migration
+                after apply
               </label>
             ) : null}
             <div className="mt-4 flex flex-wrap gap-2">
@@ -1262,8 +1404,8 @@ export default function AdminConfig({
               Sensitive changes
             </h3>
             <p className="mt-2 text-xs leading-5 text-gray-400">
-              Secret writes, connection tests, and apply can ask for a fresh
-              MFA confirmation. Use the current six-digit code from your
+              Secret writes, connection tests, and apply can ask for a fresh MFA
+              confirmation. Use the current six-digit code from your
               authenticator app.
             </p>
             <label className="mt-3 flex flex-col gap-1 text-xs font-medium text-gray-300">
@@ -1319,8 +1461,9 @@ export default function AdminConfig({
           <section className="rounded-lg border border-gray-800 bg-gray-900 p-4">
             <h3 className="text-sm font-semibold text-white">Apply</h3>
             <p className="mt-2 text-sm text-gray-400">
-              Apply only promotes validated pending values. Re-embedding changes
-              require the migration path.
+              Apply promotes validated pending values. For embedding identity
+              changes, apply first, then use the controlled stop, migrate, and
+              restart sequence.
             </p>
             {hasBlockingValidationFailure ? (
               <div className="mt-3 rounded-md border border-red-500/30 bg-red-500/10 px-3 py-2 text-xs text-red-100">
@@ -1374,6 +1517,124 @@ function ErrorBanner({ message }: { message: string | null | undefined }) {
   );
 }
 
+const configurationWorkflowSteps = [
+  'Save',
+  'Validate',
+  'Apply',
+  'Restart'
+] as const;
+
+function workflowStageIndex(stage: ConfigurationWorkflowStage): number {
+  if (stage === 'save') {
+    return 0;
+  }
+  if (stage === 'validate') {
+    return 1;
+  }
+  if (stage === 'apply') {
+    return 2;
+  }
+  if (stage === 'restart' || stage === 'migrate') {
+    return 3;
+  }
+  return configurationWorkflowSteps.length;
+}
+
+function workflowMessage(stage: ConfigurationWorkflowStage): string {
+  if (stage === 'save') {
+    return 'Next: save your draft. Saving does not activate it yet.';
+  }
+  if (stage === 'validate') {
+    return 'Next: validate and test connections. Enter an MFA code if requested.';
+  }
+  if (stage === 'apply') {
+    return 'Next: apply the validated settings.';
+  }
+  if (stage === 'migrate') {
+    return 'Next: migrate embeddings while mcp-server is stopped, then start it again.';
+  }
+  if (stage === 'restart') {
+    return 'Restart mcp-server to make the applied settings active.';
+  }
+  return 'Configuration is up to date.';
+}
+
+function ConfigurationProgress({
+  stage,
+  targetEmbeddingDimensions
+}: {
+  stage: ConfigurationWorkflowStage;
+  targetEmbeddingDimensions: string;
+}) {
+  const currentIndex = workflowStageIndex(stage);
+
+  return (
+    <section className="rounded-lg border border-blue-500/20 bg-blue-500/5 p-4">
+      <h3 className="text-sm font-semibold text-white">
+        Configuration progress
+      </h3>
+      <ol className="mt-3 grid gap-2 sm:grid-cols-4">
+        {configurationWorkflowSteps.map((label, index) => {
+          const complete = stage === 'complete' || index < currentIndex;
+          const current = stage !== 'complete' && index === currentIndex;
+          const visibleLabel =
+            stage === 'migrate' && index === 3 ? 'Migrate + restart' : label;
+          return (
+            <li
+              key={label}
+              className={`rounded-md border px-3 py-2 text-xs ${
+                complete
+                  ? 'border-emerald-500/30 bg-emerald-500/10 text-emerald-100'
+                  : current
+                    ? 'border-blue-400/50 bg-blue-500/10 text-blue-100'
+                    : 'border-gray-800 bg-gray-950 text-gray-500'
+              }`}
+              aria-current={current ? 'step' : undefined}
+            >
+              <span className="font-semibold">{index + 1}</span> {visibleLabel}
+              {complete ? ' ✓' : ''}
+            </li>
+          );
+        })}
+      </ol>
+      <p className="mt-3 text-sm text-blue-100">{workflowMessage(stage)}</p>
+      {stage === 'restart' ? (
+        <code className="mt-2 block w-fit rounded bg-gray-950 px-2 py-1 text-xs text-gray-200">
+          docker compose restart mcp-server
+        </code>
+      ) : null}
+      {stage === 'migrate' && targetEmbeddingDimensions ? (
+        <div className="mt-2 space-y-1 text-xs text-gray-300">
+          <p>Preview the migration while Postgram is still running:</p>
+          <code className="block w-fit rounded bg-gray-950 px-2 py-1 text-gray-200">
+            ./bin/pgm-admin embeddings migrate --target-dimensions{' '}
+            {targetEmbeddingDimensions} --dry-run
+          </code>
+          <p>
+            Then stop the API worker before the destructive migration so it
+            cannot process queued entities with the previous provider:
+          </p>
+          <code className="block w-fit rounded bg-gray-950 px-2 py-1 text-gray-200">
+            docker compose stop mcp-server
+          </code>
+          <code className="block w-fit rounded bg-gray-950 px-2 py-1 text-gray-200">
+            ./bin/pgm-admin embeddings migrate --target-dimensions{' '}
+            {targetEmbeddingDimensions} --yes
+          </code>
+          <code className="block w-fit rounded bg-gray-950 px-2 py-1 text-gray-200">
+            docker compose up -d mcp-server
+          </code>
+        </div>
+      ) : null}
+      <p className="mt-2 text-xs leading-5 text-gray-400">
+        Applied database settings override matching provider values from .env
+        after restart. DATABASE_URL and installation encryption keys remain
+        container-managed bootstrap settings.
+      </p>
+    </section>
+  );
+}
+
 function ImpactWarnings({
   restartRequired,
   reembedRequired
@@ -1404,8 +1665,8 @@ function ImpactWarnings({
             Re-embedding required
           </h3>
           <p className="mt-1 text-xs text-red-100/80">
-            Embedding provider, model, or dimension changes are migration work
-            and are blocked from simple apply.
+            Embedding provider, model, or dimension changes require a controlled
+            migration after the validated settings are applied.
           </p>
         </div>
       ) : null}
@@ -1623,12 +1884,14 @@ function SecretEditor({
       ) : null}
       {envConfigured ? (
         <p className="mt-2 rounded-md border border-blue-500/30 bg-blue-500/10 px-2 py-1.5 text-xs leading-5 text-blue-100">
-          {name} is already available from environment. You do not need to
-          save it again unless you want a database override.
+          {name} is already available from environment. You do not need to save
+          it again unless you want a database override.
         </p>
       ) : null}
       <label className="mt-3 flex flex-col gap-1 text-xs font-medium text-gray-300">
-        <HelpLabel help={`${providerSecretHelpText[name]} This field is write-only: after saving, Postgram stores encrypted secret material and shows only metadata.`}>
+        <HelpLabel
+          help={`${providerSecretHelpText[name]} This field is write-only: after saving, Postgram stores encrypted secret material and shows only metadata.`}
+        >
           {name} replacement
         </HelpLabel>
         <input

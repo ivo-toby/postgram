@@ -142,7 +142,7 @@ export type ProviderValidationResult = {
 export type ProviderApplyResult = {
   applied: true;
   restartRequired: boolean;
-  reembedRequired: false;
+  reembedRequired: boolean;
   reload: {
     extraction: 'restart_required' | 'unchanged';
     embedding: 'restart_required' | 'unchanged';
@@ -1471,24 +1471,35 @@ export function readProviderConfiguration(
         secrets[name] = found.value;
       }
 
-      const pendingSettings = Object.values(settings).filter(
-        (setting) =>
-          setting.source === 'database' && setting.state === 'pending'
-      );
       const settingsNeedingRestart = Object.values(settings).filter(
         settingNeedsCurrentProcessRestart
       );
 
+      const migrationRelevantSettings = Object.values(settings).filter(
+        (setting) =>
+          setting.reembedRequired &&
+          setting.source === 'database' &&
+          (setting.state === 'pending' ||
+            (setting.state === 'applied' &&
+              appliedAfterProcessStart(setting.appliedAt)))
+      );
       const snapshotForRuntime = {
         settings,
         secrets,
         envSecrets: envSecretAvailability(input.envConfig),
         restartRequired: settingsNeedingRestart.length > 0,
-        reembedRequired: pendingSettings.some(
-          (setting) => setting.reembedRequired
-        ),
+        reembedRequired: false,
         egressPolicy: EGRESS_POLICY
       };
+      if (migrationRelevantSettings.length > 0) {
+        const targetEmbedding = targetEmbeddingIdentity(snapshotForRuntime);
+        const currentEmbedding = await currentEmbeddingIdentity(pool);
+        snapshotForRuntime.reembedRequired =
+          currentEmbedding === null ||
+          currentEmbedding.provider !== targetEmbedding.provider ||
+          currentEmbedding.model !== targetEmbedding.model ||
+          currentEmbedding.dimensions !== targetEmbedding.dimensions;
+      }
       const target = targetRuntimeConfig(snapshotForRuntime, input.envConfig);
       const activeSecretNames = new Set(
         target ? providerSecretUsage(target).map((usage) => usage.name) : []
@@ -1583,6 +1594,74 @@ function targetEmbeddingIdentity(
     provider,
     settingString(snapshot, 'EMBEDDING_MODEL'),
     settingNumber(snapshot, 'EMBEDDING_DIMENSIONS')
+  );
+
+  return {
+    provider,
+    model: defaults.model,
+    dimensions: defaults.dimensions
+  };
+}
+
+async function embeddingIdentityAfterApply(
+  pool: Pool,
+  input: {
+    envConfig?: AppConfig | undefined;
+    settingsToApply: ReadonlyArray<{
+      key: ProviderConfigSettingKey;
+      value: JsonValue;
+    }>;
+  }
+): Promise<ConfiguredEmbeddingIdentity> {
+  const values = Object.fromEntries(
+    Array.from(EMBEDDING_IDENTITY_KEYS).map((key) => [
+      key,
+      envValue(input.envConfig, key)
+    ])
+  ) as Partial<Record<ProviderConfigSettingKey, JsonValue>>;
+  const applied = await pool.query<{
+    key: ProviderConfigSettingKey;
+    value: JsonValue;
+  }>(
+    `
+      SELECT
+        key,
+        CASE
+          WHEN state = 'applied' THEN value
+          ELSE applied_value
+        END AS value
+      FROM admin_runtime_settings
+      WHERE key = ANY($1::text[])
+        AND (
+          state = 'applied'
+          OR applied_version > 0
+          OR applied_value IS NOT NULL
+        )
+    `,
+    [Array.from(EMBEDDING_IDENTITY_KEYS)]
+  );
+
+  for (const row of applied.rows) {
+    values[row.key] = row.value;
+  }
+  for (const setting of input.settingsToApply) {
+    if (EMBEDDING_IDENTITY_KEYS.has(setting.key)) {
+      values[setting.key] = setting.value;
+    }
+  }
+
+  const provider = values.EMBEDDING_PROVIDER ?? 'openai';
+  if (provider !== 'openai' && provider !== 'ollama') {
+    throw validationError('Invalid embedding provider', {
+      field: 'EMBEDDING_PROVIDER'
+    });
+  }
+  const model = values.EMBEDDING_MODEL;
+  const dimensions = values.EMBEDDING_DIMENSIONS;
+  const defaults = resolveEmbeddingDefaults(
+    provider,
+    typeof model === 'string' ? model : undefined,
+    typeof dimensions === 'number' ? dimensions : undefined
   );
 
   return {
@@ -2827,18 +2906,6 @@ export function applyProviderConfiguration(
         );
       }
 
-      if (validation.value.reembedRequired) {
-        throw new AppError(
-          ErrorCode.CONFLICT,
-          'Embedding provider changes require a reembedding migration',
-          {
-            reembedRequired: true,
-            current: validation.value.embedding.current,
-            target: validation.value.embedding.target
-          }
-        );
-      }
-
       const snapshotForApply = await readProviderConfiguration(pool, {
         envConfig: input.envConfig
       });
@@ -2885,10 +2952,12 @@ export function applyProviderConfiguration(
             source: 'database';
             state: 'pending';
             updatedAt: string;
+            value: JsonValue;
           } =>
             setting.source === 'database' &&
             setting.state === 'pending' &&
             setting.updatedAt !== null &&
+            setting.value !== undefined &&
             validatedPendingValues.has(setting.key) &&
             jsonValuesEqual(
               setting.value,
@@ -2896,6 +2965,30 @@ export function applyProviderConfiguration(
             )
         )
         .sort((left, right) => left.key.localeCompare(right.key));
+      const appliesEmbeddingIdentity = settingsToApply.some((setting) =>
+        EMBEDDING_IDENTITY_KEYS.has(setting.key)
+      );
+      const hasRecentlyAppliedEmbeddingIdentity = Object.values(
+        snapshotForApply.value.settings
+      ).some(
+        (setting) =>
+          EMBEDDING_IDENTITY_KEYS.has(setting.key) &&
+          setting.source === 'database' &&
+          appliedAfterProcessStart(setting.appliedAt)
+      );
+      let reembedRequired = false;
+      if (appliesEmbeddingIdentity || hasRecentlyAppliedEmbeddingIdentity) {
+        const targetEmbedding = await embeddingIdentityAfterApply(pool, {
+          envConfig: input.envConfig,
+          settingsToApply
+        });
+        const currentEmbedding = await currentEmbeddingIdentity(pool);
+        reembedRequired =
+          currentEmbedding === null ||
+          currentEmbedding.provider !== targetEmbedding.provider ||
+          currentEmbedding.model !== targetEmbedding.model ||
+          currentEmbedding.dimensions !== targetEmbedding.dimensions;
+      }
       const expectedApplyRows = settingsToApply.map((setting) => ({
         key: setting.key,
         value: setting.value,
@@ -2990,7 +3083,7 @@ export function applyProviderConfiguration(
             applied_settings: appliedSettings,
             restart_required: restartRequired,
             secret_restart_required: secretRestart.restartRequired,
-            reembed_required: false,
+            reembed_required: reembedRequired,
             extraction_reload: extractionChanged
               ? 'restart_required'
               : 'unchanged',
@@ -3004,7 +3097,7 @@ export function applyProviderConfiguration(
         return {
           applied: true,
           restartRequired,
-          reembedRequired: false,
+          reembedRequired,
           reload: {
             extraction: extractionChanged ? 'restart_required' : 'unchanged',
             embedding: embeddingChanged ? 'restart_required' : 'unchanged'
@@ -3032,7 +3125,7 @@ export function resolveRuntimeProviderConfig(
   return ResultAsync.fromPromise(
     (async () => {
       const resolved = { ...input.envConfig } as AppConfig;
-      const applied = await pool.query<{
+      const settings = await pool.query<{
         key: ProviderConfigSettingKey;
         value: JsonValue;
       }>(
@@ -3054,7 +3147,7 @@ export function resolveRuntimeProviderConfig(
         [PROVIDER_SETTING_KEYS]
       );
 
-      for (const row of applied.rows) {
+      for (const row of settings.rows) {
         (resolved as unknown as Record<string, JsonValue>)[row.key] = row.value;
       }
 

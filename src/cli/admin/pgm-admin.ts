@@ -25,6 +25,7 @@ import {
   previewAdminReextractMaintenance,
   type MaintenanceEntityScope
 } from '../../services/admin-maintenance-service.js';
+import { resolveRuntimeProviderConfig } from '../../services/admin-provider-config-service.js';
 import {
   applyDurableGrooming,
   groomDurableMemory,
@@ -1401,9 +1402,9 @@ embeddingsCommand
       process.exit(65);
     }
 
-    let providerConfig;
+    let envConfig;
     try {
-      providerConfig = buildEmbeddingProviderConfig(loadConfig());
+      envConfig = loadConfig();
     } catch (error) {
       const appError =
         error instanceof AppError
@@ -1417,12 +1418,40 @@ embeddingsCommand
       } else {
         printHuman([`${appError.code}: ${appError.message}`]);
       }
-      process.exit(65);
+      process.exitCode = 65;
+      return;
     }
 
     const pool = createPool();
 
     try {
+      let providerConfig;
+      try {
+        const runtimeConfig = await resolveRuntimeProviderConfig(pool, {
+          envConfig,
+          encryptionKey: envConfig.ADMIN_SETTINGS_ENCRYPTION_KEY
+        });
+        if (runtimeConfig.isErr()) {
+          throw runtimeConfig.error;
+        }
+        providerConfig = buildEmbeddingProviderConfig(runtimeConfig.value);
+      } catch (error) {
+        const appError =
+          error instanceof AppError
+            ? error
+            : new AppError(
+                ErrorCode.VALIDATION,
+                error instanceof Error ? error.message : 'invalid config'
+              );
+        if (json) {
+          printJson(toErrorResponse(appError));
+        } else {
+          printHuman([`${appError.code}: ${appError.message}`]);
+        }
+        process.exitCode = 65;
+        return;
+      }
+
       const report = await runMigrate({
         pool,
         providerConfig,

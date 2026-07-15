@@ -1,8 +1,9 @@
 #!/usr/bin/env bash
 # Shorthand for running pgm-admin inside the Postgram container.
 #
-# If the container is already running, this does `docker exec -it` for an
-# interactive terminal and `docker exec -i` for piped/non-interactive use.
+# If the container is already running, this re-enters the image entrypoint via
+# `docker exec`. The entrypoint reconstructs Docker-managed environment values
+# such as DATABASE_URL before launching pgm-admin.
 # If it isn't (e.g. the startup dimension gate is refusing to boot), this
 # falls back to `docker compose run --rm` so admin commands like
 # `embeddings migrate` still work.
@@ -14,7 +15,7 @@
 #
 # Override with env:
 #   PGM_SERVICE=mcp-server        (compose service name)
-#   PGM_CONTAINER=postgram-mcp-server-1  (running container name)
+#   PGM_CONTAINER=<name-or-id>    (optional running container override)
 #
 # Tip: add an alias in your shell rc for one-handed use:
 #   alias pgm='./bin/pgm'
@@ -22,18 +23,48 @@
 set -euo pipefail
 
 SERVICE="${PGM_SERVICE:-mcp-server}"
-CONTAINER="${PGM_CONTAINER:-postgram-mcp-server-1}"
+CONTAINER="${PGM_CONTAINER:-}"
 
 # cd to repo root so `docker compose` finds docker-compose.yml regardless of
 # where the caller invoked the script from.
 script_dir="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 cd "$(dirname "$script_dir")"
 
-if docker ps --format '{{.Names}}' | grep -qx "$CONTAINER"; then
-  if [[ -t 0 && -t 1 ]]; then
-    exec docker exec -it "$CONTAINER" pgm-admin "$@"
+if [[ -z "$CONTAINER" ]]; then
+  CONTAINER="$(docker compose ps -q "$SERVICE" 2>/dev/null || true)"
+fi
+
+if [[ -n "$CONTAINER" ]] &&
+  docker inspect --format '{{.State.Running}}' "$CONTAINER" 2>/dev/null | grep -qx true; then
+  command_name=""
+  subcommand_name=""
+  has_yes_flag=false
+  has_dry_run_flag=false
+  for arg in "$@"; do
+    [[ "$arg" == "--yes" ]] && has_yes_flag=true
+    [[ "$arg" == "--dry-run" ]] && has_dry_run_flag=true
+    [[ "$arg" == "--json" ]] && continue
+    if [[ -z "$command_name" ]]; then
+      command_name="$arg"
+    elif [[ -z "$subcommand_name" ]]; then
+      subcommand_name="$arg"
+    fi
+  done
+
+  if [[ "$command_name" == "embeddings" && "$subcommand_name" == "migrate" && "$has_yes_flag" == true && "$has_dry_run_flag" == false ]]; then
+    printf '%s\n' \
+      "Refusing to migrate embeddings while $CONTAINER is running." \
+      "Apply the validated provider settings first, then run:" \
+      "  docker compose stop $SERVICE" \
+      "  ./bin/pgm-admin embeddings migrate <options> --yes" \
+      "  docker compose up -d $SERVICE" >&2
+    exit 64
   fi
-  exec docker exec -i "$CONTAINER" pgm-admin "$@"
+
+  if [[ -t 0 && -t 1 ]]; then
+    exec docker exec -it "$CONTAINER" /app/docker-entrypoint.sh pgm-admin "$@"
+  fi
+  exec docker exec -i "$CONTAINER" /app/docker-entrypoint.sh pgm-admin "$@"
 else
   exec docker compose run --rm "$SERVICE" pgm-admin "$@"
 fi

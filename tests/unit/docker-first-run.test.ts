@@ -1,4 +1,4 @@
-import { mkdtempSync, readFileSync, rmSync, writeFileSync } from 'node:fs';
+import { chmodSync, mkdtempSync, readFileSync, rmSync, writeFileSync } from 'node:fs';
 import { tmpdir } from 'node:os';
 import { join } from 'node:path';
 import { spawnSync } from 'node:child_process';
@@ -24,7 +24,200 @@ function runShellScript(
   });
 }
 
+function runBashScript(
+  script: string,
+  args: string[],
+  env: Record<string, string>
+) {
+  return spawnSync('bash', [script, ...args], {
+    cwd: process.cwd(),
+    env: {
+      PATH: process.env.PATH ?? '',
+      ...env
+    },
+    encoding: 'utf8'
+  });
+}
+
 describe('Docker first-run scripts', () => {
+  it('re-enters the container entrypoint before running pgm-admin', () => {
+    const fakeDockerDir = makeSecretDir();
+    const callsFile = join(fakeDockerDir, 'docker-calls');
+    const fakeDocker = join(fakeDockerDir, 'docker');
+
+    try {
+      writeFileSync(
+        fakeDocker,
+        `#!/bin/sh
+if [ "$1" = "compose" ] && [ "$2" = "ps" ]; then
+  echo custom-project-mcp-server-1
+  exit 0
+fi
+if [ "$1" = "inspect" ]; then
+  echo true
+  exit 0
+fi
+printf '%s\\n' "$@" > "$DOCKER_CALLS_FILE"
+`
+      );
+      chmodSync(fakeDocker, 0o755);
+
+      const result = runBashScript('bin/pgm-admin', ['stats'], {
+        PATH: `${fakeDockerDir}:${process.env.PATH ?? ''}`,
+        DOCKER_CALLS_FILE: callsFile
+      });
+
+      expect(result.status).toBe(0);
+      expect(readFileSync(callsFile, 'utf8').trim().split('\n')).toEqual([
+        'exec',
+        '-i',
+        'custom-project-mcp-server-1',
+        '/app/docker-entrypoint.sh',
+        'pgm-admin',
+        'stats'
+      ]);
+    } finally {
+      rmSync(fakeDockerDir, { recursive: true, force: true });
+    }
+  });
+
+  it('refuses a destructive embedding migration while the live worker is running', () => {
+    const fakeDockerDir = makeSecretDir();
+    const fakeDocker = join(fakeDockerDir, 'docker');
+
+    try {
+      writeFileSync(
+        fakeDocker,
+        `#!/bin/sh
+if [ "$1" = "compose" ] && [ "$2" = "ps" ]; then
+  echo custom-project-mcp-server-1
+  exit 0
+fi
+if [ "$1" = "inspect" ]; then
+  echo true
+  exit 0
+fi
+exit 99
+`
+      );
+      chmodSync(fakeDocker, 0o755);
+
+      const result = runBashScript(
+        'bin/pgm-admin',
+        [
+          'embeddings',
+          '--json',
+          'migrate',
+          '--target-dimensions',
+          '1024',
+          '--yes'
+        ],
+        {
+          PATH: `${fakeDockerDir}:${process.env.PATH ?? ''}`
+        }
+      );
+
+      expect(result.status).toBe(64);
+      expect(result.stderr).toContain('docker compose stop mcp-server');
+      expect(result.stderr).toContain('docker compose up -d mcp-server');
+    } finally {
+      rmSync(fakeDockerDir, { recursive: true, force: true });
+    }
+  });
+
+  it('does not mistake unrelated command option values for an embedding migration', () => {
+    const fakeDockerDir = makeSecretDir();
+    const callsFile = join(fakeDockerDir, 'docker-calls');
+    const fakeDocker = join(fakeDockerDir, 'docker');
+
+    try {
+      writeFileSync(
+        fakeDocker,
+        `#!/bin/sh
+if [ "$1" = "compose" ] && [ "$2" = "ps" ]; then
+  echo custom-project-mcp-server-1
+  exit 0
+fi
+if [ "$1" = "inspect" ]; then
+  echo true
+  exit 0
+fi
+printf '%s\n' "$@" > "$DOCKER_CALLS_FILE"
+`
+      );
+      chmodSync(fakeDocker, 0o755);
+
+      const result = runBashScript(
+        'bin/pgm-admin',
+        [
+          'memory',
+          'groom-durable',
+          '--mode',
+          'mark',
+          '--tag',
+          'embeddings',
+          'migrate',
+          '--yes'
+        ],
+        {
+          PATH: `${fakeDockerDir}:${process.env.PATH ?? ''}`,
+          DOCKER_CALLS_FILE: callsFile
+        }
+      );
+
+      expect(result.status).toBe(0);
+      expect(readFileSync(callsFile, 'utf8')).toContain('groom-durable');
+    } finally {
+      rmSync(fakeDockerDir, { recursive: true, force: true });
+    }
+  });
+
+  it('allows a confirmed dry-run while the live worker is running', () => {
+    const fakeDockerDir = makeSecretDir();
+    const callsFile = join(fakeDockerDir, 'docker-calls');
+    const fakeDocker = join(fakeDockerDir, 'docker');
+
+    try {
+      writeFileSync(
+        fakeDocker,
+        `#!/bin/sh
+if [ "$1" = "compose" ] && [ "$2" = "ps" ]; then
+  echo custom-project-mcp-server-1
+  exit 0
+fi
+if [ "$1" = "inspect" ]; then
+  echo true
+  exit 0
+fi
+printf '%s\n' "$@" > "$DOCKER_CALLS_FILE"
+`
+      );
+      chmodSync(fakeDocker, 0o755);
+
+      const result = runBashScript(
+        'bin/pgm-admin',
+        [
+          'embeddings',
+          'migrate',
+          '--target-dimensions',
+          '1024',
+          '--dry-run',
+          '--yes'
+        ],
+        {
+          PATH: `${fakeDockerDir}:${process.env.PATH ?? ''}`,
+          DOCKER_CALLS_FILE: callsFile
+        }
+      );
+
+      expect(result.status).toBe(0);
+      expect(readFileSync(callsFile, 'utf8')).toContain('--dry-run');
+      expect(readFileSync(callsFile, 'utf8')).toContain('--yes');
+    } finally {
+      rmSync(fakeDockerDir, { recursive: true, force: true });
+    }
+  });
+
   it('creates persistent Docker secrets without requiring manual env-file edits', () => {
     const secretsDir = makeSecretDir();
     try {

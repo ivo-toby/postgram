@@ -1,3 +1,9 @@
+## [1.35.1](https://github.com/ivo-toby/postgram/compare/cli-v1.35.0...cli-v1.35.1) (2026-07-15)
+
+### Bug Fixes
+
+* **admin:** repair container config workflow ([#101](https://github.com/ivo-toby/postgram/issues/101)) ([9678404](https://github.com/ivo-toby/postgram/commit/967840455cb1ed7a13eb6df8b78cc0a0958e789e))
+
 ## [1.35.0](https://github.com/ivo-toby/postgram/compare/cli-v1.34.1...cli-v1.35.0) (2026-07-12)
 
 ### Features

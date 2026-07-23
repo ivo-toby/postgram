@@ -23,6 +23,17 @@ function makeProvider(): ProviderWithMocks {
 }
 
 describe('embedding-service', () => {
+  const activeModel = {
+    id: 'model-1',
+    name: 'text-embedding-3-small',
+    provider: 'openai',
+    dimensions: 2,
+    chunkSize: 300,
+    chunkOverlap: 100,
+    metadata: {},
+    createdAt: new Date().toISOString()
+  };
+
   it('delegates embedBatch to the injected provider when given one', async () => {
     const provider = makeProvider();
 
@@ -68,5 +79,51 @@ describe('embedding-service', () => {
     ).rejects.toMatchObject({
       message: 'Active model dimensions do not match provider dimensions'
     });
+  });
+
+  it('reuses query embeddings for the same text and active model', async () => {
+    const provider = makeProvider();
+    const service = createEmbeddingService({ provider });
+
+    const [first, second] = await Promise.all([
+      service.embedQuery('postgres search', activeModel),
+      service.embedQuery('postgres search', activeModel)
+    ]);
+    const third = await service.embedQuery('postgres search', activeModel);
+
+    expect(first).toEqual([0.25, 0.75]);
+    expect(second).toEqual(first);
+    expect(third).toEqual(first);
+    expect(provider.embedBatchMock).toHaveBeenCalledTimes(1);
+  });
+
+  it('does not reuse query embeddings across active models', async () => {
+    const provider = makeProvider();
+    const service = createEmbeddingService({ provider });
+
+    await service.embedQuery('postgres search', activeModel);
+    await service.embedQuery('postgres search', {
+      ...activeModel,
+      id: 'model-2'
+    });
+
+    expect(provider.embedBatchMock).toHaveBeenCalledTimes(2);
+  });
+
+  it('retries query embeddings after a cached provider request fails', async () => {
+    const provider = makeProvider();
+    provider.embedBatchMock
+      .mockRejectedValueOnce(new Error('provider unavailable'))
+      .mockResolvedValueOnce([[0.25, 0.75]]);
+    const service = createEmbeddingService({ provider });
+
+    await expect(
+      service.embedQuery('postgres search', activeModel)
+    ).rejects.toThrow('provider unavailable');
+    await expect(
+      service.embedQuery('postgres search', activeModel)
+    ).resolves.toEqual([0.25, 0.75]);
+
+    expect(provider.embedBatchMock).toHaveBeenCalledTimes(2);
   });
 });

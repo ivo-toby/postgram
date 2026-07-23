@@ -39,6 +39,7 @@ type EntityRow = {
 type SearchRow = EntityRow & {
   chunk_content: string;
   similarity: number;
+  score: number;
 };
 
 export type SearchResult = {
@@ -226,10 +227,8 @@ type SearchContext = {
   now: Date;
 };
 
-// Fetch at most this many candidates from DB for JS-side reranking.
-// Prevents OOM when the corpus is large — vector similarity is pre-sorted
-// so we get the best candidates and BM25/recency reranking still works correctly
-// over the candidate set.
+// Bound the vector candidate set before SQL-side BM25 and recency reranking.
+// This keeps ranking work and intermediate tuples predictable as the corpus grows.
 const CANDIDATE_CAP = 500;
 
 async function runHybridSearch(
@@ -240,32 +239,85 @@ async function runHybridSearch(
 ): Promise<{ results: SearchResult[] }> {
   const candidateLimit = Math.min(ctx.limit * 20, CANDIDATE_CAP);
 
-  const rows = await pool.query<SearchRow & { bm25: number }>(
+  const rows = await pool.query<SearchRow>(
     `
+      WITH candidates AS MATERIALIZED (
+        SELECT
+          e.id AS entity_id,
+          c.id AS chunk_id,
+          e.created_at,
+          1 - (c.embedding <=> $1::vector) AS similarity,
+          c.embedding <=> $1::vector AS distance,
+          ts_rank(e.search_tsvector, plainto_tsquery('simple', $8)) AS bm25
+        FROM chunks c
+        JOIN entities e ON e.id = c.entity_id
+        WHERE ($10::boolean = true OR e.status IS DISTINCT FROM 'archived')
+          AND ($2::text IS NULL OR e.type = $2)
+          AND ($3::text[] IS NULL OR e.tags @> $3)
+          AND ($4::text[] IS NULL OR e.type = ANY($4))
+          AND e.visibility = ANY($5)
+          AND ($6::text IS NULL OR e.visibility = $6)
+          AND ${ownerSqlCondition('e.owner', '$7')}
+          AND (
+            $11::text IS NULL
+            OR (
+              e.type = 'memory'
+              AND COALESCE(e.metadata->>'memory_role', 'durable_memory') = $11
+            )
+          )
+          AND ${scopedMemoryVisibilitySql('e.metadata', '$12')}
+        ORDER BY distance
+        LIMIT $9
+      ),
+      normalized AS (
+        SELECT
+          candidates.*,
+          CASE
+            WHEN MAX(bm25) OVER () = 0 THEN bm25
+            ELSE bm25 / MAX(bm25) OVER ()
+          END AS normalized_bm25
+        FROM candidates
+      ),
+      scored AS (
+        SELECT
+          normalized.*,
+          (
+            0.6 * similarity + 0.4 * normalized_bm25
+          ) * (
+            1 + $13::double precision * EXP(
+              -EXTRACT(EPOCH FROM ($14::timestamptz - created_at))
+              / 86400.0
+              / 30.0
+            )
+          ) AS score
+        FROM normalized
+      ),
+      deduplicated AS (
+        SELECT
+          scored.*,
+          ROW_NUMBER() OVER (
+            PARTITION BY entity_id
+            ORDER BY score DESC, chunk_id
+          ) AS entity_rank
+        FROM scored
+        WHERE score >= $15
+      ),
+      top_results AS MATERIALIZED (
+        SELECT *
+        FROM deduplicated
+        WHERE entity_rank = 1
+        ORDER BY score DESC
+        LIMIT $16
+      )
       SELECT
         e.*,
         c.content AS chunk_content,
-        1 - (c.embedding <=> $1::vector) AS similarity,
-        ts_rank(e.search_tsvector, plainto_tsquery('simple', $8)) AS bm25
-      FROM chunks c
-      JOIN entities e ON e.id = c.entity_id
-      WHERE ($10::boolean = true OR e.status IS DISTINCT FROM 'archived')
-        AND ($2::text IS NULL OR e.type = $2)
-        AND ($3::text[] IS NULL OR e.tags @> $3)
-        AND ($4::text[] IS NULL OR e.type = ANY($4))
-        AND e.visibility = ANY($5)
-        AND ($6::text IS NULL OR e.visibility = $6)
-        AND ${ownerSqlCondition('e.owner', '$7')}
-        AND (
-          $11::text IS NULL
-          OR (
-            e.type = 'memory'
-            AND COALESCE(e.metadata->>'memory_role', 'durable_memory') = $11
-          )
-        )
-        AND ${scopedMemoryVisibilitySql('e.metadata', '$12')}
-      ORDER BY c.embedding <=> $1::vector
-      LIMIT $9
+        top_results.similarity,
+        top_results.score
+      FROM top_results
+      JOIN entities e ON e.id = top_results.entity_id
+      JOIN chunks c ON c.id = top_results.chunk_id
+      ORDER BY top_results.score DESC
     `,
     [
       vectorToSql(ctx.queryEmbedding),
@@ -279,43 +331,25 @@ async function runHybridSearch(
       candidateLimit,
       input.includeArchived ?? false,
       input.memoryRole ?? null,
-      auth.clientId
+      auth.clientId,
+      ctx.recencyWeight,
+      ctx.now,
+      ctx.threshold,
+      ctx.limit
     ]
   );
 
-  const withNormalizedBm25 = normalizeBm25Scores(
-    rows.rows.map((row) => ({
-      row,
-      bm25: Number(row.bm25)
-    }))
-  );
-
-  const scored = withNormalizedBm25
-    .map(({ row, bm25 }) => {
+  return {
+    results: rows.rows.map((row) => {
       const entity = mapEntity(row);
-      const similarity = Number(row.similarity);
-      const blended = blendScores(similarity, bm25);
-      const ageDays =
-        (ctx.now.getTime() - row.created_at.getTime()) / (1000 * 60 * 60 * 24);
-      const score = applyRecencyBoost({
-        similarity: blended,
-        ageDays,
-        recencyWeight: ctx.recencyWeight,
-        halfLifeDays: 30
-      });
-
       return {
         entity,
         entityId: entity.id,
         chunkContent: row.chunk_content,
-        similarity,
-        score
+        similarity: Number(row.similarity),
+        score: Number(row.score)
       };
     })
-    .filter((result) => result.score >= ctx.threshold);
-
-  return {
-    results: deduplicateResults(scored).slice(0, ctx.limit)
   };
 }
 

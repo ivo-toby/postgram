@@ -148,7 +148,7 @@ describe('searchEntities graph expansion', () => {
                 updated_at: createdAt,
                 chunk_content: 'anchor compact search content',
                 similarity: 1,
-                bm25: 1
+                score: 0.88
               }
             ]
           });
@@ -231,6 +231,7 @@ describe('searchEntities graph expansion', () => {
     expect(result.isOk()).toBe(true);
     expect(result._unsafeUnwrap().results[0]).toMatchObject({
       entityId: anchorId,
+      score: 0.88,
       edges: {
         count: 1,
         relations: [{ relation: 'depends_on', count: 1 }]
@@ -246,5 +247,8 @@ describe('searchEntities graph expansion', () => {
     expect(
       queries.some((sql) => sql.includes('FROM unnest($1::uuid[]) AS anchor'))
     ).toBe(false);
+    expect(queries.find((sql) => sql.includes('FROM chunks c'))).toContain(
+      'ROW_NUMBER() OVER'
+    );
   });
 });

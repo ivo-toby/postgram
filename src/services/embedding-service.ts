@@ -4,6 +4,7 @@ import { AppError, ErrorCode } from '../util/errors.js';
 import type { EmbeddingProvider } from './embeddings/providers.js';
 
 const DEFAULT_DIMENSIONS = 1536;
+const QUERY_EMBEDDING_CACHE_SIZE = 256;
 
 type EmbeddingMode = 'deterministic' | 'provider';
 
@@ -150,6 +151,49 @@ export function createEmbeddingService(options: EmbeddingServiceOptions = {}) {
       return vector;
     });
 
+  const queryEmbeddingCache = new Map<string, Promise<number[]>>();
+
+  function embedCachedQuery(
+    text: string,
+    model?: ActiveEmbeddingModel
+  ): Promise<number[]> {
+    if (!model) {
+      return embedQueryImpl(text, model);
+    }
+
+    const cacheKey = JSON.stringify([
+      model.id,
+      model.provider,
+      model.name,
+      model.dimensions,
+      text
+    ]);
+    const cached = queryEmbeddingCache.get(cacheKey);
+    if (cached) {
+      queryEmbeddingCache.delete(cacheKey);
+      queryEmbeddingCache.set(cacheKey, cached);
+      return cached;
+    }
+
+    const embedding = embedQueryImpl(text, model);
+    queryEmbeddingCache.set(cacheKey, embedding);
+
+    if (queryEmbeddingCache.size > QUERY_EMBEDDING_CACHE_SIZE) {
+      const oldestKey = queryEmbeddingCache.keys().next().value;
+      if (oldestKey !== undefined) {
+        queryEmbeddingCache.delete(oldestKey);
+      }
+    }
+
+    void embedding.catch(() => {
+      if (queryEmbeddingCache.get(cacheKey) === embedding) {
+        queryEmbeddingCache.delete(cacheKey);
+      }
+    });
+
+    return embedding;
+  }
+
   return {
     dimensions: options.provider?.dimensions ?? DEFAULT_DIMENSIONS,
     async embedBatch(
@@ -162,7 +206,7 @@ export function createEmbeddingService(options: EmbeddingServiceOptions = {}) {
       text: string,
       model?: ActiveEmbeddingModel
     ): Promise<number[]> {
-      return embedQueryImpl(text, model);
+      return embedCachedQuery(text, model);
     },
     async getActiveModel(pool: Pool): Promise<ActiveEmbeddingModel> {
       const result = await pool.query<ActiveModelRow>(

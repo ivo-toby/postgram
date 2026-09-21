@@ -687,7 +687,7 @@ The research task should **not** create the implementation spec itself unless in
 
 Inspect:
 
-- https://github.com/ivo-toby/tiny-sdd
+- the `tiny-sdd` repository on GitHub
 
 Understand what information TinySDD expects before implementation.
 

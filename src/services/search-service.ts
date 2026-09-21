@@ -44,6 +44,7 @@ type EntityRow = {
 };
 
 type SearchRow = EntityRow & {
+  chunk_id: string;
   chunk_content: string;
   similarity: number;
   score: number;
@@ -60,6 +61,8 @@ type SearchEnvelopeRow =
 export type SearchResult = {
   entity: Entity;
   entityId: string;
+  /** Exact judged chunk — one entity result maps to its top-ranked chunk. */
+  chunkId: string;
   chunkContent: string;
   similarity: number;
   score: number;
@@ -313,6 +316,7 @@ function mapSearchRows(rows: SearchRow[]): SearchResult[] {
     return {
       entity,
       entityId: entity.id,
+      chunkId: row.chunk_id,
       chunkContent: row.chunk_content,
       similarity: Number(row.similarity),
       score: Number(row.score)
@@ -409,6 +413,7 @@ function buildHybridSearchSql(
       e.created_at,
       e.updated_at,
       c.content AS chunk_content,
+      top_results.chunk_id,
       top_results.similarity,
       top_results.score
     FROM candidate_stats
@@ -793,6 +798,7 @@ export function searchEntities(
             clientScope: auth.clientId ?? undefined,
             candidates: results.results.map((result) => ({
               entityId: result.entityId,
+              chunkId: result.chunkId,
               chunkContent: result.chunkContent,
               entityType: result.entity.type,
               tags: result.entity.tags,

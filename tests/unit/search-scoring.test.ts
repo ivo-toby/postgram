@@ -51,6 +51,7 @@ function searchRow(id: string, content: string, score = 0.88) {
     created_at: createdAt,
     updated_at: createdAt,
     chunk_content: content,
+    chunk_id: `chunk-${id}`,
     similarity: 1,
     score,
     result_present: true,
@@ -646,12 +647,14 @@ describe('searchEntities Jev shadow judge', () => {
     expect(payload?.candidates).toHaveLength(1);
     expect(payload?.candidates?.[0]).toMatchObject({
       entityId: '00000000-0000-0000-0000-000000000011',
+      chunkId: 'chunk-00000000-0000-0000-0000-000000000011',
       status: 'judged',
       score: 0.88,
       similarity: 1,
       nouls: { relevant: 0.91, evidence: 0.82, contradicts: 0.07 },
       model: 'jev-latest'
     });
+    expect(typeof payload?.candidates?.[0]?.stateHash).toBe('string');
     expect(typeof payload?.candidates?.[0]?.latencyMs).toBe('number');
     // Usage is preserved so cost-per-query can be computed offline.
     expect(payload?.candidates?.[0]?.usage).toEqual({
@@ -751,10 +754,12 @@ describe('searchEntities Jev shadow judge', () => {
     expect(shadowEvent.judgedCount).toBe(0);
     expect(shadowEvent.candidates[0]).toMatchObject({
       entityId: '00000000-0000-0000-0000-000000000011',
+      chunkId: 'chunk-00000000-0000-0000-0000-000000000011',
       status: 'unavailable',
       score: 0.88,
       similarity: 1
     });
+    expect(typeof shadowEvent.candidates[0]?.stateHash).toBe('string');
     expect(typeof shadowEvent.candidates[0]?.latencyMs).toBe('number');
     expect(JSON.stringify(debug.mock.calls)).not.toContain('postgres search');
     expect(JSON.stringify(info.mock.calls)).not.toContain('postgres search');
@@ -824,6 +829,7 @@ describe('searchEntities Jev shadow judge', () => {
 describe('jev-retrieval-judge', () => {
   const baseCandidate: JevJudgeCandidate = {
     entityId: '00000000-0000-0000-0000-0000000000aa',
+    chunkId: 'chunk-00000000-0000-0000-0000-0000000000aa',
     chunkContent: 'passage text',
     entityType: 'memory',
     tags: ['notes'],
@@ -885,7 +891,21 @@ describe('jev-retrieval-judge', () => {
     });
     expect(observation.candidates[0]).toEqual({
       entityId: baseCandidate.entityId,
+      chunkId: baseCandidate.chunkId,
       status: 'judged',
+      stateHash: createHash('sha256')
+        .update(
+          JSON.stringify({
+            query: 'what is postgres',
+            chunk_text: 'passage text',
+            entity_type: 'memory',
+            tags: ['notes'],
+            similarity: 0.9,
+            score: 0.75
+          }),
+          'utf8'
+        )
+        .digest('hex'),
       score: 0.75,
       similarity: 0.9,
       nouls: { relevant: 0.91, evidence: 0.82, contradicts: 0.07 },
@@ -1059,6 +1079,77 @@ describe('jev-retrieval-judge', () => {
     // clients never hash equal, with or without a key.
     expect(keyedScopedA.queryHash).not.toBe(keyedScopedB.queryHash);
     expect(keyedScopedA.queryHash).not.toBe(keyedNoScope.queryHash);
+  });
+
+  it('rejects probabilities outside [0, 1] as malformed answers', async () => {
+    const client = {
+      systemOne: vi.fn(() =>
+        Promise.resolve({
+          model: 'jev-latest',
+          answers: {
+            relevant: { type: 'noul', noul: 1.5 },
+            evidence: { type: 'noul', noul: 0.82 },
+            contradicts: { type: 'noul', noul: -0.1 }
+          }
+        })
+      )
+    };
+    const judge = makeJudge({ client: client as never });
+
+    const observation = await judge({
+      query: 'what is postgres',
+      candidates: [baseCandidate]
+    });
+
+    const first = observation.candidates[0];
+    expect(first?.status).toBe('unavailable');
+  });
+
+  it('keys the state hash with the secret when one is configured', async () => {
+    const { client } = makeStubJevClient();
+    const deps = { client: client as never };
+    const unkeyedJudge = makeJudge(deps);
+    const keyedJudge = createJevRetrievalJudge({
+      shadowEnabled: true,
+      apiKey: 'test-key',
+      timeoutMs: 100,
+      maxCandidates: 10,
+      queryCacheSecret: 'sekrit'
+    }, deps);
+    if (!keyedJudge) throw new Error('expected judge');
+
+    const unkeyed = await unkeyedJudge({
+      query: 'what is postgres',
+      candidates: [baseCandidate]
+    });
+    const keyed = await keyedJudge({
+      query: 'what is postgres',
+      candidates: [baseCandidate]
+    });
+
+    const first = unkeyed.candidates[0];
+    if (first?.status !== 'judged') throw new Error('expected judged');
+    const plain = createHash('sha256')
+      .update(
+        JSON.stringify({
+          query: 'what is postgres',
+          chunk_text: 'passage text',
+          entity_type: 'memory',
+          tags: ['notes'],
+          similarity: 0.9,
+          score: 0.75
+        }),
+        'utf8'
+      )
+      .digest('hex');
+    // Without a secret the state hash is a plain sha256 of the exact state.
+    expect(first.stateHash).toBe(plain);
+    // With a secret it is an HMAC over the same input — a log reader cannot
+    // verify a guessed query/chunk pair without the key.
+    const keyedFirst = keyed.candidates[0];
+    if (keyedFirst?.status !== 'judged') throw new Error('expected judged');
+    expect(keyedFirst.stateHash).not.toBe(plain);
+    expect(keyedFirst.stateHash).toHaveLength(64);
   });
 
   it('omits usage when the SDK response carries no usage block', async () => {

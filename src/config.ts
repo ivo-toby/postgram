@@ -233,6 +233,16 @@ const configSchema = z
         message: 'PUBLIC_BASE_URL is required when OAUTH_ENABLED=true'
       });
     }
+    if (cfg.JEV_SHADOW_ENABLED && !cfg.JEV_API_KEY) {
+      // An explicitly enabled feature must not silently do nothing: fail
+      // startup so the operator fixes the key instead of paying latency for
+      // a judge that never exists.
+      ctx.addIssue({
+        code: z.ZodIssueCode.custom,
+        path: ['JEV_API_KEY'],
+        message: 'JEV_API_KEY is required when JEV_SHADOW_ENABLED=true'
+      });
+    }
   });
 
 export type AppConfig = z.infer<typeof configSchema>;

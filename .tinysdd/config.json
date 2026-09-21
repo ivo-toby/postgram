@@ -8,8 +8,8 @@
       "model": "glm-5.3-flash:cloud",
       "profile": "tinysdd-profiles/glm53-flash.json",
       "limits": {
-        "timeoutMs": 300000,
-        "maxToolCalls": 40
+        "timeoutMs": 900000,
+        "maxToolCalls": 60
       },
       "instructions": [
         "tinysdd/instructions/workspace.md"

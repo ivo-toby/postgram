@@ -1,1 +1,9 @@
-{"id": "glm53-flash-ollama-v1", "instructions": "Use the task's exact source interfaces. Report missing facts and unrun checks explicitly.", "runtime": {"reasoning": true, "thinking": "low"}, "schemaVersion": 1}
+{
+  "id": "glm53-flash-ollama-v2-medium",
+  "instructions": "Use the task's exact source interfaces. Report missing facts and unrun checks explicitly.",
+  "runtime": {
+    "reasoning": true,
+    "thinking": "medium"
+  },
+  "schemaVersion": 1
+}

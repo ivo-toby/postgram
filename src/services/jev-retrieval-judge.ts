@@ -1,0 +1,414 @@
+/**
+ * Shadow-mode Jev retrieval judge.
+ *
+ * After hybrid search resolves, up to `maxCandidates` results are sent to the
+ * TypeSafe API as state (text plus ranking scores) with three Noul questions
+ * — relevant / evidence / contradicts — answered in a single `systemOne`
+ * request per candidate. The resulting P(yes) probabilities are logged beside
+ * the ranking scores in the `search.completed` debug payload.
+ *
+ * Boundaries (docs/superpowers/jev-research-decision.md):
+ * - Shadow mode only: judgments are logged, never used to filter, rerank or
+ *   gate graph expansion. There is deliberately no probability threshold in
+ *   this module; any future policy threshold must be a named constant tuned
+ *   from measured data, never an inline probability cut.
+ * - With the flag off the Jev client is never constructed and the SDK module
+ *   is never imported at runtime; search results stay byte-identical.
+ * - Any Jev error or timeout degrades to a per-candidate skip, so search must
+ *   never fail because of Jev. Candidates are judged concurrently, so the
+ *   worst-case added latency is roughly one request timeout, not N.
+ * - Jev jaggedness guidance: no numeric, date or counting questions; the
+ *   state is text plus scores only, and the chunk text is capped so a large
+ *   document cannot distract the judge.
+ */
+
+import { createHash } from 'node:crypto';
+
+import type { Logger } from 'pino';
+
+import { loadConfig } from '../config.js';
+
+/** P(yes) answers for the three Noul questions, each in [0, 1]. */
+export type JevNouls = {
+  relevant: number;
+  evidence: number;
+  contradicts: number;
+};
+
+/** A candidate the judge scored. */
+export type JevJudgedCandidate = {
+  entityId: string;
+  status: 'judged';
+  score: number;
+  similarity: number;
+  nouls: JevNouls;
+  model: string;
+  latencyMs: number;
+};
+
+/** A candidate skipped because Jev was unavailable or answered malformed. */
+export type JevUnavailableCandidate = {
+  entityId: string;
+  status: 'unavailable';
+  score: number;
+  similarity: number;
+  latencyMs: number;
+};
+
+export type JevCandidateObservation =
+  | JevJudgedCandidate
+  | JevUnavailableCandidate;
+
+export type JevShadowObservation = {
+  /**
+   * Unkeyed sha256 of the query text — same one-way scheme as the query
+   * embedding cache default — so judgments are replayable offline without
+   * putting plaintext queries into the logs.
+   */
+  queryHash: string;
+  candidates: JevCandidateObservation[];
+};
+
+/** Minimal candidate data the judge needs; built from SearchResult rows. */
+export type JevJudgeCandidate = {
+  entityId: string;
+  chunkContent: string;
+  entityType: string;
+  tags: readonly string[];
+  similarity: number;
+  score: number;
+};
+
+export type JevRetrievalJudge = (input: {
+  query: string;
+  candidates: readonly JevJudgeCandidate[];
+  logger?: Pick<Logger, 'debug' | 'warn'> | undefined;
+}) => Promise<JevShadowObservation>;
+
+export type JevJudgeConfig = {
+  /**
+   * When false the judge is not created at all: no client, no SDK import.
+   */
+  shadowEnabled: boolean;
+  /** Falls back to the SDK's TYPESAFE_API_KEY env handling when unset. */
+  apiKey?: string | undefined;
+  /** Defaults to the SDK default model (jev-latest) when unset. */
+  model?: string | undefined;
+  /** Per-request ceiling in milliseconds; also enforced via AbortSignal. */
+  timeoutMs: number;
+  /** Upper bound on candidates judged per search call. */
+  maxCandidates: number;
+};
+
+// Structural mirror of the @typesafe-ai/sdk 0.6.0 surface this module uses,
+// kept local so tsc does not depend on the package being installed here and
+// the SDK is only ever loaded through the lazy dynamic import below. Shapes
+// follow the caller-verified interface facts: `TypeSafeClient`, `noul`,
+// `systemOne`, and `NoulResponse = { type: 'noul', noul: number }` — P(yes)
+// with no confidence field.
+export type JevSystemOneResult = {
+  model: string;
+  answers: Record<string, unknown>;
+};
+
+export type JevSystemOneClient = {
+  systemOne(
+    request: { state: unknown; questions: Record<string, unknown> },
+    options: { timeout: number; signal: AbortSignal }
+  ): Promise<JevSystemOneResult>;
+};
+
+export type JevSdkModule = {
+  TypeSafeClient: new (config?: {
+    apiKey?: string | undefined;
+    defaultModel?: string | undefined;
+  }) => JevSystemOneClient;
+  noul: (instructions?: string) => unknown;
+};
+
+export type JevJudgeDeps = {
+  /**
+   * Pre-built systemOne client; tests stub this instead of the SDK. When
+   * given, the SDK module is never imported. Noul questions are passed as
+   * plain `{ instructions }` records.
+   */
+  client?: JevSystemOneClient | undefined;
+  /**
+   * Overrides the SDK module load so tests can exercise initialization
+   * failure deterministically without depending on the install state.
+   */
+  loadModule?: (() => Promise<JevSdkModule>) | undefined;
+};
+
+// One atomic judgment per question; literal, present-tense, no negation
+// (jaggedness guidance). The research docs call the three questions relevant /
+// states_usable_evidence / contradicts_premise; the approved call shape names
+// them relevant / evidence / contradicts, and those names are echoed into the
+// shadow log.
+const RELEVANT_QUESTION = 'Does this passage help answer the query?';
+const EVIDENCE_QUESTION =
+  'Does this passage state a fact usable in an answer?';
+const CONTRADICTS_QUESTION =
+  'Does this passage contradict something the query takes for granted?';
+
+// State hygiene: text plus scores only. The cap is a state-size guard, not a
+// quality cut — large irrelevant state distracts the judge.
+const MAX_STATE_CHUNK_CHARS = 4_000;
+
+function readNoulProbability(value: unknown): number | undefined {
+  if (typeof value !== 'object' || value === null) {
+    return undefined;
+  }
+  const record = value as Record<string, unknown>;
+  if (record['type'] !== 'noul') {
+    return undefined;
+  }
+  const probability = record['noul'];
+  return typeof probability === 'number' && Number.isFinite(probability)
+    ? probability
+    : undefined;
+}
+
+function readNouls(answers: unknown): JevNouls | undefined {
+  if (typeof answers !== 'object' || answers === null) {
+    return undefined;
+  }
+  const record = answers as Record<string, unknown>;
+  const relevant = readNoulProbability(record['relevant']);
+  const evidence = readNoulProbability(record['evidence']);
+  const contradicts = readNoulProbability(record['contradicts']);
+  if (
+    relevant === undefined ||
+    evidence === undefined ||
+    contradicts === undefined
+  ) {
+    return undefined;
+  }
+  return { relevant, evidence, contradicts };
+}
+
+function buildJudgeState(
+  query: string,
+  candidate: JevJudgeCandidate
+): Record<string, unknown> {
+  return {
+    query,
+    chunk_text: candidate.chunkContent.slice(0, MAX_STATE_CHUNK_CHARS),
+    entity_type: candidate.entityType,
+    tags: [...candidate.tags],
+    similarity: candidate.similarity,
+    score: candidate.score
+  };
+}
+
+function unavailableObservation(
+  candidate: JevJudgeCandidate,
+  latencyMs: number
+): JevUnavailableCandidate {
+  return {
+    entityId: candidate.entityId,
+    status: 'unavailable',
+    score: candidate.score,
+    similarity: candidate.similarity,
+    latencyMs
+  };
+}
+
+function hashQuery(query: string): string {
+  return createHash('sha256').update(query, 'utf8').digest('hex');
+}
+
+/**
+ * Builds the shadow judge. Mirrors the createLlmProvider factory pattern:
+ * callers pass the validated JEV_* config and receive a judge function, or
+ * undefined when the feature is off or unconfigured.
+ */
+export function createJevRetrievalJudge(
+  config: JevJudgeConfig,
+  deps: JevJudgeDeps = {}
+): JevRetrievalJudge | undefined {
+  if (!config.shadowEnabled) {
+    // Flag off: no judge object, no SDK import, no client construction — the
+    // search path stays byte-identical.
+    return undefined;
+  }
+
+  if (!deps.client && !config.apiKey) {
+    // The SDK client constructor throws TypeSafeError without a key, so an
+    // enabled flag without JEV_API_KEY degrades to "judge absent" instead of
+    // failing search at construction time.
+    return undefined;
+  }
+
+  type ResolvedSdk = { client: JevSystemOneClient; noul: JevSdkModule['noul'] };
+  let initPromise: Promise<ResolvedSdk | undefined> | undefined;
+
+  // One lazy initialization per judge instance. Failures latch onto the
+  // cached promise: the warn is logged once and later calls skip silently.
+  const resolveSdk = (
+    logger: Pick<Logger, 'debug' | 'warn'> | undefined
+  ): Promise<ResolvedSdk | undefined> => {
+    if (!initPromise) {
+      initPromise = (async (): Promise<ResolvedSdk | undefined> => {
+        if (deps.client) {
+          return {
+            client: deps.client,
+            noul: (instructions?: string) => ({ instructions })
+          };
+        }
+        try {
+          // Non-literal specifier on purpose: the optional SDK dependency may
+          // only load when the shadow judge actually runs, and tsc must not
+          // resolve its types on machines where the package is absent.
+          const moduleName = '@typesafe-ai/sdk';
+          const sdk = deps.loadModule
+            ? await deps.loadModule()
+            : ((await import(moduleName)) as unknown as JevSdkModule);
+          return {
+            client: new sdk.TypeSafeClient({
+              apiKey: config.apiKey,
+              ...(config.model ? { defaultModel: config.model } : {})
+            }),
+            noul: sdk.noul
+          };
+        } catch (error) {
+          logger?.warn(
+            {
+              event: 'jev.unavailable',
+              reason: error instanceof Error ? error.message : 'unknown error'
+            },
+            'jev judge initialization failed; shadow judgments disabled'
+          );
+          return undefined;
+        }
+      })();
+    }
+    return initPromise;
+  };
+
+  const judge: JevRetrievalJudge = async ({ query, candidates, logger }) => {
+    const bounded = candidates.slice(0, config.maxCandidates);
+    const queryHash = hashQuery(query);
+    if (bounded.length === 0) {
+      return { queryHash, candidates: [] };
+    }
+
+    const sdk = await resolveSdk(logger);
+    if (!sdk) {
+      return {
+        queryHash,
+        candidates: bounded.map((candidate) =>
+          unavailableObservation(candidate, 0)
+        )
+      };
+    }
+
+    const { client, noul } = sdk;
+    const observations = await Promise.all(
+      bounded.map(async (candidate): Promise<JevCandidateObservation> => {
+        const startedAt = Date.now();
+        const elapsedMs = () => Date.now() - startedAt;
+        try {
+          const result = await client.systemOne(
+            {
+              state: buildJudgeState(query, candidate),
+              questions: {
+                relevant: noul(RELEVANT_QUESTION),
+                evidence: noul(EVIDENCE_QUESTION),
+                contradicts: noul(CONTRADICTS_QUESTION)
+              }
+            },
+            {
+              timeout: config.timeoutMs,
+              signal: AbortSignal.timeout(config.timeoutMs)
+            }
+          );
+          const nouls = readNouls(result?.answers);
+          if (!nouls) {
+            logger?.debug(
+              {
+                event: 'jev.unavailable',
+                entityId: candidate.entityId,
+                latencyMs: elapsedMs(),
+                reason: 'malformed jev response'
+              },
+              'jev candidate skipped'
+            );
+            return unavailableObservation(candidate, elapsedMs());
+          }
+          return {
+            entityId: candidate.entityId,
+            status: 'judged',
+            score: candidate.score,
+            similarity: candidate.similarity,
+            nouls,
+            model: result.model,
+            latencyMs: elapsedMs()
+          };
+        } catch (error) {
+          // Fail open. TypeSafeError, APIError, APIConnectionError,
+          // APITimeoutError and APIUserAbortError all land here — any Jev
+          // failure is a per-candidate skip, never a search failure.
+          logger?.debug(
+            {
+              event: 'jev.unavailable',
+              entityId: candidate.entityId,
+              latencyMs: elapsedMs(),
+              reason: error instanceof Error ? error.message : 'unknown error'
+            },
+            'jev candidate skipped'
+          );
+          return unavailableObservation(candidate, elapsedMs());
+        }
+      })
+    );
+
+    return { queryHash, candidates: observations };
+  };
+
+  return judge;
+}
+
+let cachedEnvJudge:
+  | { envKey: string; judge: JevRetrievalJudge | undefined }
+  | undefined;
+
+/**
+ * Default judge for the search path, resolved from the JEV_* env flags via
+ * loadConfig. Returns undefined — without importing the SDK or constructing a
+ * client — whenever the flag is off, the key is missing, or the environment
+ * does not parse (e.g. unit tests running without a DATABASE_URL). The result
+ * is memoized against the raw JEV_* env values. Callers that need
+ * deterministic behavior should inject a judge via SearchOptions.jevJudge.
+ */
+export function resolveEnvJevJudge(): JevRetrievalJudge | undefined {
+  const env = process.env;
+  const envKey = [
+    env['JEV_SHADOW_ENABLED'] ?? '',
+    env['JEV_API_KEY'] ?? '',
+    env['JEV_MODEL'] ?? '',
+    env['JEV_TIMEOUT_MS'] ?? '',
+    env['JEV_MAX_CANDIDATES'] ?? ''
+  ].join('|');
+  if (cachedEnvJudge && cachedEnvJudge.envKey === envKey) {
+    return cachedEnvJudge.judge;
+  }
+
+  let judge: JevRetrievalJudge | undefined;
+  try {
+    const config = loadConfig(env);
+    judge =
+      createJevRetrievalJudge({
+        shadowEnabled: config.JEV_SHADOW_ENABLED,
+        apiKey: config.JEV_API_KEY,
+        model: config.JEV_MODEL,
+        timeoutMs: config.JEV_TIMEOUT_MS,
+        maxCandidates: config.JEV_MAX_CANDIDATES
+      }) ?? undefined;
+  } catch {
+    // Unparseable environment (unit tests commonly run without a
+    // DATABASE_URL): the judge stays off and search continues unaffected.
+  }
+  cachedEnvJudge = { envKey, judge };
+  return judge;
+}

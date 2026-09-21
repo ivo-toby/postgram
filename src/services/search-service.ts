@@ -20,6 +20,11 @@ import {
   type QueryEmbeddingCacheStatus,
   vectorToSql
 } from './embedding-service.js';
+import { resolveEnvJevJudge } from './jev-retrieval-judge.js';
+import type {
+  JevRetrievalJudge,
+  JevShadowObservation
+} from './jev-retrieval-judge.js';
 import type { MemoryRole } from './memory-role-service.js';
 
 type EntityRow = {
@@ -100,6 +105,14 @@ type SearchOptions = {
   logger?: Pick<Logger, 'debug' | 'warn'> | undefined;
   strategyOverride?: SearchStrategyOverride | undefined;
   onStrategy?: ((strategy: HybridSearchStrategy) => void) | undefined;
+  /**
+   * Shadow-mode Jev retrieval judge. Judgments are logged inside the
+   * `search.completed` debug payload and never influence results. When
+   * omitted, a judge is resolved once from the JEV_* env flags; with
+   * JEV_SHADOW_ENABLED off (default) this resolves to nothing, the Jev client
+   * is never constructed and the SDK is never imported at runtime.
+   */
+  jevJudge?: JevRetrievalJudge | undefined;
 };
 
 export type SearchResponse = {
@@ -756,6 +769,41 @@ export function searchEntities(
       timings['hybridSqlMs'] = Date.now() - hybridStartedAt;
       options.onStrategy?.(results.strategy);
 
+      // Shadow-mode Jev retrieval judging: best-effort and logged only — never
+      // used to filter, rerank or gate graph expansion. A Jev failure
+      // degrades to per-candidate skips and must never fail the search.
+      const jevJudge = options.jevJudge ?? resolveEnvJevJudge();
+      let jev: JevShadowObservation | undefined;
+      if (jevJudge && results.results.length > 0) {
+        const judgeStartedAt = Date.now();
+        try {
+          jev = await jevJudge({
+            query,
+            candidates: results.results.map((result) => ({
+              entityId: result.entityId,
+              chunkContent: result.chunkContent,
+              entityType: result.entity.type,
+              tags: result.entity.tags,
+              similarity: result.similarity,
+              score: result.score
+            })),
+            logger: options.logger
+          });
+        } catch (error) {
+          // The judge is fail-open by contract; this guard keeps it true even
+          // if the judge module itself regresses.
+          jev = undefined;
+          options.logger?.warn(
+            {
+              event: 'jev.unavailable',
+              reason: error instanceof Error ? error.message : 'unknown error'
+            },
+            'jev shadow judge failed; skipping judgments'
+          );
+        }
+        timings['jevMs'] = Date.now() - judgeStartedAt;
+      }
+
       const edgeStartedAt = Date.now();
       const resultEntityIds = results.results.map((r) => r.entityId);
       if (!input.expandGraph) {
@@ -864,7 +912,8 @@ export function searchEntities(
           cacheStatus,
           strategy: results.strategy,
           resultCount: results.results.length,
-          timings
+          timings,
+          ...(jev ? { jev } : {})
         },
         'search completed'
       );

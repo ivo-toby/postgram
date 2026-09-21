@@ -33,6 +33,7 @@
   "dependencies": {
     "@hono/node-server": "^1.14.2",
     "@modelcontextprotocol/sdk": "^1.18.1",
+    "@typesafe-ai/sdk": "^0.6.0",
     "argon2": "^0.44.0",
     "commander": "^14.0.1",
     "hono": "^4.9.6",

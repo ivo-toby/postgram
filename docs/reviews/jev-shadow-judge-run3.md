@@ -50,3 +50,13 @@ Four issues raised by the operator, all fixed in the follow-up commit:
 4. **P2 — runtime configuration docs.** `.env.example` documents all five `JEV_*` variables including the privacy note (query text + chunk contents leave the host) and latency shape; the README configuration table gained the same rows.
 
 Verification after fixes: tsc clean, eslint clean, 195/195 unit tests.
+
+## Addendum 2: second operator feedback round (PR #107)
+
+Three more issues, all fixed:
+
+1. **P1 — shadow log could not support evaluation.** Every observation now carries `chunkId` (plumbed from the hybrid SQL through `SearchResult` to the judge) identifying the exact judged chunk, and `stateHash` — a one-way digest of the exact state object sent to Jev (keyed HMAC when `QUERY_EMBEDDING_CACHE_SECRET` is set, sha256 otherwise). With the secret, an operator can identify a logged search by digesting candidate queries (`<scope>\u0000<query>`); the chunk is pulled by `chunkId` and the exact judged input verified against `stateHash` before replay. `queryHash`/`stateHash` doc comments document the workflow.
+2. **P2 — silently disabled explicit enable.** Config validation now fails startup (`superRefine`) when `JEV_SHADOW_ENABLED=true` without `JEV_API_KEY`. The module-level "judge absent" fallback remains as defense for direct construction, but an enabled flag can no longer silently do nothing.
+3. **P2 — out-of-range probabilities.** `readNoulProbability` now rejects values outside [0, 1] as malformed (degrade to unavailable), so invalid probabilities cannot poison calibration data.
+
+Verification: tsc clean, eslint clean, 198/198 unit tests (3 new: range rejection, keyed state hash, startup validation).

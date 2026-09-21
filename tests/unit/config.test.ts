@@ -389,6 +389,12 @@ describe('jev shadow judge config', () => {
     expect(blank.JEV_TIMEOUT_MS).toBe(3000);
   });
 
+  it('rejects an enabled shadow judge without an API key at startup', () => {
+    expect(() =>
+      loadConfig(baseEnv({ JEV_SHADOW_ENABLED: 'true' }))
+    ).toThrow(/JEV_API_KEY is required/);
+  });
+
   it('rejects non-positive JEV_TIMEOUT_MS and JEV_MAX_CANDIDATES', () => {
     expect(() => loadConfig(baseEnv({ JEV_TIMEOUT_MS: '0' }))).toThrow();
     expect(() => loadConfig(baseEnv({ JEV_MAX_CANDIDATES: '0' }))).toThrow();

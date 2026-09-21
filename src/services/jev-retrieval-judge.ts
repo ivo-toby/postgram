@@ -44,12 +44,16 @@ export type JevUsage = {
 /** A candidate the judge scored. */
 export type JevJudgedCandidate = {
   entityId: string;
+  /** The exact chunk whose text was judged. */
+  chunkId: string;
   status: 'judged';
   score: number;
   similarity: number;
   nouls: JevNouls;
   model: string;
   latencyMs: number;
+  /** Digest of the exact state sent to Jev; see JevShadowObservation. */
+  stateHash: string;
   /** Absent when the SDK response carried no parseable usage block. */
   usage?: JevUsage | undefined;
 };
@@ -57,10 +61,12 @@ export type JevJudgedCandidate = {
 /** A candidate skipped because Jev was unavailable or answered malformed. */
 export type JevUnavailableCandidate = {
   entityId: string;
+  chunkId: string;
   status: 'unavailable';
   score: number;
   similarity: number;
   latencyMs: number;
+  stateHash: string;
 };
 
 export type JevCandidateObservation =
@@ -69,9 +75,12 @@ export type JevCandidateObservation =
 
 export type JevShadowObservation = {
   /**
-   * Unkeyed sha256 of the query text — same one-way scheme as the query
-   * embedding cache default — so judgments are replayable offline without
-   * putting plaintext queries into the logs.
+   * One-way digest of the query with the client scope mixed in, keyed with
+   * QUERY_EMBEDDING_CACHE_SECRET when configured — plaintext queries never
+   * reach the log, yet an operator holding the secret can identify a logged
+   * search by digesting candidate queries. Together with `chunkId` and
+   * `stateHash` per candidate this supports offline replay and human
+   * relevance labeling without storing any query or chunk text.
    */
   queryHash: string;
   candidates: JevCandidateObservation[];
@@ -80,6 +89,7 @@ export type JevShadowObservation = {
 /** Minimal candidate data the judge needs; built from SearchResult rows. */
 export type JevJudgeCandidate = {
   entityId: string;
+  chunkId: string;
   chunkContent: string;
   entityType: string;
   tags: readonly string[];
@@ -184,7 +194,12 @@ function readNoulProbability(value: unknown): number | undefined {
     return undefined;
   }
   const probability = record['noul'];
-  return typeof probability === 'number' && Number.isFinite(probability)
+  // The declared domain is [0, 1]; a value outside it is a malformed answer,
+  // not calibration data — accepting it would poison the offline analysis.
+  return typeof probability === 'number' &&
+    Number.isFinite(probability) &&
+    probability >= 0 &&
+    probability <= 1
     ? probability
     : undefined;
 }
@@ -223,31 +238,46 @@ function buildJudgeState(
 
 function unavailableObservation(
   candidate: JevJudgeCandidate,
-  latencyMs: number
+  latencyMs: number,
+  stateHash: string
 ): JevUnavailableCandidate {
   return {
     entityId: candidate.entityId,
+    chunkId: candidate.chunkId,
     status: 'unavailable',
     score: candidate.score,
     similarity: candidate.similarity,
-    latencyMs
+    latencyMs,
+    stateHash
   };
 }
 
 function hashQuery(
   query: string,
   clientScope: string | undefined,
-  secret: string | Buffer | undefined
+  digest: (value: string) => string
 ): string {
   // NUL separator keeps "ab" + "c" from colliding with "a" + "bc". The scope
   // goes into the digest itself, so the same query from two clients never
   // produces the same hash — cross-client correlation by hash equality is
   // impossible even without a secret.
-  const scoped = `${clientScope ?? ''}\u0000${query}`;
-  if (secret !== undefined && secret.length > 0) {
-    return createHmac('sha256', secret).update(scoped, 'utf8').digest('hex');
-  }
-  return createHash('sha256').update(scoped, 'utf8').digest('hex');
+  return digest(`${clientScope ?? ''}\u0000${query}`);
+}
+
+/**
+ * One-way digest used for both the query reference and the state hash.
+ *
+ * With QUERY_EMBEDDING_CACHE_SECRET configured this is a keyed HMAC, which
+ * prevents a log reader from dictionary-testing queries or guessed
+ * query/chunk pairs; without it both are unkeyed sha256 — plaintext never
+ * reaches the log either way, but guesses are verifiable (the same accepted
+ * default as createQueryEmbeddingCacheKey).
+ */
+function makeDigest(secret: string | Buffer | undefined) {
+  return (value: string): string =>
+    secret !== undefined && secret.length > 0
+      ? createHmac('sha256', secret).update(value, 'utf8').digest('hex')
+      : createHash('sha256').update(value, 'utf8').digest('hex');
 }
 
 function readUsage(value: unknown): JevUsage | undefined {
@@ -343,7 +373,10 @@ export function createJevRetrievalJudge(
     logger
   }) => {
     const bounded = candidates.slice(0, config.maxCandidates);
-    const queryHash = hashQuery(query, clientScope, config.queryCacheSecret);
+    // Bound to the factory config: every digest in the shadow log (query
+    // reference and per-candidate state hashes) uses the same keyed scheme.
+    const digest = makeDigest(config.queryCacheSecret);
+    const queryHash = hashQuery(query, clientScope, digest);
     if (bounded.length === 0) {
       return { queryHash, candidates: [] };
     }
@@ -352,9 +385,12 @@ export function createJevRetrievalJudge(
     if (!sdk) {
       return {
         queryHash,
-        candidates: bounded.map((candidate) =>
-          unavailableObservation(candidate, 0)
-        )
+        candidates: bounded.map((candidate) => {
+          // The request was never sent; hash the would-be state so the skip
+          // stays attributable to an exact input.
+          const stateHash = digest(JSON.stringify(buildJudgeState(query, candidate)));
+          return unavailableObservation(candidate, 0, stateHash);
+        })
       };
     }
 
@@ -363,10 +399,15 @@ export function createJevRetrievalJudge(
       bounded.map(async (candidate): Promise<JevCandidateObservation> => {
         const startedAt = Date.now();
         const elapsedMs = () => Date.now() - startedAt;
+        // The state hash pins the exact judged input so a later replay can
+        // verify the corpus (chunk text, tags, scores) is unchanged before
+        // trusting the comparison — even though the log carries no plaintext.
+        const state = buildJudgeState(query, candidate);
+        const stateHash = digest(JSON.stringify(state));
         try {
           const result = await client.systemOne(
             {
-              state: buildJudgeState(query, candidate),
+              state,
               questions: {
                 relevant: noul(RELEVANT_QUESTION),
                 evidence: noul(EVIDENCE_QUESTION),
@@ -389,16 +430,18 @@ export function createJevRetrievalJudge(
               },
               'jev candidate skipped'
             );
-            return unavailableObservation(candidate, elapsedMs());
+            return unavailableObservation(candidate, elapsedMs(), stateHash);
           }
           return {
             entityId: candidate.entityId,
+            chunkId: candidate.chunkId,
             status: 'judged',
             score: candidate.score,
             similarity: candidate.similarity,
             nouls,
             model: result.model,
             latencyMs: elapsedMs(),
+            stateHash,
             usage: readUsage(result?.usage)
           };
         } catch (error) {
@@ -414,7 +457,7 @@ export function createJevRetrievalJudge(
             },
             'jev candidate skipped'
           );
-          return unavailableObservation(candidate, elapsedMs());
+          return unavailableObservation(candidate, elapsedMs(), stateHash);
         }
       })
     );

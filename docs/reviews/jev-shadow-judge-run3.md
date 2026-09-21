@@ -40,3 +40,13 @@ The runner flagged `docker-compose.yml`, `package.json`, `tests/unit/config.test
 
 - Calibration/band analysis on real shadow traffic (the point of the experiment; requires live traffic with flag on).
 - Extraction-grounding follow-up, graph-expansion gating, grooming: unchanged scope.
+## Addendum: post-review feedback fixes (operator review of PR #107)
+
+Four issues raised by the operator, all fixed in the follow-up commit:
+
+1. **P1 — shadow results invisible at default log level.** The `search.completed` debug payload merge is replaced by a dedicated info-level `jev.shadow` event (queryHash, counts, aggregated token usage, per-candidate observations). Visible at the default `LOG_LEVEL=info`. `SearchOptions.logger` gained an optional `info` so debug/warn-only callers still compile.
+2. **P2 — query digest privacy.** `hashQuery` now mirrors `createQueryEmbeddingCacheKey`: HMAC-SHA256 keyed by `QUERY_EMBEDDING_CACHE_SECRET` when configured, plain sha256 otherwise; the client scope is mixed into the digest either way (NUL-separated), so identical queries from two clients never hash equal. `resolveEnvJevJudge` re-resolves when the secret changes.
+3. **P2 — usage preserved.** Each judged candidate records `usage: { inputTokens, outputTokens }` from the SDK's `usage` block (defensively parsed, absent when missing); the `jev.shadow` event adds aggregated `totalUsage` for cost-per-query.
+4. **P2 — runtime configuration docs.** `.env.example` documents all five `JEV_*` variables including the privacy note (query text + chunk contents leave the host) and latency shape; the README configuration table gained the same rows.
+
+Verification after fixes: tsc clean, eslint clean, 195/195 unit tests.

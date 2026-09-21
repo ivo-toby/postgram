@@ -648,6 +648,11 @@ those values outside database backups and browser storage.
 | `QUERY_EMBEDDING_CACHE_SIZE` | no             | `512`                           | In-process query embeddings held in front of the Postgres-backed cache. |
 | `QUERY_EMBEDDING_CACHE_SECRET` | no           |                                 | Keys the query digest with an HMAC. Without it the digest is an unkeyed sha256, which a reader of the database can dictionary-test to confirm whether a guessed query was run. Set it if you treat query text as more sensitive than entity content; it must live outside the database to mean anything. Changing it invalidates existing cache rows. |
 | `QUERY_EMBEDDING_CACHE_RETENTION_DAYS` | no   | `30`                            | Age at which persisted query embeddings are pruned. The hourly prune also retains only the 2,000 newest entries per client. |
+| `JEV_SHADOW_ENABLED` | no | `false` | Shadow-mode Jev retrieval judge (experiment). When true, each hybrid search also asks the TypeSafe (Jev) API three semantic questions per result candidate and records the P(yes) answers in a dedicated `jev.shadow` INFO log event. Judgments never influence results. **Privacy:** sends raw query text and top candidate chunk contents to api.typesafe.ai per search; the log event carries only a one-way query digest (HMAC-keyed via `QUERY_EMBEDDING_CACHE_SECRET`, partitioned per client). **Latency:** candidates are judged concurrently, so the cost is roughly one `JEV_TIMEOUT_MS` per search. |
+| `JEV_API_KEY` | when JEV_SHADOW_ENABLED=true |  | TypeSafe API key. Without it an enabled flag silently degrades to the judge being off. |
+| `JEV_MODEL` | no | `jev-latest` | Jev model used for the judgments. |
+| `JEV_TIMEOUT_MS` | no | `3000` | Per-request timeout; also bounds the added search latency via the abort signal. |
+| `JEV_MAX_CANDIDATES` | no | `10` | Upper bound on candidates judged per search call. |
 
 When Postgram runs in Docker and Ollama runs directly on the Docker host, use `http://host.docker.internal:11434` for `EMBEDDING_BASE_URL`; `localhost` inside the container points at the Postgram container, not the host machine.
 

@@ -511,8 +511,18 @@ function makeStubJevClient(
     (
       request: unknown,
       options?: unknown
-    ) => Promise<{ model: string; answers: Record<string, unknown> }>
-  >(() => Promise.resolve({ model: 'jev-latest', answers }));
+    ) => Promise<{
+      model: string;
+      answers: Record<string, unknown>;
+      usage: { input_tokens: number; output_tokens: number };
+    }>
+  >(() =>
+    Promise.resolve({
+      model: 'jev-latest',
+      answers,
+      usage: { input_tokens: 512, output_tokens: 8 }
+    })
+  );
   return { client: { systemOne }, systemOne };
 }
 
@@ -582,6 +592,7 @@ describe('searchEntities Jev shadow judge', () => {
     const { pool } = makeSearchPool();
     const debug = vi.fn();
     const warn = vi.fn();
+    const info = vi.fn();
     const { client, systemOne } = makeStubJevClient();
 
     const result = await searchEntities(
@@ -591,7 +602,7 @@ describe('searchEntities Jev shadow judge', () => {
       {
         embeddingService: makeSearchEmbeddingService(),
         jevJudge: makeJevJudge(client),
-        logger: { warn, debug }
+        logger: { warn, debug, info }
       }
     );
 
@@ -621,17 +632,19 @@ describe('searchEntities Jev shadow judge', () => {
     });
     expect(callOptions.timeout).toBe(250);
 
-    // Judgments are logged beside the scores, without duplicating chunk text.
-    const payload = debug.mock.calls[0]?.[0] as
+    // Judgments are emitted at info level (default LOG_LEVEL), beside the
+    // scores, without duplicating chunk text.
+    const payload = (info.mock.calls[0]?.[0] ?? {}) as
       | {
-          jev?: {
-            queryHash: string;
-            candidates: Array<Record<string, unknown>>;
-          };
+          event?: string;
+          queryHash?: string;
+          candidates?: Array<Record<string, unknown>>;
         }
       | undefined;
-    expect(payload?.jev?.candidates).toHaveLength(1);
-    expect(payload?.jev?.candidates[0]).toMatchObject({
+    expect(payload?.event).toBe('jev.shadow');
+    expect(typeof payload?.queryHash).toBe('string');
+    expect(payload?.candidates).toHaveLength(1);
+    expect(payload?.candidates?.[0]).toMatchObject({
       entityId: '00000000-0000-0000-0000-000000000011',
       status: 'judged',
       score: 0.88,
@@ -639,9 +652,16 @@ describe('searchEntities Jev shadow judge', () => {
       nouls: { relevant: 0.91, evidence: 0.82, contradicts: 0.07 },
       model: 'jev-latest'
     });
-    expect(typeof payload?.jev?.candidates[0]?.latencyMs).toBe('number');
-    expect(typeof payload?.jev?.queryHash).toBe('string');
+    expect(typeof payload?.candidates?.[0]?.latencyMs).toBe('number');
+    // Usage is preserved so cost-per-query can be computed offline.
+    expect(payload?.candidates?.[0]?.usage).toEqual({
+      inputTokens: 512,
+      outputTokens: 8
+    });
+    // Chunk text and plaintext query never reach any log sink.
     expect(JSON.stringify(debug.mock.calls)).not.toContain('hybrid result');
+    expect(JSON.stringify(info.mock.calls)).not.toContain('hybrid result');
+    expect(JSON.stringify(info.mock.calls)).not.toContain('postgres search');
 
     // Results are unchanged by the judge.
     expect(result._unsafeUnwrap()).toMatchObject({
@@ -654,12 +674,16 @@ describe('searchEntities Jev shadow judge', () => {
     const { pool } = makeSearchPool();
     const debug = vi.fn();
     const warn = vi.fn();
+    const info = vi.fn();
 
     const result = await searchEntities(
       pool,
       searchAuth,
       { query: 'postgres search', threshold: 0 },
-      { embeddingService: makeSearchEmbeddingService(), logger: { warn, debug } }
+      {
+        embeddingService: makeSearchEmbeddingService(),
+        logger: { warn, debug, info }
+      }
     );
 
     expect(result.isOk()).toBe(true);
@@ -668,6 +692,7 @@ describe('searchEntities Jev shadow judge', () => {
     expect(payload).not.toHaveProperty('jev');
     const timings = payload.timings as Record<string, number>;
     expect(timings).not.toHaveProperty('jevMs');
+    expect(info).not.toHaveBeenCalled();
     expect(result._unsafeUnwrap()).toMatchObject({
       results: [{ chunkContent: 'hybrid result', score: 0.88 }]
     });
@@ -694,6 +719,7 @@ describe('searchEntities Jev shadow judge', () => {
     const { pool } = makeSearchPool();
     const debug = vi.fn();
     const warn = vi.fn();
+    const info = vi.fn();
     const rejectingClient = {
       systemOne: () =>
         Promise.reject(new Error('connect ECONNREFUSED 127.0.0.1:443'))
@@ -706,7 +732,7 @@ describe('searchEntities Jev shadow judge', () => {
       {
         embeddingService: makeSearchEmbeddingService(),
         jevJudge: makeJevJudge(rejectingClient),
-        logger: { warn, debug }
+        logger: { warn, debug, info }
       }
     );
 
@@ -716,17 +742,22 @@ describe('searchEntities Jev shadow judge', () => {
       (call) => (call[0] as { event?: string }).event
     );
     expect(events).toContain('jev.unavailable');
-    const completed = (debug.mock.calls.at(-1)?.[0] ?? {}) as {
-      jev?: { candidates: Array<Record<string, unknown>> };
+    const shadowEvent = (info.mock.calls[0]?.[0] ?? {}) as {
+      event?: string;
+      judgedCount?: number;
+      candidates: Array<Record<string, unknown>>;
     };
-    expect(completed.jev?.candidates[0]).toMatchObject({
+    expect(shadowEvent.event).toBe('jev.shadow');
+    expect(shadowEvent.judgedCount).toBe(0);
+    expect(shadowEvent.candidates[0]).toMatchObject({
       entityId: '00000000-0000-0000-0000-000000000011',
       status: 'unavailable',
       score: 0.88,
       similarity: 1
     });
-    expect(typeof completed.jev?.candidates[0]?.latencyMs).toBe('number');
+    expect(typeof shadowEvent.candidates[0]?.latencyMs).toBe('number');
     expect(JSON.stringify(debug.mock.calls)).not.toContain('postgres search');
+    expect(JSON.stringify(info.mock.calls)).not.toContain('postgres search');
   });
 
   it('judges at most JEV_MAX_CANDIDATES candidates per query', async () => {
@@ -735,6 +766,7 @@ describe('searchEntities Jev shadow judge', () => {
       searchRow('00000000-0000-0000-0000-000000000022', 'second candidate', 0.8)
     ]);
     const debug = vi.fn();
+    const info = vi.fn();
     const { client, systemOne } = makeStubJevClient();
 
     const result = await searchEntities(
@@ -744,17 +776,26 @@ describe('searchEntities Jev shadow judge', () => {
       {
         embeddingService: makeSearchEmbeddingService(),
         jevJudge: makeJevJudge(client, { maxCandidates: 1 }),
-        logger: { warn: vi.fn(), debug }
+        logger: { warn: vi.fn(), debug, info }
       }
     );
 
     expect(result.isOk()).toBe(true);
     expect(result._unsafeUnwrap().results).toHaveLength(2);
     expect(systemOne).toHaveBeenCalledTimes(1);
-    const completed = (debug.mock.calls.at(-1)?.[0] ?? {}) as {
-      jev?: { candidates: unknown[] };
+    const shadowEvent = (info.mock.calls[0]?.[0] ?? {}) as {
+      candidateCount?: number;
+      judgedCount?: number;
+      totalUsage?: { inputTokens: number; outputTokens: number };
+      candidates?: unknown[];
     };
-    expect(completed.jev?.candidates).toHaveLength(1);
+    expect(shadowEvent.candidates).toHaveLength(1);
+    expect(shadowEvent.candidateCount).toBe(1);
+    expect(shadowEvent.judgedCount).toBe(1);
+    expect(shadowEvent.totalUsage).toEqual({
+      inputTokens: 512,
+      outputTokens: 8
+    });
   });
 
   it('search still resolves when the judge itself throws', async () => {
@@ -849,11 +890,9 @@ describe('jev-retrieval-judge', () => {
       similarity: 0.9,
       nouls: { relevant: 0.91, evidence: 0.82, contradicts: 0.07 },
       model: 'jev-latest',
-      latencyMs: expect.any(Number) as number
+      latencyMs: expect.any(Number) as number,
+      usage: { inputTokens: 512, outputTokens: 8 }
     });
-    expect(observation.queryHash).toBe(
-      createHash('sha256').update('what is postgres', 'utf8').digest('hex')
-    );
     expect(debug).not.toHaveBeenCalled();
   });
 
@@ -965,6 +1004,87 @@ describe('jev-retrieval-judge', () => {
     expect(first.candidates[0]?.status).toBe('unavailable');
     expect(second.candidates[0]?.status).toBe('unavailable');
     expect(warn).toHaveBeenCalledTimes(1);
+  });
+
+  it('keys the query digest with the secret and mixes the client scope in', async () => {
+    const { client } = makeStubJevClient();
+    const deps = { client: client as never };
+
+    const keyed = createJevRetrievalJudge({
+      shadowEnabled: true,
+      apiKey: 'test-key',
+      timeoutMs: 100,
+      maxCandidates: 10,
+      queryCacheSecret: 'sekrit'
+    }, deps);
+    if (!keyed) throw new Error('expected judge');
+    const unkeyed = createJevRetrievalJudge({
+      shadowEnabled: true,
+      apiKey: 'test-key',
+      timeoutMs: 100,
+      maxCandidates: 10
+    }, deps);
+    if (!unkeyed) throw new Error('expected judge');
+
+    const noCandidates: JevJudgeCandidate[] = [];
+    const keyedScopedA = await keyed({
+      query: 'what is postgres',
+      clientScope: 'client-a',
+      candidates: noCandidates
+    });
+    const keyedScopedB = await keyed({
+      query: 'what is postgres',
+      clientScope: 'client-b',
+      candidates: noCandidates
+    });
+    const keyedNoScope = await keyed({
+      query: 'what is postgres',
+      candidates: noCandidates
+    });
+    const unkeyedScopedA = await unkeyed({
+      query: 'what is postgres',
+      clientScope: 'client-a',
+      candidates: noCandidates
+    });
+
+    const plainScoped = createHash('sha256')
+      .update('client-a\u0000what is postgres', 'utf8')
+      .digest('hex');
+
+    // The keyed digest is an HMAC over the scoped text, not a plain sha256.
+    expect(keyedScopedA.queryHash).not.toBe(plainScoped);
+    // Without a secret the digest is the plain sha256 of the scoped text.
+    expect(unkeyedScopedA.queryHash).toBe(plainScoped);
+    // The client scope participates in the digest: identical queries from two
+    // clients never hash equal, with or without a key.
+    expect(keyedScopedA.queryHash).not.toBe(keyedScopedB.queryHash);
+    expect(keyedScopedA.queryHash).not.toBe(keyedNoScope.queryHash);
+  });
+
+  it('omits usage when the SDK response carries no usage block', async () => {
+    const client = {
+      systemOne: vi.fn(() =>
+        Promise.resolve({
+          model: 'jev-latest',
+          answers: {
+            relevant: { type: 'noul', noul: 0.5 },
+            evidence: { type: 'noul', noul: 0.5 },
+            contradicts: { type: 'noul', noul: 0.5 }
+          }
+        })
+      )
+    };
+    const judge = makeJudge({ client: client as never });
+
+    const observation = await judge({
+      query: 'what is postgres',
+      candidates: [baseCandidate]
+    });
+
+    const first = observation.candidates[0];
+    expect(first?.status).toBe('judged');
+    if (first?.status !== 'judged') throw new Error('expected judged');
+    expect(first.usage).toBeUndefined();
   });
 
   it('returns no judge when enabled without an API key', () => {

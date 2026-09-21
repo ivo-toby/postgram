@@ -22,7 +22,7 @@
  *   document cannot distract the judge.
  */
 
-import { createHash } from 'node:crypto';
+import { createHash, createHmac } from 'node:crypto';
 
 import type { Logger } from 'pino';
 
@@ -35,6 +35,12 @@ export type JevNouls = {
   contradicts: number;
 };
 
+/** Token usage reported by the SDK for one systemOne request. */
+export type JevUsage = {
+  inputTokens: number;
+  outputTokens: number;
+};
+
 /** A candidate the judge scored. */
 export type JevJudgedCandidate = {
   entityId: string;
@@ -44,6 +50,8 @@ export type JevJudgedCandidate = {
   nouls: JevNouls;
   model: string;
   latencyMs: number;
+  /** Absent when the SDK response carried no parseable usage block. */
+  usage?: JevUsage | undefined;
 };
 
 /** A candidate skipped because Jev was unavailable or answered malformed. */
@@ -81,6 +89,8 @@ export type JevJudgeCandidate = {
 
 export type JevRetrievalJudge = (input: {
   query: string;
+  /** Cache scope of the caller; mixed into the query digest for the log. */
+  clientScope?: string | undefined;
   candidates: readonly JevJudgeCandidate[];
   logger?: Pick<Logger, 'debug' | 'warn'> | undefined;
 }) => Promise<JevShadowObservation>;
@@ -98,6 +108,15 @@ export type JevJudgeConfig = {
   timeoutMs: number;
   /** Upper bound on candidates judged per search call. */
   maxCandidates: number;
+  /**
+   * Optional HMAC key for the shadow-log query digest. Mirrors
+   * createQueryEmbeddingCacheKey: when set (QUERY_EMBEDDING_CACHE_SECRET) the
+   * digest is keyed, so a log reader cannot dictionary-test guessed queries;
+   * when unset it is an unkeyed sha256 — plaintext queries still never reach
+   * the log, but guesses are verifiable. Either way the caller's client scope
+   * is mixed in so the same query from two clients hashes differently.
+   */
+  queryCacheSecret?: string | Buffer | undefined;
 };
 
 // Structural mirror of the @typesafe-ai/sdk 0.6.0 surface this module uses,
@@ -109,6 +128,7 @@ export type JevJudgeConfig = {
 export type JevSystemOneResult = {
   model: string;
   answers: Record<string, unknown>;
+  usage?: { input_tokens?: unknown; output_tokens?: unknown } | undefined;
 };
 
 export type JevSystemOneClient = {
@@ -214,8 +234,38 @@ function unavailableObservation(
   };
 }
 
-function hashQuery(query: string): string {
-  return createHash('sha256').update(query, 'utf8').digest('hex');
+function hashQuery(
+  query: string,
+  clientScope: string | undefined,
+  secret: string | Buffer | undefined
+): string {
+  // NUL separator keeps "ab" + "c" from colliding with "a" + "bc". The scope
+  // goes into the digest itself, so the same query from two clients never
+  // produces the same hash — cross-client correlation by hash equality is
+  // impossible even without a secret.
+  const scoped = `${clientScope ?? ''}\u0000${query}`;
+  if (secret !== undefined && secret.length > 0) {
+    return createHmac('sha256', secret).update(scoped, 'utf8').digest('hex');
+  }
+  return createHash('sha256').update(scoped, 'utf8').digest('hex');
+}
+
+function readUsage(value: unknown): JevUsage | undefined {
+  if (typeof value !== 'object' || value === null) {
+    return undefined;
+  }
+  const record = value as Record<string, unknown>;
+  const inputTokens = record['input_tokens'];
+  const outputTokens = record['output_tokens'];
+  if (
+    typeof inputTokens !== 'number' ||
+    !Number.isFinite(inputTokens) ||
+    typeof outputTokens !== 'number' ||
+    !Number.isFinite(outputTokens)
+  ) {
+    return undefined;
+  }
+  return { inputTokens, outputTokens };
 }
 
 /**
@@ -286,9 +336,14 @@ export function createJevRetrievalJudge(
     return initPromise;
   };
 
-  const judge: JevRetrievalJudge = async ({ query, candidates, logger }) => {
+  const judge: JevRetrievalJudge = async ({
+    query,
+    clientScope,
+    candidates,
+    logger
+  }) => {
     const bounded = candidates.slice(0, config.maxCandidates);
-    const queryHash = hashQuery(query);
+    const queryHash = hashQuery(query, clientScope, config.queryCacheSecret);
     if (bounded.length === 0) {
       return { queryHash, candidates: [] };
     }
@@ -343,7 +398,8 @@ export function createJevRetrievalJudge(
             similarity: candidate.similarity,
             nouls,
             model: result.model,
-            latencyMs: elapsedMs()
+            latencyMs: elapsedMs(),
+            usage: readUsage(result?.usage)
           };
         } catch (error) {
           // Fail open. TypeSafeError, APIError, APIConnectionError,
@@ -388,7 +444,10 @@ export function resolveEnvJevJudge(): JevRetrievalJudge | undefined {
     env['JEV_API_KEY'] ?? '',
     env['JEV_MODEL'] ?? '',
     env['JEV_TIMEOUT_MS'] ?? '',
-    env['JEV_MAX_CANDIDATES'] ?? ''
+    env['JEV_MAX_CANDIDATES'] ?? '',
+    // The digest secret changes every log hash: it must participate in the
+    // memoization key so runtime secret rotation is picked up.
+    env['QUERY_EMBEDDING_CACHE_SECRET'] ?? ''
   ].join('|');
   if (cachedEnvJudge && cachedEnvJudge.envKey === envKey) {
     return cachedEnvJudge.judge;
@@ -403,7 +462,8 @@ export function resolveEnvJevJudge(): JevRetrievalJudge | undefined {
         apiKey: config.JEV_API_KEY,
         model: config.JEV_MODEL,
         timeoutMs: config.JEV_TIMEOUT_MS,
-        maxCandidates: config.JEV_MAX_CANDIDATES
+        maxCandidates: config.JEV_MAX_CANDIDATES,
+        queryCacheSecret: config.QUERY_EMBEDDING_CACHE_SECRET
       }) ?? undefined;
   } catch {
     // Unparseable environment (unit tests commonly run without a

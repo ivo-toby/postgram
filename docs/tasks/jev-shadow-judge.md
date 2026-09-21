@@ -71,7 +71,7 @@ verified source; if
 
 ## Approval and handoff
 
-Approval: Ivo approved the brief in conversation (recorded via
+Approval: the operator approved the brief in conversation (recorded via
 `tinysdd task approve`); run-1 revision feedback recorded in
 `docs/reviews/jev-shadow-judge-run1.md`.
 

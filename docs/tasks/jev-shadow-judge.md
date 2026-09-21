@@ -30,10 +30,12 @@ changes; extractor prompt changes; any hardcoded probability cut.
   provider-factory pattern to mirror for the Jev client.
 - `tests/unit/search-scoring.test.ts`: mocked-pool search tests — flag-off
   behavior must stay green; add flag-on/flag-off/Jev-error cases.
-- TypeSafe JS SDK `@typesafe-ai/sdk` v0.6.0 (npm): `client.systemOne({state,
-  questions})` with `noul()` builders. Verify the exact builder/API shape in
-  the installed package before implementing — the research packet predates
-  dependency installation.
+- TypeSafe JS SDK `@typesafe-ai/sdk` v0.6.0 (npm): caller verified the exact
+  interface against the published `index.d.mts`; the approved facts in the
+  context manifest are authoritative. Key shape: `new TypeSafeClient()` +
+  `client.systemOne({ state, questions }, { timeout })` answering ALL named
+  questions in one request; `noul(instructions?)` builder; `NoulResponse =
+  { type: 'noul', noul: number }` (P(yes), no confidence field).
 - Decision: shadow log extends the existing `search.completed` debug payload
   with per-candidate `{entityId, score, similarity, nouls, model, latencyMs}`;
   full chunk text is not duplicated (already in DB).
@@ -62,14 +64,16 @@ pass regardless.
   resolves (near line 753); extend `search.completed` log (line 860).
 - `.env.example`, `docker-compose.yml` if it carries env defaults: document
   the new flags.
-- Stop and ask if the installed SDK's API shape contradicts the packet; if
+Stop and ask if the manifest's SDK interface facts conflict with a caller-
+verified source; if
   `SearchInput`/`SearchOptions` need export changes beyond the judge call; or
   if the 96 KiB context budget forces narrower manifest ranges.
 
 ## Approval and handoff
 
-Approval: pending — Ivo to approve this brief in conversation. Recording the
-approval here does not grant it.
+Approval: Ivo approved the brief in conversation (recorded via
+`tinysdd task approve`); run-1 revision feedback recorded in
+`docs/reviews/jev-shadow-judge-run1.md`.
 
 Evidence: none yet — no implementation work done; research artifacts are
 `docs/superpowers/jev-research-decision.md` and

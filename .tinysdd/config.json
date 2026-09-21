@@ -1,4 +1,13 @@
 {
   "schemaVersion": 1,
-  "workers": {}
+  "defaultWorker": "glm",
+  "workers": {
+    "glm": {
+      "type": "pi",
+      "provider": "ollama",
+      "model": "glm-5.3-flash:cloud",
+      "profile": "tinysdd-profiles/glm53-flash.json",
+      "limits": { "timeoutMs": 300000, "maxToolCalls": 40 }
+    }
+  }
 }

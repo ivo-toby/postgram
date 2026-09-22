@@ -1,0 +1,63 @@
+{
+  "facts": [
+    "Shadow mode only: judgments are logged, never used to filter, rerank, or gate expansion.",
+    "Flag off (JEV_SHADOW_ENABLED=false) means the Jev client is never constructed and results are byte-identical.",
+    "Any Jev error or timeout degrades to a per-candidate skip; search must never fail because of Jev.",
+    "No numeric, date, or counting questions go to Jev; question state is text plus scores only.",
+    "Thresholds are named constants tuned from measured data only; no hardcoded probability cut.",
+    "@typesafe-ai/sdk 0.6.0 exports: TypeSafeClient, noul, choice, score (score aliased from score$1), plus error classes APIError, APIConnectionError, APITimeoutError, TypeSafeError.",
+    "new TypeSafeClient(config?: TypeSafeClientConfig) with optional { apiKey?: string, baseURL?: string, defaultModel?: string, timeout?: number, fetch?: Fetch, retry?: Partial<RetryPolicy>, logLevel?, logger? }; apiKey falls back to TYPESAFE_API_KEY env var; baseURL defaults to https://api.typesafe.ai; defaultModel defaults to jev-latest; constructor throws TypeSafeError if the key is missing.",
+    "client.systemOne(request, options?) where request = { state: EntryType (string | object | array | null), questions: { [name]: Question }, model?: string }; options = { timeout?: number (ms per attempt), signal?: AbortSignal, retry?, headers? }.",
+    "systemOne returns APIPromise<SystemOneResult<Q>> which resolves to { model: string, answers: { [K in keyof Q]: ResultFor<Q[K]> }, usage: { input_tokens: number, output_tokens: number } }.",
+    "NoulResponse = { type: 'noul', noul: number } where noul is P(yes) in [0,1]; NoulResponse has no confidence field.",
+    "noul(instructions?: EntryType, criteria?: { true?: EntryType, false?: EntryType }) builds a NoulQuestion; import { TypeSafeClient, noul } from '@typesafe-ai/sdk'.",
+    "One systemOne request answers ALL named questions against the same state: three noul questions named relevant, evidence, contradicts in one request is the intended call shape.",
+    "Errors to catch for fail-open: TypeSafeError (base), APIError (has .status), APIConnectionError, APITimeoutError (has .timeoutMs, extends APIConnectionError), APIUserAbortError.",
+    "The worker cannot run npm/node or inspect node_modules: add '@typesafe-ai/sdk' to package.json dependencies only as documented in the brief; the caller installs and verifies."
+  ],
+  "resources": [
+    {
+      "path": "src/services/search-service.ts",
+      "startLine": 55,
+      "endLine": 107,
+      "purpose": "SearchResult/SearchInput/SearchOptions/SearchResponse shapes the judge consumes and the log extends."
+    },
+    {
+      "path": "src/services/search-service.ts",
+      "startLine": 190,
+      "endLine": 209,
+      "purpose": "Ranking constants and candidate-pool sizing the shadow judge logs beside."
+    },
+    {
+      "path": "src/services/search-service.ts",
+      "startLine": 679,
+      "endLine": 700,
+      "purpose": "searchEntities entry: threshold/limit defaults and the post-hybrid insertion region."
+    },
+    {
+      "path": "src/services/search-service.ts",
+      "startLine": 855,
+      "endLine": 876,
+      "purpose": "Log-site region: edgeMs/totalMs timings, search.completed payload, and return shape."
+    },
+    {
+      "path": "src/services/llm-provider.ts",
+      "startLine": 1,
+      "endLine": 10,
+      "purpose": "LlmProvider signature shape to mirror for the Jev client factory."
+    },
+    {
+      "path": "src/services/llm-provider.ts",
+      "startLine": 267,
+      "endLine": 292,
+      "purpose": "ProviderConfig fields and createLlmProvider factory pattern."
+    },
+    {
+      "path": "src/config.ts",
+      "startLine": 193,
+      "endLine": 222,
+      "purpose": "configSchema tail, AppConfig type, and loadConfig for new JEV_* flags."
+    }
+  ],
+  "schemaVersion": 1
+}

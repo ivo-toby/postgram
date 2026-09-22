@@ -203,7 +203,27 @@ const configSchema = z
       z.coerce.number().int().positive().optional()
     ),
     EMBEDDING_BASE_URL: optionalString,
-    EMBEDDING_API_KEY: optionalString
+    EMBEDDING_API_KEY: optionalString,
+    // Shadow-mode Jev retrieval judge (src/services/jev-retrieval-judge.ts).
+    // Judgments are emitted as a dedicated info-level `jev.shadow` event —
+    // they never filter, rerank or gate graph expansion. With
+    // JEV_SHADOW_ENABLED off (default) the Jev client is never constructed
+    // and the SDK is never imported at runtime.
+    JEV_SHADOW_ENABLED: z
+      .enum(['true', 'false'])
+      .default('false')
+      .transform((v) => v === 'true'),
+    JEV_API_KEY: optionalString,
+    // Defaults to the SDK default model (jev-latest) when unset.
+    JEV_MODEL: optionalString,
+    JEV_TIMEOUT_MS: z.preprocess(
+      emptyToUndefined,
+      z.coerce.number().int().positive().default(3000)
+    ),
+    JEV_MAX_CANDIDATES: z.preprocess(
+      emptyToUndefined,
+      z.coerce.number().int().positive().default(10)
+    )
   })
   .superRefine((cfg, ctx) => {
     if (cfg.OAUTH_ENABLED && !cfg.PUBLIC_BASE_URL) {
@@ -211,6 +231,16 @@ const configSchema = z
         code: z.ZodIssueCode.custom,
         path: ['PUBLIC_BASE_URL'],
         message: 'PUBLIC_BASE_URL is required when OAUTH_ENABLED=true'
+      });
+    }
+    if (cfg.JEV_SHADOW_ENABLED && !cfg.JEV_API_KEY) {
+      // An explicitly enabled feature must not silently do nothing: fail
+      // startup so the operator fixes the key instead of paying latency for
+      // a judge that never exists.
+      ctx.addIssue({
+        code: z.ZodIssueCode.custom,
+        path: ['JEV_API_KEY'],
+        message: 'JEV_API_KEY is required when JEV_SHADOW_ENABLED=true'
       });
     }
   });

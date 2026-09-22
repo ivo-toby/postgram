@@ -355,3 +355,48 @@ describe('createAppliedProviderPolicyFetch', () => {
     expect(fetchImpl).toEqual(expect.any(Function));
   });
 });
+
+describe('jev shadow judge config', () => {
+  it('defaults the Jev shadow judge to off with the measured defaults', () => {
+    const cfg = loadConfig(baseEnv());
+    expect(cfg.JEV_SHADOW_ENABLED).toBe(false);
+    expect(cfg.JEV_API_KEY).toBeUndefined();
+    expect(cfg.JEV_MODEL).toBeUndefined();
+    expect(cfg.JEV_TIMEOUT_MS).toBe(3000);
+    expect(cfg.JEV_MAX_CANDIDATES).toBe(10);
+  });
+
+  it('parses JEV_* overrides and treats blank values as unset', () => {
+    const cfg = loadConfig(
+      baseEnv({
+        JEV_SHADOW_ENABLED: 'true',
+        JEV_API_KEY: 'jev-key',
+        JEV_MODEL: 'jev-1.13',
+        JEV_TIMEOUT_MS: '5000',
+        JEV_MAX_CANDIDATES: '25'
+      })
+    );
+    expect(cfg.JEV_SHADOW_ENABLED).toBe(true);
+    expect(cfg.JEV_API_KEY).toBe('jev-key');
+    expect(cfg.JEV_MODEL).toBe('jev-1.13');
+    expect(cfg.JEV_TIMEOUT_MS).toBe(5000);
+    expect(cfg.JEV_MAX_CANDIDATES).toBe(25);
+
+    const blank = loadConfig(
+      baseEnv({ JEV_API_KEY: '', JEV_TIMEOUT_MS: '' })
+    );
+    expect(blank.JEV_API_KEY).toBeUndefined();
+    expect(blank.JEV_TIMEOUT_MS).toBe(3000);
+  });
+
+  it('rejects an enabled shadow judge without an API key at startup', () => {
+    expect(() =>
+      loadConfig(baseEnv({ JEV_SHADOW_ENABLED: 'true' }))
+    ).toThrow(/JEV_API_KEY is required/);
+  });
+
+  it('rejects non-positive JEV_TIMEOUT_MS and JEV_MAX_CANDIDATES', () => {
+    expect(() => loadConfig(baseEnv({ JEV_TIMEOUT_MS: '0' }))).toThrow();
+    expect(() => loadConfig(baseEnv({ JEV_MAX_CANDIDATES: '0' }))).toThrow();
+  });
+});

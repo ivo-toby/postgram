@@ -4,8 +4,9 @@
  * After hybrid search resolves, up to `maxCandidates` results are sent to the
  * TypeSafe API as state (text plus ranking scores) with three Noul questions
  * — relevant / evidence / contradicts — answered in a single `systemOne`
- * request per candidate. The resulting P(yes) probabilities are logged beside
- * the ranking scores in the `search.completed` debug payload.
+ * request per candidate. The resulting P(yes) probabilities are emitted in a
+ * dedicated info-level `jev.shadow` event (visible at the default
+ * LOG_LEVEL=info) by the caller; this module only produces the observation.
  *
  * Boundaries (docs/superpowers/jev-research-decision.md):
  * - Shadow mode only: judgments are logged, never used to filter, rerank or
@@ -290,8 +291,10 @@ function readUsage(value: unknown): JevUsage | undefined {
   if (
     typeof inputTokens !== 'number' ||
     !Number.isFinite(inputTokens) ||
+    inputTokens < 0 ||
     typeof outputTokens !== 'number' ||
-    !Number.isFinite(outputTokens)
+    !Number.isFinite(outputTokens) ||
+    outputTokens < 0
   ) {
     return undefined;
   }

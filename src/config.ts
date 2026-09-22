@@ -205,7 +205,7 @@ const configSchema = z
     EMBEDDING_BASE_URL: optionalString,
     EMBEDDING_API_KEY: optionalString,
     // Shadow-mode Jev retrieval judge (src/services/jev-retrieval-judge.ts).
-    // Judgments are logged into the `search.completed` debug payload only —
+    // Judgments are emitted as a dedicated info-level `jev.shadow` event —
     // they never filter, rerank or gate graph expansion. With
     // JEV_SHADOW_ENABLED off (default) the Jev client is never constructed
     // and the SDK is never imported at runtime.

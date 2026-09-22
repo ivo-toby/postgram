@@ -60,3 +60,14 @@ Three more issues, all fixed:
 3. **P2 — out-of-range probabilities.** `readNoulProbability` now rejects values outside [0, 1] as malformed (degrade to unavailable), so invalid probabilities cannot poison calibration data.
 
 Verification: tsc clean, eslint clean, 198/198 unit tests (3 new: range rejection, keyed state hash, startup validation).
+
+## Addendum 3: second self-review round (PR #107)
+
+Adversarial pass over the full diff. Findings fixed:
+
+1. **P2 — stale docstrings.** The `jev-retrieval-judge.ts` module header and the `config.ts` JEV comment still described judgments as going into the `search.completed` debug payload; both were moved to the info-level `jev.shadow` event two rounds earlier. Corrected both.
+2. **P2 — negative token counts accepted.** `readUsage` accepted any finite number, so a malformed usage block could inject negative values into cost aggregation. Now requires non-negative input/output tokens.
+
+Verified as intended (no change): the fail-loud validation fires at boot — `loadConfig()` is the first call in `startServer()`; transports pass the full pino logger, so `.info` is present on the search path; `error.message` in the `jev.unavailable` debug log is accepted residual risk (SDK errors are status-based, consistent with codebase norms).
+
+Verification: tsc clean, eslint clean, 198/198 unit tests.

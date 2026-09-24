@@ -14,6 +14,44 @@ import {
 } from './extraction-service.js';
 import { getMemoryRole } from './memory-role-service.js';
 
+/**
+ * Signals that the upstream LLM API returned HTTP 429 (Too Many Requests).
+ * The worker treats this as a transient condition and leaves the entity in
+ * `pending` state so it will be retried in the next poll cycle after a
+ * back-off delay, rather than marking it permanently `failed`.
+ */
+export class RateLimitError extends Error {
+  constructor(message: string) {
+    super(message);
+    this.name = 'RateLimitError';
+  }
+}
+
+/**
+ * Returns true when an error originates from an HTTP 429 response.
+ * Matches the error message format produced by createOpenAiProvider and
+ * other providers in llm-provider.ts.
+ */
+export function isRateLimitError(error: unknown): boolean {
+  if (error instanceof RateLimitError) return true;
+  if (error instanceof Error) {
+    return (
+      error.message.includes('429') ||
+      error.message.toLowerCase().includes('rate limit') ||
+      error.message.toLowerCase().includes('rate_limited') ||
+      // Mistral's openai-compatible endpoint sometimes returns "400 status code
+      // (no body)" when rate-limited instead of the standard 429. Treat it as
+      // transient so the worker backs off and retries rather than permanently
+      // failing the entity.
+      error.message === '400 status code (no body)' ||
+      // Network-level connection drops ("Connection error.") can also occur
+      // under heavy embedding load. Treat as transient.
+      error.message === 'Connection error.'
+    );
+  }
+  return false;
+}
+
 type PendingEntityRow = {
   id: string;
   type: string;
@@ -119,6 +157,16 @@ function shouldQueueExtractionForEntity(input: {
   extractionMemoryMode?: ExtractionMemoryMode | undefined;
 }): boolean {
   if (!input.extractionEnabled) {
+    return false;
+  }
+
+  const path = typeof input.metadata?.path === 'string' ? input.metadata.path : '';
+  if (
+    path.startsWith('90 Archive/') ||
+    path.startsWith('99 Systeem/') ||
+    path.endsWith('.excalidraw.md') ||
+    path.endsWith('.excalidraw')
+  ) {
     return false;
   }
 
@@ -294,6 +342,29 @@ export function createEnrichmentWorker(options: EnrichmentWorkerOptions) {
       await rollbackQuietly(client);
 
       if (!entity) {
+        throw error;
+      }
+
+      if (isRateLimitError(error)) {
+        // Transient error (429, connection drop, etc.) — mark the entity
+        // 'failed' with attempts=0 so the 5-minute cooldown in the SELECT
+        // query prevents it from being immediately re-queued on the next poll.
+        // This avoids an infinite retry loop when the rate limit window is
+        // longer than the worker's backoff pause.
+        logger.warn(
+          { entityId: entity.id },
+          'enrichment deferred — embedding rate limit (429), will back off and retry'
+        );
+        await options.pool.query(
+          `
+            UPDATE entities
+            SET enrichment_status = 'failed',
+                enrichment_attempts = 0,
+                enrichment_error = 'rate-limited (transient)'
+            WHERE id = $1
+          `,
+          [entity.id]
+        );
         throw error;
       }
 
@@ -477,6 +548,15 @@ export function createEnrichmentWorker(options: EnrichmentWorkerOptions) {
               { entityId: entity.id, linkedSoFar: error.linkedSoFar },
               'extraction deferred — embeddings unavailable, will retry'
             );
+          } else if (isRateLimitError(error)) {
+            // 429 from the LLM API is transient — leave the entity pending
+            // so it is retried after the back-off delay. Throwing propagates
+            // out of processNextExtractionEntity so the caller knows to pause.
+            logger.warn(
+              { entityId: entity.id },
+              'extraction deferred — LLM rate limit (429), will back off and retry'
+            );
+            throw error;
           } else {
             logger.warn(
               { err: error, entityId: entity.id },
@@ -503,14 +583,24 @@ export function createEnrichmentWorker(options: EnrichmentWorkerOptions) {
   }
 
   return {
-    async runOnce(): Promise<number> {
+    async runOnce(): Promise<{ processed: number; rateLimited: boolean }> {
       let processed = 0;
+      let rateLimited = false;
 
       if (await hasPendingEnrichment()) {
         const activeModel = await embeddingService.getActiveModel(options.pool);
 
-        while (await processNextEnrichmentEntity(activeModel)) {
-          processed += 1;
+        try {
+          while (await processNextEnrichmentEntity(activeModel)) {
+            processed += 1;
+          }
+        } catch (error) {
+          if (isRateLimitError(error)) {
+            rateLimited = true;
+            return { processed, rateLimited };
+          } else {
+            throw error;
+          }
         }
       }
 
@@ -524,12 +614,21 @@ export function createEnrichmentWorker(options: EnrichmentWorkerOptions) {
           allowedVisibility: ['personal', 'work', 'shared'] as const
         };
 
-        while (await processNextExtractionEntity(extractionAuth)) {
-          processed += 1;
+        try {
+          while (await processNextExtractionEntity(extractionAuth)) {
+            processed += 1;
+          }
+        } catch (error) {
+          if (isRateLimitError(error)) {
+            rateLimited = true;
+            return { processed, rateLimited };
+          } else {
+            throw error;
+          }
         }
       }
 
-      return processed;
+      return { processed, rateLimited };
     }
   };
 }

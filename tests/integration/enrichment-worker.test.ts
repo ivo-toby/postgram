@@ -63,7 +63,7 @@ describe('enrichment-worker', () => {
       embeddingService: createEmbeddingService()
     });
 
-    const processed = await worker.runOnce();
+    const { processed } = await worker.runOnce();
     expect(processed).toBe(1);
 
     const recalled = await recallEntity(
@@ -104,7 +104,7 @@ describe('enrichment-worker', () => {
       })
     });
 
-    const processed = await worker.runOnce();
+    const { processed } = await worker.runOnce();
     expect(processed).toBe(1);
 
     const recalled = await recallEntity(
@@ -186,7 +186,7 @@ describe('enrichment-worker', () => {
     await database.pool.query('ALTER TABLE entities ENABLE TRIGGER trg_entities_updated_at');
 
     // Fourth run — should NOT pick up the entity (max 3 attempts reached)
-    const processed = await failingWorker.runOnce();
+    const { processed } = await failingWorker.runOnce();
     expect(processed).toBe(0);
   }, 120_000);
 
@@ -400,7 +400,7 @@ describe('enrichment-worker', () => {
       }
     });
 
-    const processed = await worker.runOnce();
+    const { processed } = await worker.runOnce();
 
     const entity = await database.pool.query<{
       extraction_status: string | null;
@@ -436,7 +436,7 @@ describe('enrichment-worker', () => {
       callLlm: () => Promise.resolve('[]')
     });
 
-    const processed = await worker.runOnce();
+    const { processed } = await worker.runOnce();
     expect(processed).toBe(1);
 
     const rows = await database.pool.query<{
@@ -503,7 +503,7 @@ describe('enrichment-worker', () => {
 
     // Run repeatedly until both entities are processed (enrichment then
     // extraction; each pass picks one).
-    for (let i = 0; i < 8 && (await worker.runOnce()) > 0; i++) {
+    for (let i = 0; i < 8 && (await worker.runOnce()).processed > 0; i++) {
       // loop body intentionally empty
     }
 
@@ -571,6 +571,52 @@ describe('enrichment-worker', () => {
       workerB.runOnce()
     ]);
 
-    expect(processed.sort((left, right) => left - right)).toEqual([0, 1]);
+    expect(processed.map((r) => r.processed).sort((left, right) => left - right)).toEqual([0, 1]);
+  }, 120_000);
+
+  it('treats 429 rate-limit LLM errors as transient: leaves entity pending and returns rateLimited=true', async () => {
+    if (!database) {
+      throw new Error('test database not initialized');
+    }
+
+    // Store an entity and manually set it to extraction pending.
+    const stored = (await storeEntity(database.pool, makeAuthContext(), {
+      type: 'document',
+      content: 'entity that triggers a rate limit during extraction'
+    }))._unsafeUnwrap();
+    await database.pool.query(
+      `UPDATE entities
+       SET enrichment_status = 'completed', extraction_status = 'pending'
+       WHERE id = $1`,
+      [stored.id]
+    );
+
+    const worker = createEnrichmentWorker({
+      pool: database.pool,
+      embeddingService: createEmbeddingService(),
+      extractionEnabled: true,
+      callLlm: () =>
+        Promise.reject(
+          new Error(
+            'OpenAI-compatible API error: 429 - {"object":"error","message":"Rate limit exceeded","type":"rate_limited"}'
+          )
+        )
+    });
+
+    const result = await worker.runOnce();
+
+    // rateLimited flag should be set.
+    expect(result.rateLimited).toBe(true);
+
+    // Entity must still be 'pending' — not 'failed' — so it is retried.
+    const row = await database.pool.query<{
+      extraction_status: string | null;
+      extraction_error: string | null;
+    }>(
+      'SELECT extraction_status, extraction_error FROM entities WHERE id = $1',
+      [stored.id]
+    );
+    expect(row.rows[0]?.extraction_status).toBe('pending');
+    expect(row.rows[0]?.extraction_error).toBeNull();
   }, 120_000);
 });

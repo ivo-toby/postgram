@@ -5,7 +5,7 @@ import OpenAI, {
 
 import { AppError, ErrorCode } from '../../util/errors.js';
 
-export type EmbeddingProviderName = 'openai' | 'ollama';
+export type EmbeddingProviderName = 'openai' | 'ollama' | 'openai-compatible';
 
 export interface EmbeddingProvider {
   readonly name: EmbeddingProviderName;
@@ -27,6 +27,13 @@ export type EmbeddingProviderConfig =
       maxRetries?: number | undefined;
     }
   | {
+      provider: 'openai-compatible';
+      model: string;
+      dimensions: number;
+      baseUrl: string;
+      apiKey?: string | undefined;
+    }
+  | {
       provider: 'ollama';
       model: string;
       dimensions: number;
@@ -40,6 +47,9 @@ const OPENAI_DEFAULT_MODEL = 'text-embedding-3-small';
 const OPENAI_DEFAULT_DIMENSIONS = 1536;
 const OLLAMA_DEFAULT_MODEL = 'bge-m3';
 const OLLAMA_DEFAULT_DIMENSIONS = 1024;
+// Mistral Embed uses the same 1024-dimensional space as bge-m3.
+const OPENAI_COMPATIBLE_DEFAULT_MODEL = 'mistral-embed';
+const OPENAI_COMPATIBLE_DEFAULT_DIMENSIONS = 1024;
 
 // The OpenAI SDK defaults to a 10 minute timeout and 2 retries, which means a
 // single stalled embedding call can pin a request (and a database connection
@@ -70,6 +80,12 @@ export function resolveEmbeddingDefaults(
     return {
       model: model ?? OPENAI_DEFAULT_MODEL,
       dimensions: dimensions ?? OPENAI_DEFAULT_DIMENSIONS
+    };
+  }
+  if (provider === 'openai-compatible') {
+    return {
+      model: model ?? OPENAI_COMPATIBLE_DEFAULT_MODEL,
+      dimensions: dimensions ?? OPENAI_COMPATIBLE_DEFAULT_DIMENSIONS
     };
   }
   return {
@@ -356,11 +372,98 @@ async function safeReadSnippet(response: Response): Promise<string> {
   }
 }
 
+// Mistral (and many other openai-compatible providers) cap the number of
+// inputs and total tokens per embeddings request. Using 64 as a safe default
+// avoids 400 errors on large documents that produce hundreds of chunks.
+const OPENAI_COMPATIBLE_MAX_BATCH_SIZE = 64;
+
+export function createOpenAICompatibleEmbeddingProvider(
+  config: Extract<EmbeddingProviderConfig, { provider: 'openai-compatible' }>
+): EmbeddingProvider {
+  // Use the OpenAI SDK with a custom base URL — Mistral, together.ai, etc.
+  const client = new OpenAI({
+    apiKey: config.apiKey ?? 'dummy', // some servers don't require a key
+    baseURL: config.baseUrl.replace(/\/+$/, '')
+  }) as OpenAIEmbeddingClient;
+
+  async function embedBatchPage(texts: string[]): Promise<number[][]> {
+    try {
+      const response = await client.embeddings.create({
+        model: config.model,
+        input: texts.map((t) => t.toWellFormed()),
+        encoding_format: 'float'
+      });
+      const ordered = response.data
+        .slice()
+        .sort((left, right) => left.index - right.index)
+        .map((item) => item.embedding);
+
+      if (ordered.length !== texts.length) {
+        throw embeddingError('Embedding API returned an unexpected number of vectors', {
+          provider: 'openai-compatible',
+          model: config.model,
+          expected: texts.length,
+          actual: ordered.length
+        });
+      }
+      for (const vector of ordered) {
+        assertVectorShape(vector, config.dimensions, 'openai-compatible', config.model);
+      }
+      return ordered;
+    } catch (error) {
+      if (error instanceof AppError) throw error;
+      const message =
+        error instanceof Error ? error.message : 'OpenAI-compatible embedding call failed';
+      throw embeddingError(message, {
+        provider: 'openai-compatible',
+        model: config.model,
+        baseUrl: config.baseUrl
+      });
+    }
+  }
+
+  async function embedBatch(texts: string[]): Promise<number[][]> {
+    if (texts.length === 0) {
+      return [];
+    }
+    // Split into pages to respect per-request input limits.
+    const results: number[][] = [];
+    for (let i = 0; i < texts.length; i += OPENAI_COMPATIBLE_MAX_BATCH_SIZE) {
+      const page = texts.slice(i, i + OPENAI_COMPATIBLE_MAX_BATCH_SIZE);
+      const pageVectors = await embedBatchPage(page);
+      results.push(...pageVectors);
+    }
+    return results;
+  }
+
+  async function embed(text: string): Promise<number[]> {
+    const [vector] = await embedBatch([text]);
+    if (!vector) {
+      throw embeddingError('OpenAI-compatible embedding call returned no vector', {
+        provider: 'openai-compatible',
+        model: config.model
+      });
+    }
+    return vector;
+  }
+
+  return {
+    name: 'openai-compatible',
+    model: config.model,
+    dimensions: config.dimensions,
+    embed,
+    embedBatch
+  };
+}
+
 export function createEmbeddingProvider(
   config: EmbeddingProviderConfig
 ): EmbeddingProvider {
   if (config.provider === 'openai') {
     return createOpenAIEmbeddingProvider(config);
+  }
+  if (config.provider === 'openai-compatible') {
+    return createOpenAICompatibleEmbeddingProvider(config);
   }
   return createOllamaEmbeddingProvider(config);
 }

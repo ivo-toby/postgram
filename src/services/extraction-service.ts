@@ -6,6 +6,7 @@ import type {
   EmbeddingService
 } from './embedding-service.js';
 import { vectorToSql } from './embedding-service.js';
+import { isRateLimitError } from './enrichment-worker.js';
 
 type ExtractionResult = {
   targetName: string;
@@ -372,6 +373,7 @@ export type ExtractionSource = {
 
 type FindMatchParams = {
   targetName: string;
+  targetVector?: number[] | undefined;
   /**
    * null means the LLM did not supply a valid target_type. In that case the
    * type-based filters are relaxed so we can still link targets produced by
@@ -514,11 +516,16 @@ export async function findMatchingEntityByName(
     return { id: null, reason: 'semantic_skipped' };
   }
 
-  let vector: number[] | undefined;
-  try {
-    [vector] = await embeddingService.embedBatch([params.targetName], activeModel);
-  } catch {
-    return { id: null, reason: 'semantic_skipped' };
+  let vector: number[] | undefined = params.targetVector;
+  if (!vector) {
+    try {
+      [vector] = await embeddingService.embedBatch([params.targetName], activeModel);
+    } catch (err) {
+      if (isRateLimitError(err)) {
+        throw err;
+      }
+      return { id: null, reason: 'semantic_skipped' };
+    }
   }
   if (!vector) return { id: null, reason: 'semantic_skipped' };
 
@@ -700,6 +707,31 @@ export async function extractAndLinkRelationships(
 
   let deferredCount = 0;
 
+  const candidateTargets = Array.from(
+    new Set(extractions.map((e) => e.targetName).filter(Boolean))
+  );
+  const targetVectorMap = new Map<string, number[]>();
+  if (candidateTargets.length > 0) {
+    try {
+      const activeModel = await getActiveModel();
+      const vectors = await embeddingService.embedBatch(
+        candidateTargets,
+        activeModel
+      );
+      for (let i = 0; i < candidateTargets.length; i++) {
+        const target = candidateTargets[i];
+        const vec = vectors[i];
+        if (target && vec) {
+          targetVectorMap.set(target, vec);
+        }
+      }
+    } catch (err) {
+      if (isRateLimitError(err)) {
+        throw err;
+      }
+    }
+  }
+
   for (const extraction of extractions) {
     const baseLog = {
       entityId: source.id,
@@ -724,6 +756,7 @@ export async function extractAndLinkRelationships(
     const matchResult = await findMatchingEntityByName(pool, embeddingService, {
       targetName: extraction.targetName,
       targetType: extraction.targetType,
+      targetVector: targetVectorMap.get(extraction.targetName),
       sourceId: source.id,
       minSimilarity,
       getActiveModel
@@ -860,7 +893,7 @@ export async function extractAndLinkRelationships(
     }
   }
 
-  if (deferredCount > 0) {
+  if (deferredCount > 0 && linked === 0) {
     throw new SemanticMatchUnavailableError(linked);
   }
 

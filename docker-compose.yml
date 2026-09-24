@@ -31,8 +31,14 @@ services:
       retries: 5
     restart: unless-stopped
 
+  ollama:
+    image: ollama/ollama
+    volumes:
+      - ollama_data:/root/.ollama
+    restart: unless-stopped
+
   mcp-server:
-    build: .
+    image: postgram-mcp-server:latest
     depends_on:
       postgram-secrets:
         condition: service_completed_successfully
@@ -45,7 +51,7 @@ services:
       POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:-}
       POSTGRES_HOST: postgres
       POSTGRES_PORT: 5432
-      DATABASE_URL: ${DATABASE_URL:-}
+      DATABASE_URL: ${DATABASE_URL:-postgres://postgram:${POSTGRES_PASSWORD}@postgres:5432/postgram}
       ADMIN_MFA_SECRET_KEY: ${ADMIN_MFA_SECRET_KEY:-}
       OPENAI_API_KEY: ${OPENAI_API_KEY:-}
       ADMIN_SETTINGS_ENCRYPTION_KEY: ${ADMIN_SETTINGS_ENCRYPTION_KEY:-}
@@ -58,7 +64,7 @@ services:
       EMBEDDING_PROVIDER: ${EMBEDDING_PROVIDER:-}
       EMBEDDING_MODEL: ${EMBEDDING_MODEL:-}
       EMBEDDING_DIMENSIONS: ${EMBEDDING_DIMENSIONS:-}
-      EMBEDDING_BASE_URL: ${EMBEDDING_BASE_URL:-}
+      EMBEDDING_BASE_URL: ${EMBEDDING_BASE_URL:-http://ollama:11434}
       EMBEDDING_API_KEY: ${EMBEDDING_API_KEY:-}
       EMBEDDING_TIMEOUT_MS: ${EMBEDDING_TIMEOUT_MS:-15000}
       QUERY_EMBEDDING_CACHE_SIZE: ${QUERY_EMBEDDING_CACHE_SIZE:-512}
@@ -71,6 +77,7 @@ services:
       EXTRACTION_MODEL: ${EXTRACTION_MODEL:-}
       EXTRACTION_BASE_URL: ${EXTRACTION_BASE_URL:-}
       EXTRACTION_API_KEY: ${EXTRACTION_API_KEY:-}
+      EXTRACTION_RATE_LIMIT_BACKOFF_MS: ${EXTRACTION_RATE_LIMIT_BACKOFF_MS:-}
       EXTRACTION_AUTO_CREATE_ENTITIES: ${EXTRACTION_AUTO_CREATE_ENTITIES:-false}
       EXTRACTION_AUTO_CREATE_TYPES: ${EXTRACTION_AUTO_CREATE_TYPES:-person,project,interaction}
       EXTRACTION_AUTO_CREATE_MIN_CONFIDENCE: ${EXTRACTION_AUTO_CREATE_MIN_CONFIDENCE:-0.7}
@@ -86,17 +93,13 @@ services:
     extra_hosts:
       - 'host.docker.internal:host-gateway'
     ports:
-      # Defaults to loopback-only on the host (safest). To expose on the LAN
-      # for reachability from other machines, set PORT_BIND_HOST=0.0.0.0 in
-      # your .env. Prefer running behind a reverse proxy (Caddy) with TLS for
-      # anything beyond a trusted homelab.
-      - '${PORT_BIND_HOST:-127.0.0.1}:${POSTGRAM_API_PORT:-3100}:3100'
+      - '${PORT_BIND_HOST:-0.0.0.0}:${POSTGRAM_API_PORT:-3101}:3100'
     restart: unless-stopped
 
   postgram-ui:
-    build: ./ui
+    image: postgram-postgram-ui:latest
     ports:
-      - '${UI_BIND_HOST:-127.0.0.1}:${UI_PORT:-3000}:3000'
+      - '${UI_BIND_HOST:-0.0.0.0}:${UI_PORT:-3102}:3000'
     depends_on:
       mcp-server:
         condition: service_healthy
@@ -104,4 +107,5 @@ services:
 
 volumes:
   pgdata:
+  ollama_data:
   postgram_secrets:

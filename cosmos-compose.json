@@ -1,0 +1,129 @@
+{
+  "services": {
+    "postgram-postgres": {
+      "container_name": "postgram-postgres",
+      "image": "pgvector/pgvector:pg17",
+      "environment": [
+        "POSTGRES_DB=postgram",
+        "POSTGRES_USER=postgram",
+        "POSTGRES_PASSWORD=YOUR_POSTGRES_PASSWORD"
+      ],
+      "labels": {
+        "cosmos-force-network-secured": "true",
+        "org.opencontainers.image.title": "Postgram Postgres",
+        "org.opencontainers.image.description": "Database for Postgram with pgvector"
+      },
+      "ports": [],
+      "volumes": [
+        {
+          "Type": "bind",
+          "Source": "/opt/postgram/pgdata",
+          "Target": "/var/lib/postgresql/data"
+        }
+      ],
+      "restart": "unless-stopped",
+      "hostname": "postgres",
+      "healthcheck": {
+        "test": [
+          "CMD-SHELL",
+          "pg_isready -U postgram"
+        ],
+        "interval": 10,
+        "timeout": 5,
+        "retries": 5
+      }
+    },
+    "postgram-ollama": {
+      "container_name": "postgram-ollama",
+      "image": "ollama/ollama:latest",
+      "environment": [],
+      "labels": {
+        "cosmos-force-network-secured": "true"
+      },
+      "ports": [],
+      "volumes": [
+        {
+          "Type": "bind",
+          "Source": "/opt/postgram/ollama_data",
+          "Target": "/root/.ollama"
+        }
+      ],
+      "restart": "unless-stopped",
+      "hostname": "ollama"
+    },
+    "postgram-mcp-server": {
+      "container_name": "postgram-mcp-server",
+      "image": "ghcr.io/ivo-toby/postgram:latest",
+      "environment": [
+        "DATABASE_URL=postgres://postgram:YOUR_POSTGRES_PASSWORD@postgres:5432/postgram",
+        "LOG_LEVEL=info",
+        "PORT=3100",
+        "EMBEDDING_PROVIDER=openai-compatible",
+        "EMBEDDING_MODEL=mistral-embed",
+        "EMBEDDING_DIMENSIONS=1024",
+        "EMBEDDING_BASE_URL=https://api.mistral.ai/v1",
+        "EMBEDDING_API_KEY=YOUR_MISTRAL_API_KEY",
+        "EXTRACTION_ENABLED=false",
+        "EXTRACTION_PROVIDER=openai-compatible",
+        "EXTRACTION_BASE_URL=https://api.mistral.ai/v1",
+        "EXTRACTION_API_KEY=YOUR_MISTRAL_API_KEY",
+        "OAUTH_ENABLED=false",
+        "PUBLIC_BASE_URL="
+      ],
+      "labels": {
+        "cosmos-auto-update": "true",
+        "cosmos-force-network-secured": "true",
+        "org.opencontainers.image.title": "Postgram MCP Server",
+        "org.opencontainers.image.description": "MCP Server for Postgram"
+      },
+      "ports": [],
+      "volumes": [],
+      "restart": "unless-stopped",
+      "hostname": "mcp-server",
+      "depends_on": {
+        "postgram-postgres": {
+          "condition": "service_healthy"
+        }
+      },
+      "healthcheck": {
+        "test": [
+          "CMD-SHELL",
+          "wget -qO- http://127.0.0.1:3100/health || exit 1"
+        ],
+        "interval": 30,
+        "timeout": 5,
+        "retries": 3,
+        "start_period": 20
+      }
+    },
+    "postgram-ui": {
+      "container_name": "postgram-ui",
+      "image": "postgram-postgram-ui:latest",
+      "environment": [],
+      "labels": {
+        "cosmos-force-network-secured": "true",
+        "org.opencontainers.image.title": "Postgram UI",
+        "org.opencontainers.image.description": "Web frontend interface for Postgram"
+      },
+      "ports": [],
+      "volumes": [],
+      "restart": "unless-stopped",
+      "hostname": "postgram-ui",
+      "depends_on": {
+        "postgram-mcp-server": {
+          "condition": "service_healthy"
+        }
+      },
+      "healthcheck": {
+        "test": [
+          "CMD-SHELL",
+          "wget -qO- http://127.0.0.1:3000/ || exit 1"
+        ],
+        "interval": 30,
+        "timeout": 5,
+        "retries": 3,
+        "start_period": 10
+      }
+    }
+  }
+}

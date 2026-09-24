@@ -1611,6 +1611,8 @@ async function createExtractionCallLlm(purpose: string): Promise<CallLlm> {
     provider: config.EXTRACTION_PROVIDER,
     model: config.EXTRACTION_MODEL,
     openaiApiKey: config.OPENAI_API_KEY,
+    extractionBaseUrl: config.EXTRACTION_BASE_URL,
+    extractionApiKey: config.EXTRACTION_API_KEY,
     anthropicApiKey: config.ANTHROPIC_API_KEY,
     ollamaBaseUrl: config.OLLAMA_BASE_URL,
     ollamaApiKey: config.OLLAMA_API_KEY,

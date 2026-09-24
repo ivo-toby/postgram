@@ -172,7 +172,7 @@ describe('enrichment-worker with Ollama provider', () => {
         embeddingService
       });
 
-      const processed = await worker.runOnce();
+      const { processed } = await worker.runOnce();
       expect(processed).toBe(1);
 
       const recalled = await recallEntity(database.pool, makeAuthContext(), stored.id);

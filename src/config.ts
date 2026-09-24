@@ -196,7 +196,7 @@ const configSchema = z
       emptyToUndefined,
       z.string().min(1).default('http://localhost:11434')
     ),
-    EMBEDDING_PROVIDER: z.enum(['openai', 'ollama']).default('openai'),
+    EMBEDDING_PROVIDER: z.enum(['openai', 'ollama', 'openai-compatible']).default('openai'),
     EMBEDDING_MODEL: optionalString,
     EMBEDDING_DIMENSIONS: z.preprocess(
       emptyToUndefined,
@@ -206,6 +206,46 @@ const configSchema = z
     EMBEDDING_API_KEY: optionalString
   })
   .superRefine((cfg, ctx) => {
+    const needsOpenAiForEmbedding = cfg.EMBEDDING_PROVIDER === 'openai';
+    const needsBaseUrlForOpenAiCompatibleEmbedding =
+      cfg.EMBEDDING_PROVIDER === 'openai-compatible' && !cfg.EMBEDDING_BASE_URL;
+    const needsOpenAiForExtraction =
+      cfg.EXTRACTION_ENABLED && cfg.EXTRACTION_PROVIDER === 'openai';
+    const needsBaseUrlForOpenAiCompatible =
+      cfg.EXTRACTION_ENABLED
+      && cfg.EXTRACTION_PROVIDER === 'openai-compatible'
+      && !cfg.EXTRACTION_BASE_URL;
+
+    if ((needsOpenAiForEmbedding || needsOpenAiForExtraction) && !cfg.OPENAI_API_KEY) {
+      const reasons: string[] = [];
+      if (needsOpenAiForEmbedding) {
+        reasons.push('EMBEDDING_PROVIDER=openai');
+      }
+      if (needsOpenAiForExtraction) {
+        reasons.push('EXTRACTION_ENABLED=true with EXTRACTION_PROVIDER=openai');
+      }
+      ctx.addIssue({
+        code: z.ZodIssueCode.custom,
+        path: ['OPENAI_API_KEY'],
+        message: `OPENAI_API_KEY is required because ${reasons.join(' and ')}`
+      });
+    }
+
+    if (needsBaseUrlForOpenAiCompatible) {
+      ctx.addIssue({
+        code: z.ZodIssueCode.custom,
+        path: ['EXTRACTION_BASE_URL'],
+        message: 'EXTRACTION_BASE_URL is required for EXTRACTION_PROVIDER=openai-compatible'
+      });
+    }
+
+    if (needsBaseUrlForOpenAiCompatibleEmbedding) {
+      ctx.addIssue({
+        code: z.ZodIssueCode.custom,
+        path: ['EMBEDDING_BASE_URL'],
+        message: 'EMBEDDING_BASE_URL is required for EMBEDDING_PROVIDER=openai-compatible'
+      });
+    }
     if (cfg.OAUTH_ENABLED && !cfg.PUBLIC_BASE_URL) {
       ctx.addIssue({
         code: z.ZodIssueCode.custom,

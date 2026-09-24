@@ -11,4 +11,4 @@ LABEL org.opencontainers.image.source="https://github.com/ivo-toby/postgram" \
 COPY --from=builder /app/dist /usr/share/nginx/html
 COPY LICENSE /usr/share/licenses/postgram-ui/LICENSE
 COPY nginx.conf /etc/nginx/conf.d/default.conf
-EXPOSE 3000
+EXPOSE 80

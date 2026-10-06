@@ -2,7 +2,7 @@
  * Shadow-mode Jev retrieval judge.
  *
  * After hybrid search resolves, up to `maxCandidates` results are sent to the
- * TypeSafe API as state (text plus ranking scores) with three Noul questions
+ * TypeSafe API as state (query, chunk text, type, tags) with three Noul questions
  * — relevant / evidence / contradicts — answered in a single `systemOne`
  * request per candidate. The resulting P(yes) probabilities are emitted in a
  * dedicated info-level `jev.shadow` event (visible at the default
@@ -20,7 +20,7 @@
  *   so it adds no search latency; candidates are judged concurrently, so one
  *   judging pass takes roughly one request timeout at worst, not N.
  * - Jev jaggedness guidance: no numeric, date or counting questions; the
- *   state is text plus scores only, and the chunk text is capped so a large
+ *   state is text only (no ranker scores), and the chunk text is capped so a large
  *   document cannot distract the judge.
  */
 
@@ -183,8 +183,10 @@ const EVIDENCE_QUESTION =
 const CONTRADICTS_QUESTION =
   'Does this passage contradict something the query takes for granted?';
 
-// State hygiene: text plus scores only. The cap is a state-size guard, not a
-// quality cut — large irrelevant state distracts the judge.
+// State hygiene: text only. Ranker scores stay out so Jev's judgment is
+// independent of the ranking it is evaluated against. The cap is a
+// state-size guard, not a quality cut — large irrelevant state distracts the
+// judge.
 export const JEV_MAX_STATE_CHUNK_CHARS = 4_000;
 
 function readNoulProbability(value: unknown): number | undefined {
@@ -232,9 +234,7 @@ function buildJudgeState(
     query,
     chunk_text: candidate.chunkContent.slice(0, JEV_MAX_STATE_CHUNK_CHARS),
     entity_type: candidate.entityType,
-    tags: [...candidate.tags],
-    similarity: candidate.similarity,
-    score: candidate.score
+    tags: [...candidate.tags]
   };
 }
 

@@ -624,14 +624,13 @@ describe('searchEntities Jev shadow judge', () => {
       'evidence',
       'contradicts'
     ]);
-    // State hygiene: text plus scores only — no dates, no counts.
+    // State hygiene: text only — no dates, no counts, and no ranker scores,
+    // so Jev's judgment stays independent of the ranking it is compared to.
     expect(request.state).toEqual({
       query: 'postgres search',
       chunk_text: 'hybrid result',
       entity_type: 'memory',
-      tags: [],
-      similarity: 1,
-      score: 0.88
+      tags: []
     });
     expect(callOptions.timeout).toBe(250);
 
@@ -982,9 +981,7 @@ describe('jev-retrieval-judge', () => {
       query: 'what is postgres',
       chunk_text: 'passage text',
       entity_type: 'memory',
-      tags: ['notes'],
-      similarity: 0.9,
-      score: 0.75
+      tags: ['notes']
     });
     expect(request.questions).toEqual({
       relevant: { instructions: 'Does this passage help answer the query?' },
@@ -1006,9 +1003,7 @@ describe('jev-retrieval-judge', () => {
             query: 'what is postgres',
             chunk_text: 'passage text',
             entity_type: 'memory',
-            tags: ['notes'],
-            similarity: 0.9,
-            score: 0.75
+            tags: ['notes']
           }),
           'utf8'
         )
@@ -1242,9 +1237,7 @@ describe('jev-retrieval-judge', () => {
           query: 'what is postgres',
           chunk_text: 'passage text',
           entity_type: 'memory',
-          tags: ['notes'],
-          similarity: 0.9,
-          score: 0.75
+          tags: ['notes']
         }),
         'utf8'
       )

@@ -648,11 +648,22 @@ those values outside database backups and browser storage.
 | `QUERY_EMBEDDING_CACHE_SIZE` | no             | `512`                           | In-process query embeddings held in front of the Postgres-backed cache. |
 | `QUERY_EMBEDDING_CACHE_SECRET` | no           |                                 | Keys the query digest with an HMAC. Without it the digest is an unkeyed sha256, which a reader of the database can dictionary-test to confirm whether a guessed query was run. Set it if you treat query text as more sensitive than entity content; it must live outside the database to mean anything. Changing it invalidates existing cache rows. |
 | `QUERY_EMBEDDING_CACHE_RETENTION_DAYS` | no   | `30`                            | Age at which persisted query embeddings are pruned. The hourly prune also retains only the 2,000 newest entries per client. |
-| `JEV_SHADOW_ENABLED` | no | `false` | Shadow-mode Jev retrieval judge (experiment). When true, each hybrid search also asks the TypeSafe (Jev) API three semantic questions per result candidate and records the P(yes) answers in a dedicated `jev.shadow` INFO log event. Judgments never influence results. **Privacy:** sends raw query text and top candidate chunk contents to api.typesafe.ai per search; the log event carries only one-way digests — the query (HMAC-keyed via `QUERY_EMBEDDING_CACHE_SECRET`, partitioned per client) and a hash of the exact judged state, plus `chunkId` so the judged chunk is recoverable from the corpus for offline replay and labeling. **Latency:** candidates are judged concurrently, so the cost is roughly one `JEV_TIMEOUT_MS` per search. |
+| `JEV_SHADOW_ENABLED` | no | `false` | Shadow-mode Jev retrieval judge (experiment). When true, each hybrid search also asks the TypeSafe (Jev) API three semantic questions per result candidate and records the P(yes) answers in a dedicated `jev.shadow` INFO log event. Judgments never influence results. **Privacy:** sends raw query text and top candidate chunk contents to api.typesafe.ai per search; the log event carries only one-way digests — the query (HMAC-keyed via `QUERY_EMBEDDING_CACHE_SECRET`, partitioned per client) and a hash of the exact judged state, plus `chunkId` so the judged chunk is recoverable from the corpus for offline replay and labeling. **Latency:** judging runs in the background after the search returns, so it adds no search latency. |
 | `JEV_API_KEY` | when JEV_SHADOW_ENABLED=true |  | TypeSafe API key. Startup fails config validation without it — an enabled flag can never silently do nothing. |
 | `JEV_MODEL` | no | `jev-latest` | Jev model used for the judgments. |
 | `JEV_TIMEOUT_MS` | no | `3000` | Per-request timeout; also bounds the added search latency via the abort signal. |
 | `JEV_MAX_CANDIDATES` | no | `10` | Upper bound on candidates judged per search call. |
+| `JEV_SHADOW_FILE` | no | Compose: `/app/data/jev/shadow.jsonl` | JSONL file that receives one record per judged search: **plaintext** query, judged chunk text, rank, ranker scores and Jev's answers. Only written while `JEV_SHADOW_ENABLED=true`. Anyone who can read the file can read your queries. Compose stores it on the `postgram_jev` volume. |
+
+To pull the Jev shadow records out for analysis, copy the file from the container and flatten it to one CSV row per judged candidate:
+
+```bash
+docker compose cp mcp-server:/app/data/jev/shadow.jsonl ./jev-shadow.jsonl
+jq -r '.searchId as $s | .recordedAt as $t | .query as $q
+  | .candidates[] | [$s, $t, $q, .rank, .entityId, .chunkId, .status,
+    .similarity, .score, .nouls.relevant, .nouls.evidence, .nouls.contradicts]
+  | @csv' jev-shadow.jsonl > jev-shadow.csv
+```
 
 When Postgram runs in Docker and Ollama runs directly on the Docker host, use `http://host.docker.internal:11434` for `EMBEDDING_BASE_URL`; `localhost` inside the container points at the Postgram container, not the host machine.
 

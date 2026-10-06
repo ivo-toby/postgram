@@ -21,7 +21,9 @@ COPY src/db/migrations ./dist/db/migrations
 COPY docker/postgram-entrypoint.sh ./docker-entrypoint.sh
 RUN chmod +x /app/dist/cli/admin/pgm-admin.js \
  && ln -s /app/dist/cli/admin/pgm-admin.js /usr/local/bin/pgm-admin \
- && chmod +x /app/docker-entrypoint.sh
+ && chmod +x /app/docker-entrypoint.sh \
+ && mkdir -p /app/data/jev \
+ && chown node:node /app/data/jev
 EXPOSE 3100
 USER node
 ENTRYPOINT ["tini", "--", "/app/docker-entrypoint.sh"]

@@ -608,6 +608,8 @@ describe('searchEntities Jev shadow judge', () => {
     );
 
     expect(result.isOk()).toBe(true);
+    // Judging runs in the background; wait for its log event.
+    await vi.waitFor(() => expect(info).toHaveBeenCalled());
 
     // One systemOne request for the candidate, three named Noul questions.
     expect(systemOne).toHaveBeenCalledTimes(1);
@@ -741,6 +743,7 @@ describe('searchEntities Jev shadow judge', () => {
 
     expect(result.isOk()).toBe(true);
     expect(result._unsafeUnwrap().results).toHaveLength(1);
+    await vi.waitFor(() => expect(info).toHaveBeenCalled());
     const events = debug.mock.calls.map(
       (call) => (call[0] as { event?: string }).event
     );
@@ -787,6 +790,7 @@ describe('searchEntities Jev shadow judge', () => {
 
     expect(result.isOk()).toBe(true);
     expect(result._unsafeUnwrap().results).toHaveLength(2);
+    await vi.waitFor(() => expect(info).toHaveBeenCalled());
     expect(systemOne).toHaveBeenCalledTimes(1);
     const shadowEvent = (info.mock.calls[0]?.[0] ?? {}) as {
       candidateCount?: number;
@@ -820,9 +824,112 @@ describe('searchEntities Jev shadow judge', () => {
     );
 
     expect(result.isOk()).toBe(true);
-    const payload = (debug.mock.calls.at(-1)?.[0] ?? {}) as Record<string, unknown>;
-    expect(payload).not.toHaveProperty('jev');
-    expect(warn).toHaveBeenCalled();
+    const completed = debug.mock.calls
+      .map((call) => call[0] as Record<string, unknown>)
+      .find((payload) => payload['event'] === 'search.completed');
+    expect(completed).not.toHaveProperty('jev');
+    await vi.waitFor(() => expect(warn).toHaveBeenCalled());
+  });
+
+  it('returns results without waiting for the judge to finish', async () => {
+    const { pool } = makeSearchPool();
+    const info = vi.fn();
+    // A judge that never settles: if search awaited it, this test would hang.
+    const pendingJudge = () => new Promise<never>(() => undefined);
+
+    const result = await searchEntities(
+      pool,
+      searchAuth,
+      { query: 'postgres search', threshold: 0 },
+      {
+        embeddingService: makeSearchEmbeddingService(),
+        jevJudge: pendingJudge,
+        logger: { warn: vi.fn(), debug: vi.fn(), info }
+      }
+    );
+
+    expect(result.isOk()).toBe(true);
+    expect(result._unsafeUnwrap().results).toHaveLength(1);
+    expect(info).not.toHaveBeenCalled();
+  });
+
+  it('hands the recorder one record with query text, chunk text and judgments', async () => {
+    const { pool } = makeSearchPool([
+      searchRow('00000000-0000-0000-0000-000000000031', 'first candidate', 0.9),
+      searchRow('00000000-0000-0000-0000-000000000032', 'second candidate', 0.8)
+    ]);
+    const { client } = makeStubJevClient();
+    const recorder = vi.fn(() => Promise.resolve());
+
+    const result = await searchEntities(
+      pool,
+      searchAuth,
+      { query: 'postgres search', threshold: 0, limit: 2 },
+      {
+        embeddingService: makeSearchEmbeddingService(),
+        jevJudge: makeJevJudge(client),
+        jevRecorder: recorder,
+        logger: { warn: vi.fn(), debug: vi.fn(), info: vi.fn() }
+      }
+    );
+
+    expect(result.isOk()).toBe(true);
+    await vi.waitFor(() => expect(recorder).toHaveBeenCalledOnce());
+    const record = (recorder.mock.calls[0] as unknown[])[0] as Record<
+      string,
+      unknown
+    > & { candidates: Array<Record<string, unknown>> };
+    expect(record).toMatchObject({
+      query: 'postgres search',
+      clientId: 'search-key'
+    });
+    expect(typeof record['searchId']).toBe('string');
+    expect(typeof record['recordedAt']).toBe('string');
+    expect(typeof record['queryHash']).toBe('string');
+    expect(typeof record['jevMs']).toBe('number');
+    expect(record.candidates).toHaveLength(2);
+    expect(record.candidates[0]).toMatchObject({
+      rank: 1,
+      entityId: '00000000-0000-0000-0000-000000000031',
+      chunkId: 'chunk-00000000-0000-0000-0000-000000000031',
+      entityType: 'memory',
+      tags: [],
+      chunkText: 'first candidate',
+      status: 'judged',
+      score: 0.9,
+      similarity: 1,
+      nouls: { relevant: 0.91, evidence: 0.82, contradicts: 0.07 }
+    });
+    expect(record.candidates[1]).toMatchObject({
+      rank: 2,
+      chunkText: 'second candidate'
+    });
+  });
+
+  it('warns instead of failing when the recorder rejects', async () => {
+    const { pool } = makeSearchPool();
+    const { client } = makeStubJevClient();
+    const warn = vi.fn();
+
+    const result = await searchEntities(
+      pool,
+      searchAuth,
+      { query: 'postgres search', threshold: 0 },
+      {
+        embeddingService: makeSearchEmbeddingService(),
+        jevJudge: makeJevJudge(client),
+        jevRecorder: () => Promise.reject(new Error('disk full')),
+        logger: { warn, debug: vi.fn(), info: vi.fn() }
+      }
+    );
+
+    expect(result.isOk()).toBe(true);
+    await vi.waitFor(() =>
+      expect(warn).toHaveBeenCalledWith(
+        expect.objectContaining({ event: 'jev.record_failed' }),
+        expect.any(String)
+      )
+    );
   });
 });
 

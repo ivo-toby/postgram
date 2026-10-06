@@ -364,6 +364,7 @@ describe('jev shadow judge config', () => {
     expect(cfg.JEV_MODEL).toBeUndefined();
     expect(cfg.JEV_TIMEOUT_MS).toBe(3000);
     expect(cfg.JEV_MAX_CANDIDATES).toBe(10);
+    expect(cfg.JEV_SHADOW_FILE).toBeUndefined();
   });
 
   it('parses JEV_* overrides and treats blank values as unset', () => {
@@ -373,7 +374,8 @@ describe('jev shadow judge config', () => {
         JEV_API_KEY: 'jev-key',
         JEV_MODEL: 'jev-1.13',
         JEV_TIMEOUT_MS: '5000',
-        JEV_MAX_CANDIDATES: '25'
+        JEV_MAX_CANDIDATES: '25',
+        JEV_SHADOW_FILE: '/data/jev/shadow.jsonl'
       })
     );
     expect(cfg.JEV_SHADOW_ENABLED).toBe(true);
@@ -381,12 +383,14 @@ describe('jev shadow judge config', () => {
     expect(cfg.JEV_MODEL).toBe('jev-1.13');
     expect(cfg.JEV_TIMEOUT_MS).toBe(5000);
     expect(cfg.JEV_MAX_CANDIDATES).toBe(25);
+    expect(cfg.JEV_SHADOW_FILE).toBe('/data/jev/shadow.jsonl');
 
     const blank = loadConfig(
-      baseEnv({ JEV_API_KEY: '', JEV_TIMEOUT_MS: '' })
+      baseEnv({ JEV_API_KEY: '', JEV_TIMEOUT_MS: '', JEV_SHADOW_FILE: '' })
     );
     expect(blank.JEV_API_KEY).toBeUndefined();
     expect(blank.JEV_TIMEOUT_MS).toBe(3000);
+    expect(blank.JEV_SHADOW_FILE).toBeUndefined();
   });
 
   it('rejects an enabled shadow judge without an API key at startup', () => {

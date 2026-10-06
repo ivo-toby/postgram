@@ -16,8 +16,9 @@
  * - With the flag off the Jev client is never constructed and the SDK module
  *   is never imported at runtime; search results stay byte-identical.
  * - Any Jev error or timeout degrades to a per-candidate skip, so search must
- *   never fail because of Jev. Candidates are judged concurrently, so the
- *   worst-case added latency is roughly one request timeout, not N.
+ *   never fail because of Jev. The caller runs the judge in the background,
+ *   so it adds no search latency; candidates are judged concurrently, so one
+ *   judging pass takes roughly one request timeout at worst, not N.
  * - Jev jaggedness guidance: no numeric, date or counting questions; the
  *   state is text plus scores only, and the chunk text is capped so a large
  *   document cannot distract the judge.
@@ -184,7 +185,7 @@ const CONTRADICTS_QUESTION =
 
 // State hygiene: text plus scores only. The cap is a state-size guard, not a
 // quality cut — large irrelevant state distracts the judge.
-const MAX_STATE_CHUNK_CHARS = 4_000;
+export const JEV_MAX_STATE_CHUNK_CHARS = 4_000;
 
 function readNoulProbability(value: unknown): number | undefined {
   if (typeof value !== 'object' || value === null) {
@@ -229,7 +230,7 @@ function buildJudgeState(
 ): Record<string, unknown> {
   return {
     query,
-    chunk_text: candidate.chunkContent.slice(0, MAX_STATE_CHUNK_CHARS),
+    chunk_text: candidate.chunkContent.slice(0, JEV_MAX_STATE_CHUNK_CHARS),
     entity_type: candidate.entityType,
     tags: [...candidate.tags],
     similarity: candidate.similarity,

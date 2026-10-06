@@ -223,7 +223,11 @@ const configSchema = z
     JEV_MAX_CANDIDATES: z.preprocess(
       emptyToUndefined,
       z.coerce.number().int().positive().default(10)
-    )
+    ),
+    // JSONL file receiving one plaintext record per judged search (query,
+    // judged chunk text, scores, judgments) for offline analysis. Unset means
+    // judgments only reach the hashed `jev.shadow` log event.
+    JEV_SHADOW_FILE: optionalString
   })
   .superRefine((cfg, ctx) => {
     if (cfg.OAUTH_ENABLED && !cfg.PUBLIC_BASE_URL) {
@@ -235,8 +239,8 @@ const configSchema = z
     }
     if (cfg.JEV_SHADOW_ENABLED && !cfg.JEV_API_KEY) {
       // An explicitly enabled feature must not silently do nothing: fail
-      // startup so the operator fixes the key instead of paying latency for
-      // a judge that never exists.
+      // startup so the operator fixes the key instead of believing data is
+      // being collected by a judge that never exists.
       ctx.addIssue({
         code: z.ZodIssueCode.custom,
         path: ['JEV_API_KEY'],

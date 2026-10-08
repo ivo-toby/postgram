@@ -1,5 +1,5 @@
 name: Postgram
-version: "0.1.1"
+version: "0.1.2"
 slug: postgram
 description: Upstream Postgram packaged for Home Assistant without source modifications
 url: https://github.com/ivo-toby/postgram

@@ -1,3 +1,5 @@
+import { randomUUID } from 'node:crypto';
+
 import { ResultAsync } from 'neverthrow';
 import type { Pool, PoolClient } from 'pg';
 import type { Logger } from 'pino';
@@ -20,6 +22,13 @@ import {
   type QueryEmbeddingCacheStatus,
   vectorToSql
 } from './embedding-service.js';
+import {
+  JEV_MAX_STATE_CHUNK_CHARS,
+  resolveEnvJevJudge
+} from './jev-retrieval-judge.js';
+import type { JevRetrievalJudge } from './jev-retrieval-judge.js';
+import { resolveEnvJevRecorder } from './jev-shadow-recorder.js';
+import type { JevShadowRecorder } from './jev-shadow-recorder.js';
 import type { MemoryRole } from './memory-role-service.js';
 
 type EntityRow = {
@@ -39,6 +48,7 @@ type EntityRow = {
 };
 
 type SearchRow = EntityRow & {
+  chunk_id: string;
   chunk_content: string;
   similarity: number;
   score: number;
@@ -55,6 +65,8 @@ type SearchEnvelopeRow =
 export type SearchResult = {
   entity: Entity;
   entityId: string;
+  /** Exact judged chunk — one entity result maps to its top-ranked chunk. */
+  chunkId: string;
   chunkContent: string;
   similarity: number;
   score: number;
@@ -97,9 +109,31 @@ type HybridSearchStrategy = 'exact' | 'hnsw' | 'hnsw_exact_fallback';
 type SearchOptions = {
   embeddingService?: EmbeddingService | undefined;
   now?: (() => Date) | undefined;
-  logger?: Pick<Logger, 'debug' | 'warn'> | undefined;
+  /**
+   * `info` is optional so existing debug/warn-only callers keep compiling;
+   * production transports pass a full pino logger, which has it. Jev shadow
+   * judgments are emitted at info level — see the `jev.shadow` event below.
+   */
+  logger?: (Pick<Logger, 'debug' | 'warn'> & {
+    info?: Logger['info'] | undefined;
+  }) | undefined;
   strategyOverride?: SearchStrategyOverride | undefined;
   onStrategy?: ((strategy: HybridSearchStrategy) => void) | undefined;
+  /**
+   * Shadow-mode Jev retrieval judge. It runs in the background after the
+   * hybrid query — the search never waits for it — and its judgments are
+   * emitted as a dedicated info-level `jev.shadow` event (visible at the
+   * default LOG_LEVEL=info); they never influence results. When omitted, a
+   * judge is resolved once from the JEV_* env flags; with JEV_SHADOW_ENABLED
+   * off (default) this resolves to nothing, the Jev client is never
+   * constructed and the SDK is never imported at runtime.
+   */
+  jevJudge?: JevRetrievalJudge | undefined;
+  /**
+   * Durable sink for full shadow records (plaintext query and judged text).
+   * When omitted, resolved from JEV_SHADOW_FILE; unset means no record.
+   */
+  jevRecorder?: JevShadowRecorder | undefined;
 };
 
 export type SearchResponse = {
@@ -292,6 +326,7 @@ function mapSearchRows(rows: SearchRow[]): SearchResult[] {
     return {
       entity,
       entityId: entity.id,
+      chunkId: row.chunk_id,
       chunkContent: row.chunk_content,
       similarity: Number(row.similarity),
       score: Number(row.score)
@@ -388,6 +423,7 @@ function buildHybridSearchSql(
       e.created_at,
       e.updated_at,
       c.content AS chunk_content,
+      top_results.chunk_id,
       top_results.similarity,
       top_results.score
     FROM candidate_stats
@@ -676,6 +712,130 @@ async function fetchSearchEdgeSummaries(
   return buildSearchEdgeSummaries(rows.rows);
 }
 
+/**
+ * Runs the shadow judge for one search and reports what it saw. Called
+ * without await from searchEntities, so it must never reject: every failure
+ * ends in a warn.
+ */
+async function runJevShadow(args: {
+  judge: JevRetrievalJudge;
+  recorder: JevShadowRecorder | undefined;
+  query: string;
+  clientId: string | null;
+  results: readonly SearchResult[];
+  logger: SearchOptions['logger'];
+}): Promise<void> {
+  const { judge, recorder, query, clientId, logger } = args;
+  // Snapshot before the first await: graph expansion mutates result rows
+  // while the judge is still running.
+  const candidates = args.results.map((result) => ({
+    entityId: result.entityId,
+    chunkId: result.chunkId,
+    chunkContent: result.chunkContent,
+    entityType: result.entity.type,
+    tags: [...result.entity.tags],
+    similarity: result.similarity,
+    score: result.score
+  }));
+  const startedAt = Date.now();
+  try {
+    const jev = await judge({
+      query,
+      // Partitions the shadow-log query digest per client, mirroring the
+      // query embedding cache scope: the same query from two clients never
+      // hashes equal, so log hashes cannot correlate clients.
+      clientScope: clientId ?? undefined,
+      candidates,
+      logger
+    });
+    const jevMs = Date.now() - startedAt;
+
+    // Shadow judgments go to a dedicated info-level event, not the debug
+    // payload: the default LOG_LEVEL is info, and debug-only logging would
+    // make enabling Jev cost tokens without ever producing data.
+    const judgedCandidates = jev.candidates.filter(
+      (candidate) => candidate.status === 'judged'
+    );
+    const totalUsage = judgedCandidates.reduce(
+      (totals, candidate) =>
+        candidate.usage
+          ? {
+              inputTokens: totals.inputTokens + candidate.usage.inputTokens,
+              outputTokens: totals.outputTokens + candidate.usage.outputTokens
+            }
+          : totals,
+      { inputTokens: 0, outputTokens: 0 }
+    );
+    logger?.info?.(
+      {
+        event: 'jev.shadow',
+        queryHash: jev.queryHash,
+        candidateCount: jev.candidates.length,
+        judgedCount: judgedCandidates.length,
+        totalUsage,
+        jevMs,
+        candidates: jev.candidates
+      },
+      'jev shadow judgments recorded'
+    );
+
+    if (!recorder) {
+      return;
+    }
+    const byChunkId = new Map(
+      candidates.map((candidate, index) => [
+        candidate.chunkId,
+        { candidate, rank: index + 1 }
+      ])
+    );
+    try {
+      await recorder({
+        recordedAt: new Date().toISOString(),
+        searchId: randomUUID(),
+        clientId,
+        query,
+        queryHash: jev.queryHash,
+        jevMs,
+        candidates: jev.candidates.flatMap((observation) => {
+          const source = byChunkId.get(observation.chunkId);
+          return source
+            ? [
+                {
+                  ...observation,
+                  rank: source.rank,
+                  entityType: source.candidate.entityType,
+                  tags: source.candidate.tags,
+                  chunkText: source.candidate.chunkContent.slice(
+                    0,
+                    JEV_MAX_STATE_CHUNK_CHARS
+                  )
+                }
+              ]
+            : [];
+        })
+      });
+    } catch (error) {
+      logger?.warn(
+        {
+          event: 'jev.record_failed',
+          reason: error instanceof Error ? error.message : 'unknown error'
+        },
+        'jev shadow record could not be written'
+      );
+    }
+  } catch (error) {
+    // The judge is fail-open by contract; this guard keeps it true even if
+    // the judge module itself regresses.
+    logger?.warn(
+      {
+        event: 'jev.unavailable',
+        reason: error instanceof Error ? error.message : 'unknown error'
+      },
+      'jev shadow judge failed; skipping judgments'
+    );
+  }
+}
+
 export function searchEntities(
   pool: Pool,
   auth: AuthContext,
@@ -755,6 +915,22 @@ export function searchEntities(
       );
       timings['hybridSqlMs'] = Date.now() - hybridStartedAt;
       options.onStrategy?.(results.strategy);
+
+      // Shadow-mode Jev retrieval judging: started here but never awaited, so
+      // it adds no search latency and can never fail the search. Judgments
+      // are logged and recorded only — never used to filter, rerank or gate
+      // graph expansion.
+      const jevJudge = options.jevJudge ?? resolveEnvJevJudge();
+      if (jevJudge && results.results.length > 0) {
+        void runJevShadow({
+          judge: jevJudge,
+          recorder: options.jevRecorder ?? resolveEnvJevRecorder(),
+          query,
+          clientId: auth.clientId ?? null,
+          results: results.results,
+          logger: options.logger
+        });
+      }
 
       const edgeStartedAt = Date.now();
       const resultEntityIds = results.results.map((r) => r.entityId);
@@ -858,6 +1034,7 @@ export function searchEntities(
 
       timings['edgeMs'] = Date.now() - edgeStartedAt;
       timings['totalMs'] = Date.now() - startedAt;
+
       options.logger?.debug(
         {
           event: 'search.completed',

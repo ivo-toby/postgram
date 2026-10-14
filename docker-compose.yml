@@ -81,8 +81,17 @@ services:
       LLM_REQUEST_TIMEOUT_MS: ${LLM_REQUEST_TIMEOUT_MS:-}
       ENRICHMENT_POLL_INTERVAL_MS: ${ENRICHMENT_POLL_INTERVAL_MS:-1000}
       EXTRACTION_DEBUG_LOG: ${EXTRACTION_DEBUG_LOG:-false}
+      # Shadow-mode Jev retrieval judge: log-only, never filters or reranks
+      JEV_SHADOW_ENABLED: ${JEV_SHADOW_ENABLED:-false}
+      JEV_API_KEY: ${JEV_API_KEY:-}
+      JEV_MODEL: ${JEV_MODEL:-}
+      JEV_TIMEOUT_MS: ${JEV_TIMEOUT_MS:-3000}
+      JEV_MAX_CANDIDATES: ${JEV_MAX_CANDIDATES:-10}
+      # Plaintext JSONL of judged searches; only written while the judge is on
+      JEV_SHADOW_FILE: ${JEV_SHADOW_FILE:-/app/data/jev/shadow.jsonl}
     volumes:
       - postgram_secrets:/run/postgram-secrets:ro
+      - postgram_jev:/app/data/jev
     extra_hosts:
       - 'host.docker.internal:host-gateway'
     ports:
@@ -105,3 +114,4 @@ services:
 volumes:
   pgdata:
   postgram_secrets:
+  postgram_jev:

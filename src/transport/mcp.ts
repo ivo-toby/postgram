@@ -306,6 +306,7 @@ function createSessionServer(
   server.registerTool(
     'store',
     {
+      annotations: { readOnlyHint: false, destructiveHint: false },
       description: 'Store a new knowledge entity',
       inputSchema: {
         type: entityTypeSchema,
@@ -344,6 +345,7 @@ function createSessionServer(
   server.registerTool(
     'store_session_context',
     {
+      annotations: { readOnlyHint: false, destructiveHint: false },
       description:
         'Store short-lived working context for resuming recent conversations. Creates a memory with metadata.memory_role=session_context, scopes it to the authenticated client_id, embeds it for recall, and skips graph extraction.',
       inputSchema: {
@@ -385,6 +387,7 @@ function createSessionServer(
   server.registerTool(
     'groom_session_context',
     {
+      annotations: { readOnlyHint: false, destructiveHint: true },
       description:
         'Preview or archive stale session-context memories for the authenticated client. Dry-run returns candidate summaries; archive mutates only matching rows for this client.',
       inputSchema: {
@@ -500,6 +503,7 @@ function createSessionServer(
   server.registerTool(
     'recall',
     {
+      annotations: { readOnlyHint: true, destructiveHint: false },
       description: 'Recall an entity by ID',
       inputSchema: {
         id: z.string(),
@@ -520,6 +524,7 @@ function createSessionServer(
   server.registerTool(
     'search',
     {
+      annotations: { readOnlyHint: true, destructiveHint: false },
       description:
         'Search stored knowledge using hybrid BM25 + vector similarity with recency weighting. Compact results contain matched chunks rather than complete entity content; recall a selected result by id when its full content is needed. Compact results may include edges.count and edges.relations so agents can see traversable graph context without neighbor content. Set expand_graph=true to also return graph-connected entities (requires extraction to have run on the matching documents — use the queue tool to check status). Use expand_graph when exploring relationships, tracing decisions, or understanding what else is connected to a topic; avoid it for direct facts already present in compact results. Set full_response=true only when the complete legacy search envelope, including entity content, is required.',
       inputSchema: {
@@ -591,6 +596,7 @@ function createSessionServer(
   server.registerTool(
     'update',
     {
+      annotations: { readOnlyHint: false, destructiveHint: true },
       description: 'Update an entity',
       inputSchema: {
         id: z.string(),
@@ -627,6 +633,7 @@ function createSessionServer(
   server.registerTool(
     'delete',
     {
+      annotations: { readOnlyHint: false, destructiveHint: true },
       description: 'Soft-delete an entity',
       inputSchema: {
         id: z.string()
@@ -639,6 +646,7 @@ function createSessionServer(
   server.registerTool(
     'task_create',
     {
+      annotations: { readOnlyHint: false, destructiveHint: false },
       description: 'Create a task',
       inputSchema: {
         content: z.string().min(1),
@@ -673,6 +681,7 @@ function createSessionServer(
   server.registerTool(
     'task_list',
     {
+      annotations: { readOnlyHint: true, destructiveHint: false },
       description: 'List tasks',
       inputSchema: {
         status: statusSchema.optional(),
@@ -718,6 +727,7 @@ function createSessionServer(
   server.registerTool(
     'task_update',
     {
+      annotations: { readOnlyHint: false, destructiveHint: true },
       description: 'Update a task',
       inputSchema: {
         id: z.string(),
@@ -756,6 +766,7 @@ function createSessionServer(
   server.registerTool(
     'task_complete',
     {
+      annotations: { readOnlyHint: false, destructiveHint: false },
       description: 'Complete a task',
       inputSchema: {
         id: z.string(),
@@ -780,6 +791,7 @@ function createSessionServer(
   server.registerTool(
     'link',
     {
+      annotations: { readOnlyHint: false, destructiveHint: false },
       description: 'Create a relationship between two entities',
       inputSchema: {
         source_id: z.string().min(1),
@@ -823,6 +835,7 @@ function createSessionServer(
   server.registerTool(
     'unlink',
     {
+      annotations: { readOnlyHint: false, destructiveHint: true },
       description: 'Remove a relationship between entities',
       inputSchema: {
         id: z.string().min(1)
@@ -834,6 +847,7 @@ function createSessionServer(
   server.registerTool(
     'expand',
     {
+      annotations: { readOnlyHint: true, destructiveHint: false },
       description:
         'Get the graph neighborhood of an entity — connected entities up to N hops',
       inputSchema: {
@@ -886,6 +900,7 @@ function createSessionServer(
   server.registerTool(
     'queue',
     {
+      annotations: { readOnlyHint: true, destructiveHint: false },
       description:
         'Get the enrichment and extraction queue status — useful for checking whether stored entities have been embedded and knowledge graph edges extracted. Set include_failures=true to see the most recent failure messages.',
       inputSchema: {
@@ -917,6 +932,7 @@ function createSessionServer(
   server.registerTool(
     'sync_push',
     {
+      annotations: { readOnlyHint: false, destructiveHint: true },
       description:
         'Sync a document repository. Sends a manifest of files with content and SHA-256 hashes.',
       inputSchema: {
@@ -943,6 +959,7 @@ function createSessionServer(
   server.registerTool(
     'sync_status',
     {
+      annotations: { readOnlyHint: true, destructiveHint: false },
       description: 'Get the sync status of a document repository.',
       inputSchema: {
         repo: z.string().min(1)

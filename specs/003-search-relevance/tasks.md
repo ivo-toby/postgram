@@ -18,3 +18,11 @@
 - [x] Measure pasted queries and underfilled HNSW-to-exact fallback latency.
 - [x] Verify the non-null embedding constraint and document recency/score migration.
 - [x] Parent review, full backend verification and prepared PR update.
+
+## Long-query performance review
+
+- [x] Compare old/current long-query EXPLAIN on the same seeded database.
+- [x] Optimize the measured hot path while preserving coverage and authorization.
+- [x] Capture long-query plans before temporary fixture teardown.
+- [x] Document partial common-term misses as a possible next retrieval improvement.
+- [x] Parent review, local regression/quality/performance verification and prepared PR update.

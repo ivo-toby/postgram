@@ -15,21 +15,25 @@ retain those words, and all retained terms still use `simple` matching.
 All branches enforce the existing visibility, type, tag, owner, archive,
 memory-role and client-scoped memory restrictions before ranking.
 
-Each retained query term independently probes at most 200 authorized GIN hits.
 Keyword retrieval retains at most 24 distinct parsed term queries in their
 original order after removing empty terms and multi-term English stopwords.
 The full original text still goes to the embedding provider. A separate
-200-hit conjunctive probe ANDs all retained term queries and takes precedence
-over the per-term probes, ensuring all-term matches enter the pool when common
-individual terms each exceed their caps. Per-term probes preserve partial
-retrieval when the conjunctive probe is empty. Unordered GIN probes can select
-different capped hits when more than 200 authorized chunks match a probe.
-After chunk deduplication, hits from rarer term probes take priority over common
-terms when selecting the 200 chunks for cover-density keyword ranking. Compound
-terms break rarity ties before standalone terms. This keeps a late identifier or
-order number discoverable even when another query term matches many chunks, and
-bounds the expensive content parsing and ranking. Keyword ranks are approximate
-within this bounded pool, like the existing bounded vector candidate retrieval.
+200-hit conjunctive probe ANDs all retained term queries, deduplicating shared
+lexemes without changing boolean matching. A single retained term or 200
+conjunctive hits supplies the keyword pool directly. Otherwise, an authorized
+OR probe capped at 201 detects whether the complete lexical union fits the
+200-chunk pool. A union of at most 200 chunks supplies that complete pool;
+201 hits trigger independent 200-hit probes for each retained term, with full
+conjunction hits taking precedence. After chunk deduplication, rarer term probes
+take priority over common terms; compound terms break rarity ties before
+standalone terms. This keeps a late identifier or order number discoverable
+even when another query term matches many chunks, and bounds expensive content
+parsing and ranking. Unordered GIN probes can select different capped hits when
+more than 200 authorized chunks match. When the full conjunction is absent,
+independent probes can still miss a five-of-six common-term match; intersection
+probes are a possible future improvement requiring evaluation evidence.
+Keyword ranks are approximate within the bounded pool, like the existing
+bounded vector candidate retrieval. Lexical OR scoring remains unchanged.
 
 Candidates are deduplicated by chunk, then scored using reciprocal rank fusion:
 `1 / (60 + vector_rank) + 1 / (60 + keyword_rank)`. An absent branch contributes
@@ -93,4 +97,7 @@ unchanged. No new runtime configuration is needed.
   multi-term keyword profile measures the additional retrieval cost. Additional
   profiles cover a 300-word pasted query and an underfilled HNSW-to-exact
   fallback, including the repeated keyword probes in that path.
+- Long-query EXPLAIN runs before fixture teardown with the service's HNSW
+  iterative-scan settings, and verifies 200 vector candidates and one keyword
+  candidate. An optional benchmark flag saves complete JSON execution plans.
 - Server/CLI/UI typechecks, builds and relevant automated tests pass.

@@ -1,6 +1,7 @@
+import { writeFile } from 'node:fs/promises';
 import { performance } from 'node:perf_hooks';
 
-import type { Pool, PoolClient, QueryResult } from 'pg';
+import type { Pool, PoolClient } from 'pg';
 
 import type { AuthContext } from '../src/auth/types.js';
 import {
@@ -73,6 +74,7 @@ const PASTED_QUERY_INPUT_DISTINCT_TERM_COUNT = new Set(PASTED_QUERY_TERMS).size;
 const PASTED_QUERY_RETAINED_TERM_CAP = 24;
 
 type CapturedQuery = { text: string; values: unknown[] };
+type ExplainStrategy = 'hnsw' | 'exact';
 type Profile = {
   p50_ms: number;
   p95_ms: number;
@@ -109,6 +111,12 @@ function summarize(samples: number[]): Profile {
 
 function sleep(ms: number): Promise<void> {
   return new Promise((resolve) => setTimeout(resolve, ms));
+}
+
+function detectVectorStrategy(text: string): ExplainStrategy | null {
+  if (text.includes('OFFSET 0')) return 'hnsw';
+  if (text.includes('(c.embedding <=> $1::vector) + 0')) return 'exact';
+  return null;
 }
 
 async function seed(pool: Pool): Promise<void> {
@@ -222,6 +230,7 @@ function captureSearchQueries(pool: Pool): {
     exact?: CapturedQuery;
     hnsw?: CapturedQuery;
     longKeyword?: CapturedQuery;
+    pastedQuery?: CapturedQuery;
   };
   counts: { total: number };
 } {
@@ -229,15 +238,21 @@ function captureSearchQueries(pool: Pool): {
     exact?: CapturedQuery;
     hnsw?: CapturedQuery;
     longKeyword?: CapturedQuery;
+    pastedQuery?: CapturedQuery;
   } = {};
   const counts = { total: 0 };
   const capture = (text: string, values?: unknown[]): void => {
     counts.total += 1;
     if (text.includes('ROW_NUMBER() OVER')) {
-      const strategy = text.includes('CROSS JOIN LATERAL') ? 'hnsw' : 'exact';
-      captured[strategy] ??= { text, values: values ?? [] };
-      if (values?.some((value) => value === LONG_KEYWORD_QUERY)) {
-        captured.longKeyword = { text, values: values ?? [] };
+      const strategy = detectVectorStrategy(text);
+      if (strategy) {
+        captured[strategy] ??= { text, values: values ?? [] };
+        if (values?.some((value) => value === LONG_KEYWORD_QUERY)) {
+          captured.longKeyword = { text, values: values ?? [] };
+        }
+        if (values?.some((value) => value === PASTED_QUERY)) {
+          captured.pastedQuery = { text, values: values ?? [] };
+        }
       }
     }
   };
@@ -484,15 +499,30 @@ async function runProfile(
 }
 
 async function runLongKeywordProfile(
-  pool: Pool
-): Promise<[string, Profile, ProfileStats]> {
+  pool: Pool,
+  explainPool: Pool,
+  captured: { longKeyword?: CapturedQuery }
+): Promise<{
+  run: [string, Profile, ProfileStats];
+  explain: ExplainCapture | null;
+}> {
   await seedLongKeywordFixture(pool);
   try {
-    return await runProfile(pool, {
+    const run = await runProfile(pool, {
       name: 'long_keyword_query',
       repeated: true,
       longKeyword: true
     });
+    return {
+      run,
+      // The fixture must still exist while EXPLAIN ANALYZE executes. The
+      // caller receives this plan before the finally block removes it.
+      explain: await explain(
+        explainPool,
+        captured.longKeyword,
+        explainStrategy(captured.longKeyword)
+      )
+    };
   } finally {
     await removeLongKeywordFixture(pool);
   }
@@ -549,7 +579,10 @@ async function measureRecall(pool: Pool): Promise<RecallProfile> {
 type ExplainPlanNode = {
   'Node Type'?: string;
   'Index Name'?: string;
+  'CTE Name'?: string;
   'Total Cost'?: number;
+  'Actual Rows'?: number;
+  'Actual Loops'?: number;
   'Shared Hit Blocks'?: number;
   Plans?: ExplainPlanNode[];
 };
@@ -561,22 +594,33 @@ type ExplainJit = {
 };
 
 type ExplainRow = {
-  'QUERY PLAN'?: Array<{
-    'Planning Time'?: number;
-    'Execution Time'?: number;
-    Plan?: ExplainPlanNode;
-    JIT?: ExplainJit;
-  }>;
+  'QUERY PLAN'?: ExplainDocument[];
+};
+
+type ExplainDocument = {
+  'Planning Time'?: number;
+  'Execution Time'?: number;
+  Plan?: ExplainPlanNode;
+  JIT?: ExplainJit;
 };
 
 type ExplainSummary = {
   planning_ms: number | null;
   execution_ms: number | null;
   estimated_total_cost: number | null;
+  actual_rows: number | null;
+  actual_loops: number | null;
+  vector_candidates: number | null;
+  keyword_candidates: number | null;
   jit_total_ms: number | null;
   root_node: string | null;
   shared_hit_blocks: number | null;
   indexes: string[];
+};
+
+type ExplainCapture = {
+  summary: ExplainSummary;
+  plan: ExplainDocument;
 };
 
 function collectIndexes(
@@ -590,14 +634,44 @@ function collectIndexes(
   }
 }
 
-function summarizeExplain(result: QueryResult<ExplainRow>): ExplainSummary {
-  const plan = result.rows[0]?.['QUERY PLAN']?.[0];
+function collectCteRows(
+  node: ExplainPlanNode | undefined,
+  rows: {
+    vector_candidates: number | null;
+    keyword_candidates: number | null;
+  }
+): void {
+  if (!node) return;
+  const cteName = node['CTE Name'];
+  if (cteName === 'vector_candidates' || cteName === 'keyword_candidates') {
+    const actualRows = node['Actual Rows'];
+    if (actualRows !== undefined) {
+      const previous = rows[cteName];
+      rows[cteName] =
+        previous === null ? actualRows : Math.max(previous, actualRows);
+    }
+  }
+  for (const child of node.Plans ?? []) {
+    collectCteRows(child, rows);
+  }
+}
+
+function summarizeExplain(plan: ExplainDocument): ExplainSummary {
   const indexes = new Set<string>();
+  const cteRows = {
+    vector_candidates: null,
+    keyword_candidates: null
+  };
   collectIndexes(plan?.Plan, indexes);
+  collectCteRows(plan?.Plan, cteRows);
   return {
     planning_ms: plan?.['Planning Time'] ?? null,
     execution_ms: plan?.['Execution Time'] ?? null,
     estimated_total_cost: plan?.Plan?.['Total Cost'] ?? null,
+    actual_rows: plan?.Plan?.['Actual Rows'] ?? null,
+    actual_loops: plan?.Plan?.['Actual Loops'] ?? null,
+    vector_candidates: cteRows.vector_candidates,
+    keyword_candidates: cteRows.keyword_candidates,
     jit_total_ms: plan?.JIT?.Timing?.Total ?? null,
     root_node: plan?.Plan?.['Node Type'] ?? null,
     shared_hit_blocks: plan?.Plan?.['Shared Hit Blocks'] ?? null,
@@ -605,18 +679,85 @@ function summarizeExplain(result: QueryResult<ExplainRow>): ExplainSummary {
   };
 }
 
-async function explain(
-  pool: Pool,
-  query: CapturedQuery | undefined
-): Promise<ExplainSummary | null> {
-  if (!query) return null;
-  const result = await pool.query<ExplainRow>(
-    `EXPLAIN (ANALYZE, BUFFERS, FORMAT JSON) ${query.text}`,
-    query.values
-  );
-  return summarizeExplain(result);
+function explainStrategy(query: CapturedQuery | undefined): ExplainStrategy {
+  return detectVectorStrategy(query?.text ?? '') ?? 'exact';
 }
 
+async function explain(
+  pool: Pool,
+  query: CapturedQuery | undefined,
+  strategy: ExplainStrategy = 'exact'
+): Promise<ExplainCapture | null> {
+  if (!query) return null;
+  const run = async (
+    client: Pool | PoolClient
+  ): Promise<ExplainCapture | null> => {
+    const result = await client.query<ExplainRow>(
+      `EXPLAIN (ANALYZE, BUFFERS, FORMAT JSON) ${query.text}`,
+      query.values
+    );
+    const plan = result.rows[0]?.['QUERY PLAN']?.[0];
+    if (!plan) return null;
+    return { summary: summarizeExplain(plan), plan };
+  };
+  if (strategy === 'exact') return run(pool);
+
+  const client = await pool.connect();
+  let transactionActive = false;
+  try {
+    await client.query('BEGIN');
+    transactionActive = true;
+    await client.query("SELECT '[0]'::vector");
+    await client.query("SET LOCAL hnsw.iterative_scan = 'strict_order'");
+    const result = await run(client);
+    await client.query('ROLLBACK');
+    transactionActive = false;
+    return result;
+  } catch (error) {
+    if (transactionActive) {
+      try {
+        await client.query('ROLLBACK');
+      } catch {
+        // Preserve the original EXPLAIN or configuration error.
+      }
+    }
+    throw error;
+  } finally {
+    client.release();
+  }
+}
+
+function explainOutputPath(argv: string[]): string | undefined {
+  const flag = '--explain-output';
+  const argument = argv.find((value) => value.startsWith(`${flag}=`));
+  if (argument) {
+    const path = argument.slice(flag.length + 1);
+    if (!path) throw new Error(`${flag} requires a file path`);
+    return path;
+  }
+  const index = argv.indexOf(flag);
+  if (index === -1) return undefined;
+  const path = argv[index + 1];
+  if (!path || path.startsWith('--')) {
+    throw new Error(`${flag} requires a file path`);
+  }
+  return path;
+}
+
+async function writeExplainOutput(
+  path: string | undefined,
+  plans: {
+    hnsw: ExplainDocument | null;
+    exact: ExplainDocument | null;
+    long_keyword: ExplainDocument | null;
+    pasted_query: ExplainDocument | null;
+  }
+): Promise<void> {
+  if (!path) return;
+  await writeFile(path, `${JSON.stringify(plans, null, 2)}\n`, 'utf8');
+}
+
+const explainOutput = explainOutputPath(process.argv.slice(2));
 const database = await createTestDatabase();
 let report: unknown;
 try {
@@ -636,16 +777,23 @@ try {
       name: 'database_cache_hit',
       repeated: true,
       freshServicePerRun: true
-    }),
-    // A long OR query gets one selective fixture only for this profile, so
-    // the existing common-term profiles and recall corpus stay unchanged.
-    await runLongKeywordProfile(pool),
+    })
+  ];
+  // A long OR query gets one selective fixture only for this profile, so
+  // the existing common-term profiles and recall corpus stay unchanged.
+  const longKeywordRun = await runLongKeywordProfile(
+    pool,
+    database.pool,
+    captured
+  );
+  runs.push(longKeywordRun.run);
+  runs.push(
     await runProfile(pool, {
       name: 'pasted_query',
       pastedQuery: true,
       repeated: true
     })
-  ];
+  );
 
   const recall = await measureRecall(pool);
   const fallbackRun = await runFallbackProfile(pool);
@@ -659,9 +807,20 @@ try {
   ) as Record<string, number>;
 
   const fallbackStats = fallbackRun[2];
-  const hnswExplain = await explain(database.pool, captured.hnsw);
-  const exactExplain = await explain(database.pool, captured.exact);
-  const longKeywordExplain = await explain(database.pool, captured.longKeyword);
+  const hnswExplain = await explain(database.pool, captured.hnsw, 'hnsw');
+  const exactExplain = await explain(database.pool, captured.exact, 'exact');
+  const pastedQueryExplain = await explain(
+    database.pool,
+    captured.pastedQuery,
+    explainStrategy(captured.pastedQuery)
+  );
+  const longKeywordExplain = longKeywordRun.explain;
+  const explainPlans = {
+    hnsw: hnswExplain?.plan ?? null,
+    exact: exactExplain?.plan ?? null,
+    long_keyword: longKeywordExplain?.plan ?? null,
+    pasted_query: pastedQueryExplain?.plan ?? null
+  };
   report = {
     dataset: { entities: ENTITY_COUNT, chunks: CHUNK_COUNT },
     samples: SAMPLE_RUNS,
@@ -676,24 +835,41 @@ try {
     embedding_calls: embeddingCalls,
     fallback_strategy: fallbackStats.strategy,
     database_queries: counts.total,
+    explain_output: explainOutput ?? null,
     recall,
     explain: {
-      hnsw: hnswExplain,
-      exact: exactExplain,
-      long_keyword: longKeywordExplain
+      hnsw: hnswExplain?.summary ?? null,
+      exact: exactExplain?.summary ?? null,
+      long_keyword: longKeywordExplain?.summary ?? null,
+      pasted_query: pastedQueryExplain?.summary ?? null
     }
   };
+  await writeExplainOutput(explainOutput, explainPlans);
 
   if (process.argv.includes('--assert')) {
-    if (!hnswExplain?.indexes.includes('idx_chunks_embedding')) {
+    if (!hnswExplain?.summary.indexes.includes('idx_chunks_embedding')) {
       throw new Error('HNSW search plan did not use idx_chunks_embedding');
     }
-    if (exactExplain?.indexes.includes('idx_chunks_embedding')) {
+    if (exactExplain?.summary.indexes.includes('idx_chunks_embedding')) {
       throw new Error('exact search plan used idx_chunks_embedding');
     }
-    if (!longKeywordExplain?.indexes.includes('idx_chunks_content_tsvector')) {
+    if (
+      !longKeywordExplain?.summary.indexes.includes(
+        'idx_chunks_content_tsvector'
+      )
+    ) {
       throw new Error(
         'long keyword search plan did not use idx_chunks_content_tsvector'
+      );
+    }
+    const longKeywordSummary = longKeywordExplain?.summary;
+    if (
+      !longKeywordSummary ||
+      longKeywordSummary.vector_candidates !== 200 ||
+      longKeywordSummary.keyword_candidates !== 1
+    ) {
+      throw new Error(
+        `Long keyword EXPLAIN expected 200 vector candidates and 1 keyword candidate; got ${longKeywordSummary?.vector_candidates ?? 'missing'} and ${longKeywordSummary?.keyword_candidates ?? 'missing'}`
       );
     }
     if (recall.hnsw_strategy !== 'hnsw') {

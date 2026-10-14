@@ -43,13 +43,15 @@ jobs:
         shell: bash
         run: |
           set -o pipefail
-          npm run benchmark:search -- --assert | tee search-latency.json
+          npm run benchmark:search -- --assert --explain-output search-plans.json | tee search-latency.json
       - uses: actions/upload-artifact@v4
         # Upload on failure too — the numbers are what explain a failed gate.
         if: always()
         with:
           name: search-latency
-          path: search-latency.json
+          path: |
+            search-latency.json
+            search-plans.json
 
   search-quality:
     runs-on: ubuntu-latest

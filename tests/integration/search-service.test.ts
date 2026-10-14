@@ -396,7 +396,7 @@ describe('search-service', () => {
   );
 
   it.each(['exact', 'hnsw'] as const)(
-    'finds late exact identifiers despite common query terms with the %s strategy',
+    'finds late exact identifiers at the 201-hit OR boundary with the %s strategy',
     async (strategy) => {
       if (!database) {
         throw new Error('test database not initialized');
@@ -429,7 +429,7 @@ describe('search-service', () => {
         await insertSearchDistractors(database.pool, 28, { metadata: {} });
         await insertCommonKeywordDistractors(
           database.pool,
-          240,
+          200,
           testCase.commonContent
         );
         const targetId = await insertSearchFixture(database.pool, {
@@ -514,6 +514,45 @@ describe('search-service', () => {
     },
     120_000
   );
+
+  it('keeps a full conjunction at the keyword cap as the complete pool', async () => {
+    if (!database) {
+      throw new Error('test database not initialized');
+    }
+
+    const terms = ['full-cap-alpha', 'full-cap-beta'];
+    await insertSearchDistractors(database.pool, 21, { metadata: {} });
+    await insertCommonKeywordDistractors(
+      database.pool,
+      200,
+      `${terms.join(' ')} full conjunction distractor`
+    );
+    const partialId = await insertSearchFixture(database.pool, {
+      entityContent: 'Partial full-cap candidate.',
+      chunkContent: terms[0] ?? '',
+      embedding: lowSimilarityVector(0.1)
+    });
+
+    const result = await searchEntities(
+      database.pool,
+      makeAuthContext(),
+      {
+        query: terms.join(' '),
+        limit: 1,
+        threshold: 0.95
+      },
+      {
+        embeddingService: fixedEmbeddingService(unitVector(1)),
+        strategyOverride: 'exact'
+      }
+    );
+
+    expect(result.isOk()).toBe(true);
+    const results = result._unsafeUnwrap().results;
+    expect(results).toHaveLength(1);
+    expect(results[0]?.chunkContent).toContain(terms.join(' '));
+    expect(results.map((entry) => entry.entityId)).not.toContain(partialId);
+  }, 120_000);
 
   it.each(['exact', 'hnsw'] as const)(
     'admits a below-floor half-coverage vector candidate outside the keyword pool with the %s strategy',
@@ -671,6 +710,7 @@ describe('search-service', () => {
       'partial-gamma',
       'partial-delta'
     ];
+    await insertSearchDistractors(database.pool, 21, { metadata: {} });
     const targetId = await insertSearchFixture(database.pool, {
       entityContent: 'Partial coverage target.',
       chunkContent: `${terms[0]} ${terms[1]} only`,
@@ -1339,6 +1379,76 @@ describe('search-service', () => {
         .results.map((entry) => entry.entityId);
       expect(hnswIds).toContain(controlId);
       expect(hnswIds).not.toContain(candidateId);
+    },
+    120_000
+  );
+
+  const sparseKeywordScopeCases = keywordScopeCases.flatMap((scopeCase) =>
+    (['exact', 'hnsw'] as const).map((strategy) => ({
+      ...scopeCase,
+      strategy
+    }))
+  );
+
+  it.each(sparseKeywordScopeCases)(
+    'applies $name authorization before sparse OR keyword limits with the $strategy strategy',
+    async ({
+      auth: makeScopedAuth,
+      filters,
+      candidate,
+      control,
+      strategy
+    }) => {
+      if (!database) {
+        throw new Error('test database not initialized');
+      }
+
+      const queryTerms = [
+        'sparse-alpha',
+        'sparse-beta',
+        'sparse-gamma'
+      ];
+      const query = queryTerms.join(' ');
+      const partialContent = queryTerms.slice(0, 2).join(' ');
+      const embedding = lowSimilarityVector(0.1);
+      await insertSearchDistractors(database.pool, 41, {
+        ...control,
+        metadata: control.metadata ?? {}
+      });
+      const candidateId = await insertSearchFixture(database.pool, {
+        entityContent: 'Unauthorized sparse partial candidate.',
+        chunkContent: partialContent,
+        embedding,
+        ...candidate
+      });
+      const controlId = await insertSearchFixture(database.pool, {
+        entityContent: 'Authorized sparse partial control.',
+        chunkContent: partialContent,
+        embedding,
+        ...control
+      });
+
+      const result = await searchEntities(
+        database.pool,
+        makeScopedAuth(makeAuthContext()),
+        {
+          query,
+          threshold: 0.95,
+          limit: 2,
+          ...filters
+        },
+        {
+          embeddingService: fixedEmbeddingService(unitVector(1)),
+          strategyOverride: strategy
+        }
+      );
+
+      expect(result.isOk()).toBe(true);
+      const resultIds = result
+        ._unsafeUnwrap()
+        .results.map((entry) => entry.entityId);
+      expect(resultIds).toContain(controlId);
+      expect(resultIds).not.toContain(candidateId);
     },
     120_000
   );

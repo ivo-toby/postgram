@@ -213,6 +213,9 @@ const MAX_KEYWORD_TERMS = 24;
 // Each probe is capped without an ORDER BY, so PostgreSQL may choose different
 // members when more than 200 authorized chunks match. Membership is therefore
 // intentionally bounded and unordered before the merged pool is ranked.
+// If the full conjunction is absent and this cap overflows, independent probes
+// can miss a chunk matching five of six terms; future intersection probes can
+// address that only after evaluation justifies the extra work.
 const KEYWORD_CANDIDATE_CAP = 200;
 
 const hnswIterativeScanSupport = new WeakMap<Pool, boolean>();
@@ -335,13 +338,23 @@ function buildHybridSearchSql(
         WITH ORDINALITY AS words(term, term_index)
       WHERE term <> ''
     ),
-    keyword_term_queries_raw AS MATERIALIZED (
+    keyword_term_tokens AS MATERIALIZED (
       SELECT
         keyword_terms.term_index,
         keyword_terms.term,
         keyword_terms.term_count,
+        tsvector_to_array(
+          to_tsvector('simple', keyword_terms.term)
+        ) AS lexemes
+      FROM keyword_terms
+    ),
+    keyword_term_queries_raw AS MATERIALIZED (
+      SELECT
+        keyword_term_tokens.term_index,
+        keyword_term_tokens.term,
+        keyword_term_tokens.term_count,
         cardinality(
-          tsvector_to_array(to_tsvector('simple', keyword_terms.term))
+          keyword_term_tokens.lexemes
         )::integer AS lexeme_count,
         (
           SELECT string_agg(
@@ -349,10 +362,11 @@ function buildHybridSearchSql(
             ' & ' ORDER BY parsed.lexeme
           )
           FROM unnest(
-            tsvector_to_array(to_tsvector('simple', keyword_terms.term))
+            keyword_term_tokens.lexemes
           ) AS parsed(lexeme)
-        )::tsquery AS query
-      FROM keyword_terms
+        )::tsquery AS query,
+        keyword_term_tokens.lexemes
+      FROM keyword_term_tokens
     ),
     keyword_term_queries_filtered AS MATERIALIZED (
       SELECT
@@ -360,7 +374,8 @@ function buildHybridSearchSql(
         lexeme_count,
         query,
         term,
-        term_count
+        term_count,
+        lexemes
       FROM keyword_term_queries_raw
       WHERE lexeme_count > 0
         AND (term_count = 1
@@ -373,15 +388,18 @@ function buildHybridSearchSql(
         lexeme_count,
         query,
         term,
-        term_count
+        term_count,
+        lexemes
       FROM keyword_term_queries_filtered
       ORDER BY query::text, term_index
     ),
     keyword_term_queries AS MATERIALIZED (
       SELECT
         term_index,
+        term,
         lexeme_count,
         query,
+        lexemes,
         ROW_NUMBER() OVER (
           ORDER BY term_index
         )::integer AS retained_term_index
@@ -389,15 +407,32 @@ function buildHybridSearchSql(
       ORDER BY term_index
       LIMIT ${MAX_KEYWORD_TERMS}
     ),
-    keyword_query_stats AS MATERIALIZED (
+    keyword_conjunctive_query AS MATERIALIZED (
+      SELECT (
+        SELECT string_agg(
+          quote_literal(unique_lexemes.lexeme),
+          ' & ' ORDER BY unique_lexemes.lexeme
+        )
+        FROM (
+          SELECT DISTINCT parsed.lexeme
+          FROM keyword_term_queries,
+            unnest(keyword_term_queries.lexemes) AS parsed(lexeme)
+        ) AS unique_lexemes
+      )::tsquery AS query
+    ),
+    keyword_term_counts AS MATERIALIZED (
       SELECT
         COUNT(*)::integer AS retained_term_count,
-        ((COUNT(*) + 1) / 2)::integer AS required_term_count,
-        string_agg(
-          '(' || query::text || ')',
-          ' & ' ORDER BY retained_term_index
-        )::tsquery AS conjunctive_query
+        ((COUNT(*) + 1) / 2)::integer AS required_term_count
       FROM keyword_term_queries
+    ),
+    keyword_query_stats AS MATERIALIZED (
+      SELECT
+        keyword_term_counts.retained_term_count,
+        keyword_term_counts.required_term_count,
+        keyword_conjunctive_query.query AS conjunctive_query
+      FROM keyword_term_counts
+      CROSS JOIN keyword_conjunctive_query
     ),
     lexical_query AS MATERIALIZED (
       SELECT string_agg(
@@ -463,6 +498,7 @@ function buildHybridSearchSql(
         NULL::integer AS term_index,
         0::integer AS probe_priority,
         NULL::integer AS rarity_hit_count,
+        true AS conjunctive_match,
         keyword_query_stats.retained_term_count,
         keyword_query_stats.required_term_count,
         probe.entity_id,
@@ -483,6 +519,75 @@ function buildHybridSearchSql(
         LIMIT $17
       ) AS probe
     ),
+    keyword_conjunctive_stats AS MATERIALIZED (
+      SELECT COUNT(*)::integer AS hit_count
+      FROM keyword_conjunctive_hits
+    ),
+    keyword_or_probe_enabled AS MATERIALIZED (
+      SELECT
+        keyword_query_stats.retained_term_count,
+        keyword_query_stats.required_term_count,
+        lexical_query.query
+      FROM keyword_query_stats
+      CROSS JOIN keyword_conjunctive_stats
+      CROSS JOIN lexical_query
+      WHERE keyword_query_stats.retained_term_count > 1
+        AND keyword_conjunctive_stats.hit_count < $17
+        AND lexical_query.query IS NOT NULL
+    ),
+    keyword_or_hits AS MATERIALIZED (
+      SELECT
+        1::integer AS probe_kind,
+        NULL::integer AS term_index,
+        1::integer AS probe_priority,
+        NULL::integer AS rarity_hit_count,
+        EXISTS (
+          SELECT 1
+          FROM keyword_conjunctive_hits
+          WHERE keyword_conjunctive_hits.chunk_id = probe.chunk_id
+        ) AS conjunctive_match,
+        keyword_or_probe_enabled.retained_term_count,
+        keyword_or_probe_enabled.required_term_count,
+        probe.entity_id,
+        probe.chunk_id,
+        probe.created_at
+      FROM keyword_or_probe_enabled,
+      LATERAL (
+        SELECT
+          e.id AS entity_id,
+          c.id AS chunk_id,
+          e.created_at
+        FROM chunks c
+        JOIN entities e ON e.id = c.entity_id
+        WHERE to_tsvector('simple', c.content)
+            @@ keyword_or_probe_enabled.query
+          AND ${hybridEntityFilterConditions('e')}
+        LIMIT ${KEYWORD_CANDIDATE_CAP + 1}
+      ) AS probe
+    ),
+    keyword_or_stats AS MATERIALIZED (
+      SELECT COUNT(*)::integer AS hit_count
+      FROM keyword_or_hits
+    ),
+    keyword_probe_mode AS MATERIALIZED (
+      SELECT
+        keyword_query_stats.retained_term_count,
+        keyword_query_stats.required_term_count,
+        keyword_conjunctive_stats.hit_count AS conjunctive_hit_count,
+        keyword_or_stats.hit_count AS or_hit_count
+      FROM keyword_query_stats
+      CROSS JOIN keyword_conjunctive_stats
+      CROSS JOIN keyword_or_stats
+    ),
+    keyword_probe_enabled AS MATERIALIZED (
+      SELECT
+        keyword_probe_mode.retained_term_count,
+        keyword_probe_mode.required_term_count
+      FROM keyword_probe_mode
+      WHERE keyword_probe_mode.retained_term_count > 1
+        AND keyword_probe_mode.conjunctive_hit_count < $17
+        AND keyword_probe_mode.or_hit_count > $17
+    ),
     keyword_probe_hits AS MATERIALIZED (
       SELECT
         1::integer AS probe_kind,
@@ -494,13 +599,14 @@ function buildHybridSearchSql(
         COUNT(*) OVER (
           PARTITION BY keyword_term_queries.retained_term_index
         )::integer AS rarity_hit_count,
-        keyword_query_stats.retained_term_count,
-        keyword_query_stats.required_term_count,
+        false AS conjunctive_match,
+        keyword_probe_enabled.retained_term_count,
+        keyword_probe_enabled.required_term_count,
         probe.entity_id,
         probe.chunk_id,
         probe.created_at
       FROM keyword_term_queries
-      CROSS JOIN keyword_query_stats,
+      CROSS JOIN keyword_probe_enabled,
       LATERAL (
         SELECT
           e.id AS entity_id,
@@ -513,12 +619,67 @@ function buildHybridSearchSql(
         LIMIT $17
       ) AS probe
     ),
+    keyword_probe_sources AS MATERIALIZED (
+      SELECT
+        keyword_conjunctive_hits.probe_kind,
+        keyword_conjunctive_hits.term_index,
+        keyword_conjunctive_hits.probe_priority,
+        keyword_conjunctive_hits.rarity_hit_count,
+        keyword_conjunctive_hits.conjunctive_match,
+        keyword_conjunctive_hits.retained_term_count,
+        keyword_conjunctive_hits.required_term_count,
+        keyword_conjunctive_hits.entity_id,
+        keyword_conjunctive_hits.chunk_id,
+        keyword_conjunctive_hits.created_at
+      FROM keyword_conjunctive_hits
+      CROSS JOIN keyword_probe_mode
+      WHERE keyword_probe_mode.retained_term_count <= 1
+        OR keyword_probe_mode.conjunctive_hit_count >= $17
+        OR keyword_probe_mode.or_hit_count > $17
+
+      UNION ALL
+
+      SELECT
+        keyword_or_hits.probe_kind,
+        keyword_or_hits.term_index,
+        keyword_or_hits.probe_priority,
+        keyword_or_hits.rarity_hit_count,
+        keyword_or_hits.conjunctive_match,
+        keyword_or_hits.retained_term_count,
+        keyword_or_hits.required_term_count,
+        keyword_or_hits.entity_id,
+        keyword_or_hits.chunk_id,
+        keyword_or_hits.created_at
+      FROM keyword_or_hits
+      CROSS JOIN keyword_probe_mode
+      WHERE keyword_probe_mode.retained_term_count > 1
+        AND keyword_probe_mode.conjunctive_hit_count < $17
+        AND keyword_probe_mode.or_hit_count <= $17
+
+      UNION ALL
+
+      SELECT
+        keyword_probe_hits.probe_kind,
+        keyword_probe_hits.term_index,
+        keyword_probe_hits.probe_priority,
+        keyword_probe_hits.rarity_hit_count,
+        keyword_probe_hits.conjunctive_match,
+        keyword_probe_hits.retained_term_count,
+        keyword_probe_hits.required_term_count,
+        keyword_probe_hits.entity_id,
+        keyword_probe_hits.chunk_id,
+        keyword_probe_hits.created_at
+      FROM keyword_probe_hits
+      -- The OR probe is capped at 201. An overflow keeps the independent
+      -- rarity probes, while a complete OR pool skips this expensive branch.
+    ),
     keyword_probe_deduplicated AS MATERIALIZED (
       SELECT DISTINCT ON (probes.chunk_id)
         probes.probe_kind,
         probes.term_index,
         probes.probe_priority,
         probes.rarity_hit_count,
+        probes.conjunctive_match,
         probes.retained_term_count,
         probes.required_term_count,
         probes.entity_id,
@@ -526,10 +687,7 @@ function buildHybridSearchSql(
         probes.created_at
       FROM (
         SELECT *
-        FROM keyword_conjunctive_hits
-        UNION ALL
-        SELECT *
-        FROM keyword_probe_hits
+        FROM keyword_probe_sources
       ) AS probes
       ORDER BY
         probes.chunk_id,
@@ -558,7 +716,7 @@ function buildHybridSearchSql(
         keyword_probe_bounded.chunk_id,
         keyword_probe_bounded.created_at,
         keyword_probe_bounded.probe_kind,
-        (keyword_probe_bounded.probe_kind = 0) AS conjunctive_match,
+        keyword_probe_bounded.conjunctive_match,
         keyword_probe_bounded.required_term_count,
         keyword_probe_bounded.rarity_hit_count,
         keyword_probe_bounded.probe_priority,
@@ -581,7 +739,7 @@ function buildHybridSearchSql(
           -- A conjunctive hit is known to cover every retained term. A
           -- candidate above the similarity floor is already eligible, so
           -- only below-floor keyword candidates need content coverage.
-          WHEN keyword_matches_base.probe_kind = 0
+          WHEN keyword_matches_base.conjunctive_match
             OR keyword_matches_base.similarity >= $15
           THEN keyword_matches_base.required_term_count
           ELSE (

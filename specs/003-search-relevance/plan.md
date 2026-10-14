@@ -130,3 +130,49 @@ input words (24 retained) and forced underfilled HNSW followed by exact search.
 Two local attempts show varying timing spikes in different profiles, while
 captured plans retain HNSW/GIN and avoid JIT; this shared host reports 12–31%
 CPU steal. The unchanged CI performance gate provides final runner validation.
+
+## Long-query performance review
+
+Compare `6189914` and the current SQL with EXPLAIN (ANALYZE, BUFFERS) on the
+same seeded database while the long-query fixture is present. Identify actual
+node execution costs rather than attributing work to unexecuted coverage
+subplans. Optimize that measured path, preserve authorization, coverage and
+quality, and retain the existing 125ms long-query gate when the improvement
+provides enough margin. Capture benchmark plans before fixture teardown.
+
+Document that per-term caps can still miss a five-of-six common-term match
+when no full conjunction exists; evaluation evidence can motivate intersection
+or coverage-oriented probes in a later change.
+
+The paired plans show the current long-query conjunction adding about 38ms of
+GIN work, followed by 18 per-term GIN scans costing about 65ms. Coverage
+subplans execute zero loops for this above-floor workload; ranking costs under
+1ms. Use an authorized OR probe capped at 201 to detect when the entire lexical
+union fits the 200-chunk pool. In that case reuse the complete union rather
+than probing each term; with 201 hits retain the existing per-term selection.
+Skip both paths when the conjunctive probe already fills the pool, and reuse
+the conjunctive probe directly for single-term queries. Deduplicate lexemes
+only in the full AND query, which preserves its boolean matching semantics;
+leave the lexical OR scoring query unchanged.
+
+Parent review confirms that authorization filters precede the new OR limit,
+the complete sparse union preserves every lexical candidate, and overflow
+retains the conjunction-first rarity selection. The 201-hit boundary, a full
+200-hit conjunction, partial coverage outside the vector cap and 16 sparse-OR
+scope/strategy cases pass in the 83-test focused search suite.
+
+A second alternating comparison on one seeded database uses two warm-up rounds
+and eight measured plans per version. Median SQL execution is 49.90ms at
+6189914, 74.59ms at 2c67b1f, and 47.91ms with the optimization. The optimized
+plan skips all 18 per-term probes, deduplicates shared conjunctive lexemes and
+incurs no JIT. These are paired execution-plan timings, not latency-gate p95s.
+The benchmark now captures full JSON plans before fixture teardown and applies
+the service's HNSW iterative-scan setting; its assertions require 200 vector
+candidates and one keyword candidate in the long-query plan.
+
+The focused suite, quality gate, lint, server/CLI typechecks and build pass.
+The local latency run measures long-query p95 73.33ms against the unchanged
+125ms budget; pasted-query p95 is 171.72ms against 150ms on the shared host,
+while its captured SQL execution is 51.15ms. All other local profiles pass,
+HNSW recall is 1.0, and cached profiles make no provider calls. CI validates
+all original budgets and uploads both the summary and full execution plans.

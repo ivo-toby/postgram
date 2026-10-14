@@ -343,15 +343,24 @@ Keyword parsing retains the first 24 distinct non-empty term queries after
 multi-term English stopword filtering, while embeddings use the full original
 query text.
 
-Each retained keyword term independently probes up to 200 authorized GIN hits.
-A separate full-query conjunctive probe, also capped at 200 authorized hits, is
-merged first so all-term matches enter the pool; per-term probes preserve
-partial retrieval. After chunk deduplication, the merged 200-chunk keyword pool
-prefers probes with fewer observed hits, then compound terms, so a late
-identifier can survive a common query term. When a probe has more than 200
-authorized hits, its unordered capped membership may vary. `ts_rank_cd` and
-keyword ranks are therefore approximate within this bounded pool, just as
-vector ranks are bounded by their candidate retrieval.
+Keyword candidate generation starts with a full conjunction probe over all
+retained terms, capped at 200 authorized GIN hits. If it fills the cap, it is
+the keyword pool and all other probes are skipped; a single retained term
+reuses this same probe. Otherwise, an authorized OR probe capped at 201 checks
+whether the complete union fits the 200-chunk pool. A union of at most 200
+chunks is used in full without per-term scans; a 201-hit union falls back to
+independent per-term probes and the existing rarity/compound selection for the
+200-chunk pool. Full-conjunction hits stay first in that fallback. Only the
+full AND query deduplicates lexemes; lexical OR scoring remains unchanged.
+When a capped probe has more authorized hits than its cap, its unordered
+membership may vary. `ts_rank_cd` and keyword ranks are therefore approximate
+within this bounded pool, just as vector ranks are bounded by their candidate
+retrieval.
+
+If the full conjunction does not fill the pool and the OR probe saturates, a
+qualifying partial match such as five of six common terms can still fall
+outside the bounded probe membership. This is an accepted current limitation;
+evaluation may motivate later intersection probes.
 
 `threshold` is a cosine similarity floor from 0 to 1. A candidate passes when
 its vector similarity meets the floor or its chunk matches at least half of the
@@ -1353,6 +1362,13 @@ by exact fallback) — along with the number of embedding provider calls each
 profile made and an `EXPLAIN (ANALYZE, BUFFERS)` summary of the hybrid SQL. It
 stubs the embedding provider with a fixed delay, so it measures SQL time and
 cache hit rate; it says nothing about real provider latency.
+
+Capture full plans for the actual long-keyword fixture and the HNSW strict
+iterative-scan settings with:
+
+```bash
+npm run benchmark:search -- --explain-output /tmp/search-plans.json
+```
 
 The quality benchmark reports nDCG@5, MRR, and recall@10 by category against
 the public synthetic corpus. To run private graded labels, set

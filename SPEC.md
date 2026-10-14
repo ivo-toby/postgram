@@ -479,15 +479,20 @@ function search(input: SearchInput, auth: AuthContext): Promise<ServiceResult<Se
 //    and ranking use PostgreSQL's `simple` configuration. Apply the same
 //    visibility, type, tag, owner, archive, memory-role, and client predicates
 //    to every branch.
-// 4. Run a highest-priority full conjunction probe of the retained terms for
-//    up to 200 authorized GIN hits, then independently probe each retained term
-//    for up to 200 hits. Merge and deduplicate chunks across probes, placing
-//    full-conjunction hits first, then selecting the remaining 200-chunk keyword
-//    pool by ascending observed per-term hit count (rarer terms first), then
-//    compound terms. This keeps all-term and late identifier matches discoverable
-//    under common terms and bounds expensive ranking;
-//    keyword ranks are approximate within this pool. Unordered capped probes
-//    may vary membership when more than 200 authorized chunks match.
+// 4. Run a full conjunction probe of the retained terms for up to 200
+//    authorized GIN hits. If it fills the cap, use it as the keyword pool and
+//    skip every other probe; a single retained term reuses this probe directly.
+//    Otherwise run an authorized OR probe capped at 201 to determine whether
+//    the complete union fits the 200-chunk pool. Use the full union when it has
+//    at most 200 chunks, without per-term scans. If it returns 201, fall back
+//    to independent per-term probes and the existing rarity/compound selection
+//    for the 200-chunk pool, keeping full-conjunction hits first. Deduplicate
+//    lexemes only in the full AND query; leave lexical OR scoring unchanged.
+//    Capped probes may vary membership when more authorized chunks match than
+//    the cap, so keyword ranks are approximate within this bounded pool.
+//    A saturated partial match, such as five of six common terms, can still be
+//    missed when no full conjunction exists; evaluation may motivate later
+//    intersection probes, and this is an accepted current limitation.
 // 5. Rank vector and keyword candidates independently, then merge their rows
 //    by chunk while retaining each branch rank. Compute:
 //    rrf_score = 1 / (60 + vector_rank) + 1 / (60 + keyword_rank)

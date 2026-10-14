@@ -34,6 +34,10 @@ independent probes can still miss a five-of-six common-term match; intersection
 probes are a possible future improvement requiring evaluation evidence.
 Keyword ranks are approximate within the bounded pool, like the existing
 bounded vector candidate retrieval. Lexical OR scoring remains unchanged.
+The OR overflow probe uses the same bound keyword cap plus one. For dense
+queries that overflow, GIN builds the OR bitmap before the limit and per-term
+probes still run, adding retrieval work. Production timing evidence may justify
+changing probe order; the current path remains subject to the latency budgets.
 
 Candidates are deduplicated by chunk, then scored using reciprocal rank fusion:
 `1 / (60 + vector_rank) + 1 / (60 + keyword_rank)`. An absent branch contributes

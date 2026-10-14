@@ -26,3 +26,9 @@
 - [x] Capture long-query plans before temporary fixture teardown.
 - [x] Document partial common-term misses as a possible next retrieval improvement.
 - [x] Parent review, local regression/quality/performance verification and prepared PR update.
+
+## Final review nits
+
+- [x] Derive the OR overflow limit from the shared bound keyword cap.
+- [x] Document the dense OR bitmap/fallback cost for future measurement.
+- [x] Parent review, exact/HNSW boundary/scope checks and prepared PR update.

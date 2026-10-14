@@ -562,7 +562,7 @@ function buildHybridSearchSql(
         WHERE to_tsvector('simple', c.content)
             @@ keyword_or_probe_enabled.query
           AND ${hybridEntityFilterConditions('e')}
-        LIMIT ${KEYWORD_CANDIDATE_CAP + 1}
+        LIMIT ($17 + 1)
       ) AS probe
     ),
     keyword_or_stats AS MATERIALIZED (

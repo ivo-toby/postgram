@@ -176,3 +176,19 @@ The local latency run measures long-query p95 73.33ms against the unchanged
 while its captured SQL execution is 51.15ms. All other local profiles pass,
 HNSW recall is 1.0, and cached profiles make no provider calls. CI validates
 all original budgets and uploads both the summary and full execution plans.
+
+Final CI at 2918e5d passes 622 backend tests, 150 UI tests and both benchmark
+gates. Long-query p95 is 54.03ms and pasted-query p95 is 79.30ms, within the
+unchanged 125ms and 150ms budgets.
+
+## Final review nits
+
+Review 5518850306 approves the retrieval logic and leaves a cap-consistency nit.
+Derive the OR overflow limit from `$17 + 1`, using the same bound parameter as
+the other probes. This changes no current cap or probe selection. The parent
+reviewed the one-line SQL edit; 19 existing exact/HNSW boundary, sparse-scope
+and full-cap regressions and scoped lint pass.
+
+Dense OR unions still build a GIN bitmap before LIMIT and then run the per-term
+fallback. Document this accepted cost rather than changing probe order without
+production timing evidence.

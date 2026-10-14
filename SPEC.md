@@ -488,6 +488,9 @@ function search(input: SearchInput, auth: AuthContext): Promise<ServiceResult<Se
 //    to independent per-term probes and the existing rarity/compound selection
 //    for the 200-chunk pool, keeping full-conjunction hits first. Deduplicate
 //    lexemes only in the full AND query; leave lexical OR scoring unchanged.
+//    Derive the OR overflow limit from the same bound cap plus one. For dense
+//    unions, GIN builds the bitmap before LIMIT and per-term probes still run;
+//    production timing evidence may justify changing probe order later.
 //    Capped probes may vary membership when more authorized chunks match than
 //    the cap, so keyword ranks are approximate within this bounded pool.
 //    A saturated partial match, such as five of six common terms, can still be

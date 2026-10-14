@@ -16,6 +16,14 @@ All branches enforce the existing visibility, type, tag, owner, archive,
 memory-role and client-scoped memory restrictions before ranking.
 
 Each retained query term independently probes at most 200 authorized GIN hits.
+Keyword retrieval retains at most 24 distinct parsed term queries in their
+original order after removing empty terms and multi-term English stopwords.
+The full original text still goes to the embedding provider. A separate
+200-hit conjunctive probe ANDs all retained term queries and takes precedence
+over the per-term probes, ensuring all-term matches enter the pool when common
+individual terms each exceed their caps. Per-term probes preserve partial
+retrieval when the conjunctive probe is empty. Unordered GIN probes can select
+different capped hits when more than 200 authorized chunks match a probe.
 After chunk deduplication, hits from rarer term probes take priority over common
 terms when selecting the 200 chunks for cover-density keyword ranking. Compound
 terms break rarity ties before standalone terms. This keeps a late identifier or
@@ -31,7 +39,10 @@ document length normalization. Entity deduplication, threshold filtering and
 result limits remain in SQL; content is hydrated only for returned rows.
 
 `threshold` is a floor on cosine similarity. A candidate is eligible when its
-similarity meets the threshold OR its chunk matches the keyword query. The fused
+similarity meets the threshold OR its chunk matches at least half the retained
+distinct term queries (rounded up). A compound identifier is one term query;
+single-term searches require that term. This prevents a lone common word in a
+multi-term query from granting a below-floor exception. The fused
 `score` is a relative ordering value, not a probability or percentage. Recency
 continues to multiply the fused score, with a true 30-day half-life.
 
@@ -53,7 +64,7 @@ The entity keyword index remains available for existing callers.
 
 A public synthetic corpus and `benchmark:quality` report nDCG@5, MRR and recall@10
 per category: exact identifiers, long documents versus concise answers, ISO
-dates, long keyword lists, Dutch and semantic controls. Record pre-change numbers
+dates, long keyword lists, Dutch, crowded common terms and semantic controls. Record pre-change numbers
 before ranking changes. CI asserts identifier targets in the top three, concise
 answers above incidental mentions and no semantic-control nDCG regression.
 
@@ -79,5 +90,7 @@ unchanged. No new runtime configuration is needed.
   identifier targets appear in the top three and semantic controls do not regress.
 - Synthetic quality checks run in CI and the PR records baseline and final metrics.
 - Existing latency budgets and recall/index-use gates pass unchanged; a long
-  multi-term keyword profile measures the additional retrieval cost.
+  multi-term keyword profile measures the additional retrieval cost. Additional
+  profiles cover a 300-word pasted query and an underfilled HNSW-to-exact
+  fallback, including the repeated keyword probes in that path.
 - Server/CLI/UI typechecks, builds and relevant automated tests pass.

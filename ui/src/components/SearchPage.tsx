@@ -618,7 +618,7 @@ export default function SearchPage({ api, onOpenInGraph }: Props) {
                       onChange={e => update('threshold', Number(e.target.value))}
                       className="w-full"
                     />
-                    <p className="mt-1 text-[10px] text-gray-600">Keyword matches can pass below this floor.</p>
+                    <p className="mt-1 text-[10px] text-gray-600">Keyword matches covering at least half the query terms can pass below this floor.</p>
                   </Section>
                   <Section title={`Recency boost (${filters.recencyWeight.toFixed(2)})`}>
                     <input

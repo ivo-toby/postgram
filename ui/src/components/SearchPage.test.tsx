@@ -186,7 +186,11 @@ describe('SearchPage result selection', () => {
     await user.click(screen.getByRole('button', { name: /^filters/i }));
 
     expect(screen.getByText(/Vector similarity floor \(0\.00\)/u)).toBeInTheDocument();
-    expect(screen.getByText('Keyword matches can pass below this floor.')).toBeInTheDocument();
+    expect(
+      screen.getByText(
+        'Keyword matches covering at least half the query terms can pass below this floor.'
+      )
+    ).toBeInTheDocument();
   });
 
   it('opens detail from the result card body', async () => {

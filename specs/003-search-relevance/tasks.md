@@ -9,3 +9,12 @@
 - [x] Long keyword latency profile and unchanged existing budget assertions.
 - [x] Parent review, full verification and final quality report.
 - [x] Prepare the reviewed change for a PR closing #114.
+
+## PR review follow-up
+
+- [x] Red/green crowded-common-term regression and priority conjunctive probe.
+- [x] Bound probes to 24 distinct terms and verify pasted-query behavior.
+- [x] Require rounded-up 50% term coverage for below-floor keyword admission.
+- [x] Measure pasted queries and underfilled HNSW-to-exact fallback latency.
+- [x] Verify the non-null embedding constraint and document recency/score migration.
+- [x] Parent review, full backend verification and prepared PR update.

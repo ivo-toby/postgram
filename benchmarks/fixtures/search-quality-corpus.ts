@@ -2,6 +2,16 @@ import type { QualityGrade } from '../search-quality-metrics.js';
 
 export const SEARCH_QUALITY_DIMENSIONS = 1536;
 export const SEARCH_QUALITY_DISTRACTOR_COUNT = 620;
+export const SEARCH_QUALITY_BASE_FIXTURE_COUNT = 10;
+export const SEARCH_QUALITY_COMMON_TERM_DISTRACTORS_PER_TERM = 220;
+export const SEARCH_QUALITY_COMMON_TERM_TARGET_COUNT = 5;
+export const SEARCH_QUALITY_COMMON_TERMS = [
+  'postgram',
+  'search',
+  'ranking'
+] as const;
+export const SEARCH_QUALITY_COMMON_TERM_QUERY =
+  SEARCH_QUALITY_COMMON_TERMS.join(' ');
 
 export type SearchQualityCategory =
   | 'exact_identifier'
@@ -10,6 +20,7 @@ export type SearchQualityCategory =
   | 'long_keyword_list'
   | 'dutch'
   | 'semantic_control'
+  | 'common_terms'
   | 'private';
 
 export type SearchQualityFixture = {
@@ -44,7 +55,8 @@ type EmbeddingBasis =
   | 'date_target'
   | 'keyword_target'
   | 'dutch_target'
-  | 'semantic';
+  | 'semantic'
+  | 'common_terms';
 
 const FIXTURE_IDS = {
   ticketTarget: '00000000-0000-0000-0000-000000900001',
@@ -68,7 +80,8 @@ function basisVector(basis: EmbeddingBasis): number[] {
     date_target: 3,
     keyword_target: 4,
     dutch_target: 5,
-    semantic: 6
+    semantic: 6,
+    common_terms: 1200
   };
   if (basis === 'semantic') {
     // A dense semantic control gives HNSW a clear distance margin over the
@@ -90,6 +103,7 @@ const DATE_TARGET_EMBEDDING = basisVector('date_target');
 const KEYWORD_TARGET_EMBEDDING = basisVector('keyword_target');
 const DUTCH_TARGET_EMBEDDING = basisVector('dutch_target');
 const SEMANTIC_EMBEDDING = basisVector('semantic');
+const COMMON_TERM_EMBEDDING = basisVector('common_terms');
 
 function ticketDistractorId(index: number): string {
   return `00000000-0000-0000-0000-${String(index + 1).padStart(12, '0')}`;
@@ -194,9 +208,50 @@ const primaryFixtures: SearchQualityFixture[] = [
   }
 ];
 
+function commonTermDistractorId(termIndex: number, fixtureIndex: number): string {
+  const suffix = 910_000_000_000 + termIndex * 1_000 + fixtureIndex + 1;
+  return `00000000-0000-0000-0000-${String(suffix).padStart(12, '0')}`;
+}
+
+function commonTermTargetId(targetIndex: number): string {
+  const suffix = 920_000_000_000 + targetIndex + 1;
+  return `00000000-0000-0000-0000-${String(suffix).padStart(12, '0')}`;
+}
+
+const commonTermDistractors: SearchQualityFixture[] =
+  SEARCH_QUALITY_COMMON_TERMS.flatMap((term, termIndex) =>
+    Array.from(
+      { length: SEARCH_QUALITY_COMMON_TERM_DISTRACTORS_PER_TERM },
+      (_, fixtureIndex) => ({
+        id: commonTermDistractorId(termIndex, fixtureIndex),
+        type: 'document' as const,
+        content: `Crowded ${term} sample ${fixtureIndex} for the candidate probe.`,
+        embedding: COMMON_TERM_EMBEDDING
+      })
+    )
+  );
+
+export const SEARCH_QUALITY_COMMON_TERM_TARGET_IDS = Array.from(
+  { length: SEARCH_QUALITY_COMMON_TERM_TARGET_COUNT },
+  (_, targetIndex) => commonTermTargetId(targetIndex)
+);
+
+const commonTermTargets: SearchQualityFixture[] =
+  SEARCH_QUALITY_COMMON_TERM_TARGET_IDS.map((id, targetIndex) => ({
+    id,
+    type: 'memory',
+    content:
+      targetIndex === 0
+        ? 'Postgram search ranking.'
+        : `Postgram search ranking target ${targetIndex} contains all three terms.`,
+    embedding: COMMON_TERM_EMBEDDING
+  }));
+
 export const SEARCH_QUALITY_FIXTURES: readonly SearchQualityFixture[] = [
   ...primaryFixtures,
-  ...makeTicketDistractors()
+  ...makeTicketDistractors(),
+  ...commonTermDistractors,
+  ...commonTermTargets
 ];
 
 const gradesByQuery: ReadonlyArray<{
@@ -261,6 +316,20 @@ const gradesByQuery: ReadonlyArray<{
     expectedTop3Id: FIXTURE_IDS.dutchTarget
   },
   {
+    query: SEARCH_QUALITY_COMMON_TERM_QUERY,
+    category: 'common_terms',
+    relevant: SEARCH_QUALITY_COMMON_TERM_TARGET_IDS.reduce<
+      Record<string, QualityGrade>
+    >(
+      (grades, id, targetIndex) => ({
+        ...grades,
+        [id]: targetIndex === 0 ? 2 : 1
+      }),
+      {}
+    ),
+    expectedTop3Id: SEARCH_QUALITY_COMMON_TERM_TARGET_IDS[0]
+  },
+  {
     query: 'where should a short factual answer appear in retrieval results',
     category: 'semantic_control',
     relevant: { [FIXTURE_IDS.semanticTarget]: 2 }
@@ -307,6 +376,7 @@ export const SEARCH_QUALITY_QUERY_EMBEDDINGS: Readonly<
   'cache stampede mitigation vector index rebuild rollback procedure hnsw pgvector candidate branch authorization scope recency lexical':
     VECTOR_CANDIDATE_EMBEDDING,
   'vergadering nieuwe zoekindex volgende dinsdag': VECTOR_CANDIDATE_EMBEDDING,
+  [SEARCH_QUALITY_COMMON_TERM_QUERY]: VECTOR_CANDIDATE_EMBEDDING,
   'where should a short factual answer appear in retrieval results':
     SEMANTIC_EMBEDDING,
   'how can related ideas be found by meaning': SEMANTIC_EMBEDDING

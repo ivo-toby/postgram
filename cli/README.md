@@ -84,7 +84,9 @@ matching one complete term enter the bounded candidate set for a long query.
 It deduplicates chunks and ranks the candidates with reciprocal-rank fusion
 (RRF): `1 / (60 + vector_rank) + 1 / (60 + keyword_rank)`, with a missing
 branch contributing zero. The `--threshold` value is a cosine similarity
-floor; a chunk that matches the keyword query can still pass below that floor.
+floor; below-floor keyword matches need at least half of the retained distinct
+query terms, rounded up. A single-term query, including a compound identifier,
+requires its one retained term.
 Human-readable scores are relative RRF values, printed with six decimal places,
 and are not percentages. A candidate ranked first in both branches scores about
 `0.03279` before recency. Equal final scores prefer the lower keyword rank,

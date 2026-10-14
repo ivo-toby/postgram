@@ -464,7 +464,7 @@ program
   .description('Hybrid vector + keyword search over stored entity chunks.')
   .addHelpText(
     'after',
-    '\nRRF scores use 1/(60+vector_rank) + 1/(60+keyword_rank); a missing branch contributes zero. Scores are relative numbers (about 0.03279 when ranked first in both branches before recency), not percentages. --threshold is a cosine similarity floor; keyword-matching chunks may pass below it. Whitespace-separated keyword terms are ORed, while simple lexemes within each term are ANDed so compound identifiers such as ABC-1234 remain intact.\n'
+    '\nRRF scores use 1/(60+vector_rank) + 1/(60+keyword_rank); a missing branch contributes zero. Scores are relative numbers (about 0.03279 when ranked first in both branches before recency), not percentages. --threshold is a cosine similarity floor; keyword chunks covering at least half the keyword terms (rounded up) may pass below it. A single-term query, including a compound identifier, requires its one retained term. Whitespace-separated keyword terms are ORed, while simple lexemes within each term are ANDed so compound identifiers such as ABC-1234 remain intact. Keyword parsing retains the first 24 distinct non-empty terms after multi-term English stopword filtering; embedding uses the full original query.\n'
   )
   .argument('query', 'search query')
   .option('--type <type>', 'entity type')
@@ -474,7 +474,7 @@ program
   .option('--limit <limit>', 'result limit', '10')
   .option(
     '--threshold <threshold>',
-    'cosine similarity floor; matching keyword chunks can pass below it',
+    'cosine similarity floor; below-floor keyword chunks need at least half the keyword terms',
     '0.35'
   )
   .option(

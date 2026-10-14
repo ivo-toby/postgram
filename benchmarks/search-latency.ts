@@ -21,6 +21,56 @@ const LONG_KEYWORD_QUERY = [
   'rare-keyword-42',
   ...Array.from({ length: 17 }, (_, index) => `rare-term-${index}`)
 ].join(' ');
+const PASTED_QUERY_CORE_TERMS = [
+  'postgres',
+  'search',
+  'latency',
+  'benchmark',
+  'entity',
+  'migration',
+  'index',
+  'database',
+  'vector',
+  'keyword',
+  'candidate',
+  'authorization',
+  'visibility',
+  'ranking',
+  'recall',
+  'memory',
+  'project',
+  'document',
+  'task',
+  'semantic',
+  'query',
+  'embedding',
+  'cache',
+  'provider'
+] as const;
+
+function alphabeticSuffix(index: number): string {
+  let value = index + 1;
+  let suffix = '';
+  while (value > 0) {
+    value -= 1;
+    suffix = String.fromCharCode(97 + (value % 26)) + suffix;
+    value = Math.floor(value / 26);
+  }
+  return suffix;
+}
+
+const PASTED_QUERY_TAIL_TERMS = Array.from(
+  { length: 276 },
+  (_, index) => `rarecompoundterm${alphabeticSuffix(index)}`
+);
+const PASTED_QUERY_TERMS = [
+  ...PASTED_QUERY_CORE_TERMS,
+  ...PASTED_QUERY_TAIL_TERMS
+];
+const PASTED_QUERY = PASTED_QUERY_TERMS.join(' ');
+const PASTED_QUERY_INPUT_WORD_COUNT = PASTED_QUERY_TERMS.length;
+const PASTED_QUERY_INPUT_DISTINCT_TERM_COUNT = new Set(PASTED_QUERY_TERMS).size;
+const PASTED_QUERY_RETAINED_TERM_CAP = 24;
 
 type CapturedQuery = { text: string; values: unknown[] };
 type Profile = {
@@ -28,6 +78,10 @@ type Profile = {
   p95_ms: number;
   min_ms: number;
   max_ms: number;
+};
+type ProfileStats = {
+  embeddingCalls: number;
+  strategy: string | null;
 };
 
 const auth: AuthContext = {
@@ -181,7 +235,7 @@ function captureSearchQueries(pool: Pool): {
     counts.total += 1;
     if (text.includes('ROW_NUMBER() OVER')) {
       const strategy = text.includes('CROSS JOIN LATERAL') ? 'hnsw' : 'exact';
-      captured[strategy] = { text, values: values ?? [] };
+      captured[strategy] ??= { text, values: values ?? [] };
       if (values?.some((value) => value === LONG_KEYWORD_QUERY)) {
         captured.longKeyword = { text, values: values ?? [] };
       }
@@ -240,6 +294,8 @@ function benchmarkVector(): number[] {
 }
 
 const LONG_KEYWORD_FIXTURE_ID = '00000000-0000-0000-0000-00000000b042';
+const FALLBACK_FIXTURE_ID = '00000000-0000-0000-0000-00000000b043';
+const FALLBACK_TAG = 'latency-fallback';
 
 async function seedLongKeywordFixture(pool: Pool): Promise<void> {
   await pool.query(
@@ -289,6 +345,66 @@ async function removeLongKeywordFixture(pool: Pool): Promise<void> {
   await pool.query('ANALYZE chunks');
 }
 
+async function seedFallbackFixture(pool: Pool): Promise<void> {
+  await pool.query(
+    `INSERT INTO entities (
+       id,
+       type,
+       content,
+       visibility,
+       status,
+       enrichment_status,
+       tags,
+       metadata
+     )
+     VALUES ($1, 'memory', 'underfilled hnsw fallback probe', 'shared',
+       'active', 'completed', $2, '{}')`,
+    [FALLBACK_FIXTURE_ID, [FALLBACK_TAG]]
+  );
+  await pool.query(
+    `INSERT INTO chunks (
+       entity_id,
+       chunk_index,
+       content,
+       embedding,
+       model_id,
+       token_count
+     )
+     VALUES (
+       $1,
+       0,
+       'underfilled hnsw fallback probe',
+       $2::vector,
+       (SELECT id FROM embedding_models WHERE is_active = true),
+       5
+     )`,
+    [FALLBACK_FIXTURE_ID, vectorToSql(benchmarkVector())]
+  );
+}
+
+async function removeFallbackFixture(pool: Pool): Promise<void> {
+  await pool.query('DELETE FROM entities WHERE id = $1', [FALLBACK_FIXTURE_ID]);
+  await pool.query('ANALYZE entities');
+  await pool.query('ANALYZE chunks');
+}
+
+async function runFallbackProfile(
+  pool: Pool
+): Promise<[string, Profile, ProfileStats]> {
+  await seedFallbackFixture(pool);
+  try {
+    return await runProfile(pool, {
+      name: 'underfilled_hnsw_fallback',
+      query: 'underfilled hnsw fallback probe',
+      tags: [FALLBACK_TAG],
+      strategy: 'hnsw',
+      repeated: true
+    });
+  } finally {
+    await removeFallbackFixture(pool);
+  }
+}
+
 async function runProfile(
   pool: Pool,
   input: {
@@ -297,12 +413,21 @@ async function runProfile(
     repeated?: boolean;
     /** Use a long OR keyword query with one deliberately rare matching row. */
     longKeyword?: boolean;
+    /** Use a repeated 300-word pasted query with more terms than the cap. */
+    pastedQuery?: boolean;
+    /** Override the query used by this profile. */
+    query?: string;
+    /** Restrict the profile to a temporary fixture. */
+    tags?: string[];
+    /** Force HNSW so an underfilled candidate set exercises the fallback. */
+    strategy?: 'auto' | 'exact' | 'hnsw';
     /** Share the cache across runs; false simulates a cold process. */
     freshServicePerRun?: boolean;
   }
-): Promise<[string, Profile, { embeddingCalls: number }]> {
+): Promise<[string, Profile, ProfileStats]> {
   const vector = benchmarkVector();
   let embeddingCalls = 0;
+  let selectedStrategy: string | null = null;
   const embedQuery = async () => {
     embeddingCalls += 1;
     await sleep(EMBEDDING_CALL_DELAY_MS);
@@ -314,17 +439,32 @@ async function runProfile(
     if (input.freshServicePerRun) {
       embeddingService = createEmbeddingService({ embedQuery });
     }
-    const query = input.longKeyword
-      ? LONG_KEYWORD_QUERY
-      : input.repeated
-      ? 'postgres search latency benchmark entity 42'
-      : `postgres search latency benchmark entity ${iteration + 1}`;
+    const query =
+      input.query ??
+      (input.longKeyword
+        ? LONG_KEYWORD_QUERY
+        : input.pastedQuery
+        ? PASTED_QUERY
+        : input.repeated
+        ? 'postgres search latency benchmark entity 42'
+        : `postgres search latency benchmark entity ${iteration + 1}`);
     const started = performance.now();
     const result = await searchEntities(
       pool,
       auth,
-      { query, limit: 10, threshold: 0 },
-      { embeddingService }
+      {
+        query,
+        limit: 10,
+        threshold: 0,
+        ...(input.tags ? { tags: input.tags } : {})
+      },
+      {
+        embeddingService,
+        ...(input.strategy ? { strategyOverride: input.strategy } : {}),
+        onStrategy: (strategy) => {
+          selectedStrategy = strategy;
+        }
+      }
     );
     if (result.isErr()) {
       throw result.error;
@@ -340,12 +480,12 @@ async function runProfile(
   for (let index = 0; index < SAMPLE_RUNS; index += 1) {
     samples.push(await run(index));
   }
-  return [input.name, summarize(samples), { embeddingCalls }];
+  return [input.name, summarize(samples), { embeddingCalls, strategy: selectedStrategy }];
 }
 
 async function runLongKeywordProfile(
   pool: Pool
-): Promise<[string, Profile, { embeddingCalls: number }]> {
+): Promise<[string, Profile, ProfileStats]> {
   await seedLongKeywordFixture(pool);
   try {
     return await runProfile(pool, {
@@ -499,8 +639,17 @@ try {
     }),
     // A long OR query gets one selective fixture only for this profile, so
     // the existing common-term profiles and recall corpus stay unchanged.
-    await runLongKeywordProfile(pool)
+    await runLongKeywordProfile(pool),
+    await runProfile(pool, {
+      name: 'pasted_query',
+      pastedQuery: true,
+      repeated: true
+    })
   ];
+
+  const recall = await measureRecall(pool);
+  const fallbackRun = await runFallbackProfile(pool);
+  runs.push(fallbackRun);
 
   const profiles = Object.fromEntries(
     runs.map(([name, profile]) => [name, profile])
@@ -509,7 +658,7 @@ try {
     runs.map(([name, , stats]) => [name, stats.embeddingCalls])
   ) as Record<string, number>;
 
-  const recall = await measureRecall(pool);
+  const fallbackStats = fallbackRun[2];
   const hnswExplain = await explain(database.pool, captured.hnsw);
   const exactExplain = await explain(database.pool, captured.exact);
   const longKeywordExplain = await explain(database.pool, captured.longKeyword);
@@ -517,8 +666,15 @@ try {
     dataset: { entities: ENTITY_COUNT, chunks: CHUNK_COUNT },
     samples: SAMPLE_RUNS,
     embedding_call_delay_ms: EMBEDDING_CALL_DELAY_MS,
+    additional_workloads: {
+      pasted_query_words: PASTED_QUERY_INPUT_WORD_COUNT,
+      pasted_query_distinct_terms: PASTED_QUERY_INPUT_DISTINCT_TERM_COUNT,
+      pasted_query_retained_term_cap: PASTED_QUERY_RETAINED_TERM_CAP,
+      fallback_fixture: 'one tagged chunk with forced HNSW'
+    },
     profiles,
     embedding_calls: embeddingCalls,
+    fallback_strategy: fallbackStats.strategy,
     database_queries: counts.total,
     recall,
     explain: {
@@ -550,6 +706,11 @@ try {
         `HNSW recall ${recall.recall.toFixed(2)} fell below 0.80`
       );
     }
+    if (fallbackStats.strategy !== 'hnsw_exact_fallback') {
+      throw new Error(
+        `Underfilled HNSW profile used ${fallbackStats.strategy ?? 'no strategy'}`
+      );
+    }
 
     const maxP95: Record<string, number> = {
       // One provider round trip plus SQL.
@@ -559,7 +720,11 @@ try {
       // One extra indexed SELECT versus a memory hit, and still no round trip.
       database_cache_hit: 150,
       // The additional work is the bounded GIN keyword branch.
-      long_keyword_query: 125
+      long_keyword_query: 125,
+      // A 300-word pasted query retains only its first 24 distinct terms.
+      pasted_query: 150,
+      // Forced HNSW over one tagged chunk, followed by exact fallback.
+      underfilled_hnsw_fallback: 250
     };
     for (const [name, maximum] of Object.entries(maxP95)) {
       const actual = profiles[name]?.p95_ms;
@@ -577,7 +742,9 @@ try {
       cold_unique_queries: SAMPLE_RUNS,
       memory_cache_hit: 0,
       database_cache_hit: 0,
-      long_keyword_query: 0
+      long_keyword_query: 0,
+      pasted_query: 0,
+      underfilled_hnsw_fallback: 0
     };
     for (const [name, maximum] of Object.entries(maxEmbeddingCalls)) {
       const actual = embeddingCalls[name];

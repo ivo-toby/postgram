@@ -181,6 +181,29 @@ describe('searchEntities query embedding', () => {
     ).toHaveLength(1);
   });
 
+  it('passes the complete long query to embedding instead of the capped keyword terms', async () => {
+    const { pool } = makePool();
+    const query = Array.from(
+      { length: 300 },
+      (_, index) => `pasted-term-${index}`
+    ).join(' ');
+    const embedQuery = vi.fn().mockResolvedValue([1, 0, 0]);
+
+    const result = await searchEntities(
+      pool,
+      searchAuth,
+      { query, threshold: 0 },
+      { embeddingService: makeEmbeddingService(embedQuery) }
+    );
+
+    expect(result.isOk()).toBe(true);
+    expect(embedQuery).toHaveBeenCalledWith(
+      query,
+      activeTestModel,
+      expect.any(Object)
+    );
+  });
+
   it('uses HNSW-first candidates with transaction-local iterative scan for broad searches', async () => {
     const { pool, queries } = makePool();
 

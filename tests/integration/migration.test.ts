@@ -179,6 +179,39 @@ describe('Talon migration', () => {
     ]);
   }, 120_000);
 
+  it('keeps chunk embeddings non-null for vector search', async () => {
+    if (!database) {
+      throw new Error('test database not initialized');
+    }
+
+    await resetTestDatabase(database.pool);
+    const entityId = crypto.randomUUID();
+    await database.pool.query(
+      `INSERT INTO entities (
+         id, type, content, visibility, status, enrichment_status
+       )
+       VALUES ($1, 'memory', 'embedding constraint fixture', 'shared', 'active', 'completed')`,
+      [entityId]
+    );
+    const model = await database.pool.query<{ id: string }>(
+      'SELECT id FROM embedding_models WHERE is_active = true'
+    );
+    const modelId = model.rows[0]?.id;
+    if (!modelId) {
+      throw new Error('active embedding model not initialized');
+    }
+
+    await expect(
+      database.pool.query(
+        `INSERT INTO chunks (
+           entity_id, chunk_index, content, embedding, model_id, token_count
+         )
+         VALUES ($1, 0, 'null embedding', NULL, $2, 2)`,
+        [entityId, modelId]
+      )
+    ).rejects.toMatchObject({ code: '23502' });
+  }, 120_000);
+
   it('dry-runs without writing and reports the items that would migrate', async () => {
     if (!database) {
       throw new Error('test database not initialized');

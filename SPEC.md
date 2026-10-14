@@ -454,7 +454,7 @@ interface SearchInput {
   tags?: string[];
   visibility?: string;
   limit?: number;            // default: 10, max: 50
-  threshold?: number;        // cosine floor, default: 0.35 for OpenAI; keyword matches may bypass
+  threshold?: number;        // cosine floor, default: 0.35 for OpenAI; half-term keyword coverage may bypass
   recency_weight?: number;   // default: 0.1, set to 0 to disable
 }
 
@@ -474,21 +474,28 @@ function search(input: SearchInput, auth: AuthContext): Promise<ServiceResult<Se
 //    `ABC-1234` while allowing one complete term from a long query to match.
 //    For multi-term queries, omit terms whose English dictionary vector is
 //    empty (standalone English stopwords); retain a single term even when its
-//    English vector is empty. Matching and ranking use PostgreSQL's `simple`
-//    configuration. Apply the same visibility, type, tag, owner, archive,
-//    memory-role, and client predicates to every branch.
-// 4. Probe each retained keyword term independently for up to 200 authorized
-//    GIN hits. Deduplicate chunks across probes and select the merged 200-chunk
-//    keyword pool by ascending observed per-term hit count (rarer terms first),
-//    then compound terms. This keeps late identifiers discoverable under common
-//    terms and bounds the expensive keyword ranking; keyword ranks are
-//    approximate within this pool.
+//    English vector is empty. Retain the first 24 distinct non-empty term
+//    queries in original order; embed the full original query text. Matching
+//    and ranking use PostgreSQL's `simple` configuration. Apply the same
+//    visibility, type, tag, owner, archive, memory-role, and client predicates
+//    to every branch.
+// 4. Run a highest-priority full conjunction probe of the retained terms for
+//    up to 200 authorized GIN hits, then independently probe each retained term
+//    for up to 200 hits. Merge and deduplicate chunks across probes, placing
+//    full-conjunction hits first, then selecting the remaining 200-chunk keyword
+//    pool by ascending observed per-term hit count (rarer terms first), then
+//    compound terms. This keeps all-term and late identifier matches discoverable
+//    under common terms and bounds expensive ranking;
+//    keyword ranks are approximate within this pool. Unordered capped probes
+//    may vary membership when more than 200 authorized chunks match.
 // 5. Rank vector and keyword candidates independently, then merge their rows
 //    by chunk while retaining each branch rank. Compute:
 //    rrf_score = 1 / (60 + vector_rank) + 1 / (60 + keyword_rank)
 //    A missing branch contributes zero. A candidate is eligible when its
-//    cosine similarity meets `threshold` OR its chunk matches the keyword
-//    query; do not compare `threshold` with the fused score.
+//    cosine similarity meets `threshold` OR its chunk matches at least
+//    ceil(retained_distinct_term_count / 2) term queries; do not compare
+//    `threshold` with the fused score. A single-term query, including a
+//    compound identifier, requires its one retained term.
 // 6. Apply recency to the fused score:
 //    final_score = rrf_score * (1 + recency_weight * 0.5^(age_days / 30))
 // 7. Deduplicate scored chunks by entity, retaining the highest final score.
@@ -507,11 +514,14 @@ final_score = rrf_score * boost
 - `recency_weight` default: 0.1 (10% max boost for brand-new entities)
 - `half_life`: 30 days (hardcoded for Phase 1; use `e^(-ln(2) * age_days / 30)`)
 - Effect: a 0-day-old entity gets 10% boost, a 30-day-old entity gets 5% boost, and a 90-day-old entity gets 1.25% boost
+- Under RRF, `recency_weight=0.1` is roughly six rank positions for a single
+  branch near the top (`1/61` versus `1/67`); the actual recency multiplier is
+  capped at a 10% boost.
 - Set `recency_weight=0` to disable entirely
 
 **Edge cases:**
 - Empty query string — return `VALIDATION` error
-- No eligible candidates above the cosine floor or keyword match — return empty array, not an error
+- No eligible candidates above the cosine floor or half-term keyword coverage — return empty array, not an error
 - Empty or punctuation-only keyword input — retain semantic vector retrieval
 - Multi-term keyword queries ignore standalone English stopwords when the
   English dictionary produces an empty vector; a single-term query retains its
@@ -698,7 +708,7 @@ MCP server uses `@modelcontextprotocol/sdk` with SSE transport. All tools share 
 ```typescript
 {
   name: "search",
-  description: "Hybrid vector and keyword search across all stored knowledge. Chunks are ranked with reciprocal-rank fusion (1/(60+vector_rank) + 1/(60+keyword_rank)); missing branches contribute zero. A candidate ranked first in both branches scores about 0.03279 before recency. The returned score is a relative RRF ordering value, not a probability or percentage. Whitespace-separated keyword terms are ORed while simple lexemes within each term are ANDed, preserving compound identifiers such as ABC-1234; multi-term standalone English stopwords are omitted. The threshold is a cosine similarity floor, but a chunk matching the keyword query can pass below it. Recency weighting uses a true 30-day half-life.",
+  description: "Hybrid vector and keyword search across all stored knowledge. Chunks are ranked with reciprocal-rank fusion (1/(60+vector_rank) + 1/(60+keyword_rank)); missing branches contribute zero. A candidate ranked first in both branches scores about 0.03279 before recency. The returned score is a relative RRF ordering value, not a probability or percentage. Whitespace-separated keyword terms are ORed while simple lexemes within each term are ANDed, preserving compound identifiers such as ABC-1234; multi-term standalone English stopwords are omitted. The threshold is a cosine similarity floor, but a below-floor keyword match requires at least half of the retained distinct query terms, rounded up; a single-term query, including a compound identifier, requires its one retained term. Recency weighting uses a true 30-day half-life.",
   inputSchema: {
     type: "object",
     properties: {
@@ -706,7 +716,7 @@ MCP server uses `@modelcontextprotocol/sdk` with SSE transport. All tools share 
       type:           { type: "string", enum: ["memory", "person", "project", "task", "interaction", "document"] },
       tags:           { type: "array", items: { type: "string" }, description: "Filter to entities containing ALL of these tags" },
       limit:          { type: "number", default: 10, description: "Max results (1-50)" },
-      threshold:      { type: "number", default: 0.35, description: "Cosine similarity floor (0-1); keyword-matching chunks can pass below it. Keyword terms are ORed across whitespace-separated terms and simple lexemes within a term are conjunctive." },
+      threshold:      { type: "number", default: 0.35, description: "Cosine similarity floor (0-1); below-floor keyword matches require at least half of the retained distinct query terms, rounded up; a single-term query, including a compound identifier, requires its one retained term. Keyword terms are ORed across whitespace-separated terms and simple lexemes within a term are conjunctive." },
       recency_weight: { type: "number", default: 0.1, description: "Recency boost strength (0=disabled)" }
     },
     required: ["query"]
@@ -1255,7 +1265,7 @@ pgm search "auth decisions" --type memory --limit 5
 | `--type, -t` | string | | Filter by type |
 | `--tags` | string | | Filter by tags (comma-separated) |
 | `--limit, -n` | number | 10 | Max results |
-| `--threshold` | number | 0.35 | Cosine similarity floor; keyword-matching chunks can pass below it |
+| `--threshold` | number | 0.35 | Cosine similarity floor; below-floor keyword matches need at least half of retained distinct query terms |
 | `--json` | boolean | false | Output raw JSON |
 
 **Output (default):**

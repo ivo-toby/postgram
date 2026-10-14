@@ -7,6 +7,12 @@ import {
   type QualityQueryResult
 } from '../../benchmarks/search-quality-metrics.js';
 import {
+  SEARCH_QUALITY_BASE_FIXTURE_COUNT,
+  SEARCH_QUALITY_COMMON_TERM_DISTRACTORS_PER_TERM,
+  SEARCH_QUALITY_COMMON_TERM_QUERY,
+  SEARCH_QUALITY_COMMON_TERM_TARGET_COUNT,
+  SEARCH_QUALITY_COMMON_TERM_TARGET_IDS,
+  SEARCH_QUALITY_COMMON_TERMS,
   SEARCH_QUALITY_CORPUS,
   SEARCH_QUALITY_DISTRACTOR_COUNT
 } from '../../benchmarks/fixtures/search-quality-corpus.js';
@@ -15,9 +21,41 @@ describe('search quality fixtures', () => {
   it('contains the moderate distractor corpus used to exercise bounded candidates', () => {
     expect(SEARCH_QUALITY_DISTRACTOR_COUNT).toBeGreaterThan(500);
     expect(SEARCH_QUALITY_CORPUS.fixtures.length).toBe(
-      SEARCH_QUALITY_DISTRACTOR_COUNT + 10
+      SEARCH_QUALITY_BASE_FIXTURE_COUNT +
+        SEARCH_QUALITY_DISTRACTOR_COUNT +
+        SEARCH_QUALITY_COMMON_TERMS.length *
+          SEARCH_QUALITY_COMMON_TERM_DISTRACTORS_PER_TERM +
+        SEARCH_QUALITY_COMMON_TERM_TARGET_COUNT
     );
-    expect(SEARCH_QUALITY_CORPUS.queries).toHaveLength(9);
+    expect(SEARCH_QUALITY_CORPUS.queries).toHaveLength(10);
+  });
+
+  it('contains crowded single-term matches and late all-term targets', () => {
+    const targetPositions = SEARCH_QUALITY_COMMON_TERM_TARGET_IDS.map((id) =>
+      SEARCH_QUALITY_CORPUS.fixtures.findIndex((fixture) => fixture.id === id)
+    );
+    const firstTargetPosition = Math.min(...targetPositions);
+    const commonQuery = SEARCH_QUALITY_CORPUS.queries.find(
+      (query) => query.query === SEARCH_QUALITY_COMMON_TERM_QUERY
+    );
+
+    expect(firstTargetPosition).toBeGreaterThan(
+      SEARCH_QUALITY_BASE_FIXTURE_COUNT + SEARCH_QUALITY_DISTRACTOR_COUNT
+    );
+    for (const term of SEARCH_QUALITY_COMMON_TERMS) {
+      const matches = SEARCH_QUALITY_CORPUS.fixtures.filter((fixture) =>
+        fixture.content.toLowerCase().includes(term)
+      );
+      expect(matches.length).toBeGreaterThan(
+        SEARCH_QUALITY_COMMON_TERM_DISTRACTORS_PER_TERM
+      );
+    }
+    expect(commonQuery?.expectedTop3Id).toBe(
+      SEARCH_QUALITY_COMMON_TERM_TARGET_IDS[0]
+    );
+    expect(
+      Object.values(commonQuery?.grades ?? {}).filter((grade) => grade > 0)
+    ).toHaveLength(SEARCH_QUALITY_COMMON_TERM_TARGET_COUNT);
   });
 
   it('labels every public query with a graded target', () => {
@@ -38,7 +76,8 @@ describe('search quality fixtures', () => {
         'iso_date',
         'long_keyword_list',
         'dutch',
-        'semantic_control'
+        'semantic_control',
+        'common_terms'
       ])
     );
   });

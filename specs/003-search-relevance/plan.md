@@ -71,7 +71,7 @@ Implementation workers use the user-requested GPT-5.6-Luna with reasoning max.
 The parent records the spec, coordinates the baseline gate, personally reviews
 changes and owns final validation and PR creation. Workers edit disjoint files.
 
-## Final evidence
+## Initial PR evidence (6189914)
 
 The unchanged public corpus improves exact-identifier, ISO-date, long-keyword
 and Dutch category nDCG@5/MRR/recall@10 from 0 to 1. Concise-answer nDCG@5
@@ -90,3 +90,43 @@ tests, server/CLI/UI typechecks, server/UI builds, lint, and both benchmark gate
 Sprite smoke checks cover server startup/migrations, local provider wiring,
 REST store/recall/search/tasks/auth, compact CLI JSON/TOON, and read-only private
 evaluation. The temporary Sprite was destroyed after validation.
+
+## PR review follow-up
+
+The capped per-term pool can exclude all-term matches when every term exceeds
+200 hits. Add a highest-priority conjunctive probe before the existing rare-term
+selection. Extend the corpus with crowded terms and a small intersection;
+record its baseline against the reviewed commit before service changes.
+
+Retain the first 24 distinct non-empty parsed term queries after stopword
+filtering. Below-floor admission requires at least half of retained terms,
+rounded up; vector-above-floor admission and branch ranks remain independent.
+Add pasted-query and underfilled-fallback latency profiles without weakening
+the original budgets. Keep the fallback implementation unless measurements
+justify a larger refactor. Verify the existing NOT NULL embedding constraint,
+and document score/threshold migration and the recency trade-off.
+
+Coverage uses the actual chunk tsvector rather than capped probe membership,
+which can undercount a late partial match. Materialize below-floor vector
+tsvectors once before checking retained terms. Select the best whole probe
+tuple during deduplication so rarity, compound priority and term order stay
+associated with the same probe.
+
+The expanded corpus has 1,295 fixtures and ten queries. The new crowded-term
+category was missing all five relevant targets at 6189914; the revised service
+retrieves all five, with nDCG@5 0.785467, MRR 1 and recall@10 1. Original
+category metrics remain unchanged. The original baseline values still refer
+to fb5f9f3 and the 630-fixture corpus; the appended category baseline refers to
+the reviewed service and expanded corpus.
+
+Parent verification passes 605 backend tests, static checks, the quality gate,
+and PostgreSQL 16 smoke checks with the reported 2,000 postgram / 400 ranking /
+five-intersection distribution under exact and HNSW. A late two-of-three
+partial target outside the vector cap also passes on PostgreSQL 16. NULL chunk
+embedding inserts fail with PostgreSQL error 23502 under the existing schema.
+
+New latency profiles retain the original budgets and measure 300 distinct
+input words (24 retained) and forced underfilled HNSW followed by exact search.
+Two local attempts show varying timing spikes in different profiles, while
+captured plans retain HNSW/GIN and avoid JIT; this shared host reports 12–31%
+CPU steal. The unchanged CI performance gate provides final runner validation.

@@ -206,9 +206,13 @@ type SearchContext = {
 const EXACT_SEARCH_MAX_CHUNKS = 5_000;
 const CANDIDATE_MULTIPLIER = 20;
 const CANDIDATE_CAP = 500;
+const MAX_KEYWORD_TERMS = 24;
 // Bound the GIN hit set before the more expensive cover-density rank. This
 // keeps common terms from ranking every matching chunk while leaving the
 // vector candidate budget and fallback decision independent.
+// Each probe is capped without an ORDER BY, so PostgreSQL may choose different
+// members when more than 200 authorized chunks match. Membership is therefore
+// intentionally bounded and unordered before the merged pool is ranked.
 const KEYWORD_CANDIDATE_CAP = 200;
 
 const hnswIterativeScanSupport = new WeakMap<Pool, boolean>();
@@ -350,21 +354,55 @@ function buildHybridSearchSql(
         )::tsquery AS query
       FROM keyword_terms
     ),
-    keyword_term_queries AS MATERIALIZED (
+    keyword_term_queries_filtered AS MATERIALIZED (
       SELECT
         term_index,
         lexeme_count,
-        query
+        query,
+        term,
+        term_count
       FROM keyword_term_queries_raw
       WHERE lexeme_count > 0
         AND (term_count = 1
           OR to_tsvector('english', term) <> ''::tsvector
         )
     ),
+    keyword_term_queries_distinct AS MATERIALIZED (
+      SELECT DISTINCT ON (query::text)
+        term_index,
+        lexeme_count,
+        query,
+        term,
+        term_count
+      FROM keyword_term_queries_filtered
+      ORDER BY query::text, term_index
+    ),
+    keyword_term_queries AS MATERIALIZED (
+      SELECT
+        term_index,
+        lexeme_count,
+        query,
+        ROW_NUMBER() OVER (
+          ORDER BY term_index
+        )::integer AS retained_term_index
+      FROM keyword_term_queries_distinct
+      ORDER BY term_index
+      LIMIT ${MAX_KEYWORD_TERMS}
+    ),
+    keyword_query_stats AS MATERIALIZED (
+      SELECT
+        COUNT(*)::integer AS retained_term_count,
+        ((COUNT(*) + 1) / 2)::integer AS required_term_count,
+        string_agg(
+          '(' || query::text || ')',
+          ' & ' ORDER BY retained_term_index
+        )::tsquery AS conjunctive_query
+      FROM keyword_term_queries
+    ),
     lexical_query AS MATERIALIZED (
       SELECT string_agg(
         '(' || query::text || ')',
-        ' | ' ORDER BY term_index
+        ' | ' ORDER BY retained_term_index
       )::tsquery AS query
       FROM keyword_term_queries
     ),
@@ -376,22 +414,42 @@ function buildHybridSearchSql(
       FROM vector_candidates
       WHERE 1 - distance < $15
     ),
-    vector_keyword_matches AS MATERIALIZED (
-      -- Above-floor vector candidates are already eligible; lexical membership
-      -- matters only for below-floor candidates and does not create a keyword
-      -- rank. The keyword branch independently supplies lexical ranking.
-      SELECT vector_below_threshold.chunk_id
+    vector_below_threshold_content AS MATERIALIZED (
+      SELECT
+        vector_below_threshold.chunk_id,
+        to_tsvector('simple', c.content) AS content_tsvector
       FROM vector_below_threshold
       JOIN chunks c ON c.id = vector_below_threshold.chunk_id
-      CROSS JOIN lexical_query
-      WHERE lexical_query.query IS NOT NULL
-        AND to_tsvector('simple', c.content) @@ lexical_query.query
+    ),
+    vector_keyword_coverage AS MATERIALIZED (
+      SELECT
+        vector_below_threshold_content.chunk_id,
+        keyword_query_stats.required_term_count,
+        (
+          SELECT COUNT(*)::integer
+          FROM keyword_term_queries
+          WHERE vector_below_threshold_content.content_tsvector
+            @@ keyword_term_queries.query
+        ) AS matched_term_count
+      FROM vector_below_threshold_content
+      CROSS JOIN keyword_query_stats
+      WHERE keyword_query_stats.required_term_count > 0
+    ),
+    vector_keyword_matches AS MATERIALIZED (
+      -- Above-floor vector candidates are already eligible; only below-floor
+      -- candidates pay for term coverage. This does not create a keyword rank.
+      SELECT
+        vector_keyword_coverage.chunk_id,
+        vector_keyword_coverage.matched_term_count
+      FROM vector_keyword_coverage
+      WHERE vector_keyword_coverage.matched_term_count
+        >= vector_keyword_coverage.required_term_count
     ),
     vector_ranked AS MATERIALIZED (
       SELECT
         vector_candidates.*,
         1 - vector_candidates.distance AS similarity,
-        (vector_keyword_matches.chunk_id IS NOT NULL) AS keyword_match,
+        (vector_keyword_matches.matched_term_count IS NOT NULL) AS keyword_match,
         ROW_NUMBER() OVER (
           ORDER BY vector_candidates.distance, vector_candidates.chunk_id
         )::integer AS vector_rank
@@ -399,20 +457,50 @@ function buildHybridSearchSql(
       LEFT JOIN vector_keyword_matches
         ON vector_keyword_matches.chunk_id = vector_candidates.chunk_id
     ),
+    keyword_conjunctive_hits AS MATERIALIZED (
+      SELECT
+        0::integer AS probe_kind,
+        NULL::integer AS term_index,
+        0::integer AS probe_priority,
+        NULL::integer AS rarity_hit_count,
+        keyword_query_stats.retained_term_count,
+        keyword_query_stats.required_term_count,
+        probe.entity_id,
+        probe.chunk_id,
+        probe.created_at
+      FROM keyword_query_stats,
+      LATERAL (
+        SELECT
+          e.id AS entity_id,
+          c.id AS chunk_id,
+          e.created_at
+        FROM chunks c
+        JOIN entities e ON e.id = c.entity_id
+        WHERE keyword_query_stats.conjunctive_query IS NOT NULL
+          AND to_tsvector('simple', c.content)
+            @@ keyword_query_stats.conjunctive_query
+          AND ${hybridEntityFilterConditions('e')}
+        LIMIT $17
+      ) AS probe
+    ),
     keyword_probe_hits AS MATERIALIZED (
       SELECT
-        keyword_term_queries.term_index,
+        1::integer AS probe_kind,
+        keyword_term_queries.retained_term_index AS term_index,
         CASE
           WHEN keyword_term_queries.lexeme_count > 1 THEN 0
           ELSE 1
         END AS probe_priority,
         COUNT(*) OVER (
-          PARTITION BY keyword_term_queries.term_index
-        )::integer AS matched_term_count,
+          PARTITION BY keyword_term_queries.retained_term_index
+        )::integer AS rarity_hit_count,
+        keyword_query_stats.retained_term_count,
+        keyword_query_stats.required_term_count,
         probe.entity_id,
         probe.chunk_id,
         probe.created_at
-      FROM keyword_term_queries,
+      FROM keyword_term_queries
+      CROSS JOIN keyword_query_stats,
       LATERAL (
         SELECT
           e.id AS entity_id,
@@ -426,41 +514,91 @@ function buildHybridSearchSql(
       ) AS probe
     ),
     keyword_probe_deduplicated AS MATERIALIZED (
-      SELECT DISTINCT ON (chunk_id)
-        entity_id,
-        chunk_id,
-        created_at,
-        probe_priority,
-        term_index,
-        matched_term_count
-      FROM keyword_probe_hits
+      SELECT DISTINCT ON (probes.chunk_id)
+        probes.probe_kind,
+        probes.term_index,
+        probes.probe_priority,
+        probes.rarity_hit_count,
+        probes.retained_term_count,
+        probes.required_term_count,
+        probes.entity_id,
+        probes.chunk_id,
+        probes.created_at
+      FROM (
+        SELECT *
+        FROM keyword_conjunctive_hits
+        UNION ALL
+        SELECT *
+        FROM keyword_probe_hits
+      ) AS probes
       ORDER BY
-        chunk_id,
-        matched_term_count,
-        probe_priority,
-        term_index
+        probes.chunk_id,
+        probes.probe_kind,
+        probes.rarity_hit_count ASC NULLS LAST,
+        probes.probe_priority ASC NULLS LAST,
+        probes.term_index ASC NULLS LAST
     ),
-    keyword_matches AS MATERIALIZED (
-      SELECT
-        keyword_probe_deduplicated.entity_id,
-        keyword_probe_deduplicated.chunk_id,
-        keyword_probe_deduplicated.created_at,
-        1 - (c.embedding <=> $1::vector) AS similarity,
-        to_tsvector('simple', c.content) AS content_tsvector,
-        lexical_query.query
-      FROM keyword_probe_deduplicated
-      JOIN chunks c ON c.id = keyword_probe_deduplicated.chunk_id
-      CROSS JOIN lexical_query
-      WHERE lexical_query.query IS NOT NULL
+    keyword_probe_bounded AS MATERIALIZED (
       -- Rank only the bounded, de-duplicated GIN hit set; vector candidates
       -- keep their own cap. Rarer term probes are preferred so an exact
       -- identifier cannot be crowded out by a common standalone term.
+      SELECT *
+      FROM keyword_probe_deduplicated
       ORDER BY
-        keyword_probe_deduplicated.matched_term_count,
-        keyword_probe_deduplicated.probe_priority,
-        keyword_probe_deduplicated.term_index,
-        keyword_probe_deduplicated.chunk_id
+        probe_kind,
+        rarity_hit_count ASC NULLS LAST,
+        probe_priority ASC NULLS LAST,
+        term_index ASC NULLS LAST,
+        chunk_id
       LIMIT $17
+    ),
+    keyword_matches_base AS MATERIALIZED (
+      SELECT
+        keyword_probe_bounded.entity_id,
+        keyword_probe_bounded.chunk_id,
+        keyword_probe_bounded.created_at,
+        keyword_probe_bounded.probe_kind,
+        (keyword_probe_bounded.probe_kind = 0) AS conjunctive_match,
+        keyword_probe_bounded.required_term_count,
+        keyword_probe_bounded.rarity_hit_count,
+        keyword_probe_bounded.probe_priority,
+        keyword_probe_bounded.term_index,
+        1 - (c.embedding <=> $1::vector) AS similarity,
+        to_tsvector('simple', c.content) AS content_tsvector,
+        lexical_query.query
+      FROM keyword_probe_bounded
+      JOIN chunks c ON c.id = keyword_probe_bounded.chunk_id
+      CROSS JOIN lexical_query
+      WHERE lexical_query.query IS NOT NULL
+    ),
+    keyword_matches AS MATERIALIZED (
+      SELECT
+        keyword_matches_base.entity_id,
+        keyword_matches_base.chunk_id,
+        keyword_matches_base.created_at,
+        keyword_matches_base.conjunctive_match,
+        CASE
+          -- A conjunctive hit is known to cover every retained term. A
+          -- candidate above the similarity floor is already eligible, so
+          -- only below-floor keyword candidates need content coverage.
+          WHEN keyword_matches_base.probe_kind = 0
+            OR keyword_matches_base.similarity >= $15
+          THEN keyword_matches_base.required_term_count
+          ELSE (
+            SELECT COUNT(*)::integer
+            FROM keyword_term_queries
+            WHERE keyword_matches_base.content_tsvector
+              @@ keyword_term_queries.query
+          )
+        END AS matched_term_count,
+        keyword_matches_base.required_term_count,
+        keyword_matches_base.rarity_hit_count,
+        keyword_matches_base.probe_priority,
+        keyword_matches_base.term_index,
+        keyword_matches_base.similarity,
+        keyword_matches_base.content_tsvector,
+        keyword_matches_base.query
+      FROM keyword_matches_base
     ),
     keyword_candidates AS MATERIALIZED (
       SELECT
@@ -472,6 +610,11 @@ function buildHybridSearchSql(
     keyword_ranked AS MATERIALIZED (
       SELECT
         keyword_candidates.*,
+        (
+          keyword_candidates.required_term_count > 0
+          AND keyword_candidates.matched_term_count
+            >= keyword_candidates.required_term_count
+        ) AS keyword_match,
         ROW_NUMBER() OVER (
           ORDER BY lexical_rank DESC, chunk_id
         )::integer AS keyword_rank
@@ -495,7 +638,7 @@ function buildHybridSearchSql(
         similarity,
         NULL::integer AS vector_rank,
         keyword_rank,
-        true AS keyword_match
+        keyword_match
       FROM keyword_ranked
     ),
     candidates AS MATERIALIZED (

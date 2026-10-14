@@ -1,3 +1,14 @@
+## [Unreleased]
+
+### Changed
+
+* **search:** Scores now use relative RRF values, typically about `0.008`–`0.033`,
+  and can shift when vector or keyword branch membership and ranks change.
+  `--threshold` is a cosine similarity floor rather than a fused-score
+  threshold; below-floor keyword matches require at least half of the retained
+  distinct query terms, rounded up. Existing stored thresholds may return looser
+  results, so retune clients during migration.
+
 ## [1.37.2](https://github.com/ivo-toby/postgram/compare/cli-v1.37.1...cli-v1.37.2) (2026-10-08)
 
 ### Bug Fixes

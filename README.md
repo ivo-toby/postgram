@@ -339,17 +339,26 @@ a single term is retained even when that vector is empty. Matching and ranking
 still use PostgreSQL's `simple` configuration. Broad searches select candidates
 through the HNSW index; small filtered sets use exact distance ranking, and HNSW
 falls back to exact ranking when its candidate scan cannot fill its target.
+Keyword parsing retains the first 24 distinct non-empty term queries after
+multi-term English stopword filtering, while embeddings use the full original
+query text.
 
 Each retained keyword term independently probes up to 200 authorized GIN hits.
-After chunk deduplication, the merged 200-chunk keyword pool prefers probes
-with fewer observed hits, then compound terms, so a late identifier can survive
-a common query term. `ts_rank_cd` and keyword ranks are therefore approximate
-within this bounded pool, just as vector ranks are bounded by their candidate
-retrieval.
+A separate full-query conjunctive probe, also capped at 200 authorized hits, is
+merged first so all-term matches enter the pool; per-term probes preserve
+partial retrieval. After chunk deduplication, the merged 200-chunk keyword pool
+prefers probes with fewer observed hits, then compound terms, so a late
+identifier can survive a common query term. When a probe has more than 200
+authorized hits, its unordered capped membership may vary. `ts_rank_cd` and
+keyword ranks are therefore approximate within this bounded pool, just as
+vector ranks are bounded by their candidate retrieval.
 
 `threshold` is a cosine similarity floor from 0 to 1. A candidate passes when
-its vector similarity meets the floor or its chunk matches the keyword query,
-so keyword matches can remain eligible below the vector floor. The returned
+its vector similarity meets the floor or its chunk matches at least half of the
+retained distinct keyword terms, rounded up. A single-term query, including a
+compound identifier such as `ABC-1234`, requires its one retained term. Partial
+keyword candidates remain eligible when they meet the vector floor or this
+coverage rule. The returned
 `score` is the relative RRF ordering value, not a probability or percentage;
 `similarity` remains the raw cosine value. An optional recency multiplier uses
 a true 30-day half-life. A candidate ranked first in both branches scores
@@ -1334,11 +1343,13 @@ npm run benchmark:search -- --assert  # 5k-entity/6k-chunk latency gate
 npm run benchmark:quality -- --assert # synthetic search relevance gate
 ```
 
-The search benchmark reports p50/p95 latency for four profiles —
+The search benchmark reports p50/p95 latency for six profiles —
 `cold_unique_queries` (every query pays a provider round trip),
 `memory_cache_hit`, `database_cache_hit` (in-process cache empty, so only the
-persisted cache can serve it), and `long_keyword_query` (the bounded chunk GIN
-keyword branch) — along with the number of embedding provider calls each
+persisted cache can serve it), `long_keyword_query` (the bounded chunk GIN
+keyword branch), `pasted_query` (300 distinct input terms with 24 retained), and
+`underfilled_hnsw_fallback` (forced HNSW over a narrow tagged fixture followed
+by exact fallback) — along with the number of embedding provider calls each
 profile made and an `EXPLAIN (ANALYZE, BUFFERS)` summary of the hybrid SQL. It
 stubs the embedding provider with a fixed delay, so it measures SQL time and
 cache hit rate; it says nothing about real provider latency.

@@ -79,7 +79,10 @@ describe('CLI help text', () => {
       'RRF scores use 1/(60+vector_rank) + 1/(60+keyword_rank)'
     );
     expect(normalizedSearchHelp).toContain(
-      'cosine similarity floor; keyword-matching chunks may pass below it'
+      'cosine similarity floor; below-floor keyword chunks need at least half the keyword terms'
+    );
+    expect(normalizedSearchHelp).toContain(
+      'Keyword parsing retains the first 24 distinct non-empty terms after multi-term English stopword filtering'
     );
   }, 20_000);
 

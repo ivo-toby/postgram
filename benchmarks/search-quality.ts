@@ -47,6 +47,7 @@ import {
 } from './search-quality-metrics.js';
 import {
   SEARCH_QUALITY_CORPUS,
+  SEARCH_QUALITY_COMMON_TERM_TARGET_COUNT,
   SEARCH_QUALITY_DIMENSIONS,
   SEARCH_QUALITY_DISTRACTOR_COUNT,
   SEARCH_QUALITY_QUERY_EMBEDDINGS,
@@ -501,6 +502,17 @@ function publicAssertions(
         'semantic-control baseline is available',
         false,
         'Both current and baseline semantic_control nDCG@5 are required'
+      )
+    );
+  }
+
+  const commonTermRecall = metrics.common_terms?.recall_at_10;
+  if (commonTermRecall !== undefined) {
+    assertions.push(
+      assertion(
+        'common-term targets recall@10',
+        commonTermRecall === 1,
+        `recall ${commonTermRecall.toFixed(6)}, expected all ${SEARCH_QUALITY_COMMON_TERM_TARGET_COUNT} late targets`
       )
     );
   }

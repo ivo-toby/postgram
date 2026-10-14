@@ -185,7 +185,7 @@ async function insertSearchDistractors(
           session_scope: { kind: 'client', client_id: 'codex' }
         }
       ),
-      vectorToSql(lowSimilarityVector(0.7)),
+      vectorToSql(overrides.embedding ?? lowSimilarityVector(0.7)),
       count
     ]
   );
@@ -460,6 +460,395 @@ describe('search-service', () => {
     },
     120_000
   );
+
+  it.each(['exact', 'hnsw'] as const)(
+    'prioritizes late all-term intersections over crowded per-term probes with the %s strategy',
+    async (strategy) => {
+      if (!database) {
+        throw new Error('test database not initialized');
+      }
+
+      const terms = [
+        'saturated-alpha',
+        'saturated-beta',
+        'saturated-gamma'
+      ];
+      await insertSearchDistractors(database.pool, 120, { metadata: {} });
+      for (const term of terms) {
+        await insertCommonKeywordDistractors(
+          database.pool,
+          240,
+          `${term} common-only distractor`
+        );
+      }
+
+      const targetIds: string[] = [];
+      for (let index = 0; index < 5; index += 1) {
+        targetIds.push(
+          await insertSearchFixture(database.pool, {
+            entityContent: 'Late all-term intersection target.',
+            chunkContent: `${terms.join(' ')} intersection ${index}`,
+            embedding: lowSimilarityVector(0.1)
+          })
+        );
+      }
+
+      const result = await searchEntities(
+        database.pool,
+        makeAuthContext(),
+        {
+          query: terms.join(' '),
+          limit: 5,
+          threshold: 0.95
+        },
+        {
+          embeddingService: fixedEmbeddingService(unitVector(1)),
+          strategyOverride: strategy
+        }
+      );
+
+      expect(result.isOk()).toBe(true);
+      expect(
+        result._unsafeUnwrap().results.map((entry) => entry.entityId)
+      ).toEqual(expect.arrayContaining(targetIds));
+    },
+    120_000
+  );
+
+  it.each(['exact', 'hnsw'] as const)(
+    'admits a below-floor half-coverage vector candidate outside the keyword pool with the %s strategy',
+    async (strategy) => {
+      if (!database) {
+        throw new Error('test database not initialized');
+      }
+
+      const terms = [
+        'coverage-alpha',
+        'coverage-beta',
+        'coverage-gamma',
+        'coverage-delta'
+      ];
+      for (const term of terms.slice(0, 2)) {
+        await insertCommonKeywordDistractors(
+          database.pool,
+          240,
+          `${term} common-only distractor`
+        );
+      }
+      const targetId = await insertSearchFixture(database.pool, {
+        entityContent: 'Half coverage vector target.',
+        chunkContent: `${terms[0]} ${terms[1]} partial intersection`,
+        embedding: lowSimilarityVector(0.1)
+      });
+
+      let selectedStrategy: string | undefined;
+      const result = await searchEntities(
+        database.pool,
+        makeAuthContext(),
+        {
+          query: terms.join(' '),
+          limit: 25,
+          threshold: 0.95
+        },
+        {
+          embeddingService: fixedEmbeddingService(unitVector(1)),
+          strategyOverride: strategy,
+          onStrategy: (value) => {
+            selectedStrategy = value;
+          }
+        }
+      );
+
+      expect(result.isOk()).toBe(true);
+      expect(
+        result._unsafeUnwrap().results.map((entry) => entry.entityId)
+      ).toContain(targetId);
+      expect(selectedStrategy).toBe(
+        strategy === 'exact' ? 'exact' : 'hnsw_exact_fallback'
+      );
+    },
+    120_000
+  );
+
+  it.each(['exact', 'hnsw'] as const)(
+    'counts actual content coverage for a late partial keyword candidate with the %s strategy',
+    async (strategy) => {
+      if (!database) {
+        throw new Error('test database not initialized');
+      }
+
+      await insertSearchDistractors(database.pool, 21, { metadata: {} });
+      await insertCommonKeywordDistractors(
+        database.pool,
+        220,
+        'postgram common-only distractor'
+      );
+      const targetId = await insertSearchFixture(database.pool, {
+        entityContent: 'Late partial coverage target.',
+        chunkContent: 'postgram ranking',
+        embedding: lowSimilarityVector(0.1)
+      });
+
+      const result = await searchEntities(
+        database.pool,
+        makeAuthContext(),
+        {
+          query: 'postgram search ranking',
+          limit: 1,
+          threshold: 0.95
+        },
+        {
+          embeddingService: fixedEmbeddingService(unitVector(1)),
+          strategyOverride: strategy
+        }
+      );
+
+      expect(result.isOk()).toBe(true);
+      expect(
+        result._unsafeUnwrap().results.map((entry) => entry.entityId)
+      ).toContain(targetId);
+    },
+    120_000
+  );
+
+  it.each([
+    {
+      name: 'common terms',
+      terms: ['notes', 'project', 'migration'],
+      matchingTerm: 'notes'
+    },
+    {
+      name: 'Dutch terms',
+      terms: ['de', 'zoekindex', 'ranking'],
+      matchingTerm: 'de'
+    },
+    {
+      name: 'generic terms',
+      terms: ['generic', 'project', 'migration'],
+      matchingTerm: 'generic'
+    }
+  ])(
+    'rejects below-floor keyword candidates with less than half coverage for $name',
+    async ({ terms, matchingTerm }) => {
+      if (!database) {
+        throw new Error('test database not initialized');
+      }
+
+      await insertSearchFixture(database.pool, {
+        entityContent: 'Insufficient coverage target.',
+        chunkContent: `${matchingTerm} only`,
+        embedding: lowSimilarityVector(0.1)
+      });
+
+      const result = await searchEntities(
+        database.pool,
+        makeAuthContext(),
+        {
+          query: terms.join(' '),
+          limit: 1,
+          threshold: 0.95
+        },
+        {
+          embeddingService: fixedEmbeddingService(unitVector(1)),
+          strategyOverride: 'exact'
+        }
+      );
+
+      expect(result.isOk()).toBe(true);
+      expect(result._unsafeUnwrap().results).toHaveLength(0);
+    },
+    120_000
+  );
+
+  it('retrieves a partial match when it covers half the retained terms and no row matches all terms', async () => {
+    if (!database) {
+      throw new Error('test database not initialized');
+    }
+
+    const terms = [
+      'partial-alpha',
+      'partial-beta',
+      'partial-gamma',
+      'partial-delta'
+    ];
+    const targetId = await insertSearchFixture(database.pool, {
+      entityContent: 'Partial coverage target.',
+      chunkContent: `${terms[0]} ${terms[1]} only`,
+      embedding: lowSimilarityVector(0.1)
+    });
+
+    const result = await searchEntities(
+      database.pool,
+      makeAuthContext(),
+      {
+        query: terms.join(' '),
+        limit: 1,
+        threshold: 0.95
+      },
+      {
+        embeddingService: fixedEmbeddingService(unitVector(1)),
+        strategyOverride: 'exact'
+      }
+    );
+
+    expect(result.isOk()).toBe(true);
+    expect(
+      result._unsafeUnwrap().results.map((entry) => entry.entityId)
+    ).toEqual([targetId]);
+  }, 120_000);
+
+  it('requires coverage only from the first 24 distinct parsed terms', async () => {
+    if (!database) {
+      throw new Error('test database not initialized');
+    }
+
+    const firstTerms = Array.from(
+      { length: 24 },
+      (_, index) => `important-${index}`
+    );
+    const query = [
+      ...firstTerms,
+      'tail-only-marker',
+      ...Array.from({ length: 275 }, (_, index) => `tail-padding-${index}`)
+    ].join(' ');
+    const targetTerms = firstTerms.slice(0, 12);
+    const targetId = await insertSearchFixture(database.pool, {
+      entityContent: 'Retained keyword target.',
+      chunkContent: targetTerms.join(' '),
+      embedding: lowSimilarityVector(0.1)
+    });
+
+    const result = await searchEntities(
+      database.pool,
+      makeAuthContext(),
+      { query, limit: 1, threshold: 0.95 },
+      {
+        embeddingService: fixedEmbeddingService(unitVector(1)),
+        strategyOverride: 'exact'
+      }
+    );
+
+    expect(result.isOk()).toBe(true);
+    expect(
+      result._unsafeUnwrap().results.map((entry) => entry.entityId)
+    ).toEqual([targetId]);
+  }, 120_000);
+
+  it.each(['exact', 'hnsw'] as const)(
+    'does not retrieve a tail-only keyword after the first 24 terms with the %s strategy',
+    async (strategy) => {
+      if (!database) {
+        throw new Error('test database not initialized');
+      }
+
+      const firstTerms = Array.from(
+        { length: 24 },
+        (_, index) => `important-${index}`
+      );
+      const query = [
+        ...firstTerms,
+        'tail-only-marker',
+        ...Array.from({ length: 275 }, (_, index) => `tail-padding-${index}`)
+      ].join(' ');
+      await insertSearchDistractors(database.pool, 21, {
+        embedding: lowSimilarityVector(0.9),
+        metadata: {}
+      });
+      const targetId = await insertSearchFixture(database.pool, {
+        entityContent: 'Tail keyword target.',
+        chunkContent: 'tail-only-marker',
+        embedding: lowSimilarityVector(0.8)
+      });
+
+      const result = await searchEntities(
+        database.pool,
+        makeAuthContext(),
+        { query, limit: 1, threshold: 0.7 },
+        {
+          embeddingService: fixedEmbeddingService(unitVector(1)),
+          strategyOverride: strategy
+        }
+      );
+
+      expect(result.isOk()).toBe(true);
+      expect(
+        result._unsafeUnwrap().results.map((entry) => entry.entityId)
+      ).not.toContain(targetId);
+    },
+    120_000
+  );
+
+  it('counts equivalent parsed terms once when retaining the 24th distinct term', async () => {
+    if (!database) {
+      throw new Error('test database not initialized');
+    }
+
+    const query = [
+      'DUPLICATE-MARKER',
+      'duplicate-marker',
+      ...Array.from({ length: 22 }, (_, index) => `distinct-${index}`),
+      'retained-marker'
+    ].join(' ');
+    const targetId = await insertSearchFixture(database.pool, {
+      entityContent: 'Retained duplicate accounting target.',
+      chunkContent: [
+        ...Array.from({ length: 11 }, (_, index) => `distinct-${index}`),
+        'retained-marker'
+      ].join(' '),
+      embedding: lowSimilarityVector(0.1)
+    });
+
+    const result = await searchEntities(
+      database.pool,
+      makeAuthContext(),
+      { query, limit: 1, threshold: 0.95 },
+      {
+        embeddingService: fixedEmbeddingService(unitVector(1)),
+        strategyOverride: 'exact'
+      }
+    );
+
+    expect(result.isOk()).toBe(true);
+    expect(
+      result._unsafeUnwrap().results.map((entry) => entry.entityId)
+    ).toEqual([targetId]);
+  }, 120_000);
+
+  it('does not count standalone stopwords toward the 24-term keyword cap', async () => {
+    if (!database) {
+      throw new Error('test database not initialized');
+    }
+
+    const query = [
+      'the',
+      'the',
+      ...Array.from({ length: 23 }, (_, index) => `retained-${index}`),
+      'retained-marker'
+    ].join(' ');
+    const targetId = await insertSearchFixture(database.pool, {
+      entityContent: 'Stopword accounting target.',
+      chunkContent: [
+        ...Array.from({ length: 11 }, (_, index) => `retained-${index}`),
+        'retained-marker'
+      ].join(' '),
+      embedding: lowSimilarityVector(0.1)
+    });
+
+    const result = await searchEntities(
+      database.pool,
+      makeAuthContext(),
+      { query, limit: 1, threshold: 0.95 },
+      {
+        embeddingService: fixedEmbeddingService(unitVector(1)),
+        strategyOverride: 'exact'
+      }
+    );
+
+    expect(result.isOk()).toBe(true);
+    expect(
+      result._unsafeUnwrap().results.map((entry) => entry.entityId)
+    ).toEqual([targetId]);
+  }, 120_000);
 
   it.each(['exact', 'hnsw'] as const)(
     'admits a below-threshold vector match outside the keyword cap with the %s strategy',

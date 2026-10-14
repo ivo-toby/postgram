@@ -1100,7 +1100,12 @@ describe('pgm CLI', () => {
     expect(helpResult.stdout).toContain('emit compact TOON output');
     expect(helpResult.stdout).toContain('RRF');
     expect(helpResult.stdout).toContain('cosine similarity floor');
-    expect(helpResult.stdout).toContain('keyword-matching chunks may pass below it');
+    expect(helpResult.stdout).toContain(
+      'keyword chunks covering at least half the keyword terms (rounded up) may pass below it'
+    );
+    expect(helpResult.stdout).toContain(
+      'Keyword parsing retains the first 24 distinct non-empty terms after multi-term English stopword filtering'
+    );
     expect(helpResult.stdout).toContain(
       'simple lexemes within each term are ANDed'
     );

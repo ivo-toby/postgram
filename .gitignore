@@ -4,6 +4,7 @@ cli/dist/
 .envrc
 .env
 coverage/
+benchmarks/fixtures/private-search-quality.labels.jsonl
 *.tsbuildinfo
 .worktrees/
 .amo-upload-uuid

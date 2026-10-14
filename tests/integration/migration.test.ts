@@ -151,6 +151,34 @@ describe('Talon migration', () => {
     }
   });
 
+  it('installs the transactional chunk content GIN index', async () => {
+    if (!database) {
+      throw new Error('test database not initialized');
+    }
+
+    const index = await database.pool.query<{ indexdef: string }>(
+      `SELECT indexdef
+       FROM pg_indexes
+       WHERE schemaname = 'public'
+         AND tablename = 'chunks'
+         AND indexname = 'idx_chunks_content_tsvector'`
+    );
+
+    expect(index.rows).toHaveLength(1);
+    expect(index.rows[0]?.indexdef).toContain(
+      "USING gin (to_tsvector('simple'::regconfig, content))"
+    );
+
+    const migration = await database.pool.query<{ version: string }>(
+      `SELECT version
+       FROM schema_migrations
+       WHERE version = '017_chunk_keyword_index.sql'`
+    );
+    expect(migration.rows).toEqual([
+      { version: '017_chunk_keyword_index.sql' }
+    ]);
+  }, 120_000);
+
   it('dry-runs without writing and reports the items that would migrate', async () => {
     if (!database) {
       throw new Error('test database not initialized');

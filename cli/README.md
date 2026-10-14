@@ -75,13 +75,28 @@ pgm queue
 pgm store "hello" --json
 ```
 
+Search retrieves both semantic vector neighbors and chunks matching query
+keywords. Whitespace-separated terms are ORed; each term's `simple` lexemes
+are ANDed, preserving compound identifiers such as `ABC-1234`. For multi-term
+queries, standalone English stopwords are omitted using the English dictionary;
+matching and ranking still use the `simple` configuration. This lets a chunk
+matching one complete term enter the bounded candidate set for a long query.
+It deduplicates chunks and ranks the candidates with reciprocal-rank fusion
+(RRF): `1 / (60 + vector_rank) + 1 / (60 + keyword_rank)`, with a missing
+branch contributing zero. The `--threshold` value is a cosine similarity
+floor; a chunk that matches the keyword query can still pass below that floor.
+Human-readable scores are relative RRF values, printed with six decimal places,
+and are not percentages. A candidate ranked first in both branches scores about
+`0.03279` before recency. Equal final scores prefer the lower keyword rank,
+then vector rank, then stable identifiers.
+
 Agent-facing `--json` output is compact by default for search, list, task list,
 graph expansion, write acknowledgements, and link acknowledgements. Search
-returns identifiers, scores, matched chunks, tags, and edge summaries without
+returns identifiers, numeric RRF scores, matched chunks, tags, and edge summaries without
 complete result or graph-neighbor content. Select an ID from those chunks and
 use `pgm recall <id>` when complete content is needed. Other compact outputs
 omit token-heavy fields such as timestamps, metadata, nested `entity` objects,
-and raw similarity unless you pass `--full-response`. Use `--toon` on list-like
+and raw cosine similarity unless you pass `--full-response`. Use `--toon` on list-like
 commands (`search`, `list`, `task list`, `expand`) when an agent needs the
 smallest readable output. TOON and compacting are CLI-layer formats; the
 Postgram API remains JSON.

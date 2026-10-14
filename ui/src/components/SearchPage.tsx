@@ -22,6 +22,10 @@ const PAGE_SIZE = 20;
 const SEMANTIC_MAX = 50;
 const API_KEY_STORAGE_KEY = 'pgm_api_key';
 
+function formatRrfScore(score: number): string {
+  return Number.isFinite(score) ? score.toFixed(6) : String(score);
+}
+
 type Props = {
   api: ApiClient;
   onOpenInGraph: (entityId: string) => void;
@@ -604,7 +608,7 @@ export default function SearchPage({ api, onOpenInGraph }: Props) {
 
               {filters.mode === 'semantic' && (
                 <>
-                  <Section title={`Similarity threshold (${filters.threshold.toFixed(2)})`}>
+                  <Section title={`Vector similarity floor (${filters.threshold.toFixed(2)})`}>
                     <input
                       type="range"
                       min={0}
@@ -614,6 +618,7 @@ export default function SearchPage({ api, onOpenInGraph }: Props) {
                       onChange={e => update('threshold', Number(e.target.value))}
                       className="w-full"
                     />
+                    <p className="mt-1 text-[10px] text-gray-600">Keyword matches can pass below this floor.</p>
                   </Section>
                   <Section title={`Recency boost (${filters.recencyWeight.toFixed(2)})`}>
                     <input
@@ -899,7 +904,9 @@ function ResultCard({
             )}
             <span className="text-gray-500">{new Date(entity.updated_at).toLocaleDateString()}</span>
             {typeof score === 'number' && (
-              <span className="ml-auto text-gray-400 tabular-nums">{Math.round(score * 100)}%</span>
+              <span className="ml-auto text-gray-400 tabular-nums" title="Relative relevance score">
+                Score {formatRrfScore(score)}
+              </span>
             )}
           </div>
 

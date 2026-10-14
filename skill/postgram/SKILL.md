@@ -101,7 +101,14 @@ Statuses: `inbox` (unprocessed), `next` (actionable), `waiting` (blocked), `sche
 pgm search "what the user asked about" --limit 5 --toon
 ```
 
-Hybrid BM25 + vector with recency weighting. Add `--type project` or `--visibility work` to narrow.
+Hybrid vector + keyword retrieval with chunk-level reciprocal-rank fusion and
+recency weighting. Search scores are relative RRF numbers, not percentages;
+`--threshold` is a cosine floor that keyword-matching chunks can bypass. Query
+terms split on whitespace are ORed, while each term's `simple` lexemes are
+ANDed so compound identifiers such as `ABC-1234` remain intact. In multi-term
+queries, standalone English stopwords are omitted using the English dictionary;
+matching and ranking still use the `simple` configuration. Add `--type project`
+or `--visibility work` to narrow.
 
 Search is a discovery step. Compact JSON and TOON contain matched chunks, not complete entity bodies. Start with a specific query and `--limit 5`, inspect `id`, `score`, `chunk`, tags, and edge summaries, then run `pgm recall <id>` only for the results needed to answer the user.
 

@@ -40,7 +40,7 @@ describe('CLI help text', () => {
       'Store durable memory/entity; use memory session-context for resumability'
     );
     expect(normalized).toContain(
-      'Search stored entities (chunks by default; full content with --json --full-response)'
+      'Hybrid vector + keyword search over stored entity chunks.'
     );
     expect(help).toContain('Memory commands for agent session context');
   });
@@ -74,6 +74,12 @@ describe('CLI help text', () => {
     );
     expect(normalizedSearchHelp).toContain(
       'emit compact TOON output for lower agent token use'
+    );
+    expect(normalizedSearchHelp).toContain(
+      'RRF scores use 1/(60+vector_rank) + 1/(60+keyword_rank)'
+    );
+    expect(normalizedSearchHelp).toContain(
+      'cosine similarity floor; keyword-matching chunks may pass below it'
     );
   }, 20_000);
 

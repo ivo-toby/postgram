@@ -24,6 +24,7 @@
     "test:coverage": "vitest run --coverage",
     "test:watch": "vitest",
     "benchmark:search": "tsx benchmarks/search-latency.ts",
+    "benchmark:quality": "tsx benchmarks/search-quality.ts",
     "benchmark:auth": "tsx benchmarks/auth-verification.ts",
     "benchmark:contention": "tsx benchmarks/enrichment-contention.ts",
     "lint": "eslint .",

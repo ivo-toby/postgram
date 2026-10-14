@@ -1088,6 +1088,7 @@ describe('pgm CLI', () => {
       env
     );
     expect(humanResult.stdout).toContain('token compact search response shape');
+    expect(humanResult.stdout).toMatch(/score=\d+\.\d{6}/u);
     expect(humanResult.stdout).not.toContain('entity:');
 
     const helpResult = await runPgm(['search', '--help'], env);
@@ -1097,6 +1098,13 @@ describe('pgm CLI', () => {
     );
     expect(helpResult.stdout).toContain('--toon');
     expect(helpResult.stdout).toContain('emit compact TOON output');
+    expect(helpResult.stdout).toContain('RRF');
+    expect(helpResult.stdout).toContain('cosine similarity floor');
+    expect(helpResult.stdout).toContain('keyword-matching chunks may pass below it');
+    expect(helpResult.stdout).toContain(
+      'simple lexemes within each term are ANDed'
+    );
+    expect(helpResult.stdout).toContain('compound identifiers such as ABC-1234');
   }, 120_000);
 
   it('adds, lists, updates, and completes tasks through REST', async () => {

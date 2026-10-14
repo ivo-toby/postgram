@@ -2,13 +2,18 @@ import { afterAll, beforeAll, beforeEach, describe, expect, it } from 'vitest';
 
 import {
   createEmbeddingService,
-  pruneQueryEmbeddingCache
+  pruneQueryEmbeddingCache,
+  vectorToSql
 } from '../../src/services/embedding-service.js';
 import { createEnrichmentWorker } from '../../src/services/enrichment-worker.js';
 import { createEdge } from '../../src/services/edge-service.js';
 import { searchEntities } from '../../src/services/search-service.js';
-import { softDeleteEntity, storeEntity } from '../../src/services/entity-service.js';
+import {
+  softDeleteEntity,
+  storeEntity
+} from '../../src/services/entity-service.js';
 import type { AuthContext } from '../../src/auth/types.js';
+import type { EntityType, Visibility } from '../../src/types/entities.js';
 import { ErrorCode } from '../../src/util/errors.js';
 import {
   createTestDatabase,
@@ -26,6 +31,224 @@ function makeAuthContext(): AuthContext {
     allowedTypes: null,
     allowedVisibility: ['personal', 'work', 'shared']
   };
+}
+
+function unitVector(first: number, second = 0): number[] {
+  const vector = new Array<number>(1536).fill(0);
+  vector[0] = first;
+  vector[1] = second;
+  return vector;
+}
+
+function lowSimilarityVector(similarity = 0.1): number[] {
+  return unitVector(similarity, Math.sqrt(1 - similarity ** 2));
+}
+
+type SearchFixtureInput = {
+  entityContent: string;
+  chunkContent: string;
+  embedding?: number[];
+  type?: EntityType;
+  visibility?: Visibility;
+  owner?: string | null;
+  status?: string | null;
+  tags?: string[];
+  metadata?: Record<string, unknown>;
+  createdAt?: Date;
+};
+
+type SearchFixtureOverrides = Omit<
+  SearchFixtureInput,
+  'entityContent' | 'chunkContent'
+>;
+
+async function insertSearchFixture(
+  pool: TestDatabase['pool'],
+  input: SearchFixtureInput
+): Promise<string> {
+  const entityId = crypto.randomUUID();
+  const createdAt = input.createdAt ?? new Date('2026-10-14T12:00:00.000Z');
+  await pool.query(
+    `INSERT INTO entities (
+       id,
+       type,
+       content,
+       visibility,
+       owner,
+       status,
+       enrichment_status,
+       tags,
+       metadata,
+       created_at,
+       updated_at
+     )
+     VALUES ($1, $2, $3, $4, $5, $6, 'completed', $7, $8::jsonb, $9, $9)`,
+    [
+      entityId,
+      input.type ?? 'memory',
+      input.entityContent,
+      input.visibility ?? 'shared',
+      input.owner ?? null,
+      input.status ?? 'active',
+      input.tags ?? [],
+      JSON.stringify(input.metadata ?? {}),
+      createdAt
+    ]
+  );
+
+  await pool.query(
+    `INSERT INTO chunks (
+       entity_id,
+       chunk_index,
+       content,
+       embedding,
+       model_id,
+       token_count
+     )
+     VALUES (
+       $1,
+       0,
+       $2,
+       $3::vector,
+       (SELECT id FROM embedding_models WHERE is_active = true),
+       8
+     )`,
+    [
+      entityId,
+      input.chunkContent,
+      vectorToSql(input.embedding ?? unitVector(1))
+    ]
+  );
+
+  return entityId;
+}
+
+async function insertSearchDistractors(
+  pool: TestDatabase['pool'],
+  count: number,
+  overrides: SearchFixtureOverrides = {}
+): Promise<void> {
+  await pool.query(
+    `WITH rows AS (
+       SELECT gen_random_uuid() AS id
+       FROM generate_series(1, $8::integer)
+     ), inserted AS (
+       INSERT INTO entities (
+         id,
+         type,
+         content,
+         visibility,
+         owner,
+         status,
+         enrichment_status,
+         tags,
+         metadata
+       )
+       SELECT
+         id,
+         $1,
+         'vector distractor content only',
+         $2,
+         $3,
+         $4,
+         'completed',
+         $5,
+         $6::jsonb
+       FROM rows
+       RETURNING id
+     )
+     INSERT INTO chunks (
+       entity_id,
+       chunk_index,
+       content,
+       embedding,
+       model_id,
+       token_count
+     )
+     SELECT
+       id,
+       0,
+       'vector distractor content only',
+       $7::vector,
+       (SELECT id FROM embedding_models WHERE is_active = true),
+       6
+     FROM inserted`,
+    [
+      overrides.type ?? 'memory',
+      overrides.visibility ?? 'shared',
+      overrides.owner ?? null,
+      overrides.status ?? 'active',
+      overrides.tags ?? ['allowed'],
+      JSON.stringify(
+        overrides.metadata ?? {
+          memory_role: 'session_context',
+          session_scope: { kind: 'client', client_id: 'codex' }
+        }
+      ),
+      vectorToSql(lowSimilarityVector(0.7)),
+      count
+    ]
+  );
+}
+
+async function insertCommonKeywordDistractors(
+  pool: TestDatabase['pool'],
+  count: number,
+  content: string
+): Promise<void> {
+  await pool.query(
+    `WITH rows AS (
+       SELECT gen_random_uuid() AS id
+       FROM generate_series(1, $1::integer)
+     ), inserted AS (
+       INSERT INTO entities (
+         id,
+         type,
+         content,
+         visibility,
+         status,
+         enrichment_status,
+         tags,
+         metadata
+       )
+       SELECT
+         id,
+         'memory',
+         $2::text,
+         'shared',
+         'active',
+         'completed',
+         ARRAY[]::text[],
+         '{}'::jsonb
+       FROM rows
+       RETURNING id
+     )
+     INSERT INTO chunks (
+       entity_id,
+       chunk_index,
+       content,
+       embedding,
+       model_id,
+       token_count
+     )
+     SELECT
+       id,
+       0,
+       $2::text,
+       $3::vector,
+       (SELECT id FROM embedding_models WHERE is_active = true),
+       6
+     FROM inserted`,
+    [count, content, vectorToSql(lowSimilarityVector(0.6))]
+  );
+}
+
+function fixedEmbeddingService(
+  queryVector: number[]
+): ReturnType<typeof createEmbeddingService> {
+  return createEmbeddingService({
+    embedQuery: () => Promise.resolve(queryVector)
+  });
 }
 
 describe('search-service', () => {
@@ -79,7 +302,7 @@ describe('search-service', () => {
     expect(result._unsafeUnwrap().results).toHaveLength(0);
   }, 120_000);
 
-  it('boosts exact keyword matches via hybrid BM25+vector scoring', async () => {
+  it('boosts exact keyword matches via hybrid RRF scoring', async () => {
     if (!database) {
       throw new Error('test database not initialized');
     }
@@ -114,6 +337,622 @@ describe('search-service', () => {
     expect(results.length).toBeGreaterThan(0);
     expect(results[0]?.entity.content).toContain('pgvector');
   }, 120_000);
+
+  it.each(['exact', 'hnsw'] as const)(
+    'finds a chunk keyword match outside the vector cap with the %s strategy',
+    async (strategy) => {
+      if (!database) {
+        throw new Error('test database not initialized');
+      }
+
+      for (let index = 0; index < 28; index += 1) {
+        await insertSearchFixture(database.pool, {
+          entityContent: `vector decoy ${index}`,
+          chunkContent: `vector decoy chunk ${index}`,
+          embedding: lowSimilarityVector(0.9)
+        });
+      }
+
+      await insertSearchFixture(database.pool, {
+        entityContent: 'A related identifier without the requested suffix.',
+        chunkContent: Array.from(
+          { length: 48 },
+          () => 'release ID Q4 1140 incidental reference'
+        ).join(' '),
+        embedding: lowSimilarityVector(0.1)
+      });
+
+      const targetId = await insertSearchFixture(database.pool, {
+        entityContent: 'Identifier details are stored in a separate section.',
+        chunkContent: 'release-ID-Q4-114 candidate',
+        embedding: unitVector(-1)
+      });
+
+      let selectedStrategy: string | undefined;
+      const result = await searchEntities(
+        database.pool,
+        makeAuthContext(),
+        {
+          query: 'release-ID-Q4-114',
+          limit: 1,
+          threshold: 0.95
+        },
+        {
+          embeddingService: fixedEmbeddingService(unitVector(1)),
+          strategyOverride: strategy,
+          onStrategy: (value) => {
+            selectedStrategy = value;
+          }
+        }
+      );
+
+      expect(result.isOk()).toBe(true);
+      expect(
+        result._unsafeUnwrap().results.map((entry) => entry.entityId)
+      ).toContain(targetId);
+      expect(selectedStrategy).toBe(strategy === 'exact' ? 'exact' : 'hnsw');
+    },
+    120_000
+  );
+
+  it.each(['exact', 'hnsw'] as const)(
+    'finds late exact identifiers despite common query terms with the %s strategy',
+    async (strategy) => {
+      if (!database) {
+        throw new Error('test database not initialized');
+      }
+
+      const cases = [
+        {
+          query: 'ticket ABC-1234',
+          commonContent: 'ticket common identifier distractor',
+          targetContent: 'ticket ABC-1234'
+        },
+        {
+          query: 'order 998877665544332211',
+          commonContent: 'order common identifier distractor',
+          targetContent: 'order 998877665544332211'
+        },
+        {
+          query: 'release-date ABC-1234',
+          commonContent: 'release-date common identifier distractor',
+          targetContent: 'release-date ABC-1234'
+        }
+      ];
+
+      for (const testCase of cases) {
+        await resetTestDatabase(database.pool);
+        await seedApiKey(database.pool, {
+          id: '00000000-0000-0000-0000-000000000104',
+          name: 'search-key'
+        });
+        await insertSearchDistractors(database.pool, 28, { metadata: {} });
+        await insertCommonKeywordDistractors(
+          database.pool,
+          240,
+          testCase.commonContent
+        );
+        const targetId = await insertSearchFixture(database.pool, {
+          entityContent: 'The requested identifier.',
+          chunkContent: testCase.targetContent,
+          embedding: lowSimilarityVector(0.1)
+        });
+
+        const result = await searchEntities(
+          database.pool,
+          makeAuthContext(),
+          {
+            query: testCase.query,
+            limit: 1,
+            threshold: 0.95
+          },
+          {
+            embeddingService: fixedEmbeddingService(unitVector(1)),
+            strategyOverride: strategy
+          }
+        );
+
+        expect(result.isOk()).toBe(true);
+        expect(
+          result._unsafeUnwrap().results.map((entry) => entry.entityId)
+        ).toContain(targetId);
+      }
+    },
+    120_000
+  );
+
+  it.each(['exact', 'hnsw'] as const)(
+    'admits a below-threshold vector match outside the keyword cap with the %s strategy',
+    async (strategy) => {
+      if (!database) {
+        throw new Error('test database not initialized');
+      }
+
+      const query = 'keyword-cap-marker';
+      await insertCommonKeywordDistractors(
+        database.pool,
+        240,
+        `${query} common distractor`
+      );
+      const targetId = await insertSearchFixture(database.pool, {
+        entityContent: 'The late vector keyword target.',
+        chunkContent: query,
+        embedding: lowSimilarityVector(0.1)
+      });
+
+      const result = await searchEntities(
+        database.pool,
+        makeAuthContext(),
+        {
+          query,
+          limit: 250,
+          threshold: 0.95
+        },
+        {
+          embeddingService: fixedEmbeddingService(unitVector(1)),
+          strategyOverride: strategy
+        }
+      );
+
+      expect(result.isOk()).toBe(true);
+      expect(
+        result._unsafeUnwrap().results.map((entry) => entry.entityId)
+      ).toContain(targetId);
+    },
+    120_000
+  );
+
+  it('scores chunk content without leaking keywords from the whole entity', async () => {
+    if (!database) {
+      throw new Error('test database not initialized');
+    }
+
+    await insertSearchFixture(database.pool, {
+      entityContent:
+        'The whole entity mentions whole-entity-secret in a distant section.',
+      chunkContent: 'This chunk contains an unrelated paragraph.',
+      embedding: lowSimilarityVector(0.1)
+    });
+
+    const result = await searchEntities(
+      database.pool,
+      makeAuthContext(),
+      {
+        query: 'whole-entity-secret',
+        threshold: 0.35,
+        limit: 10
+      },
+      {
+        embeddingService: fixedEmbeddingService(unitVector(1)),
+        strategyOverride: 'exact'
+      }
+    );
+
+    expect(result.isOk()).toBe(true);
+    expect(result._unsafeUnwrap().results).toHaveLength(0);
+  }, 120_000);
+
+  it('lets a low-vector keyword match pass threshold while rejecting a low-vector semantic candidate', async () => {
+    if (!database) {
+      throw new Error('test database not initialized');
+    }
+
+    const keywordId = await insertSearchFixture(database.pool, {
+      entityContent: 'A concise answer without the query lexemes.',
+      chunkContent: 'threshold-marker appears only in this chunk.',
+      embedding: lowSimilarityVector(0.1)
+    });
+    await insertSearchFixture(database.pool, {
+      entityContent: 'A semantic neighbor without the query lexemes.',
+      chunkContent: 'A semantic neighbor without the query lexemes.',
+      embedding: lowSimilarityVector(0.7)
+    });
+
+    const result = await searchEntities(
+      database.pool,
+      makeAuthContext(),
+      {
+        query: 'threshold-marker',
+        threshold: 0.8,
+        limit: 10
+      },
+      {
+        embeddingService: fixedEmbeddingService(unitVector(1)),
+        strategyOverride: 'exact'
+      }
+    );
+
+    expect(result.isOk()).toBe(true);
+    expect(
+      result._unsafeUnwrap().results.map((entry) => entry.entityId)
+    ).toEqual([keywordId]);
+  }, 120_000);
+
+  it('treats query punctuation as text while building keyword candidates', async () => {
+    if (!database) {
+      throw new Error('test database not initialized');
+    }
+
+    const targetId = await insertSearchFixture(database.pool, {
+      entityContent: 'Punctuation fixture entity.',
+      chunkContent: 'literal punctuation probe',
+      embedding: lowSimilarityVector(0.1)
+    });
+
+    const result = await searchEntities(
+      database.pool,
+      makeAuthContext(),
+      {
+        query: 'literal punctuation probe | ! & : ( )',
+        threshold: 0.8,
+        limit: 1
+      },
+      {
+        embeddingService: fixedEmbeddingService(unitVector(1)),
+        strategyOverride: 'exact'
+      }
+    );
+
+    expect(result.isOk()).toBe(true);
+    expect(
+      result._unsafeUnwrap().results.map((entry) => entry.entityId)
+    ).toEqual([targetId]);
+  }, 120_000);
+
+  it('handles quoted and backslash lexemes without making punctuation syntax', async () => {
+    if (!database) {
+      throw new Error('test database not initialized');
+    }
+
+    const quotedKeywordId = await insertSearchFixture(database.pool, {
+      entityContent: 'Quoted keyword fixture.',
+      chunkContent: "O'Reilly quote\\slash marker",
+      embedding: lowSimilarityVector(0.1)
+    });
+    const semanticId = await insertSearchFixture(database.pool, {
+      entityContent: 'Punctuation semantic fixture.',
+      chunkContent: 'semantic punctuation candidate',
+      embedding: unitVector(1)
+    });
+
+    const quotedKeywordResult = await searchEntities(
+      database.pool,
+      makeAuthContext(),
+      {
+        query: "O'Reilly quote\\slash",
+        threshold: 0.8,
+        limit: 1
+      },
+      {
+        embeddingService: fixedEmbeddingService(unitVector(1)),
+        strategyOverride: 'exact'
+      }
+    );
+
+    expect(quotedKeywordResult.isOk()).toBe(true);
+    expect(
+      quotedKeywordResult._unsafeUnwrap().results.map((entry) => entry.entityId)
+    ).toEqual([quotedKeywordId]);
+
+    const punctuationOnlyQuery = ['!', '&', ':', '(', ')', '\\'].join(' ');
+    const punctuationOnlyResult = await searchEntities(
+      database.pool,
+      makeAuthContext(),
+      { query: punctuationOnlyQuery, threshold: 0.8, limit: 1 },
+      {
+        embeddingService: fixedEmbeddingService(unitVector(1)),
+        strategyOverride: 'exact'
+      }
+    );
+
+    expect(punctuationOnlyResult.isOk()).toBe(true);
+    expect(
+      punctuationOnlyResult._unsafeUnwrap().results.map((entry) => entry.entityId)
+    ).toEqual([semanticId]);
+  }, 120_000);
+
+  it('fuses vector and keyword ranks while assigning zero to a missing branch', async () => {
+    if (!database) {
+      throw new Error('test database not initialized');
+    }
+
+    const vectorOnlyId = await insertSearchFixture(database.pool, {
+      entityContent: 'An incidental vector neighbor.',
+      chunkContent: 'An incidental vector neighbor.',
+      embedding: unitVector(1)
+    });
+    const bothBranchesId = await insertSearchFixture(database.pool, {
+      entityContent: 'A concise answer without the query lexemes.',
+      chunkContent: 'rrf-anchor is present in this chunk.',
+      embedding: lowSimilarityVector(0.99)
+    });
+
+    const result = await searchEntities(
+      database.pool,
+      makeAuthContext(),
+      {
+        query: 'rrf-anchor',
+        threshold: 0,
+        recencyWeight: 0,
+        limit: 2
+      },
+      {
+        embeddingService: fixedEmbeddingService(unitVector(1)),
+        strategyOverride: 'exact'
+      }
+    );
+
+    expect(result.isOk()).toBe(true);
+    const results = result._unsafeUnwrap().results;
+    expect(results.map((entry) => entry.entityId)).toEqual([
+      bothBranchesId,
+      vectorOnlyId
+    ]);
+    expect(results[0]?.score).toBeCloseTo(1 / 61 + 1 / 62, 6);
+    expect(results[1]?.score).toBeCloseTo(1 / 61, 6);
+  }, 120_000);
+
+  it('uses keyword rank to break equal fused scores for concise chunks', async () => {
+    if (!database) {
+      throw new Error('test database not initialized');
+    }
+
+    const createdAt = new Date('2026-10-14T12:00:00.000Z');
+    const conciseId = await insertSearchFixture(database.pool, {
+      entityContent: 'A concise deployment answer.',
+      chunkContent: 'deployment window Tuesday concise answer',
+      embedding: lowSimilarityVector(0.49),
+      createdAt
+    });
+    const incidentalId = await insertSearchFixture(database.pool, {
+      entityContent: 'A long deployment planning document.',
+      chunkContent: Array.from(
+        { length: 48 },
+        () => 'deployment window Tuesday incidental planning context'
+      ).join(' '),
+      embedding: lowSimilarityVector(0.69),
+      createdAt
+    });
+
+    const result = await searchEntities(
+      database.pool,
+      makeAuthContext(),
+      {
+        query: 'deployment window Tuesday',
+        threshold: 0.8,
+        recencyWeight: 0,
+        limit: 2
+      },
+      {
+        embeddingService: fixedEmbeddingService(unitVector(1)),
+        strategyOverride: 'exact'
+      }
+    );
+
+    expect(result.isOk()).toBe(true);
+    expect(
+      result._unsafeUnwrap().results.map((entry) => entry.entityId)
+    ).toEqual([conciseId, incidentalId]);
+  }, 120_000);
+
+  it('uses a true thirty-day half-life for recency boosts', async () => {
+    if (!database) {
+      throw new Error('test database not initialized');
+    }
+
+    const pool = database.pool;
+    const now = new Date('2026-10-14T12:00:00.000Z');
+    const searchOne = async (createdAt: Date): Promise<number> => {
+      await resetTestDatabase(pool);
+      await seedApiKey(pool, {
+        id: '00000000-0000-0000-0000-000000000104',
+        name: 'search-key'
+      });
+      await insertSearchFixture(pool, {
+        entityContent: 'Recency half-life fixture.',
+        chunkContent: 'half-life marker',
+        embedding: unitVector(1),
+        createdAt
+      });
+
+      const result = await searchEntities(
+        pool,
+        makeAuthContext(),
+        {
+          query: 'half-life marker',
+          threshold: 0,
+          recencyWeight: 1,
+          limit: 1
+        },
+        {
+          embeddingService: fixedEmbeddingService(unitVector(1)),
+          strategyOverride: 'exact',
+          now: () => now
+        }
+      );
+      expect(result.isOk()).toBe(true);
+      return result._unsafeUnwrap().results[0]?.score ?? 0;
+    };
+
+    const recentScore = await searchOne(now);
+    const thirtyDaysAgo = new Date(now.getTime() - 30 * 24 * 60 * 60 * 1000);
+    const oldScore = await searchOne(thirtyDaysAgo);
+
+    expect(oldScore / recentScore).toBeCloseTo(0.75, 2);
+  }, 120_000);
+
+  type SearchRequest = Parameters<typeof searchEntities>[2];
+  type KeywordScopeCase = {
+    name: string;
+    auth: (base: AuthContext) => AuthContext;
+    filters: Omit<SearchRequest, 'query' | 'threshold' | 'limit'>;
+    candidate: SearchFixtureOverrides;
+    control: SearchFixtureOverrides;
+  };
+
+  const keywordScopeCases: KeywordScopeCase[] = [
+    {
+      name: 'visibility',
+      auth: (base) => ({ ...base, allowedVisibility: ['shared'] }),
+      filters: {},
+      candidate: { visibility: 'personal' },
+      control: { visibility: 'shared' }
+    },
+    {
+      name: 'type',
+      auth: (base) => ({ ...base, allowedTypes: ['memory'] }),
+      filters: {},
+      candidate: { type: 'document' },
+      control: { type: 'memory' }
+    },
+    {
+      name: 'owner',
+      auth: (base) => base,
+      filters: { owner: 'alice' },
+      candidate: { owner: 'bob' },
+      control: { owner: 'alice' }
+    },
+    {
+      name: 'archive',
+      auth: (base) => base,
+      filters: { includeArchived: false },
+      candidate: { status: 'archived' },
+      control: { status: 'active' }
+    },
+    {
+      name: 'tags',
+      auth: (base) => base,
+      filters: { tags: ['allowed'] },
+      candidate: { tags: ['other'] },
+      control: { tags: ['allowed'] }
+    },
+    {
+      name: 'memory role',
+      auth: (base) => ({ ...base, clientId: 'codex' }),
+      filters: { memoryRole: 'session_context' },
+      candidate: {
+        metadata: { memory_role: 'durable_memory' }
+      },
+      control: {
+        metadata: {
+          memory_role: 'session_context',
+          session_scope: { kind: 'client', client_id: 'codex' }
+        }
+      }
+    },
+    {
+      name: 'session scope',
+      auth: (base) => ({ ...base, clientId: 'codex' }),
+      filters: {},
+      candidate: {
+        metadata: {
+          memory_role: 'session_context',
+          session_scope: { kind: 'client', client_id: 'talon' }
+        }
+      },
+      control: {
+        metadata: {
+          memory_role: 'session_context',
+          session_scope: { kind: 'client', client_id: 'codex' }
+        }
+      }
+    },
+    {
+      name: 'durable client scope',
+      auth: (base) => ({ ...base, clientId: 'codex' }),
+      filters: {},
+      candidate: {
+        metadata: {
+          memory_role: 'durable_memory',
+          session_scope: { kind: 'client', client_id: 'talon' }
+        }
+      },
+      control: {
+        metadata: {
+          memory_role: 'durable_memory',
+          session_scope: { kind: 'client', client_id: 'codex' }
+        }
+      }
+    }
+  ];
+
+  it.each(keywordScopeCases)(
+    'applies $name authorization filters to keyword candidates',
+    async ({ auth: makeScopedAuth, filters, candidate, control }) => {
+      if (!database) {
+        throw new Error('test database not initialized');
+      }
+
+      const query = 'keyword-scope-marker';
+      const embedding = lowSimilarityVector(0.1);
+      await insertSearchDistractors(database.pool, 21, {
+        metadata:
+          filters.memoryRole === 'session_context'
+            ? {
+                memory_role: 'session_context',
+                session_scope: { kind: 'client', client_id: 'codex' }
+              }
+            : { memory_role: 'durable_memory' }
+      });
+      const candidateId = await insertSearchFixture(database.pool, {
+        entityContent: 'Candidate metadata does not contain the query.',
+        chunkContent: query,
+        embedding,
+        ...candidate
+      });
+      const controlId = await insertSearchFixture(database.pool, {
+        entityContent: 'Control metadata does not contain the query.',
+        chunkContent: query,
+        embedding,
+        ...control
+      });
+
+      const result = await searchEntities(
+        database.pool,
+        makeScopedAuth(makeAuthContext()),
+        {
+          query,
+          threshold: 0.8,
+          limit: 1,
+          ...filters
+        },
+        {
+          embeddingService: fixedEmbeddingService(unitVector(1)),
+          strategyOverride: 'exact'
+        }
+      );
+
+      expect(result.isOk()).toBe(true);
+      const resultIds = result
+        ._unsafeUnwrap()
+        .results.map((entry) => entry.entityId);
+      expect(resultIds).toContain(controlId);
+      expect(resultIds).not.toContain(candidateId);
+
+      const hnswResult = await searchEntities(
+        database.pool,
+        makeScopedAuth(makeAuthContext()),
+        {
+          query,
+          threshold: 0.8,
+          limit: 1,
+          ...filters
+        },
+        {
+          embeddingService: fixedEmbeddingService(unitVector(1)),
+          strategyOverride: 'hnsw'
+        }
+      );
+
+      expect(hnswResult.isOk()).toBe(true);
+      const hnswIds = hnswResult
+        ._unsafeUnwrap()
+        .results.map((entry) => entry.entityId);
+      expect(hnswIds).toContain(controlId);
+      expect(hnswIds).not.toContain(candidateId);
+    },
+    120_000
+  );
 
   it('returns enriched entities ranked by similarity with filters', async () => {
     if (!database) {
@@ -750,10 +1589,8 @@ describe('search-service', () => {
       { embeddingService: failingEmbeddingService }
     );
 
-    // Keyword results are scored on a different scale to hybrid results, and
-    // BM25 normalisation means the best keyword match always scores near 1.0
-    // however irrelevant it is. Returning those under the caller's semantic
-    // threshold would be worse than returning nothing.
+    // An embedding failure must fail the search rather than silently falling
+    // back to keyword-only results.
     expect(result.isErr()).toBe(true);
     expect(result._unsafeUnwrapErr().code).toBe(ErrorCode.EMBEDDING_FAILED);
   }, 120_000);

@@ -3,7 +3,10 @@ import { performance } from 'node:perf_hooks';
 import type { Pool, PoolClient, QueryResult } from 'pg';
 
 import type { AuthContext } from '../src/auth/types.js';
-import { createEmbeddingService } from '../src/services/embedding-service.js';
+import {
+  createEmbeddingService,
+  vectorToSql
+} from '../src/services/embedding-service.js';
 import { searchEntities } from '../src/services/search-service.js';
 import {
   createTestDatabase,
@@ -14,6 +17,10 @@ const ENTITY_COUNT = 5_000;
 const CHUNK_COUNT = 6_000;
 const WARMUP_RUNS = 5;
 const SAMPLE_RUNS = 20;
+const LONG_KEYWORD_QUERY = [
+  'rare-keyword-42',
+  ...Array.from({ length: 17 }, (_, index) => `rare-term-${index}`)
+].join(' ');
 
 type CapturedQuery = { text: string; values: unknown[] };
 type Profile = {
@@ -157,16 +164,27 @@ async function seed(pool: Pool): Promise<void> {
 
 function captureSearchQueries(pool: Pool): {
   pool: Pool;
-  captured: { exact?: CapturedQuery; hnsw?: CapturedQuery };
+  captured: {
+    exact?: CapturedQuery;
+    hnsw?: CapturedQuery;
+    longKeyword?: CapturedQuery;
+  };
   counts: { total: number };
 } {
-  const captured: { exact?: CapturedQuery; hnsw?: CapturedQuery } = {};
+  const captured: {
+    exact?: CapturedQuery;
+    hnsw?: CapturedQuery;
+    longKeyword?: CapturedQuery;
+  } = {};
   const counts = { total: 0 };
   const capture = (text: string, values?: unknown[]): void => {
     counts.total += 1;
     if (text.includes('ROW_NUMBER() OVER')) {
       const strategy = text.includes('CROSS JOIN LATERAL') ? 'hnsw' : 'exact';
       captured[strategy] = { text, values: values ?? [] };
+      if (values?.some((value) => value === LONG_KEYWORD_QUERY)) {
+        captured.longKeyword = { text, values: values ?? [] };
+      }
     }
   };
   const instrumentClient = (client: PoolClient): PoolClient =>
@@ -221,12 +239,64 @@ function benchmarkVector(): number[] {
   return vector;
 }
 
+const LONG_KEYWORD_FIXTURE_ID = '00000000-0000-0000-0000-00000000b042';
+
+async function seedLongKeywordFixture(pool: Pool): Promise<void> {
+  await pool.query(
+    `INSERT INTO entities (
+       id,
+       type,
+       content,
+       visibility,
+       status,
+       enrichment_status,
+       tags,
+       metadata
+     )
+     VALUES ($1, 'memory', $2, 'shared', 'active', 'completed', '{}', '{}')`,
+    [LONG_KEYWORD_FIXTURE_ID, LONG_KEYWORD_QUERY]
+  );
+  await pool.query(
+    `INSERT INTO chunks (
+       entity_id,
+       chunk_index,
+       content,
+       embedding,
+       model_id,
+       token_count
+     )
+     VALUES (
+       $1,
+       0,
+       $2,
+       $3::vector,
+       (SELECT id FROM embedding_models WHERE is_active = true),
+       20
+     )`,
+    [
+      LONG_KEYWORD_FIXTURE_ID,
+      LONG_KEYWORD_QUERY,
+      vectorToSql(benchmarkVector())
+    ]
+  );
+}
+
+async function removeLongKeywordFixture(pool: Pool): Promise<void> {
+  await pool.query('DELETE FROM entities WHERE id = $1', [
+    LONG_KEYWORD_FIXTURE_ID
+  ]);
+  await pool.query('ANALYZE entities');
+  await pool.query('ANALYZE chunks');
+}
+
 async function runProfile(
   pool: Pool,
   input: {
     name: string;
     /** Reuse one query across runs so every call after the first is a cache hit. */
     repeated?: boolean;
+    /** Use a long OR keyword query with one deliberately rare matching row. */
+    longKeyword?: boolean;
     /** Share the cache across runs; false simulates a cold process. */
     freshServicePerRun?: boolean;
   }
@@ -244,7 +314,9 @@ async function runProfile(
     if (input.freshServicePerRun) {
       embeddingService = createEmbeddingService({ embedQuery });
     }
-    const query = input.repeated
+    const query = input.longKeyword
+      ? LONG_KEYWORD_QUERY
+      : input.repeated
       ? 'postgres search latency benchmark entity 42'
       : `postgres search latency benchmark entity ${iteration + 1}`;
     const started = performance.now();
@@ -269,6 +341,21 @@ async function runProfile(
     samples.push(await run(index));
   }
   return [input.name, summarize(samples), { embeddingCalls }];
+}
+
+async function runLongKeywordProfile(
+  pool: Pool
+): Promise<[string, Profile, { embeddingCalls: number }]> {
+  await seedLongKeywordFixture(pool);
+  try {
+    return await runProfile(pool, {
+      name: 'long_keyword_query',
+      repeated: true,
+      longKeyword: true
+    });
+  } finally {
+    await removeLongKeywordFixture(pool);
+  }
 }
 
 type RecallProfile = {
@@ -322,8 +409,15 @@ async function measureRecall(pool: Pool): Promise<RecallProfile> {
 type ExplainPlanNode = {
   'Node Type'?: string;
   'Index Name'?: string;
+  'Total Cost'?: number;
   'Shared Hit Blocks'?: number;
   Plans?: ExplainPlanNode[];
+};
+
+type ExplainJit = {
+  Timing?: {
+    Total?: number;
+  };
 };
 
 type ExplainRow = {
@@ -331,12 +425,15 @@ type ExplainRow = {
     'Planning Time'?: number;
     'Execution Time'?: number;
     Plan?: ExplainPlanNode;
+    JIT?: ExplainJit;
   }>;
 };
 
 type ExplainSummary = {
   planning_ms: number | null;
   execution_ms: number | null;
+  estimated_total_cost: number | null;
+  jit_total_ms: number | null;
   root_node: string | null;
   shared_hit_blocks: number | null;
   indexes: string[];
@@ -360,6 +457,8 @@ function summarizeExplain(result: QueryResult<ExplainRow>): ExplainSummary {
   return {
     planning_ms: plan?.['Planning Time'] ?? null,
     execution_ms: plan?.['Execution Time'] ?? null,
+    estimated_total_cost: plan?.Plan?.['Total Cost'] ?? null,
+    jit_total_ms: plan?.JIT?.Timing?.Total ?? null,
     root_node: plan?.Plan?.['Node Type'] ?? null,
     shared_hit_blocks: plan?.Plan?.['Shared Hit Blocks'] ?? null,
     indexes: Array.from(indexes).sort()
@@ -397,7 +496,10 @@ try {
       name: 'database_cache_hit',
       repeated: true,
       freshServicePerRun: true
-    })
+    }),
+    // A long OR query gets one selective fixture only for this profile, so
+    // the existing common-term profiles and recall corpus stay unchanged.
+    await runLongKeywordProfile(pool)
   ];
 
   const profiles = Object.fromEntries(
@@ -410,6 +512,7 @@ try {
   const recall = await measureRecall(pool);
   const hnswExplain = await explain(database.pool, captured.hnsw);
   const exactExplain = await explain(database.pool, captured.exact);
+  const longKeywordExplain = await explain(database.pool, captured.longKeyword);
   report = {
     dataset: { entities: ENTITY_COUNT, chunks: CHUNK_COUNT },
     samples: SAMPLE_RUNS,
@@ -418,7 +521,11 @@ try {
     embedding_calls: embeddingCalls,
     database_queries: counts.total,
     recall,
-    explain: { hnsw: hnswExplain, exact: exactExplain }
+    explain: {
+      hnsw: hnswExplain,
+      exact: exactExplain,
+      long_keyword: longKeywordExplain
+    }
   };
 
   if (process.argv.includes('--assert')) {
@@ -427,6 +534,11 @@ try {
     }
     if (exactExplain?.indexes.includes('idx_chunks_embedding')) {
       throw new Error('exact search plan used idx_chunks_embedding');
+    }
+    if (!longKeywordExplain?.indexes.includes('idx_chunks_content_tsvector')) {
+      throw new Error(
+        'long keyword search plan did not use idx_chunks_content_tsvector'
+      );
     }
     if (recall.hnsw_strategy !== 'hnsw') {
       throw new Error(
@@ -445,7 +557,9 @@ try {
       // No provider round trip at all: this must stay pure SQL time.
       memory_cache_hit: 125,
       // One extra indexed SELECT versus a memory hit, and still no round trip.
-      database_cache_hit: 150
+      database_cache_hit: 150,
+      // The additional work is the bounded GIN keyword branch.
+      long_keyword_query: 125
     };
     for (const [name, maximum] of Object.entries(maxP95)) {
       const actual = profiles[name]?.p95_ms;
@@ -462,7 +576,8 @@ try {
     const maxEmbeddingCalls: Record<string, number> = {
       cold_unique_queries: SAMPLE_RUNS,
       memory_cache_hit: 0,
-      database_cache_hit: 0
+      database_cache_hit: 0,
+      long_keyword_query: 0
     };
     for (const [name, maximum] of Object.entries(maxEmbeddingCalls)) {
       const actual = embeddingCalls[name];

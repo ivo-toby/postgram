@@ -223,6 +223,16 @@ describe('MCP tools', () => {
           'update'
         ].sort()
       );
+
+      const searchTool = tools.tools.find((tool) => tool.name === 'search');
+      expect(searchTool?.description).toContain('reciprocal-rank fusion');
+      expect(searchTool?.description).toContain('keyword query can pass');
+      expect(searchTool?.description).toContain(
+        'simple lexemes are ANDed so compound identifiers such as ABC-1234 remain intact'
+      );
+      expect(JSON.stringify(searchTool?.inputSchema)).toContain(
+        'Cosine similarity floor'
+      );
     } finally {
       await close();
     }

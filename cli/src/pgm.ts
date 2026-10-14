@@ -92,7 +92,7 @@ function formatSearchResults(
   const lines: string[] = [];
   for (const result of results) {
     lines.push(
-      `${result.entity.type} ${shortId(result.entity.id)} score=${result.score.toFixed(3)}`
+      `${result.entity.type} ${shortId(result.entity.id)} score=${result.score.toFixed(6)}`
     );
     lines.push(`  ${result.chunk_content}`);
     if (result.related && result.related.length > 0) {
@@ -461,8 +461,10 @@ program
 
 program
   .command('search')
-  .description(
-    'Search stored entities (chunks by default; full content with --json --full-response)'
+  .description('Hybrid vector + keyword search over stored entity chunks.')
+  .addHelpText(
+    'after',
+    '\nRRF scores use 1/(60+vector_rank) + 1/(60+keyword_rank); a missing branch contributes zero. Scores are relative numbers (about 0.03279 when ranked first in both branches before recency), not percentages. --threshold is a cosine similarity floor; keyword-matching chunks may pass below it. Whitespace-separated keyword terms are ORed, while simple lexemes within each term are ANDed so compound identifiers such as ABC-1234 remain intact.\n'
   )
   .argument('query', 'search query')
   .option('--type <type>', 'entity type')
@@ -470,8 +472,16 @@ program
   .option('--visibility <visibility>', 'entity visibility filter')
   .option('--owner <owner>', 'entity owner filter')
   .option('--limit <limit>', 'result limit', '10')
-  .option('--threshold <threshold>', 'similarity threshold', '0.35')
-  .option('--recency-weight <recencyWeight>', 'recency weight', '0.1')
+  .option(
+    '--threshold <threshold>',
+    'cosine similarity floor; matching keyword chunks can pass below it',
+    '0.35'
+  )
+  .option(
+    '--recency-weight <recencyWeight>',
+    'recency multiplier (RRF score uses a 30-day half-life)',
+    '0.1'
+  )
   .option('--expand-graph', 'include graph-connected entities in results')
   .option('--include-archived', 'include archived entities in results')
   .option(

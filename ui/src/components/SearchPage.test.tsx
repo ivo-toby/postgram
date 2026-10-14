@@ -2,7 +2,7 @@ import { beforeEach, describe, expect, it, vi } from 'vitest';
 import { fireEvent, render, screen, waitFor, within } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import type { ApiClient, BulkArchiveEntitiesResponse } from '../lib/api.ts';
-import type { Entity } from '../lib/types.ts';
+import type { Entity, SearchResult } from '../lib/types.ts';
 import SearchPage from './SearchPage.tsx';
 import { getCleanupBasketStorageKey, type CleanupBasketItem } from '../hooks/useCleanupBasket.ts';
 
@@ -152,6 +152,41 @@ describe('SearchPage result selection', () => {
 
     expect(screen.getByRole('checkbox', { name: 'Select First cleanup candidate' })).toBeChecked();
     expect(api.listEdges).not.toHaveBeenCalled();
+  });
+
+  it('labels semantic search scores as numeric relative relevance values', async () => {
+    const searchEntity = entity({ id: 'entity-score', content: 'Search score candidate' });
+    const searchResult: SearchResult = {
+      entity: searchEntity,
+      chunk_content: 'Search score candidate chunk',
+      similarity: 0.91,
+      score: 0.0123456,
+    };
+    const user = userEvent.setup();
+    const api = {
+      listEntities: vi.fn(async () => ({ items: [], total: 0, limit: 20, offset: 0 })),
+      searchEntities: vi.fn(async () => ({ results: [searchResult] })),
+      getEntity: vi.fn(),
+      listEdges: vi.fn(async () => ({ edges: [] })),
+      deleteEntity: vi.fn(),
+      bulkArchiveEntities: vi.fn(async () => EMPTY_ARCHIVE_RESPONSE),
+    } as unknown as ApiClient;
+    window.localStorage.setItem('pgm_api_key', API_KEY);
+
+    render(<SearchPage api={api} onOpenInGraph={vi.fn()} />);
+    await user.type(screen.getByRole('searchbox'), 'score');
+
+    expect(await screen.findByTitle('Relative relevance score')).toHaveTextContent('Score 0.012346');
+    expect(screen.queryByText('1%')).not.toBeInTheDocument();
+  });
+
+  it('explains the vector floor and keyword-match exception', async () => {
+    const { user } = await renderSearchPage([entity()]);
+
+    await user.click(screen.getByRole('button', { name: /^filters/i }));
+
+    expect(screen.getByText(/Vector similarity floor \(0\.00\)/u)).toBeInTheDocument();
+    expect(screen.getByText('Keyword matches can pass below this floor.')).toBeInTheDocument();
   });
 
   it('opens detail from the result card body', async () => {

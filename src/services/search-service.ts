@@ -187,12 +187,11 @@ export function buildSearchEdgeSummaries(
   return summaries;
 }
 
-// Ranking weights. These are interpolated into the SQL below rather than
-// applied in JS so that thresholding, deduplication and the final LIMIT all
-// happen inside Postgres — only the rows that survive get their content
+// RRF's rank constant is deliberately kept in SQL below so that branch
+// ranking, thresholding, deduplication and the final LIMIT all happen in
+// Postgres. Only rows that survive get their entity and chunk content
 // hydrated and shipped across the wire.
-export const VECTOR_WEIGHT = 0.6;
-export const BM25_WEIGHT = 0.4;
+export const RRF_K = 60;
 export const RECENCY_HALF_LIFE_DAYS = 30;
 
 type SearchContext = {
@@ -207,6 +206,10 @@ type SearchContext = {
 const EXACT_SEARCH_MAX_CHUNKS = 5_000;
 const CANDIDATE_MULTIPLIER = 20;
 const CANDIDATE_CAP = 500;
+// Bound the GIN hit set before the more expensive cover-density rank. This
+// keeps common terms from ranking every matching chunk while leaving the
+// vector candidate budget and fallback decision independent.
+const KEYWORD_CANDIDATE_CAP = 200;
 
 const hnswIterativeScanSupport = new WeakMap<Pool, boolean>();
 
@@ -232,14 +235,12 @@ function hybridEntityFilterConditions(alias: HybridEntityAlias): string {
   `;
 }
 
-const EXACT_CANDIDATES_SQL = `
+const EXACT_VECTOR_CANDIDATES_SQL = `
   SELECT
     e.id AS entity_id,
     c.id AS chunk_id,
     e.created_at,
-    1 - (c.embedding <=> $1::vector) AS similarity,
-    c.embedding <=> $1::vector AS distance,
-    ts_rank(e.search_tsvector, plainto_tsquery('simple', $8)) AS bm25
+    c.embedding <=> $1::vector AS distance
   FROM chunks c
   JOIN entities e ON e.id = c.entity_id
   WHERE ${hybridEntityFilterConditions('e')}
@@ -247,20 +248,17 @@ const EXACT_CANDIDATES_SQL = `
   LIMIT $9
 `;
 
-const HNSW_CANDIDATES_SQL = `
+const HNSW_VECTOR_CANDIDATES_SQL = `
   SELECT
     e.id AS entity_id,
     c.id AS chunk_id,
     e.created_at,
-    1 - (c.embedding <=> $1::vector) AS similarity,
-    c.embedding <=> $1::vector AS distance,
-    ts_rank(e.search_tsvector, plainto_tsquery('simple', $8)) AS bm25
+    c.embedding <=> $1::vector AS distance
   FROM chunks c
   CROSS JOIN LATERAL (
     SELECT
       filtered.id,
-      filtered.created_at,
-      filtered.search_tsvector
+      filtered.created_at
     FROM entities filtered
     WHERE filtered.id = c.entity_id
       AND ${hybridEntityFilterConditions('filtered')}
@@ -316,7 +314,7 @@ function mapSearchEnvelopeRows(rows: SearchEnvelopeRow[]): {
 }
 
 function buildHybridSearchSql(
-  candidateSql: string,
+  vectorCandidateSql: string,
   includeContent: boolean
 ): string {
   const contentProjection = includeContent
@@ -324,56 +322,252 @@ function buildHybridSearchSql(
     : 'NULL::text AS content';
 
   return `
-    WITH candidates AS MATERIALIZED (
-      ${candidateSql}
+    WITH keyword_terms AS MATERIALIZED (
+      SELECT
+        term,
+        term_index,
+        COUNT(*) OVER () AS term_count
+      FROM unnest(regexp_split_to_array(trim($8::text), '\\s+'))
+        WITH ORDINALITY AS words(term, term_index)
+      WHERE term <> ''
     ),
-    normalized AS (
+    keyword_term_queries_raw AS MATERIALIZED (
+      SELECT
+        keyword_terms.term_index,
+        keyword_terms.term,
+        keyword_terms.term_count,
+        cardinality(
+          tsvector_to_array(to_tsvector('simple', keyword_terms.term))
+        )::integer AS lexeme_count,
+        (
+          SELECT string_agg(
+            quote_literal(parsed.lexeme),
+            ' & ' ORDER BY parsed.lexeme
+          )
+          FROM unnest(
+            tsvector_to_array(to_tsvector('simple', keyword_terms.term))
+          ) AS parsed(lexeme)
+        )::tsquery AS query
+      FROM keyword_terms
+    ),
+    keyword_term_queries AS MATERIALIZED (
+      SELECT
+        term_index,
+        lexeme_count,
+        query
+      FROM keyword_term_queries_raw
+      WHERE lexeme_count > 0
+        AND (term_count = 1
+          OR to_tsvector('english', term) <> ''::tsvector
+        )
+    ),
+    lexical_query AS MATERIALIZED (
+      SELECT string_agg(
+        '(' || query::text || ')',
+        ' | ' ORDER BY term_index
+      )::tsquery AS query
+      FROM keyword_term_queries
+    ),
+    vector_candidates AS MATERIALIZED (
+      ${vectorCandidateSql}
+    ),
+    vector_below_threshold AS MATERIALIZED (
+      SELECT chunk_id
+      FROM vector_candidates
+      WHERE 1 - distance < $15
+    ),
+    vector_keyword_matches AS MATERIALIZED (
+      -- Above-floor vector candidates are already eligible; lexical membership
+      -- matters only for below-floor candidates and does not create a keyword
+      -- rank. The keyword branch independently supplies lexical ranking.
+      SELECT vector_below_threshold.chunk_id
+      FROM vector_below_threshold
+      JOIN chunks c ON c.id = vector_below_threshold.chunk_id
+      CROSS JOIN lexical_query
+      WHERE lexical_query.query IS NOT NULL
+        AND to_tsvector('simple', c.content) @@ lexical_query.query
+    ),
+    vector_ranked AS MATERIALIZED (
+      SELECT
+        vector_candidates.*,
+        1 - vector_candidates.distance AS similarity,
+        (vector_keyword_matches.chunk_id IS NOT NULL) AS keyword_match,
+        ROW_NUMBER() OVER (
+          ORDER BY vector_candidates.distance, vector_candidates.chunk_id
+        )::integer AS vector_rank
+      FROM vector_candidates
+      LEFT JOIN vector_keyword_matches
+        ON vector_keyword_matches.chunk_id = vector_candidates.chunk_id
+    ),
+    keyword_probe_hits AS MATERIALIZED (
+      SELECT
+        keyword_term_queries.term_index,
+        CASE
+          WHEN keyword_term_queries.lexeme_count > 1 THEN 0
+          ELSE 1
+        END AS probe_priority,
+        COUNT(*) OVER (
+          PARTITION BY keyword_term_queries.term_index
+        )::integer AS matched_term_count,
+        probe.entity_id,
+        probe.chunk_id,
+        probe.created_at
+      FROM keyword_term_queries,
+      LATERAL (
+        SELECT
+          e.id AS entity_id,
+          c.id AS chunk_id,
+          e.created_at
+        FROM chunks c
+        JOIN entities e ON e.id = c.entity_id
+        WHERE to_tsvector('simple', c.content) @@ keyword_term_queries.query
+          AND ${hybridEntityFilterConditions('e')}
+        LIMIT $17
+      ) AS probe
+    ),
+    keyword_probe_deduplicated AS MATERIALIZED (
+      SELECT DISTINCT ON (chunk_id)
+        entity_id,
+        chunk_id,
+        created_at,
+        probe_priority,
+        term_index,
+        matched_term_count
+      FROM keyword_probe_hits
+      ORDER BY
+        chunk_id,
+        matched_term_count,
+        probe_priority,
+        term_index
+    ),
+    keyword_matches AS MATERIALIZED (
+      SELECT
+        keyword_probe_deduplicated.entity_id,
+        keyword_probe_deduplicated.chunk_id,
+        keyword_probe_deduplicated.created_at,
+        1 - (c.embedding <=> $1::vector) AS similarity,
+        to_tsvector('simple', c.content) AS content_tsvector,
+        lexical_query.query
+      FROM keyword_probe_deduplicated
+      JOIN chunks c ON c.id = keyword_probe_deduplicated.chunk_id
+      CROSS JOIN lexical_query
+      WHERE lexical_query.query IS NOT NULL
+      -- Rank only the bounded, de-duplicated GIN hit set; vector candidates
+      -- keep their own cap. Rarer term probes are preferred so an exact
+      -- identifier cannot be crowded out by a common standalone term.
+      ORDER BY
+        keyword_probe_deduplicated.matched_term_count,
+        keyword_probe_deduplicated.probe_priority,
+        keyword_probe_deduplicated.term_index,
+        keyword_probe_deduplicated.chunk_id
+      LIMIT $17
+    ),
+    keyword_candidates AS MATERIALIZED (
+      SELECT
+        keyword_matches.*,
+        ts_rank_cd(content_tsvector, query, 34) AS lexical_rank
+      FROM keyword_matches
+      ORDER BY lexical_rank DESC, chunk_id
+    ),
+    keyword_ranked AS MATERIALIZED (
+      SELECT
+        keyword_candidates.*,
+        ROW_NUMBER() OVER (
+          ORDER BY lexical_rank DESC, chunk_id
+        )::integer AS keyword_rank
+      FROM keyword_candidates
+    ),
+    branch_candidates AS MATERIALIZED (
+      SELECT
+        entity_id,
+        chunk_id,
+        created_at,
+        similarity,
+        vector_rank,
+        NULL::integer AS keyword_rank,
+        keyword_match
+      FROM vector_ranked
+      UNION ALL
+      SELECT
+        entity_id,
+        chunk_id,
+        created_at,
+        similarity,
+        NULL::integer AS vector_rank,
+        keyword_rank,
+        true AS keyword_match
+      FROM keyword_ranked
+    ),
+    candidates AS MATERIALIZED (
+      SELECT
+        entity_id,
+        chunk_id,
+        created_at,
+        MAX(similarity) AS similarity,
+        MIN(vector_rank) AS vector_rank,
+        MIN(keyword_rank) AS keyword_rank,
+        BOOL_OR(keyword_match) AS keyword_match
+      FROM branch_candidates
+      GROUP BY entity_id, chunk_id, created_at
+    ),
+    eligible AS (
       SELECT
         candidates.*,
-        CASE
-          WHEN MAX(bm25) OVER () = 0 THEN bm25
-          ELSE bm25 / MAX(bm25) OVER ()
-        END AS normalized_bm25
+        (
+          similarity >= $15
+          OR keyword_match
+        ) AS threshold_pass
       FROM candidates
     ),
     scored AS (
       SELECT
-        normalized.*,
+        eligible.*,
         (
-          ${VECTOR_WEIGHT} * similarity + ${BM25_WEIGHT} * normalized_bm25
+          COALESCE(1.0 / (${RRF_K} + vector_rank), 0.0)
+          + COALESCE(1.0 / (${RRF_K} + keyword_rank), 0.0)
         ) * (
-          1 + $13::double precision * EXP(
-            -EXTRACT(EPOCH FROM ($14::timestamptz - created_at))
-            / 86400.0
-            / ${RECENCY_HALF_LIFE_DAYS}.0
+          1 + $13::double precision * POWER(
+            0.5,
+            GREATEST(
+              EXTRACT(EPOCH FROM ($14::timestamptz - created_at)),
+              0
+            ) / 86400.0 / ${RECENCY_HALF_LIFE_DAYS}.0
           )
         ) AS score
-      FROM normalized
+      FROM eligible
+      WHERE threshold_pass
     ),
     deduplicated AS (
       SELECT
         scored.*,
         ROW_NUMBER() OVER (
           PARTITION BY entity_id
-          ORDER BY score DESC, chunk_id
+          ORDER BY
+            score DESC,
+            keyword_rank ASC NULLS LAST,
+            vector_rank ASC NULLS LAST,
+            chunk_id
         ) AS entity_rank
       FROM scored
-      WHERE score >= $15
     ),
     top_results AS MATERIALIZED (
       SELECT *
       FROM deduplicated
       WHERE entity_rank = 1
-      ORDER BY score DESC
+      ORDER BY
+        score DESC,
+        keyword_rank ASC NULLS LAST,
+        vector_rank ASC NULLS LAST,
+        entity_id
       LIMIT $16
     ),
-    candidate_stats AS (
-      SELECT COUNT(*)::integer AS candidate_count
-      FROM candidates
+    vector_stats AS (
+      SELECT COUNT(*)::integer AS vector_candidate_count
+      FROM vector_candidates
     )
     SELECT
       top_results.entity_id IS NOT NULL AS result_present,
-      candidate_stats.candidate_count,
+      vector_stats.vector_candidate_count AS candidate_count,
       e.id,
       e.type,
       ${contentProjection},
@@ -390,11 +584,15 @@ function buildHybridSearchSql(
       c.content AS chunk_content,
       top_results.similarity,
       top_results.score
-    FROM candidate_stats
+    FROM vector_stats
     LEFT JOIN top_results ON true
     LEFT JOIN entities e ON e.id = top_results.entity_id
     LEFT JOIN chunks c ON c.id = top_results.chunk_id
-    ORDER BY top_results.score DESC NULLS LAST
+    ORDER BY
+      top_results.score DESC NULLS LAST,
+      top_results.keyword_rank ASC NULLS LAST,
+      top_results.vector_rank ASC NULLS LAST,
+      top_results.entity_id
   `;
 }
 
@@ -420,7 +618,8 @@ function hybridSearchValues(
     ctx.recencyWeight,
     ctx.now,
     ctx.threshold,
-    ctx.limit
+    ctx.limit,
+    KEYWORD_CANDIDATE_CAP
   ];
 }
 
@@ -436,7 +635,9 @@ async function executeHybridSearch(
     CANDIDATE_CAP
   );
   const candidateSql =
-    strategy === 'hnsw' ? HNSW_CANDIDATES_SQL : EXACT_CANDIDATES_SQL;
+    strategy === 'hnsw'
+      ? HNSW_VECTOR_CANDIDATES_SQL
+      : EXACT_VECTOR_CANDIDATES_SQL;
   const rows = await queryable.query<SearchEnvelopeRow>(
     buildHybridSearchSql(candidateSql, input.includeContent ?? true),
     hybridSearchValues(auth, input, ctx, candidateLimit)

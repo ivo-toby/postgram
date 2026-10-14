@@ -50,3 +50,26 @@ jobs:
         with:
           name: search-latency
           path: search-latency.json
+
+  search-quality:
+    runs-on: ubuntu-latest
+    needs: verify
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: npm
+      - run: npm ci
+      - name: Run search relevance gate
+        # Keep the JSON report when an assertion fails so the artifact shows
+        # which query regressed instead of only showing the thrown error.
+        shell: bash
+        run: |
+          set -o pipefail
+          npm run benchmark:quality -- --assert | tee search-quality.json
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: search-quality
+          path: search-quality.json

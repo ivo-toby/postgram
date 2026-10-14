@@ -222,7 +222,7 @@ postgram/
 │   │   └── migrate.ts              # Migration runner (reads SQL files, tracks in schema_migrations)
 │   ├── services/
 │   │   ├── entity-service.ts        # store, recall, update, delete, list
-│   │   ├── search-service.ts        # vector search with recency boost
+│   │   ├── search-service.ts        # hybrid vector/keyword search with RRF and recency
 │   │   ├── task-service.ts          # task convenience wrappers (create, list, update, complete)
 │   │   ├── embedding-service.ts     # OpenAI embedding generation, batch processing
 │   │   └── chunking-service.ts      # Text splitting (port from obsidian-autopilot-backend)
@@ -454,55 +454,79 @@ interface SearchInput {
   tags?: string[];
   visibility?: string;
   limit?: number;            // default: 10, max: 50
-  threshold?: number;        // default: 0.35 for OpenAI
+  threshold?: number;        // cosine floor, default: 0.35 for OpenAI; keyword matches may bypass
   recency_weight?: number;   // default: 0.1, set to 0 to disable
 }
 
 interface SearchResult {
   entity: StoredEntity;
   chunk_content: string;    // the matching chunk's text
-  score: number;            // final score (similarity * recency boost)
+  score: number;            // relative RRF score after the recency multiplier
   similarity: number;       // raw cosine similarity
 }
 
 function search(input: SearchInput, auth: AuthContext): Promise<ServiceResult<SearchResult[]>>
 // 1. Validate auth: requires 'read' scope
 // 2. Embed the query string using active embedding model
-// 3. Execute vector search:
-//    SELECT c.content, c.entity_id,
-//           1 - (c.embedding <=> $query_embedding) AS similarity,
-//           e.*
-//    FROM chunks c
-//    JOIN entities e ON c.entity_id = e.id
-//    WHERE e.visibility = ANY($allowed_visibility)
-//      AND ($type IS NULL OR e.type = $type)
-//      AND ($tags IS NULL OR e.tags @> $tags)
-//      AND e.status != 'archived'
-//      AND 1 - (c.embedding <=> $query_embedding) >= $threshold
-//    ORDER BY c.embedding <=> $query_embedding
-//    LIMIT $limit
-// 4. Apply recency boost in application code:
-//    final_score = similarity * (1 + recency_weight * exp(-age_days / 30))
-// 5. Re-sort by final_score descending
-// 6. Deduplicate: if multiple chunks from same entity match, keep highest-scoring chunk
-// 7. Append audit log entry with query and result count
+// 3. Retrieve bounded vector candidates and keyword candidates. Split the query
+//    into whitespace-separated terms, AND each term's `simple` lexemes, then OR
+//    the non-empty terms. This preserves compound identifiers such as
+//    `ABC-1234` while allowing one complete term from a long query to match.
+//    For multi-term queries, omit terms whose English dictionary vector is
+//    empty (standalone English stopwords); retain a single term even when its
+//    English vector is empty. Matching and ranking use PostgreSQL's `simple`
+//    configuration. Apply the same visibility, type, tag, owner, archive,
+//    memory-role, and client predicates to every branch.
+// 4. Probe each retained keyword term independently for up to 200 authorized
+//    GIN hits. Deduplicate chunks across probes and select the merged 200-chunk
+//    keyword pool by ascending observed per-term hit count (rarer terms first),
+//    then compound terms. This keeps late identifiers discoverable under common
+//    terms and bounds the expensive keyword ranking; keyword ranks are
+//    approximate within this pool.
+// 5. Rank vector and keyword candidates independently, then merge their rows
+//    by chunk while retaining each branch rank. Compute:
+//    rrf_score = 1 / (60 + vector_rank) + 1 / (60 + keyword_rank)
+//    A missing branch contributes zero. A candidate is eligible when its
+//    cosine similarity meets `threshold` OR its chunk matches the keyword
+//    query; do not compare `threshold` with the fused score.
+// 6. Apply recency to the fused score:
+//    final_score = rrf_score * (1 + recency_weight * 0.5^(age_days / 30))
+// 7. Deduplicate scored chunks by entity, retaining the highest final score.
+//    Re-sort by final_score descending. For equal final scores, prefer the
+//    lower keyword rank, then the lower vector rank, then stable chunk/entity
+//    identifiers. Apply result limits in SQL.
+// 8. Hydrate content only for returned rows.
 ```
 
 **Recency boost formula:**
 ```
-boost = 1 + (recency_weight * e^(-age_days / half_life))
-final_score = similarity * boost
+decay = e^(-ln(2) * age_days / 30) = 0.5^(age_days / 30)
+boost = 1 + (recency_weight * decay)
+final_score = rrf_score * boost
 ```
 - `recency_weight` default: 0.1 (10% max boost for brand-new entities)
-- `half_life`: 30 days (hardcoded for Phase 1)
-- Effect: a 0-day-old entity gets 10% boost, a 30-day-old entity gets ~3.7% boost, a 90-day-old entity gets ~0.5% boost
+- `half_life`: 30 days (hardcoded for Phase 1; use `e^(-ln(2) * age_days / 30)`)
+- Effect: a 0-day-old entity gets 10% boost, a 30-day-old entity gets 5% boost, and a 90-day-old entity gets 1.25% boost
 - Set `recency_weight=0` to disable entirely
 
 **Edge cases:**
 - Empty query string — return `VALIDATION` error
-- No results above threshold — return empty array, not an error
+- No eligible candidates above the cosine floor or keyword match — return empty array, not an error
+- Empty or punctuation-only keyword input — retain semantic vector retrieval
+- Multi-term keyword queries ignore standalone English stopwords when the
+  English dictionary produces an empty vector; a single-term query retains its
+  term, while keyword matching and ranking continue to use `simple`
+- Equal final-score rows use keyword rank, vector rank, then stable identifiers
+  as tie-breakers
 - Embedding API failure — return `EMBEDDING_FAILED` error with details
-- Multiple chunks from same entity — deduplicate, return only the best-matching chunk per entity
+- Multiple candidate rows for the same chunk — deduplicate before ranking; return only the best-ranked chunk per entity
+
+Migration 017 creates an expression GIN index on
+`to_tsvector('simple', chunks.content)`. The migration runner uses a normal
+transactional `CREATE INDEX`: reads remain available during startup, while
+writes to `chunks` wait for the migration to commit. The index build does not
+rewrite the table heap, and this runner cannot use `CREATE INDEX CONCURRENTLY`,
+so operators should schedule deployment for the expected write pause.
 
 ### 3.3 `task-service.ts`
 
@@ -674,7 +698,7 @@ MCP server uses `@modelcontextprotocol/sdk` with SSE transport. All tools share 
 ```typescript
 {
   name: "search",
-  description: "Semantic search across all stored knowledge. Returns entities ranked by relevance to the query, with optional type/tag filtering and recency boosting.",
+  description: "Hybrid vector and keyword search across all stored knowledge. Chunks are ranked with reciprocal-rank fusion (1/(60+vector_rank) + 1/(60+keyword_rank)); missing branches contribute zero. A candidate ranked first in both branches scores about 0.03279 before recency. The returned score is a relative RRF ordering value, not a probability or percentage. Whitespace-separated keyword terms are ORed while simple lexemes within each term are ANDed, preserving compound identifiers such as ABC-1234; multi-term standalone English stopwords are omitted. The threshold is a cosine similarity floor, but a chunk matching the keyword query can pass below it. Recency weighting uses a true 30-day half-life.",
   inputSchema: {
     type: "object",
     properties: {
@@ -682,7 +706,7 @@ MCP server uses `@modelcontextprotocol/sdk` with SSE transport. All tools share 
       type:           { type: "string", enum: ["memory", "person", "project", "task", "interaction", "document"] },
       tags:           { type: "array", items: { type: "string" }, description: "Filter to entities containing ALL of these tags" },
       limit:          { type: "number", default: 10, description: "Max results (1-50)" },
-      threshold:      { type: "number", default: 0.35, description: "Minimum similarity score (0-1)" },
+      threshold:      { type: "number", default: 0.35, description: "Cosine similarity floor (0-1); keyword-matching chunks can pass below it. Keyword terms are ORed across whitespace-separated terms and simple lexemes within a term are conjunctive." },
       recency_weight: { type: "number", default: 0.1, description: "Recency boost strength (0=disabled)" }
     },
     required: ["query"]
@@ -924,7 +948,7 @@ HTTP status mapping:
     {
       "entity": { ... },
       "chunk_content": "decided to use pgvector over dedicated graph DB",
-      "score": 0.87,
+      "score": 0.03279,
       "similarity": 0.82
     }
   ]
@@ -1231,15 +1255,15 @@ pgm search "auth decisions" --type memory --limit 5
 | `--type, -t` | string | | Filter by type |
 | `--tags` | string | | Filter by tags (comma-separated) |
 | `--limit, -n` | number | 10 | Max results |
-| `--threshold` | number | 0.35 | Min similarity |
+| `--threshold` | number | 0.35 | Cosine similarity floor; keyword-matching chunks can pass below it |
 | `--json` | boolean | false | Output raw JSON |
 
 **Output (default):**
 ```
-[0.87] memory 550e8400 — decided to use pgvector over dedicated graph DB
+[0.032790] memory 550e8400 — decided to use pgvector over dedicated graph DB
        tags: decisions, architecture | 2026-03-17
 
-[0.72] memory 661f9511 — evaluated graph databases: Neo4j too heavy for personal use
+[0.016393] memory 661f9511 — evaluated graph databases: Neo4j too heavy for personal use
        tags: decisions, research | 2026-03-15
 ```
 
@@ -1736,7 +1760,8 @@ Explicitly **not** in Phase 1 (deferred to later phases):
 - LLM-based relation extraction on write
 - Entity resolution / dedup
 - `log_interaction` convenience wrapper
-- BM25 hybrid search
+- Alternative weighted keyword ranking beyond the current simple-configuration
+  RRF branch
 - Local embedding models (Ollama)
 - Field-level encryption
 - `pgm-admin reembed` (batch re-embedding when switching models)

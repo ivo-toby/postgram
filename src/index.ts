@@ -346,7 +346,7 @@ export async function startServer(): Promise<{
 }> {
   const config = loadConfig();
   const logger = createLogger(config.LOG_LEVEL);
-  const pool = createPool(config.DATABASE_URL);
+  const pool = createPool(config.DATABASE_URL, logger);
 
   await runMigrations(pool);
 

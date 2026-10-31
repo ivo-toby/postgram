@@ -1,0 +1,10 @@
+{
+  "schemaVersion": 1,
+  "version": "1.0.0",
+  "ratifiedAt": "2026-10-31T15:57:08.871Z",
+  "amendedAt": "2026-10-31T15:57:08.871Z",
+  "approvedAt": "2026-10-31T15:57:08.871Z",
+  "by": "ivo",
+  "reason": "Compact TinySDD constitution derived from speckit 1.1.0 principles and WDD scope/verification",
+  "contentSha256": "86ebc14a0354debc6d00a9b321b8de1f103aba97f518f6dff6c3217fedfbc15f"
+}

@@ -1,0 +1,15 @@
+{
+  "schemaVersion": 1,
+  "defaultWorker": "randal-qwen36",
+  "workers": {
+    "randal-qwen36": {
+      "type": "pi",
+      "provider": "litellm",
+      "model": "randal-mi50/llamacpp/Qwen3.6-35B-A3B-UD-Q5_K_XL.gguf",
+      "profile": "randal-qwen38-next-flash-32k-v1",
+      "limits": {
+        "maxToolCalls": 1000
+      }
+    }
+  }
+}

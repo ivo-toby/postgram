@@ -1,11 +1,8 @@
-import OpenAI, {
-  APIConnectionTimeoutError,
-  APIUserAbortError
-} from 'openai';
+import OpenAI, { APIConnectionTimeoutError, APIUserAbortError } from 'openai';
 
 import { AppError, ErrorCode } from '../../util/errors.js';
 
-export type EmbeddingProviderName = 'openai' | 'ollama';
+export type EmbeddingProviderName = 'openai' | 'ollama' | 'openai-compatible';
 
 export interface EmbeddingProvider {
   readonly name: EmbeddingProviderName;
@@ -28,6 +25,15 @@ export type EmbeddingProviderConfig =
     }
   | {
       provider: 'ollama';
+      model: string;
+      dimensions: number;
+      baseUrl: string;
+      apiKey?: string | undefined;
+      timeoutMs?: number | undefined;
+      fetchImpl?: ProviderFetch | undefined;
+    }
+  | {
+      provider: 'openai-compatible';
       model: string;
       dimensions: number;
       baseUrl: string;
@@ -72,6 +78,16 @@ export function resolveEmbeddingDefaults(
       dimensions: dimensions ?? OPENAI_DEFAULT_DIMENSIONS
     };
   }
+  if (provider === 'openai-compatible') {
+    // A generic endpoint has no model we could sensibly default to.
+    if (model === undefined || dimensions === undefined) {
+      throw new AppError(
+        ErrorCode.VALIDATION,
+        'EMBEDDING_MODEL and EMBEDDING_DIMENSIONS are required for EMBEDDING_PROVIDER=openai-compatible'
+      );
+    }
+    return { model, dimensions };
+  }
   return {
     model: model ?? OLLAMA_DEFAULT_MODEL,
     dimensions: dimensions ?? OLLAMA_DEFAULT_DIMENSIONS
@@ -94,7 +110,10 @@ type OpenAIEmbeddingClient = {
   };
 };
 
-function embeddingError(message: string, details: Record<string, unknown> = {}): AppError {
+function embeddingError(
+  message: string,
+  details: Record<string, unknown> = {}
+): AppError {
   return new AppError(ErrorCode.EMBEDDING_FAILED, message, details);
 }
 
@@ -158,7 +177,8 @@ export function createOpenAIEmbeddingProvider(
       // Pass `dimensions` to OpenAI when the operator has chosen a non-default
       // size. text-embedding-3-small/large accept this parameter and truncate
       // via Matryoshka; older models (ada-002) will reject it at the API.
-      const nonDefaultDimensions = config.dimensions !== OPENAI_DEFAULT_DIMENSIONS;
+      const nonDefaultDimensions =
+        config.dimensions !== OPENAI_DEFAULT_DIMENSIONS;
       const response = await client.embeddings.create(
         {
           model: config.model,
@@ -175,12 +195,15 @@ export function createOpenAIEmbeddingProvider(
         .map((item) => item.embedding);
 
       if (ordered.length !== texts.length) {
-        throw embeddingError('Embedding API returned an unexpected number of vectors', {
-          provider: 'openai',
-          model: config.model,
-          expected: texts.length,
-          actual: ordered.length
-        });
+        throw embeddingError(
+          'Embedding API returned an unexpected number of vectors',
+          {
+            provider: 'openai',
+            model: config.model,
+            expected: texts.length,
+            actual: ordered.length
+          }
+        );
       }
 
       for (const vector of ordered) {
@@ -227,6 +250,159 @@ export function createOpenAIEmbeddingProvider(
   };
 }
 
+// Keeps each request well inside common per-request input limits.
+const OPENAI_COMPATIBLE_MAX_BATCH = 128;
+
+/**
+ * An OpenAI-style `/embeddings` endpoint on another host, such as Mistral.
+ * Unlike the OpenAI provider it never sends `dimensions`: servers that don't
+ * support it, Mistral among them, reject unknown fields.
+ */
+export function createOpenAICompatibleEmbeddingProvider(
+  config: Extract<EmbeddingProviderConfig, { provider: 'openai-compatible' }>
+): EmbeddingProvider {
+  const baseUrl = config.baseUrl.replace(/\/+$/, '');
+  const provider = 'openai-compatible';
+
+  async function request(texts: string[]): Promise<number[][]> {
+    const timeoutMs = config.timeoutMs ?? DEFAULT_EMBEDDING_TIMEOUT_MS;
+    const controller = new AbortController();
+    const timer = setTimeout(() => controller.abort(), timeoutMs);
+    const timedOut = (): AppError =>
+      embeddingError(
+        `OpenAI-compatible embedding call timed out after ${timeoutMs}ms`,
+        { provider, model: config.model, baseUrl, timeoutMs }
+      );
+    try {
+      const headers: Record<string, string> = {
+        'Content-Type': 'application/json'
+      };
+      if (config.apiKey) {
+        headers['Authorization'] = `Bearer ${config.apiKey}`;
+      }
+
+      let response: Response;
+      try {
+        response = await (config.fetchImpl ?? fetch)(`${baseUrl}/embeddings`, {
+          method: 'POST',
+          headers,
+          body: JSON.stringify({
+            model: config.model,
+            input: texts,
+            encoding_format: 'float'
+          }),
+          signal: controller.signal
+        });
+      } catch (error) {
+        if (controller.signal.aborted || isAbortError(error)) {
+          throw timedOut();
+        }
+        const message =
+          error instanceof Error ? error.message : 'embedding call failed';
+        throw embeddingError(
+          `OpenAI-compatible provider unreachable: ${message}`,
+          {
+            provider,
+            model: config.model,
+            baseUrl
+          }
+        );
+      }
+
+      if (!response.ok) {
+        throw embeddingError(
+          `OpenAI-compatible embedding call failed with status ${response.status}`,
+          {
+            provider,
+            model: config.model,
+            baseUrl,
+            status: response.status,
+            body: await safeReadSnippet(response)
+          }
+        );
+      }
+
+      let body: { data?: Array<{ index: number; embedding: number[] }> };
+      try {
+        body = (await response.json()) as typeof body;
+      } catch (error) {
+        if (controller.signal.aborted) {
+          throw timedOut();
+        }
+        const message = error instanceof Error ? error.message : 'invalid JSON';
+        throw embeddingError(
+          `OpenAI-compatible provider returned an unreadable response: ${message}`,
+          {
+            provider,
+            model: config.model,
+            baseUrl
+          }
+        );
+      }
+
+      const ordered = (body.data ?? [])
+        .slice()
+        .sort((left, right) => left.index - right.index)
+        .map((item) => item.embedding);
+      if (ordered.length !== texts.length) {
+        throw embeddingError(
+          'Embedding API returned an unexpected number of vectors',
+          {
+            provider,
+            model: config.model,
+            expected: texts.length,
+            actual: ordered.length
+          }
+        );
+      }
+      for (const vector of ordered) {
+        assertVectorShape(vector, config.dimensions, provider, config.model);
+      }
+      return ordered;
+    } finally {
+      clearTimeout(timer);
+    }
+  }
+
+  async function embedBatch(texts: string[]): Promise<number[][]> {
+    const vectors: number[][] = [];
+    for (
+      let start = 0;
+      start < texts.length;
+      start += OPENAI_COMPATIBLE_MAX_BATCH
+    ) {
+      vectors.push(
+        ...(await request(
+          texts.slice(start, start + OPENAI_COMPATIBLE_MAX_BATCH)
+        ))
+      );
+    }
+    return vectors;
+  }
+
+  async function embed(text: string): Promise<number[]> {
+    const [vector] = await embedBatch([text]);
+    if (!vector) {
+      throw embeddingError(
+        'OpenAI-compatible embedding call returned no vector',
+        {
+          provider,
+          model: config.model
+        }
+      );
+    }
+    return vector;
+  }
+
+  return {
+    name: provider,
+    model: config.model,
+    dimensions: config.dimensions,
+    embed,
+    embedBatch
+  };
+}
+
 export function createOllamaEmbeddingProvider(
   config: Extract<EmbeddingProviderConfig, { provider: 'ollama' }>
 ): EmbeddingProvider {
@@ -260,12 +436,15 @@ export function createOllamaEmbeddingProvider(
 
     let response: Response;
     try {
-      response = await (config.fetchImpl ?? fetch)(`${baseUrl}/api/embeddings`, {
-        method: 'POST',
-        headers,
-        body: JSON.stringify({ model: config.model, prompt }),
-        signal: controller.signal
-      });
+      response = await (config.fetchImpl ?? fetch)(
+        `${baseUrl}/api/embeddings`,
+        {
+          method: 'POST',
+          headers,
+          body: JSON.stringify({ model: config.model, prompt }),
+          signal: controller.signal
+        }
+      );
     } catch (error) {
       if (controller.signal.aborted) {
         throw embeddingError(
@@ -308,11 +487,14 @@ export function createOllamaEmbeddingProvider(
       }
       const message =
         error instanceof Error ? error.message : 'Invalid JSON from Ollama';
-      throw embeddingError(`Ollama returned an unreadable response: ${message}`, {
-        provider: 'ollama',
-        model: config.model,
-        baseUrl
-      });
+      throw embeddingError(
+        `Ollama returned an unreadable response: ${message}`,
+        {
+          provider: 'ollama',
+          model: config.model,
+          baseUrl
+        }
+      );
     }
     if (!body.embedding) {
       throw embeddingError('Ollama response missing embedding field', {
@@ -322,7 +504,12 @@ export function createOllamaEmbeddingProvider(
       });
     }
 
-    assertVectorShape(body.embedding, config.dimensions, 'ollama', config.model);
+    assertVectorShape(
+      body.embedding,
+      config.dimensions,
+      'ollama',
+      config.model
+    );
     return body.embedding;
   }
 
@@ -361,6 +548,9 @@ export function createEmbeddingProvider(
 ): EmbeddingProvider {
   if (config.provider === 'openai') {
     return createOpenAIEmbeddingProvider(config);
+  }
+  if (config.provider === 'openai-compatible') {
+    return createOpenAICompatibleEmbeddingProvider(config);
   }
   return createOllamaEmbeddingProvider(config);
 }

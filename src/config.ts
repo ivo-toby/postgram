@@ -190,13 +190,22 @@ const configSchema = z
       emptyToUndefined,
       z.coerce.number().min(0).max(1).default(0.65)
     ),
+    // Cosine floor applied when a search request sets no threshold. Its
+    // useful range depends on the embedding model: some models put unrelated
+    // text at 0.7+, where the 0.35 default filters nothing.
+    SEARCH_DEFAULT_THRESHOLD: z.preprocess(
+      emptyToUndefined,
+      z.coerce.number().min(0).max(1).default(0.35)
+    ),
     ANTHROPIC_API_KEY: optionalString,
     OLLAMA_API_KEY: optionalString,
     OLLAMA_BASE_URL: z.preprocess(
       emptyToUndefined,
       z.string().min(1).default('http://localhost:11434')
     ),
-    EMBEDDING_PROVIDER: z.enum(['openai', 'ollama']).default('openai'),
+    EMBEDDING_PROVIDER: z
+      .enum(['openai', 'ollama', 'openai-compatible'])
+      .default('openai'),
     EMBEDDING_MODEL: optionalString,
     EMBEDDING_DIMENSIONS: z.preprocess(
       emptyToUndefined,
@@ -211,6 +220,25 @@ const configSchema = z
         code: z.ZodIssueCode.custom,
         path: ['PUBLIC_BASE_URL'],
         message: 'PUBLIC_BASE_URL is required when OAUTH_ENABLED=true'
+      });
+    }
+    if (cfg.EMBEDDING_PROVIDER === 'openai-compatible' && !cfg.EMBEDDING_BASE_URL) {
+      ctx.addIssue({
+        code: z.ZodIssueCode.custom,
+        path: ['EMBEDDING_BASE_URL'],
+        message:
+          'EMBEDDING_BASE_URL is required when EMBEDDING_PROVIDER=openai-compatible'
+      });
+    }
+    if (
+      cfg.EMBEDDING_PROVIDER === 'openai-compatible' &&
+      (cfg.EMBEDDING_MODEL === undefined || cfg.EMBEDDING_DIMENSIONS === undefined)
+    ) {
+      ctx.addIssue({
+        code: z.ZodIssueCode.custom,
+        path: ['EMBEDDING_MODEL'],
+        message:
+          'EMBEDDING_MODEL and EMBEDDING_DIMENSIONS are required when EMBEDDING_PROVIDER=openai-compatible'
       });
     }
   });

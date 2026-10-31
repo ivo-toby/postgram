@@ -60,13 +60,13 @@ const settingHelpText: Record<AdminProviderConfigSettingKey, string> = {
   OLLAMA_BASE_URL:
     'Base URL for Ollama. From Docker on your Mac, host.docker.internal usually reaches Ollama running on the host.',
   EMBEDDING_PROVIDER:
-    'Embeddings turn text into vectors for semantic search and graph similarity. Choose openai for hosted embeddings or ollama for local embeddings.',
+    'Embeddings turn text into vectors for semantic search and graph similarity. Choose openai for hosted OpenAI embeddings, ollama for local embeddings, or openai-compatible for another OpenAI-style /embeddings API such as Mistral.',
   EMBEDDING_MODEL:
     'Model that generates embedding vectors. It must match the dimensions stored in Postgram, otherwise old and new vectors cannot be compared safely.',
   EMBEDDING_DIMENSIONS:
     'Number of numeric values produced by the embedding model. Changing this requires a re-embedding migration because existing vectors have the old size.',
   EMBEDDING_BASE_URL:
-    'Optional dedicated embedding endpoint. Use this only when embeddings should call a different Ollama or compatible endpoint than OLLAMA_BASE_URL.'
+    'Embedding endpoint. Required for openai-compatible (for example https://api.mistral.ai/v1). For ollama it is optional and only needed when embeddings should call a different host than OLLAMA_BASE_URL.'
 };
 
 const providerSecretHelpText: Record<AdminProviderSecretName, string> = {
@@ -84,7 +84,8 @@ const providerSecretHelpText: Record<AdminProviderSecretName, string> = {
 
 const embeddingProviderOptions = [
   { value: 'openai', label: 'OpenAI' },
-  { value: 'ollama', label: 'Ollama' }
+  { value: 'ollama', label: 'Ollama' },
+  { value: 'openai-compatible', label: 'OpenAI-compatible' }
 ];
 
 const extractionProviderOptions = [
@@ -372,8 +373,12 @@ function providerForUrlKey(
   config: AdminProviderConfiguration,
   key: ProviderUrlSettingKey
 ): string {
-  return key === 'EXTRACTION_BASE_URL'
-    ? targetExtractionProvider(config)
+  if (key === 'EXTRACTION_BASE_URL') {
+    return targetExtractionProvider(config);
+  }
+  return key === 'EMBEDDING_BASE_URL' &&
+    targetEmbeddingProvider(config) === 'openai-compatible'
+    ? 'openai-compatible'
     : 'ollama';
 }
 
@@ -396,7 +401,9 @@ function isProviderUrlRelevant(
         !configSettingString(config, 'EMBEDDING_BASE_URL'))
     );
   }
-  return embeddingProvider === 'ollama';
+  return (
+    embeddingProvider === 'ollama' || embeddingProvider === 'openai-compatible'
+  );
 }
 
 function normalizeProviderUrl(value: string | undefined): string | null {

@@ -74,6 +74,7 @@ type AppOptions = {
   adminMfaSecretKey?: string | undefined;
   adminSettingsEncryptionKey?: string | undefined;
   runtimeConfig?: AppConfig | undefined;
+  searchDefaultThreshold?: number | undefined;
   providerConfigFetch?: ProviderConfigFetch | undefined;
   providerConfigDnsLookup?: ProviderConfigDnsLookup | undefined;
   adminBackupCommandRunner?: AdminBackupCommandRunner | undefined;
@@ -148,6 +149,23 @@ export function buildEmbeddingProviderConfig(
     };
   }
 
+  if (config.EMBEDDING_PROVIDER === 'openai-compatible') {
+    if (!config.EMBEDDING_BASE_URL) {
+      throw new AppError(
+        ErrorCode.VALIDATION,
+        'EMBEDDING_BASE_URL is required for EMBEDDING_PROVIDER=openai-compatible'
+      );
+    }
+    return {
+      provider: 'openai-compatible',
+      model,
+      dimensions,
+      baseUrl: config.EMBEDDING_BASE_URL,
+      apiKey: config.EMBEDDING_API_KEY,
+      timeoutMs: config.EMBEDDING_TIMEOUT_MS
+    };
+  }
+
   const baseUrl = config.EMBEDDING_BASE_URL ?? config.OLLAMA_BASE_URL;
   return {
     provider: 'ollama',
@@ -188,7 +206,7 @@ export function createAppliedProviderPolicyFetch(input: {
 }
 
 function describeHost(providerConfig: EmbeddingProviderConfig): string {
-  return providerConfig.provider === 'ollama'
+  return providerConfig.provider !== 'openai'
     ? providerConfig.baseUrl
     : 'api.openai.com';
 }
@@ -296,6 +314,7 @@ export function createApp(
     registerRestRoutes(app, options.pool, {
       embeddingService: options.embeddingService,
       logger: options.logger,
+      searchDefaultThreshold: options.searchDefaultThreshold,
       ...(options.extractionEnabled !== undefined
         ? { extractionEnabled: options.extractionEnabled }
         : {})
@@ -303,6 +322,7 @@ export function createApp(
     registerMcpRoutes(app, options.pool, {
       embeddingService: options.embeddingService,
       logger: options.logger,
+      searchDefaultThreshold: options.searchDefaultThreshold,
       resourceMetadataUrl:
         options.oauth?.enabled && options.oauth.publicBaseUrl
           ? `${options.oauth.publicBaseUrl.replace(/\/$/, '')}/.well-known/oauth-protected-resource/mcp`
@@ -369,6 +389,15 @@ export async function startServer(): Promise<{
   );
 
   let providerConfig = buildEmbeddingProviderConfig(runtimeConfig);
+  if (providerConfig.provider === 'openai-compatible') {
+    const fetchImpl = createAppliedProviderPolicyFetch({
+      settingKey: 'EMBEDDING_BASE_URL',
+      provider: 'openai-compatible',
+      baseUrl: providerConfig.baseUrl,
+      appliedSettingKeys: appliedProviderSettingKeys
+    });
+    providerConfig = { ...providerConfig, fetchImpl };
+  }
   if (providerConfig.provider === 'ollama') {
     const settingKey = runtimeConfig.EMBEDDING_BASE_URL
       ? 'EMBEDDING_BASE_URL'
@@ -558,6 +587,7 @@ export async function startServer(): Promise<{
     adminMfaSecretKey: config.ADMIN_MFA_SECRET_KEY,
     adminSettingsEncryptionKey: config.ADMIN_SETTINGS_ENCRYPTION_KEY,
     runtimeConfig,
+    searchDefaultThreshold: runtimeConfig.SEARCH_DEFAULT_THRESHOLD,
     oauth: {
       enabled: runtimeConfig.OAUTH_ENABLED,
       publicBaseUrl: runtimeConfig.PUBLIC_BASE_URL

@@ -1,4 +1,4 @@
-import type { Pool } from 'pg';
+import type { Pool, PoolClient } from 'pg';
 
 type AuditEntryInput = {
   apiKeyId?: string | null;
@@ -8,7 +8,7 @@ type AuditEntryInput = {
 };
 
 export async function appendAuditEntry(
-  pool: Pool,
+  pool: Pool | PoolClient,
   input: AuditEntryInput
 ): Promise<void> {
   await pool.query(

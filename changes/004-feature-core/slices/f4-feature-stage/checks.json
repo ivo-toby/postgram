@@ -1,0 +1,21 @@
+{
+  "schemaVersion": 1,
+  "dependencyMounts": [
+    "node_modules"
+  ],
+  "checks": [
+    {
+      "id": "feature-f4",
+      "argv": [
+        "node",
+        "changes/004-feature-core/slice-check.mjs",
+        "src/services/feature-service.ts",
+        "tests/integration/feature-stage.test.ts"
+      ],
+      "timeoutMs": 600000,
+      "criteria": [
+        "C1"
+      ]
+    }
+  ]
+}

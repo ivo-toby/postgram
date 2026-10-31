@@ -1,0 +1,58 @@
+{
+  "schemaVersion": 1,
+  "facts": [
+    "ESLint applies typescript-eslint recommendedTypeChecked, consistent-type-imports (use `import type` for types) and no-floating-promises to src/**/*.ts and tests/**/*.ts; require-await is active, so an async function must await something.",
+    "tsconfig is strict with noUncheckedIndexedAccess, exactOptionalPropertyTypes and verbatimModuleSyntax, with module and moduleResolution NodeNext: EVERY relative import ends in .js, in source and in tests (for example `import { x } from '../../src/services/feature-rules.js'`). A missing .js is error TS2835 and makes every imported type unresolved.",
+    "exactOptionalPropertyTypes: an optional key typed `key?: T` does not accept `T | undefined`. Build objects by adding a key only when its value is defined (`...(v !== undefined ? { key: v } : {})`); do not cast.",
+    "Lint includes no-unsafe-assignment, no-unsafe-member-access, no-unsafe-return and no-unsafe-call: an untyped pg query result has rows of type any. Always pass a row type: `const result = await pool.query<{ id: string }>(sql, params);` then `result.rows[0]?.id`. Treat metadata values and caught errors as unknown and narrow them with typeof/Array.isArray before use.",
+    "neverthrow is ^8.2.0: import { ok, err, okAsync, errAsync, ResultAsync } from 'neverthrow' and `import type { Result } from 'neverthrow'`. Read a Result with `.isOk()`/`.isErr()` then `.value`/`.error`; services build `ResultAsync.fromPromise((async () => { ... })(), (error) => toAppError(error, msg))`, and inside such a block a ServiceResult is awaited with `.match((v) => v, (e) => { throw e; })` as in src/services/task-service.ts completeTask. Tests use `_unsafeUnwrap()` and `_unsafeUnwrapErr()`.",
+    "A union type such as Result or a discriminated union must be narrowed before reading a member that only one variant has.",
+    "Tests use vitest ^3.2.4 (describe/it/expect from \"vitest\"). Integration tests use createTestDatabase/resetTestDatabase/seedApiKey from tests/helpers/postgres.js (pgvector/pgvector:pg17 via testcontainers) and run all migrations; seed the api key used as auth.apiKeyId because audit_log.api_key_id references api_keys.",
+    "The protected feature test tests/integration/feature-service.feature.test.ts, changes/004-feature-core/slice-check.mjs, specs/constitution.md and specs/constitution.approval.json must not be edited.",
+    "The slice check runs `node changes/004-feature-core/slice-check.mjs <files>`: Vitest on the slice test, ESLint with --max-warnings=0 on every listed file, and `tsc --noEmit -p tsconfig.json` for the whole project (errors inside tests/integration/feature-service.feature.test.ts are ignored, because it imports functions that later slices add). Use run_checks: it works in your sandbox for unit tests, ESLint and tsc. Docker is unreachable in the sandbox, so integration tests are reported as SKIPPED there; the controller runs them on the host. Fix every ESLint and tsc error before you finish."
+  ],
+  "resources": [
+    {
+      "path": "specs/constitution.md",
+      "startLine": 1,
+      "endLine": 45,
+      "purpose": "Adopted project constitution 1.1.0; every principle applies to this slice."
+    },
+    {
+      "path": "specs/004-workspace-session-tracking/data-model.md",
+      "startLine": 24,
+      "endLine": 92,
+      "purpose": "Feature metadata keys, normalization rules, stage order, transition table and worked example."
+    },
+    {
+      "path": "specs/004-workspace-session-tracking/contracts/rest.md",
+      "startLine": 32,
+      "endLine": 48,
+      "purpose": "Title rule and the PR URL canonicalization rule."
+    },
+    {
+      "path": "src/util/errors.ts",
+      "startLine": 1,
+      "endLine": 28,
+      "purpose": "ErrorCode and AppError(code, message, details)."
+    },
+    {
+      "path": "src/types/entities.ts",
+      "startLine": 29,
+      "endLine": 43,
+      "purpose": "Entity type used by the result types."
+    },
+    {
+      "path": "tests/unit/git-remote.test.ts",
+      "startLine": 1,
+      "endLine": 20,
+      "purpose": "Unit test style to copy."
+    },
+    {
+      "path": "tests/integration/feature-service.feature.test.ts",
+      "startLine": 107,
+      "endLine": 197,
+      "purpose": "Feature-level assertions the rules must make possible (defaults, validation, manual stage)."
+    }
+  ]
+}

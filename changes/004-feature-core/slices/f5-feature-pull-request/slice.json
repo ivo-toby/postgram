@@ -1,0 +1,54 @@
+{
+  "schemaVersion": 1,
+  "id": "feature-f5",
+  "brief": "changes/004-feature-core/slices/f5-feature-pull-request/brief.md",
+  "context": "changes/004-feature-core/slices/f5-feature-pull-request/context.json",
+  "checks": "changes/004-feature-core/slices/f5-feature-pull-request/checks.json",
+  "implementationFiles": [
+    "src/services/feature-service.ts"
+  ],
+  "sliceTests": [
+    "tests/integration/feature-pull-request.test.ts"
+  ],
+  "protect": [
+    "tests/integration/feature-service.feature.test.ts",
+    "changes/004-feature-core/slice-check.mjs"
+  ],
+  "interfaces": [
+    "specs/004-workspace-session-tracking/contracts/rest.md",
+    "specs/004-workspace-session-tracking/data-model.md"
+  ],
+  "dependsOn": [
+    "feature-f4"
+  ],
+  "budget": {
+    "maxImplementationFiles": null,
+    "maxSliceTestFiles": null,
+    "maxCompiledContextBytes": null
+  },
+  "openDecisions": [],
+  "testReview": {
+    "schemaVersion": 1,
+    "workflow": "slice-tests",
+    "criteria": [
+      {
+        "id": "feature-f5-tests",
+        "requirementIds": [
+          "pr-canonical",
+          "pr-upsert",
+          "stage-derive",
+          "released-status",
+          "feature-audit"
+        ],
+        "question": "Do the tests walk the worked example and every transition-table row through the service, including release_on_merge, same-state re-reports, rejection without writes and the feature_pr/feature_stage audit rows?",
+        "interfaces": [
+          "specs/004-workspace-session-tracking/contracts/rest.md",
+          "specs/004-workspace-session-tracking/data-model.md"
+        ],
+        "testPaths": [
+          "tests/integration/feature-pull-request.test.ts"
+        ]
+      }
+    ]
+  }
+}

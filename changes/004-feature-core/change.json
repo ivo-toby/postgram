@@ -1,0 +1,58 @@
+{
+  "schemaVersion": 1,
+  "id": "004-feature-core",
+  "proposal": "changes/004-feature-core/proposal.md",
+  "design": "changes/004-feature-core/design.md",
+  "specDeltas": [
+    "changes/004-feature-core/deltas/feature-core.json"
+  ],
+  "slices": [
+    "changes/004-feature-core/slices/f1-feature-rules/slice.json",
+    "changes/004-feature-core/slices/f2-task-normalization/slice.json",
+    "changes/004-feature-core/slices/f3-feature-lookup/slice.json",
+    "changes/004-feature-core/slices/f4-feature-stage/slice.json",
+    "changes/004-feature-core/slices/f5-feature-pull-request/slice.json"
+  ],
+  "budget": {
+    "maxImplementationFiles": 2,
+    "maxSliceTestFiles": 1,
+    "maxCompiledContextBytes": 65536
+  },
+  "featureTests": [
+    "tests/integration/feature-service.feature.test.ts"
+  ],
+  "featureChecks": "changes/004-feature-core/feature-checks.json",
+  "integration": [
+    {
+      "id": "feature-task-tools",
+      "requirementIds": [
+        "feature-defaults",
+        "feature-validate",
+        "feature-manual-update",
+        "feature-create",
+        "feature-id-resolve",
+        "stage-set",
+        "pr-canonical",
+        "pr-upsert",
+        "stage-derive",
+        "released-status",
+        "feature-audit",
+        "repository-setting"
+      ],
+      "entrypoints": [
+        "src/services/task-service.ts"
+      ],
+      "wiringSlice": "feature-f2",
+      "testPaths": [
+        "tests/integration/feature-service.feature.test.ts"
+      ],
+      "checkIds": [
+        "feature-core"
+      ]
+    }
+  ],
+  "constitution": {
+    "path": "specs/constitution.md",
+    "approval": "specs/constitution.approval.json"
+  }
+}

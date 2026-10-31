@@ -1,0 +1,53 @@
+{
+  "schemaVersion": 1,
+  "id": "feature-f3",
+  "brief": "changes/004-feature-core/slices/f3-feature-lookup/brief.md",
+  "context": "changes/004-feature-core/slices/f3-feature-lookup/context.json",
+  "checks": "changes/004-feature-core/slices/f3-feature-lookup/checks.json",
+  "implementationFiles": [
+    "src/services/feature-service.ts"
+  ],
+  "sliceTests": [
+    "tests/integration/feature-service.test.ts"
+  ],
+  "protect": [
+    "tests/integration/feature-service.feature.test.ts",
+    "changes/004-feature-core/slice-check.mjs"
+  ],
+  "interfaces": [
+    "specs/004-workspace-session-tracking/contracts/rest.md",
+    "specs/004-workspace-session-tracking/research.md"
+  ],
+  "dependsOn": [
+    "feature-f1"
+  ],
+  "budget": {
+    "maxImplementationFiles": null,
+    "maxSliceTestFiles": null,
+    "maxCompiledContextBytes": null
+  },
+  "openDecisions": [],
+  "testReview": {
+    "schemaVersion": 1,
+    "workflow": "slice-tests",
+    "criteria": [
+      {
+        "id": "feature-f3-tests",
+        "requirementIds": [
+          "feature-create",
+          "feature-id-resolve",
+          "repository-setting",
+          "feature-audit"
+        ],
+        "question": "Do the tests cover every row of the feature id table, candidate ordering and titles, archived exclusion, createFeature defaults, and repository upsert with audit only on create or change?",
+        "interfaces": [
+          "specs/004-workspace-session-tracking/contracts/rest.md",
+          "specs/004-workspace-session-tracking/research.md"
+        ],
+        "testPaths": [
+          "tests/integration/feature-service.test.ts"
+        ]
+      }
+    ]
+  }
+}

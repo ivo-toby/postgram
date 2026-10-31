@@ -184,7 +184,7 @@ Let **S** be the session identified by this report: the same `workspace_id`, `ag
 3. **Workspace.** Upsert by `(machine_id, path)`. Set `repo_remote`, `repo_root` and `branch` when their keys are present (an omitted key keeps the stored value, `null` sets null), apply the git rule (`git: null` clears, an omitted key keeps, an object sets; see rest.md), and clear `missing_since`.
    - `last_activity_at`: `now()` for `source = 'hook'`. For `source = 'scan'` it is `GREATEST(existing, max(sessions[].observed_at))`, or `now()` on insert without sessions.
 4. **Feature link.**
-   - When `feature_id` is present and resolves to a visible `task`: set the link. A marker always wins (FR-019), and `pgm feature link/unlink` keeps the marker in sync. If the task is not yet a feature, apply the feature defaults.
+   - When `feature_id` is present and resolves to a visible `task`: set the link. A marker always wins (FR-019), and `pgm feature link/unlink` keeps the marker in sync. A report never writes `entities`, so a task that is not yet a feature stays a plain task; views treat a linked task without `metadata.stage` as `building`. It becomes a feature when its stage is set or a pull request is attached.
    - When it is unknown or invisible: warning `feature_not_found`, link unchanged.
    - When it is not a task: warning `feature_not_task`, link unchanged.
    - When `feature_id` is absent: keep the existing link. A report never creates a feature.

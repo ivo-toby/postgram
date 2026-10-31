@@ -43,6 +43,10 @@ const configSchema = z
       emptyToUndefined,
       z.coerce.number().int().positive().default(30)
     ),
+    WORKSPACE_DORMANT_AFTER_DAYS: z.preprocess(
+      emptyToUndefined,
+      z.coerce.number().int().positive().default(30)
+    ),
     EXTRACTION_ENABLED: z
       .enum(['true', 'false'])
       .default('false')

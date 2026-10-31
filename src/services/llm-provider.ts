@@ -83,6 +83,125 @@ function isReasoningModel(model: string): boolean {
   return /^o\d/i.test(model) || /^gpt-5/i.test(model);
 }
 
+type JsonSchemaNode = Record<string, unknown>;
+
+function isPlainObject(value: unknown): value is JsonSchemaNode {
+  return typeof value === 'object' && value !== null && !Array.isArray(value);
+}
+
+function mapSchemaRecord(
+  record: JsonSchemaNode,
+  fn: (value: unknown) => unknown
+): JsonSchemaNode {
+  return Object.fromEntries(
+    Object.entries(record).map(([key, value]) => [key, fn(value)])
+  );
+}
+
+function isObjectSchema(node: JsonSchemaNode): boolean {
+  const type = node.type;
+  return (
+    type === 'object' ||
+    (Array.isArray(type) && type.includes('object')) ||
+    (type === undefined && isPlainObject(node.properties))
+  );
+}
+
+function withNullEnum(node: JsonSchemaNode): JsonSchemaNode {
+  return Array.isArray(node.enum) && !node.enum.includes(null)
+    ? { ...node, enum: [...(node.enum as unknown[]), null] }
+    : node;
+}
+
+// Strict mode has no optional fields: every property must be listed in
+// `required`. Optional fields are expressed by allowing null instead.
+function makeNullable(node: JsonSchemaNode): JsonSchemaNode {
+  const type = node.type;
+  if (typeof type === 'string') {
+    return type === 'null'
+      ? node
+      : withNullEnum({ ...node, type: [type, 'null'] });
+  }
+  if (Array.isArray(type)) {
+    return type.includes('null')
+      ? node
+      : withNullEnum({ ...node, type: [...(type as unknown[]), 'null'] });
+  }
+  if (Array.isArray(node.anyOf)) {
+    const hasNull = node.anyOf.some(
+      (option) => isPlainObject(option) && option.type === 'null'
+    );
+    return hasNull
+      ? node
+      : { ...node, anyOf: [...(node.anyOf as unknown[]), { type: 'null' }] };
+  }
+  return { anyOf: [node, { type: 'null' }] };
+}
+
+function normalizeStrictSchema(value: unknown): unknown {
+  if (!isPlainObject(value)) return value;
+  const result: JsonSchemaNode = { ...value };
+
+  // Only recurse through schema positions, so a field that happens to be
+  // named "properties" or "type" is never mistaken for a schema keyword.
+  if (isPlainObject(value.properties)) {
+    result.properties = mapSchemaRecord(
+      value.properties,
+      normalizeStrictSchema
+    );
+  }
+  if (Array.isArray(value.items)) {
+    result.items = value.items.map(normalizeStrictSchema);
+  } else if (isPlainObject(value.items)) {
+    result.items = normalizeStrictSchema(value.items);
+  }
+  for (const key of ['anyOf', 'oneOf', 'allOf']) {
+    const options = value[key];
+    if (Array.isArray(options))
+      result[key] = options.map(normalizeStrictSchema);
+  }
+  for (const key of ['$defs', 'definitions']) {
+    const defs = value[key];
+    if (isPlainObject(defs))
+      result[key] = mapSchemaRecord(defs, normalizeStrictSchema);
+  }
+
+  if (isObjectSchema(value)) {
+    const properties = isPlainObject(result.properties)
+      ? result.properties
+      : {};
+    const required = new Set(
+      Array.isArray(value.required)
+        ? value.required.filter((key): key is string => typeof key === 'string')
+        : []
+    );
+    if (isPlainObject(result.properties)) {
+      result.properties = Object.fromEntries(
+        Object.entries(properties).map(([key, child]) => [
+          key,
+          required.has(key) || !isPlainObject(child)
+            ? child
+            : makeNullable(child)
+        ])
+      );
+    }
+    result.required = Object.keys(properties);
+    result.additionalProperties = false;
+  }
+
+  return result;
+}
+
+/**
+ * Rewrite a JSON schema into the subset OpenAI accepts with `strict: true`:
+ * every object is closed (`additionalProperties: false`) and lists all of its
+ * properties as required, with originally optional properties made nullable.
+ * Returns a copy; the input schema is not mutated.
+ */
+export function toOpenAiStrictSchema(schema: object): object {
+  return normalizeStrictSchema(schema) as object;
+}
+
 // Some servers (Mistral with reasoning models) return content as a list of
 // parts: thinking parts followed by text parts. Only the text is the answer.
 function messageText(content: MessageContent): string | undefined {
@@ -124,7 +243,7 @@ function createOpenAiProvider(
         json_schema: {
           name: 'postgram_structured_response',
           strict: true,
-          schema
+          schema: toOpenAiStrictSchema(schema)
         }
       };
     }

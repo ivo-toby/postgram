@@ -77,6 +77,24 @@ function isReasoningModel(model: string): boolean {
   return /^o\d/i.test(model) || /^gpt-5/i.test(model);
 }
 
+/** Normalize object schemas for OpenAI strict structured outputs without mutating callers. */
+function strictOpenAiSchema(schema: object): object {
+  function normalize(value: unknown): unknown {
+    if (Array.isArray(value)) return value.map(normalize);
+    if (!value || typeof value !== 'object') return value;
+    const node = value as Record<string, unknown>;
+    const result: Record<string, unknown> = {};
+    for (const [key, child] of Object.entries(node)) result[key] = normalize(child);
+    if (node.type === 'object' || (node.properties && !node.type)) {
+      const properties = (result.properties ?? {}) as Record<string, unknown>;
+      result.additionalProperties = false;
+      result.required = Object.keys(properties);
+    }
+    return result;
+  }
+  return normalize(schema) as object;
+}
+
 function createOpenAiProvider(
   apiKey: string,
   model: string,
@@ -103,7 +121,7 @@ function createOpenAiProvider(
         json_schema: {
           name: 'postgram_structured_response',
           strict: true,
-          schema
+          schema: strictOpenAiSchema(schema)
         }
       };
     }

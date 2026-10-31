@@ -1,0 +1,30 @@
+name: Postgram
+version: "0.1.2"
+slug: postgram
+description: Upstream Postgram packaged for Home Assistant without source modifications
+url: https://github.com/ivo-toby/postgram
+arch:
+  - amd64
+  - aarch64
+startup: application
+boot: auto
+init: false
+webui: "http://[HOST]:[PORT:3000]"
+ports:
+  3000/tcp: 3000
+  3100/tcp: 3100
+ports_description:
+  3000/tcp: Postgram web interface
+  3100/tcp: Postgram API and MCP
+map:
+  - addon_config:rw
+options:
+  openai_api_key: ""
+  log_level: info
+  extraction_enabled: false
+  extraction_model: ""
+schema:
+  openai_api_key: password
+  log_level: list(trace|debug|info|warn|error|fatal)
+  extraction_enabled: bool
+  extraction_model: str?

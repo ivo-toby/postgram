@@ -550,9 +550,52 @@ describe('createLlmProvider', () => {
           json_schema: {
             name: 'postgram_structured_response',
             strict: true,
-            schema
+            schema: { ...schema, additionalProperties: false }
           }
         });
+      });
+
+      it('normalizes nested objects and array items without mutating the input schema', async () => {
+        (
+          globalThis.fetch as unknown as ReturnType<typeof vi.fn>
+        ).mockResolvedValue(
+          new Response(JSON.stringify({ choices: [{ message: { content: '{}' } }] }), { status: 200 })
+        );
+        const provider = createLlmProvider({ provider: 'openai', openaiApiKey: 'sk-test' });
+        const schema = {
+          type: 'object',
+          properties: {
+            items: {
+              type: 'array',
+              items: {
+                type: 'object',
+                properties: { name: { type: 'string' }, detail: {
+                  type: 'object', properties: { enabled: { type: 'boolean' } }
+                } }
+              }
+            }
+          }
+        };
+        const original = JSON.stringify(schema);
+        await provider('extract', schema);
+        const call = (globalThis.fetch as unknown as ReturnType<typeof vi.fn>).mock.calls[0];
+        const body = JSON.parse((call?.[1] as RequestInit).body as string) as {
+          response_format: { json_schema: { schema: {
+            additionalProperties: boolean; required: string[];
+            properties: { items: { items: {
+              additionalProperties: boolean; required: string[];
+              properties: { detail: { additionalProperties: boolean; required: string[] } }
+            } } }
+          } } }
+        };
+        const result = body.response_format.json_schema.schema;
+        expect(result.additionalProperties).toBe(false);
+        expect(result.required).toEqual(['items']);
+        expect(result.properties.items.items.additionalProperties).toBe(false);
+        expect(result.properties.items.items.required).toEqual(['name', 'detail']);
+        expect(result.properties.items.items.properties.detail.additionalProperties).toBe(false);
+        expect(result.properties.items.items.properties.detail.required).toEqual(['enabled']);
+        expect(JSON.stringify(schema)).toBe(original);
       });
     });
   });

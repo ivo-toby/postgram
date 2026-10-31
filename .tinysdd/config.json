@@ -11,5 +11,10 @@
         "maxToolCalls": 1000
       }
     }
+  },
+  "phaseGates": {
+    "research": {
+      "mode": "human"
+    }
   }
 }

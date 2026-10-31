@@ -1,3 +1,9 @@
+## [1.38.0](https://github.com/ivo-toby/postgram/compare/cli-v1.37.3...cli-v1.38.0) (2026-10-31)
+
+### Features
+
+* support Mistral-style OpenAI-compatible providers ([#119](https://github.com/ivo-toby/postgram/issues/119)) ([c8f5997](https://github.com/ivo-toby/postgram/commit/c8f5997b55fc9c42447a748dfb959dc368f169f3))
+
 ## [1.37.3](https://github.com/ivo-toby/postgram/compare/cli-v1.37.2...cli-v1.37.3) (2026-10-14)
 
 ### Bug Fixes

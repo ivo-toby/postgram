@@ -11,12 +11,16 @@ import type {
   EnrichmentStatus,
   Visibility
 } from '../types/entities.js';
-import type { RepositorySetting } from '../types/features.js';
+import type {
+  FeatureStage,
+  RepositorySetting,
+  SetStageResult
+} from '../types/features.js';
 import { appendAuditEntry } from '../util/audit.js';
 import { AppError, ErrorCode } from '../util/errors.js';
 import { normalizeRemote } from '../util/git-remote.js';
-import { storeEntity } from './entity-service.js';
-import { featureDefaults } from './feature-rules.js';
+import { storeEntity, updateEntity } from './entity-service.js';
+import { featureDefaults, isFeatureStage } from './feature-rules.js';
 
 type EntityRow = {
   id: string;
@@ -266,5 +270,113 @@ export function setRepositoryReleaseOnMerge(
       return setting;
     })(),
     (error) => toAppError(error, 'Failed to set repository release_on_merge')
+  );
+}
+
+const STAGE_WRITE_ATTEMPTS = 2;
+
+type StageWriteAttempt =
+  | { kind: 'written'; entity: Entity; previousStage: FeatureStage | null }
+  | { kind: 'conflict'; error: AppError };
+
+async function attemptStageWrite(
+  pool: Pool,
+  auth: AuthContext,
+  id: string,
+  stage: FeatureStage
+): Promise<StageWriteAttempt> {
+  const resolved = await resolveFeatureId(pool, auth, id);
+  if (resolved.isErr()) {
+    throw resolved.error;
+  }
+
+  const task = resolved.value;
+  const currentMetadata = task.metadata;
+  const now = new Date().toISOString();
+  const storedStage = currentMetadata.stage;
+  const previousStage =
+    currentMetadata.kind === 'feature' && isFeatureStage(storedStage)
+      ? storedStage
+      : null;
+  const base =
+    previousStage === null
+      ? { ...currentMetadata, ...featureDefaults(now) }
+      : currentMetadata;
+
+  const nextMetadata: Record<string, unknown> = {
+    ...base,
+    stage,
+    stage_source: 'manual',
+    stage_set_at: now
+  };
+
+  const updated = await updateEntity(pool, auth, {
+    id: task.id,
+    version: task.version,
+    metadata: nextMetadata
+  });
+
+  if (updated.isErr()) {
+    if (updated.error.code === ErrorCode.CONFLICT) {
+      return { kind: 'conflict', error: updated.error };
+    }
+    throw updated.error;
+  }
+
+  return { kind: 'written', entity: updated.value, previousStage };
+}
+
+async function writeStageMetadata(
+  pool: Pool,
+  auth: AuthContext,
+  id: string,
+  stage: FeatureStage
+): Promise<SetStageResult> {
+  let lastConflict: AppError | null = null;
+
+  for (let attempt = 0; attempt < STAGE_WRITE_ATTEMPTS; attempt += 1) {
+    const result = await attemptStageWrite(pool, auth, id, stage);
+
+    if (result.kind === 'written') {
+      if (result.previousStage !== stage) {
+        await appendAuditEntry(pool, {
+          apiKeyId: auth.apiKeyId,
+          operation: 'feature_stage',
+          entityId: result.entity.id,
+          details: {
+            from: result.previousStage,
+            to: stage,
+            source: 'manual'
+          }
+        });
+      }
+
+      return { entity: result.entity, previous_stage: result.previousStage };
+    }
+
+    lastConflict = result.error;
+  }
+
+  throw lastConflict ?? new AppError(ErrorCode.CONFLICT, 'Version conflict');
+}
+
+export function setFeatureStage(
+  pool: Pool,
+  auth: AuthContext,
+  input: { id: string; stage: string }
+): ServiceResult<SetStageResult> {
+  return ResultAsync.fromPromise(
+    (async () => {
+      requireScope(auth, 'write');
+
+      if (!isFeatureStage(input.stage)) {
+        throw new AppError(ErrorCode.VALIDATION, 'invalid feature stage', {
+          field: 'stage'
+        });
+      }
+
+      return await writeStageMetadata(pool, auth, input.id, input.stage);
+    })(),
+    (error) => toAppError(error, 'Failed to set feature stage')
   );
 }

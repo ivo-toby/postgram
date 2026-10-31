@@ -1,3 +1,9 @@
+## [1.38.2](https://github.com/ivo-toby/postgram/compare/cli-v1.38.1...cli-v1.38.2) (2026-10-31)
+
+### Bug Fixes
+
+* **enrichment:** don't re-queue graph extraction on re-embed of unchanged content ([#121](https://github.com/ivo-toby/postgram/issues/121)) ([0364ddc](https://github.com/ivo-toby/postgram/commit/0364ddc5bd2665bc11bf7e488c73517476cdc394)), closes [#120](https://github.com/ivo-toby/postgram/issues/120)
+
 ## [1.38.1](https://github.com/ivo-toby/postgram/compare/cli-v1.38.0...cli-v1.38.1) (2026-10-31)
 
 ### Bug Fixes

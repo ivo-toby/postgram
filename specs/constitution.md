@@ -12,7 +12,9 @@
    migrations (`NNN_snake_case.sql`) together with the spec and query helpers.
 4. Scoped security. Every non-health entry point authenticates and enforces
    scope, type and visibility in the service layer. Mutating or privileged
-   operations write an audit record. Admin operations stay container-local.
+   operations write an audit record, unless the approved spec or plan
+   documents a waiver for a named high-volume operation; structural changes
+   are always audited. Admin operations stay container-local.
    API keys are stored hashed (argon2). Secrets never reach logs or plaintext
    storage.
 5. Expected errors are values. Use `neverthrow` Result types for expected

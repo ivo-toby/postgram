@@ -435,7 +435,10 @@ describe('search-service', () => {
         const targetId = await insertSearchFixture(database.pool, {
           entityContent: 'The requested identifier.',
           chunkContent: testCase.targetContent,
-          embedding: lowSimilarityVector(0.1)
+          embedding: lowSimilarityVector(0.1),
+          // The distractors are stamped now(); a fixed date here would let
+          // recency decay push the target down as the calendar moves on.
+          createdAt: new Date()
         });
 
         const result = await searchEntities(

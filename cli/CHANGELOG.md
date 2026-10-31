@@ -1,3 +1,9 @@
+## [1.38.1](https://github.com/ivo-toby/postgram/compare/cli-v1.38.0...cli-v1.38.1) (2026-10-31)
+
+### Bug Fixes
+
+* **llm:** normalize JSON schemas for OpenAI strict structured outputs ([#118](https://github.com/ivo-toby/postgram/issues/118)) ([58fc7c7](https://github.com/ivo-toby/postgram/commit/58fc7c70fd5e352f3a7c9d13d4d20d778272be32))
+
 ## [1.38.0](https://github.com/ivo-toby/postgram/compare/cli-v1.37.3...cli-v1.38.0) (2026-10-31)
 
 ### Features

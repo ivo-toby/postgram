@@ -34,4 +34,4 @@
 - Git, Claude Code hooks, pi, SSH and GitHub pull requests are named because they are the external systems the user works with (the product surface), not implementation choices. Storage design, schemas and languages are deliberately left to `/speckit.plan`.
 - FR-016 / SC-006 encode the requirement that activity tracking stays out of the knowledge-entry write path; the plan decides how.
 - The `awaiting_release` stage was added beyond the five stages in the input, to cover "merged but not yet released" for repositories that do not release on merge.
-- Defaults chosen without clarification: staleness threshold 24h (FR-015), registration timeout 2s (FR-020), machine identity = alias with hostname fallback (FR-007), server does not poll GitHub (Assumptions).
+- Defaults chosen without clarification: dormancy threshold 30 days, informational only (FR-015; changed from a 24h stale risk flag after user feedback: returning to a Claude session after weeks is normal), registration timeout 2s (FR-020), machine identity = alias with hostname fallback (FR-007), server does not poll GitHub (Assumptions).

@@ -128,7 +128,8 @@ A coding agent working through Postgram's agent tools can register its workspace
 - **Concurrent reports from many sessions in the same workspace**: each is recorded. The workspace shows the most recent git state.
 - **Feature archived or done while workspaces still exist**: workspaces stay linked, and `pgm where` hides them unless the user asks for all.
 - **Hook runs from a directory inside a nested repository or a submodule**: the innermost worktree root is used.
-- **No reboot detection possible on a platform**: sessions fall back to time-based staleness only.
+- **No reboot detection possible on a platform**: sessions are never marked `interrupted` there. `pgm where` shows last activity time, and dormancy applies as usual.
+- **Returning to a session after weeks**: the session shows its age and possibly `dormant`, keeps its resume command, and goes back to `running` on the next report.
 
 ## Requirements *(mandatory)*
 
@@ -154,9 +155,9 @@ A coding agent working through Postgram's agent tools can register its workspace
 **Agent sessions**
 
 - **FR-012**: The system MUST record agent sessions with: agent kind (`claude-code`, `pi`, `talon`, `other`), the agent's own session id when available, the workspace it runs in, start time, last activity time, and status.
-- **FR-013**: Session status MUST be one of `running`, `idle`, `ended`, `interrupted`, `stale`.
+- **FR-013**: Session status MUST be one of `running`, `idle`, `ended`, `interrupted`. Separately, a session MAY be marked `dormant` (see FR-015).
 - **FR-014**: Each report from a machine MUST include an identifier of the machine's current boot. When a report arrives with a boot identifier that differs from the one recorded for earlier non-ended sessions on that machine, those sessions MUST be marked `interrupted`.
-- **FR-015**: Sessions that are `running` or `idle` and have had no activity for longer than a staleness threshold (default 24 hours) MUST be shown as `stale`.
+- **FR-015**: Sessions that are `running` or `idle` and have had no activity for longer than a dormancy threshold (default 30 days, configurable) MUST be shown as `dormant`. Dormant is informational only: it is not a risk flag, does not change the session status, and the session stays resumable. Returning to a session after weeks is normal use.
 - **FR-016**: Recording activity for workspaces and sessions MUST NOT create new revisions of the feature or task, and MUST NOT trigger re-indexing, embedding or knowledge extraction of any knowledge entry.
 
 **Registration**
@@ -177,7 +178,7 @@ A coding agent working through Postgram's agent tools can register its workspace
 **Views**
 
 - **FR-026**: `pgm where` MUST list non-released features grouped by stage, each with: title, stage, linked pull requests, and per workspace the machine, path, branch, last activity, git state, session statuses, risk flags, and a resume command.
-- **FR-027**: Risk flags MUST include: uncommitted changes, unpushed commits, no upstream branch, interrupted session, stale session, workspace missing on disk.
+- **FR-027**: Risk flags MUST include: uncommitted changes, unpushed commits, no upstream branch, interrupted session, workspace missing on disk. Time since last activity alone MUST NOT raise a risk flag.
 - **FR-028**: The resume command MUST connect to the workspace's machine (omitted when it is the current machine), change to the worktree path, and resume the most recent session with the agent-specific resume form. When no session id is known it starts the agent without resuming.
 - **FR-029**: `pgm where` MUST list workspaces that are not linked to a feature in a separate "unassigned" group.
 - **FR-030**: When run on a machine, `pgm where` and `pgm scan` MUST check that local workspaces still exist on disk and flag missing ones.
@@ -228,6 +229,6 @@ A coding agent working through Postgram's agent tools can register its workspace
 - Pull request state is read with the GitHub access the user already has on the machine running the command, or reported by an agent. The server does not poll GitHub in this phase.
 - "Repository is released on merge" is a per-repository setting the user chooses, defaulting to off.
 - Git state is a snapshot from the last report, not live. `pgm where` shows its age.
-- Server-side defaults introduced here (such as the staleness threshold) are exposed as runtime configuration and carried through to the Docker setup, `.env.example` and README configuration tables, per project convention.
+- Server-side defaults introduced here (such as the dormancy threshold) are exposed as runtime configuration and carried through to the Docker setup, `.env.example` and README configuration tables, per project convention.
 - Existing tasks, statuses and the task tools keep working unchanged. Tasks that are not features are unaffected.
 - Single user with multiple machines. Multi-user collaboration on the same feature is not a goal of this phase, but nothing here prevents it later.

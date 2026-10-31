@@ -3,7 +3,7 @@ import tseslint from 'typescript-eslint';
 
 export default tseslint.config(
   {
-    ignores: ['**/dist/**', '**/node_modules/**']
+    ignores: ['**/dist/**', '**/node_modules/**', '.tinysdd/**']
   },
   js.configs.recommended,
   {
@@ -22,6 +22,15 @@ export default tseslint.config(
         Response: 'readonly',
         setTimeout: 'readonly',
         clearTimeout: 'readonly'
+      }
+    }
+  },
+  {
+    files: ['changes/**/*.mjs'],
+    languageOptions: {
+      globals: {
+        process: 'readonly',
+        console: 'readonly'
       }
     }
   },

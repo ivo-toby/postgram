@@ -50,7 +50,7 @@ claude                 # SessionStart hook registers the session automatically
 ```bash
 pgm where
 # copy the printed resume line, e.g.
-ssh -t strongbad 'cd /home/ivo/wt/1a2b3c4d-kw-rank && claude --resume 8f3c…'
+ssh -t strongbad 'cd '\''/home/ivo/wt/1a2b3c4d-kw-rank'\'' && claude --resume '\''8f3c…'\'''
 ```
 
 Sessions that were running on the rebooted machine show as `interrupted` once that machine reports again. The resume command still works, as long as the transcript was not cleaned up.
@@ -63,5 +63,5 @@ After the standard sprite setup:
 2. Run `pgm here --agent claude-code --session-id s1 --event start` in a temp git repo.
 3. Run `pgm where --json` and check that the workspace appears under `unassigned`.
 4. `pgm feature add "Smoke"` → `pgm feature link <id>` → `pgm where` shows it under `building`.
-5. Simulate a reboot: send a report with a different `boot_id` through `curl` to `/api/workspaces/report`. Check that `s1` becomes `interrupted`.
+5. Simulate a reboot: send a `source: hook` report with no session (or for another session `s2`) and a different `boot_id` through `curl` to `/api/workspaces/report`. Check that `s1` becomes `interrupted` (the reporting session itself is never interrupted).
 6. Check that the entity version for the feature did not change across 20 `activity` reports.

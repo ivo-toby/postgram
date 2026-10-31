@@ -62,7 +62,7 @@ Input: a workspace object (rest.md) and the local machine alias.
 1. **Directory**: `dir = resume_session.cwd` when it equals `path` or lies under `path + '/'`. Otherwise `dir = path`.
 2. **Template**:
    - Use `with_id` when `resume_session` is not null, `with_id` is not null, and the transcript is not known to be gone. Replace `{session_id}` with `shq(agent_session_id)`.
-   - Otherwise use `without_id` for the agent kind of `resume_session`, or `claude-code` when it is null.
+   - Otherwise use `without_id` for the agent kind of `resume_session`, else of `sessions[0]`, else `claude-code`.
    - When the chosen template is null, render only the `cd`.
 3. **Local command**: `local = "cd " + shq(dir) + (tpl ? " && " + tpl : "")`.
 4. **Remote or local**: the workspace's `machine` equals the local alias → print `local`. Otherwise → `"ssh -t " + connect_target + " " + shq(local)`.
@@ -125,7 +125,10 @@ Details are in research R6, R7 and R8.
 
 ### Time budget (FR-020)
 
-- Git resolution gets a total of **800 ms**. Any git value not resolved in time makes the CLI **omit** the `git` key (unknown), rather than sending `null`.
+- Git resolution gets a total of **800 ms**.
+  - If the worktree root (`rev-parse --show-toplevel`) is not resolved in time, **no report is sent** (log a line, exit 0). Falling back to cwd would create a second workspace for a subdirectory.
+  - Any git count not resolved in time makes the CLI **omit** the `git` key (unknown), rather than sending `null`.
+  - `repo_remote`, `repo_root` or `branch` values not resolved in time are **omitted** (keep stored value), never sent as `null`.
 - The HTTP call gets `here_timeout_ms − elapsed − 100 ms`, with a minimum of 100 ms.
 
 ### Exit code and output
@@ -173,8 +176,10 @@ The absolute `node` path is used because hook processes may lack `PATH` (nvm, Ho
 
 **`--pi`**:
 
+- Installs only the pi extension and leaves Claude settings untouched.
 - Copies `integrations/pi/postgram.ts` from the CLI package to `${PI_CODING_AGENT_DIR:-~/.pi/agent}/extensions/postgram.ts`, overwriting a file with that name.
-- The copy embeds the same absolute `pgm` command.
+- The installer replaces the placeholders `__PGM_NODE__` and `__PGM_SCRIPT__` in the copy with `process.execPath` and `realpath(process.argv[1])`.
+- Each handler runs `pi.exec(__PGM_NODE__, [__PGM_SCRIPT__, 'here', '--agent', 'pi', '--session-id', ctx.sessionManager.getSessionId(), '--event', <event>, '--cwd', ctx.cwd, '--quiet'], { timeout: 5000 })`. See research R3 for which handlers await it.
 
 **Uninstall** removes only entries matching the idempotency rule, or the extension file with `--pi`.
 
@@ -230,7 +235,7 @@ pgm where [--actions] [--machine <alias>] [--repo <remote>]
 - If the path does not exist and `missing_since` is null → `PATCH {missing:true}`.
 - If the path exists and `missing_since` is set → `PATCH {missing:false}`.
 
-Then render the refreshed data.
+Then render the refreshed data. If a PATCH fails (e.g. a read-only key gets 403), keep going and add `missing` to that workspace's risks locally.
 
 **`--json`** prints the server response with `resume` added to each workspace (the rendered string) and `transcript_gone: boolean`.
 
@@ -239,8 +244,8 @@ Then render the refreshed data.
 - Group header: `== <Label> (<n>) ==`. Empty groups are skipped in human mode.
 - Feature line: `<8-hex> <title>  [<stage>]` plus ` PR:<state>` for each PR.
 - Per workspace:
-  - Line 1: `  <machine>  <branch|->  <risks joined by ' '>`
-  - Line 2: `  <path>  <latest session agent_kind>/<status> <age>`. The age looks like `3h` or `12d`; add ` dormant` when dormant, or ` transcript gone`.
+  - Line 1: `  <machine>  <branch|->  <risks>`, with each risk rendered as `dirty:<n>`, `unpushed:<n>`, `no_upstream`, `interrupted` or `missing`, joined by spaces.
+  - Line 2: `  <path>  git <age of git_state_at|?>  <sessions>`. `<sessions>` is each entry of `sessions` as `<agent_kind>/<status> <age>`, plus ` dormant` when dormant or ` transcript gone`, comma-separated. Print `no sessions` when the list is empty. Ages look like `3h` or `12d`.
   - Line 3: `  resume: <rendered command>`
 - Lines 1–2 are cut with `…` to 60 columns. Line 3 is never cut.
 - Ages use `m` under 1 hour, `h` under 48 hours, otherwise `d`.
@@ -257,8 +262,10 @@ pgm scan [--root <dir>]... [--depth <n>] [--yes-exact] [--dry-run]
 
 **Finding sessions** (never decode directory names; see research R9):
 
-- **Claude**: let `enc(p) = p.replace(/[^a-zA-Z0-9]/g, '-')`. Search the directory `~/.claude/projects/<enc(worktree)>` and every directory whose name starts with `enc(worktree) + '-'`, which covers sessions launched in a subdirectory. Each `*.jsonl` file is a session: id = file stem, `observed_at` = mtime, `transcript_path` = the file.
-- **pi**: the directory is `~/.pi/agent/sessions/--<worktree without leading '/', with '/' → '-'>--/`. Each `*.jsonl` file is a session: id from the header line `id`, `cwd` from the header line `cwd`, `observed_at` = mtime.
+- **Claude**: let `enc(p) = p.replace(/[^a-zA-Z0-9]/g, '-')`. Search the directory `${CLAUDE_CONFIG_DIR:-~/.claude}/projects/<enc(worktree)>` and every directory whose name starts with `enc(worktree) + '-'`, which covers sessions launched in a subdirectory. Skip a worktree with a note when `enc(worktree)` is longer than 200 characters. Each `*.jsonl` file is a session: id = file stem, `observed_at` = mtime, `transcript_path` = the file.
+  - **Assignment**: the prefix rule overlaps. For example, `enc('/src/postgram')+'-'` also matches the worktree `/src/postgram.worktrees/…`, and `/w/a` also matches `/w/a-b`. So each project directory is given **only** to the scanned worktree with the **longest** matching `enc` prefix.
+  - **cwd check**: when a transcript line carries a `cwd` field, use it as the session's `cwd`, and drop the session unless `cwd` equals the worktree path or lies under `path + '/'`. The field is undocumented, so its absence is not an error.
+- **pi**: the directory is `${PI_CODING_AGENT_DIR:-~/.pi/agent}/sessions/--<worktree without leading '/', with '/' → '-'>--/`. Files are named `<ts>_<id>.jsonl`; the session id is the header-line `id`, so it matches what the extension reports. Each `*.jsonl` file is a session: id from the header line `id`, `cwd` from the header line `cwd`, `observed_at` = mtime.
 
 **Proposals** (FR-035), in this order:
 
@@ -275,7 +282,7 @@ pgm scan [--root <dir>]... [--depth <n>] [--yes-exact] [--dry-run]
 
 **Recording**: an accepted worktree is sent as one report with `source: "scan"`, `feature_id`, and `sessions: [...]`. Accepting also writes the marker.
 
-**Known workspaces**: worktrees already registered on this machine are found by fetching `GET /api/workspaces?machine=<alias>` first. They are listed as `known` and not prompted (FR-037).
+**Known workspaces**: worktrees already registered on this machine are found by fetching `GET /api/workspaces?machine=<alias>` first. They are listed as `known` and not prompted (FR-037). Then the same local disk check as `pgm where` is applied to every fetched workspace (PATCH `missing` true or false; FR-030).
 
 ## pgm feature
 
@@ -283,17 +290,25 @@ pgm scan [--root <dir>]... [--depth <n>] [--yes-exact] [--dry-run]
 pgm feature add "<title>" [--tags a,b] [--visibility personal|work|shared]   # prints id
 pgm feature stage <id> <stage>
 pgm feature pr <id> <url> [--state open|merged|closed]                       # --state defaults to open
-pgm feature link <id> [--path <dir>]
-pgm feature unlink [--path <dir>]
+pgm feature link <id> [--path <dir> | --workspace <workspace-uuid>]
+pgm feature unlink [--path <dir> | --workspace <workspace-uuid>]
 ```
 
 `<id>` accepts a UUID or an 8-hex short id.
 
 **`link` / `unlink`**:
 
+**Local** (no `--workspace`):
+
 1. Resolve the workspace by lookup with (local alias, realpath of `--path` or cwd). If there is no workspace yet, send a workspace-only report first.
 2. PATCH `feature_id`.
 3. Rewrite the marker (`link`) or delete it (`unlink`), so the next hook report keeps the change (FR-010 and FR-019).
+
+**By workspace id** (`--workspace`):
+
+1. PATCH that workspace directly.
+2. When its `machine` is the local alias and its path exists, update the marker as above.
+3. Otherwise touch no marker, and print to stderr: `warning: <machine> may have a feature marker; its next registration will restore the marker's link`.
 
 ## pgm machine
 
@@ -305,7 +320,7 @@ pgm machine list
 **`set`**:
 
 1. Writes `~/.pgmrc`.
-2. Sends a workspace-less registration so the machine exists. This is a report for `realpath(cwd)` with no session.
+2. Sends a report with no `workspace` and no session, so the machine exists without creating a junk workspace.
 3. Sends `PUT /api/machines/:alias {connect_target}`.
 
 Changing an existing alias prints a warning that history stays under the old alias.

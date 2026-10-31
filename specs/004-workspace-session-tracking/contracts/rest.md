@@ -26,7 +26,8 @@
 | Short id matches more than one task | 409 `CONFLICT` with `details.candidates: [{id, title}]` |
 | Any other format | 400 |
 | Unknown id, or one the caller cannot see | 404 |
-| Id resolves to an entity that is not a `task` | 400 |
+| Full UUID that resolves to an entity that is not a `task` | 400 |
+| Short id with no match among non-archived tasks | 404 |
 
 ### Shared rules
 
@@ -156,10 +157,13 @@ Registers activity. It is called by `pgm here`, `pgm scan`, `pgm worktree new` a
 | `machine.alias` | matches `^[a-z0-9._-]{1,64}$` |
 | `machine.hostname` | 1–255 characters |
 | `machine.boot_id` | ≤ 128 characters, or `null` |
+| `workspace` | optional. When omitted, only report steps 1–2 (machine, reboot rule) run; `session`, `sessions` and `feature_id` must then be absent (else 400), and the response has `workspace: null, feature: null` |
 | `workspace.path` | absolute, ≤ 4096 characters. The server strips trailing `/` (except for `/` itself) |
+| `workspace.repo_remote`, `workspace.repo_root`, `workspace.branch` | string or `null`. An **omitted** key keeps the stored value; `null` sets null. The server normalizes `repo_remote` with the shared function |
+| `feature_id` | UUID, or absent. `null` is treated as absent (a report never unlinks). Short ids are not accepted here. Any other value is 400 |
+| `event` | `start`, `activity`, `stop` or `end`. Required for `source: hook`; ignored for `source: scan` |
 | `agent_kind` | `claude-code`, `pi`, `talon` or `other` |
 | `agent_session_id` | ≤ 200 characters, or `null` |
-| `event` | `start`, `activity`, `stop` or `end` |
 | `session.cwd`, `session.transcript_path` | absolute, ≤ 4096 characters, or `null` |
 
 **Git snapshot semantics** (SC-007):
@@ -172,8 +176,8 @@ Registers activity. It is called by `pgm here`, `pgm scan`, `pgm worktree new` a
 
 **Session forms**:
 
-- `session` (one object) or `sessions` (an array) may be sent. Sending both is 400.
-- `sessions` is only allowed with `source: "scan"`.
+- `source: "hook"` accepts at most one `session`; `sessions` is 400.
+- `source: "scan"` accepts only `sessions` (an array, may be empty); `session` is 400.
 - With `source: "scan"`, every session must carry `observed_at` (ISO), and its `event` is ignored. The status is set to `idle` on insert and left unchanged for an existing record.
 
 **Processing**: the transaction steps are in data-model.md, "Report transaction".
@@ -201,7 +205,7 @@ Body: `{ "feature_id": "uuid|8-hex|null", "missing": true|false }`. Both fields 
 
 - **`feature_id`**:
   - Links or unlinks the workspace.
-  - Linking to a plain task marks it as a feature, with the same defaults as `/stage` minus the stage change: `kind = feature`, and `stage = building` if it has none.
+  - Linking to a plain task marks it as a feature and applies the feature defaults from data-model.md (`stage`, `stage_source`, `stage_set_at`, `pull_requests`).
   - An unknown or invisible feature is 404.
 - **`missing: true`** sets `missing_since = now()` only if it is null. **`missing: false`** clears it.
 - **Returns** `{ workspace }`. An unknown or invisible workspace is 404.

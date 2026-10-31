@@ -6,10 +6,10 @@ Every tool is a thin adapter over the same service functions as REST (Constituti
 |------|-------|-------|------------------|
 | `workspace_report` | write | Same body as `POST /api/workspaces/report` | `{ workspace_id, session_id, session_status, feature: {id,title,stage}\|null, interrupted_sessions, warnings }` |
 | `workspace_lookup` | read | `{ machine, path }` | `{ workspace_id\|null, feature: {id,title,stage,pull_requests}\|null }`. Same matching as `GET /api/workspaces/lookup` (a subdirectory resolves to its workspace). No match means both are `null`, not an error. |
-| `workspace_link` | write | `{ workspace_id, feature_id \| null }` | `{ workspace_id, feature_id }` |
+| `workspace_link` | write | `{ workspace_id, feature_id \| null }` | `{ workspace_id, feature_id }`. Description note: a feature marker in the worktree overrides this link on the next hook report. |
 | `feature_stage` | write | `{ id (uuid or 8-hex), stage }` | `{ id, stage, previous_stage }` |
 | `feature_pr` | write | `{ id (uuid or 8-hex), url, state? (default open) }` | `{ id, stage, stage_changed }` |
-| `where` | read | `{ view?: 'stage'\|'actions', machine?, repo?, include_released?, include_ended? }` | The same grouped structure as `GET /api/where`. In compact mode each workspace is reduced to `machine`, `path`, `branch`, `risks` and the latest session (`agent_kind`, `agent_session_id`, `status`). |
+| `where` | read | `{ view?: 'stage'\|'actions', machine?, repo?, include_released?, include_done?, include_ended? }` | The same grouped structure as `GET /api/where`. In compact mode each workspace is reduced to `machine`, `connect_target`, `path`, `branch`, `risks`, `resume_session` (`agent_kind`, `agent_session_id`, `status`, `cwd`) and the latest session (`agent_kind`, `agent_session_id`, `status`). |
 
 ## Tool descriptions (agent-facing)
 

@@ -48,7 +48,7 @@ Source: `github.com/badlogic/pi-mono` at `e4adba9`, `packages/coding-agent/docs/
 
 - **Facts relied on**:
   - Event payloads carry no session id. Read `ctx.sessionManager.getSessionId()` and `ctx.cwd` freshly in each handler.
-  - Handlers are awaited one after another. For `activity`/`stop`, use fire-and-forget (`void pi.exec('pgm', [...], { timeout: 5000 }).catch(() => {})`). On `session_shutdown`, await it (with a timeout), because that is awaited before exit.
+  - Handlers are awaited one after another. For `activity`/`stop`, use fire-and-forget (`void pi.exec(__PGM_NODE__, [__PGM_SCRIPT__, 'here', …], { timeout: 5000 }).catch(() => {})`, with placeholders and arguments as defined in contracts/cli.md). On `session_shutdown`, await it (with a timeout), because that is awaited before exit.
   - The extension is re-created on `/new`, `/resume` and `/fork`, so it keeps no in-memory state.
   - Resume is `pi --session <id>`, which runs in the session's own cwd.
   - Sessions live in `~/.pi/agent/sessions/--<cwd with / → ->--/<ts>_<id>.jsonl`. The header line contains `id` and `cwd`.
@@ -96,7 +96,7 @@ All commands run with `cwd`, `GIT_OPTIONAL_LOCKS=0` (so `git status` never takes
 | Worktree root | `git rev-parse --show-toplevel` |
 | Main repo root | `dirname "$(git rev-parse --path-format=absolute --git-common-dir)"` |
 | Branch | `git symbolic-ref --short -q HEAD` (empty means detached, recorded as `null`) |
-| Remote | `git remote get-url origin`, normalized: strip the scheme, user and `.git`, and turn `host:owner/repo` into `host/owner/repo`, lowercased host |
+| Remote | `git remote get-url origin`, normalized by the shared function in contracts/rest.md ("Remote normalization") |
 | Dirty count | `git status --porcelain=v1 --untracked-files=normal`, counting lines |
 | Upstream and unpushed | `git rev-list --count @{upstream}..HEAD`. When there is no upstream, `has_upstream = false` and `git rev-list --count HEAD --not --remotes` |
 
@@ -108,7 +108,7 @@ All commands run with `cwd`, `GIT_OPTIONAL_LOCKS=0` (so `git status` never takes
   - Marker file `.postgram/feature.json`, next to `.postgram/.gitignore` containing `*`, which makes the directory self-ignoring and needs no edit to `.gitignore` or `info/exclude`.
   - Branch pattern `feat/<8-hex short id>-<slug>`.
   - Matching regex: `(?:^|/)([0-9a-f]{8})(?:-|$)`.
-  - A short id resolves through a new service lookup on `id::text LIKE $1 || '%' AND type = 'task'`, and must be unique.
+  - A short id resolves through a new service lookup on `id::text LIKE $1 || '%' AND type = 'task' AND status IS DISTINCT FROM 'archived'`, and must be unique.
 - **Alternatives considered**: writing to `$GIT_COMMON_DIR/info/exclude` was rejected because it is shared by all worktrees and touches the user's repository config.
 
 ## R9. Bootstrap scan: finding sessions per worktree
@@ -116,7 +116,7 @@ All commands run with `cwd`, `GIT_OPTIONAL_LOCKS=0` (so `git status` never takes
 - **Decision**: never decode project-directory names. The Claude encoding replaces every non-alphanumeric character with `-`, so it is lossy. Instead, encode each known worktree path forward and check whether the directory exists:
   - Claude: `~/.claude/projects/<enc(path)>/*.jsonl`, plus every directory starting with `enc(path) + '-'` (sessions launched in a subdirectory), where `enc(p) = p.replace(/[^a-zA-Z0-9]/g,'-')`. Paths whose encoding is longer than 200 characters are truncated with a hash, so skip them with a note.
   - pi: `~/.pi/agent/sessions/--<path without leading / with / → ->--/*.jsonl`. Read the header line for the id.
-- The session id is the file stem for Claude, and `<ts>_<id>` for pi. Last activity comes from the file's mtime.
+- The session id is the file stem for Claude, and the header-line `id` for pi (the file is named `<ts>_<id>.jsonl`). Assignment and cwd rules for overlapping prefixes are in contracts/cli.md (`pgm scan`). Last activity comes from the file's mtime.
 - `CLAUDE_CONFIG_DIR` and `PI_CODING_AGENT_DIR` are respected.
 
 ## R10. Audit volume vs. the "audit everything" constraint

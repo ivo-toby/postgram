@@ -177,11 +177,11 @@ Events set the status regardless of the previous status (FR-013): `start` and `a
 
 One `POST /api/workspaces/report` runs inside a single transaction. Machine and workspace use `INSERT … ON CONFLICT … DO UPDATE`. Session rows are locked with `SELECT … FOR UPDATE`.
 
-Let **S** be the session identified by this report: the same `workspace_id`, `agent_kind` and `agent_session_id`. Session ids may repeat across agent kinds, so the agent kind is part of the key.
+Let **S** be the session identified by this report: the same `workspace_id`, `agent_kind` and `agent_session_id`. Session ids may repeat across agent kinds, so the agent kind is part of the key. For an id-less report, S is the row step 5 will update (there is none for `start`). When the report has no `workspace`, only steps 1 and 2 run.
 
 1. **Machine.** Upsert the machine by `alias`. Set `hostname` and `last_seen_at = now()`. Set `boot_id` only when the reported value is non-null **and** `source = 'hook'`.
 2. **Reboot rule** (only when `source = 'hook'` and the reported `boot_id` is non-null). Every session on this machine with status `running` or `idle`, a non-null `boot_id` that differs from the reported one, **and that is not S**, becomes `interrupted`, with `end_reason = 'reboot'` and `ended_at = now()`. `interrupted_sessions` is the number of rows changed. Each change writes a `session_interrupt` audit entry.
-3. **Workspace.** Upsert by `(machine_id, path)`. Set `repo_remote`, `repo_root` and `branch`, apply the git rule (`git: null` clears, an omitted key keeps, an object sets; see rest.md), and clear `missing_since`.
+3. **Workspace.** Upsert by `(machine_id, path)`. Set `repo_remote`, `repo_root` and `branch` when their keys are present (an omitted key keeps the stored value, `null` sets null), apply the git rule (`git: null` clears, an omitted key keeps, an object sets; see rest.md), and clear `missing_since`.
    - `last_activity_at`: `now()` for `source = 'hook'`. For `source = 'scan'` it is `GREATEST(existing, max(sessions[].observed_at))`, or `now()` on insert without sessions.
 4. **Feature link.**
    - When `feature_id` is present and resolves to a visible `task`: set the link. A marker always wins (FR-019), and `pgm feature link/unlink` keeps the marker in sync. If the task is not yet a feature, apply the feature defaults.

@@ -77,7 +77,7 @@ src/
 ├── services/
 │   ├── workspace-service.ts                     # new: report tx, link, lookup, list, where/actions, risks
 │   ├── feature-service.ts                       # new: create, setStage, addPullRequest, deriveStage, resolveShortId
-│   └── task-service.ts                          # touch: default stage when metadata.kind === 'feature'
+│   └── task-service.ts                          # touch: feature normalization (defaults, validation, stage_source on update), see data-model.md
 ├── types/workspaces.ts                          # new: Machine, Workspace, AgentSession, Stage, Risk, WhereView
 ├── transport/
 │   ├── rest.ts                                  # + /api/workspaces*, /api/machines, /api/repositories, /api/features*, /api/where

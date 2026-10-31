@@ -14,11 +14,11 @@ Every item resolves an unknown from the plan's Technical Context. All sources we
 
 Source: https://code.claude.com/docs/en/hooks.md, https://code.claude.com/docs/en/sessions.md, https://code.claude.com/docs/en/cli-reference.md.
 
-- **Decision**: register command hooks running `pgm here --hook` with `timeout: 5` on four events:
+- **Decision**: register command hooks running `pgm here --hook` with `timeout: 5` on four events. No matcher is set on any of them, so `SessionStart` fires for every source (startup, resume, clear, compact, fork). The hook command uses absolute paths for both `node` and the CLI script (see contracts/cli.md):
 
   | Hook event | `pgm here` event |
   |------------|------------------|
-  | `SessionStart` (matcher `startup,resume,clear,compact,fork`) | `start` |
+  | `SessionStart` (no matcher) | `start` |
   | `UserPromptSubmit` | `activity` |
   | `Stop` | `stop` |
   | `SessionEnd` | `end` |
@@ -84,7 +84,7 @@ Source: `github.com/badlogic/pi-mono` at `e4adba9`, `packages/coding-agent/docs/
   - macOS: `sysctl -n kern.boottime`, i.e. the `{ sec = …, usec = … }` part, hashed.
 
   If neither is available, send `null`; reboot detection is then disabled for that machine (spec edge case).
-- **Server rule**: when a report arrives with a boot id that differs from the stored non-null one, every `running` or `idle` session on that machine whose `boot_id` differs is set to `interrupted`, with `end_reason = 'reboot'`, in the same transaction.
+- **Server rule**: the authoritative version is in data-model.md, "Report transaction", step 2. On a hook report with a non-null boot id, every other `running` or `idle` session on that machine whose non-null `boot_id` differs is set to `interrupted`, with `end_reason = 'reboot'`, in the same transaction.
 - **Alternatives considered**: comparing uptime was rejected because it is fragile with clock changes. Process liveness checks were rejected because they only work locally.
 
 ## R7. Git state resolution
@@ -114,7 +114,7 @@ All commands run with `cwd`, `GIT_OPTIONAL_LOCKS=0` (so `git status` never takes
 ## R9. Bootstrap scan: finding sessions per worktree
 
 - **Decision**: never decode project-directory names. The Claude encoding replaces every non-alphanumeric character with `-`, so it is lossy. Instead, encode each known worktree path forward and check whether the directory exists:
-  - Claude: `~/.claude/projects/<path.replace(/[^a-zA-Z0-9]/g,'-')>/*.jsonl`. Paths whose encoding is longer than 200 characters are truncated with a hash, so skip them with a note.
+  - Claude: `~/.claude/projects/<enc(path)>/*.jsonl`, plus every directory starting with `enc(path) + '-'` (sessions launched in a subdirectory), where `enc(p) = p.replace(/[^a-zA-Z0-9]/g,'-')`. Paths whose encoding is longer than 200 characters are truncated with a hash, so skip them with a note.
   - pi: `~/.pi/agent/sessions/--<path without leading / with / → ->--/*.jsonl`. Read the header line for the id.
 - The session id is the file stem for Claude, and `<ts>_<id>` for pi. Last activity comes from the file's mtime.
 - `CLAUDE_CONFIG_DIR` and `PI_CODING_AGENT_DIR` are respected.

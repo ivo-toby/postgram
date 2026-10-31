@@ -1,5 +1,13 @@
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
-import { createLlmProvider } from '../../src/services/llm-provider.js';
+import {
+  createLlmProvider,
+  toOpenAiStrictSchema
+} from '../../src/services/llm-provider.js';
+import { EXTRACTION_SCHEMA } from '../../src/services/extraction-service.js';
+import {
+  DURABLE_MEMORY_GROOMING_SCHEMA,
+  SESSION_CONTEXT_PROMOTION_SCHEMA
+} from '../../src/services/memory-grooming-service.js';
 
 describe('createLlmProvider', () => {
   describe('ollama', () => {
@@ -550,10 +558,157 @@ describe('createLlmProvider', () => {
           json_schema: {
             name: 'postgram_structured_response',
             strict: true,
-            schema
+            schema: { ...schema, additionalProperties: false }
           }
         });
       });
+
+      it('sends the extraction schema in OpenAI strict-mode shape', async () => {
+        (
+          globalThis.fetch as unknown as ReturnType<typeof vi.fn>
+        ).mockResolvedValue(
+          new Response(
+            JSON.stringify({
+              choices: [{ message: { content: '{"relationships":[]}' } }]
+            }),
+            { status: 200 }
+          )
+        );
+        const provider = createLlmProvider({
+          provider: 'openai',
+          openaiApiKey: 'sk-test',
+          model: 'gpt-4o-mini'
+        });
+        await provider('extract', EXTRACTION_SCHEMA);
+
+        const call = (globalThis.fetch as unknown as ReturnType<typeof vi.fn>)
+          .mock.calls[0];
+        const body = JSON.parse((call?.[1] as RequestInit).body as string) as {
+          response_format: { json_schema: { schema: unknown } };
+        };
+        expect(body.response_format.json_schema.schema).toEqual(
+          toOpenAiStrictSchema(EXTRACTION_SCHEMA)
+        );
+      });
+    });
+  });
+
+  describe('toOpenAiStrictSchema', () => {
+    it('closes nested objects and makes optional fields required but nullable', () => {
+      expect(toOpenAiStrictSchema(EXTRACTION_SCHEMA)).toEqual({
+        type: 'object',
+        additionalProperties: false,
+        required: ['relationships'],
+        properties: {
+          relationships: {
+            type: 'array',
+            items: {
+              type: 'object',
+              additionalProperties: false,
+              required: [
+                'target_name',
+                'target_type',
+                'relation',
+                'confidence'
+              ],
+              properties: {
+                target_name: { type: 'string' },
+                target_type: {
+                  type: 'string',
+                  enum: EXTRACTION_SCHEMA.properties.relationships.items
+                    .properties.target_type.enum
+                },
+                relation: {
+                  type: 'string',
+                  enum: EXTRACTION_SCHEMA.properties.relationships.items
+                    .properties.relation.enum
+                },
+                confidence: { type: ['number', 'null'], minimum: 0, maximum: 1 }
+              }
+            }
+          }
+        }
+      });
+    });
+
+    it('adds null to the enum of an optional enum field', () => {
+      const result = toOpenAiStrictSchema({
+        type: 'object',
+        properties: { mode: { type: 'string', enum: ['a', 'b'] } }
+      });
+      expect(result).toEqual({
+        type: 'object',
+        additionalProperties: false,
+        required: ['mode'],
+        properties: {
+          mode: { type: ['string', 'null'], enum: ['a', 'b', null] }
+        }
+      });
+    });
+
+    it('wraps optional fields without a type in anyOf with null', () => {
+      const result = toOpenAiStrictSchema({
+        type: 'object',
+        properties: {
+          free: { description: 'untyped' },
+          union: { anyOf: [{ type: 'string' }, { type: 'number' }] }
+        }
+      });
+      expect(result).toEqual({
+        type: 'object',
+        additionalProperties: false,
+        required: ['free', 'union'],
+        properties: {
+          free: { anyOf: [{ description: 'untyped' }, { type: 'null' }] },
+          union: {
+            anyOf: [{ type: 'string' }, { type: 'number' }, { type: 'null' }]
+          }
+        }
+      });
+    });
+
+    it('treats a field named "properties" as a field, not a schema', () => {
+      const result = toOpenAiStrictSchema({
+        type: 'object',
+        required: ['properties'],
+        properties: { properties: { type: 'string' } }
+      });
+      expect(result).toEqual({
+        type: 'object',
+        additionalProperties: false,
+        required: ['properties'],
+        properties: { properties: { type: 'string' } }
+      });
+    });
+
+    it('produces strict-valid grooming schemas', () => {
+      for (const schema of [
+        SESSION_CONTEXT_PROMOTION_SCHEMA,
+        DURABLE_MEMORY_GROOMING_SCHEMA
+      ]) {
+        const result = toOpenAiStrictSchema(schema) as {
+          required: string[];
+          properties: Record<string, { type: unknown }>;
+        };
+        expect(result.required).toEqual(Object.keys(schema.properties));
+        for (const key of Object.keys(schema.properties)) {
+          const wasRequired = (schema.required as readonly string[]).includes(
+            key
+          );
+          const type = result.properties[key]?.type;
+          if (wasRequired) {
+            expect(Array.isArray(type) && type.includes('null')).toBe(false);
+          } else {
+            expect(type).toEqual(expect.arrayContaining(['null']));
+          }
+        }
+      }
+    });
+
+    it('does not mutate the input schema', () => {
+      const snapshot = JSON.stringify(EXTRACTION_SCHEMA);
+      toOpenAiStrictSchema(EXTRACTION_SCHEMA);
+      expect(JSON.stringify(EXTRACTION_SCHEMA)).toBe(snapshot);
     });
   });
 
@@ -663,16 +818,14 @@ describe('createLlmProvider', () => {
 
     it('uses schema-neutral JSON instructions instead of forcing arrays', async () => {
       const originalFetch = globalThis.fetch;
-      globalThis.fetch = vi
-        .fn()
-        .mockResolvedValue(
-          new Response(
-            JSON.stringify({
-              content: [{ type: 'text', text: '{"promote":false}' }]
-            }),
-            { status: 200 }
-          )
-        ) as unknown as typeof fetch;
+      globalThis.fetch = vi.fn().mockResolvedValue(
+        new Response(
+          JSON.stringify({
+            content: [{ type: 'text', text: '{"promote":false}' }]
+          }),
+          { status: 200 }
+        )
+      ) as unknown as typeof fetch;
       try {
         const provider = createLlmProvider({
           provider: 'anthropic',

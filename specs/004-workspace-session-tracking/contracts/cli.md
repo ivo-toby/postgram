@@ -38,6 +38,7 @@ pgm hooks install [--settings <path>] [--yes] [--keep-transcripts <days>]
 ```
 
 - Adds `SessionStart`, `UserPromptSubmit`, `Stop` and `SessionEnd` command hooks that run `pgm here --hook` to `~/.claude/settings.json`, or to `$CLAUDE_CONFIG_DIR/settings.json` when that is set.
+- Writes the absolute path of the running `pgm` binary into each hook command, because hooks may not get the shell `PATH`.
 - Uses `timeout: 5` on each hook. This also raises the SessionEnd budget beyond the 1.5 s default.
 - Is idempotent: existing `pgm here` entries are replaced, never duplicated.
 - Shows a diff and asks before writing unless `--yes` (FR-021).
@@ -66,10 +67,10 @@ pgm where [--actions] [--machine <alias>] [--repo <remote>]
 ```
 
 - Default: grouped by stage. `--actions` groups by human action (FR-026, FR-031).
-- `--all` includes released features (FR-033).
+- `--all` includes released features. `--include-ended` shows all ended sessions. By default each workspace shows its non-ended sessions plus its most recent session even when ended (FR-033).
 - Before rendering, checks every workspace on the local machine (existence of the path) and PATCHes `missing` when it changed (FR-030).
 - Per workspace prints the machine, path, branch, age of the last activity, git state with its age, risk flags, and the session list.
-- Prints `resume:` for the most recent non-ended session (FR-028):
+- Prints `resume:` for the most recently active session with a known session id, including `ended` and `interrupted` ones (FR-028):
 
   ```text
   ssh -t <connect_target> 'cd <path> && <resume-template>'   # remote machine
@@ -100,7 +101,7 @@ pgm scan [--root <dir>]... [--depth <n>] [--yes-exact] [--dry-run]
 ```text
 pgm feature add "<title>" [--tags a,b] [--visibility personal|work|shared]
 pgm feature stage <id> <stage>
-pgm feature pr <id> <url> [--state open|merged|closed]
+pgm feature pr <id> <url> [--state open|merged|closed]   # --state defaults to open
 pgm feature link <id> [--path <dir>]     # link the cwd's (or path's) workspace
 pgm feature unlink [--path <dir>]
 ```

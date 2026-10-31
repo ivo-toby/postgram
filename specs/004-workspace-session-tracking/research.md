@@ -37,7 +37,7 @@ Source: https://code.claude.com/docs/en/hooks.md, https://code.claude.com/docs/e
 
 Source: `github.com/badlogic/pi-mono` at `e4adba9`, `packages/coding-agent/docs/extensions.md`, `session-format.md`, `cli.md`, and `src/core/extensions/runner.ts`. The npm package is now `@earendil-works/pi-coding-agent`. Legacy `@mariozechner/*` imports are still mapped.
 
-- **Decision**: ship `integrations/pi/postgram.ts`. `pgm hooks install --pi` copies it to `~/.pi/agent/extensions/postgram.ts`, or under `$PI_CODING_AGENT_DIR` when set. Event mapping:
+- **Decision**: ship `cli/integrations/pi/postgram.ts` (inside the CLI package, listed in its `files`). `pgm hooks install --pi` copies it to `~/.pi/agent/extensions/postgram.ts`, or under `$PI_CODING_AGENT_DIR` when set. Event mapping:
 
   | pi event | `pgm here` event |
   |----------|------------------|

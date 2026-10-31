@@ -28,10 +28,12 @@ A feature is a `task` entity whose metadata carries these keys. No schema change
 | Key | Type | Rules |
 |-----|------|-------|
 | `kind` | `'feature'` | Marks the task as a feature (FR-001). |
-| `stage` | enum | `building` · `review` · `functional_test` · `ready_to_merge` · `awaiting_release` · `released`. Defaults to `building` when `kind` is set without a stage (FR-002). |
+
+The feature **title** is derived, not stored: it is the first line of `content`, trimmed and cut at 80 characters.
+| `stage` | enum | `building` · `review` · `functional_test` · `ready_to_merge` · `awaiting_release` · `released`. Defaults to `building` when a task is created **or updated** with `kind = 'feature'` and no valid stage (FR-002). |
 | `stage_source` | `'manual' \| 'derived'` | Who set the current stage. |
 | `stage_set_at` | ISO timestamp | When the stage last changed. |
-| `pull_requests` | array of `{ url, state, updated_at }` | `state` ∈ `open` · `merged` · `closed`. Unique by `url` (FR-004). |
+| `pull_requests` | array of `{ url, state, updated_at }` | `state` ∈ `open` · `merged` · `closed`, default `open`. Unique by `url`: adding a known URL updates its state (FR-004). |
 
 Stage changes go through `updateEntity`. That bumps the version and writes an audit entry, but the content is unchanged, so there is no re-embedding. The service does the version read-modify-write internally, with one retry on conflict, so agents never need to pass a version for stage or PR updates.
 
@@ -75,7 +77,7 @@ Machines are upserted by `alias` on every report.
 |--------|------|-------|
 | `id` | uuid PK | |
 | `machine_id` | uuid NOT NULL FK → machines | |
-| `path` | text NOT NULL | Absolute, normalized, with no trailing slash. This is the worktree root when inside git, otherwise the cwd. |
+| `path` | text NOT NULL | Absolute real path (symlinks resolved, `fs.realpathSync`), with no trailing slash. This is the worktree root when inside git, otherwise the cwd. |
 | `repo_remote` | text NULL | Normalized remote identity, e.g. `github.com/ivo-toby/postgram`. |
 | `repo_root` | text NULL | The main worktree path, from `git rev-parse --git-common-dir`. |
 | `branch` | text NULL | NULL when detached or not a git repo. |
@@ -115,19 +117,15 @@ Machines are upserted by `alias` on every report.
 
 ### Session state machine
 
-```text
-            start/activity             stop
-   (new) ───────────────► running ───────────► idle
-                            ▲  │                 │
-                 activity   │  │ end             │ end
-                 /start     │  ▼                 ▼
-                            └── idle         ended
-   running|idle ──(boot_id changed on machine)──► interrupted
-   interrupted ──(same agent_session_id reports again)──► running
-   ended       ──(same agent_session_id reports start again, e.g. resume)──► running
-```
+| Event / rule | Resulting status | Applies from |
+|--------------|------------------|--------------|
+| `start` | `running` | any status, or a new record |
+| `activity` | `running` | any status, or a new record |
+| `stop` | `idle` | any status, or a new record |
+| `end` | `ended` | any status, or a new record |
+| reboot rule (report step 2) | `interrupted` | `running` or `idle` with a non-null, different `boot_id` |
 
-Events: `start` and `activity` set `running`, `stop` sets `idle`, `end` sets `ended` and records `ended_at` and `end_reason`.
+Events set the status regardless of the previous status (FR-013): `start` and `activity` set `running`, `stop` sets `idle`, `end` sets `ended` and records `ended_at` and `end_reason`. Any non-`end` event clears `ended_at` and `end_reason`. Every report also sets the session's `boot_id` to the reported value. Only the reboot rule sets `interrupted`.
 
 ## repositories
 
@@ -144,7 +142,7 @@ Events: `start` and `activity` set `running`, `stop` sets `idle`, `end` sets `en
 One `POST /api/workspaces/report` runs inside a single transaction:
 
 1. Upsert the machine by `alias` and read the previous `boot_id`.
-2. If the reported `boot_id` differs from the previous non-null value, mark every `running` or `idle` session on that machine whose `boot_id` differs as `interrupted`, with `end_reason = 'reboot'`. Return the count.
+2. If the reported `boot_id` is non-null, mark every `running` or `idle` session on that machine whose `boot_id` is **non-null and differs** from it as `interrupted`, with `end_reason = 'reboot'`. Sessions with a null `boot_id` (e.g. from `pgm scan`) are left alone. Return the count.
 3. Upsert the workspace by `(machine_id, path)`, refresh its git snapshot, set `last_activity_at = now()` and clear `missing_since`.
 4. Set or keep the feature link:
    - If `feature_id` came from a marker, set it. The feature must exist, be a `task`, and be visible to the caller. Otherwise the link stays as it is and the response carries a warning.

@@ -2,7 +2,7 @@
 
 **Feature Branch**: `004-workspace-session-tracking`
 **Created**: 2026-10-31
-**Status**: Draft
+**Status**: Approved (2026-10-31), ready for implementation
 **Input**: User description: "Workspace and agent-session tracking for Postgram (phase 1 of personal project management). Postgram becomes the source of truth for projects, features and tasks. The user runs agent environments on three machines (Mac, codebox, strongbad) with multiple Claude Code and pi coding-agent sessions working on ~7 features in parallel, each in a different stage. They lose track of which feature is where, and after a machine reboot they no longer know which agent session or git worktree belonged to which feature. Sessions and worktrees still exist on disk after reboot; the missing piece is the index."
 
 ## Context
@@ -126,6 +126,7 @@ A coding agent working through Postgram's agent tools can register its workspace
 - **Machine renamed or hostname changed**: machines are identified by a configured alias with the hostname as fallback, so a hostname change does not split history once the alias is set.
 - **Clock skew between machines**: last activity is the time the server received the report.
 - **Concurrent reports from many sessions in the same workspace**: each is recorded. The workspace shows the most recent git state.
+- **Symlinked paths** (e.g. macOS `/var` → `/private/var`): workspace paths are stored as fully resolved real paths, so the same directory reached through a symlink is one workspace.
 - **Feature archived or done while workspaces still exist**: workspaces stay linked, and `pgm where` hides them unless the user asks for all.
 - **Hook runs from a directory inside a nested repository or a submodule**: the innermost worktree root is used.
 - **Agent transcript deleted by the agent's own retention**: when checked on the local machine, the session shows `transcript gone` and the resume command starts a fresh agent in the worktree instead of resuming.
@@ -141,8 +142,8 @@ A coding agent working through Postgram's agent tools can register its workspace
 - **FR-001**: The system MUST let a task be marked as a feature.
 - **FR-002**: Each feature MUST carry a delivery stage, one of: `building`, `review`, `functional_test`, `ready_to_merge`, `awaiting_release`, `released`. New features start in `building`.
 - **FR-003**: Users and agents MUST be able to set a feature's stage directly to any value, including moving backwards (e.g. from `functional_test` back to `building` after a failed test).
-- **FR-004**: Users and agents MUST be able to attach one or more pull request links to a feature.
-- **FR-005**: When pull request state is available, the system MUST advance stages only forward and only on these events: pull request opened while in `building` → `review`; pull request merged → `awaiting_release`, or `released` when the repository is marked as releasing on merge. A stage the user set by hand MUST NOT be overwritten by a derived stage that would move it backwards.
+- **FR-004**: Users and agents MUST be able to attach one or more pull request links to a feature, each with a state of `open`, `merged` or `closed` (default `open`). Adding a link that is already attached updates its state instead of duplicating it.
+- **FR-005**: When a pull request link is added or its state changes, the system MUST derive a stage change only in these cases: state `open` while the feature is in `building` → `review`; state `merged` while the feature is in any stage before `awaiting_release` → `awaiting_release`, or `released` when the repository is marked as releasing on merge. In every other case the stage stays unchanged. A derived change MUST never move a stage backwards, whether the current stage was set by hand or derived. Stage order: `building` < `review` < `functional_test` < `ready_to_merge` < `awaiting_release` < `released`.
 - **FR-006**: Moving a feature to `released` MUST NOT change its general task status. Completing the task stays a separate decision.
 
 **Machines and workspaces**
@@ -156,8 +157,9 @@ A coding agent working through Postgram's agent tools can register its workspace
 **Agent sessions**
 
 - **FR-012**: The system MUST record agent sessions with: agent kind (`claude-code`, `pi`, `talon`, `other`), the agent's own session id when available, the workspace it runs in, start time, last activity time, and status.
-- **FR-013**: Session status MUST be one of `running`, `idle`, `ended`, `interrupted`. Separately, a session MAY be marked `dormant` (see FR-015).
-- **FR-014**: Each report from a machine MUST include an identifier of the machine's current boot. When a report arrives with a boot identifier that differs from the one recorded for earlier non-ended sessions on that machine, those sessions MUST be marked `interrupted`.
+- **FR-012a**: A report for an agent session id that is already recorded in that workspace MUST update that record, never create a second one. This covers resuming a session after quitting or after a reboot.
+- **FR-013**: Session status MUST be one of `running`, `idle`, `ended`, `interrupted`. Each reported event sets the status regardless of the previous status: `start` and `activity` → `running`, `stop` → `idle`, `end` → `ended`. Only the reboot rule (FR-014) sets `interrupted`. Separately, a session MAY be marked `dormant` (see FR-015).
+- **FR-014**: Each report from a machine MUST include an identifier of the machine's current boot. When a report arrives from a machine, every `running` or `idle` session on that machine whose last recorded boot identifier is known and differs from the reported one MUST be marked `interrupted`. Sessions with no recorded boot identifier (for example, sessions found by `pgm scan`) are never marked `interrupted` by this rule.
 - **FR-015**: Sessions that are `running` or `idle` and have had no activity for longer than a dormancy threshold (default 30 days, configurable) MUST be shown as `dormant`. Dormant is informational only: it is not a risk flag, does not change the session status, and the session stays resumable. Returning to a session after weeks is normal use.
 - **FR-016**: Recording activity for workspaces and sessions MUST NOT create new revisions of the feature or task, and MUST NOT trigger re-indexing, embedding or knowledge extraction of any knowledge entry.
 
@@ -167,7 +169,7 @@ A coding agent working through Postgram's agent tools can register its workspace
 - **FR-018**: `pgm here` MUST accept the agent kind, the session id and an event (`start`, `activity`, `stop`, `end`), and MUST be able to read these from the event data that Claude Code hooks provide on standard input.
 - **FR-019**: `pgm here` MUST link the workspace to a feature when the worktree contains a feature marker. Otherwise it MUST keep an existing link and MUST NOT create a feature on its own.
 - **FR-020**: `pgm here` MUST finish within 2 seconds even when the server is slow or unreachable. In that case it gives up without an error exit code that would disturb the calling agent, and writes a short note to its local log.
-- **FR-021**: The CLI MUST offer a command that installs the Claude Code hooks for `pgm here` into the user's Claude Code settings, showing the change before writing it.
+- **FR-021**: The CLI MUST offer a command that installs the Claude Code hooks for `pgm here` into the user's Claude Code settings, showing the change before writing it. The installed hooks MUST call `pgm` by absolute path, because hook processes may not have the user's shell `PATH`. Installing twice MUST NOT duplicate hooks.
 - **FR-021a**: Because Claude Code deletes session transcripts after 30 days by default, the hook installer MUST offer (with explicit confirmation) to raise that retention so sessions the user returns to after weeks stay resumable.
 - **FR-022**: A pi extension MUST report the same events through `pgm here` or the equivalent server call.
 
@@ -179,19 +181,19 @@ A coding agent working through Postgram's agent tools can register its workspace
 
 **Views**
 
-- **FR-026**: `pgm where` MUST list non-released features grouped by stage, each with: title, stage, linked pull requests, and per workspace the machine, path, branch, last activity, git state, session statuses, risk flags, and a resume command.
+- **FR-026**: `pgm where` MUST list non-released features grouped by stage, each with: title (the first line of the task content, cut at 80 characters), stage, linked pull requests, and per workspace the machine, path, branch, last activity, git state, session statuses, risk flags, and a resume command.
 - **FR-027**: Risk flags MUST include: uncommitted changes, unpushed commits, no upstream branch, interrupted session, workspace missing on disk. Time since last activity alone MUST NOT raise a risk flag.
-- **FR-028**: The resume command MUST connect to the workspace's machine (omitted when it is the current machine), change to the worktree path, and resume the most recent session with the agent-specific resume form. When no session id is known it starts the agent without resuming.
+- **FR-028**: The resume command MUST connect to the workspace's machine (omitted when it is the current machine), change to the worktree path, and resume the workspace's most recently active session that has a known session id, **including `ended` and `interrupted` sessions** (quitting an agent does not make its session unresumable), with the agent-specific resume form. When no session id is known, or the transcript is known to be gone, it starts the agent without resuming.
 - **FR-029**: `pgm where` MUST list workspaces that are not linked to a feature in a separate "unassigned" group.
 - **FR-030**: When run on a machine, `pgm where` and `pgm scan` MUST check that local workspaces still exist on disk and flag missing ones.
 - **FR-031**: The action view MUST group non-released features by required human action: Review (`review`), Test (`functional_test`), Merge (`ready_to_merge`), Release (`awaiting_release`), plus In progress (`building`).
 - **FR-032**: Both views MUST support machine-readable output for agents and scripts, and filters by machine and by repository.
-- **FR-033**: `pgm where` MUST let the user include released features and ended sessions on request.
+- **FR-033**: By default, `pgm where` MUST show per workspace all non-ended sessions plus the most recently active session even when it has ended. On request it MUST include released features and all ended sessions.
 
 **Bootstrap scan**
 
 - **FR-034**: `pgm scan` MUST find worktrees of the repositories the user configures for that machine, and agent session histories stored on that machine for those paths.
-- **FR-035**: For each worktree found, `pgm scan` MUST propose a feature link based on (in order) a feature marker, a feature identifier in the branch name, then a search for features similar to the branch name. The user picks: accept, choose another feature, create a new feature from the branch name, or skip.
+- **FR-035**: For each worktree found, `pgm scan` MUST propose a feature link based on (in order) a feature marker, a feature identifier in the branch name (ignored when it matches more than one feature), then a search for features similar to the branch name. The user picks: accept, choose another feature, create a new feature from the branch name, or skip.
 - **FR-036**: `pgm scan` MUST record nothing without the user's confirmation, except when the user passes an explicit "accept all exact matches" option.
 - **FR-037**: `pgm scan` MUST be safe to re-run: already-registered workspaces are shown as known and never duplicated.
 
@@ -204,10 +206,10 @@ A coding agent working through Postgram's agent tools can register its workspace
 
 ### Key Entities
 
-- **Feature**: an existing Postgram task marked as a feature. Adds a delivery stage, an optional "stage set by hand" flag, and linked pull requests. It remains a knowledge entry (searchable, linkable in the graph).
+- **Feature**: an existing Postgram task marked as a feature. Adds a delivery stage, the source of the current stage (set by hand or derived), and linked pull requests with their state. Its title is the first line of the task content. It remains a knowledge entry (searchable, linkable in the graph).
 - **Machine**: a computer the user works on. Alias, hostname, connection target for resume commands, last known boot identifier, last seen time. Not a knowledge entry.
 - **Workspace**: a directory on a machine, usually a git worktree. Machine, absolute path, repository identity, branch, last git state, last activity, optional link to one feature. Long-lived and not a knowledge entry.
-- **Agent Session**: one run of a coding agent in a workspace. Agent kind, agent session id, status, start time, last activity, boot identifier at start. Many per workspace and not a knowledge entry.
+- **Agent Session**: one run of a coding agent in a workspace. Agent kind, agent session id, status, start time, last activity, the boot identifier of its last report. Many per workspace and not a knowledge entry.
 - **Feature Marker**: a small file in a worktree that names the feature it belongs to. Lives on disk only and is ignored by git.
 - **Machine scan configuration**: per machine, the list of repository locations `pgm scan` looks in. Stored in the local CLI configuration.
 

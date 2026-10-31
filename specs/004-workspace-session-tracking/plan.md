@@ -96,7 +96,7 @@ cli/src/
 │   └── resume.ts                                # new: R5 templates + shell quoting
 └── where-output.ts                              # new: human/phone layout + JSON
 
-integrations/pi/postgram.ts                      # new: pi extension (R3)
+cli/integrations/pi/postgram.ts                  # new: pi extension (R3), shipped in the CLI package
 
 skill/postgram/SKILL.md                          # + register/stage/worktree guidance for coding agents (FR-041)
 
@@ -113,7 +113,7 @@ cli/tests/
 .env.example, docker-compose.yml, README.md, docs/  # + WORKSPACE_DORMANT_AFTER_DAYS, new CLI commands
 ```
 
-**Structure Decision**: keep the existing single-service layout (`src/` server, `cli/` workspace package). Machine-local logic goes in a new `cli/src/local/` folder, so pure helpers are unit-testable without a server. The pi extension lives in `integrations/pi/` because it is distributed by copying, not as part of the npm CLI bundle. It is still included in the CLI package `files` so `pgm hooks install --pi` can copy it.
+**Structure Decision**: keep the existing single-service layout (`src/` server, `cli/` workspace package). Machine-local logic goes in a new `cli/src/local/` folder, so pure helpers are unit-testable without a server. The pi extension lives in `cli/integrations/pi/` because it is distributed by copying, not imported by the CLI. It must sit inside the `cli/` package and be listed in its `files`, otherwise it is not in the published tarball and `pgm hooks install --pi` has nothing to copy.
 
 ## Implementation Order (for /speckit.tasks)
 

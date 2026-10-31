@@ -136,6 +136,8 @@ Group keys:
 
 Risk codes (FR-027): `dirty`, `unpushed`, `no_upstream`, `interrupted`, `missing`. Dormancy is never a risk.
 
-By default, ended sessions are left out, as are workspaces whose features are `done` or `archived`.
+By default, each workspace lists its non-ended sessions plus its most recently active session even when ended. `include_ended=true` lists all sessions. Workspaces whose features have task status `done` or `archived` are left out by default.
+
+`title` is the first line of the feature's task content, cut at 80 characters.
 
 The server does not build resume commands. The CLI renders them, because it knows the local machine and the user's resume templates.

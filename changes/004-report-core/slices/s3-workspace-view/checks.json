@@ -1,0 +1,21 @@
+{
+  "schemaVersion": 1,
+  "dependencyMounts": [
+    "node_modules"
+  ],
+  "checks": [
+    {
+      "id": "report-s3",
+      "argv": [
+        "node",
+        "changes/004-report-core/slice-check.mjs",
+        "src/services/workspace-view.ts",
+        "tests/unit/workspace-view.test.ts"
+      ],
+      "timeoutMs": 300000,
+      "criteria": [
+        "C1"
+      ]
+    }
+  ]
+}

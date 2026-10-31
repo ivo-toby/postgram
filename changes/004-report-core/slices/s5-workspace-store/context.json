@@ -1,0 +1,51 @@
+{
+  "schemaVersion": 1,
+  "facts": [
+    "ESLint applies typescript-eslint recommendedTypeChecked, consistent-type-imports (use `import type` for types) and no-floating-promises to src/**/*.ts and tests/**/*.ts; require-await is active, so an async function must await something.",
+    "tsconfig is strict with noUncheckedIndexedAccess, exactOptionalPropertyTypes and verbatimModuleSyntax; relative imports end in .js (for example ../types/workspaces.js).",
+    "Tests use vitest ^3.2.4 (describe/it/expect from \"vitest\"). Integration tests use createTestDatabase/resetTestDatabase/seedApiKey from tests/helpers/postgres.ts, which start pgvector/pgvector:pg17 with testcontainers and run all migrations.",
+    "The protected feature test tests/integration/workspace-report.feature.test.ts and specs/constitution.md plus specs/constitution.approval.json must not be edited.",
+    "Lint includes no-unsafe-assignment, no-unsafe-member-access, no-unsafe-return and no-unsafe-call: an untyped pg query result has rows of type any and fails them. Always pass a row type, in code and in tests: `const result = await pool.query<{ id: string; count: number }>(sql, params);` then `result.rows[0]?.id`. Type caught errors and JSON values as unknown and narrow them.",
+    "The slice check runs `node changes/004-report-core/slice-check.mjs <files>`: Vitest on the slice test and ESLint with --max-warnings=0 on every listed .ts file. Both must pass with zero lint problems.",
+    "Types MachineRow, WorkspaceRow, ReportWarning, GitSnapshot are in src/types/workspaces.ts (report-s1).",
+    "pg ^8.16.3: client.query<Row>(sql, params) returns { rows, rowCount }; use `import type { PoolClient } from \"pg\"`. In an INSERT ... ON CONFLICT ... RETURNING, (xmax = 0) AS inserted tells an insert from an update."
+  ],
+  "resources": [
+    {
+      "path": "specs/constitution.md",
+      "startLine": 1,
+      "endLine": 45,
+      "purpose": "Adopted project constitution 1.1.0; every principle applies to this slice."
+    },
+    {
+      "path": "specs/004-workspace-session-tracking/data-model.md",
+      "startLine": 176,
+      "endLine": 208,
+      "purpose": "Report steps 1, 3 and 4."
+    },
+    {
+      "path": "specs/004-workspace-session-tracking/data-model.md",
+      "startLine": 108,
+      "endLine": 131,
+      "purpose": "Workspace columns and visibility rule."
+    },
+    {
+      "path": "src/auth/types.ts",
+      "startLine": 19,
+      "endLine": 26,
+      "purpose": "AuthContext allowedTypes and allowedVisibility."
+    },
+    {
+      "path": "tests/helpers/postgres.ts",
+      "startLine": 1,
+      "endLine": 148,
+      "purpose": "Test database helpers."
+    },
+    {
+      "path": "tests/integration/task-service.test.ts",
+      "startLine": 1,
+      "endLine": 52,
+      "purpose": "Integration test structure."
+    }
+  ]
+}

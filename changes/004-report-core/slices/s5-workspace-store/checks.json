@@ -1,0 +1,21 @@
+{
+  "schemaVersion": 1,
+  "dependencyMounts": [
+    "node_modules"
+  ],
+  "checks": [
+    {
+      "id": "report-s5",
+      "argv": [
+        "node",
+        "changes/004-report-core/slice-check.mjs",
+        "src/services/workspace-store.ts",
+        "tests/integration/workspace-store.test.ts"
+      ],
+      "timeoutMs": 300000,
+      "criteria": [
+        "C1"
+      ]
+    }
+  ]
+}

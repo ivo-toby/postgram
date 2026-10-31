@@ -1,0 +1,56 @@
+{
+  "schemaVersion": 1,
+  "id": "report-s1",
+  "brief": "changes/004-report-core/slices/s1-schema/brief.md",
+  "context": "changes/004-report-core/slices/s1-schema/context.json",
+  "checks": "changes/004-report-core/slices/s1-schema/checks.json",
+  "implementationFiles": [
+    "src/db/migrations/018_workspace_tracking.sql",
+    "src/types/workspaces.ts",
+    "src/util/audit.ts",
+    "tests/helpers/postgres.ts"
+  ],
+  "sliceTests": [
+    "tests/integration/workspace-migration.test.ts"
+  ],
+  "protect": [
+    "tests/integration/workspace-report.feature.test.ts",
+    "changes/004-report-core/slice-check.mjs"
+  ],
+  "interfaces": [
+    "src/db/migrate.ts",
+    "src/util/audit.ts",
+    "tests/helpers/postgres.ts"
+  ],
+  "dependsOn": [],
+  "budget": {
+    "maxImplementationFiles": null,
+    "maxSliceTestFiles": null,
+    "maxCompiledContextBytes": null
+  },
+  "openDecisions": [],
+  "testReview": {
+    "schemaVersion": 1,
+    "workflow": "slice-tests",
+    "criteria": [
+      {
+        "id": "report-s1-tests",
+        "requirementIds": [
+          "machine-upsert",
+          "workspace-upsert",
+          "session-hook",
+          "audit-structural"
+        ],
+        "question": "Do the slice tests prove the unique keys, checks, cascade/set-null foreign keys and that appendAuditEntry joins a client transaction?",
+        "interfaces": [
+          "src/db/migrate.ts",
+          "src/util/audit.ts",
+          "tests/helpers/postgres.ts"
+        ],
+        "testPaths": [
+          "tests/integration/workspace-migration.test.ts"
+        ]
+      }
+    ]
+  }
+}

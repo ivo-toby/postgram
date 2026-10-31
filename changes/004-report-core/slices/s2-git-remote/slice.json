@@ -1,0 +1,46 @@
+{
+  "schemaVersion": 1,
+  "id": "report-s2",
+  "brief": "changes/004-report-core/slices/s2-git-remote/brief.md",
+  "context": "changes/004-report-core/slices/s2-git-remote/context.json",
+  "checks": "changes/004-report-core/slices/s2-git-remote/checks.json",
+  "implementationFiles": [
+    "src/util/git-remote.ts"
+  ],
+  "sliceTests": [
+    "tests/unit/git-remote.test.ts"
+  ],
+  "protect": [
+    "tests/integration/workspace-report.feature.test.ts",
+    "changes/004-report-core/slice-check.mjs"
+  ],
+  "interfaces": [
+    "specs/004-workspace-session-tracking/contracts/rest.md"
+  ],
+  "dependsOn": [],
+  "budget": {
+    "maxImplementationFiles": null,
+    "maxSliceTestFiles": null,
+    "maxCompiledContextBytes": null
+  },
+  "openDecisions": [],
+  "testReview": {
+    "schemaVersion": 1,
+    "workflow": "slice-tests",
+    "criteria": [
+      {
+        "id": "report-s2-tests",
+        "requirementIds": [
+          "workspace-upsert"
+        ],
+        "question": "Do the tests cover the three contract vectors, every supported URL form, credential and port stripping, and the D7 fallback?",
+        "interfaces": [
+          "specs/004-workspace-session-tracking/contracts/rest.md"
+        ],
+        "testPaths": [
+          "tests/unit/git-remote.test.ts"
+        ]
+      }
+    ]
+  }
+}

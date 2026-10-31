@@ -1,0 +1,50 @@
+{
+  "schemaVersion": 1,
+  "id": "report-s8",
+  "brief": "changes/004-report-core/slices/s8-dormancy-config/brief.md",
+  "context": "changes/004-report-core/slices/s8-dormancy-config/context.json",
+  "checks": "changes/004-report-core/slices/s8-dormancy-config/checks.json",
+  "implementationFiles": [
+    "src/config.ts",
+    "docker-compose.yml",
+    "README.md"
+  ],
+  "sliceTests": [
+    "tests/unit/config-workspace.test.ts"
+  ],
+  "protect": [
+    "tests/integration/workspace-report.feature.test.ts",
+    "changes/004-report-core/slice-check.mjs"
+  ],
+  "interfaces": [
+    "src/config.ts",
+    "tests/unit/config.test.ts"
+  ],
+  "dependsOn": [],
+  "budget": {
+    "maxImplementationFiles": null,
+    "maxSliceTestFiles": null,
+    "maxCompiledContextBytes": null
+  },
+  "openDecisions": [],
+  "testReview": {
+    "schemaVersion": 1,
+    "workflow": "slice-tests",
+    "criteria": [
+      {
+        "id": "report-s8-tests",
+        "requirementIds": [
+          "dormancy-config"
+        ],
+        "question": "Do the tests check default, override, blank and invalid values, and that docker-compose.yml and README.md carry the setting?",
+        "interfaces": [
+          "src/config.ts",
+          "tests/unit/config.test.ts"
+        ],
+        "testPaths": [
+          "tests/unit/config-workspace.test.ts"
+        ]
+      }
+    ]
+  }
+}

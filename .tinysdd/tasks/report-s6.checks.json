@@ -1,0 +1,21 @@
+{
+  "schemaVersion": 1,
+  "dependencyMounts": [
+    "node_modules"
+  ],
+  "checks": [
+    {
+      "id": "report-s6",
+      "argv": [
+        "node",
+        "changes/004-report-core/slice-check.mjs",
+        "src/services/session-store.ts",
+        "tests/integration/session-store.test.ts"
+      ],
+      "timeoutMs": 300000,
+      "criteria": [
+        "C1"
+      ]
+    }
+  ]
+}

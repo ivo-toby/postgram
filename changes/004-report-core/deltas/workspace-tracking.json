@@ -1,0 +1,19 @@
+{
+  "schemaVersion": 1,
+  "spec": "specs/workspace-tracking.md",
+  "baseSha256": null,
+  "changes": [
+    { "operation": "add", "id": "report-validate", "text": "A workspace report that breaks the validation table or session-form rules of the report contract is rejected with VALIDATION, and nothing is written." },
+    { "operation": "add", "id": "report-scope", "text": "A workspace report requires write scope; a key without it gets FORBIDDEN and nothing is written." },
+    { "operation": "add", "id": "machine-upsert", "text": "Each report upserts its machine by alias with hostname and last_seen_at; the machine boot_id is set only by a hook report with a non-null boot id." },
+    { "operation": "add", "id": "reboot-rule", "text": "A hook report with a non-null boot id marks every other running or idle session on that machine whose non-null boot_id differs as interrupted with end_reason reboot and ended_at now; the reported session is never interrupted and interrupted_sessions counts the changed rows." },
+    { "operation": "add", "id": "workspace-upsert", "text": "A report upserts the workspace by machine and path with a trailing slash stripped; omitted repo keys keep stored values and null clears them; git null clears the snapshot, an omitted git keeps it and an object replaces it; missing_since is cleared; last_activity_at is now for hook reports and the newest observed time for scan reports." },
+    { "operation": "add", "id": "feature-link", "text": "A report with a feature_id of a visible task links the workspace; an unknown or invisible id gives warning feature_not_found and a non-task gives feature_not_task, both leaving the link unchanged; an absent feature_id keeps the link; a report never creates a feature or unlinks." },
+    { "operation": "add", "id": "session-hook", "text": "Hook reports upsert the session keyed by workspace, agent kind and agent session id; start and activity set running, stop sets idle, end sets ended with ended_at and end_reason, and any non-end event clears ended_at and end_reason; id-less start inserts, other id-less events update the newest id-less session of that kind or insert one." },
+    { "operation": "add", "id": "session-scan", "text": "Scan reports insert new sessions as idle with a null boot id and started_at and last_activity_at set to observed_at; existing sessions only move last_activity_at forward and fill a null cwd or transcript_path." },
+    { "operation": "add", "id": "audit-structural", "text": "Reports write audit rows only for machine_create, workspace_create, workspace_link, session_create, session_end and session_interrupt; activity-only reports write none." },
+    { "operation": "add", "id": "no-entity-write", "text": "No workspace report writes the entities table, changes an entity version or changes enrichment status." },
+    { "operation": "add", "id": "report-response", "text": "The report returns the workspace object, session, sessions, feature, interrupted_sessions and warnings as defined in the report contract, with workspace and feature null when the report has no workspace." },
+    { "operation": "add", "id": "dormancy-config", "text": "The server setting WORKSPACE_DORMANT_AFTER_DAYS defaults to 30, accepts integers of at least 1, and is documented in docker-compose.yml, .env.example and the README configuration table." }
+  ]
+}

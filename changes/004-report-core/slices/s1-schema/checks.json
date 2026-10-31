@@ -1,0 +1,23 @@
+{
+  "schemaVersion": 1,
+  "dependencyMounts": [
+    "node_modules"
+  ],
+  "checks": [
+    {
+      "id": "report-s1",
+      "argv": [
+        "node",
+        "changes/004-report-core/slice-check.mjs",
+        "src/types/workspaces.ts",
+        "src/util/audit.ts",
+        "tests/helpers/postgres.ts",
+        "tests/integration/workspace-migration.test.ts"
+      ],
+      "timeoutMs": 300000,
+      "criteria": [
+        "C1"
+      ]
+    }
+  ]
+}

@@ -1,0 +1,21 @@
+{
+  "schemaVersion": 1,
+  "dependencyMounts": [
+    "node_modules"
+  ],
+  "checks": [
+    {
+      "id": "report-s2",
+      "argv": [
+        "node",
+        "changes/004-report-core/slice-check.mjs",
+        "src/util/git-remote.ts",
+        "tests/unit/git-remote.test.ts"
+      ],
+      "timeoutMs": 300000,
+      "criteria": [
+        "C1"
+      ]
+    }
+  ]
+}

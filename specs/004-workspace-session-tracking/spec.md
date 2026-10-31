@@ -128,6 +128,7 @@ A coding agent working through Postgram's agent tools can register its workspace
 - **Concurrent reports from many sessions in the same workspace**: each is recorded. The workspace shows the most recent git state.
 - **Feature archived or done while workspaces still exist**: workspaces stay linked, and `pgm where` hides them unless the user asks for all.
 - **Hook runs from a directory inside a nested repository or a submodule**: the innermost worktree root is used.
+- **Agent transcript deleted by the agent's own retention**: when checked on the local machine, the session shows `transcript gone` and the resume command starts a fresh agent in the worktree instead of resuming.
 - **No reboot detection possible on a platform**: sessions are never marked `interrupted` there. `pgm where` shows last activity time, and dormancy applies as usual.
 - **Returning to a session after weeks**: the session shows its age and possibly `dormant`, keeps its resume command, and goes back to `running` on the next report.
 
@@ -167,6 +168,7 @@ A coding agent working through Postgram's agent tools can register its workspace
 - **FR-019**: `pgm here` MUST link the workspace to a feature when the worktree contains a feature marker. Otherwise it MUST keep an existing link and MUST NOT create a feature on its own.
 - **FR-020**: `pgm here` MUST finish within 2 seconds even when the server is slow or unreachable. In that case it gives up without an error exit code that would disturb the calling agent, and writes a short note to its local log.
 - **FR-021**: The CLI MUST offer a command that installs the Claude Code hooks for `pgm here` into the user's Claude Code settings, showing the change before writing it.
+- **FR-021a**: Because Claude Code deletes session transcripts after 30 days by default, the hook installer MUST offer (with explicit confirmation) to raise that retention so sessions the user returns to after weeks stay resumable.
 - **FR-022**: A pi extension MUST report the same events through `pgm here` or the equivalent server call.
 
 **Worktree creation**

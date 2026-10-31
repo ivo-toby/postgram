@@ -1,8 +1,10 @@
 # postgram Development Guidelines
 
-Auto-generated from all feature plans. Last updated: 2026-04-18
+Auto-generated from all feature plans. Last updated: 2026-10-31
 
 ## Active Technologies
+- TypeScript 5.9 on Node.js 22+ (LTS) + Hono (REST), `@modelcontextprotocol/sdk` (MCP), `zod`, `neverthrow`, `pg`, `commander` (CLI). No new runtime dependencies. (004-workspace-session-tracking)
+- PostgreSQL 16+. New migration `018_workspace_tracking.sql` adds `machines`, `workspaces`, `agent_sessions` and `repositories`. `entities` is unchanged. Features use task metadata. (004-workspace-session-tracking)
 
 - TypeScript 5.9 on Node.js 22+ (LTS) + Hono (HTTP), `@modelcontextprotocol/sdk` (MCP SSE), (002-local-embeddings)
 - PostgreSQL 16+ with `pgvector` and `pgcrypto`; raw SQL with typed (002-local-embeddings)
@@ -23,6 +25,7 @@ defaults, deployment docs, and README tables so container deployments receive
 the new value.
 
 ## Recent Changes
+- 004-workspace-session-tracking: Added TypeScript 5.9 on Node.js 22+ (LTS) + Hono (REST), `@modelcontextprotocol/sdk` (MCP), `zod`, `neverthrow`, `pg`, `commander` (CLI). No new runtime dependencies.
 
 - 002-local-embeddings: Added TypeScript 5.9 on Node.js 22+ (LTS) + Hono (HTTP), `@modelcontextprotocol/sdk` (MCP SSE),
 

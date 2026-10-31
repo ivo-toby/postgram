@@ -1,3 +1,5 @@
+import { readFile } from 'node:fs/promises';
+
 import { afterAll, beforeAll, beforeEach, describe, expect, it } from 'vitest';
 
 import { createEnrichmentWorker } from '../../src/services/enrichment-worker.js';
@@ -529,6 +531,55 @@ describe('enrichment-worker', () => {
       [stored.id]
     );
     expect(row.rows[0]?.extraction_status).toBe('completed');
+  }, 120_000);
+
+  it('backfills the extraction hash only for rows whose embedding reflects current content', async () => {
+    if (!database) {
+      throw new Error('test database not initialized');
+    }
+
+    // Rows as they look when upgrading from a version without the hash column.
+    const inSync = await database.pool.query<{ id: string }>(
+      `INSERT INTO entities (type, content, visibility, enrichment_status, extraction_status, metadata)
+       VALUES ('document', 'in sync content', 'shared', 'completed', 'completed', '{}'::jsonb)
+       RETURNING id`
+    );
+    // Edited after extraction, not yet re-embedded when the migration runs.
+    const edited = await database.pool.query<{ id: string }>(
+      `INSERT INTO entities (type, content, visibility, enrichment_status, extraction_status, metadata)
+       VALUES ('document', 'edited content awaiting embedding', 'shared', 'pending', 'completed', '{}'::jsonb)
+       RETURNING id`
+    );
+
+    const migration = await readFile(
+      new URL('../../src/db/migrations/018_extraction_content_hash.sql', import.meta.url),
+      'utf8'
+    );
+    await database.pool.query(migration);
+
+    const hashes = await database.pool.query<{
+      id: string;
+      extraction_content_hash: string | null;
+    }>('SELECT id, extraction_content_hash FROM entities');
+    const byId = Object.fromEntries(hashes.rows.map((r) => [r.id, r]));
+    expect(byId[inSync.rows[0]!.id]?.extraction_content_hash).not.toBeNull();
+    expect(byId[edited.rows[0]!.id]?.extraction_content_hash).toBeNull();
+
+    let llmCalls = 0;
+    const worker = createEnrichmentWorker({
+      pool: database.pool,
+      embeddingService: createEmbeddingService(),
+      extractionEnabled: true,
+      callLlm: () => {
+        llmCalls += 1;
+        return Promise.resolve('[]');
+      }
+    });
+    await worker.runOnce();
+    await worker.runOnce();
+
+    // The edited row is embedded and then extracted; the in-sync row is untouched.
+    expect(llmCalls).toBe(1);
   }, 120_000);
 
   it('clears already-pending memory extraction when memory extraction is disabled by default', async () => {

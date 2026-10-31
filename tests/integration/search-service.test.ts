@@ -276,6 +276,47 @@ describe('search-service', () => {
     }
   });
 
+  it('applies the configured default threshold when the request sets none', async () => {
+    if (!database) {
+      throw new Error('test database not initialized');
+    }
+
+    const targetId = await insertSearchFixture(database.pool, {
+      entityContent: 'Notes about the harbour ferry timetable.',
+      chunkContent: 'harbour ferry timetable',
+      embedding: lowSimilarityVector(0.5)
+    });
+    const search = (defaultThreshold?: number) =>
+      searchEntities(
+        database!.pool,
+        makeAuthContext(),
+        { query: 'quokka', limit: 5 },
+        {
+          embeddingService: fixedEmbeddingService(unitVector(1)),
+          ...(defaultThreshold === undefined ? {} : { defaultThreshold })
+        }
+      );
+    const ids = async (defaultThreshold?: number) =>
+      (await search(defaultThreshold))._unsafeUnwrap().results.map((r) => r.entityId);
+
+    // Cosine 0.5 passes the built-in 0.35 floor and a 0.4 default, not 0.6.
+    expect(await ids()).toContain(targetId);
+    expect(await ids(0.4)).toContain(targetId);
+    expect(await ids(0.6)).not.toContain(targetId);
+
+    // An explicit request threshold still wins over the default.
+    const explicit = await searchEntities(
+      database.pool,
+      makeAuthContext(),
+      { query: 'quokka', limit: 5, threshold: 0.3 },
+      {
+        embeddingService: fixedEmbeddingService(unitVector(1)),
+        defaultThreshold: 0.6
+      }
+    );
+    expect(explicit._unsafeUnwrap().results.map((r) => r.entityId)).toContain(targetId);
+  });
+
   it('returns no vector results before enrichment completes', async () => {
     if (!database) {
       throw new Error('test database not initialized');

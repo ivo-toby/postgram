@@ -768,6 +768,64 @@ describe('createLlmProvider', () => {
       expect(body.messages).toEqual([{ role: 'user', content: 'anything' }]);
     });
 
+    const mockCompletion = (content: unknown) =>
+      (globalThis.fetch as unknown as ReturnType<typeof vi.fn>).mockResolvedValue(
+        new Response(JSON.stringify({ choices: [{ message: { content } }] }), {
+          status: 200
+        })
+      );
+    const sentBody = (): Record<string, unknown> => {
+      const call = (globalThis.fetch as unknown as ReturnType<typeof vi.fn>).mock
+        .calls[0];
+      return JSON.parse((call?.[1] as RequestInit).body as string) as Record<
+        string,
+        unknown
+      >;
+    };
+
+    it('joins text parts and drops thinking parts when content is a list', async () => {
+      // Mistral returns reasoning models' answers in this shape.
+      mockCompletion([
+        { type: 'thinking', thinking: [{ type: 'text', text: 'Let me see...' }] },
+        { type: 'text', text: '{"relationships":' },
+        { type: 'text', text: '[]}' }
+      ]);
+      const provider = createLlmProvider({
+        provider: 'openai-compatible',
+        model: 'zai-glm-5-3-flash',
+        extractionBaseUrl: 'https://api.mistral.example/v1'
+      });
+
+      expect(await provider('anything')).toBe('{"relationships":[]}');
+    });
+
+    it('forwards an explicit reasoning_effort for any model', async () => {
+      mockCompletion('[]');
+      const provider = createLlmProvider({
+        provider: 'openai-compatible',
+        model: 'zai-glm-5-3-flash',
+        extractionBaseUrl: 'https://api.mistral.example/v1',
+        reasoningEffort: 'low'
+      });
+      await provider('anything');
+
+      expect(sentBody()['reasoning_effort']).toBe('low');
+    });
+
+    it('does not turn disableThinking into reasoning_effort', async () => {
+      // Generic servers may reject 'minimal'; only an explicit effort is sent.
+      mockCompletion('[]');
+      const provider = createLlmProvider({
+        provider: 'openai-compatible',
+        model: 'zai-glm-5-3-flash',
+        extractionBaseUrl: 'https://api.mistral.example/v1',
+        disableThinking: true
+      });
+      await provider('anything');
+
+      expect(sentBody()).not.toHaveProperty('reasoning_effort');
+    });
+
     it('adds schema instructions for OpenAI-compatible providers without response_format', async () => {
       (
         globalThis.fetch as unknown as ReturnType<typeof vi.fn>

@@ -52,8 +52,14 @@ async function fetchWithTimeout(
   }
 }
 
+type MessageContent =
+  | string
+  | Array<{ type?: string; text?: string }>
+  | null
+  | undefined;
+
 type OpenAiResponse = {
-  choices: Array<{ message: { content: string } }>;
+  choices: Array<{ message?: { content?: MessageContent } }>;
 };
 
 type AnthropicResponse = {
@@ -196,6 +202,21 @@ export function toOpenAiStrictSchema(schema: object): object {
   return normalizeStrictSchema(schema) as object;
 }
 
+// Some servers (Mistral with reasoning models) return content as a list of
+// parts: thinking parts followed by text parts. Only the text is the answer.
+function messageText(content: MessageContent): string | undefined {
+  if (typeof content === 'string') {
+    return content;
+  }
+  if (!Array.isArray(content)) {
+    return undefined;
+  }
+  return content
+    .filter((part) => part.type === 'text' && typeof part.text === 'string')
+    .map((part) => part.text)
+    .join('');
+}
+
 function createOpenAiProvider(
   apiKey: string,
   model: string,
@@ -236,6 +257,10 @@ function createOpenAiProvider(
     const effort = reasoningEffort ?? (disableThinking ? 'minimal' : undefined);
     if (effort && reasoning) {
       payload['reasoning_effort'] = effort;
+    } else if (reasoningEffort && !nativeStructuredOutputs) {
+      // OpenAI-compatible servers: we can't tell which models take the field,
+      // so forward it only when the operator set it explicitly.
+      payload['reasoning_effort'] = reasoningEffort;
     }
 
     const response = await fetchWithTimeout(
@@ -261,7 +286,7 @@ function createOpenAiProvider(
     }
 
     const body = (await response.json()) as OpenAiResponse;
-    return body.choices[0]?.message?.content ?? '[]';
+    return messageText(body.choices[0]?.message?.content) ?? '[]';
   };
 }
 

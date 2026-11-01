@@ -1,0 +1,22 @@
+{
+  "schemaVersion": 1,
+  "dependencyMounts": [
+    "node_modules"
+  ],
+  "checks": [
+    {
+      "id": "cli-t1",
+      "argv": [
+        "node",
+        "changes/004-cli-hooks/slice-check.mjs",
+        "cli/src/tracking/types.ts",
+        "cli/src/tracking/config.ts",
+        "cli/tests/unit/tracking-config.test.ts"
+      ],
+      "timeoutMs": 600000,
+      "criteria": [
+        "C1"
+      ]
+    }
+  ]
+}

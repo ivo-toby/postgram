@@ -1,0 +1,54 @@
+{
+  "schemaVersion": 1,
+  "id": "cli-t9",
+  "brief": "changes/004-cli-hooks/slices/t9-worktree/brief.md",
+  "context": "changes/004-cli-hooks/slices/t9-worktree/context.json",
+  "checks": "changes/004-cli-hooks/slices/t9-worktree/checks.json",
+  "implementationFiles": [
+    "cli/src/tracking/worktree.ts"
+  ],
+  "sliceTests": [
+    "cli/tests/unit/tracking-worktree.test.ts"
+  ],
+  "protect": [
+    "tests/contract/cli-tracking.feature.test.ts",
+    "tests/contract/cli-scan.feature.test.ts",
+    "changes/004-cli-hooks/slice-check.mjs"
+  ],
+  "interfaces": [
+    "specs/004-workspace-session-tracking/contracts/cli.md",
+    "changes/004-cli-hooks/proposal.md"
+  ],
+  "dependsOn": [
+    "cli-t1",
+    "cli-t3",
+    "cli-t4"
+  ],
+  "budget": {
+    "maxImplementationFiles": null,
+    "maxSliceTestFiles": null,
+    "maxCompiledContextBytes": null
+  },
+  "openDecisions": [],
+  "testReview": {
+    "schemaVersion": 1,
+    "workflow": "slice-tests",
+    "criteria": [
+      {
+        "id": "cli-t9-tests",
+        "requirementIds": [
+          "worktree-resolve",
+          "worktree-create"
+        ],
+        "question": "Do the tests cover the three resolution forms, paging, ambiguity and no-match refusals, the side-effect order with refusal before any change, the created worktree with branch, path and marker, --create and a failing report?",
+        "interfaces": [
+          "specs/004-workspace-session-tracking/contracts/cli.md",
+          "changes/004-cli-hooks/proposal.md"
+        ],
+        "testPaths": [
+          "cli/tests/unit/tracking-worktree.test.ts"
+        ]
+      }
+    ]
+  }
+}

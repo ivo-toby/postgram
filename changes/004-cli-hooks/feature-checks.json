@@ -1,0 +1,27 @@
+{
+  "schemaVersion": 1,
+  "dependencyMounts": [
+    "node_modules"
+  ],
+  "checks": [
+    {
+      "id": "cli-hooks",
+      "argv": [
+        "node",
+        "node_modules/vitest/vitest.mjs",
+        "run",
+        "tests/contract/cli-tracking.feature.test.ts",
+        "tests/contract/cli-scan.feature.test.ts"
+      ],
+      "timeoutMs": 600000,
+      "criteria": [
+        "C1",
+        "C2",
+        "C3",
+        "C4",
+        "C5",
+        "C6"
+      ]
+    }
+  ]
+}

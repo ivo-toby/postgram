@@ -1,0 +1,89 @@
+{
+  "schemaVersion": 1,
+  "id": "004-cli-hooks",
+  "proposal": "changes/004-cli-hooks/proposal.md",
+  "design": "changes/004-cli-hooks/design.md",
+  "specDeltas": [
+    "changes/004-cli-hooks/deltas/cli-hooks.json"
+  ],
+  "slices": [
+    "changes/004-cli-hooks/slices/t1-config/slice.json",
+    "changes/004-cli-hooks/slices/t2-resume/slice.json",
+    "changes/004-cli-hooks/slices/t3-api/slice.json",
+    "changes/004-cli-hooks/slices/t4-local/slice.json",
+    "changes/004-cli-hooks/slices/t5-here/slice.json",
+    "changes/004-cli-hooks/slices/t6-hooks/slice.json",
+    "changes/004-cli-hooks/slices/t7-where/slice.json",
+    "changes/004-cli-hooks/slices/t8-feature-commands/slice.json",
+    "changes/004-cli-hooks/slices/t9-worktree/slice.json",
+    "changes/004-cli-hooks/slices/t10-scan-discovery/slice.json",
+    "changes/004-cli-hooks/slices/t11-scan/slice.json",
+    "changes/004-cli-hooks/slices/w1-wiring/slice.json"
+  ],
+  "budget": {
+    "maxImplementationFiles": 4,
+    "maxSliceTestFiles": 1,
+    "maxCompiledContextBytes": 65536
+  },
+  "featureTests": [
+    "tests/contract/cli-tracking.feature.test.ts",
+    "tests/contract/cli-scan.feature.test.ts"
+  ],
+  "featureChecks": "changes/004-cli-hooks/feature-checks.json",
+  "integration": [
+    {
+      "id": "cli-entrypoint",
+      "requirementIds": [
+        "cfg-helpers",
+        "cfg-pgmrc",
+        "usage-exit",
+        "resume-render",
+        "resume-transcript",
+        "age-format",
+        "api-client",
+        "git-state",
+        "git-budget",
+        "boot-id",
+        "marker-file",
+        "here-hook",
+        "here-flags",
+        "here-output",
+        "here-log",
+        "hooks-install",
+        "hooks-retention",
+        "hooks-pi",
+        "hooks-uninstall",
+        "where-disk-check",
+        "where-layout",
+        "where-json",
+        "feature-commands",
+        "feature-link-marker",
+        "machine-commands",
+        "repo-command",
+        "worktree-resolve",
+        "worktree-create",
+        "scan-discovery",
+        "scan-sessions",
+        "scan-proposals",
+        "scan-record",
+        "scan-known",
+        "cli-wiring"
+      ],
+      "entrypoints": [
+        "cli/src/pgm.ts"
+      ],
+      "wiringSlice": "cli-w1",
+      "testPaths": [
+        "tests/contract/cli-tracking.feature.test.ts",
+        "tests/contract/cli-scan.feature.test.ts"
+      ],
+      "checkIds": [
+        "cli-hooks"
+      ]
+    }
+  ],
+  "constitution": {
+    "path": "specs/constitution.md",
+    "approval": "specs/constitution.approval.json"
+  }
+}

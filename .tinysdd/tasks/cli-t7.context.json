@@ -1,0 +1,71 @@
+{
+  "schemaVersion": 1,
+  "facts": [
+    "All new code is in the CLI package `cli/` (package @ivotoby/postgram-cli, ESM). Source files are under cli/src/tracking/, tests under cli/tests/unit/. The CLI never imports from the server package `src/`.",
+    "tsconfig (cli/tsconfig.json) is strict with noUncheckedIndexedAccess, exactOptionalPropertyTypes and verbatimModuleSyntax, module NodeNext: EVERY relative import ends in .js, in source and tests (for example `import { shq } from '../../src/tracking/config.js'` from cli/tests/unit). Use `import type` for type-only imports (consistent-type-imports).",
+    "exactOptionalPropertyTypes: an optional key typed `key?: T` does not accept `T | undefined`. Add a key only when its value is defined (`...(v !== undefined ? { key: v } : {})`); do not cast.",
+    "ESLint (typescript-eslint recommendedTypeChecked) runs with zero allowed warnings. In cli/src no-unsafe-assignment, no-unsafe-member-access, no-unsafe-argument and require-await are off, but they are ON in cli/tests: in tests type JSON.parse results (`JSON.parse(text) as { a: string }`) and do not mark a function async unless it awaits. no-floating-promises is on everywhere: await or `void` every promise. Never call String() on an unknown value; narrow it with typeof first.",
+    "Node built-ins only (node:fs, node:fs/promises, node:path, node:os, node:child_process, node:crypto, node:readline). The only runtime dependency is commander ^14 (`import { Command } from 'commander'`; `command.opts<T>()`, `command.optsWithGlobals<T>()`). Tests use vitest ^3.2.4 (`import { describe, expect, it, vi } from 'vitest'`); stub fetch with `vi.stubGlobal('fetch', fn)` and restore with `vi.unstubAllGlobals()`. Create temporary directories with `mkdtempSync(path.join(os.tmpdir(), 'x-'))` and pass `realpathSync` of it (macOS tmp is a symlink).",
+    "Existing helpers you may import from cli/src/shared.ts: `resolvePgmConfig(homeDir?)` (credentials, env PGM_API_URL/PGM_API_KEY first, then ~/.pgmrc), `isJsonMode(command)`, `printJson(value)`, `printHuman(lines)`, `handleCliFailure(error, json)`, `shortId(id)`; from cli/src/errors.ts `AppError` and `ErrorCode`. Do not change those files unless this brief says so.",
+    "Do not edit the protected feature tests tests/contract/cli-tracking.feature.test.ts, tests/contract/cli-scan.feature.test.ts, changes/004-cli-hooks/slice-check.mjs, specs/constitution.md or specs/constitution.approval.json, nor files of accepted slices unless this brief says so. Do not delete files.",
+    "The slice check runs `node changes/004-cli-hooks/slice-check.mjs <files>`: Vitest (with --root cli) on the slice test, ESLint --max-warnings=0 on every listed file, and `tsc --noEmit -p cli/tsconfig.json`. Call the run_checks tool before you finish and fix every reported error. Do not create helper or probe files to run checks; use run_checks.",
+    "Each command file exports a register function that adds its commands to the given commander program and calls usageExit on every new command and subcommand. The action bodies run through runTrackingCommand. Keep the work in exported run functions that take a deps object, so tests drive them without a server; the register function passes the real deps.",
+    "Prompts and messages go to stderr (process.stderr.write); data goes to stdout through the printed result. A prompt reads one line from stdin with node:readline; end of input or a non-TTY stdin without an answer counts as no (D10). Tests pass the answer through deps."
+  ],
+  "resources": [
+    {
+      "path": "specs/constitution.md",
+      "startLine": 1,
+      "endLine": 45,
+      "purpose": "Adopted project constitution 1.1.0; every principle applies to this slice."
+    },
+    {
+      "path": "changes/004-cli-hooks/interfaces.md",
+      "startLine": 5,
+      "endLine": 68,
+      "purpose": "Exact contents of the accepted cli/src/tracking/types.ts. Import from that file; do not change it."
+    },
+    {
+      "path": "changes/004-cli-hooks/interfaces.md",
+      "startLine": 70,
+      "endLine": 91,
+      "purpose": "Exports of the accepted cli/src/tracking/config.ts. Import from that file; do not change it."
+    },
+    {
+      "path": "changes/004-cli-hooks/interfaces.md",
+      "startLine": 93,
+      "endLine": 103,
+      "purpose": "Exports of the accepted cli/src/tracking/resume.ts. Import from that file; do not change it."
+    },
+    {
+      "path": "changes/004-cli-hooks/interfaces.md",
+      "startLine": 105,
+      "endLine": 139,
+      "purpose": "Exports of the accepted cli/src/tracking/api.ts and the pgm client methods. Import from that file; do not change it."
+    },
+    {
+      "path": "specs/004-workspace-session-tracking/contracts/cli.md",
+      "startLine": 220,
+      "endLine": 252,
+      "purpose": "pgm where flags, disk check, --json and the human layout."
+    },
+    {
+      "path": "specs/004-workspace-session-tracking/contracts/rest.md",
+      "startLine": 49,
+      "endLine": 98,
+      "purpose": "The workspace object and risks."
+    },
+    {
+      "path": "specs/004-workspace-session-tracking/contracts/rest.md",
+      "startLine": 266,
+      "endLine": 343,
+      "purpose": "GET /api/where groups."
+    },
+    {
+      "path": "tests/contract/cli-tracking.feature.test.ts",
+      "startLine": 309,
+      "endLine": 396,
+      "purpose": "Feature-level where assertions."
+    }
+  ]
+}

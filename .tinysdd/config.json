@@ -16,5 +16,52 @@
     "research": {
       "mode": "human"
     }
+  },
+  "featureIntegration": {
+    "features": {
+      "004-report-core": {
+        "argv": [
+          "node",
+          "node_modules/vitest/vitest.mjs",
+          "run",
+          "tests/integration/workspace-report.feature.test.ts"
+        ],
+        "dependencyMounts": [
+          "node_modules"
+        ],
+        "testPaths": [
+          "tests/integration/workspace-report.feature.test.ts"
+        ],
+        "entrypoints": [
+          "src/services/workspace-service.ts"
+        ],
+        "timeoutMs": 300000,
+        "docker": {
+          "socket": "/var/run/docker.sock"
+        }
+      },
+      "004-feature-core": {
+        "argv": [
+          "node",
+          "node_modules/vitest/vitest.mjs",
+          "run",
+          "tests/integration/feature-service.feature.test.ts"
+        ],
+        "dependencyMounts": [
+          "node_modules"
+        ],
+        "testPaths": [
+          "tests/integration/feature-service.feature.test.ts"
+        ],
+        "entrypoints": [
+          "src/services/feature-service.ts",
+          "src/services/task-service.ts"
+        ],
+        "timeoutMs": 300000,
+        "docker": {
+          "socket": "/var/run/docker.sock"
+        }
+      }
+    }
   }
 }

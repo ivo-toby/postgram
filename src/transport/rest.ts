@@ -246,7 +246,7 @@ function parseQueryNumber(value: string | undefined, fallback: number): number {
   return parsed;
 }
 
-function toStoredEntity(entity: Entity) {
+export function toStoredEntity(entity: Entity) {
   return {
     id: entity.id,
     type: entity.type,

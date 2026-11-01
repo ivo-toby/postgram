@@ -21,6 +21,12 @@ import {
   shortId
 } from './shared.js';
 import { AppError, ErrorCode } from './errors.js';
+import { registerFeatureCommands } from './tracking/feature-commands.js';
+import { registerHereCommand } from './tracking/here.js';
+import { registerHooksCommands } from './tracking/hooks.js';
+import { registerScanCommand } from './tracking/scan.js';
+import { registerWhereCommand } from './tracking/where.js';
+import { registerWorktreeCommand } from './tracking/worktree.js';
 import { buildSyncManifest } from './sync-walk.js';
 import {
   compactEdgeResponse,
@@ -1218,5 +1224,12 @@ program
       return lines;
     });
   });
+
+registerHereCommand(program);
+registerHooksCommands(program);
+registerWhereCommand(program);
+registerFeatureCommands(program);
+registerWorktreeCommand(program);
+registerScanCommand(program);
 
 await program.parseAsync(process.argv);

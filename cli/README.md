@@ -121,6 +121,32 @@ provenance, decisions, dependencies, blockers, ownership, involvement,
 discussion participants, connected context, or ambiguous search hits. Do not
 expand when the compact result already answers a direct fact.
 
+## Workspace tracking
+
+Track features, machines, workspaces and agent sessions across worktrees:
+
+```bash
+pgm here                       # report the current workspace and session
+pgm hooks install              # install the Claude Code hooks (--pi installs the pi extension)
+pgm hooks uninstall            # remove the installed hooks
+pgm where                      # features and workspaces grouped by stage
+pgm feature add "my feature"   # create a feature (also: stage, pr, link, unlink)
+pgm machine set --alias codebox # set this machine's alias or connect target (also: pgm machine list)
+pgm repo set <remote> --release-on-merge true|false  # record the repository for this worktree
+pgm worktree new 1234abcd      # create a worktree for a feature (UUID, 8-hex short id or title; --create creates the feature)
+pgm scan --root ~/src          # discover worktrees and record their features (needs --root <dir> or scan_roots; --yes-exact, --dry-run)
+```
+
+New `~/.pgmrc` keys (read alongside `api_url`/`api_key`):
+
+| Key | Default |
+|-----|---------|
+| `machine` | `{ "alias": <hostname>, "connect_target": <alias> }` |
+| `scan_roots` | `[]` |
+| `worktree_root` | `null` (meaning `<repo_root>.worktrees`) |
+| `here_timeout_ms` | `2000` |
+| `resume` | per-agent-kind `with_id`/`without_id` command templates |
+
 ## Memory Roles
 
 Store durable memory:

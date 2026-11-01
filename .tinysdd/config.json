@@ -96,6 +96,29 @@
         "docker": {
           "socket": "/var/run/docker.sock"
         }
+      },
+      "004-cli-hooks": {
+        "argv": [
+          "node",
+          "node_modules/vitest/vitest.mjs",
+          "run",
+          "tests/contract/cli-tracking.feature.test.ts",
+          "tests/contract/cli-scan.feature.test.ts"
+        ],
+        "dependencyMounts": [
+          "node_modules"
+        ],
+        "testPaths": [
+          "tests/contract/cli-tracking.feature.test.ts",
+          "tests/contract/cli-scan.feature.test.ts"
+        ],
+        "entrypoints": [
+          "cli/src/pgm.ts"
+        ],
+        "timeoutMs": 600000,
+        "docker": {
+          "socket": "/var/run/docker.sock"
+        }
       }
     }
   }

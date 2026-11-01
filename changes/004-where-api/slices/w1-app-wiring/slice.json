@@ -1,0 +1,57 @@
+{
+  "schemaVersion": 1,
+  "id": "where-w1",
+  "brief": "changes/004-where-api/slices/w1-app-wiring/brief.md",
+  "context": "changes/004-where-api/slices/w1-app-wiring/context.json",
+  "checks": "changes/004-where-api/slices/w1-app-wiring/checks.json",
+  "implementationFiles": [
+    "src/index.ts"
+  ],
+  "sliceTests": [
+    "tests/contract/workspace-wiring.test.ts"
+  ],
+  "protect": [
+    "tests/integration/where-service.feature.test.ts",
+    "tests/contract/workspace-api.feature.test.ts",
+    "tests/contract/workspace-mcp.feature.test.ts",
+    "changes/004-where-api/slice-check.mjs"
+  ],
+  "interfaces": [
+    "changes/004-where-api/proposal.md",
+    "src/index.ts"
+  ],
+  "dependsOn": [
+    "where-r1",
+    "where-r2",
+    "where-m1"
+  ],
+  "budget": {
+    "maxImplementationFiles": null,
+    "maxSliceTestFiles": null,
+    "maxCompiledContextBytes": null
+  },
+  "openDecisions": [],
+  "testReview": {
+    "schemaVersion": 1,
+    "workflow": "slice-tests",
+    "criteria": [
+      {
+        "id": "where-w1-tests",
+        "requirementIds": [
+          "dormancy-wiring",
+          "rest-workspace-routes",
+          "rest-feature-routes",
+          "mcp-workspace-tools"
+        ],
+        "question": "Do the tests prove that createApp registers both route files and passes the dormancy option (set and default), and that an existing route still works?",
+        "interfaces": [
+          "changes/004-where-api/proposal.md",
+          "src/index.ts"
+        ],
+        "testPaths": [
+          "tests/contract/workspace-wiring.test.ts"
+        ]
+      }
+    ]
+  }
+}

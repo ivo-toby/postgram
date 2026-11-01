@@ -1,0 +1,53 @@
+{
+  "schemaVersion": 1,
+  "id": "where-q1",
+  "brief": "changes/004-where-api/slices/q1-where-rules/brief.md",
+  "context": "changes/004-where-api/slices/q1-where-rules/context.json",
+  "checks": "changes/004-where-api/slices/q1-where-rules/checks.json",
+  "implementationFiles": [
+    "src/services/where-rules.ts"
+  ],
+  "sliceTests": [
+    "tests/unit/where-rules.test.ts"
+  ],
+  "protect": [
+    "tests/integration/where-service.feature.test.ts",
+    "tests/contract/workspace-api.feature.test.ts",
+    "tests/contract/workspace-mcp.feature.test.ts",
+    "changes/004-where-api/slice-check.mjs"
+  ],
+  "interfaces": [
+    "specs/004-workspace-session-tracking/contracts/rest.md",
+    "changes/004-where-api/proposal.md"
+  ],
+  "dependsOn": [],
+  "budget": {
+    "maxImplementationFiles": null,
+    "maxSliceTestFiles": null,
+    "maxCompiledContextBytes": null
+  },
+  "openDecisions": [],
+  "testReview": {
+    "schemaVersion": 1,
+    "workflow": "slice-tests",
+    "criteria": [
+      {
+        "id": "where-q1-tests",
+        "requirementIds": [
+          "where-groups",
+          "where-inclusion",
+          "where-order",
+          "where-plain-task"
+        ],
+        "question": "Do the tests cover both views' group keys, labels and order (with and without includeReleased), the done/archived and released hiding including their workspaces, the filtered drop, all three ordering keys, and toWhereFeature for plain, invalid and valid metadata?",
+        "interfaces": [
+          "specs/004-workspace-session-tracking/contracts/rest.md",
+          "changes/004-where-api/proposal.md"
+        ],
+        "testPaths": [
+          "tests/unit/where-rules.test.ts"
+        ]
+      }
+    ]
+  }
+}

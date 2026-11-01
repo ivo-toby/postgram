@@ -1,0 +1,23 @@
+{
+  "schemaVersion": 1,
+  "dependencyMounts": [
+    "node_modules"
+  ],
+  "checks": [
+    {
+      "id": "where-m1",
+      "argv": [
+        "node",
+        "changes/004-where-api/slice-check.mjs",
+        "src/transport/mcp-results.ts",
+        "src/transport/mcp-workspace-tools.ts",
+        "src/transport/mcp.ts",
+        "tests/contract/mcp-workspace-tools.test.ts"
+      ],
+      "timeoutMs": 600000,
+      "criteria": [
+        "C1"
+      ]
+    }
+  ]
+}

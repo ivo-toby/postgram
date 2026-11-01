@@ -1,0 +1,29 @@
+{
+  "schemaVersion": 1,
+  "dependencyMounts": [
+    "node_modules"
+  ],
+  "checks": [
+    {
+      "id": "where-api",
+      "argv": [
+        "node",
+        "node_modules/vitest/vitest.mjs",
+        "run",
+        "tests/integration/where-service.feature.test.ts",
+        "tests/contract/workspace-api.feature.test.ts",
+        "tests/contract/workspace-mcp.feature.test.ts"
+      ],
+      "timeoutMs": 300000,
+      "criteria": [
+        "C1",
+        "C2",
+        "C3",
+        "C4",
+        "C5",
+        "C6",
+        "C7"
+      ]
+    }
+  ]
+}

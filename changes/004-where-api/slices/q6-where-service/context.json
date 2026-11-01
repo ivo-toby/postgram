@@ -1,0 +1,67 @@
+{
+  "schemaVersion": 1,
+  "facts": [
+    "ESLint applies typescript-eslint recommendedTypeChecked, consistent-type-imports (use `import type` for types) and no-floating-promises to src/**/*.ts and tests/**/*.ts; require-await is active, so an async function must await something.",
+    "tsconfig is strict with noUncheckedIndexedAccess, exactOptionalPropertyTypes and verbatimModuleSyntax, with module and moduleResolution NodeNext: EVERY relative import ends in .js, in source and in tests (for example `import { x } from '../../src/services/where-rules.js'`). A missing .js is error TS2835 and makes every imported type unresolved.",
+    "exactOptionalPropertyTypes: an optional key typed `key?: T` does not accept `T | undefined`. Build objects by adding a key only when its value is defined (`...(v !== undefined ? { key: v } : {})`); do not cast.",
+    "Lint includes no-unsafe-assignment, no-unsafe-member-access, no-unsafe-return, no-unsafe-call and no-base-to-string: an untyped pg query result has rows of type any. Always pass a row type: `const result = await pool.query<{ id: string }>(sql, params);` then `result.rows[0]?.id`. Treat metadata values and caught errors as unknown and narrow them with typeof/Array.isArray before use; never call String() on an unknown value.",
+    "neverthrow is ^8.2.0: import { ResultAsync } from 'neverthrow'. A service returns `ServiceResult<T>` (from ../types/common.js, a ResultAsync<T, AppError>) built as `ResultAsync.fromPromise((async () => { ... })(), (error) => toAppError(error, msg))`; inside such a block throw an AppError to fail, and await another ServiceResult with `const r = await other(...); if (r.isErr()) { throw r.error; }` then use `r.value`. Copy the private toAppError helper from src/services/feature-service.ts into your file. In tests, await the ResultAsync first and then unwrap: `(await fn(...))._unsafeUnwrap()` and `(await fn(...))._unsafeUnwrapErr()`; never call `_unsafeUnwrap` on the un-awaited ResultAsync.",
+    "A union type such as Result or a discriminated union must be narrowed before reading a member that only one variant has.",
+    "Tests use vitest ^3.2.4 (describe/it/expect from \"vitest\"). Integration tests use createTestDatabase/resetTestDatabase/seedApiKey from tests/helpers/postgres.js (pgvector/pgvector:pg17 via testcontainers) and run all migrations. In beforeEach run resetTestDatabase, then `TRUNCATE TABLE agent_sessions, workspaces, machines, repositories CASCADE`, then seedApiKey with the id used as auth.apiKeyId (audit_log.api_key_id references api_keys). Build workspaces through reportWorkspace (src/services/workspace-service.js) as the protected feature test does; set last_activity_at with a direct UPDATE when a test needs a fixed order.",
+    "The protected feature tests tests/integration/where-service.feature.test.ts, tests/contract/workspace-api.feature.test.ts, tests/contract/workspace-mcp.feature.test.ts, changes/004-where-api/slice-check.mjs, specs/constitution.md and specs/constitution.approval.json must not be edited. Do not edit files of accepted slices unless this brief says so.",
+    "The slice check runs `node changes/004-where-api/slice-check.mjs <files>`: Vitest on the slice test, ESLint with --max-warnings=0 on every listed file, and `tsc --noEmit -p tsconfig.json` for the whole project (errors inside the three protected feature tests are ignored, because they import functions and options that later slices add). Call the run_checks tool before you finish and fix every ESLint and tsc error it reports. Docker is unreachable in the sandbox, so integration and contract tests are reported as SKIPPED there; the controller runs them on the host. Do not create helper or probe files to run checks; use run_checks.",
+    "src/services/workspace-query.ts (accepted slice where-q2) exports exactly:\nimport type { Pool, PoolClient } from 'pg';\n\nexport type WorkspaceViewOptions = { dormantAfterDays: number };\nexport type WorkspaceQuery = {\n  machine?: string | undefined;        // exact machine alias\n  repo?: string | undefined;           // already normalized remote, exact match on repo_remote\n  featureId?: string | undefined;      // full UUID, exact match on feature_id\n  unassigned?: boolean | undefined;    // true: feature_id IS NULL\n  workspaceIds?: readonly string[] | undefined;\n  includeEnded?: boolean | undefined;\n};\n\nexport async function loadWorkspaceViews(\n  db: Pool | PoolClient,\n  auth: AuthContext,\n  query: WorkspaceQuery,\n  options: { now: Date; dormantAfterDays: number }\n): Promise<WorkspaceView[]>;\n\nexport function listWorkspaces(\n  pool: Pool,\n  auth: AuthContext,\n  input: {\n    machine?: string | undefined;\n    repo?: string | undefined;          // any remote form\n    featureId?: string | undefined;     // UUID or 8-hex short id\n    unassigned?: boolean | undefined;\n    includeEnded?: boolean | undefined;\n  },\n  options: WorkspaceViewOptions\n): ServiceResult<WorkspaceView[]>;\nloadWorkspaceViews applies the FR-040 visibility rule itself, checks no scope, and returns views sorted by last_activity_at DESC, id ASC. Import it; do not change that file.",
+    "src/services/where-rules.ts (accepted slice where-q1) exports exactly:\nimport type { EntityStatus } from '../types/entities.js';\nimport type { FeaturePullRequest, FeatureStage, StageSource } from '../types/features.js';\nimport type { WorkspaceView } from '../types/workspaces.js';\n\nexport type WhereView = 'stage' | 'actions';\nexport type FeatureTaskRow = { id: string; content: string | null; status: EntityStatus | null; metadata: Record<string, unknown> | null };\nexport type WhereFeatureSummary = {\n  id: string; title: string; stage: FeatureStage; stage_source: StageSource | null;\n  stage_set_at: string | null; task_status: EntityStatus | null; pull_requests: FeaturePullRequest[];\n};\nexport type WhereFeature = WhereFeatureSummary & { workspaces: WorkspaceView[] };\nexport type WhereFeatureGroup = { key: string; label: string; features: WhereFeature[] };\nexport type WhereUnassignedGroup = { key: 'unassigned'; label: 'Unassigned'; workspaces: WorkspaceView[] };\nexport type WhereGroup = WhereFeatureGroup | WhereUnassignedGroup;\n\nexport function isWhereView(value: unknown): value is WhereView;\nexport function featureTitle(content: string | null): string;\nexport function toWhereFeature(row: FeatureTaskRow): WhereFeatureSummary;\nexport function buildWhereGroups(input: {\n  view: WhereView;\n  features: readonly WhereFeatureSummary[];\n  workspaces: readonly WorkspaceView[];\n  includeReleased: boolean;\n  includeDone: boolean;\n  filtered: boolean;\n}): WhereGroup[];\nImport from it; do not change that file.",
+    "createFeature(pool, auth, { content, visibility }) and setFeatureStage(pool, auth, { id, stage }) from src/services/feature-service.ts build test features; createTask from src/services/task-service.ts builds a plain task."
+  ],
+  "resources": [
+    {
+      "path": "specs/constitution.md",
+      "startLine": 1,
+      "endLine": 45,
+      "purpose": "Adopted project constitution 1.1.0; every principle applies to this slice."
+    },
+    {
+      "path": "specs/004-workspace-session-tracking/contracts/rest.md",
+      "startLine": 266,
+      "endLine": 343,
+      "purpose": "GET /api/where."
+    },
+    {
+      "path": "specs/004-workspace-session-tracking/spec.md",
+      "startLine": 186,
+      "endLine": 191,
+      "purpose": "FR-026 to FR-031."
+    },
+    {
+      "path": "changes/004-where-api/proposal.md",
+      "startLine": 86,
+      "endLine": 92,
+      "purpose": "D2 (plain linked task is building) and D3 (released hidden)."
+    },
+    {
+      "path": "src/services/feature-service.ts",
+      "startLine": 1,
+      "endLine": 68,
+      "purpose": "Service imports, row typing and the toAppError helper to copy."
+    },
+    {
+      "path": "src/util/git-remote.ts",
+      "startLine": 1,
+      "endLine": 40,
+      "purpose": "normalizeRemote."
+    },
+    {
+      "path": "tests/integration/where-service.feature.test.ts",
+      "startLine": 1,
+      "endLine": 153,
+      "purpose": "Integration test setup, auth and hookReport helpers to copy."
+    },
+    {
+      "path": "tests/integration/where-service.feature.test.ts",
+      "startLine": 578,
+      "endLine": 753,
+      "purpose": "Feature-level where assertions."
+    }
+  ]
+}

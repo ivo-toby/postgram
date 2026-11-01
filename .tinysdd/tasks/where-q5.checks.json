@@ -1,0 +1,21 @@
+{
+  "schemaVersion": 1,
+  "dependencyMounts": [
+    "node_modules"
+  ],
+  "checks": [
+    {
+      "id": "where-q5",
+      "argv": [
+        "node",
+        "changes/004-where-api/slice-check.mjs",
+        "src/services/machine-service.ts",
+        "tests/integration/machine-service.test.ts"
+      ],
+      "timeoutMs": 600000,
+      "criteria": [
+        "C1"
+      ]
+    }
+  ]
+}

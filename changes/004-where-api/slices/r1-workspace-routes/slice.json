@@ -1,0 +1,57 @@
+{
+  "schemaVersion": 1,
+  "id": "where-r1",
+  "brief": "changes/004-where-api/slices/r1-workspace-routes/brief.md",
+  "context": "changes/004-where-api/slices/r1-workspace-routes/context.json",
+  "checks": "changes/004-where-api/slices/r1-workspace-routes/checks.json",
+  "implementationFiles": [
+    "src/transport/workspace-routes.ts"
+  ],
+  "sliceTests": [
+    "tests/contract/workspace-routes.test.ts"
+  ],
+  "protect": [
+    "tests/integration/where-service.feature.test.ts",
+    "tests/contract/workspace-api.feature.test.ts",
+    "tests/contract/workspace-mcp.feature.test.ts",
+    "changes/004-where-api/slice-check.mjs"
+  ],
+  "interfaces": [
+    "specs/004-workspace-session-tracking/contracts/rest.md",
+    "changes/004-where-api/proposal.md"
+  ],
+  "dependsOn": [
+    "where-q3",
+    "where-q4",
+    "where-q5",
+    "where-q6",
+    "where-r2"
+  ],
+  "budget": {
+    "maxImplementationFiles": null,
+    "maxSliceTestFiles": null,
+    "maxCompiledContextBytes": null
+  },
+  "openDecisions": [],
+  "testReview": {
+    "schemaVersion": 1,
+    "workflow": "slice-tests",
+    "criteria": [
+      {
+        "id": "where-r1-tests",
+        "requirementIds": [
+          "rest-workspace-routes",
+          "rest-errors"
+        ],
+        "question": "Do the tests cover all seven routes with status and body, query flag parsing including invalid values, required lookup parameters, the options passthrough (dormant_after_days), and the 400, 403 and 404 envelopes?",
+        "interfaces": [
+          "specs/004-workspace-session-tracking/contracts/rest.md",
+          "changes/004-where-api/proposal.md"
+        ],
+        "testPaths": [
+          "tests/contract/workspace-routes.test.ts"
+        ]
+      }
+    ]
+  }
+}

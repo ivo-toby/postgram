@@ -1,0 +1,22 @@
+{
+  "schemaVersion": 1,
+  "dependencyMounts": [
+    "node_modules"
+  ],
+  "checks": [
+    {
+      "id": "where-r2",
+      "argv": [
+        "node",
+        "changes/004-where-api/slice-check.mjs",
+        "src/transport/feature-routes.ts",
+        "src/transport/rest.ts",
+        "tests/contract/feature-routes.test.ts"
+      ],
+      "timeoutMs": 600000,
+      "criteria": [
+        "C1"
+      ]
+    }
+  ]
+}

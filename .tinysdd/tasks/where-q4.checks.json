@@ -1,0 +1,21 @@
+{
+  "schemaVersion": 1,
+  "dependencyMounts": [
+    "node_modules"
+  ],
+  "checks": [
+    {
+      "id": "where-q4",
+      "argv": [
+        "node",
+        "changes/004-where-api/slice-check.mjs",
+        "src/services/workspace-update.ts",
+        "tests/integration/workspace-update.test.ts"
+      ],
+      "timeoutMs": 600000,
+      "criteria": [
+        "C1"
+      ]
+    }
+  ]
+}

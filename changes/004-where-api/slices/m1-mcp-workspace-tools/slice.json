@@ -1,0 +1,59 @@
+{
+  "schemaVersion": 1,
+  "id": "where-m1",
+  "brief": "changes/004-where-api/slices/m1-mcp-workspace-tools/brief.md",
+  "context": "changes/004-where-api/slices/m1-mcp-workspace-tools/context.json",
+  "checks": "changes/004-where-api/slices/m1-mcp-workspace-tools/checks.json",
+  "implementationFiles": [
+    "src/transport/mcp-results.ts",
+    "src/transport/mcp-workspace-tools.ts",
+    "src/transport/mcp.ts"
+  ],
+  "sliceTests": [
+    "tests/contract/mcp-workspace-tools.test.ts"
+  ],
+  "protect": [
+    "tests/integration/where-service.feature.test.ts",
+    "tests/contract/workspace-api.feature.test.ts",
+    "tests/contract/workspace-mcp.feature.test.ts",
+    "changes/004-where-api/slice-check.mjs"
+  ],
+  "interfaces": [
+    "specs/004-workspace-session-tracking/contracts/mcp.md",
+    "changes/004-where-api/proposal.md",
+    "src/transport/mcp.ts"
+  ],
+  "dependsOn": [
+    "where-q3",
+    "where-q4",
+    "where-q6"
+  ],
+  "budget": {
+    "maxImplementationFiles": null,
+    "maxSliceTestFiles": null,
+    "maxCompiledContextBytes": null
+  },
+  "openDecisions": [],
+  "testReview": {
+    "schemaVersion": 1,
+    "workflow": "slice-tests",
+    "criteria": [
+      {
+        "id": "where-m1-tests",
+        "requirementIds": [
+          "mcp-workspace-tools",
+          "mcp-where-compact"
+        ],
+        "question": "Do the tests cover the tool list, every tool in compact and full form, the exact compact keys including the where workspace reduction, error mapping for validation and scope, and that an existing tool still works after the helper move?",
+        "interfaces": [
+          "specs/004-workspace-session-tracking/contracts/mcp.md",
+          "changes/004-where-api/proposal.md",
+          "src/transport/mcp.ts"
+        ],
+        "testPaths": [
+          "tests/contract/mcp-workspace-tools.test.ts"
+        ]
+      }
+    ]
+  }
+}

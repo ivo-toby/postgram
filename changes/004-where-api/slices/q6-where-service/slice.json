@@ -1,0 +1,58 @@
+{
+  "schemaVersion": 1,
+  "id": "where-q6",
+  "brief": "changes/004-where-api/slices/q6-where-service/brief.md",
+  "context": "changes/004-where-api/slices/q6-where-service/context.json",
+  "checks": "changes/004-where-api/slices/q6-where-service/checks.json",
+  "implementationFiles": [
+    "src/services/where-service.ts"
+  ],
+  "sliceTests": [
+    "tests/integration/where-service.test.ts"
+  ],
+  "protect": [
+    "tests/integration/where-service.feature.test.ts",
+    "tests/contract/workspace-api.feature.test.ts",
+    "tests/contract/workspace-mcp.feature.test.ts",
+    "changes/004-where-api/slice-check.mjs"
+  ],
+  "interfaces": [
+    "specs/004-workspace-session-tracking/contracts/rest.md",
+    "specs/004-workspace-session-tracking/spec.md",
+    "changes/004-where-api/proposal.md"
+  ],
+  "dependsOn": [
+    "where-q1",
+    "where-q2"
+  ],
+  "budget": {
+    "maxImplementationFiles": null,
+    "maxSliceTestFiles": null,
+    "maxCompiledContextBytes": null
+  },
+  "openDecisions": [],
+  "testReview": {
+    "schemaVersion": 1,
+    "workflow": "slice-tests",
+    "criteria": [
+      {
+        "id": "where-q6-tests",
+        "requirementIds": [
+          "where-groups",
+          "where-inclusion",
+          "where-plain-task",
+          "workspace-visibility"
+        ],
+        "question": "Do the tests cover both views end to end, the plain linked task, released and done hiding with their flags, both filters, both visibility branches, the rejections and the top-level fields?",
+        "interfaces": [
+          "specs/004-workspace-session-tracking/contracts/rest.md",
+          "specs/004-workspace-session-tracking/spec.md",
+          "changes/004-where-api/proposal.md"
+        ],
+        "testPaths": [
+          "tests/integration/where-service.test.ts"
+        ]
+      }
+    ]
+  }
+}

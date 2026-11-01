@@ -1,0 +1,102 @@
+{
+  "schemaVersion": 1,
+  "spec": "specs/workspace-tracking.md",
+  "baseSha256": null,
+  "changes": [
+    {
+      "operation": "add",
+      "id": "workspace-visibility",
+      "text": "A linked workspace is visible only when its feature is a task whose visibility is in allowedVisibility and the task type is allowed; an unlinked workspace is visible only when personal is in allowedVisibility; invisible workspaces are never returned and are NOT_FOUND by id."
+    },
+    {
+      "operation": "add",
+      "id": "workspace-list",
+      "text": "listWorkspaces requires read scope, filters by exact machine alias, normalized repo remote, feature id (UUID or 8-hex short id) and unassigned, and sorts by last_activity_at descending."
+    },
+    {
+      "operation": "add",
+      "id": "session-window",
+      "text": "Workspace sessions hold the non-ended sessions plus the single most recently active session, or all sessions with includeEnded, sorted by last_activity_at descending."
+    },
+    {
+      "operation": "add",
+      "id": "workspace-lookup",
+      "text": "lookupWorkspace requires read scope, strips a trailing slash, rejects a relative path with VALIDATION, and returns the visible workspace on that machine whose path equals the given path or is its longest prefix ending at a slash boundary, with feature id, title, stage and pull_requests; no match or an unknown machine returns workspace null and feature null."
+    },
+    {
+      "operation": "add",
+      "id": "workspace-link",
+      "text": "updateWorkspace requires write scope and at least one of featureId and missing; featureId (UUID or 8-hex) links the workspace, applies the feature defaults to a plain task, and null unlinks; an unknown or invisible workspace or feature is NOT_FOUND, a non-task feature id is VALIDATION, and nothing is written on any rejection."
+    },
+    {
+      "operation": "add",
+      "id": "workspace-missing",
+      "text": "missing true sets missing_since to now only when it is null; missing false clears it."
+    },
+    {
+      "operation": "add",
+      "id": "workspace-audit",
+      "text": "A link change writes workspace_link with from and to; an unchanged link, missing and connect-target changes write no audit row."
+    },
+    {
+      "operation": "add",
+      "id": "machine-list",
+      "text": "listMachines requires read scope and returns alias, hostname, connect_target and last_seen_at sorted by alias."
+    },
+    {
+      "operation": "add",
+      "id": "machine-connect-target",
+      "text": "setMachineConnectTarget requires write scope, accepts null or a value matching ^[A-Za-z0-9._@:-]{1,255}$ (else VALIDATION), returns NOT_FOUND for an unknown alias and never creates or renames a machine."
+    },
+    {
+      "operation": "add",
+      "id": "where-groups",
+      "text": "getWhere requires read scope, accepts view stage (default) or actions (else VALIDATION), and returns view, generated_at, dormant_after_days and every group of the view in contract order with its label, even when empty; released appears only in the stage view with includeReleased."
+    },
+    {
+      "operation": "add",
+      "id": "where-inclusion",
+      "text": "Features whose task status is done or archived are hidden unless includeDone, released features are hidden unless includeReleased in the stage view and always in the actions view, and the workspaces of hidden features never fall into unassigned; with a machine or repo filter only matching workspaces are kept and features without one are dropped; without a filter features without workspaces are listed with workspaces []."
+    },
+    {
+      "operation": "add",
+      "id": "where-order",
+      "text": "Features are ordered by their newest workspace last_activity_at descending (features without workspaces last), then stage_set_at descending, then id ascending; workspaces by last_activity_at descending."
+    },
+    {
+      "operation": "add",
+      "id": "where-plain-task",
+      "text": "A linked task without a valid metadata.stage is shown as stage building with stage_source and stage_set_at null; the title is the first content line, trimmed and cut at 80 characters."
+    },
+    {
+      "operation": "add",
+      "id": "rest-workspace-routes",
+      "text": "POST /api/workspaces/report, PATCH /api/workspaces/:id, PUT /api/machines/:alias, GET /api/machines, GET /api/workspaces/lookup, GET /api/workspaces and GET /api/where call the workspace services with the bearer key's auth and return the rest.md bodies; boolean query flags accept exactly true or false, anything else is 400."
+    },
+    {
+      "operation": "add",
+      "id": "rest-feature-routes",
+      "text": "PUT /api/repositories, POST /api/features (201), POST /api/features/:id/stage and POST /api/features/:id/pull-requests call the feature services, accept either feature id form in the path and return the rest.md bodies with entities in the existing stored-entity shape."
+    },
+    {
+      "operation": "add",
+      "id": "rest-errors",
+      "text": "Service errors use the existing error envelope and status mapping: VALIDATION 400, FORBIDDEN 403, NOT_FOUND 404, CONFLICT 409 with details.candidates; a request without a valid key is 401."
+    },
+    {
+      "operation": "add",
+      "id": "mcp-workspace-tools",
+      "text": "The MCP tools workspace_report, workspace_lookup, workspace_link, feature_stage, feature_pr and where call the same services as REST, return the compact outputs of mcp.md by default and the full REST-shaped payload with full_response, and return service errors as tool errors."
+    },
+    {
+      "operation": "add",
+      "id": "mcp-where-compact",
+      "text": "In compact where output each workspace is machine, connect_target, path, branch, risks, resume_session (agent_kind, agent_session_id, status, cwd) or null, and latest_session (agent_kind, agent_session_id, status) or null."
+    },
+    {
+      "operation": "add",
+      "id": "dormancy-wiring",
+      "text": "createApp accepts workspaceDormantAfterDays (default 30) and passes it to the workspace routes and MCP tools; the server passes WORKSPACE_DORMANT_AFTER_DAYS; existing routes and tools are unchanged."
+    }
+  ]
+}

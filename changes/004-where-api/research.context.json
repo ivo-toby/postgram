@@ -1,0 +1,74 @@
+{
+  "schemaVersion": 1,
+  "facts": [
+    "Constitution 1.1.0 (specs/constitution.md, approval specs/constitution.approval.json) is adopted for this change.",
+    "Phase 1 (004-report-core) provides the workspaces, machines and agent_sessions tables (migration 018) and the pure workspace object projection toWorkspaceView in src/services/workspace-view.ts.",
+    "Phase 2 (004-feature-core) provides resolveFeatureId, createFeature and setFeatureStage in src/services/feature-service.ts and featureDefaults/isFeatureStage in src/services/feature-rules.ts.",
+    "workspaces.feature_id references entities(id) ON DELETE SET NULL, and (machine_id, path) is unique.",
+    "Visibility (FR-040): a linked workspace follows its feature task's visibility and the task type permission; an unlinked workspace is personal.",
+    "Decisions D1-D13 and the 10-slice plan accepted by Ivo on 2026-11-01; D8 and D9 are controller details that follow FR-040.",
+    "The services become reachable through new REST route files and MCP tools (contracts/rest.md 123-343, contracts/mcp.md), registered by createApp in src/index.ts."
+  ],
+  "resources": [
+    {
+      "path": "specs/constitution.md",
+      "startLine": 1,
+      "endLine": 45,
+      "purpose": "Adopted project constitution."
+    },
+    {
+      "path": "specs/004-workspace-session-tracking/contracts/rest.md",
+      "startLine": 49,
+      "endLine": 121,
+      "purpose": "Workspace object, visibility and audit operations."
+    },
+    {
+      "path": "specs/004-workspace-session-tracking/contracts/rest.md",
+      "startLine": 202,
+      "endLine": 219,
+      "purpose": "PATCH workspace and PUT machine."
+    },
+    {
+      "path": "specs/004-workspace-session-tracking/contracts/rest.md",
+      "startLine": 248,
+      "endLine": 343,
+      "purpose": "Machines, lookup, list and where."
+    },
+    {
+      "path": "specs/004-workspace-session-tracking/spec.md",
+      "startLine": 186,
+      "endLine": 206,
+      "purpose": "FR-026 to FR-031, FR-039, FR-040."
+    },
+    {
+      "path": "src/services/workspace-view.ts",
+      "startLine": 1,
+      "endLine": 206,
+      "purpose": "Workspace object projection."
+    },
+    {
+      "path": "src/services/workspace-store.ts",
+      "startLine": 244,
+      "endLine": 356,
+      "purpose": "Feature visibility and title rule used by the report."
+    },
+    {
+      "path": "specs/004-workspace-session-tracking/contracts/rest.md",
+      "startLine": 123,
+      "endLine": 246,
+      "purpose": "Write endpoints and their bodies."
+    },
+    {
+      "path": "specs/004-workspace-session-tracking/contracts/mcp.md",
+      "startLine": 1,
+      "endLine": 26,
+      "purpose": "MCP tools and compact outputs."
+    },
+    {
+      "path": "src/index.ts",
+      "startLine": 218,
+      "endLine": 316,
+      "purpose": "createApp, error handler and route registration."
+    }
+  ]
+}

@@ -1,0 +1,55 @@
+{
+  "schemaVersion": 1,
+  "id": "where-q3",
+  "brief": "changes/004-where-api/slices/q3-workspace-lookup/brief.md",
+  "context": "changes/004-where-api/slices/q3-workspace-lookup/context.json",
+  "checks": "changes/004-where-api/slices/q3-workspace-lookup/checks.json",
+  "implementationFiles": [
+    "src/services/workspace-lookup.ts"
+  ],
+  "sliceTests": [
+    "tests/integration/workspace-lookup.test.ts"
+  ],
+  "protect": [
+    "tests/integration/where-service.feature.test.ts",
+    "tests/contract/workspace-api.feature.test.ts",
+    "tests/contract/workspace-mcp.feature.test.ts",
+    "changes/004-where-api/slice-check.mjs"
+  ],
+  "interfaces": [
+    "specs/004-workspace-session-tracking/contracts/rest.md",
+    "specs/004-workspace-session-tracking/spec.md",
+    "changes/004-where-api/proposal.md"
+  ],
+  "dependsOn": [
+    "where-q1",
+    "where-q2"
+  ],
+  "budget": {
+    "maxImplementationFiles": null,
+    "maxSliceTestFiles": null,
+    "maxCompiledContextBytes": null
+  },
+  "openDecisions": [],
+  "testReview": {
+    "schemaVersion": 1,
+    "workflow": "slice-tests",
+    "criteria": [
+      {
+        "id": "where-q3-tests",
+        "requirementIds": [
+          "workspace-lookup"
+        ],
+        "question": "Do the tests cover exact, trailing-slash and subdirectory matches, the slash boundary, longest and longest-visible matches, unknown machine, the feature summary for a plain task and a staged feature, and the rejections?",
+        "interfaces": [
+          "specs/004-workspace-session-tracking/contracts/rest.md",
+          "specs/004-workspace-session-tracking/spec.md",
+          "changes/004-where-api/proposal.md"
+        ],
+        "testPaths": [
+          "tests/integration/workspace-lookup.test.ts"
+        ]
+      }
+    ]
+  }
+}

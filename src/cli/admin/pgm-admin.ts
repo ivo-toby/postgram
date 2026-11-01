@@ -113,9 +113,13 @@ type DurableApplyCommandOptions = {
 };
 
 function createPool(): Pool {
-  return new Pool({
+  const pool = new Pool({
     connectionString: resolveAdminDatabaseUrl()
   });
+  pool.on('error', (err) => {
+    console.error('Unexpected error on idle PostgreSQL client:', err);
+  });
+  return pool;
 }
 
 async function withPool<T>(fn: (pool: Pool, json: boolean) => Promise<T>, json: boolean): Promise<T> {

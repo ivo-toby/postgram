@@ -4,11 +4,12 @@ import { createPool } from '../../src/db/pool.js';
 describe('createPool', () => {
   it('registers an error listener that handles idle client errors without crashing', async () => {
     const errorLog = vi.fn();
-    const logger = { error: errorLog };
+    const logger = { error: errorLog, warn: vi.fn() };
     const pool = createPool('postgres://postgram:secret@localhost:5432/postgram', logger);
 
     try {
       expect(pool.listenerCount('error')).toBeGreaterThan(0);
+      expect(pool.listenerCount('connect')).toBeGreaterThan(0);
 
       const testError = new Error('terminating connection due to administrator command');
       expect(() => {

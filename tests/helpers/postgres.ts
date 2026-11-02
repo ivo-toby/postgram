@@ -7,6 +7,7 @@ import type { EntityType, Visibility } from '../../src/types/entities.js';
 
 export type TestDatabase = {
   pool: Pool;
+  connectionString: string;
   close: () => Promise<void>;
 };
 
@@ -42,9 +43,11 @@ export async function createTestDatabase(): Promise<TestDatabase> {
     )
     .start();
 
+  const host = container.getHost();
+  const port = container.getMappedPort(5432);
   const pool = new Pool({
-    host: container.getHost(),
-    port: container.getMappedPort(5432),
+    host,
+    port,
     database: 'postgram',
     user: 'postgram',
     password: 'postgram'
@@ -55,6 +58,7 @@ export async function createTestDatabase(): Promise<TestDatabase> {
 
   return {
     pool,
+    connectionString: `postgres://postgram:postgram@${host}:${port}/postgram`,
     close: async () => {
       await pool.end();
       await container.stop();

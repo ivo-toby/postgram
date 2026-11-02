@@ -119,6 +119,11 @@ function createPool(): Pool {
   pool.on('error', (err) => {
     console.error('Unexpected error on idle PostgreSQL client:', err);
   });
+  pool.on('connect', (client) => {
+    client.on('error', (err) => {
+      console.warn('PostgreSQL client connection error:', err);
+    });
+  });
   return pool;
 }
 

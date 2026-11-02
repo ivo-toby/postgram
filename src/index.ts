@@ -63,7 +63,7 @@ type AppVariables = {
 type AppOptions = {
   pool?: Pool;
   embeddingService?: EmbeddingService | undefined;
-  logger?: Pick<Logger, 'debug' | 'warn'> | undefined;
+  logger?: Pick<Logger, 'debug' | 'warn' | 'error'> | undefined;
   extractionEnabled?: boolean | undefined;
   oauth?:
     | {
@@ -280,6 +280,7 @@ export function createApp(
       app as unknown as Parameters<typeof registerAdminRoutes>[0],
       options.pool,
       {
+        logger: options.logger,
         adminMfaSecretKey: options.adminMfaSecretKey,
         adminSettingsEncryptionKey: options.adminSettingsEncryptionKey,
         runtimeConfig: options.runtimeConfig,
@@ -366,7 +367,7 @@ export async function startServer(): Promise<{
 }> {
   const config = loadConfig();
   const logger = createLogger(config.LOG_LEVEL);
-  const pool = createPool(config.DATABASE_URL);
+  const pool = createPool(config.DATABASE_URL, logger);
 
   await runMigrations(pool);
 

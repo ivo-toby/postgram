@@ -1,0 +1,23 @@
+{
+  "schemaVersion": 1,
+  "dependencyMounts": [
+    "node_modules",
+    "ui/node_modules"
+  ],
+  "checks": [
+    {
+      "id": "ui-w1",
+      "argv": [
+        "node",
+        "changes/004-ui-where/slice-check.mjs",
+        "ui/src/App.tsx",
+        "ui/src/components/TopBar.tsx",
+        "ui/src/components/TopBar.test.tsx"
+      ],
+      "timeoutMs": 600000,
+      "criteria": [
+        "C1"
+      ]
+    }
+  ]
+}

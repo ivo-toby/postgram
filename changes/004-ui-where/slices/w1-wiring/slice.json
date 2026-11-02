@@ -1,0 +1,55 @@
+{
+  "schemaVersion": 1,
+  "id": "ui-w1",
+  "brief": "changes/004-ui-where/slices/w1-wiring/brief.md",
+  "context": "changes/004-ui-where/slices/w1-wiring/context.json",
+  "checks": "changes/004-ui-where/slices/w1-wiring/checks.json",
+  "implementationFiles": [
+    "ui/src/App.tsx",
+    "ui/src/components/TopBar.tsx"
+  ],
+  "sliceTests": [
+    "ui/src/components/TopBar.test.tsx"
+  ],
+  "protect": [
+    "ui/tests/where-page.feature.test.tsx",
+    "changes/004-ui-where/slice-check.mjs",
+    "ui/src/lib/where.ts",
+    "ui/src/lib/api.ts",
+    "ui/src/hooks/useWhere.ts",
+    "ui/src/components/WherePage.tsx"
+  ],
+  "interfaces": [
+    "specs/004-workspace-session-tracking/contracts/ui.md",
+    "changes/004-ui-where/interfaces.md"
+  ],
+  "dependsOn": [
+    "ui-u3"
+  ],
+  "budget": {
+    "maxImplementationFiles": null,
+    "maxSliceTestFiles": null,
+    "maxCompiledContextBytes": null
+  },
+  "openDecisions": [],
+  "testReview": {
+    "schemaVersion": 1,
+    "workflow": "slice-tests",
+    "criteria": [
+      {
+        "id": "ui-w1-tests",
+        "requirementIds": [
+          "ui-wiring",
+          "ui-readonly"
+        ],
+        "question": "Do the tests cover the Where tab rendering, its inactive state on another page and the navigate call, while every existing TopBar assertion still passes?",
+        "interfaces": [
+          "specs/004-workspace-session-tracking/contracts/ui.md"
+        ],
+        "testPaths": [
+          "ui/src/components/TopBar.test.tsx"
+        ]
+      }
+    ]
+  }
+}

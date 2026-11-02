@@ -1,0 +1,45 @@
+{
+  "schemaVersion": 1,
+  "id": "ui-u1",
+  "brief": "changes/004-ui-where/slices/u1-where-lib/brief.md",
+  "context": "changes/004-ui-where/slices/u1-where-lib/context.json",
+  "checks": "changes/004-ui-where/slices/u1-where-lib/checks.json",
+  "implementationFiles": [
+    "ui/src/lib/where.ts"
+  ],
+  "sliceTests": [
+    "ui/src/lib/where.test.ts"
+  ],
+  "protect": [
+    "ui/tests/where-page.feature.test.tsx",
+    "changes/004-ui-where/slice-check.mjs"
+  ],
+  "interfaces": [
+    "specs/004-workspace-session-tracking/contracts/ui.md",
+    "specs/004-workspace-session-tracking/contracts/rest.md"
+  ],
+  "dependsOn": [],
+  "budget": {
+    "maxImplementationFiles": null,
+    "maxSliceTestFiles": null,
+    "maxCompiledContextBytes": null
+  },
+  "openDecisions": [],
+  "testReview": {
+    "schemaVersion": 1,
+    "workflow": "slice-tests",
+    "criteria": [
+      {
+        "id": "ui-u1-tests",
+        "requirementIds": ["ui-resume", "ui-age-format", "ui-feature-card", "ui-groups"],
+        "question": "Do the tests cover the four resume vectors including the quoted session id and the talon case, the cwd-outside-path case, both formatAge boundaries, pullRequestNumber on a non-PR url and the group helpers?",
+        "interfaces": [
+          "specs/004-workspace-session-tracking/contracts/ui.md"
+        ],
+        "testPaths": [
+          "ui/src/lib/where.test.ts"
+        ]
+      }
+    ]
+  }
+}

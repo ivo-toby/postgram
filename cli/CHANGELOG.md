@@ -1,3 +1,9 @@
+## [1.38.3](https://github.com/ivo-toby/postgram/compare/cli-v1.38.2...cli-v1.38.3) (2026-11-02)
+
+### Bug Fixes
+
+* **db:** handle idle and checked-out pg client errors to prevent unhandled crash ([#115](https://github.com/ivo-toby/postgram/issues/115)) ([197c451](https://github.com/ivo-toby/postgram/commit/197c4517b5c8b671e40d83702640a22249744ac2))
+
 ## [1.38.2](https://github.com/ivo-toby/postgram/compare/cli-v1.38.1...cli-v1.38.2) (2026-10-31)
 
 ### Bug Fixes

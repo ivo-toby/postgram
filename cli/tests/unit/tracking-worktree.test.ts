@@ -6,7 +6,8 @@ import {
   mkdtempSync,
   readFileSync,
   realpathSync,
-  rmSync
+  rmSync,
+  writeFileSync
 } from 'node:fs';
 import os from 'node:os';
 import path from 'node:path';
@@ -31,9 +32,14 @@ import {
   matchFeature,
   registerWorktreeCommand,
   runWorktreeNew,
+  runWorktreeRemove,
   taskTitle
 } from '../../src/tracking/worktree.js';
-import type { TaskSummary, WorktreeDeps } from '../../src/tracking/worktree.js';
+import type {
+  TaskSummary,
+  WorktreeDeps,
+  WorktreeRemoveDeps
+} from '../../src/tracking/worktree.js';
 
 const FEATURE_ID = 'a1b2c3d4-e5f6-7890-abcd-ef1234567890';
 
@@ -402,6 +408,155 @@ describe('runWorktreeNew', () => {
     expect(warn).toHaveBeenCalledWith(
       expect.stringContaining('report failed')
     );
+  });
+});
+
+describe('runWorktreeRemove', () => {
+  function removeSetup(repo: string) {
+    const lookup = vi.fn<TrackingClient['lookup']>();
+    const deleteWorkspace = vi.fn<TrackingClient['deleteWorkspace']>();
+    const warn = vi.fn();
+    const base = realDeps(repo).deps;
+    const deps: WorktreeRemoveDeps = {
+      client: { lookup, deleteWorkspace } as unknown as TrackingClient,
+      config: base.config,
+      cwd: repo,
+      run: runGit,
+      exists: existsSync,
+      realpath: (p) => Promise.resolve(realpathSync(p)),
+      resolveWorkspace: (cwd) => resolveLocalWorkspace(cwd, { budgetMs: 5000 }),
+      warn
+    };
+    return { deps, lookup, deleteWorkspace, warn };
+  }
+
+  function makeWorktree(repo: string, name = 'wt'): string {
+    const target = `${repo}.worktrees/${name}`;
+    gitExec(repo, ['worktree', 'add', '-q', '-b', `feat/${name}`, target]);
+    return realpathSync(target);
+  }
+
+  function pushTo(repo: string, branch: string): void {
+    const remote = mkdtempSync(path.join(os.tmpdir(), 'wt-remote-'));
+    tempDirs.push(remote);
+    gitExec(remote, ['init', '-q', '--bare', '-b', 'main']);
+    gitExec(repo, ['remote', 'add', 'origin', remote]);
+    gitExec(repo, ['push', '-q', '-u', 'origin', 'main']);
+    gitExec(repo, ['push', '-q', '-u', 'origin', branch]);
+  }
+
+  const registered = {
+    workspace: { id: 'ws-1', path: '' },
+    feature: null
+  } as unknown as Awaited<ReturnType<TrackingClient['lookup']>>;
+
+  it('removes a clean, pushed worktree and unregisters its workspace', async () => {
+    if (!gitAvailable) return;
+    const repo = makeTempRepo();
+    const target = makeWorktree(repo);
+    pushTo(repo, 'feat/wt');
+    const { deps, lookup, deleteWorkspace } = removeSetup(repo);
+    lookup.mockResolvedValue({
+      ...registered,
+      workspace: { ...(registered.workspace as object), id: 'ws-1', path: target }
+    } as typeof registered);
+    deleteWorkspace.mockResolvedValue({ deleted: true, workspace: {} } as never);
+
+    const result = await runWorktreeRemove(target, deps);
+
+    expect(existsSync(target)).toBe(false);
+    expect(gitExec(repo, ['branch', '--list', 'feat/wt'])).toContain('feat/wt');
+    expect(lookup).toHaveBeenCalledWith('me', target);
+    expect(deleteWorkspace).toHaveBeenCalledWith('ws-1');
+    expect(result).toEqual({ path: target, removed: true, unregistered: true });
+  });
+
+  it('refuses a dirty worktree and changes nothing', async () => {
+    if (!gitAvailable) return;
+    const repo = makeTempRepo();
+    const target = makeWorktree(repo);
+    pushTo(repo, 'feat/wt');
+    writeFileSync(path.join(target, 'new.txt'), 'x');
+    const { deps, deleteWorkspace } = removeSetup(repo);
+
+    await expect(runWorktreeRemove(target, deps)).rejects.toThrow(/1 changed file/);
+
+    expect(existsSync(target)).toBe(true);
+    expect(deleteWorkspace).not.toHaveBeenCalled();
+  });
+
+  it('refuses a worktree with unpushed commits', async () => {
+    if (!gitAvailable) return;
+    const repo = makeTempRepo();
+    const target = makeWorktree(repo);
+    pushTo(repo, 'feat/wt');
+    gitExec(target, ['commit', '-q', '--allow-empty', '-m', 'local only']);
+    const { deps } = removeSetup(repo);
+
+    await expect(runWorktreeRemove(target, deps)).rejects.toThrow(/1 unpushed commit/);
+    expect(existsSync(target)).toBe(true);
+  });
+
+  it('refuses a branch that no remote has', async () => {
+    if (!gitAvailable) return;
+    const repo = makeTempRepo();
+    const target = makeWorktree(repo);
+    gitExec(target, ['commit', '-q', '--allow-empty', '-m', 'only here']);
+    const { deps } = removeSetup(repo);
+
+    await expect(runWorktreeRemove(target, deps)).rejects.toThrow(/unpushed/);
+    expect(existsSync(target)).toBe(true);
+  });
+
+  it('refuses the main working tree, a subdirectory and a missing path', async () => {
+    if (!gitAvailable) return;
+    const repo = makeTempRepo();
+    const target = makeWorktree(repo);
+    mkdirSync(path.join(target, 'sub'));
+    const { deps } = removeSetup(repo);
+
+    await expect(runWorktreeRemove(repo, deps)).rejects.toThrow(/main working tree/);
+    await expect(runWorktreeRemove(path.join(target, 'sub'), deps)).rejects.toThrow(
+      /root of a worktree/
+    );
+    await expect(runWorktreeRemove(`${repo}/nope`, deps)).rejects.toThrow(/no such directory/);
+    expect(existsSync(target)).toBe(true);
+    expect(existsSync(repo)).toBe(true);
+  });
+
+  it('warns but still reports the removal when unregistering fails', async () => {
+    if (!gitAvailable) return;
+    const repo = makeTempRepo();
+    const target = makeWorktree(repo);
+    pushTo(repo, 'feat/wt');
+    const { deps, lookup, warn } = removeSetup(repo);
+    lookup.mockRejectedValue(new Error('offline'));
+
+    const result = await runWorktreeRemove(target, deps);
+
+    expect(result).toEqual({ path: target, removed: true, unregistered: false });
+    expect(existsSync(target)).toBe(false);
+    expect(warn).toHaveBeenCalledWith(expect.stringContaining('offline'));
+  });
+
+  it('never passes --force to git', async () => {
+    if (!gitAvailable) return;
+    const repo = makeTempRepo();
+    const target = makeWorktree(repo);
+    pushTo(repo, 'feat/wt');
+    const { deps, lookup } = removeSetup(repo);
+    lookup.mockResolvedValue({ workspace: null, feature: null });
+    const seen: string[][] = [];
+    deps.run = (args, options) => {
+      seen.push(args);
+      return runGit(args, options);
+    };
+
+    await runWorktreeRemove(target, deps);
+
+    const remove = seen.find((args) => args.includes('remove'));
+    expect(remove).toBeDefined();
+    expect(remove?.some((arg) => arg === '--force' || arg === '-f')).toBe(false);
   });
 });
 

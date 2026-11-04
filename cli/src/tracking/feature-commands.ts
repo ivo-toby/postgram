@@ -4,6 +4,7 @@ import os from 'node:os';
 
 import type { Command } from 'commander';
 
+import { createPgmClient } from '../client.js';
 import { AppError, ErrorCode } from '../errors.js';
 import { parseCommaList, shortId } from '../shared.js';
 import { runTrackingCommand } from './api.js';
@@ -12,6 +13,7 @@ import { UsageError, usageExit, writeMachineConfig } from './config.js';
 import type { TrackingConfig } from './config.js';
 import { readBootId, removeMarker, resolveLocalWorkspace, writeMarker } from './local.js';
 import type { LocalWorkspace } from './local.js';
+import { formatSync, runFeatureSync, runGhPrState } from './feature-sync.js';
 import { FEATURE_STAGES } from './types.js';
 import type { FeatureStage } from './types.js';
 
@@ -58,6 +60,68 @@ export async function runFeatureStage(
   return deps.json
     ? response
     : [`${shortId(response.entity.id)} ${response.previous_stage ?? '-'} → ${stage}`];
+}
+
+export type FeatureDoneDeps = {
+  pgm: Pick<
+    ReturnType<typeof createPgmClient>,
+    'recallEntity' | 'completeTask' | 'listTasks'
+  >;
+  json: boolean;
+};
+
+const FULL_UUID = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
+const SHORT_HEX = /^[0-9a-f]{8}$/i;
+
+async function resolveTaskId(id: string, deps: FeatureDoneDeps): Promise<string> {
+  if (FULL_UUID.test(id)) {
+    return id.toLowerCase();
+  }
+  if (!SHORT_HEX.test(id)) {
+    throw new UsageError('feature id must be a full UUID or an 8-hex short id');
+  }
+  const prefix = id.toLowerCase();
+  const matches: string[] = [];
+  for (let offset = 0; ; offset += 100) {
+    const page = await deps.pgm.listTasks({ limit: 100, offset });
+    for (const item of page.items) {
+      if (item.id.startsWith(prefix)) {
+        matches.push(item.id);
+      }
+    }
+    if (page.items.length < 100) {
+      break;
+    }
+  }
+  if (matches.length > 1) {
+    throw new AppError(ErrorCode.CONFLICT, `feature id ${id} is ambiguous`);
+  }
+  const [match] = matches;
+  if (match === undefined) {
+    throw new AppError(ErrorCode.NOT_FOUND, `no feature matches ${id}`);
+  }
+  return match;
+}
+
+/**
+ * Marks the feature's task done. `pgm where` already hides done tasks unless
+ * --all is given, so a feature needs no stage of its own for this.
+ */
+export async function runFeatureDone(
+  id: string,
+  deps: FeatureDoneDeps
+): Promise<unknown> {
+  const taskId = await resolveTaskId(id, deps);
+  const current = await deps.pgm.recallEntity(taskId);
+  if (current.entity.status === 'done') {
+    return deps.json
+      ? { id: taskId, status: 'done', changed: false }
+      : [`${shortId(taskId)} already done`];
+  }
+  const completed = await deps.pgm.completeTask(taskId, current.entity.version);
+  return deps.json
+    ? { id: taskId, status: completed.entity.status, changed: true }
+    : [`${shortId(taskId)} done`];
 }
 
 const PR_STATES = ['open', 'merged', 'closed'] as const;
@@ -276,6 +340,35 @@ export function registerFeatureCommands(program: Command): void {
     await runTrackingCommand(command, (context) =>
       runFeaturePr(id, url, options, featureDeps(context))
     );
+  });
+
+  usageExit(
+    feature
+      .command('done')
+      .description('Mark a feature done so pgm where hides it (pgm where --all shows it)')
+      .argument('<id>', 'feature id (UUID or 8-hex)')
+  ).action(async (id: string, _options: unknown, command: Command) => {
+    await runTrackingCommand(command, (context) =>
+      runFeatureDone(id, { pgm: context.pgm, json: context.json })
+    );
+  });
+
+  usageExit(
+    feature
+      .command('sync')
+      .description('Update PR states from GitHub (needs gh) and apply the stage rules')
+      .argument('[id]', 'only this feature (UUID or 8-hex)')
+  ).action(async (id: string | undefined, _options: unknown, command: Command) => {
+    await runTrackingCommand(command, async (context) => {
+      const result = await runFeatureSync(id, {
+        client: context.client,
+        gh: (url) => runGhPrState(url)
+      });
+      if (result.errors.length > 0) {
+        process.exitCode = 1;
+      }
+      return context.json ? result : formatSync(result);
+    });
   });
 
   usageExit(

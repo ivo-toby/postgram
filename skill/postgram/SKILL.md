@@ -1,6 +1,6 @@
 ---
 name: postgram
-description: Use the `pgm` CLI (Postgram) to persist, search, and link knowledge across sessions. Invoke whenever the user wants to remember something across conversations, recall prior context, search their personal knowledge base, track tasks, or explore relationships between stored entities. Assumes `pgm` is on PATH, `PGM_API_URL` is set, and `PGM_API_KEY` is valid. Verifies config with `pgm config` or falls back to `curl $PGM_API_URL/health` before first write.
+description: Use the `pgm` CLI (Postgram) to persist, search, and link knowledge across sessions. Invoke whenever the user wants to remember something across conversations, recall prior context, search their personal knowledge base, track tasks, explore relationships between stored entities, or keep track of features, worktrees and agent sessions across machines. Also invoke when the user asks to clean up, consolidate or get an overview of their projects, features or worktrees ("clean up my projects", "ruim mijn projecten op", "where was I", "what needs review"): that means the Workspace tracking consolidate procedure, not freeing disk space. Assumes `pgm` is on PATH, `PGM_API_URL` is set, and `PGM_API_KEY` is valid. Verifies config with `pgm config` or falls back to `curl $PGM_API_URL/health` before first write.
 ---
 
 # Postgram CLI skill
@@ -18,6 +18,7 @@ Invoke this skill proactively when the user:
 - Wraps a work session ("end of day", "let's checkpoint") — store a durable memory summarizing the session.
 - Needs continuity for an active or recent thread — store session context, not durable memory.
 - Relates two things explicitly ("X depends on Y", "A is part of B") — create an edge.
+- Asks to clean up, consolidate or get an overview of their projects ("ruim mijn projecten op"), asks where work lives or what needs them ("where was I", "what needs review", "after the reboot"), starts a feature, or opens or merges a PR — see [Workspace tracking](#workspace-tracking-keep-order-in-the-project-chaos).
 
 Also store without being asked when any of these happen in the conversation:
 
@@ -185,6 +186,121 @@ extraction: pending=8   completed=1230  failed=2
 - `oldest_pending_secs` — how long the oldest item has been waiting (a large value means the worker is stuck or slow)
 - `retry_eligible` — failed embedding jobs that will be retried automatically
 - `extraction: null / disabled` — extraction is off; enable with `EXTRACTION_ENABLED=true`
+
+## Workspace tracking: keep order in the project chaos
+
+### Why it exists
+
+The user runs many agent sessions in parallel, on several machines, in many
+git worktrees, for features that are each in a different stage. Worktrees and
+transcripts survive a reboot, but the mapping between them gets lost: which
+feature lives where, which session worked on it, and what the human must do
+next. Postgram holds that mapping. Your job is to keep it correct and to use
+it to help the user decide what to do next.
+
+### The model
+
+- **Feature**: a `task` entity with `metadata.kind = 'feature'`. It carries a
+  delivery `stage` and a list of `pull_requests`. It is the unit the user
+  thinks in ("keyword rank fusion", "UI v1"). It has a UUID and an 8-hex short
+  id (the first 8 characters).
+- **Stage**: `building` → `review` → `functional_test` → `ready_to_merge` →
+  `awaiting_release` → `released`. Stages map to the human action needed:
+  review, test, merge, release. `building` means agents are still working.
+- **Machine**: one row per host, by alias (for example `ivomac`,
+  `codebox-vm`). The `connect_target` is the ssh host used in resume commands.
+- **Workspace**: one directory on one machine, usually a git worktree, with
+  its branch and a git-state snapshot (dirty files, unpushed commits). It
+  links to at most one feature. Without a link it is "Unassigned".
+- **Agent session**: one Claude Code, pi or Talon session in a workspace, with
+  status `running`, `idle`, `ended` or `interrupted` (the machine rebooted
+  while it ran). Long-inactive sessions show as dormant.
+- **Feature marker**: `.postgram/feature.json` in a worktree names its
+  feature. A marker wins over a manual link on the next report.
+
+Sessions and git state are reported automatically by the hooks
+(`pgm hooks install`). You do not need to report them yourself. Features,
+stages, PRs and links need judgement; that is your part.
+
+### What to do
+
+- **Session start.** The SessionStart hook prints a feature line when the
+  worktree is linked. If the workspace is unassigned and the work clearly
+  belongs to a feature, look it up and propose the link. Do not guess when
+  two features fit; ask.
+- **"Where was I?" / "what needs me?" / after a reboot.** Call `where`
+  (MCP) or `pgm where`. Use `view: actions` / `pgm where --actions` for the
+  human's to-do list. Give the resume command for the piece they pick.
+- **Starting new work.** Find an existing feature first (`pgm search` or
+  `where`). Create one only when none fits, with a short concrete title.
+  Prefer `pgm worktree new <feature> [--create]`: it creates the branch and
+  worktree, writes the marker and registers the workspace.
+- **Opening a PR.** Attach it with `feature_pr` / `pgm feature pr <id> <url>`.
+  That moves `building` to `review` by itself.
+- **PR merged.** Report it with `--state merged`. That moves the feature to
+  `awaiting_release`, or to `released` when the repo has
+  `release_on_merge` (`pgm repo set <remote> --release-on-merge true`).
+- **Manual stage moves.** Set `functional_test` or `ready_to_merge` only when
+  the user says so or the evidence is clear (tests handed to the user,
+  approval given). Never set `released` unless a release was published.
+- **Housekeeping.** When `where` shows unassigned workspaces, stale features,
+  or risks (`dirty`, `unpushed`, `no_upstream`, `interrupted`), point them
+  out and propose one concrete fix each. Do not link, unlink or change stages
+  in bulk without the user's approval.
+
+### Consolidate: "clean up my projects"
+
+Use this when the user asks to get an overview, consolidate or clean up their
+projects on a machine. Work in three passes and stop after the second for
+approval.
+
+1. **Inventory (read-only).** Find git repos and their worktrees under the
+   scan roots (`scan_roots` in `~/.pgmrc`, or ask; often `~/workspace`), plus
+   `git worktree list` of each repo, which also finds worktrees elsewhere
+   (for example `~/.codex/worktrees`). For each worktree collect: path,
+   branch, last commit date and subject, dirty files, unpushed commits,
+   upstream, and the PR for the branch (`gh pr list --head <branch> --state
+   all`). Run `pgm where --all --json` for what Postgram already knows, and
+   search for existing features (`pgm search "<topic>" --type task --toon`).
+2. **Proposal.** Show one table, one row per worktree: path, branch, last
+   activity, risks, and the proposed action:
+   - link to an existing feature (give its short id),
+   - new feature (give the title),
+   - remove (merged or closed PR, no unique commits, or a throwaway
+     worktree).
+   Also propose a stage per feature, derived from its PR (open → `review`,
+   merged → `awaiting_release` or `released`). Group large sets of the same
+   kind (for example hundreds of review worktrees from one tool) into one
+   row with a count and one decision. Mark rows you are unsure about and ask
+   about those; do not guess.
+3. **Apply what the user approved.** `pgm feature add`, then `pgm feature
+   link <id> --path <dir>`, `pgm feature pr <id> <url> [--state merged]` and
+   `pgm feature stage` where the PR does not settle it. Remove worktrees
+   only with `git worktree remove` (no `--force`) and only after explicit
+   approval; never remove one with dirty files or unpushed commits. End
+   with `pgm where` so the user sees the result.
+
+Links are per machine: `pgm feature link --path` links the path on the
+machine where it runs. For another machine, run each pass there (or over
+`ssh <connect_target>`), one machine at a time.
+
+### Commands
+
+| Need | CLI | MCP tool |
+|------|-----|----------|
+| Overview by stage | `pgm where` | `where` |
+| Human to-do list | `pgm where --actions` | `where` with `view: actions` |
+| Feature of this directory | `pgm here` | `workspace_lookup` |
+| Create a feature | `pgm feature add "<title>"` | `task_create` with `metadata.kind: feature` |
+| Link/unlink a workspace | `pgm feature link <id> [--path <dir>]` / `pgm feature unlink` | `workspace_link` (`feature_id: null` unlinks) |
+| Set a stage | `pgm feature stage <id> <stage>` | `feature_stage` |
+| Attach a PR | `pgm feature pr <id> <url> [--state merged]` | `feature_pr` |
+| New worktree for a feature | `pgm worktree new <feature> [--create]` | — |
+| Bootstrap existing worktrees | `pgm scan --root <dir> [--dry-run]` (interactive) | — |
+
+`pgm scan` asks per worktree; run it in the user's terminal, not from an
+agent without a TTY. Use `--yes-exact` to accept only marker and short-id
+matches without prompts.
 
 ## Principles
 

@@ -462,6 +462,11 @@ Tasks are first-class entities with convenience operations for:
 - update
 - complete (with completion timestamp)
 
+Features are tasks with a delivery stage. Postgram tracks which machine,
+worktree and agent session each feature lives in, and shows what needs you
+next with `pgm where`. See [docs/workspace-tracking.md](docs/workspace-tracking.md)
+for onboarding and daily use.
+
 ### 9. Multiple Interfaces
 
 The same service layer is exposed through:

@@ -123,7 +123,8 @@ expand when the compact result already answers a direct fact.
 
 ## Workspace tracking
 
-Track features, machines, workspaces and agent sessions across worktrees:
+Track features, machines, workspaces and agent sessions across worktrees.
+For onboarding and daily use, see [docs/workspace-tracking.md](../docs/workspace-tracking.md).
 
 ```bash
 pgm here                       # report the current workspace and session

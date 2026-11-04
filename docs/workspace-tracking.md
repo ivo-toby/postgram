@@ -24,8 +24,8 @@ decide which feature a workspace belongs to and when its stage changes.
 
 ### 1. Server
 
-Run a Postgram build with migration `018_workspace_tracking.sql`. Migrations
-run on boot; the migration only adds tables.
+Update the server to a release with workspace tracking and restart it. The
+database migration runs automatically on boot and only adds tables.
 
 Optional: `WORKSPACE_DORMANT_AFTER_DAYS` (default `30`) sets when an inactive
 session shows as dormant.

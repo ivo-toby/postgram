@@ -99,11 +99,16 @@ pgm repo set github.com/<owner>/<repo> --release-on-merge true  # merge means re
 
 ## After a reboot
 
-Run `pgm where` and copy the resume line, for example:
+Run `pgm where` and copy the resume line. For work on the machine you are on,
+it is a plain `cd` and resume:
 
 ```bash
-ssh -t codebox 'cd '\''/home/ivo/wt/1a2b3c4d-kw-rank'\'' && claude --resume '\''8f3c…'\'''
+cd '/Users/ivo/wt/1a2b3c4d-kw-rank' && claude --resume '8f3c…'
 ```
+
+For work on another machine, the same command is wrapped in
+`ssh -t <connect_target> '…'`, so you can resume it from wherever you are.
+The connect target is what you set with `pgm machine set --connect`.
 
 Sessions that ran on the rebooted machine show as `interrupted` once that
 machine reports again. Resume works as long as the transcript still exists.

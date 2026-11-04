@@ -1,6 +1,6 @@
 ---
 name: postgram
-description: Use the `pgm` CLI (Postgram) to persist, search, and link knowledge across sessions. Invoke whenever the user wants to remember something across conversations, recall prior context, search their personal knowledge base, track tasks, explore relationships between stored entities, or keep track of features, worktrees and agent sessions across machines ("where was I", "what needs review"). Assumes `pgm` is on PATH, `PGM_API_URL` is set, and `PGM_API_KEY` is valid. Verifies config with `pgm config` or falls back to `curl $PGM_API_URL/health` before first write.
+description: Use the `pgm` CLI (Postgram) to persist, search, and link knowledge across sessions. Invoke whenever the user wants to remember something across conversations, recall prior context, search their personal knowledge base, track tasks, explore relationships between stored entities, or keep track of features, worktrees and agent sessions across machines. Also invoke when the user asks to clean up, consolidate or get an overview of their projects, features or worktrees ("clean up my projects", "ruim mijn projecten op", "where was I", "what needs review"): that means the Workspace tracking consolidate procedure, not freeing disk space. Assumes `pgm` is on PATH, `PGM_API_URL` is set, and `PGM_API_KEY` is valid. Verifies config with `pgm config` or falls back to `curl $PGM_API_URL/health` before first write.
 ---
 
 # Postgram CLI skill
@@ -18,7 +18,7 @@ Invoke this skill proactively when the user:
 - Wraps a work session ("end of day", "let's checkpoint") — store a durable memory summarizing the session.
 - Needs continuity for an active or recent thread — store session context, not durable memory.
 - Relates two things explicitly ("X depends on Y", "A is part of B") — create an edge.
-- Asks where work lives or what needs them ("where was I", "what needs review", "after the reboot"), starts a feature, or opens or merges a PR — see [Workspace tracking](#workspace-tracking-keep-order-in-the-project-chaos).
+- Asks to clean up, consolidate or get an overview of their projects ("ruim mijn projecten op"), asks where work lives or what needs them ("where was I", "what needs review", "after the reboot"), starts a feature, or opens or merges a PR — see [Workspace tracking](#workspace-tracking-keep-order-in-the-project-chaos).
 
 Also store without being asked when any of these happen in the conversation:
 

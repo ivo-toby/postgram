@@ -1,4 +1,4 @@
-export type Page = 'search' | 'graph' | 'projector' | 'tasks' | 'admin';
+export type Page = 'search' | 'graph' | 'projector' | 'tasks' | 'where' | 'admin';
 
 type Props = {
   onLogout: () => void;
@@ -11,19 +11,20 @@ export default function TopBar({ onLogout, currentPage, onNavigate }: Props) {
     <header className="flex items-center gap-2 sm:gap-4 px-3 sm:px-4 h-12 bg-gray-900 border-b border-gray-800 shrink-0">
       <div className="flex items-center gap-2">
         <img src="/logo-mark.png" alt="" className="h-7 w-7" />
-        <span className="text-white font-semibold text-sm tracking-wide">Postgram</span>
+        <span className="hidden sm:inline text-white font-semibold text-sm tracking-wide">Postgram</span>
       </div>
-      <nav className="flex items-center gap-1 ml-2 sm:ml-4">
+      <nav className="flex items-center gap-1 ml-2 sm:ml-4 min-w-0 overflow-x-auto">
         <TabButton active={currentPage === 'search'} onClick={() => onNavigate('search')}>Search</TabButton>
         <TabButton active={currentPage === 'graph'} onClick={() => onNavigate('graph')}>Graph</TabButton>
         <TabButton active={currentPage === 'projector'} onClick={() => onNavigate('projector')}>Projector</TabButton>
         <TabButton active={currentPage === 'tasks'} onClick={() => onNavigate('tasks')}>Tasks</TabButton>
+        <TabButton active={currentPage === 'where'} onClick={() => onNavigate('where')}>Where</TabButton>
         <TabButton active={currentPage === 'admin'} onClick={() => onNavigate('admin')}>Admin</TabButton>
       </nav>
       <div className="flex-1" />
       <button
         onClick={onLogout}
-        className="text-xs text-gray-400 hover:text-white transition-colors"
+        className="shrink-0 text-xs text-gray-400 hover:text-white transition-colors"
       >
         Logout
       </button>
@@ -35,7 +36,7 @@ function TabButton({ active, onClick, children }: { active: boolean; onClick: ()
   return (
     <button
       onClick={onClick}
-      className={`px-3 py-1 rounded-md text-sm transition-colors ${
+      className={`shrink-0 px-2 sm:px-3 py-1 rounded-md text-sm transition-colors ${
         active ? 'bg-gray-800 text-white' : 'text-gray-400 hover:text-white hover:bg-gray-800/50'
       }`}
     >

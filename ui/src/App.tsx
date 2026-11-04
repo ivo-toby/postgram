@@ -14,6 +14,7 @@ import EdgeList from './components/EdgeList.tsx';
 import EntityActions from './components/EntityActions.tsx';
 import SearchPage from './components/SearchPage.tsx';
 import TasksPage from './components/TasksPage.tsx';
+import WherePage from './components/WherePage.tsx';
 import TopBar, { type Page } from './components/TopBar.tsx';
 
 const ProjectorPage = lazy(() => import('./components/ProjectorPage.tsx'));
@@ -33,7 +34,7 @@ type RegularPage = Exclude<Page, 'admin'>;
 
 function readStoredRegularPage(): RegularPage {
   const saved = localStorage.getItem(PAGE_STORAGE_KEY);
-  if (saved === 'graph' || saved === 'projector' || saved === 'tasks') return saved;
+  if (saved === 'graph' || saved === 'projector' || saved === 'tasks' || saved === 'where') return saved;
   return 'search';
 }
 
@@ -250,6 +251,17 @@ function AuthenticatedApp({
         <TopBar onLogout={onLogout} currentPage={currentPage} onNavigate={onNavigate} />
         <div className="flex-1 min-h-0">
           <TasksPage api={api} />
+        </div>
+      </div>
+    );
+  }
+
+  if (currentPage === 'where') {
+    return (
+      <div className="flex flex-col h-full bg-gray-950">
+        <TopBar onLogout={onLogout} currentPage={currentPage} onNavigate={onNavigate} />
+        <div className="flex-1 min-h-0">
+          <WherePage api={api} />
         </div>
       </div>
     );

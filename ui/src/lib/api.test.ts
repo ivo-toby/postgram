@@ -266,10 +266,10 @@ describe('createApiClient', () => {
 
 describe('createApiClient.getWhere', () => {
   beforeEach(() => {
-    vi.stubGlobal('fetch', vi.fn(async () => new Response(JSON.stringify({ view: 'actions', groups: [] }), {
+    vi.stubGlobal('fetch', vi.fn(() => Promise.resolve(new Response(JSON.stringify({ view: 'actions', groups: [] }), {
       status: 200,
       headers: { 'Content-Type': 'application/json' },
-    })));
+    }))));
   });
 
   it('asks for the actions view without extra parameters when the toggle is off', async () => {
@@ -295,6 +295,6 @@ describe('createApiClient.getWhere', () => {
 
     const url = vi.mocked(fetch).mock.calls[0]?.[0];
     expect(url).toBe('/api/where?view=actions');
-    expect(String(url)).not.toContain('include_ended');
+    expect(url).not.toContain('include_ended');
   });
 });

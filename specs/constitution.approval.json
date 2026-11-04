@@ -1,0 +1,10 @@
+{
+  "schemaVersion": 1,
+  "version": "1.1.0",
+  "ratifiedAt": "2026-10-31T15:57:08.871Z",
+  "amendedAt": "2026-10-31T16:02:32.425Z",
+  "approvedAt": "2026-10-31T16:02:32.425Z",
+  "by": "ivo",
+  "reason": "MINOR: principle 4 allows audit waivers documented in an approved spec or plan for named high-volume operations",
+  "contentSha256": "8a09ce1c5d0e8bbfe55ce86424a3f8ec50bb4ad0a525f7fe60ed69a10914f4ae"
+}

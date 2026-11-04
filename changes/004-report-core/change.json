@@ -1,0 +1,61 @@
+{
+  "schemaVersion": 1,
+  "id": "004-report-core",
+  "proposal": "changes/004-report-core/proposal.md",
+  "design": "changes/004-report-core/design.md",
+  "specDeltas": [
+    "changes/004-report-core/deltas/workspace-tracking.json"
+  ],
+  "slices": [
+    "changes/004-report-core/slices/s1-schema/slice.json",
+    "changes/004-report-core/slices/s2-git-remote/slice.json",
+    "changes/004-report-core/slices/s3-workspace-view/slice.json",
+    "changes/004-report-core/slices/s4-report-schema/slice.json",
+    "changes/004-report-core/slices/s5-workspace-store/slice.json",
+    "changes/004-report-core/slices/s6-session-store/slice.json",
+    "changes/004-report-core/slices/s7-report-service/slice.json",
+    "changes/004-report-core/slices/s8-dormancy-config/slice.json"
+  ],
+  "budget": {
+    "maxImplementationFiles": 4,
+    "maxSliceTestFiles": 1,
+    "maxCompiledContextBytes": 65536
+  },
+  "featureTests": [
+    "tests/integration/workspace-report.feature.test.ts"
+  ],
+  "featureChecks": "changes/004-report-core/feature-checks.json",
+  "integration": [
+    {
+      "id": "report-migration",
+      "requirementIds": [
+        "report-validate",
+        "report-scope",
+        "machine-upsert",
+        "reboot-rule",
+        "workspace-upsert",
+        "feature-link",
+        "session-hook",
+        "session-scan",
+        "audit-structural",
+        "no-entity-write",
+        "report-response",
+        "dormancy-config"
+      ],
+      "entrypoints": [
+        "src/db/migrate.ts"
+      ],
+      "wiringSlice": "report-s1",
+      "testPaths": [
+        "tests/integration/workspace-report.feature.test.ts"
+      ],
+      "checkIds": [
+        "feature-report"
+      ]
+    }
+  ],
+  "constitution": {
+    "path": "specs/constitution.md",
+    "approval": "specs/constitution.approval.json"
+  }
+}

@@ -36,8 +36,16 @@ import {
   listTasks,
   updateTask
 } from '../services/task-service.js';
-import type { ServiceResult } from '../types/common.js';
 import type { Entity, Visibility } from '../types/entities.js';
+import {
+  boolishSchema,
+  fullResponseSchema,
+  toToolSuccess,
+  toToolError,
+  toolFromService
+} from './mcp-results.js';
+import type { ToolPayload } from './mcp-results.js';
+import { registerWorkspaceTools } from './mcp-workspace-tools.js';
 import {
   AppError,
   ErrorCode,
@@ -57,8 +65,6 @@ import {
 } from '../util/search-output.js';
 
 type McpApp = Hono<{ Variables: { auth: AuthContext } }>;
-
-type ToolPayload = Record<string, unknown>;
 
 const entityTypeSchema = z.enum([
   'memory',
@@ -89,19 +95,6 @@ const numericSchema = (schema: z.ZodNumber = z.number()) =>
     return Number.isFinite(parsed) ? parsed : value;
   }, schema);
 
-const boolishSchema = () =>
-  z.preprocess((value) => {
-    if (value === 'true') {
-      return true;
-    }
-
-    if (value === 'false') {
-      return false;
-    }
-
-    return value;
-  }, z.boolean());
-
 const stringArraySchema = () =>
   z.preprocess((value) => {
     if (typeof value !== 'string') {
@@ -125,12 +118,6 @@ const statusSchema = z.enum([
   'scheduled',
   'someday'
 ]);
-
-const fullResponseSchema = boolishSchema()
-  .optional()
-  .describe(
-    'If true, return the full legacy JSON response. Defaults to compact output for lower agent token use.'
-  );
 
 const toonSchema = boolishSchema()
   .optional()
@@ -156,18 +143,6 @@ function toStoredEntity(entity: Entity) {
   };
 }
 
-function toToolSuccess(payload: ToolPayload) {
-  return {
-    content: [
-      {
-        type: 'text' as const,
-        text: JSON.stringify(payload)
-      }
-    ],
-    structuredContent: payload
-  };
-}
-
 function toToolText(payload: string, structuredContent: ToolPayload) {
   return {
     content: [
@@ -177,21 +152,6 @@ function toToolText(payload: string, structuredContent: ToolPayload) {
       }
     ],
     structuredContent
-  };
-}
-
-function toToolError(error: AppError) {
-  const payload = toErrorResponse(error);
-
-  return {
-    content: [
-      {
-        type: 'text' as const,
-        text: JSON.stringify(payload)
-      }
-    ],
-    structuredContent: payload,
-    isError: true
   };
 }
 
@@ -259,17 +219,6 @@ function filterGroomingCandidatesByVisibility(
   );
 }
 
-async function toolFromService<T, P extends ToolPayload>(
-  result: ServiceResult<T>,
-  map: (value: T) => P,
-  renderSuccess: (payload: P) => ReturnType<typeof toToolSuccess> = toToolSuccess
-) {
-  return result.match(
-    (value) => renderSuccess(map(value)),
-    (error) => toToolError(error)
-  );
-}
-
 function getBearerToken(header: string | undefined): string | null {
   if (!header?.startsWith('Bearer ')) {
     return null;
@@ -296,6 +245,7 @@ function createSessionServer(
     embeddingService?: EmbeddingService | undefined;
     logger?: Pick<Logger, 'debug' | 'warn'> | undefined;
     extractionEnabled?: boolean | undefined;
+    workspaceDormantAfterDays?: number | undefined;
     searchDefaultThreshold?: number | undefined;
   } = {}
 ) {
@@ -966,6 +916,10 @@ function createSessionServer(
       }))
   );
 
+  registerWorkspaceTools(server, pool, auth, {
+    dormantAfterDays: options.workspaceDormantAfterDays ?? 30
+  });
+
   return server;
 }
 
@@ -978,6 +932,7 @@ export function registerMcpRoutes(
     extractionEnabled?: boolean | undefined;
     searchDefaultThreshold?: number | undefined;
     resourceMetadataUrl?: string | undefined;
+    workspaceDormantAfterDays?: number | undefined;
   } = {}
 ): void {
   app.all('/mcp', async (c) => {

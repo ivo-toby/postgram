@@ -42,6 +42,8 @@ import { registerMcpRoutes } from './transport/mcp.js';
 import { registerAdminRoutes } from './transport/admin.js';
 import { registerOAuthRoutes } from './transport/oauth.js';
 import { registerRestRoutes } from './transport/rest.js';
+import { registerFeatureRoutes } from './transport/feature-routes.js';
+import { registerWorkspaceRoutes } from './transport/workspace-routes.js';
 import { createLogger } from './util/logger.js';
 import {
   AppError,
@@ -62,6 +64,7 @@ type AppVariables = {
 
 type AppOptions = {
   pool?: Pool;
+  workspaceDormantAfterDays?: number | undefined;
   embeddingService?: EmbeddingService | undefined;
   logger?: Pick<Logger, 'debug' | 'warn' | 'error'> | undefined;
   extractionEnabled?: boolean | undefined;
@@ -320,9 +323,13 @@ export function createApp(
         ? { extractionEnabled: options.extractionEnabled }
         : {})
     });
+    const dormantAfterDays = options.workspaceDormantAfterDays ?? 30;
+    registerWorkspaceRoutes(app, options.pool, { dormantAfterDays });
+    registerFeatureRoutes(app, options.pool);
     registerMcpRoutes(app, options.pool, {
       embeddingService: options.embeddingService,
       logger: options.logger,
+      workspaceDormantAfterDays: dormantAfterDays,
       searchDefaultThreshold: options.searchDefaultThreshold,
       resourceMetadataUrl:
         options.oauth?.enabled && options.oauth.publicBaseUrl
@@ -582,6 +589,7 @@ export async function startServer(): Promise<{
 
   const app = createApp({
     pool,
+    workspaceDormantAfterDays: config.WORKSPACE_DORMANT_AFTER_DAYS,
     embeddingService,
     logger,
     extractionEnabled: runtimeConfig.EXTRACTION_ENABLED,

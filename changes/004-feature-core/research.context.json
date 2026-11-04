@@ -1,0 +1,21 @@
+{
+  "schemaVersion": 1,
+  "facts": [
+    "Constitution 1.1.0 (specs/constitution.md, approval specs/constitution.approval.json) is adopted for this change.",
+    "A feature is a task entity with metadata.kind 'feature'; stage, stage_source, stage_set_at and pull_requests live in metadata, so no migration is needed.",
+    "updateEntity (src/services/entity-service.ts:302) checks the version, merges metadata shallowly, bumps the version and writes an 'update' audit row; content is unchanged, so no re-embedding happens.",
+    "createTask and updateTask (src/services/task-service.ts:132-228) pass merged metadata straight to storeEntity/updateEntity without any feature handling today.",
+    "The repositories table (migration 018) holds remote and release_on_merge; normalizeRemote in src/util/git-remote.ts produces its keys.",
+    "Decision D1 (Ivo, 2026-10-31): a workspace report never writes entities, so linking a plain task does not apply feature defaults; data-model.md report step 4 is updated accordingly."
+  ],
+  "resources": [
+    { "path": "specs/constitution.md", "startLine": 1, "endLine": 45, "purpose": "Adopted project constitution." },
+    { "path": "specs/004-workspace-session-tracking/data-model.md", "startLine": 24, "endLine": 92, "purpose": "Feature metadata, normalization, writes and stage transitions." },
+    { "path": "specs/004-workspace-session-tracking/contracts/rest.md", "startLine": 17, "endLine": 48, "purpose": "Feature id forms, title rule and PR URL canonicalization." },
+    { "path": "specs/004-workspace-session-tracking/contracts/rest.md", "startLine": 105, "endLine": 121, "purpose": "Audit operation names." },
+    { "path": "specs/004-workspace-session-tracking/contracts/rest.md", "startLine": 220, "endLine": 246, "purpose": "Repository, feature, stage and pull request shapes." },
+    { "path": "specs/004-workspace-session-tracking/research.md", "startLine": 105, "endLine": 112, "purpose": "Short-id lookup." },
+    { "path": "src/services/entity-service.ts", "startLine": 302, "endLine": 424, "purpose": "updateEntity." },
+    { "path": "src/services/task-service.ts", "startLine": 132, "endLine": 228, "purpose": "createTask and updateTask." }
+  ]
+}

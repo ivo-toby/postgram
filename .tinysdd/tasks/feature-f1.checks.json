@@ -1,0 +1,22 @@
+{
+  "schemaVersion": 1,
+  "dependencyMounts": [
+    "node_modules"
+  ],
+  "checks": [
+    {
+      "id": "feature-f1",
+      "argv": [
+        "node",
+        "changes/004-feature-core/slice-check.mjs",
+        "src/types/features.ts",
+        "src/services/feature-rules.ts",
+        "tests/unit/feature-rules.test.ts"
+      ],
+      "timeoutMs": 600000,
+      "criteria": [
+        "C1"
+      ]
+    }
+  ]
+}

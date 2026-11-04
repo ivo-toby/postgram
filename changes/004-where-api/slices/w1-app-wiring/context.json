@@ -1,0 +1,71 @@
+{
+  "schemaVersion": 1,
+  "facts": [
+    "ESLint applies typescript-eslint recommendedTypeChecked, consistent-type-imports (use `import type` for types) and no-floating-promises to src/**/*.ts and tests/**/*.ts; require-await is active, so an async function must await something.",
+    "tsconfig is strict with noUncheckedIndexedAccess, exactOptionalPropertyTypes and verbatimModuleSyntax, with module and moduleResolution NodeNext: EVERY relative import ends in .js, in source and in tests (for example `import { x } from '../../src/services/where-rules.js'`). A missing .js is error TS2835 and makes every imported type unresolved.",
+    "exactOptionalPropertyTypes: an optional key typed `key?: T` does not accept `T | undefined`. Build objects by adding a key only when its value is defined (`...(v !== undefined ? { key: v } : {})`); do not cast.",
+    "Lint includes no-unsafe-assignment, no-unsafe-member-access, no-unsafe-return, no-unsafe-call and no-base-to-string: an untyped pg query result has rows of type any. Always pass a row type: `const result = await pool.query<{ id: string }>(sql, params);` then `result.rows[0]?.id`. Treat metadata values and caught errors as unknown and narrow them with typeof/Array.isArray before use; never call String() on an unknown value.",
+    "neverthrow is ^8.2.0: import { ResultAsync } from 'neverthrow'. A service returns `ServiceResult<T>` (from ../types/common.js, a ResultAsync<T, AppError>) built as `ResultAsync.fromPromise((async () => { ... })(), (error) => toAppError(error, msg))`; inside such a block throw an AppError to fail, and await another ServiceResult with `const r = await other(...); if (r.isErr()) { throw r.error; }` then use `r.value`. Copy the private toAppError helper from src/services/feature-service.ts into your file. In tests, await the ResultAsync first and then unwrap: `(await fn(...))._unsafeUnwrap()` and `(await fn(...))._unsafeUnwrapErr()`; never call `_unsafeUnwrap` on the un-awaited ResultAsync.",
+    "A union type such as Result or a discriminated union must be narrowed before reading a member that only one variant has.",
+    "Tests use vitest ^3.2.4 (describe/it/expect from \"vitest\"). Integration tests use createTestDatabase/resetTestDatabase/seedApiKey from tests/helpers/postgres.js (pgvector/pgvector:pg17 via testcontainers) and run all migrations. In beforeEach run resetTestDatabase, then `TRUNCATE TABLE agent_sessions, workspaces, machines, repositories CASCADE`, then seedApiKey with the id used as auth.apiKeyId (audit_log.api_key_id references api_keys). Build workspaces through reportWorkspace (src/services/workspace-service.js) as the protected feature test does; set last_activity_at with a direct UPDATE when a test needs a fixed order.",
+    "The protected feature tests tests/integration/where-service.feature.test.ts, tests/contract/workspace-api.feature.test.ts, tests/contract/workspace-mcp.feature.test.ts, changes/004-where-api/slice-check.mjs, specs/constitution.md and specs/constitution.approval.json must not be edited. Do not edit files of accepted slices unless this brief says so.",
+    "The slice check runs `node changes/004-where-api/slice-check.mjs <files>`: Vitest on the slice test, ESLint with --max-warnings=0 on every listed file, and `tsc --noEmit -p tsconfig.json` for the whole project (errors inside the three protected feature tests are ignored, because they import functions and options that later slices add). Call the run_checks tool before you finish and fix every ESLint and tsc error it reports. Docker is unreachable in the sandbox, so integration and contract tests are reported as SKIPPED there; the controller runs them on the host. Do not create helper or probe files to run checks; use run_checks.",
+    "src/transport/workspace-routes.ts exports registerWorkspaceRoutes(app, pool, { dormantAfterDays }); src/transport/feature-routes.ts exports registerFeatureRoutes(app, pool); registerMcpRoutes(app, pool, options) in src/transport/mcp.ts accepts workspaceDormantAfterDays. All are accepted slices; do not change them."
+  ],
+  "resources": [
+    {
+      "path": "specs/constitution.md",
+      "startLine": 1,
+      "endLine": 45,
+      "purpose": "Adopted project constitution 1.1.0; every principle applies to this slice."
+    },
+    {
+      "path": "changes/004-where-api/proposal.md",
+      "startLine": 5,
+      "endLine": 47,
+      "purpose": "Outcome: the routes, tools and createApp option."
+    },
+    {
+      "path": "src/index.ts",
+      "startLine": 40,
+      "endLine": 87,
+      "purpose": "Imports and AppOptions."
+    },
+    {
+      "path": "src/index.ts",
+      "startLine": 218,
+      "endLine": 236,
+      "purpose": "createApp start."
+    },
+    {
+      "path": "src/index.ts",
+      "startLine": 293,
+      "endLine": 316,
+      "purpose": "Auth middleware and route registration."
+    },
+    {
+      "path": "src/index.ts",
+      "startLine": 553,
+      "endLine": 567,
+      "purpose": "main: createApp call with config values."
+    },
+    {
+      "path": "src/config.ts",
+      "startLine": 46,
+      "endLine": 49,
+      "purpose": "WORKSPACE_DORMANT_AFTER_DAYS (default 30)."
+    },
+    {
+      "path": "tests/contract/rest-api.test.ts",
+      "startLine": 1,
+      "endLine": 75,
+      "purpose": "Contract test setup with createApp."
+    },
+    {
+      "path": "tests/contract/workspace-api.feature.test.ts",
+      "startLine": 1,
+      "endLine": 110,
+      "purpose": "Feature-level REST setup using workspaceDormantAfterDays."
+    }
+  ]
+}

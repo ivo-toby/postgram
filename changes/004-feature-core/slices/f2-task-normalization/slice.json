@@ -1,0 +1,52 @@
+{
+  "schemaVersion": 1,
+  "id": "feature-f2",
+  "brief": "changes/004-feature-core/slices/f2-task-normalization/brief.md",
+  "context": "changes/004-feature-core/slices/f2-task-normalization/context.json",
+  "checks": "changes/004-feature-core/slices/f2-task-normalization/checks.json",
+  "implementationFiles": [
+    "src/services/task-service.ts"
+  ],
+  "sliceTests": [
+    "tests/integration/task-feature-metadata.test.ts"
+  ],
+  "protect": [
+    "tests/integration/feature-service.feature.test.ts",
+    "changes/004-feature-core/slice-check.mjs"
+  ],
+  "interfaces": [
+    "src/services/task-service.ts",
+    "specs/004-workspace-session-tracking/data-model.md"
+  ],
+  "dependsOn": [
+    "feature-f1"
+  ],
+  "budget": {
+    "maxImplementationFiles": null,
+    "maxSliceTestFiles": null,
+    "maxCompiledContextBytes": null
+  },
+  "openDecisions": [],
+  "testReview": {
+    "schemaVersion": 1,
+    "workflow": "slice-tests",
+    "criteria": [
+      {
+        "id": "feature-f2-tests",
+        "requirementIds": [
+          "feature-defaults",
+          "feature-validate",
+          "feature-manual-update"
+        ],
+        "question": "Do the tests prove defaults on create and update, unchanged non-feature tasks, rejection without writes, the manual-stage rule and that an invisible task never gets a VALIDATION answer?",
+        "interfaces": [
+          "src/services/task-service.ts",
+          "specs/004-workspace-session-tracking/data-model.md"
+        ],
+        "testPaths": [
+          "tests/integration/task-feature-metadata.test.ts"
+        ]
+      }
+    ]
+  }
+}

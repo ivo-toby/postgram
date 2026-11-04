@@ -1,0 +1,48 @@
+{
+  "schemaVersion": 1,
+  "id": "report-s3",
+  "brief": "changes/004-report-core/slices/s3-workspace-view/brief.md",
+  "context": "changes/004-report-core/slices/s3-workspace-view/context.json",
+  "checks": "changes/004-report-core/slices/s3-workspace-view/checks.json",
+  "implementationFiles": [
+    "src/services/workspace-view.ts"
+  ],
+  "sliceTests": [
+    "tests/unit/workspace-view.test.ts"
+  ],
+  "protect": [
+    "tests/integration/workspace-report.feature.test.ts",
+    "changes/004-report-core/slice-check.mjs"
+  ],
+  "interfaces": [
+    "specs/004-workspace-session-tracking/contracts/rest.md"
+  ],
+  "dependsOn": [
+    "report-s1"
+  ],
+  "budget": {
+    "maxImplementationFiles": null,
+    "maxSliceTestFiles": null,
+    "maxCompiledContextBytes": null
+  },
+  "openDecisions": [],
+  "testReview": {
+    "schemaVersion": 1,
+    "workflow": "slice-tests",
+    "criteria": [
+      {
+        "id": "report-s3-tests",
+        "requirementIds": [
+          "report-response"
+        ],
+        "question": "Do the tests pin the risk order, null-git handling, resume selection across statuses, visible-session defaults and dormancy boundary?",
+        "interfaces": [
+          "specs/004-workspace-session-tracking/contracts/rest.md"
+        ],
+        "testPaths": [
+          "tests/unit/workspace-view.test.ts"
+        ]
+      }
+    ]
+  }
+}

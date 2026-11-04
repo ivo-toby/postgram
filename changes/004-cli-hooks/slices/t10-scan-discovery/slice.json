@@ -1,0 +1,53 @@
+{
+  "schemaVersion": 1,
+  "id": "cli-t10",
+  "brief": "changes/004-cli-hooks/slices/t10-scan-discovery/brief.md",
+  "context": "changes/004-cli-hooks/slices/t10-scan-discovery/context.json",
+  "checks": "changes/004-cli-hooks/slices/t10-scan-discovery/checks.json",
+  "implementationFiles": [
+    "cli/src/tracking/scan-discovery.ts"
+  ],
+  "sliceTests": [
+    "cli/tests/unit/tracking-scan-discovery.test.ts"
+  ],
+  "protect": [
+    "tests/contract/cli-tracking.feature.test.ts",
+    "tests/contract/cli-scan.feature.test.ts",
+    "changes/004-cli-hooks/slice-check.mjs"
+  ],
+  "interfaces": [
+    "specs/004-workspace-session-tracking/contracts/cli.md",
+    "specs/004-workspace-session-tracking/research.md"
+  ],
+  "dependsOn": [
+    "cli-t1",
+    "cli-t4"
+  ],
+  "budget": {
+    "maxImplementationFiles": null,
+    "maxSliceTestFiles": null,
+    "maxCompiledContextBytes": null
+  },
+  "openDecisions": [],
+  "testReview": {
+    "schemaVersion": 1,
+    "workflow": "slice-tests",
+    "criteria": [
+      {
+        "id": "cli-t10-tests",
+        "requirementIds": [
+          "scan-discovery",
+          "scan-sessions"
+        ],
+        "question": "Do the tests cover depth, stop-at-repository and skipped directories, worktree dedupe, the longest-prefix assignment including the .worktrees overlap, the cwd check and the long-path note, and pi header parsing?",
+        "interfaces": [
+          "specs/004-workspace-session-tracking/contracts/cli.md",
+          "specs/004-workspace-session-tracking/research.md"
+        ],
+        "testPaths": [
+          "cli/tests/unit/tracking-scan-discovery.test.ts"
+        ]
+      }
+    ]
+  }
+}

@@ -1,0 +1,88 @@
+{
+  "schemaVersion": 1,
+  "id": "004-where-api",
+  "proposal": "changes/004-where-api/proposal.md",
+  "design": "changes/004-where-api/design.md",
+  "specDeltas": [
+    "changes/004-where-api/deltas/where-api.json"
+  ],
+  "slices": [
+    "changes/004-where-api/slices/q1-where-rules/slice.json",
+    "changes/004-where-api/slices/q2-workspace-query/slice.json",
+    "changes/004-where-api/slices/q3-workspace-lookup/slice.json",
+    "changes/004-where-api/slices/q4-workspace-update/slice.json",
+    "changes/004-where-api/slices/q5-machine-service/slice.json",
+    "changes/004-where-api/slices/q6-where-service/slice.json",
+    "changes/004-where-api/slices/r2-feature-routes/slice.json",
+    "changes/004-where-api/slices/r1-workspace-routes/slice.json",
+    "changes/004-where-api/slices/m1-mcp-workspace-tools/slice.json",
+    "changes/004-where-api/slices/w1-app-wiring/slice.json"
+  ],
+  "budget": {
+    "maxImplementationFiles": 3,
+    "maxSliceTestFiles": 1,
+    "maxCompiledContextBytes": 65536
+  },
+  "featureTests": [
+    "tests/integration/where-service.feature.test.ts",
+    "tests/contract/workspace-api.feature.test.ts",
+    "tests/contract/workspace-mcp.feature.test.ts"
+  ],
+  "featureChecks": "changes/004-where-api/feature-checks.json",
+  "integration": [
+    {
+      "id": "where-rest",
+      "requirementIds": [
+        "workspace-visibility",
+        "workspace-list",
+        "session-window",
+        "workspace-lookup",
+        "workspace-link",
+        "workspace-missing",
+        "workspace-audit",
+        "machine-list",
+        "machine-connect-target",
+        "where-groups",
+        "where-inclusion",
+        "where-order",
+        "where-plain-task",
+        "rest-workspace-routes",
+        "rest-feature-routes",
+        "rest-errors",
+        "dormancy-wiring"
+      ],
+      "entrypoints": [
+        "src/index.ts"
+      ],
+      "wiringSlice": "where-w1",
+      "testPaths": [
+        "tests/integration/where-service.feature.test.ts",
+        "tests/contract/workspace-api.feature.test.ts"
+      ],
+      "checkIds": [
+        "where-api"
+      ]
+    },
+    {
+      "id": "where-mcp",
+      "requirementIds": [
+        "mcp-workspace-tools",
+        "mcp-where-compact"
+      ],
+      "entrypoints": [
+        "src/transport/mcp.ts"
+      ],
+      "wiringSlice": "where-m1",
+      "testPaths": [
+        "tests/contract/workspace-mcp.feature.test.ts"
+      ],
+      "checkIds": [
+        "where-api"
+      ]
+    }
+  ],
+  "constitution": {
+    "path": "specs/constitution.md",
+    "approval": "specs/constitution.approval.json"
+  }
+}

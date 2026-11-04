@@ -206,6 +206,8 @@ describe('MCP tools', () => {
         [
           'delete',
           'expand',
+          'feature_pr',
+          'feature_stage',
           'groom_session_context',
           'link',
           'queue',
@@ -220,7 +222,11 @@ describe('MCP tools', () => {
           'task_list',
           'task_update',
           'unlink',
-          'update'
+          'update',
+          'where',
+          'workspace_link',
+          'workspace_lookup',
+          'workspace_report'
         ].sort()
       );
 

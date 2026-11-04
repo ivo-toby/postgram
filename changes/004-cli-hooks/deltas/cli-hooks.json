@@ -1,0 +1,177 @@
+{
+  "schemaVersion": 1,
+  "spec": "specs/workspace-tracking.md",
+  "baseSha256": null,
+  "changes": [
+    {
+      "operation": "add",
+      "id": "cfg-helpers",
+      "text": "shq is POSIX single-quote escaping, slug follows the contract expression with fallback feature, and the default machine alias is the lowercased hostname cut at the first dot with characters outside [a-z0-9._-] replaced by -."
+    },
+    {
+      "operation": "add",
+      "id": "cfg-pgmrc",
+      "text": "The tracking keys machine.alias, machine.connect_target, scan_roots, worktree_root, here_timeout_ms and resume are always read from ~/.pgmrc with the contract defaults, ~ expanded, resume merged per agent kind and field, and pgm machine set rewrites only the machine keys keeping the file mode 600."
+    },
+    {
+      "operation": "add",
+      "id": "usage-exit",
+      "text": "Usage errors and commander parse errors of the new commands exit 2 with a message on stderr; runtime errors exit 1 through the existing failure handler and its JSON envelope in --json mode."
+    },
+    {
+      "operation": "add",
+      "id": "resume-render",
+      "text": "The resume command cds into resume_session.cwd when it equals or lies under the workspace path, else the path; uses with_id with the shell-quoted session id when available, else without_id of the session agent kind, else only cd; and wraps the command in ssh -t <connect_target> with shell quoting for a workspace on another machine."
+    },
+    {
+      "operation": "add",
+      "id": "resume-transcript",
+      "text": "A transcript is gone only for a workspace on the local machine whose resume session is claude-code with a non-null transcript_path that does not exist; then the resume falls back to without_id."
+    },
+    {
+      "operation": "add",
+      "id": "age-format",
+      "text": "Ages render as whole minutes under one hour, whole hours under 48 hours and whole days otherwise, for example 3h or 12d."
+    },
+    {
+      "operation": "add",
+      "id": "api-client",
+      "text": "The tracking client calls report, PATCH workspace, PUT machine, GET machines, PUT repositories, POST features, stage and pull-requests, GET lookup, GET workspaces and GET where with the existing bearer auth and error mapping, and supports a per-call timeout."
+    },
+    {
+      "operation": "add",
+      "id": "git-state",
+      "text": "Git state comes from the research R7 commands with GIT_OPTIONAL_LOCKS=0: realpath of the worktree root, the main repo root, branch (null when detached), origin remote (null without origin), dirty count and unpushed count with has_upstream, and the workspace path is realpath(cwd) outside git."
+    },
+    {
+      "operation": "add",
+      "id": "git-budget",
+      "text": "Git resolution has a total budget: an unresolved worktree root means no report, an unresolved count omits the git key, and an unresolved remote, root or branch omits that key rather than sending null."
+    },
+    {
+      "operation": "add",
+      "id": "boot-id",
+      "text": "The boot id is the trimmed Linux boot_id file, else the sha256 hex of the sec/usec part of macOS kern.boottime, else null."
+    },
+    {
+      "operation": "add",
+      "id": "marker-file",
+      "text": "The marker .postgram/feature.json holds feature_id and created_at next to .postgram/.gitignore containing *, can be read (invalid content reads as none) and removed."
+    },
+    {
+      "operation": "add",
+      "id": "here-hook",
+      "text": "pgm here --hook reads the Claude Code hook JSON from stdin, maps SessionStart, UserPromptSubmit, Stop and SessionEnd to start, activity, stop and end with session_id, cwd, transcript_path and source or reason, ignores other events and invalid or empty stdin with exit 0 and no report, and sends the marker feature_id."
+    },
+    {
+      "operation": "add",
+      "id": "here-flags",
+      "text": "Without --hook, pgm here sends a workspace-only report when neither --session-id nor --event is given, otherwise a session with event default activity and agent default claude-code; bad flag values exit 2."
+    },
+    {
+      "operation": "add",
+      "id": "here-output",
+      "text": "In hook mode stdout is empty except one line naming the linked feature on SessionStart unless --quiet; without --hook it prints registered <alias>:<path> followed by the feature short id and stage or (unassigned); every failure is logged and the command exits 0."
+    },
+    {
+      "operation": "add",
+      "id": "here-log",
+      "text": "Failures of pgm here are appended as one line to ~/.pgm/here.log, which is rotated to here.log.1 at 1 MB."
+    },
+    {
+      "operation": "add",
+      "id": "hooks-install",
+      "text": "pgm hooks install writes one command hook with timeout 5 and no matcher per SessionStart, UserPromptSubmit, Stop and SessionEnd using the absolute node and script paths, replaces an existing postgram here --hook entry instead of duplicating it, keeps other hooks, shows a diff and asks unless --yes, and warns when ~/.pgmrc lacks credentials."
+    },
+    {
+      "operation": "add",
+      "id": "hooks-retention",
+      "text": "cleanupPeriodDays is set to --keep-transcripts, or proposed as 365 interactively without the flag, never lowered, and left unchanged by --yes without --keep-transcripts."
+    },
+    {
+      "operation": "add",
+      "id": "hooks-pi",
+      "text": "pgm hooks install --pi copies the CLI package pi extension to the pi extensions directory with the node and script placeholders replaced, leaves Claude settings untouched, and uninstall --pi removes that file."
+    },
+    {
+      "operation": "add",
+      "id": "hooks-uninstall",
+      "text": "pgm hooks uninstall removes only the postgram here --hook entries."
+    },
+    {
+      "operation": "add",
+      "id": "where-disk-check",
+      "text": "Before rendering, pgm where marks a local workspace whose path is gone as missing and clears missing for one whose path exists again, renders the refreshed data, and on a failed PATCH keeps going with missing added locally."
+    },
+    {
+      "operation": "add",
+      "id": "where-layout",
+      "text": "The human where layout prints group headers with counts and skips empty groups, a feature line with short id, title, stage and PR states, and three lines per workspace with risks, path, git age, sessions and the resume command, cutting the first two lines to 60 columns."
+    },
+    {
+      "operation": "add",
+      "id": "where-json",
+      "text": "pgm where --json prints the server response with resume and transcript_gone added to every workspace; --actions, --machine, --repo, --all and --include-ended map to the query parameters."
+    },
+    {
+      "operation": "add",
+      "id": "feature-commands",
+      "text": "pgm feature add prints the new id, stage and pr call the feature endpoints with either id form, and pr defaults to state open."
+    },
+    {
+      "operation": "add",
+      "id": "feature-link-marker",
+      "text": "pgm feature link and unlink resolve the local workspace by lookup (reporting it first when unknown), PATCH its feature_id and rewrite or delete the marker; with --workspace they PATCH that workspace and update the marker only when it is local and exists, else warn."
+    },
+    {
+      "operation": "add",
+      "id": "machine-commands",
+      "text": "pgm machine set writes ~/.pgmrc, reports the machine without a workspace and sets its connect target, warning when the alias changes; pgm machine list prints the machines."
+    },
+    {
+      "operation": "add",
+      "id": "repo-command",
+      "text": "pgm repo set <remote> --release-on-merge true|false sets the repository flag; any other value exits 2."
+    },
+    {
+      "operation": "add",
+      "id": "worktree-resolve",
+      "text": "pgm worktree new resolves the feature by full UUID, then 8-hex short id, then case-insensitive exact title among non-archived feature tasks; several matches exit 1 listing them; no match needs --create or a y answer, else exit 1."
+    },
+    {
+      "operation": "add",
+      "id": "worktree-create",
+      "text": "pgm worktree new refuses an existing path or branch with exit 2 before any side effect, then creates the feature when needed, adds the worktree on feat/<short>-<slug> from the base, writes the marker, reports the workspace linked and prints only the absolute path; a report failure only warns."
+    },
+    {
+      "operation": "add",
+      "id": "scan-discovery",
+      "text": "pgm scan finds repositories under the roots up to the depth without descending into a repository, node_modules or dot-directories, and lists their worktrees deduplicated by realpath."
+    },
+    {
+      "operation": "add",
+      "id": "scan-sessions",
+      "text": "Claude sessions come from the encoded worktree project directory and its dash-suffixed subdirectory variants, each directory going to the worktree with the longest matching encoded prefix, dropping a session whose transcript cwd lies outside the worktree; pi sessions come from the pi session directory with id and cwd from the header line."
+    },
+    {
+      "operation": "add",
+      "id": "scan-proposals",
+      "text": "Scan proposals are the marker, then a unique short id in the branch, then the top three task search hits; --yes-exact accepts marker and short-id proposals and skips the rest without searching; the interactive prompt offers accept, pick, new and skip."
+    },
+    {
+      "operation": "add",
+      "id": "scan-record",
+      "text": "An accepted worktree is sent as one scan report with feature_id and its sessions and gets the marker; --dry-run sends and writes nothing; no roots exit 2."
+    },
+    {
+      "operation": "add",
+      "id": "scan-known",
+      "text": "Workspaces already registered on this machine are listed as known and not prompted, and the disk check of pgm where is applied to them."
+    },
+    {
+      "operation": "add",
+      "id": "cli-wiring",
+      "text": "The pgm entrypoint registers here, hooks, where, feature, machine, repo, worktree and scan without changing existing commands."
+    }
+  ]
+}

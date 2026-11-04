@@ -1,0 +1,52 @@
+{
+  "schemaVersion": 1,
+  "id": "where-r2",
+  "brief": "changes/004-where-api/slices/r2-feature-routes/brief.md",
+  "context": "changes/004-where-api/slices/r2-feature-routes/context.json",
+  "checks": "changes/004-where-api/slices/r2-feature-routes/checks.json",
+  "implementationFiles": [
+    "src/transport/feature-routes.ts",
+    "src/transport/rest.ts"
+  ],
+  "sliceTests": [
+    "tests/contract/feature-routes.test.ts"
+  ],
+  "protect": [
+    "tests/integration/where-service.feature.test.ts",
+    "tests/contract/workspace-api.feature.test.ts",
+    "tests/contract/workspace-mcp.feature.test.ts",
+    "changes/004-where-api/slice-check.mjs"
+  ],
+  "interfaces": [
+    "specs/004-workspace-session-tracking/contracts/rest.md",
+    "changes/004-where-api/proposal.md"
+  ],
+  "dependsOn": [],
+  "budget": {
+    "maxImplementationFiles": null,
+    "maxSliceTestFiles": null,
+    "maxCompiledContextBytes": null
+  },
+  "openDecisions": [],
+  "testReview": {
+    "schemaVersion": 1,
+    "workflow": "slice-tests",
+    "criteria": [
+      {
+        "id": "where-r2-tests",
+        "requirementIds": [
+          "rest-feature-routes",
+          "rest-errors"
+        ],
+        "question": "Do the tests cover every route with its status and body shape, the stored-entity serialization, both feature id forms, and the 400, 403, 404 and 409 envelopes?",
+        "interfaces": [
+          "specs/004-workspace-session-tracking/contracts/rest.md",
+          "changes/004-where-api/proposal.md"
+        ],
+        "testPaths": [
+          "tests/contract/feature-routes.test.ts"
+        ]
+      }
+    ]
+  }
+}

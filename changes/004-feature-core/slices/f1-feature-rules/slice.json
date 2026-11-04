@@ -1,0 +1,54 @@
+{
+  "schemaVersion": 1,
+  "id": "feature-f1",
+  "brief": "changes/004-feature-core/slices/f1-feature-rules/brief.md",
+  "context": "changes/004-feature-core/slices/f1-feature-rules/context.json",
+  "checks": "changes/004-feature-core/slices/f1-feature-rules/checks.json",
+  "implementationFiles": [
+    "src/types/features.ts",
+    "src/services/feature-rules.ts"
+  ],
+  "sliceTests": [
+    "tests/unit/feature-rules.test.ts"
+  ],
+  "protect": [
+    "tests/integration/feature-service.feature.test.ts",
+    "changes/004-feature-core/slice-check.mjs"
+  ],
+  "interfaces": [
+    "specs/004-workspace-session-tracking/data-model.md",
+    "specs/004-workspace-session-tracking/contracts/rest.md"
+  ],
+  "dependsOn": [],
+  "budget": {
+    "maxImplementationFiles": null,
+    "maxSliceTestFiles": null,
+    "maxCompiledContextBytes": null
+  },
+  "openDecisions": [],
+  "testReview": {
+    "schemaVersion": 1,
+    "workflow": "slice-tests",
+    "criteria": [
+      {
+        "id": "feature-f1-tests",
+        "requirementIds": [
+          "feature-defaults",
+          "feature-validate",
+          "feature-manual-update",
+          "pr-canonical",
+          "pr-upsert",
+          "stage-derive"
+        ],
+        "question": "Do the tests pin every transition-table row, never-backwards, PR canonicalization and rejection, upsert immutability, defaults, each validation failure and the manual-stage rule?",
+        "interfaces": [
+          "specs/004-workspace-session-tracking/data-model.md",
+          "specs/004-workspace-session-tracking/contracts/rest.md"
+        ],
+        "testPaths": [
+          "tests/unit/feature-rules.test.ts"
+        ]
+      }
+    ]
+  }
+}

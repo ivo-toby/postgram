@@ -1,0 +1,54 @@
+{
+  "schemaVersion": 1,
+  "id": "report-s5",
+  "brief": "changes/004-report-core/slices/s5-workspace-store/brief.md",
+  "context": "changes/004-report-core/slices/s5-workspace-store/context.json",
+  "checks": "changes/004-report-core/slices/s5-workspace-store/checks.json",
+  "implementationFiles": [
+    "src/services/workspace-store.ts"
+  ],
+  "sliceTests": [
+    "tests/integration/workspace-store.test.ts"
+  ],
+  "protect": [
+    "tests/integration/workspace-report.feature.test.ts",
+    "changes/004-report-core/slice-check.mjs"
+  ],
+  "interfaces": [
+    "specs/004-workspace-session-tracking/data-model.md",
+    "src/auth/types.ts",
+    "tests/helpers/postgres.ts"
+  ],
+  "dependsOn": [
+    "report-s1"
+  ],
+  "budget": {
+    "maxImplementationFiles": null,
+    "maxSliceTestFiles": null,
+    "maxCompiledContextBytes": null
+  },
+  "openDecisions": [],
+  "testReview": {
+    "schemaVersion": 1,
+    "workflow": "slice-tests",
+    "criteria": [
+      {
+        "id": "report-s5-tests",
+        "requirementIds": [
+          "machine-upsert",
+          "workspace-upsert",
+          "feature-link"
+        ],
+        "question": "Do the tests prove the omitted-versus-null semantics, the boot_id rule per source, every link outcome and that entities rows are never modified?",
+        "interfaces": [
+          "specs/004-workspace-session-tracking/data-model.md",
+          "src/auth/types.ts",
+          "tests/helpers/postgres.ts"
+        ],
+        "testPaths": [
+          "tests/integration/workspace-store.test.ts"
+        ]
+      }
+    ]
+  }
+}

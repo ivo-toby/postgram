@@ -1,0 +1,52 @@
+{
+  "schemaVersion": 1,
+  "id": "where-q2",
+  "brief": "changes/004-where-api/slices/q2-workspace-query/brief.md",
+  "context": "changes/004-where-api/slices/q2-workspace-query/context.json",
+  "checks": "changes/004-where-api/slices/q2-workspace-query/checks.json",
+  "implementationFiles": [
+    "src/services/workspace-query.ts"
+  ],
+  "sliceTests": [
+    "tests/integration/workspace-query.test.ts"
+  ],
+  "protect": [
+    "tests/integration/where-service.feature.test.ts",
+    "tests/contract/workspace-api.feature.test.ts",
+    "tests/contract/workspace-mcp.feature.test.ts",
+    "changes/004-where-api/slice-check.mjs"
+  ],
+  "interfaces": [
+    "specs/004-workspace-session-tracking/contracts/rest.md",
+    "specs/004-workspace-session-tracking/spec.md"
+  ],
+  "dependsOn": [],
+  "budget": {
+    "maxImplementationFiles": null,
+    "maxSliceTestFiles": null,
+    "maxCompiledContextBytes": null
+  },
+  "openDecisions": [],
+  "testReview": {
+    "schemaVersion": 1,
+    "workflow": "slice-tests",
+    "criteria": [
+      {
+        "id": "where-q2-tests",
+        "requirementIds": [
+          "workspace-visibility",
+          "workspace-list",
+          "session-window"
+        ],
+        "question": "Do the tests cover both visibility branches (linked and unlinked, including allowedTypes), every filter and its normalization or resolution, the error cases, the sort order and both session windows?",
+        "interfaces": [
+          "specs/004-workspace-session-tracking/contracts/rest.md",
+          "specs/004-workspace-session-tracking/spec.md"
+        ],
+        "testPaths": [
+          "tests/integration/workspace-query.test.ts"
+        ]
+      }
+    ]
+  }
+}

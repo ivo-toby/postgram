@@ -88,7 +88,11 @@ export async function resetTestDatabase(pool: Pool): Promise<void> {
       edges,
       entities,
       api_keys,
-      embedding_models
+      embedding_models,
+      agent_sessions,
+      workspaces,
+      machines,
+      repositories
     RESTART IDENTITY CASCADE
   `);
 

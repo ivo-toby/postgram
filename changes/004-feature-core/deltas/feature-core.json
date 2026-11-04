@@ -1,0 +1,19 @@
+{
+  "schemaVersion": 1,
+  "spec": "specs/workspace-tracking.md",
+  "baseSha256": null,
+  "changes": [
+    { "operation": "add", "id": "feature-defaults", "text": "When the resulting metadata of createTask or updateTask has kind feature, absent keys get the defaults stage building, stage_source manual, stage_set_at now and pull_requests []; tasks without kind feature are unchanged." },
+    { "operation": "add", "id": "feature-validate", "text": "A present but invalid stage or stage_source, or malformed pull_requests (not an array of canonical GitHub PR URLs with state open, merged or closed and a string updated_at), is rejected with VALIDATION and nothing is written; values are never coerced." },
+    { "operation": "add", "id": "feature-manual-update", "text": "A stage changed through updateTask sets stage_source manual and stage_set_at now; updateTask never derives a stage." },
+    { "operation": "add", "id": "feature-create", "text": "createFeature creates a task with status inbox and the feature defaults, with the given content, tags and visibility." },
+    { "operation": "add", "id": "feature-id-resolve", "text": "A feature id is a full UUID or an 8-hex short id matching the start of a non-archived visible task id; more than one match is CONFLICT with candidates id and title, any other format or a non-task UUID is VALIDATION, and an unknown or invisible id is NOT_FOUND." },
+    { "operation": "add", "id": "stage-set", "text": "setFeatureStage sets any stage from any stage with stage_source manual and stage_set_at now, turns a plain task into a feature, returns the previous stage (null for a plain task), requires write scope and retries once on a version conflict before returning CONFLICT." },
+    { "operation": "add", "id": "pr-canonical", "text": "A pull request URL must match https://github.com/<owner>/<repo>/pull/<n>; anything after the number is stripped and owner and repo are lowercased; any other URL is VALIDATION." },
+    { "operation": "add", "id": "pr-upsert", "text": "addFeaturePullRequest upserts by canonical URL with state open by default, writes the complete pull_requests array, refreshes updated_at on a re-report and never duplicates a URL." },
+    { "operation": "add", "id": "stage-derive", "text": "Only a new URL or a changed state derives a stage: open while building gives review; merged before awaiting_release gives awaiting_release, or released when the PR repository has release_on_merge; every other case and every closed state keeps the stage; a derived move never goes backwards and sets stage_source derived." },
+    { "operation": "add", "id": "released-status", "text": "Reaching released, by hand or derived, never changes the task status." },
+    { "operation": "add", "id": "feature-audit", "text": "A stage change writes feature_stage with from, to and source; a new or changed PR writes feature_pr with url and state; a repository setting change writes repository_update with remote and release_on_merge; a same-state PR re-report writes neither feature_stage nor feature_pr." },
+    { "operation": "add", "id": "repository-setting", "text": "setRepositoryReleaseOnMerge normalizes the remote, upserts its release_on_merge value, requires write scope and returns remote and release_on_merge; a missing repository row means release_on_merge false." }
+  ]
+}

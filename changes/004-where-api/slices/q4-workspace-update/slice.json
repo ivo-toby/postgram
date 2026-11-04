@@ -1,0 +1,55 @@
+{
+  "schemaVersion": 1,
+  "id": "where-q4",
+  "brief": "changes/004-where-api/slices/q4-workspace-update/brief.md",
+  "context": "changes/004-where-api/slices/q4-workspace-update/context.json",
+  "checks": "changes/004-where-api/slices/q4-workspace-update/checks.json",
+  "implementationFiles": [
+    "src/services/workspace-update.ts"
+  ],
+  "sliceTests": [
+    "tests/integration/workspace-update.test.ts"
+  ],
+  "protect": [
+    "tests/integration/where-service.feature.test.ts",
+    "tests/contract/workspace-api.feature.test.ts",
+    "tests/contract/workspace-mcp.feature.test.ts",
+    "changes/004-where-api/slice-check.mjs"
+  ],
+  "interfaces": [
+    "specs/004-workspace-session-tracking/contracts/rest.md",
+    "changes/004-where-api/proposal.md"
+  ],
+  "dependsOn": [
+    "where-q2"
+  ],
+  "budget": {
+    "maxImplementationFiles": null,
+    "maxSliceTestFiles": null,
+    "maxCompiledContextBytes": null
+  },
+  "openDecisions": [],
+  "testReview": {
+    "schemaVersion": 1,
+    "workflow": "slice-tests",
+    "criteria": [
+      {
+        "id": "where-q4-tests",
+        "requirementIds": [
+          "workspace-link",
+          "workspace-missing",
+          "workspace-audit",
+          "workspace-visibility"
+        ],
+        "question": "Do the tests cover linking by both id forms with defaults on a plain task only, unlink with and without personal, the missing flag both ways and its idempotence, audit only on a changed link, and every rejection with a check that nothing was written?",
+        "interfaces": [
+          "specs/004-workspace-session-tracking/contracts/rest.md",
+          "changes/004-where-api/proposal.md"
+        ],
+        "testPaths": [
+          "tests/integration/workspace-update.test.ts"
+        ]
+      }
+    ]
+  }
+}

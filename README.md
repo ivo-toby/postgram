@@ -683,6 +683,7 @@ those values outside database backups and browser storage.
 | `PUBLIC_BASE_URL`             | conditional |         | Public HTTPS origin for OAuth metadata and callback URLs. Required when `OAUTH_ENABLED=true`. Example: `https://postgram.example.com`. |
 | `LOG_LEVEL`                   | no          | `info`  | pino log level                                                                                                                 |
 | `ENRICHMENT_POLL_INTERVAL_MS` | no          | `1000`  | Enrichment worker poll interval                                                                                                |
+| `WORKSPACE_DORMANT_AFTER_DAYS` | no         | `30`    | Days without activity after which a running or idle agent session is shown as dormant. Informational only.                      |
 
 ### Embeddings
 

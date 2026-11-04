@@ -1,8 +1,7 @@
-// Protected feature test for change 004-ui-where (spec 004 phase 5).
-// It lives outside ui/src on purpose: ui/tsconfig.json only includes src, so
-// this file is run by Vitest but never typechecked by a slice check.
+// Feature test for the Where page (spec 004 phase 5).
+// It lives outside ui/src, so ui/tsconfig.json (include: src) does not typecheck it.
 // It asserts the UI contract of specs/004-workspace-session-tracking/contracts/ui.md
-// end to end against a stubbed API client. Slices may not edit this file.
+// end to end against a stubbed API client.
 import { describe, expect, it, vi, beforeEach } from 'vitest';
 import { render, screen, waitFor, within } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';

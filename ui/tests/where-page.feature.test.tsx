@@ -233,8 +233,8 @@ function clipboard(writeText: (text: string) => Promise<void>): void {
   });
 }
 
-function groupSection(label: string): HTMLElement {
-  const heading = screen.getByRole('heading', { level: 2, name: new RegExp(`^${label} \\(`, 'u') });
+async function groupSection(label: string): Promise<HTMLElement> {
+  const heading = await screen.findByRole('heading', { level: 2, name: new RegExp(`^${label} \\(`, 'u') });
   const section = heading.closest('section');
   if (section === null) throw new Error(`group ${label} is not inside a section`);
   return section;
@@ -273,7 +273,7 @@ describe('WherePage (feature)', () => {
   it('renders a feature with its short id, stage, age and pull request', async () => {
     render(<WherePage api={stubApi()} />);
 
-    const review = groupSection('Review');
+    const review = await groupSection('Review');
     expect(await within(review).findByText('1a2b3c4d')).toBeInTheDocument();
     expect(within(review).getByText('Keyword rank fusion')).toBeInTheDocument();
     expect(within(review).getByText('review')).toBeInTheDocument();
@@ -288,7 +288,7 @@ describe('WherePage (feature)', () => {
   it('marks a done feature without worktrees', async () => {
     render(<WherePage api={stubApi()} />);
 
-    const merge = groupSection('Merge');
+    const merge = await groupSection('Merge');
     expect(await within(merge).findByText('Docker env table')).toBeInTheDocument();
     expect(within(merge).getByText('done')).toBeInTheDocument();
     expect(within(merge).getByText('no worktrees')).toBeInTheDocument();
@@ -297,7 +297,7 @@ describe('WherePage (feature)', () => {
   it('renders a workspace row with its risks, git age and sessions', async () => {
     render(<WherePage api={stubApi()} />);
 
-    const review = groupSection('Review');
+    const review = await groupSection('Review');
     await within(review).findByText('/w/a');
     expect(within(review).getByText('codebox')).toBeInTheDocument();
     expect(within(review).getByText('feat/kw')).toBeInTheDocument();
@@ -310,14 +310,14 @@ describe('WherePage (feature)', () => {
   it('renders unknown git counts, a dormant session and a missing path', async () => {
     render(<WherePage api={stubApi()} />);
 
-    const progress = groupSection('In progress');
+    const progress = await groupSection('In progress');
     await within(progress).findByText('/home/ivo/wt/a b');
     expect(within(progress).getByText('no upstream')).toBeInTheDocument();
     expect(within(progress).getByText('git ?')).toBeInTheDocument();
     expect(within(progress).getAllByText('-').length).toBeGreaterThan(0);
     expect(within(progress).getByText('pi/idle 3d dormant')).toBeInTheDocument();
 
-    const unassigned = groupSection('Unassigned');
+    const unassigned = await groupSection('Unassigned');
     expect(within(unassigned).getByText('missing')).toBeInTheDocument();
     expect(within(unassigned).getByText('no sessions')).toBeInTheDocument();
   });
@@ -340,12 +340,12 @@ describe('WherePage (feature)', () => {
   });
 
   it('copies the resume command of a row', async () => {
+    const user = userEvent.setup();
     const writeText = vi.fn(async () => undefined);
     clipboard(writeText);
-    const user = userEvent.setup();
     render(<WherePage api={stubApi()} />);
 
-    const review = groupSection('Review');
+    const review = await groupSection('Review');
     const button = await within(review).findByRole('button', { name: 'Copy resume command' });
     await user.click(button);
 
@@ -356,11 +356,11 @@ describe('WherePage (feature)', () => {
   });
 
   it('reports a failed copy and keeps the command readable', async () => {
-    clipboard(vi.fn(async () => { throw new Error('denied'); }));
     const user = userEvent.setup();
+    clipboard(vi.fn(async () => { throw new Error('denied'); }));
     render(<WherePage api={stubApi()} />);
 
-    const review = groupSection('Review');
+    const review = await groupSection('Review');
     await user.click(await within(review).findByRole('button', { name: 'Copy resume command' }));
 
     expect(await within(review).findByText('Copy failed')).toBeInTheDocument();

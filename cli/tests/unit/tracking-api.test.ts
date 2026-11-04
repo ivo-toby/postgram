@@ -146,6 +146,16 @@ describe('createTrackingClient', () => {
     expect(lastBody()).toEqual({ feature_id: null, missing: true });
   });
 
+  it('deletes a workspace by encoded id', async () => {
+    stubFetch({ deleted: true, workspace: {} });
+
+    await client.deleteWorkspace('ws 1');
+
+    expect(lastCall().url).toBe('http://api.test/api/workspaces/ws%201');
+    expect(lastCall().init?.method).toBe('DELETE');
+    expect(lastHeaders().Authorization).toBe('Bearer key-123');
+  });
+
   it('puts a machine with connect_target', async () => {
     stubFetch({});
 

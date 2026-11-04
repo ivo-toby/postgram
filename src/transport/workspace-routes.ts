@@ -14,6 +14,7 @@ import {
 import { getWhere } from '../services/where-service.js';
 import { listWorkspaces } from '../services/workspace-query.js';
 import { reportWorkspace } from '../services/workspace-service.js';
+import { deleteWorkspace } from '../services/workspace-delete.js';
 import { updateWorkspace } from '../services/workspace-update.js';
 import { lookupWorkspace } from '../services/workspace-lookup.js';
 import { AppError, ErrorCode } from '../util/errors.js';
@@ -138,6 +139,22 @@ export function registerWorkspaceRoutes(
     }
 
     return c.json({ workspace: result.value }, 200);
+  });
+
+  app.delete('/api/workspaces/:id', async (c) => {
+    const auth = c.get('auth');
+    const result = await deleteWorkspace(
+      pool,
+      auth,
+      { id: c.req.param('id') },
+      options
+    );
+
+    if (result.isErr()) {
+      throw result.error;
+    }
+
+    return c.json({ deleted: true, workspace: result.value }, 200);
   });
 
   app.put('/api/machines/:alias', async (c) => {

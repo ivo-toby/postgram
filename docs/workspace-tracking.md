@@ -103,7 +103,7 @@ Run `pgm where` and copy the resume line. For work on the machine you are on,
 it is a plain `cd` and resume:
 
 ```bash
-cd '/Users/ivo/wt/1a2b3c4d-kw-rank' && claude --resume '8f3c…'
+cd '/Users/me/wt/1a2b3c4d-kw-rank' && claude --resume '8f3c…'
 ```
 
 For work on another machine, the same command is wrapped in

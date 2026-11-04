@@ -104,6 +104,7 @@ function makeDeps(overrides: Partial<WorktreeDeps> = {}): WorktreeDeps {
       scanRoots: [],
       worktreeRoot: null,
       hereTimeoutMs: 2000,
+      ignorePaths: [],
       resume: DEFAULT_RESUME
     },
     cwd: '/repo',
@@ -438,6 +439,7 @@ function realDeps(
       scanRoots: [],
       worktreeRoot: null,
       hereTimeoutMs: 2000,
+      ignorePaths: [],
       resume: DEFAULT_RESUME
     },
     cwd: repo,

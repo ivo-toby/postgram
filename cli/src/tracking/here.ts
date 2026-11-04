@@ -8,7 +8,7 @@ import type { Command } from 'commander';
 import { readStdinText, resolvePgmConfig, shortId } from '../shared.js';
 import { createTrackingClient } from './api.js';
 import type { TrackingClient } from './api.js';
-import { loadTrackingConfig, usageExit } from './config.js';
+import { isIgnoredPath, loadTrackingConfig, usageExit } from './config.js';
 import type { TrackingConfig } from './config.js';
 import { readBootId, readMarker, resolveLocalWorkspace } from './local.js';
 import type { LocalWorkspace } from './local.js';
@@ -143,6 +143,16 @@ function featureLine(feature: { id: string; title: string; stage: string | null 
   return `Postgram: this worktree belongs to feature ${shortId(feature.id)} "${feature.title}" (stage: ${feature.stage ?? 'building'}).`;
 }
 
+function ignoredResult(
+  options: HereOptions,
+  target: string
+): { stdout: string; exitCode: 0 } {
+  return {
+    stdout: options.hook ? '' : `ignored ${target} (ignore_paths)\n`,
+    exitCode: 0
+  };
+}
+
 export async function runHere(
   options: HereOptions,
   deps: HereDeps
@@ -194,6 +204,11 @@ export async function runHere(
   }
   const config = deps.config;
 
+  // Checked before any git call so an ignored directory costs nothing.
+  if (isIgnoredPath(cwd, config.ignorePaths)) {
+    return ignoredResult(options, cwd);
+  }
+
   if (deps.client === null) {
     await deps.log('missing credentials');
     return { stdout: '', exitCode: 0 };
@@ -205,6 +220,10 @@ export async function runHere(
   if (local.kind === 'timeout') {
     await deps.log('git timeout');
     return { stdout: '', exitCode: 0 };
+  }
+
+  if (isIgnoredPath(local.path, config.ignorePaths)) {
+    return ignoredResult(options, local.path);
   }
 
   const marker = await deps.readMarker(local.path);

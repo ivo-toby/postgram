@@ -20,6 +20,7 @@ const CONFIG: TrackingConfig = {
   scanRoots: [],
   worktreeRoot: null,
   hereTimeoutMs: 2000,
+  ignorePaths: [],
   resume: DEFAULT_RESUME
 };
 

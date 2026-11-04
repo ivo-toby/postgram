@@ -399,7 +399,7 @@ function normalizeProviderSettingValue(
       return value;
     }
     case 'EMBEDDING_PROVIDER': {
-      if (value !== 'openai' && value !== 'ollama') {
+      if (!isEmbeddingProviderName(value)) {
         throw validationError('Invalid embedding provider', { field: key });
       }
       return value;
@@ -433,6 +433,12 @@ function normalizeProviderHostname(hostname: string): string {
 
 function normalizeBaseUrl(url: URL): string {
   return url.toString().replace(/\/+$/u, '');
+}
+
+function isEmbeddingProviderName(
+  value: unknown
+): value is 'openai' | 'ollama' | 'openai-compatible' {
+  return value === 'openai' || value === 'ollama' || value === 'openai-compatible';
 }
 
 function isLocalProviderCapable(provider: string): boolean {
@@ -1584,7 +1590,7 @@ function targetEmbeddingIdentity(
   snapshot: ProviderConfigurationSnapshot
 ): ConfiguredEmbeddingIdentity {
   const provider = settingString(snapshot, 'EMBEDDING_PROVIDER') ?? 'openai';
-  if (provider !== 'openai' && provider !== 'ollama') {
+  if (!isEmbeddingProviderName(provider)) {
     throw validationError('Invalid embedding provider', {
       field: 'EMBEDDING_PROVIDER'
     });
@@ -1651,7 +1657,7 @@ async function embeddingIdentityAfterApply(
   }
 
   const provider = values.EMBEDDING_PROVIDER ?? 'openai';
-  if (provider !== 'openai' && provider !== 'ollama') {
+  if (!isEmbeddingProviderName(provider)) {
     throw validationError('Invalid embedding provider', {
       field: 'EMBEDDING_PROVIDER'
     });
@@ -1679,6 +1685,12 @@ function providerForUrlKey(
     return (
       settingString(snapshot, 'EXTRACTION_PROVIDER') ?? 'openai-compatible'
     );
+  }
+  if (
+    key === 'EMBEDDING_BASE_URL' &&
+    targetEmbeddingProvider(snapshot) === 'openai-compatible'
+  ) {
+    return 'openai-compatible';
   }
   return 'ollama';
 }
@@ -1713,7 +1725,10 @@ function isProviderUrlRelevant(
           !settingString(snapshot, 'EMBEDDING_BASE_URL'))
       );
     case 'EMBEDDING_BASE_URL':
-      return embeddingProvider === 'ollama';
+      return (
+        embeddingProvider === 'ollama' ||
+        embeddingProvider === 'openai-compatible'
+      );
     default:
       return false;
   }
@@ -2654,6 +2669,9 @@ async function storedSecretReadyForRuntime(
           input.runtimeConfig.EXTRACTION_PROVIDER === 'ollama'
         ? ['OLLAMA_BASE_URL']
         : input.name === 'EMBEDDING_API_KEY' &&
+            input.runtimeConfig.EMBEDDING_PROVIDER === 'openai-compatible'
+          ? ['EMBEDDING_BASE_URL']
+          : input.name === 'EMBEDDING_API_KEY' &&
             input.runtimeConfig.EMBEDDING_PROVIDER === 'ollama'
           ? input.runtimeConfig.EMBEDDING_BASE_URL
             ? ['EMBEDDING_BASE_URL']
@@ -2791,7 +2809,10 @@ function providerSecretUsage(config: AppConfig): ProviderSecretUsage[] {
   if (config.EMBEDDING_PROVIDER === 'openai') {
     addSecretUsage(usages, 'OPENAI_API_KEY', true);
   }
-  if (config.EMBEDDING_PROVIDER === 'ollama') {
+  if (
+    config.EMBEDDING_PROVIDER === 'ollama' ||
+    config.EMBEDDING_PROVIDER === 'openai-compatible'
+  ) {
     addSecretUsage(usages, 'EMBEDDING_API_KEY', false);
   }
 
@@ -2833,7 +2854,9 @@ function activeSecretRestartImpacts(
 
   const embedding =
     (target.EMBEDDING_PROVIDER === 'openai' && changed('OPENAI_API_KEY')) ||
-    (target.EMBEDDING_PROVIDER === 'ollama' && changed('EMBEDDING_API_KEY'));
+    ((target.EMBEDDING_PROVIDER === 'ollama' ||
+      target.EMBEDDING_PROVIDER === 'openai-compatible') &&
+      changed('EMBEDDING_API_KEY'));
   const extraction =
     target.EXTRACTION_ENABLED &&
     ((target.EXTRACTION_PROVIDER === 'openai' && changed('OPENAI_API_KEY')) ||

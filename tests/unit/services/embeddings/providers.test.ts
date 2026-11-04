@@ -25,10 +25,12 @@ describe('resolveEmbeddingDefaults', () => {
   });
 
   it('honors explicit overrides', () => {
-    expect(resolveEmbeddingDefaults('ollama', 'nomic-embed-text', 768)).toEqual({
-      model: 'nomic-embed-text',
-      dimensions: 768
-    });
+    expect(resolveEmbeddingDefaults('ollama', 'nomic-embed-text', 768)).toEqual(
+      {
+        model: 'nomic-embed-text',
+        dimensions: 768
+      }
+    );
   });
 });
 
@@ -53,7 +55,10 @@ describe('OpenAI embedding provider', () => {
 
     const vectors = await provider.embedBatch(['a', 'b']);
 
-    expect(vectors).toEqual([[0.3, 0.4], [0.1, 0.2]]);
+    expect(vectors).toEqual([
+      [0.3, 0.4],
+      [0.1, 0.2]
+    ]);
     const [params, options] = create.mock.calls[0] as [
       Record<string, unknown>,
       { signal?: AbortSignal } | undefined
@@ -238,10 +243,14 @@ describe('Ollama embedding provider', () => {
 
   it('loops sequentially for embedBatch and preserves order', async () => {
     let call = 0;
-    (globalThis.fetch as unknown as ReturnType<typeof vi.fn>).mockImplementation(() => {
+    (
+      globalThis.fetch as unknown as ReturnType<typeof vi.fn>
+    ).mockImplementation(() => {
       call += 1;
       const embedding = call === 1 ? [1, 1] : [2, 2];
-      return Promise.resolve(new Response(JSON.stringify({ embedding }), { status: 200 }));
+      return Promise.resolve(
+        new Response(JSON.stringify({ embedding }), { status: 200 })
+      );
     });
 
     const provider = createEmbeddingProvider({
@@ -252,7 +261,10 @@ describe('Ollama embedding provider', () => {
     });
 
     const vectors = await provider.embedBatch(['a', 'b']);
-    expect(vectors).toEqual([[1, 1], [2, 2]]);
+    expect(vectors).toEqual([
+      [1, 1],
+      [2, 2]
+    ]);
     expect(call).toBe(2);
   });
 
@@ -271,9 +283,12 @@ describe('Ollama embedding provider', () => {
 
     await provider.embed('hi');
 
-    const call = (globalThis.fetch as unknown as ReturnType<typeof vi.fn>).mock.calls[0];
+    const call = (globalThis.fetch as unknown as ReturnType<typeof vi.fn>).mock
+      .calls[0];
     const init = call?.[1] as RequestInit;
-    expect((init.headers as Record<string, string>)['Authorization']).toBe('Bearer secret');
+    expect((init.headers as Record<string, string>)['Authorization']).toBe(
+      'Bearer secret'
+    );
   });
 
   it('throws EMBEDDING_FAILED on non-2xx', async () => {
@@ -290,7 +305,10 @@ describe('Ollama embedding provider', () => {
 
     await expect(provider.embed('hi')).rejects.toMatchObject({
       code: ErrorCode.EMBEDDING_FAILED,
-      details: expect.objectContaining({ status: 404 }) as Record<string, unknown>
+      details: expect.objectContaining({ status: 404 }) as Record<
+        string,
+        unknown
+      >
     });
   });
 
@@ -356,5 +374,174 @@ describe('createEmbeddingProvider factory', () => {
     expect(provider.name).toBe('ollama');
     expect(provider.model).toBe('bge-m3');
     expect(provider.dimensions).toBe(1024);
+  });
+});
+
+describe('OpenAI-compatible embedding provider', () => {
+  const okResponse = (vectors: number[][]): Response =>
+    new Response(
+      JSON.stringify({
+        data: vectors.map((embedding, index) => ({ index, embedding }))
+      }),
+      { status: 200, headers: { 'Content-Type': 'application/json' } }
+    );
+
+  const baseConfig = {
+    provider: 'openai-compatible' as const,
+    model: 'mistral-embed',
+    dimensions: 2,
+    baseUrl: 'https://api.mistral.example/v1/',
+    apiKey: 'mk-test'
+  };
+
+  it('posts to {baseUrl}/embeddings without a dimensions field', async () => {
+    const fetchImpl = vi.fn().mockResolvedValue(okResponse([[0.1, 0.2]]));
+    const provider = createEmbeddingProvider({ ...baseConfig, fetchImpl });
+
+    expect(await provider.embed('hello')).toEqual([0.1, 0.2]);
+
+    const [url, init] = fetchImpl.mock.calls[0] as [string, RequestInit];
+    expect(url).toBe('https://api.mistral.example/v1/embeddings');
+    // Mistral rejects unknown fields such as `dimensions` with a 422.
+    expect(JSON.parse(init.body as string)).toEqual({
+      model: 'mistral-embed',
+      input: ['hello'],
+      encoding_format: 'float'
+    });
+    expect(new Headers(init.headers).get('Authorization')).toBe(
+      'Bearer mk-test'
+    );
+    expect(init.signal).toBeInstanceOf(AbortSignal);
+  });
+
+  it('omits the Authorization header without an api key', async () => {
+    const fetchImpl = vi.fn().mockResolvedValue(okResponse([[0.1, 0.2]]));
+    const provider = createEmbeddingProvider({
+      ...baseConfig,
+      apiKey: undefined,
+      fetchImpl
+    });
+
+    await provider.embed('hello');
+
+    const [, init] = fetchImpl.mock.calls[0] as [string, RequestInit];
+    expect(new Headers(init.headers).has('Authorization')).toBe(false);
+  });
+
+  it('orders vectors by index', async () => {
+    const fetchImpl = vi.fn().mockResolvedValue(
+      new Response(
+        JSON.stringify({
+          data: [
+            { index: 1, embedding: [0.3, 0.4] },
+            { index: 0, embedding: [0.1, 0.2] }
+          ]
+        }),
+        { status: 200 }
+      )
+    );
+    const provider = createEmbeddingProvider({ ...baseConfig, fetchImpl });
+
+    expect(await provider.embedBatch(['a', 'b'])).toEqual([
+      [0.1, 0.2],
+      [0.3, 0.4]
+    ]);
+  });
+
+  it('splits large batches into requests of at most 128 inputs', async () => {
+    const fetchImpl = vi.fn((_url: string, init: RequestInit) => {
+      const body = JSON.parse(init.body as string) as { input: string[] };
+      return Promise.resolve(
+        okResponse(body.input.map((text) => [Number(text), 0]))
+      );
+    });
+    const provider = createEmbeddingProvider({ ...baseConfig, fetchImpl });
+    const texts = Array.from({ length: 300 }, (_, i) => String(i));
+
+    const vectors = await provider.embedBatch(texts);
+
+    expect(
+      fetchImpl.mock.calls.map(
+        ([, init]) =>
+          (JSON.parse(init.body as string) as { input: string[] }).input.length
+      )
+    ).toEqual([128, 128, 44]);
+    expect(vectors.map((v) => v[0])).toEqual(texts.map(Number));
+  });
+
+  it('throws EMBEDDING_FAILED with the response body on non-2xx', async () => {
+    const fetchImpl = vi
+      .fn()
+      .mockResolvedValue(
+        new Response('{"detail":"extra_forbidden"}', { status: 422 })
+      );
+    const provider = createEmbeddingProvider({ ...baseConfig, fetchImpl });
+
+    const error = await provider.embed('hello').catch((e: unknown) => e);
+
+    expect(error).toBeInstanceOf(AppError);
+    expect((error as AppError).code).toBe(ErrorCode.EMBEDDING_FAILED);
+    expect((error as AppError).details).toMatchObject({
+      provider: 'openai-compatible',
+      status: 422,
+      body: '{"detail":"extra_forbidden"}'
+    });
+  });
+
+  it('throws EMBEDDING_FAILED on dimension mismatch', async () => {
+    const fetchImpl = vi.fn().mockResolvedValue(okResponse([[0.1, 0.2, 0.3]]));
+    const provider = createEmbeddingProvider({ ...baseConfig, fetchImpl });
+
+    await expect(provider.embed('hello')).rejects.toMatchObject({
+      code: ErrorCode.EMBEDDING_FAILED,
+      message: 'Embedding dimension mismatch'
+    });
+  });
+
+  it('throws EMBEDDING_FAILED when the vector count does not match', async () => {
+    const fetchImpl = vi.fn().mockResolvedValue(okResponse([[0.1, 0.2]]));
+    const provider = createEmbeddingProvider({ ...baseConfig, fetchImpl });
+
+    await expect(provider.embedBatch(['a', 'b'])).rejects.toMatchObject({
+      code: ErrorCode.EMBEDDING_FAILED
+    });
+  });
+
+  it('reports an aborted request as a timeout', async () => {
+    const fetchImpl = vi.fn(
+      (_url: string, init: RequestInit) =>
+        new Promise<Response>((_resolve, reject) => {
+          init.signal?.addEventListener('abort', () =>
+            reject(Object.assign(new Error('aborted'), { name: 'AbortError' }))
+          );
+        })
+    );
+    const provider = createEmbeddingProvider({
+      ...baseConfig,
+      timeoutMs: 20,
+      fetchImpl
+    });
+
+    await expect(provider.embed('hello')).rejects.toMatchObject({
+      code: ErrorCode.EMBEDDING_FAILED,
+      message: 'OpenAI-compatible embedding call timed out after 20ms'
+    });
+  });
+
+  it('exposes its readonly fields', () => {
+    const provider = createEmbeddingProvider(baseConfig);
+
+    expect(provider.name).toBe('openai-compatible');
+    expect(provider.model).toBe('mistral-embed');
+    expect(provider.dimensions).toBe(2);
+  });
+
+  it('has no default model or dimensions', () => {
+    expect(() => resolveEmbeddingDefaults('openai-compatible')).toThrow(
+      /EMBEDDING_MODEL and EMBEDDING_DIMENSIONS/
+    );
+    expect(
+      resolveEmbeddingDefaults('openai-compatible', 'mistral-embed', 1024)
+    ).toEqual({ model: 'mistral-embed', dimensions: 1024 });
   });
 });

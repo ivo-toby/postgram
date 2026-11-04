@@ -246,6 +246,7 @@ function createSessionServer(
     logger?: Pick<Logger, 'debug' | 'warn'> | undefined;
     extractionEnabled?: boolean | undefined;
     workspaceDormantAfterDays?: number | undefined;
+    searchDefaultThreshold?: number | undefined;
   } = {}
 ) {
   const server = new McpServer({
@@ -518,7 +519,8 @@ function createSessionServer(
           },
           {
             embeddingService: options.embeddingService,
-            logger: options.logger
+            logger: options.logger,
+            defaultThreshold: options.searchDefaultThreshold
           }
         ),
         (value) => ({
@@ -928,6 +930,7 @@ export function registerMcpRoutes(
     embeddingService?: EmbeddingService | undefined;
     logger?: Pick<Logger, 'debug' | 'warn'> | undefined;
     extractionEnabled?: boolean | undefined;
+    searchDefaultThreshold?: number | undefined;
     resourceMetadataUrl?: string | undefined;
     workspaceDormantAfterDays?: number | undefined;
   } = {}

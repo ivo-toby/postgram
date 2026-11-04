@@ -52,13 +52,13 @@
         },
         {
           "name": "EMBEDDING_PROVIDER",
-          "description": "Embedding provider: openai or ollama.",
+          "description": "Embedding provider: openai, ollama, or openai-compatible.",
           "default": "ollama",
-          "choices": ["openai", "ollama"]
+          "choices": ["openai", "ollama", "openai-compatible"]
         },
         {
           "name": "EMBEDDING_BASE_URL",
-          "description": "Ollama embedding endpoint when EMBEDDING_PROVIDER is ollama.",
+          "description": "Embedding endpoint: the Ollama host for ollama, or an OpenAI-style base URL (for example https://api.mistral.ai/v1) for openai-compatible.",
           "default": "http://host.docker.internal:11434"
         },
         {

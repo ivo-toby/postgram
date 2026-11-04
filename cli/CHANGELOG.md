@@ -1,3 +1,27 @@
+## [1.38.3](https://github.com/ivo-toby/postgram/compare/cli-v1.38.2...cli-v1.38.3) (2026-11-02)
+
+### Bug Fixes
+
+* **db:** handle idle and checked-out pg client errors to prevent unhandled crash ([#115](https://github.com/ivo-toby/postgram/issues/115)) ([197c451](https://github.com/ivo-toby/postgram/commit/197c4517b5c8b671e40d83702640a22249744ac2))
+
+## [1.38.2](https://github.com/ivo-toby/postgram/compare/cli-v1.38.1...cli-v1.38.2) (2026-10-31)
+
+### Bug Fixes
+
+* **enrichment:** don't re-queue graph extraction on re-embed of unchanged content ([#121](https://github.com/ivo-toby/postgram/issues/121)) ([0364ddc](https://github.com/ivo-toby/postgram/commit/0364ddc5bd2665bc11bf7e488c73517476cdc394)), closes [#120](https://github.com/ivo-toby/postgram/issues/120)
+
+## [1.38.1](https://github.com/ivo-toby/postgram/compare/cli-v1.38.0...cli-v1.38.1) (2026-10-31)
+
+### Bug Fixes
+
+* **llm:** normalize JSON schemas for OpenAI strict structured outputs ([#118](https://github.com/ivo-toby/postgram/issues/118)) ([58fc7c7](https://github.com/ivo-toby/postgram/commit/58fc7c70fd5e352f3a7c9d13d4d20d778272be32))
+
+## [1.38.0](https://github.com/ivo-toby/postgram/compare/cli-v1.37.3...cli-v1.38.0) (2026-10-31)
+
+### Features
+
+* support Mistral-style OpenAI-compatible providers ([#119](https://github.com/ivo-toby/postgram/issues/119)) ([c8f5997](https://github.com/ivo-toby/postgram/commit/c8f5997b55fc9c42447a748dfb959dc368f169f3))
+
 ## [1.37.3](https://github.com/ivo-toby/postgram/compare/cli-v1.37.2...cli-v1.37.3) (2026-10-14)
 
 ### Bug Fixes

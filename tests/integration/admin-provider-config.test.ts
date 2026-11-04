@@ -1872,6 +1872,77 @@ describe('admin provider config service', () => {
     });
   }, 120_000);
 
+  it('validates and applies an openai-compatible embedding provider against its /models endpoint', async () => {
+    if (!database) {
+      throw new Error('test database not initialized');
+    }
+
+    const actorId = await createActor(database);
+    const saved = await saveProviderConfiguration(database.pool, {
+      actorAdminUserId: actorId,
+      settings: {
+        EMBEDDING_PROVIDER: 'openai-compatible',
+        EMBEDDING_BASE_URL: 'https://embeddings.example.test/v1',
+        EMBEDDING_MODEL: 'mistral-embed',
+        EMBEDDING_DIMENSIONS: 1024
+      }
+    });
+    expect(saved.isOk()).toBe(true);
+
+    const fetchImpl = vi.fn(() =>
+      Promise.resolve(
+        new Response(JSON.stringify({ data: [] }), {
+          status: 200,
+          headers: { 'Content-Type': 'application/json' }
+        })
+      )
+    );
+    const validated = await validateProviderConfiguration(database.pool, {
+      actorAdminUserId: actorId,
+      envConfig: env({ EMBEDDING_API_KEY: SECRET_PLAINTEXT }),
+      dnsLookup: publicDns(),
+      fetchImpl,
+      testConnections: true
+    });
+
+    expect(validated.isOk()).toBe(true);
+    // 1536 -> 1024 dimensions: the config is valid but needs a re-embed.
+    expect(validated._unsafeUnwrap()).toMatchObject({
+      status: 'requires_reembedding',
+      runtime: { constructible: true },
+      connectionTests: {
+        EMBEDDING_BASE_URL: { status: 'valid' }
+      }
+    });
+    const firstFetchCall = fetchImpl.mock.calls[0] as
+      | [string, RequestInit]
+      | undefined;
+    expect(firstFetchCall?.[0]).toBe('https://embeddings.example.test/v1/models');
+    expect(
+      (firstFetchCall?.[1].headers as Record<string, string> | undefined)
+        ?.Authorization
+    ).toBe(`Bearer ${SECRET_PLAINTEXT}`);
+    assertNoSecretLeak(validated._unsafeUnwrap());
+
+    const applied = await applyProviderConfiguration(database.pool, {
+      actorAdminUserId: actorId,
+      envConfig: env({ EMBEDDING_API_KEY: SECRET_PLAINTEXT }),
+      dnsLookup: publicDns()
+    });
+    expect(applied.isOk()).toBe(true);
+    expect(applied._unsafeUnwrap()).toMatchObject({
+      reload: { embedding: 'restart_required' }
+    });
+    expect(applied._unsafeUnwrap().appliedSettings).toEqual(
+      expect.arrayContaining([
+        'EMBEDDING_PROVIDER',
+        'EMBEDDING_BASE_URL',
+        'EMBEDDING_MODEL',
+        'EMBEDDING_DIMENSIONS'
+      ])
+    );
+  }, 120_000);
+
   it('validates shared Ollama base URLs with the extraction API key when extraction also uses OLLAMA_BASE_URL', async () => {
     if (!database) {
       throw new Error('test database not initialized');

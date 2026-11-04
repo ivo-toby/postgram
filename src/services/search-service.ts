@@ -96,6 +96,8 @@ type HybridSearchStrategy = 'exact' | 'hnsw' | 'hnsw_exact_fallback';
 
 type SearchOptions = {
   embeddingService?: EmbeddingService | undefined;
+  // Cosine floor used when the request sets no threshold (SEARCH_DEFAULT_THRESHOLD).
+  defaultThreshold?: number | undefined;
   now?: (() => Date) | undefined;
   logger?: Pick<Logger, 'debug' | 'warn'> | undefined;
   strategyOverride?: SearchStrategyOverride | undefined;
@@ -1194,7 +1196,7 @@ export function searchEntities(
         throw new AppError(ErrorCode.VALIDATION, 'Query must not be empty');
       }
 
-      const threshold = input.threshold ?? 0.35;
+      const threshold = input.threshold ?? options.defaultThreshold ?? 0.35;
       const recencyWeight = input.recencyWeight ?? 0.1;
       const limit = input.limit ?? 10;
       const now = options.now?.() ?? new Date();

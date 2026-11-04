@@ -158,7 +158,8 @@ const secretNames = [
 
 const embeddingProviderOptions = [
   { value: 'openai', label: 'OpenAI' },
-  { value: 'ollama', label: 'Ollama' }
+  { value: 'ollama', label: 'Ollama' },
+  { value: 'openai-compatible', label: 'OpenAI-compatible' }
 ];
 
 const extractionProviderOptions = [

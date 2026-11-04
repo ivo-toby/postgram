@@ -295,6 +295,7 @@ export function registerRestRoutes(
     embeddingService?: EmbeddingService | undefined;
     logger?: Pick<Logger, 'debug' | 'warn'> | undefined;
     extractionEnabled?: boolean | undefined;
+    searchDefaultThreshold?: number | undefined;
   } = {}
 ): void {
   app.post('/api/entities', async (c) => {
@@ -563,7 +564,8 @@ export function registerRestRoutes(
       },
       {
         embeddingService: options.embeddingService,
-        logger: options.logger
+        logger: options.logger,
+        defaultThreshold: options.searchDefaultThreshold
       }
     );
 

@@ -1,3 +1,5 @@
+import { createHash } from 'node:crypto';
+
 import type { Logger } from 'pino';
 import type { Pool, PoolClient } from 'pg';
 
@@ -29,6 +31,10 @@ type PendingExtractionRow = PendingEntityRow & {
   extraction_model_override: string | null;
   extraction_provider_override: string | null;
 };
+
+function contentHash(content: string): string {
+  return createHash('sha256').update(content, 'utf8').digest('hex');
+}
 
 type CallLlm = (prompt: string, schema?: object) => Promise<string>;
 
@@ -261,19 +267,26 @@ export function createEnrichmentWorker(options: EnrichmentWorkerOptions) {
                 -- extraction on them prompts the LLM with "what does Alice
                 -- relate to?" with no context, which free-associates new
                 -- stubs and loops. Skip them.
+                -- Re-embedding (model switch, reembed, maintenance job) must not
+                -- re-queue extraction for content that was already extracted;
+                -- that stays an explicit reextract.
                 extraction_status = CASE
                   WHEN extraction_status = 'skipped' THEN 'skipped'
+                  WHEN extraction_status IN ('completed', 'failed')
+                    AND extraction_content_hash = $3 THEN extraction_status
                   WHEN $2::boolean = false THEN NULL
                   WHEN 'auto-created' = ANY(tags) THEN NULL
                   ELSE 'pending'
                 END,
                 extraction_error = CASE
                   WHEN extraction_status = 'skipped' THEN extraction_error
+                  WHEN extraction_status IN ('completed', 'failed')
+                    AND extraction_content_hash = $3 THEN extraction_error
                   ELSE NULL
                 END
             WHERE id = $1
           `,
-          [entity.id, shouldQueueExtraction]
+          [entity.id, shouldQueueExtraction, contentHash(entity.content)]
         );
       } else {
         await client.query(
@@ -462,10 +475,11 @@ export function createEnrichmentWorker(options: EnrichmentWorkerOptions) {
             `UPDATE entities
              SET extraction_status = 'completed',
                  extraction_error = NULL,
+                 extraction_content_hash = $2,
                  extraction_model_override = NULL,
                  extraction_provider_override = NULL
              WHERE id = $1`,
-            [entity.id]
+            [entity.id, contentHash(entity.content)]
           );
         } catch (error) {
           if (error instanceof SemanticMatchUnavailableError) {
@@ -485,8 +499,8 @@ export function createEnrichmentWorker(options: EnrichmentWorkerOptions) {
             // Don't clear override columns here either — operator may want
             // the failure mode investigated against the same model.
             await options.pool.query(
-              "UPDATE entities SET extraction_status = 'failed', extraction_error = $2 WHERE id = $1",
-              [entity.id, truncateErrorMessage(error)]
+              "UPDATE entities SET extraction_status = 'failed', extraction_error = $2, extraction_content_hash = $3 WHERE id = $1",
+              [entity.id, truncateErrorMessage(error), contentHash(entity.content)]
             );
           }
         } finally {

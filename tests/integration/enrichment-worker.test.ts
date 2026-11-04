@@ -1,3 +1,5 @@
+import { readFile } from 'node:fs/promises';
+
 import { afterAll, beforeAll, beforeEach, describe, expect, it } from 'vitest';
 
 import { createEnrichmentWorker } from '../../src/services/enrichment-worker.js';
@@ -366,6 +368,218 @@ describe('enrichment-worker', () => {
       enrichment_status: 'completed',
       extraction_status: 'completed'
     });
+  }, 120_000);
+
+  it('keeps completed extraction when re-embedding unchanged content', async () => {
+    if (!database) {
+      throw new Error('test database not initialized');
+    }
+
+    const stored = (await storeEntity(database.pool, makeAuthContext(), {
+      type: 'document',
+      content: 'document that was already extracted before the embedding model changed'
+    }))._unsafeUnwrap();
+
+    let llmCalls = 0;
+    const worker = createEnrichmentWorker({
+      pool: database.pool,
+      embeddingService: createEmbeddingService(),
+      extractionEnabled: true,
+      callLlm: () => {
+        llmCalls += 1;
+        return Promise.resolve('[]');
+      }
+    });
+
+    // First pass: embed, then extract.
+    await worker.runOnce();
+    await worker.runOnce();
+    expect(llmCalls).toBe(1);
+
+    // Simulate `embeddings migrate` / `reembed`: only enrichment is re-queued.
+    await database.pool.query(
+      `UPDATE entities SET enrichment_status = 'pending', enrichment_attempts = 0 WHERE id = $1`,
+      [stored.id]
+    );
+    await worker.runOnce();
+    await worker.runOnce();
+
+    const row = await database.pool.query<{
+      enrichment_status: string;
+      extraction_status: string | null;
+    }>(
+      'SELECT enrichment_status, extraction_status FROM entities WHERE id = $1',
+      [stored.id]
+    );
+    expect(row.rows[0]).toEqual({
+      enrichment_status: 'completed',
+      extraction_status: 'completed'
+    });
+    expect(llmCalls).toBe(1);
+  }, 120_000);
+
+  it('keeps failed extraction and its error when re-embedding unchanged content', async () => {
+    if (!database) {
+      throw new Error('test database not initialized');
+    }
+
+    const stored = (await storeEntity(database.pool, makeAuthContext(), {
+      type: 'document',
+      content: 'document whose extraction failed before the embedding model changed'
+    }))._unsafeUnwrap();
+
+    let llmCalls = 0;
+    const worker = createEnrichmentWorker({
+      pool: database.pool,
+      embeddingService: createEmbeddingService(),
+      extractionEnabled: true,
+      callLlm: () => {
+        llmCalls += 1;
+        return Promise.reject(new Error('llm down'));
+      }
+    });
+
+    await worker.runOnce();
+    await worker.runOnce();
+    await database.pool.query(
+      `UPDATE entities SET enrichment_status = 'pending', enrichment_attempts = 0 WHERE id = $1`,
+      [stored.id]
+    );
+    await worker.runOnce();
+    await worker.runOnce();
+
+    const row = await database.pool.query<{
+      extraction_status: string | null;
+      extraction_error: string | null;
+    }>(
+      'SELECT extraction_status, extraction_error FROM entities WHERE id = $1',
+      [stored.id]
+    );
+    expect(row.rows[0]?.extraction_status).toBe('failed');
+    expect(row.rows[0]?.extraction_error).toContain('llm down');
+    expect(llmCalls).toBe(1);
+  }, 120_000);
+
+  it('re-queues extraction when content changed since the last extraction', async () => {
+    if (!database) {
+      throw new Error('test database not initialized');
+    }
+
+    const stored = (await storeEntity(database.pool, makeAuthContext(), {
+      type: 'document',
+      content: 'original content that gets extracted once'
+    }))._unsafeUnwrap();
+
+    let llmCalls = 0;
+    const worker = createEnrichmentWorker({
+      pool: database.pool,
+      embeddingService: createEmbeddingService(),
+      extractionEnabled: true,
+      callLlm: () => {
+        llmCalls += 1;
+        return Promise.resolve('[]');
+      }
+    });
+
+    await worker.runOnce();
+    await worker.runOnce();
+    expect(llmCalls).toBe(1);
+
+    await database.pool.query(
+      `UPDATE entities
+       SET content = 'edited content that must be extracted again',
+           enrichment_status = 'pending',
+           enrichment_attempts = 0
+       WHERE id = $1`,
+      [stored.id]
+    );
+    await worker.runOnce();
+    await worker.runOnce();
+
+    expect(llmCalls).toBe(2);
+  }, 120_000);
+
+  it('queues extraction for entities that were never extracted', async () => {
+    if (!database) {
+      throw new Error('test database not initialized');
+    }
+
+    const stored = (await storeEntity(database.pool, makeAuthContext(), {
+      type: 'document',
+      content: 'document stored while extraction was disabled'
+    }))._unsafeUnwrap();
+    await database.pool.query(
+      `UPDATE entities SET enrichment_status = 'completed' WHERE id = $1`,
+      [stored.id]
+    );
+    await database.pool.query(
+      `UPDATE entities SET enrichment_status = 'pending' WHERE id = $1`,
+      [stored.id]
+    );
+
+    const worker = createEnrichmentWorker({
+      pool: database.pool,
+      embeddingService: createEmbeddingService(),
+      extractionEnabled: true,
+      callLlm: () => Promise.resolve('[]')
+    });
+    await worker.runOnce();
+    await worker.runOnce();
+
+    const row = await database.pool.query<{ extraction_status: string | null }>(
+      'SELECT extraction_status FROM entities WHERE id = $1',
+      [stored.id]
+    );
+    expect(row.rows[0]?.extraction_status).toBe('completed');
+  }, 120_000);
+
+  it('backfills the extraction hash only for rows whose embedding reflects current content', async () => {
+    if (!database) {
+      throw new Error('test database not initialized');
+    }
+
+    // Rows as they look when upgrading from a version without the hash column.
+    const inSync = await database.pool.query<{ id: string }>(
+      `INSERT INTO entities (type, content, visibility, enrichment_status, extraction_status, metadata)
+       VALUES ('document', 'in sync content', 'shared', 'completed', 'completed', '{}'::jsonb)
+       RETURNING id`
+    );
+    // Edited after extraction, not yet re-embedded when the migration runs.
+    const edited = await database.pool.query<{ id: string }>(
+      `INSERT INTO entities (type, content, visibility, enrichment_status, extraction_status, metadata)
+       VALUES ('document', 'edited content awaiting embedding', 'shared', 'pending', 'completed', '{}'::jsonb)
+       RETURNING id`
+    );
+
+    const migration = await readFile(
+      new URL('../../src/db/migrations/018_extraction_content_hash.sql', import.meta.url),
+      'utf8'
+    );
+    await database.pool.query(migration);
+
+    const hashes = await database.pool.query<{
+      id: string;
+      extraction_content_hash: string | null;
+    }>('SELECT id, extraction_content_hash FROM entities');
+    const byId = Object.fromEntries(hashes.rows.map((r) => [r.id, r]));
+    expect(byId[inSync.rows[0]!.id]?.extraction_content_hash).not.toBeNull();
+    expect(byId[edited.rows[0]!.id]?.extraction_content_hash).toBeNull();
+
+    let llmCalls = 0;
+    const worker = createEnrichmentWorker({
+      pool: database.pool,
+      embeddingService: createEmbeddingService(),
+      extractionEnabled: true,
+      callLlm: () => {
+        llmCalls += 1;
+        return Promise.resolve('[]');
+      }
+    });
+    await worker.runOnce();
+    await worker.runOnce();
+
+    // The edited row is embedded and then extracted; the in-sync row is untouched.
+    expect(llmCalls).toBe(1);
   }, 120_000);
 
   it('clears already-pending memory extraction when memory extraction is disabled by default', async () => {

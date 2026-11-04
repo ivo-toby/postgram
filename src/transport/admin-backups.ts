@@ -13,7 +13,7 @@ import {
   type AdminRequestContext
 } from '../auth/admin-middleware.js';
 import type { AppConfig } from '../config.js';
-import { checkDatabaseHealth, createPool } from '../db/pool.js';
+import { checkDatabaseHealth, createPool, type PoolLogger } from '../db/pool.js';
 import { runMigrations } from '../db/migrate.js';
 import {
   createAdminBackupArchive,
@@ -42,6 +42,7 @@ type AdminBackupApp = Hono<{
 }>;
 
 export type AdminBackupRouteOptions = {
+  logger?: PoolLogger | undefined;
   runtimeConfig?: AppConfig | undefined;
   backupCommandRunner?: AdminBackupCommandRunner | undefined;
   backupRestoreVerifier?: AdminBackupRestoreVerifier | undefined;
@@ -151,10 +152,11 @@ export async function verifyAdminBackupRestore(
 }
 
 function createDefaultRestoreVerifier(
-  configuredEmbedding: ConfiguredEmbeddingIdentity
+  configuredEmbedding: ConfiguredEmbeddingIdentity,
+  logger?: PoolLogger
 ): AdminBackupRestoreVerifier {
   return async (input) => {
-    const stagingPool = createPool(input.databaseUrl);
+    const stagingPool = createPool(input.databaseUrl, logger);
     try {
       return await verifyAdminBackupRestore(stagingPool, configuredEmbedding);
     } finally {
@@ -416,11 +418,14 @@ export function registerAdminBackupRoutes(
         commandRunner: options.backupCommandRunner,
         verifier:
           options.backupRestoreVerifier ??
-          createDefaultRestoreVerifier({
-            provider: options.runtimeConfig.EMBEDDING_PROVIDER,
-            model: embeddingDefaults.model,
-            dimensions: embeddingDefaults.dimensions
-          }),
+          createDefaultRestoreVerifier(
+            {
+              provider: options.runtimeConfig.EMBEDDING_PROVIDER,
+              model: embeddingDefaults.model,
+              dimensions: embeddingDefaults.dimensions
+            },
+            options.logger
+          ),
         createdbPath: options.createdbPath,
         dropdbPath: options.dropdbPath,
         pgRestorePath: options.pgRestorePath

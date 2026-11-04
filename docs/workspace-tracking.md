@@ -73,7 +73,12 @@ pgm where              # everything, grouped by stage, with resume commands
 pgm where --actions    # what you need to do: Review / Test / Merge / Release
 ```
 
-Start new work in a registered worktree:
+Start new work by asking your agent, for example "start keyword rank fusion
+in its own worktree". The skill tells it to find or create the feature and run
+`pgm worktree new`, which creates the branch and worktree, writes the feature
+marker and registers the workspace.
+
+To do it yourself and start a fresh session there:
 
 ```bash
 cd "$(pgm worktree new "Keyword rank fusion" --create)"

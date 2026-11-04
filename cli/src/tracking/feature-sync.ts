@@ -54,7 +54,7 @@ const defaultExec: Exec = (cmd, args) =>
   new Promise((resolve, reject) => {
     execFile(cmd, args, { timeout: 20_000 }, (error, stdout, stderr) => {
       if (error !== null) {
-        reject(Object.assign(error, { stderr }));
+        reject(Object.assign(error, { stderr }) as Error);
       } else {
         resolve({ stdout });
       }

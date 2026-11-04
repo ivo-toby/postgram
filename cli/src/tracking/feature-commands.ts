@@ -4,7 +4,7 @@ import os from 'node:os';
 
 import type { Command } from 'commander';
 
-import { createPgmClient } from '../client.js';
+import type { createPgmClient } from '../client.js';
 import { AppError, ErrorCode } from '../errors.js';
 import { parseCommaList, shortId } from '../shared.js';
 import { runTrackingCommand } from './api.js';

@@ -1,3 +1,29 @@
+## [1.39.0](https://github.com/ivo-toby/postgram/compare/cli-v1.38.3...cli-v1.39.0) (2026-11-04)
+
+### Features
+
+* **cli:** add pgm here, pgm hooks and the pi extension ([f5e9a3b](https://github.com/ivo-toby/postgram/commit/f5e9a3b868dee56edbaa4ffbaea46446296788af))
+* **cli:** add pgm where, feature, machine, repo, worktree and scan ([ca90f10](https://github.com/ivo-toby/postgram/commit/ca90f103ffe22b89de9e0362767129f2d7f648fb))
+* **cli:** add the tracking config, API client and local git helpers ([6510201](https://github.com/ivo-toby/postgram/commit/651020159941da54e920f2f533562160c004f398))
+* **cli:** wire the tracking commands into pgm ([d9fe69c](https://github.com/ivo-toby/postgram/commit/d9fe69c9fa1bf1d6d6a58241d6956d51790a76b5))
+* **config:** add WORKSPACE_DORMANT_AFTER_DAYS ([1bfb32d](https://github.com/ivo-toby/postgram/commit/1bfb32dd5d348f02aceac83699dda74587697d7a))
+* **features:** add feature stage and pull request rules ([b115dfd](https://github.com/ivo-toby/postgram/commit/b115dfdceedd660af053a725c9149f20ca29ec5d))
+* **features:** attach pull requests and derive the stage ([3dd9ce5](https://github.com/ivo-toby/postgram/commit/3dd9ce5486a57cba75c744b12f3bcd3e33e3ced9))
+* **features:** create features, resolve feature ids and store repository settings ([76cd901](https://github.com/ivo-toby/postgram/commit/76cd9012e3be838c975db1ede3d3b77e6cfbed36))
+* **features:** set a feature stage by hand ([cd97e0d](https://github.com/ivo-toby/postgram/commit/cd97e0d0dfe41c0a82e8a90aecab3df282aed602))
+* **mcp:** add workspace, feature and where tools ([0a4cb08](https://github.com/ivo-toby/postgram/commit/0a4cb088368642549a4725e437191145d55e2b4c))
+* **rest:** add workspace, machine, feature and where routes ([c3c0384](https://github.com/ivo-toby/postgram/commit/c3c0384d905e907617c2fe26611debdce9f4bbdf))
+* **server:** register the where API and pass the dormancy setting ([81bfff1](https://github.com/ivo-toby/postgram/commit/81bfff1133117615ddad5748a0faaa90fdfd081f))
+* **tasks:** normalize feature metadata in createTask and updateTask ([d327617](https://github.com/ivo-toby/postgram/commit/d3276173085325167dcea05e86a264485af601f5))
+* **where:** list, look up and update workspaces and build the where views ([eda7041](https://github.com/ivo-toby/postgram/commit/eda70419a25c223384e19369fc5144e1d2a33aca))
+* **workspaces:** add the reportWorkspace transaction ([653cab2](https://github.com/ivo-toby/postgram/commit/653cab28a55c88eab3bf6f0be3fe99576554ef86))
+* **workspaces:** add workspace tracking schema and row types ([3c8b59f](https://github.com/ivo-toby/postgram/commit/3c8b59ffe4bb72117132060578ca860b01be06e5))
+* **workspaces:** normalize git remotes to host/owner/repo ([03e1353](https://github.com/ivo-toby/postgram/commit/03e13538562eec2c941d39f3119bcbd2029a7ed6))
+* **workspaces:** project workspace rows into the report view ([fb3eae7](https://github.com/ivo-toby/postgram/commit/fb3eae7a6693b5b23ec381ff5a767d74af78414b))
+* **workspaces:** store agent sessions and apply the reboot rule ([ffd27e0](https://github.com/ivo-toby/postgram/commit/ffd27e0763b07997fc242ad2f12bfb5b89bd141b))
+* **workspaces:** store machines, workspaces and feature links ([9bc4dee](https://github.com/ivo-toby/postgram/commit/9bc4dee95d94d65bc9beb1646693cd67198d7bf5))
+* **workspaces:** validate workspace report input ([4cd5756](https://github.com/ivo-toby/postgram/commit/4cd575618ad5d3c6ae19e60aa3388be7c193972b))
+
 ## [1.38.3](https://github.com/ivo-toby/postgram/compare/cli-v1.38.2...cli-v1.38.3) (2026-11-02)
 
 ### Bug Fixes

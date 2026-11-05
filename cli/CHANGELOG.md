@@ -1,3 +1,13 @@
+## [1.40.1](https://github.com/ivo-toby/postgram/compare/cli-v1.40.0...cli-v1.40.1) (2026-11-05)
+
+### Bug Fixes
+
+* **api:** reject a non-UUID entity id as VALIDATION instead of INTERNAL ([6652ef0](https://github.com/ivo-toby/postgram/commit/6652ef0f705a27f035ec50858e3e711210f8fc45))
+* **tasks:** keep features out of task lists ([9996d6c](https://github.com/ivo-toby/postgram/commit/9996d6c880821e2c79a61f6e9abff74ec28c0967))
+* **tracking:** do not register directories outside git ([0b5b5e4](https://github.com/ivo-toby/postgram/commit/0b5b5e40cca714e6bdb9c45904a4284cd81d9304))
+* **tracking:** offer and link only open features in pgm scan ([af17454](https://github.com/ivo-toby/postgram/commit/af17454f63b5bdd4714797d6c0375772de1749a9))
+* **tracking:** require a feature id in feature done and feature sync ([83bf889](https://github.com/ivo-toby/postgram/commit/83bf88971bc1ecf92a26392511c1d86e11642754))
+
 ## [1.40.0](https://github.com/ivo-toby/postgram/compare/cli-v1.39.0...cli-v1.40.0) (2026-11-05)
 
 ### Features

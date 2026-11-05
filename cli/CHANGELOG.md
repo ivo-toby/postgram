@@ -1,3 +1,10 @@
+## [1.41.1](https://github.com/ivo-toby/postgram/compare/cli-v1.41.0...cli-v1.41.1) (2026-11-05)
+
+### Bug Fixes
+
+* **ui:** never cache a missing asset for a year ([569f102](https://github.com/ivo-toby/postgram/commit/569f102f19f79245ab3d6ec11cf2e8303c653ea5))
+* **ui:** stop browsers from keeping an old index.html after a deploy ([b57eaff](https://github.com/ivo-toby/postgram/commit/b57eaff965c7346c40dbf8a1bdb16f56e3bbadbe))
+
 ## [1.41.0](https://github.com/ivo-toby/postgram/compare/cli-v1.40.1...cli-v1.41.0) (2026-11-05)
 
 ### Features

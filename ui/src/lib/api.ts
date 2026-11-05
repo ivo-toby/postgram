@@ -1,4 +1,5 @@
 import type { Entity, Edge, SearchResponse, QueueStatus, GraphData, ListResponse, EntityEmbedding, TaskStatus } from './types.ts';
+import type { WhereResponse, WhereView } from './where.ts';
 
 type ApiClientOptions = {
   apiKey: string;
@@ -217,6 +218,14 @@ export function createApiClient(options: ApiClientOptions) {
 
     getHealth() {
       return r<{ status: string }>('/health');
+    },
+
+    getWhere(params: { view: WhereView; include_released?: boolean; include_done?: boolean }) {
+      const qs = new URLSearchParams();
+      qs.set('view', params.view);
+      if (params.include_released === true) qs.set('include_released', 'true');
+      if (params.include_done === true) qs.set('include_done', 'true');
+      return r<WhereResponse>(`/api/where?${qs}`);
     },
   };
 }

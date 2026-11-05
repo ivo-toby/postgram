@@ -64,7 +64,8 @@ specs/004-workspace-session-tracking/
 ├── contracts/
 │   ├── rest.md
 │   ├── mcp.md
-│   └── cli.md
+│   ├── cli.md
+│   └── ui.md            # phase 5: the read-only Where page in ui/
 ├── checklists/requirements.md
 └── tasks.md             # /speckit.tasks (not yet created)
 ```

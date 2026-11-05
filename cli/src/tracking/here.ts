@@ -226,6 +226,14 @@ export async function runHere(
     return ignoredResult(options, local.path);
   }
 
+  // A directory outside git holds no project code, so it is never a workspace.
+  if (local.repoRoot === null) {
+    return {
+      stdout: options.hook ? '' : `skipped ${local.path} (not a git repository)\n`,
+      exitCode: 0
+    };
+  }
+
   const marker = await deps.readMarker(local.path);
   const bootId = await deps.bootId();
 

@@ -10,9 +10,12 @@ the server.
 In v1:
 
 - A `Where` tab next to Search, Graph, Projector and Tasks.
-- The **actions** view as the default list, and a switch to the **stage** view.
-- Per feature its stage, pull requests and worktrees, with risks and sessions.
-- A **copy resume command** button per worktree.
+- **Swimlanes per project**: one section per project, each with the same
+  stage columns, and one small card per feature.
+- A **details dialog** per feature, opened from its card: its stage, pull
+  requests and worktrees, with risks, sessions and a **copy resume command**
+  button per worktree.
+- The worktrees that belong to no feature, in a collapsed list at the bottom.
 
 Out of scope (v2 and later, per the UI brainstorm):
 
@@ -22,6 +25,7 @@ Out of scope (v2 and later, per the UI brainstorm):
 - The local disk check for `missing` (`PATCH /api/workspaces/:id`); only `pgm
   where` does that, because only the CLI can see the disk.
 - Filtering by machine or repo.
+- A project entity of its own. A project is a repository (below).
 
 ## Data
 
@@ -30,20 +34,19 @@ and its bearer key. No other endpoint is called.
 
 | UI state | Query |
 |----------|-------|
-| Actions view (default) | `view=actions` |
-| Stage view | `view=stage` |
-| "Show released and done" off (default) | *(no extra parameters)* |
-| "Show released and done" on | `include_released=true&include_done=true` |
+| Default | `view=stage` |
+| "Show released and done" on | `view=stage&include_released=true&include_done=true` |
 
 `include_ended` is never sent, so each workspace carries its open sessions plus
 the single most recently active ended one.
 
-The response shape, group keys, labels, order, risks and `resume_session` are
-exactly as in `rest.md`; the UI adds no rules of its own and re-sorts nothing.
+The response shape, group keys, risks and `resume_session` are exactly as in
+`rest.md`. The UI regroups the stage groups per project (below) and keeps the
+server's feature order inside each column.
 
 **Refresh**: on mount, every 60 s while the page is mounted, and on the
 `Refresh` button. A refresh keeps the rendered page visible; it does not blank
-it. Switching the view or the toggle refetches immediately.
+it. Changing the toggle refetches immediately.
 
 **401** goes through the existing client, which logs the user out. Any other
 error shows an error banner with a `Retry` button, and the last good data stays
@@ -51,21 +54,66 @@ on screen when there is any.
 
 ## Rendering
 
-### Groups
+### Projects
 
-- Groups come in response order. A group with no features and no workspaces is
-  **not rendered** (same as `pgm where`).
-- When every group is empty, the page shows `Nothing to do` instead.
-- A group header is `<label>` with the count of features (for `unassigned`, of
-  workspaces).
+- A feature's **project** is its repository: the `repo_remote` of its first
+  worktree that has one, else the repository of its first pull request
+  (`github.com/<owner>/<repo>`, lowercased), else none. Features without a
+  repository go into the project `Other`.
+- A project is named after the last part of its repository (`postgram` for
+  `github.com/ivo-toby/postgram`).
+- Projects are ordered by their most recent activity (the newest
+  `last_activity_at` of their worktrees or `stage_set_at` of their features),
+  newest first, with `Other` last.
+- A project header shows the name as a level-2 heading, the repository
+  (hidden on a phone), `<n> features`, and `<n> need you` when any card is in
+  a column that needs you.
+- The summary line above the projects reads
+  `<n> features in <m> projects · <k> need you`.
+- When there are no features and no unassigned worktrees, the page shows
+  `Nothing to do` instead.
+
+### Columns
+
+Every project has the same columns, in this order, also when they are empty:
+
+| Column | Stage | Needs you |
+|--------|-------|-----------|
+| Building | `building` | no |
+| Review | `review` | yes |
+| Test | `functional_test` | yes |
+| Merge | `ready_to_merge` | yes |
+| Release | `awaiting_release` | no |
+| Released | `released`, only with "Show released and done" | no |
+
+A column header is its label as a level-3 heading plus the number of cards,
+and `needs you` when the column needs you and holds a card.
 
 ### Feature card
 
+A card is a button that opens the details dialog. It shows only:
+
 | Element | Value |
 |---------|-------|
-| Short id | the first 8 characters of `id`, monospace |
 | Title | `title` |
-| Stage badge | the readable label of `stage` (below), with the raw value and `derived` or `manual` from `stage_source` as its tooltip |
+| PR | `#<number>` of the first pull request, when there is one |
+| Age | `stage_set_at` as a relative age, omitted when null |
+| Status | `done` or `archived`, only for those task statuses |
+| Risk | the worst risk over all its worktrees, with an amber dot, plus `+<n>` for the number of other risk kinds |
+
+Risks from worst to least: `missing`, `interrupted`, `uncommitted` (`dirty`),
+`unpushed`, `no upstream`.
+
+### Details dialog
+
+A dialog (`role="dialog"`, named by the feature title) slides in from the
+right. It closes on `Close`, on Escape and on a click next to it.
+
+| Element | Value |
+|---------|-------|
+| Line above the title | `<short id> · <project>` |
+| Title | `title`, as a level-2 heading |
+| Stage badge | the readable label of `stage` (`Building`, `Review`, `Functional test`, `Ready to merge`, `Awaiting release`, `Released`), with the raw value and `derived` or `manual` from `stage_source` as its tooltip |
 | Age | `stage_set_at` as a relative age (`12m`, `5h`, `3d`), omitted when null |
 | Status badge | `task_status`, only when it is `done` or `archived` |
 | PR chips | one per entry of `pull_requests`: `#<number> <state>`, linking to `url`, opening in a new tab with `rel="noreferrer"` |
@@ -73,6 +121,12 @@ on screen when there is any.
 | No worktrees | the line `no worktrees` |
 
 The number in a PR chip is the trailing number of the canonical URL.
+
+### Unassigned worktrees
+
+Below the projects, a collapsed section `Unassigned worktrees (<n>)` (its
+summary is a level-2 heading) lists the `unassigned` workspaces as workspace
+rows. It is left out when there are none.
 
 ### Workspace row
 
@@ -135,8 +189,10 @@ still be copied by hand. The command is always visible, also on a phone.
 
 ## Layout
 
-- It works down to 360 px wide: one column, cards stacked, no horizontal
-  scrolling. Paths wrap instead of overflowing.
+- The columns of a project scroll sideways when the screen is too narrow for
+  them; the page itself never scrolls sideways. Paths wrap instead of
+  overflowing.
+- The details dialog is full width on a phone.
 - The page keeps the dark styling and the Tailwind classes of the existing
   pages.
 - Tab state follows the existing `pgm_current_page` mechanism in `App.tsx`, so
@@ -155,11 +211,14 @@ The feature test asserts these, so they are part of the contract.
 | Element | Text |
 |---------|------|
 | Tab | `Where` |
-| View switch | the buttons `Actions` and `Stage`; the active one has `aria-pressed="true"` |
 | Released toggle | a checkbox labelled `Show released and done` |
 | Refresh | a button `Refresh` |
-| Group header | `<label> (<count>)`, as a level-2 heading |
-| Feature line | the short id and the title as separate text, plus the stage as a badge |
+| Summary | `<n> features in <m> projects · <k> need you` (`1 needs you` for one) |
+| Project header | the project name as a level-2 heading, `<n> features` (`1 feature`), `<k> need you` |
+| Column header | `Building`, `Review`, `Test`, `Merge`, `Release`, `Released` as level-3 headings; `needs you` |
+| Card risk | `missing`, `interrupted`, `uncommitted`, `unpushed` or `no upstream`, plus ` +<n>` |
+| Card PR | `#<number>` |
+| Details line | `<short id> · <project>` |
 | Stage badge | `Building`, `Review`, `Functional test`, `Ready to merge`, `Awaiting release` or `Released` |
 | Status badge | `done` or `archived` |
 | PR chip | `#<number> <state>`, e.g. `#42 open` |
@@ -170,20 +229,25 @@ The feature test asserts these, so they are part of the contract.
 | Session chip | `<agent_kind>/<status> <age>`, plus ` dormant` when dormant |
 | No sessions | `no sessions` |
 | Copy button | accessible name `Copy resume command`; `Copied` for 2 s after success; `Copy failed` after a rejection |
+| Close | a button `Close` in the dialog; Escape closes it too |
+| Unassigned | `Unassigned worktrees (<n>)` |
 | Everything empty | `Nothing to do` |
 | Error banner | the error message plus a `Retry` button |
 
 ## Structure the feature test relies on
 
-- Each rendered group is a `<section>` that contains its level-2 heading, its
-  features and their worktrees, so a test can scope queries to one group.
+- Each project is a `<section>` that contains its level-2 heading, its
+  level-3 column headings and its cards, so a test can scope queries to one
+  project. The unassigned worktrees are a `<section>` of their own.
+- A card is a `<button>` whose accessible name starts with the feature title.
+- The details are a `role="dialog"` element whose accessible name is the
+  feature title.
 - These are each a **single text node**, not split across elements:
   `git <age>`, `git ?`, `dirty <n>`, `unpushed <n>`, `no upstream`,
   `interrupted`, `missing`, `<agent_kind>/<status> <age>`,
   `<agent_kind>/<status> <age> dormant`, `no sessions`, `no worktrees`,
-  `#<number> <state>`, the short id, the title, the stage, the status badge,
-  the age of `stage_set_at`, the branch (or `-`), the path and the resume
-  command.
-- The two view buttons carry `aria-pressed`, the released toggle is a real
-  checkbox with the label as its accessible name, and the copy button's
-  accessible name is `Copy resume command`.
+  `#<number> <state>`, `#<number>`, the card risk, the details line, the
+  title, the stage, the status badge, the age of `stage_set_at`, the branch
+  (or `-`), the path, the resume command, the summary and the project counts.
+- The released toggle is a real checkbox with the label as its accessible
+  name, and the copy button's accessible name is `Copy resume command`.

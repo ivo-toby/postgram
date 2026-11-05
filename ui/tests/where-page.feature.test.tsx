@@ -1,7 +1,8 @@
 // Feature test for the Where page (spec 004 phase 5).
 // It lives outside ui/src, so ui/tsconfig.json (include: src) does not typecheck it.
 // It asserts the UI contract of specs/004-workspace-session-tracking/contracts/ui.md
-// end to end against a stubbed API client.
+// end to end against a stubbed API client: swimlanes per project, with the
+// worktree details in a dialog per feature.
 import { describe, expect, it, vi, beforeEach } from 'vitest';
 import { render, screen, waitFor, within } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
@@ -137,79 +138,79 @@ const unassignedWorkspace = workspace({
   sessions: [],
 });
 
-function actionsResponse(): Json {
+function features(): Record<string, Json[]> {
   return {
-    view: 'actions',
+    building: [
+      {
+        id: '3c4d5e6f-3333-4333-8333-333333333333',
+        title: 'Where page',
+        stage: 'building',
+        stage_source: 'manual',
+        stage_set_at: threeDaysAgo,
+        task_status: 'active',
+        pull_requests: [],
+        workspaces: [piWorkspace, talonWorkspace],
+      },
+    ],
+    review: [
+      {
+        id: '1a2b3c4d-1111-4111-8111-111111111111',
+        title: 'Keyword rank fusion',
+        stage: 'review',
+        stage_source: 'derived',
+        stage_set_at: twelveMinutesAgo,
+        task_status: 'active',
+        pull_requests: [
+          {
+            url: 'https://github.com/ivo-toby/postgram/pull/42',
+            state: 'open',
+            updated_at: twelveMinutesAgo,
+          },
+        ],
+        workspaces: [workspace()],
+      },
+    ],
+    functional_test: [],
+    ready_to_merge: [
+      {
+        id: '2b3c4d5e-2222-4222-8222-222222222222',
+        title: 'Docker env table',
+        stage: 'ready_to_merge',
+        stage_source: 'manual',
+        stage_set_at: null,
+        task_status: 'done',
+        pull_requests: [],
+        workspaces: [],
+      },
+    ],
+    awaiting_release: [],
+  };
+}
+
+function stageResponse(): Json {
+  const byStage = features();
+  return {
+    view: 'stage',
     generated_at: iso(0),
     dormant_after_days: 30,
     groups: [
-      {
-        key: 'review',
-        label: 'Review',
-        features: [
-          {
-            id: '1a2b3c4d-1111-4111-8111-111111111111',
-            title: 'Keyword rank fusion',
-            stage: 'review',
-            stage_source: 'derived',
-            stage_set_at: twelveMinutesAgo,
-            task_status: 'active',
-            pull_requests: [
-              {
-                url: 'https://github.com/ivo-toby/postgram/pull/42',
-                state: 'open',
-                updated_at: twelveMinutesAgo,
-              },
-            ],
-            workspaces: [workspace()],
-          },
-        ],
-      },
-      { key: 'test', label: 'Test', features: [] },
-      {
-        key: 'merge',
-        label: 'Merge',
-        features: [
-          {
-            id: '2b3c4d5e-2222-4222-8222-222222222222',
-            title: 'Docker env table',
-            stage: 'ready_to_merge',
-            stage_source: 'manual',
-            stage_set_at: null,
-            task_status: 'done',
-            pull_requests: [],
-            workspaces: [],
-          },
-        ],
-      },
-      { key: 'release', label: 'Release', features: [] },
-      {
-        key: 'in_progress',
-        label: 'In progress',
-        features: [
-          {
-            id: '3c4d5e6f-3333-4333-8333-333333333333',
-            title: 'Where page',
-            stage: 'building',
-            stage_source: 'manual',
-            stage_set_at: threeDaysAgo,
-            task_status: 'active',
-            pull_requests: [],
-            workspaces: [piWorkspace, talonWorkspace],
-          },
-        ],
-      },
+      { key: 'building', label: 'Building', features: byStage.building },
+      { key: 'review', label: 'Review', features: byStage.review },
+      { key: 'functional_test', label: 'Functional test', features: byStage.functional_test },
+      { key: 'ready_to_merge', label: 'Ready to merge', features: byStage.ready_to_merge },
+      { key: 'awaiting_release', label: 'Awaiting release', features: byStage.awaiting_release },
       { key: 'unassigned', label: 'Unassigned', workspaces: [unassignedWorkspace] },
     ],
   };
 }
 
-function emptyResponse(view: string): Json {
+function emptyResponse(): Json {
   return {
-    view,
+    view: 'stage',
     generated_at: iso(0),
     dormant_after_days: 30,
     groups: [
+      { key: 'building', label: 'Building', features: [] },
       { key: 'review', label: 'Review', features: [] },
       { key: 'unassigned', label: 'Unassigned', workspaces: [] },
     ],
@@ -220,7 +221,7 @@ function apiWith(getWhere: ApiClient['getWhere']): ApiClient {
   return { getWhere } as unknown as ApiClient;
 }
 
-function stubApi(response: Json = actionsResponse()): ApiClient {
+function stubApi(response: Json = stageResponse()): ApiClient {
   return apiWith(vi.fn(async () => response) as unknown as ApiClient['getWhere']);
 }
 
@@ -232,11 +233,17 @@ function clipboard(writeText: (text: string) => Promise<void>): void {
   });
 }
 
-async function groupSection(label: string): Promise<HTMLElement> {
-  const heading = await screen.findByRole('heading', { level: 2, name: new RegExp(`^${label} \\(`, 'u') });
+async function projectSection(name: string): Promise<HTMLElement> {
+  const heading = await screen.findByRole('heading', { level: 2, name });
   const section = heading.closest('section');
-  if (section === null) throw new Error(`group ${label} is not inside a section`);
+  if (section === null) throw new Error(`project ${name} is not inside a section`);
   return section;
+}
+
+async function openFeature(title: string): Promise<HTMLElement> {
+  const user = userEvent.setup();
+  await user.click(await screen.findByRole('button', { name: new RegExp(title, 'u') }));
+  return screen.getByRole('dialog', { name: title });
 }
 
 describe('WherePage (feature)', () => {
@@ -244,151 +251,167 @@ describe('WherePage (feature)', () => {
     clipboard(vi.fn(async () => undefined));
   });
 
-  it('asks for the actions view without released or done work', async () => {
+  it('asks for the stage view without released or done work', async () => {
     const api = stubApi();
     render(<WherePage api={api} />);
 
-    await screen.findByRole('heading', { level: 2, name: /^Review \(/u });
-    expect(api.getWhere).toHaveBeenCalledWith({ view: 'actions' });
+    await projectSection('postgram');
+    expect(api.getWhere).toHaveBeenCalledWith({ view: 'stage' });
   });
 
-  it('renders the groups in server order and skips the empty ones', async () => {
+  it('renders one section per project, Other last, then the unassigned worktrees', async () => {
     render(<WherePage api={stubApi()} />);
 
-    const headings = await waitFor(() => {
-      const found = screen.getAllByRole('heading', { level: 2 });
-      expect(found.length).toBeGreaterThan(0);
-      return found;
-    });
-
-    expect(headings.map((heading) => heading.textContent)).toEqual([
-      'Review (1)',
-      'Merge (1)',
-      'In progress (1)',
-      'Unassigned (1)',
+    await projectSection('postgram');
+    expect(screen.getAllByRole('heading', { level: 2 }).map((heading) => heading.textContent)).toEqual([
+      'postgram',
+      'Other',
+      'Unassigned worktrees (1)',
     ]);
+    expect(screen.getByText('3 features in 2 projects · 2 need you')).toBeInTheDocument();
   });
 
-  it('renders a feature with its short id, stage, age and pull request', async () => {
+  it('gives each project the five stage columns and marks the ones that need you', async () => {
     render(<WherePage api={stubApi()} />);
 
-    const review = await groupSection('Review');
-    expect(await within(review).findByText('1a2b3c4d')).toBeInTheDocument();
-    expect(within(review).getByText('Keyword rank fusion')).toBeInTheDocument();
-    expect(within(review).getByText('Review')).toBeInTheDocument();
-    expect(within(review).getAllByText('12m').length).toBeGreaterThan(0);
+    const postgram = await projectSection('postgram');
+    expect(within(postgram).getAllByRole('heading', { level: 3 }).map((heading) => heading.textContent)).toEqual([
+      'Building',
+      'Review',
+      'Test',
+      'Merge',
+      'Release',
+    ]);
+    expect(within(postgram).getByText('github.com/ivo-toby/postgram')).toBeInTheDocument();
+    expect(within(postgram).getByText('2 features')).toBeInTheDocument();
+    expect(within(postgram).getByText('1 needs you')).toBeInTheDocument();
+    expect(within(postgram).getAllByText('needs you')).toHaveLength(1);
+  });
 
-    const link = within(review).getByRole('link', { name: '#42 open' });
+  it('keeps a card to its title, PR number, age and worst risk', async () => {
+    render(<WherePage api={stubApi()} />);
+
+    const postgram = await projectSection('postgram');
+    const card = within(postgram).getByRole('button', { name: /Keyword rank fusion/u });
+    expect(within(card).getByText('#42')).toBeInTheDocument();
+    expect(within(card).getByText('12m')).toBeInTheDocument();
+    expect(within(card).getByText('uncommitted +1')).toBeInTheDocument();
+    expect(within(postgram).queryByText('/w/a')).not.toBeInTheDocument();
+
+    const other = await projectSection('Other');
+    const done = within(other).getByRole('button', { name: /Docker env table/u });
+    expect(within(done).getByText('done')).toBeInTheDocument();
+  });
+
+  it('opens the details of a feature with its stage, pull request and worktree', async () => {
+    render(<WherePage api={stubApi()} />);
+
+    const dialog = await openFeature('Keyword rank fusion');
+    expect(within(dialog).getByText('1a2b3c4d · postgram')).toBeInTheDocument();
+    expect(within(dialog).getByText('Review')).toBeInTheDocument();
+    expect(within(dialog).getByText('12m')).toBeInTheDocument();
+
+    const link = within(dialog).getByRole('link', { name: '#42 open' });
     expect(link).toHaveAttribute('href', 'https://github.com/ivo-toby/postgram/pull/42');
     expect(link).toHaveAttribute('target', '_blank');
     expect(link).toHaveAttribute('rel', expect.stringContaining('noreferrer'));
+
+    expect(within(dialog).getByText('/w/a')).toBeInTheDocument();
+    expect(within(dialog).getByText('codebox')).toBeInTheDocument();
+    expect(within(dialog).getByText('feat/kw')).toBeInTheDocument();
+    expect(within(dialog).getByText('git 5h')).toBeInTheDocument();
+    expect(within(dialog).getByText('dirty 2')).toBeInTheDocument();
+    expect(within(dialog).getByText('unpushed 3')).toBeInTheDocument();
+    expect(within(dialog).getByText('claude-code/running 12m')).toBeInTheDocument();
   });
 
-  it('marks a done feature without worktrees', async () => {
+  it('shows unknown git counts and a dormant session in the details', async () => {
     render(<WherePage api={stubApi()} />);
 
-    const merge = await groupSection('Merge');
-    expect(await within(merge).findByText('Docker env table')).toBeInTheDocument();
-    expect(within(merge).getByText('done')).toBeInTheDocument();
-    expect(within(merge).getByText('no worktrees')).toBeInTheDocument();
+    const dialog = await openFeature('Where page');
+    expect(within(dialog).getByText('/home/ivo/wt/a b')).toBeInTheDocument();
+    expect(within(dialog).getByText('no upstream')).toBeInTheDocument();
+    expect(within(dialog).getByText('git ?')).toBeInTheDocument();
+    expect(within(dialog).getAllByText('-').length).toBeGreaterThan(0);
+    expect(within(dialog).getByText('pi/idle 3d dormant')).toBeInTheDocument();
   });
 
-  it('renders a workspace row with its risks, git age and sessions', async () => {
+  it('marks a done feature without worktrees in the details', async () => {
     render(<WherePage api={stubApi()} />);
 
-    const review = await groupSection('Review');
-    await within(review).findByText('/w/a');
-    expect(within(review).getByText('codebox')).toBeInTheDocument();
-    expect(within(review).getByText('feat/kw')).toBeInTheDocument();
-    expect(within(review).getByText('git 5h')).toBeInTheDocument();
-    expect(within(review).getByText('dirty 2')).toBeInTheDocument();
-    expect(within(review).getByText('unpushed 3')).toBeInTheDocument();
-    expect(within(review).getByText('claude-code/running 12m')).toBeInTheDocument();
+    const dialog = await openFeature('Docker env table');
+    expect(within(dialog).getByText('Ready to merge')).toBeInTheDocument();
+    expect(within(dialog).getByText('done')).toBeInTheDocument();
+    expect(within(dialog).getByText('no worktrees')).toBeInTheDocument();
   });
 
-  it('renders unknown git counts, a dormant session and a missing path', async () => {
+  it('closes the details with the Close button and with Escape', async () => {
+    const user = userEvent.setup();
     render(<WherePage api={stubApi()} />);
 
-    const progress = await groupSection('In progress');
-    await within(progress).findByText('/home/ivo/wt/a b');
-    expect(within(progress).getByText('no upstream')).toBeInTheDocument();
-    expect(within(progress).getByText('git ?')).toBeInTheDocument();
-    expect(within(progress).getAllByText('-').length).toBeGreaterThan(0);
-    expect(within(progress).getByText('pi/idle 3d dormant')).toBeInTheDocument();
+    let dialog = await openFeature('Keyword rank fusion');
+    await user.click(within(dialog).getByRole('button', { name: 'Close' }));
+    expect(screen.queryByRole('dialog')).not.toBeInTheDocument();
 
-    const unassigned = await groupSection('Unassigned');
-    expect(within(unassigned).getByText('missing')).toBeInTheDocument();
-    expect(within(unassigned).getByText('no sessions')).toBeInTheDocument();
+    dialog = await openFeature('Keyword rank fusion');
+    await user.keyboard('{Escape}');
+    expect(screen.queryByRole('dialog')).not.toBeInTheDocument();
   });
 
   it('renders every resume command as the ssh form', async () => {
     render(<WherePage api={stubApi()} />);
 
+    const where = await openFeature('Where page');
     expect(
-      await screen.findByText(String.raw`ssh -t codebox 'cd /w/a && claude --resume 8f3c'`)
-    ).toBeInTheDocument();
-    expect(
-      screen.getByText(
+      within(where).getByText(
         String.raw`ssh -t nuc.lan 'cd '\''/home/ivo/wt/a b/cli'\'' && pi --session '\''x'\''\'\'''\''y'\'''`
       )
     ).toBeInTheDocument();
-    expect(screen.getByText(String.raw`ssh -t jarvis 'cd /w/d'`)).toBeInTheDocument();
+    expect(within(where).getByText(String.raw`ssh -t jarvis 'cd /w/d'`)).toBeInTheDocument();
+
+    const user = userEvent.setup();
+    await user.click(within(where).getByRole('button', { name: 'Close' }));
+    const keyword = await openFeature('Keyword rank fusion');
     expect(
-      screen.getByText(String.raw`ssh -t codebox 'cd /w/c && claude'`)
+      within(keyword).getByText(String.raw`ssh -t codebox 'cd /w/a && claude --resume 8f3c'`)
     ).toBeInTheDocument();
+
+    // The unassigned worktree keeps its row, missing path and resume command.
+    const unassigned = (await screen.findByRole('heading', { level: 2, name: 'Unassigned worktrees (1)' })).closest(
+      'section'
+    ) as HTMLElement;
+    expect(within(unassigned).getByText('missing')).toBeInTheDocument();
+    expect(within(unassigned).getByText('no sessions')).toBeInTheDocument();
+    expect(within(unassigned).getByText(String.raw`ssh -t codebox 'cd /w/c && claude'`)).toBeInTheDocument();
   });
 
   it('copies the resume command of a row', async () => {
+    render(<WherePage api={stubApi()} />);
+    const dialog = await openFeature('Keyword rank fusion');
+
     const user = userEvent.setup();
     const writeText = vi.fn(async () => undefined);
     clipboard(writeText);
-    render(<WherePage api={stubApi()} />);
-
-    const review = await groupSection('Review');
-    const button = await within(review).findByRole('button', { name: 'Copy resume command' });
-    await user.click(button);
+    await user.click(within(dialog).getByRole('button', { name: 'Copy resume command' }));
 
     expect(writeText).toHaveBeenCalledWith(
       String.raw`ssh -t codebox 'cd /w/a && claude --resume 8f3c'`
     );
-    expect(await within(review).findByText('Copied')).toBeInTheDocument();
+    expect(await within(dialog).findByText('Copied')).toBeInTheDocument();
   });
 
   it('reports a failed copy and keeps the command readable', async () => {
+    render(<WherePage api={stubApi()} />);
+    const dialog = await openFeature('Keyword rank fusion');
+
     const user = userEvent.setup();
     clipboard(vi.fn(async () => { throw new Error('denied'); }));
-    render(<WherePage api={stubApi()} />);
+    await user.click(within(dialog).getByRole('button', { name: 'Copy resume command' }));
 
-    const review = await groupSection('Review');
-    await user.click(await within(review).findByRole('button', { name: 'Copy resume command' }));
-
-    expect(await within(review).findByText('Copy failed')).toBeInTheDocument();
+    expect(await within(dialog).findByText('Copy failed')).toBeInTheDocument();
     expect(
-      screen.getByText(String.raw`ssh -t codebox 'cd /w/a && claude --resume 8f3c'`)
+      within(dialog).getByText(String.raw`ssh -t codebox 'cd /w/a && claude --resume 8f3c'`)
     ).toBeInTheDocument();
-  });
-
-  it('switches to the stage view and back', async () => {
-    const getWhere = vi.fn(async ({ view }: { view: string }) =>
-      view === 'stage' ? emptyResponse('stage') : actionsResponse()
-    );
-    const api = apiWith(getWhere as unknown as ApiClient['getWhere']);
-    const user = userEvent.setup();
-    render(<WherePage api={api} />);
-
-    await screen.findByRole('heading', { level: 2, name: /^Review \(/u });
-    await user.click(screen.getByRole('button', { name: 'Stage' }));
-
-    await waitFor(() => {
-      expect(getWhere).toHaveBeenCalledWith({ view: 'stage' });
-    });
-    expect(screen.getByRole('button', { name: 'Stage' })).toHaveAttribute('aria-pressed', 'true');
-    expect(await screen.findByText('Nothing to do')).toBeInTheDocument();
-
-    await user.click(screen.getByRole('button', { name: 'Actions' }));
-    await waitFor(() => {
-      expect(getWhere).toHaveBeenLastCalledWith({ view: 'actions' });
-    });
   });
 
   it('adds released and done work to the query when the toggle is on', async () => {
@@ -396,12 +419,12 @@ describe('WherePage (feature)', () => {
     const user = userEvent.setup();
     render(<WherePage api={api} />);
 
-    await screen.findByRole('heading', { level: 2, name: /^Review \(/u });
+    await projectSection('postgram');
     await user.click(screen.getByRole('checkbox', { name: 'Show released and done' }));
 
     await waitFor(() => {
       expect(api.getWhere).toHaveBeenLastCalledWith({
-        view: 'actions',
+        view: 'stage',
         include_released: true,
         include_done: true,
       });
@@ -413,7 +436,7 @@ describe('WherePage (feature)', () => {
     const user = userEvent.setup();
     render(<WherePage api={api} />);
 
-    await screen.findByRole('heading', { level: 2, name: /^Review \(/u });
+    await projectSection('postgram');
     await user.click(screen.getByRole('button', { name: 'Refresh' }));
 
     await waitFor(() => {
@@ -426,7 +449,7 @@ describe('WherePage (feature)', () => {
     const getWhere = vi.fn(async () => {
       calls += 1;
       if (calls === 2) throw new Error('where is down');
-      return actionsResponse();
+      return stageResponse();
     });
     const api = apiWith(getWhere as unknown as ApiClient['getWhere']);
     const user = userEvent.setup();
@@ -444,13 +467,12 @@ describe('WherePage (feature)', () => {
     });
   });
 
-  it('shows nothing to do when every group is empty', async () => {
-    render(<WherePage api={stubApi(emptyResponse('actions'))} />);
+  it('shows nothing to do when there are no features and no worktrees', async () => {
+    render(<WherePage api={stubApi(emptyResponse())} />);
 
     expect(await screen.findByText('Nothing to do')).toBeInTheDocument();
     expect(screen.queryByRole('heading', { level: 2 })).not.toBeInTheDocument();
   });
-
 });
 
 describe('TopBar (feature)', () => {

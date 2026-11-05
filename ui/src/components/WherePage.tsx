@@ -3,8 +3,6 @@ import type { ApiClient } from '../lib/api.ts';
 import { useWhere } from '../hooks/useWhere.ts';
 import {
   formatAge,
-  groupCount,
-  isGroupEmpty,
   pullRequestNumber,
   renderResume,
   stageLabel,
@@ -13,10 +11,15 @@ import {
   type Risk,
   type SessionView,
   type WhereFeature,
-  type WhereGroup,
-  type WhereView,
   type WorkspaceView,
 } from '../lib/where.ts';
+import {
+  buildLanes,
+  featureRiskLabel,
+  type LaneColumn,
+  type Lanes,
+  type ProjectLanes,
+} from '../lib/lanes.ts';
 
 type Props = {
   api: ApiClient;
@@ -24,39 +27,23 @@ type Props = {
 
 const COPIED_MS = 2000;
 
-const VIEWS: { view: WhereView; label: string }[] = [
-  { view: 'actions', label: 'Actions' },
-  { view: 'stage', label: 'Stage' },
-];
 
 export default function WherePage({ api }: Props) {
-  const [view, setView] = useState<WhereView>('actions');
   const [includeReleasedAndDone, setIncludeReleasedAndDone] = useState(false);
-  const { data, loading, error, refresh } = useWhere(api, { view, includeReleasedAndDone });
+  const [selectedId, setSelectedId] = useState<string | null>(null);
+  const { data, loading, error, refresh } = useWhere(api, { view: 'stage', includeReleasedAndDone });
 
   const now = new Date();
-  const visibleGroups = data === null ? [] : data.groups.filter((group) => !isGroupEmpty(group));
+  const lanes = data === null ? null : buildLanes(data, { includeReleased: includeReleasedAndDone });
+  const selected = lanes === null || selectedId === null ? null : findFeature(lanes, selectedId);
+  const isEmpty = lanes !== null && lanes.projects.length === 0 && lanes.unassigned.length === 0;
 
   return (
-    <div className="flex h-full min-h-0 flex-col gap-4 overflow-y-auto bg-gray-950 p-3 text-gray-100 sm:p-4">
-      <div className="flex flex-wrap items-center gap-2">
-        <div role="group" aria-label="View" className="flex gap-1">
-          {VIEWS.map((option) => (
-            <button
-              key={option.view}
-              type="button"
-              aria-pressed={view === option.view}
-              onClick={() => setView(option.view)}
-              className={`rounded-md px-3 py-1 text-sm transition-colors ${
-                view === option.view
-                  ? 'bg-gray-800 text-white'
-                  : 'text-gray-400 hover:bg-gray-800/50 hover:text-white'
-              }`}
-            >
-              {option.label}
-            </button>
-          ))}
-        </div>
+    <div className="flex h-full min-h-0 flex-col gap-6 overflow-y-auto bg-gray-950 p-3 text-gray-100 sm:p-4">
+      <div className="flex flex-wrap items-center gap-x-4 gap-y-2">
+        {lanes !== null && !isEmpty && (
+          <p className="text-sm text-gray-400">{summaryText(lanes)}</p>
+        )}
         <label className="flex cursor-pointer items-center gap-2 text-xs text-gray-300">
           <input
             type="checkbox"
@@ -93,79 +80,284 @@ export default function WherePage({ api }: Props) {
 
       {loading && <p className="text-sm text-gray-500">Loading…</p>}
 
-      {data !== null && visibleGroups.length === 0 && (
-        <p className="text-sm text-gray-400">Nothing to do</p>
+      {isEmpty && <p className="text-sm text-gray-400">Nothing to do</p>}
+
+      {lanes?.projects.map((project) => (
+        <ProjectSection
+          key={project.key}
+          project={project}
+          now={now}
+          selectedId={selected?.feature.id ?? null}
+          onSelect={setSelectedId}
+        />
+      ))}
+
+      {lanes !== null && lanes.unassigned.length > 0 && (
+        <section className="flex min-w-0 flex-col gap-2">
+          <details className="group">
+            <summary className="cursor-pointer text-sm text-gray-400 hover:text-white">
+              <h2 className="inline text-sm font-semibold">{`Unassigned worktrees (${lanes.unassigned.length})`}</h2>
+            </summary>
+            <ul className="mt-2 flex flex-col gap-2">
+              {lanes.unassigned.map((workspace) => (
+                <WorkspaceRow key={workspace.id} workspace={workspace} now={now} />
+              ))}
+            </ul>
+          </details>
+        </section>
       )}
 
-      {visibleGroups.map((group) => (
-        <GroupSection key={group.key} group={group} now={now} />
-      ))}
+      {selected !== null && (
+        <FeatureDetails
+          feature={selected.feature}
+          projectName={selected.projectName}
+          now={now}
+          onClose={() => setSelectedId(null)}
+        />
+      )}
     </div>
   );
 }
 
-function GroupSection({ group, now }: { group: WhereGroup; now: Date }) {
+function summaryText(lanes: Lanes): string {
+  const features = lanes.featureCount === 1 ? '1 feature' : `${lanes.featureCount} features`;
+  const projects = lanes.projects.length === 1 ? '1 project' : `${lanes.projects.length} projects`;
+  return `${features} in ${projects} · ${needYouText(lanes.needsYouCount)}`;
+}
+
+function needYouText(count: number): string {
+  return count === 1 ? '1 needs you' : `${count} need you`;
+}
+
+function findFeature(lanes: Lanes, id: string): { feature: WhereFeature; projectName: string } | null {
+  for (const project of lanes.projects) {
+    for (const column of project.columns) {
+      const feature = column.features.find((candidate) => candidate.id === id);
+      if (feature !== undefined) return { feature, projectName: project.name };
+    }
+  }
+  return null;
+}
+
+function ProjectSection({
+  project,
+  now,
+  selectedId,
+  onSelect,
+}: {
+  project: ProjectLanes;
+  now: Date;
+  selectedId: string | null;
+  onSelect: (id: string) => void;
+}) {
   return (
-    <section className="flex min-w-0 flex-col gap-3">
-      <h2 className="text-sm font-semibold text-white">{`${group.label} (${groupCount(group)})`}</h2>
-      {group.features !== undefined ? (
-        <ul className="flex flex-col gap-3">
-          {group.features.map((feature) => (
-            <FeatureCard key={feature.id} feature={feature} now={now} />
+    <section className="flex min-w-0 flex-col gap-2">
+      <div className="flex flex-wrap items-baseline gap-x-3 gap-y-1">
+        <h2 className="text-sm font-semibold text-white">{project.name}</h2>
+        {project.repo !== null && (
+          <span className="hidden font-mono text-xs text-gray-500 sm:inline">{project.repo}</span>
+        )}
+        <span className="text-xs text-gray-400">
+          {project.featureCount === 1 ? '1 feature' : `${project.featureCount} features`}
+        </span>
+        {project.needsYouCount > 0 && (
+          <span className="text-xs text-amber-300">{needYouText(project.needsYouCount)}</span>
+        )}
+      </div>
+      <div className="overflow-x-auto pb-1">
+        <div
+          className="grid gap-2"
+          style={{
+            gridTemplateColumns: `repeat(${project.columns.length}, minmax(10rem, 1fr))`,
+          }}
+        >
+          {project.columns.map((column) => (
+            <LaneColumnView
+              key={column.stage}
+              column={column}
+              now={now}
+              selectedId={selectedId}
+              onSelect={onSelect}
+            />
           ))}
-        </ul>
-      ) : (
-        <ul className="flex flex-col gap-3">
-          {(group.workspaces ?? []).map((workspace) => (
-            <WorkspaceRow key={workspace.id} workspace={workspace} now={now} />
-          ))}
-        </ul>
-      )}
+        </div>
+      </div>
     </section>
   );
 }
 
-function FeatureCard({ feature, now }: { feature: WhereFeature; now: Date }) {
-  const showStatus = feature.task_status === 'done' || feature.task_status === 'archived';
+function LaneColumnView({
+  column,
+  now,
+  selectedId,
+  onSelect,
+}: {
+  column: LaneColumn;
+  now: Date;
+  selectedId: string | null;
+  onSelect: (id: string) => void;
+}) {
   return (
-    <li className="flex min-w-0 flex-col gap-2 rounded-lg border border-gray-800 bg-gray-900 p-3">
-      <div className="flex flex-wrap items-center gap-2">
-        <span className="font-mono text-xs text-gray-500">{feature.id.slice(0, 8)}</span>
-        <h3 className="min-w-0 break-words text-sm font-medium text-white">{feature.title}</h3>
-        <span
-          title={feature.stage_source === null ? feature.stage : `${feature.stage} (${feature.stage_source})`}
-          className="rounded-md border border-blue-500/30 bg-blue-500/10 px-2 py-0.5 text-xs text-blue-300"
-        >
-          {stageLabel(feature.stage)}
-        </span>
-        {feature.stage_set_at !== null && (
-          <span className="text-xs text-gray-500">{formatAge(feature.stage_set_at, now)}</span>
-        )}
-        {showStatus && (
-          <span className="rounded-md border border-gray-700 px-2 py-0.5 text-xs text-gray-400">
-            {feature.task_status}
-          </span>
+    <div className="flex min-h-24 min-w-0 flex-col gap-2 rounded-lg border border-gray-800 bg-gray-900/40 p-2">
+      <div className="flex items-center gap-1.5 text-xs text-gray-400">
+        <h3 className="font-semibold text-gray-300">{column.label}</h3>
+        <span>{column.features.length}</span>
+        {column.needsYou && column.features.length > 0 && (
+          <span className="ml-auto text-[11px] text-gray-400">needs you</span>
         )}
       </div>
+      <ul className="flex flex-col gap-2">
+        {column.features.map((feature) => (
+          <li key={feature.id}>
+            <FeatureCard
+              feature={feature}
+              now={now}
+              selected={feature.id === selectedId}
+              onSelect={() => onSelect(feature.id)}
+            />
+          </li>
+        ))}
+      </ul>
+    </div>
+  );
+}
 
-      {feature.pull_requests.length > 0 && (
-        <div className="flex flex-wrap gap-2">
-          {feature.pull_requests.map((pr) => (
-            <PullRequestChip key={pr.url} pr={pr} />
-          ))}
+function FeatureCard({
+  feature,
+  now,
+  selected,
+  onSelect,
+}: {
+  feature: WhereFeature;
+  now: Date;
+  selected: boolean;
+  onSelect: () => void;
+}) {
+  const risk = featureRiskLabel(feature);
+  const pr = feature.pull_requests[0];
+  return (
+    <button
+      type="button"
+      onClick={onSelect}
+      aria-haspopup="dialog"
+      className={`flex w-full flex-col items-start gap-1.5 rounded-md border p-2 text-left transition-colors ${
+        selected
+          ? 'border-blue-500 bg-gray-800'
+          : 'border-gray-800 bg-gray-900 hover:border-gray-600'
+      }`}
+    >
+      <span className="break-words text-sm font-medium leading-snug text-white">{feature.title}</span>
+      <span className="flex flex-wrap items-center gap-1.5 text-[11px] text-gray-400">
+        {pr !== undefined && (
+          <span className="rounded border border-gray-700 px-1.5 text-gray-300">
+            {`#${pullRequestNumber(pr.url) ?? '?'}`}
+          </span>
+        )}
+        {feature.stage_set_at !== null && <span>{formatAge(feature.stage_set_at, now)}</span>}
+        {(feature.task_status === 'done' || feature.task_status === 'archived') && (
+          <span>{feature.task_status}</span>
+        )}
+        {risk !== null && (
+          <span className="flex items-center gap-1 text-amber-300">
+            <span aria-hidden="true" className="h-1.5 w-1.5 rounded-full bg-amber-500" />
+            <span>{risk}</span>
+          </span>
+        )}
+      </span>
+    </button>
+  );
+}
+
+function FeatureDetails({
+  feature,
+  projectName,
+  now,
+  onClose,
+}: {
+  feature: WhereFeature;
+  projectName: string;
+  now: Date;
+  onClose: () => void;
+}) {
+  const closeRef = useRef<HTMLButtonElement>(null);
+
+  useEffect(() => {
+    closeRef.current?.focus();
+    function onKey(event: KeyboardEvent) {
+      if (event.key === 'Escape') onClose();
+    }
+    window.addEventListener('keydown', onKey);
+    return () => window.removeEventListener('keydown', onKey);
+  }, [onClose]);
+
+  const titleId = `feature-${feature.id}-title`;
+  return (
+    <div className="fixed inset-0 z-40">
+      <button
+        type="button"
+        tabIndex={-1}
+        aria-label="Close details"
+        onClick={onClose}
+        className="absolute inset-0 h-full w-full cursor-default bg-gray-950/60"
+      />
+      <aside
+        role="dialog"
+        aria-modal="true"
+        aria-labelledby={titleId}
+        className="absolute inset-y-0 right-0 flex w-full max-w-md flex-col gap-4 overflow-y-auto border-l border-gray-800 bg-gray-900 p-4"
+      >
+        <div className="flex items-start gap-3">
+          <div className="flex min-w-0 flex-1 flex-col gap-1.5">
+            <span className="font-mono text-xs text-gray-500">{`${feature.id.slice(0, 8)} · ${projectName}`}</span>
+            <h2 id={titleId} className="break-words text-base font-semibold text-white">
+              {feature.title}
+            </h2>
+            <div className="flex flex-wrap items-center gap-2">
+              <span
+                title={feature.stage_source === null ? feature.stage : `${feature.stage} (${feature.stage_source})`}
+                className="rounded-md border border-blue-500/30 bg-blue-500/10 px-2 py-0.5 text-xs text-blue-300"
+              >
+                {stageLabel(feature.stage)}
+              </span>
+              {feature.stage_set_at !== null && (
+                <span className="text-xs text-gray-500">{formatAge(feature.stage_set_at, now)}</span>
+              )}
+              {(feature.task_status === 'done' || feature.task_status === 'archived') && (
+                <span className="rounded-md border border-gray-700 px-2 py-0.5 text-xs text-gray-400">
+                  {feature.task_status}
+                </span>
+              )}
+            </div>
+          </div>
+          <button
+            ref={closeRef}
+            type="button"
+            onClick={onClose}
+            className="shrink-0 rounded-md border border-gray-700 px-3 py-1.5 text-xs text-gray-300 hover:bg-gray-800 hover:text-white"
+          >
+            Close
+          </button>
         </div>
-      )}
 
-      {feature.workspaces.length === 0 ? (
-        <p className="text-xs text-gray-500">no worktrees</p>
-      ) : (
-        <ul className="flex flex-col gap-2">
-          {feature.workspaces.map((workspace) => (
-            <WorkspaceRow key={workspace.id} workspace={workspace} now={now} />
-          ))}
-        </ul>
-      )}
-    </li>
+        {feature.pull_requests.length > 0 && (
+          <div className="flex flex-wrap gap-2">
+            {feature.pull_requests.map((pr) => (
+              <PullRequestChip key={pr.url} pr={pr} />
+            ))}
+          </div>
+        )}
+
+        {feature.workspaces.length === 0 ? (
+          <p className="text-xs text-gray-500">no worktrees</p>
+        ) : (
+          <ul className="flex flex-col gap-2">
+            {feature.workspaces.map((workspace) => (
+              <WorkspaceRow key={workspace.id} workspace={workspace} now={now} />
+            ))}
+          </ul>
+        )}
+      </aside>
+    </div>
   );
 }
 

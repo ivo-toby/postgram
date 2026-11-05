@@ -53,42 +53,43 @@ function workspace(overrides: Partial<WorkspaceView> = {}): WorkspaceView {
   };
 }
 
-function oneFeatureResponse(workspaces: WorkspaceView[] = [workspace()]): WhereResponse {
+type FeatureOverrides = Partial<WhereResponse['groups'][number]['features'] extends (infer F)[] | undefined ? F : never>;
+
+function feature(overrides: FeatureOverrides = {}) {
   return {
-    view: 'actions',
+    id: '1a2b3c4d-1111-4111-8111-111111111111',
+    title: 'Keyword rank fusion',
+    stage: 'review' as const,
+    stage_source: 'derived' as const,
+    stage_set_at: iso(12 * MINUTE),
+    task_status: 'active',
+    pull_requests: [{ url: 'https://github.com/ivo-toby/postgram/pull/42', state: 'open' as const, updated_at: iso(HOUR) }],
+    workspaces: [workspace()],
+    ...overrides,
+  };
+}
+
+function stageResponse(
+  features: ReturnType<typeof feature>[],
+  unassigned: WorkspaceView[] = []
+): WhereResponse {
+  const keys = ['building', 'review', 'functional_test', 'ready_to_merge', 'awaiting_release'] as const;
+  return {
+    view: 'stage',
     generated_at: iso(0),
     dormant_after_days: 30,
     groups: [
-      {
-        key: 'review',
-        label: 'Review',
-        features: [
-          {
-            id: '1a2b3c4d-1111-4111-8111-111111111111',
-            title: 'Keyword rank fusion',
-            stage: 'review',
-            stage_source: 'derived',
-            stage_set_at: iso(12 * MINUTE),
-            task_status: 'active',
-            pull_requests: [],
-            workspaces,
-          },
-        ],
-      },
-      { key: 'test', label: 'Test', features: [] },
+      ...keys.map((key) => ({ key, label: key, features: features.filter((f) => f.stage === key) })),
+      { key: 'unassigned', label: 'Unassigned', workspaces: unassigned },
     ],
   };
 }
 
-const EMPTY_RESPONSE: WhereResponse = {
-  view: 'actions',
-  generated_at: iso(0),
-  dormant_after_days: 30,
-  groups: [
-    { key: 'review', label: 'Review', features: [] },
-    { key: 'unassigned', label: 'Unassigned', workspaces: [] },
-  ],
-};
+function oneFeatureResponse(workspaces: WorkspaceView[] = [workspace()]): WhereResponse {
+  return stageResponse([feature({ workspaces })]);
+}
+
+const EMPTY_RESPONSE: WhereResponse = stageResponse([]);
 
 const RESUME = String.raw`ssh -t codebox 'cd /w/a && claude --resume 8f3c'`;
 
@@ -103,6 +104,11 @@ function setClipboard(value: unknown): void {
   Object.defineProperty(navigator, 'clipboard', { value, configurable: true, writable: true });
 }
 
+async function openFeature(title = 'Keyword rank fusion'): Promise<HTMLElement> {
+  fireEvent.click(await screen.findByRole('button', { name: new RegExp(title, 'u') }));
+  return screen.getByRole('dialog', { name: title });
+}
+
 describe('WherePage', () => {
   beforeEach(() => {
     setClipboard({ writeText: vi.fn(async () => undefined) });
@@ -113,8 +119,8 @@ describe('WherePage', () => {
     setClipboard(undefined);
   });
 
-  describe('empty states', () => {
-    it('shows Nothing to do and no heading when every group is empty', async () => {
+  describe('lanes', () => {
+    it('shows Nothing to do and no project when there is nothing', async () => {
       const { api } = apiReturning(EMPTY_RESPONSE);
       render(<WherePage api={api} />);
 
@@ -122,21 +128,87 @@ describe('WherePage', () => {
       expect(screen.queryByRole('heading', { level: 2 })).not.toBeInTheDocument();
     });
 
-    it('skips an empty group and keeps the filled one in a section', async () => {
+    it('puts features in a section per project with the same five columns', async () => {
+      const talon = feature({
+        id: '2b3c4d5e-2222-4222-8222-222222222222',
+        title: 'Memory sync',
+        stage: 'functional_test',
+        workspaces: [],
+        pull_requests: [{ url: 'https://github.com/ivo-toby/talon/pull/3', state: 'open', updated_at: iso(HOUR) }],
+      });
+      const { api } = apiReturning(stageResponse([feature({ workspaces: [workspace({ repo_remote: 'github.com/ivo-toby/postgram' })] }), talon]));
+      render(<WherePage api={api} />);
+
+      const postgram = (await screen.findByRole('heading', { level: 2, name: 'postgram' })).closest('section') as HTMLElement;
+      expect(within(postgram).getAllByRole('heading', { level: 3 }).map((h) => h.textContent)).toEqual([
+        'Building',
+        'Review',
+        'Test',
+        'Merge',
+        'Release',
+      ]);
+      expect(within(postgram).getByRole('button', { name: /Keyword rank fusion/u })).toBeInTheDocument();
+      expect(within(postgram).getByText('1 needs you')).toBeInTheDocument();
+
+      const talonSection = screen.getByRole('heading', { level: 2, name: 'talon' }).closest('section') as HTMLElement;
+      expect(within(talonSection).getByRole('button', { name: /Memory sync/u })).toBeInTheDocument();
+      expect(screen.getByText('2 features in 2 projects · 2 need you')).toBeInTheDocument();
+    });
+
+    it('shows the PR number, age and worst risk on a card, and no worktree details', async () => {
+      const risky = workspace({ risks: ['unpushed', 'interrupted'] });
+      const { api } = apiReturning(oneFeatureResponse([risky]));
+      render(<WherePage api={api} />);
+
+      const card = await screen.findByRole('button', { name: /Keyword rank fusion/u });
+      expect(within(card).getByText('#42')).toBeInTheDocument();
+      expect(within(card).getByText('12m')).toBeInTheDocument();
+      expect(within(card).getByText('interrupted +1')).toBeInTheDocument();
+      expect(screen.queryByText('/w/a')).not.toBeInTheDocument();
+      expect(screen.queryByRole('button', { name: 'Copy resume command' })).not.toBeInTheDocument();
+    });
+
+    it('lists unassigned worktrees under a collapsed heading', async () => {
+      const { api } = apiReturning(stageResponse([], [workspace({ id: 'ws-loose', feature_id: null, path: '/w/loose' })]));
+      render(<WherePage api={api} />);
+
+      expect(await screen.findByRole('heading', { level: 2, name: 'Unassigned worktrees (1)' })).toBeInTheDocument();
+      expect(screen.queryByText('Nothing to do')).not.toBeInTheDocument();
+    });
+  });
+
+  describe('details', () => {
+    it('opens a dialog with the stage, PR and worktrees, and closes it', async () => {
       const { api } = apiReturning(oneFeatureResponse());
       render(<WherePage api={api} />);
 
-      const heading = await screen.findByRole('heading', { level: 2, name: 'Review (1)' });
-      expect(heading.closest('section')).not.toBeNull();
-      expect(screen.queryByText(/^Test \(/u)).not.toBeInTheDocument();
-      expect(screen.queryByText('Nothing to do')).not.toBeInTheDocument();
+      const dialog = await openFeature();
+      expect(within(dialog).getByText('Review')).toBeInTheDocument();
+      expect(within(dialog).getByRole('link', { name: '#42 open' })).toHaveAttribute(
+        'href',
+        'https://github.com/ivo-toby/postgram/pull/42'
+      );
+      expect(within(dialog).getByText('/w/a')).toBeInTheDocument();
+
+      fireEvent.click(within(dialog).getByRole('button', { name: 'Close' }));
+      expect(screen.queryByRole('dialog')).not.toBeInTheDocument();
+    });
+
+    it('closes on Escape', async () => {
+      const { api } = apiReturning(oneFeatureResponse());
+      render(<WherePage api={api} />);
+
+      await openFeature();
+      fireEvent.keyDown(window, { key: 'Escape' });
+      expect(screen.queryByRole('dialog')).not.toBeInTheDocument();
     });
 
     it('shows no worktrees for a feature without workspaces', async () => {
       const { api } = apiReturning(oneFeatureResponse([]));
       render(<WherePage api={api} />);
 
-      expect(await screen.findByText('no worktrees')).toBeInTheDocument();
+      const dialog = await openFeature();
+      expect(within(dialog).getByText('no worktrees')).toBeInTheDocument();
     });
   });
 
@@ -152,8 +224,9 @@ describe('WherePage', () => {
       });
       const { api } = apiReturning(oneFeatureResponse([risky]));
       render(<WherePage api={api} />);
+      await openFeature();
 
-      expect(await screen.findByText('dirty')).toBeInTheDocument();
+      expect(screen.getByText('dirty')).toBeInTheDocument();
       expect(screen.getByText('unpushed 4')).toBeInTheDocument();
       expect(screen.getByText('no upstream')).toBeInTheDocument();
       expect(screen.getByText('interrupted')).toBeInTheDocument();
@@ -167,8 +240,9 @@ describe('WherePage', () => {
       const bare = workspace({ git: null, git_state_at: null, risks: [] });
       const { api } = apiReturning(oneFeatureResponse([bare]));
       render(<WherePage api={api} />);
+      await openFeature();
 
-      await screen.findByText('/w/a');
+      expect(screen.getByText('/w/a')).toBeInTheDocument();
       expect(screen.queryByText(/^git /u)).not.toBeInTheDocument();
     });
 
@@ -192,8 +266,9 @@ describe('WherePage', () => {
       });
       const { api } = apiReturning(oneFeatureResponse([idle]));
       render(<WherePage api={api} />);
+      await openFeature();
 
-      expect(await screen.findByText('pi/idle 3d dormant')).toBeInTheDocument();
+      expect(screen.getByText('pi/idle 3d dormant')).toBeInTheDocument();
     });
   });
 
@@ -204,6 +279,7 @@ describe('WherePage', () => {
       setClipboard({ writeText });
       const { api } = apiReturning(oneFeatureResponse());
       render(<WherePage api={api} />);
+      await openFeature();
 
       const button = (await screen.findAllByRole('button', { name: 'Copy resume command' }))[0];
       if (button === undefined) throw new Error('no copy button');
@@ -234,6 +310,7 @@ describe('WherePage', () => {
       setClipboard(undefined);
       const { api } = apiReturning(oneFeatureResponse());
       render(<WherePage api={api} />);
+      await openFeature();
 
       fireEvent.click((await screen.findAllByRole('button', { name: 'Copy resume command' }))[0] as HTMLElement);
 
@@ -245,6 +322,7 @@ describe('WherePage', () => {
       setClipboard({ writeText: vi.fn(async () => { throw new Error('denied'); }) });
       const { api } = apiReturning(oneFeatureResponse());
       render(<WherePage api={api} />);
+      await openFeature();
 
       fireEvent.click((await screen.findAllByRole('button', { name: 'Copy resume command' }))[0] as HTMLElement);
 
@@ -254,30 +332,13 @@ describe('WherePage', () => {
   });
 
   describe('controls', () => {
-    it('switches aria-pressed between the views and passes the new view to the query', async () => {
+    it('asks for the stage view, and adds released and done when the checkbox is checked', async () => {
       const { api, getWhere } = apiReturning(oneFeatureResponse());
       const user = userEvent.setup();
       render(<WherePage api={api} />);
 
-      await screen.findByRole('heading', { level: 2, name: 'Review (1)' });
-      expect(screen.getByRole('button', { name: 'Actions' })).toHaveAttribute('aria-pressed', 'true');
-      expect(screen.getByRole('button', { name: 'Stage' })).toHaveAttribute('aria-pressed', 'false');
-
-      await user.click(screen.getByRole('button', { name: 'Stage' }));
-
-      await waitFor(() => {
-        expect(getWhere).toHaveBeenLastCalledWith({ view: 'stage' });
-      });
-      expect(screen.getByRole('button', { name: 'Stage' })).toHaveAttribute('aria-pressed', 'true');
-      expect(screen.getByRole('button', { name: 'Actions' })).toHaveAttribute('aria-pressed', 'false');
-    });
-
-    it('sends the released and done parameters when the checkbox is checked', async () => {
-      const { api, getWhere } = apiReturning(oneFeatureResponse());
-      const user = userEvent.setup();
-      render(<WherePage api={api} />);
-
-      await screen.findByRole('heading', { level: 2, name: 'Review (1)' });
+      await screen.findByRole('button', { name: /Keyword rank fusion/u });
+      expect(getWhere).toHaveBeenCalledWith({ view: 'stage' });
       const checkbox = screen.getByRole('checkbox', { name: 'Show released and done' });
       expect(checkbox).not.toBeChecked();
 
@@ -285,7 +346,7 @@ describe('WherePage', () => {
 
       await waitFor(() => {
         expect(getWhere).toHaveBeenLastCalledWith({
-          view: 'actions',
+          view: 'stage',
           include_released: true,
           include_done: true,
         });
@@ -297,13 +358,13 @@ describe('WherePage', () => {
       const user = userEvent.setup();
       render(<WherePage api={api} />);
 
-      await screen.findByRole('heading', { level: 2, name: 'Review (1)' });
+      await screen.findByRole('button', { name: /Keyword rank fusion/u });
       await user.click(screen.getByRole('button', { name: 'Refresh' }));
 
       await waitFor(() => {
         expect(getWhere).toHaveBeenCalledTimes(2);
       });
-      expect(getWhere).toHaveBeenLastCalledWith({ view: 'actions' });
+      expect(getWhere).toHaveBeenLastCalledWith({ view: 'stage' });
     });
   });
 
@@ -343,9 +404,7 @@ describe('WherePage', () => {
       });
 
       expect(screen.queryByText('Loading…')).not.toBeInTheDocument();
-      const section = screen.getByRole('heading', { level: 2, name: 'Review (1)' }).closest('section');
-      expect(section).not.toBeNull();
-      expect(within(section as HTMLElement).getByText('Keyword rank fusion')).toBeInTheDocument();
+      expect(screen.getByText('Keyword rank fusion')).toBeInTheDocument();
     });
   });
 });

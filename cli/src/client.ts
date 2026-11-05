@@ -319,8 +319,12 @@ export function createPgmClient(options: RestClientOptions) {
       limit?: number | undefined;
       offset?: number | undefined;
       include_archived?: boolean | undefined;
+      kind?: 'task' | 'feature' | 'all' | undefined;
     } = {}) {
       const params = new URLSearchParams();
+      if (input.kind) {
+        params.set('kind', input.kind);
+      }
       if (input.status) {
         params.set('status', input.status);
       }

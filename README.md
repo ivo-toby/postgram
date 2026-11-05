@@ -918,7 +918,7 @@ transport-layer conveniences for MCP and the CLI.
 ### Tasks
 
 - `POST /api/tasks` — create task
-- `GET /api/tasks` — list tasks
+- `GET /api/tasks` — list tasks (`kind=task|feature|all`, default `all`; features are tasks with `metadata.kind = 'feature'`)
 - `PATCH /api/tasks/:id` — update task
 - `POST /api/tasks/:id/complete` — complete task
 

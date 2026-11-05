@@ -34,6 +34,7 @@ import {
   completeTask,
   createTask,
   listTasks,
+  TASK_KIND_FILTERS,
   updateTask
 } from '../services/task-service.js';
 import type { Entity, Visibility } from '../types/entities.js';
@@ -107,6 +108,8 @@ const stringArraySchema = () =>
       return value;
     }
   }, z.array(z.string()));
+
+const taskKindSchema = z.enum(TASK_KIND_FILTERS);
 
 const statusSchema = z.enum([
   'active',
@@ -634,9 +637,11 @@ function createSessionServer(
   server.registerTool(
     'task_list',
     {
-      description: 'List tasks',
+      description:
+        "List tasks. Features (tasks with kind 'feature') are left out unless kind is 'feature' or 'all'.",
       inputSchema: {
         status: statusSchema.optional(),
+        kind: taskKindSchema.optional(),
         context: z.string().optional(),
         limit: numericSchema(z.number().int().positive()).optional(),
         offset: numericSchema(z.number().int().nonnegative()).optional(),
@@ -648,6 +653,7 @@ function createSessionServer(
     (args) =>
       toolFromService(
         listTasks(pool, auth, {
+          kind: args.kind ?? 'task',
           status: args.status,
           context: args.context,
           limit: args.limit,

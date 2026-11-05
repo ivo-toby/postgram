@@ -377,6 +377,11 @@ describe('pgm tracking commands (feature)', () => {
   it('marks a vanished local workspace missing before rendering (C3)', async () => {
     const scratch = path.join(tmp, 'scratch');
     mkdirSync(scratch);
+    // A directory outside git is never registered.
+    await pgm(['here', '--hook'], { cwd: scratch, input: sessionStart(scratch) });
+    expect(await workspaces()).toEqual([]);
+
+    initRepo(scratch);
     await pgm(['here', '--hook'], { cwd: scratch, input: sessionStart(scratch) });
     rmSync(scratch, { recursive: true });
 

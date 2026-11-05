@@ -60,6 +60,16 @@ new feature or skip. `--yes-exact` accepts only certain matches (a feature
 marker or short id in the branch) and asks nothing. Set `scan_roots` in
 `~/.pgmrc` to skip `--root`.
 
+An agent has no terminal. It uses `pgm scan --json` to list every worktree
+(git state, last commit, current link, candidate features), shows you a
+proposal, and after your approval runs `pgm scan --apply plan.json`. The plan
+format is in [cli/README.md](../cli/README.md#scan-inventory-and-plan).
+
+Keep directories that are not work out of the registry with `ignore_paths` in
+`~/.pgmrc`, for example `["~/workspace"]` for the folder that holds your repos.
+An entry matches that directory only; `~/tmp/**` matches everything below it.
+`pgm here`, the hooks and `pgm scan` skip these paths.
+
 ### 4. Tell your agents
 
 Install the Postgram skill (`skill/postgram/SKILL.md`) for your agents. Its
@@ -69,9 +79,16 @@ move stages, and to use `where` when you ask what needs you.
 ## Daily use
 
 ```bash
-pgm where              # everything, grouped by stage, with resume commands
+pgm where              # grouped by stage; one summary per feature with several workspaces
+pgm where --expand     # every workspace with its resume command
 pgm where --actions    # what you need to do: Review / Test / Merge / Release
+pgm where --all        # also done and released features
 ```
+
+A feature with several workspaces shows its workspace count, how many have
+risks and the resume command of the most recently active one. A feature with
+one workspace shows it in full. Local paths are shown relative to your home
+directory; a long path loses its leading folders, never its end.
 
 Start new work by asking your agent, for example "start keyword rank fusion
 in its own worktree". The skill tells it to find or create the feature and run
@@ -96,6 +113,31 @@ pgm repo set github.com/<owner>/<repo> --release-on-merge true  # merge means re
 ```
 
 `<id>` is the feature UUID or its 8-hex short id.
+
+## Cleaning up
+
+```bash
+pgm feature sync              # ask GitHub (gh) for PR states, apply the stage rules
+pgm feature done <id>         # finished: pgm where hides it (--all shows it)
+pgm worktree rm <path>        # remove a worktree and unregister it
+pgm workspace prune --dry-run # registrations whose directory is gone
+pgm workspace prune
+```
+
+- `feature sync` needs the GitHub CLI (`gh`), logged in. It reports only
+  changed states through the same endpoint as `feature pr`, so a merge moves
+  the stage as usual. Merged PRs are not asked again.
+- `feature done` completes the feature's task (the same as `pgm task complete`).
+  It adds no stage.
+- `worktree rm` refuses a worktree with changed files or commits that no
+  remote has. There is no force flag and git runs without `--force`. The
+  branch stays. It needs the `delete` scope to unregister the workspace; if
+  that fails the worktree is still removed and `workspace prune` finishes the
+  job later.
+- `workspace prune` removes the registrations of this machine whose directory
+  no longer exists. It never touches features. `--ignored` also removes
+  registrations that match `ignore_paths`. It needs the `delete` scope, as does
+  the `workspace_delete` MCP tool and `DELETE /api/workspaces/:id`.
 
 ## After a reboot
 

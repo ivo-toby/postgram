@@ -14,6 +14,7 @@ import {
 import { getWhere, type WhereResult } from '../services/where-service.js';
 import { lookupWorkspace } from '../services/workspace-lookup.js';
 import { reportWorkspace } from '../services/workspace-service.js';
+import { deleteWorkspace } from '../services/workspace-delete.js';
 import { updateWorkspace } from '../services/workspace-update.js';
 import {
   boolishSchema,
@@ -190,6 +191,36 @@ export function registerWorkspaceTools(
             : toToolSuccess({
                 workspace_id: payload.workspace.id,
                 feature_id: payload.workspace.feature_id
+              })
+      )
+  );
+
+  server.registerTool(
+    'workspace_delete',
+    {
+      description:
+        'Remove a workspace registration (for example one whose directory is gone). Its sessions are removed with it; the linked feature is never touched. Needs the delete scope.',
+      inputSchema: {
+        workspace_id: z.string(),
+        full_response: fullResponseSchema
+      }
+    },
+    (args) =>
+      toolFromService(
+        deleteWorkspace(
+          pool,
+          auth,
+          { id: args.workspace_id },
+          { dormantAfterDays: options.dormantAfterDays }
+        ),
+        (value) => ({ deleted: true, workspace: value }),
+        (payload) =>
+          args.full_response
+            ? toToolSuccess(payload)
+            : toToolSuccess({
+                deleted: true,
+                workspace_id: payload.workspace.id,
+                path: payload.workspace.path
               })
       )
   );

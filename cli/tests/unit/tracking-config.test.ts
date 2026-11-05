@@ -17,6 +17,7 @@ import {
   UsageError,
   defaultAlias,
   expandHome,
+  isIgnoredPath,
   loadTrackingConfig,
   parseTrackingConfig,
   shq,
@@ -90,6 +91,27 @@ describe('expandHome', () => {
   });
 });
 
+describe('isIgnoredPath', () => {
+  const ignore = ['/home/u/workspace', '/home/u/tmp/**'];
+
+  it('matches an entry exactly, not its children', () => {
+    expect(isIgnoredPath('/home/u/workspace', ignore)).toBe(true);
+    expect(isIgnoredPath('/home/u/workspace/', ignore)).toBe(true);
+    expect(isIgnoredPath('/home/u/workspace/postgram', ignore)).toBe(false);
+    expect(isIgnoredPath('/home/u/workspace2', ignore)).toBe(false);
+  });
+
+  it('matches everything below an entry ending in /**', () => {
+    expect(isIgnoredPath('/home/u/tmp/a/b', ignore)).toBe(true);
+    expect(isIgnoredPath('/home/u/tmp', ignore)).toBe(false);
+    expect(isIgnoredPath('/home/u/tmpfiles', ignore)).toBe(false);
+  });
+
+  it('ignores nothing for an empty list', () => {
+    expect(isIgnoredPath('/home/u/workspace', [])).toBe(false);
+  });
+});
+
 describe('parseTrackingConfig', () => {
   const input = { homeDir: '/home/u', hostname: 'My-Mac.local' };
 
@@ -100,6 +122,7 @@ describe('parseTrackingConfig', () => {
     expect(config.scanRoots).toEqual([]);
     expect(config.worktreeRoot).toBeNull();
     expect(config.hereTimeoutMs).toBe(2000);
+    expect(config.ignorePaths).toEqual([]);
     expect(config.resume).toEqual(DEFAULT_RESUME);
     expect(config.resume).not.toBe(DEFAULT_RESUME);
     expect(config.resume.pi).not.toBe(DEFAULT_RESUME.pi);
@@ -112,6 +135,7 @@ describe('parseTrackingConfig', () => {
         scan_roots: ['~/src', 42, '~/wt'],
         worktree_root: '~/wt',
         here_timeout_ms: 5000,
+        ignore_paths: ['~/workspace', '~/tmp/**', 7, ''],
         resume: {
           pi: { with_id: 'pi -s {session_id}' },
           talon: { without_id: null }
@@ -125,6 +149,7 @@ describe('parseTrackingConfig', () => {
     expect(config.scanRoots).toEqual(['/home/u/src', '/home/u/wt']);
     expect(config.worktreeRoot).toBe('/home/u/wt');
     expect(config.hereTimeoutMs).toBe(5000);
+    expect(config.ignorePaths).toEqual(['/home/u/workspace', '/home/u/tmp/**']);
     expect(config.resume['claude-code']).toEqual({
       with_id: 'claude --resume {session_id}',
       without_id: 'claude'

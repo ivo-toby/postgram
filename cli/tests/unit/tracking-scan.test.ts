@@ -6,7 +6,12 @@ import type { TrackingClient } from '../../src/tracking/api.js';
 import { DEFAULT_RESUME, UsageError } from '../../src/tracking/config.js';
 import type { TrackingConfig } from '../../src/tracking/config.js';
 import type { ScannedSession, ScannedWorktree } from '../../src/tracking/scan-discovery.js';
-import { BRANCH_SHORT_ID, runScan } from '../../src/tracking/scan.js';
+import {
+  BRANCH_SHORT_ID,
+  runScan,
+  runScanApply,
+  runScanInventory
+} from '../../src/tracking/scan.js';
 import type { ScanDeps } from '../../src/tracking/scan.js';
 import type {
   ReportBody,
@@ -20,6 +25,7 @@ const CONFIG: TrackingConfig = {
   scanRoots: [],
   worktreeRoot: null,
   hereTimeoutMs: 2000,
+  ignorePaths: [],
   resume: DEFAULT_RESUME
 };
 
@@ -192,6 +198,10 @@ function makeDeps(
       return Promise.resolve();
     },
     exists: (): boolean => true,
+    isTty: (): boolean => true,
+    realpath: (p: string): Promise<string> => Promise.resolve(p),
+    lastCommit: (): Promise<{ date: string; subject: string } | null> =>
+      Promise.resolve(null),
     info: (line: string): void => {
       calls.info.push(line);
     },
@@ -462,5 +472,318 @@ describe('runScan known workspaces', () => {
       { id: 'ws-g', body: { missing: true } },
       { id: 'ws-b', body: { missing: false } }
     ]);
+  });
+});
+
+describe('runScan without a terminal', () => {
+  it('fails cleanly before discovering anything and names the alternatives', async () => {
+    const { deps, calls } = makeDeps({ isTty: () => false });
+    const failure = runScan({ root: ['/w'], yesExact: false, dryRun: false }, deps);
+    await expect(failure).rejects.toThrow(UsageError);
+    await expect(failure).rejects.toThrow(/--json.*--yes-exact|--yes-exact.*--json/);
+    expect(calls.discovered).toEqual([]);
+    expect(calls.asked).toEqual([]);
+  });
+
+  it('still allows --yes-exact without a terminal', async () => {
+    const { deps } = makeDeps({ isTty: () => false });
+    await expect(
+      runScan({ root: ['/w'], yesExact: true, dryRun: false }, deps)
+    ).resolves.toEqual([]);
+  });
+});
+
+describe('runScan ignore_paths', () => {
+  it('drops ignored worktrees from the run', async () => {
+    const { deps, calls } = makeDeps({
+      config: { ...CONFIG, ignorePaths: ['/w/root', '/w/tmp/**'] },
+      discover: () =>
+        Promise.resolve([
+          { path: '/w/root', branch: 'main' },
+          { path: '/w/tmp/x', branch: 'main' },
+          { path: '/w/keep', branch: 'main' }
+        ])
+    });
+    const lines = await runScan({ root: ['/w'], yesExact: true, dryRun: false }, deps);
+    expect(lines).toEqual(['skipped /w/keep']);
+    expect(calls.report).toEqual([]);
+  });
+});
+
+describe('runScanInventory', () => {
+  it('describes every worktree without sending anything', async () => {
+    const known: WorkspaceView[] = [
+      makeWorkspace({ id: 'ws-known', path: '/w/known', feature_id: MARKER_ID }),
+      makeWorkspace({ id: 'ws-gone', path: '/w/gone', missing_since: null })
+    ];
+    const claudeSess: ScannedSession = {
+      agent_kind: 'claude-code',
+      agent_session_id: 'sess-1',
+      cwd: '/w/new',
+      transcript_path: '/t/1.jsonl',
+      observed_at: '2026-10-30T10:00:00.000Z'
+    };
+    const { deps, calls, tasks, setSearchResult } = makeDeps(
+      {
+        config: { ...CONFIG, ignorePaths: ['/w/ignored'] },
+        discover: () =>
+          Promise.resolve([
+            { path: '/w/known', branch: 'feat/known' },
+            { path: '/w/new', branch: 'feat/abc12345-thing' },
+            { path: '/w/ignored', branch: 'main' }
+          ]),
+        claudeSessions: () =>
+          Promise.resolve({
+            sessions: new Map([['/w/new', [claudeSess]]]),
+            notes: []
+          }),
+        resolveWorkspace: (p: string) =>
+          Promise.resolve({
+            kind: 'ok' as const,
+            path: p,
+            repoRoot: '/w/repo',
+            workspace: {
+              path: p,
+              repo_remote: 'git@github.com:example/repo.git',
+              branch: p === '/w/new' ? 'feat/abc12345-thing' : 'feat/known',
+              git: { dirty_count: 2, unpushed_count: 1, has_upstream: false }
+            }
+          }),
+        lastCommit: () =>
+          Promise.resolve({ date: '2026-10-29T09:00:00+00:00', subject: 'fix: thing' }),
+        readMarker: (p: string) => Promise.resolve(p === '/w/new' ? MARKER_ID : null)
+      },
+      known
+    );
+    tasks.push(
+      { id: MARKER_ID, title: 'Marker feature' },
+      { id: SHORT_ID_TASK, title: 'Short id feature' }
+    );
+    setSearchResult(() => [{ id: CREATED_ID, title: 'Searched' }]);
+
+    const inventory = await runScanInventory({ root: ['/w'], dryRun: false, yesExact: false }, deps);
+
+    expect(calls.report).toEqual([]);
+    expect(calls.patch).toEqual([]);
+    expect(calls.created).toEqual([]);
+    expect(calls.markersWritten).toEqual([]);
+    expect(inventory.machine).toBe('me');
+    expect(inventory.worktrees.map((w) => w.path)).toEqual(['/w/known', '/w/new']);
+
+    const [linked, fresh] = inventory.worktrees;
+    expect(linked).toMatchObject({
+      path: '/w/known',
+      repo_remote: 'git@github.com:example/repo.git',
+      branch: 'feat/known',
+      workspace_id: 'ws-known',
+      feature: { id: MARKER_ID, title: 'Marker feature' },
+      candidates: [],
+      git: { dirty_count: 2, unpushed_count: 1, has_upstream: false },
+      last_commit: { date: '2026-10-29T09:00:00+00:00', subject: 'fix: thing' }
+    });
+    expect(fresh).toMatchObject({
+      path: '/w/new',
+      workspace_id: null,
+      feature: null,
+      marker_feature_id: MARKER_ID,
+      sessions: { count: 1, last_activity_at: '2026-10-30T10:00:00.000Z' },
+      candidates: [
+        { kind: 'marker', feature_id: MARKER_ID, title: 'Marker feature' },
+        { kind: 'short-id', feature_id: SHORT_ID_TASK, title: 'Short id feature' },
+        { kind: 'search', feature_id: CREATED_ID, title: 'Searched' }
+      ]
+    });
+  });
+
+  it('reports git as null on a timeout and keeps going', async () => {
+    const { deps } = makeDeps({
+      discover: () => Promise.resolve([{ path: '/w/slow', branch: 'main' }]),
+      resolveWorkspace: () => Promise.resolve({ kind: 'timeout' as const })
+    });
+    const inventory = await runScanInventory({ root: ['/w'], dryRun: false, yesExact: false }, deps);
+    expect(inventory.worktrees[0]).toMatchObject({
+      path: '/w/slow',
+      branch: 'main',
+      git: null,
+      note: 'git timeout'
+    });
+  });
+
+  it('needs no terminal', async () => {
+    const { deps } = makeDeps({ isTty: () => false });
+    await expect(
+      runScanInventory({ root: ['/w'], dryRun: false, yesExact: false }, deps)
+    ).resolves.toMatchObject({ worktrees: [] });
+  });
+});
+
+describe('runScanApply', () => {
+  const FEATURE = MARKER_ID;
+
+  function applyDeps(overrides: Partial<ScanDeps> = {}) {
+    const made = makeDeps(
+      {
+        resolveWorkspace: (p: string) =>
+          Promise.resolve({
+            kind: 'ok' as const,
+            path: p,
+            repoRoot: '/w/repo',
+            workspace: { path: p, branch: 'b', git: null }
+          }),
+        ...overrides
+      },
+      []
+    );
+    made.tasks.push({ id: FEATURE, title: 'Existing feature' });
+    return made;
+  }
+
+  it('validates the whole plan before writing anything', async () => {
+    const { deps, calls } = applyDeps();
+    const plan = {
+      entries: [
+        { path: '/w/ok', action: 'link', feature_id: FEATURE },
+        { path: '/w/ok', action: 'skip' },
+        { path: 'relative', action: 'skip' },
+        { path: '/w/nofeature', action: 'link' },
+        { path: '/w/unknown', action: 'link', feature_id: 'deadbeef' },
+        { path: '/w/notitle', action: 'create', title: '  ' },
+        { path: '/w/bad', action: 'explode' }
+      ]
+    };
+    const failure = runScanApply(plan, { dryRun: false }, deps);
+    await expect(failure).rejects.toThrow(UsageError);
+    const message = await failure.catch((error: Error) => error.message);
+    expect(message).toContain('duplicate path /w/ok');
+    expect(message).toContain('relative: path must be absolute');
+    expect(message).toContain('/w/nofeature: link needs feature_id');
+    expect(message).toContain('/w/unknown: no feature matches deadbeef');
+    expect(message).toContain('/w/notitle: create needs a non-empty title');
+    expect(message).toContain("/w/bad: unknown action 'explode'");
+    expect(calls.report).toEqual([]);
+    expect(calls.created).toEqual([]);
+  });
+
+  it('rejects a path that is missing, ignored, not a git worktree root or a timeout', async () => {
+    const { deps, calls } = applyDeps({
+      config: { ...CONFIG, ignorePaths: ['/w/ignored'] },
+      exists: (p: string) => p !== '/w/missing',
+      realpath: (p: string) => Promise.resolve(p === '/w/link' ? '/w/real' : p),
+      resolveWorkspace: (p: string) => {
+        if (p === '/w/slow') {
+          return Promise.resolve({ kind: 'timeout' as const });
+        }
+        const top = p === '/w/sub' ? '/w' : p;
+        return Promise.resolve({
+          kind: 'ok' as const,
+          path: top,
+          repoRoot: p === '/w/plain' ? null : '/w/repo',
+          workspace: { path: top, git: null }
+        });
+      }
+    });
+    const entries = ['/w/missing', '/w/ignored', '/w/plain', '/w/sub', '/w/slow'].map(
+      (p) => ({ path: p, action: 'link', feature_id: FEATURE })
+    );
+    const message = await runScanApply({ entries }, { dryRun: false }, deps).catch(
+      (error: Error) => error.message
+    );
+    expect(message).toContain('/w/missing: path does not exist');
+    expect(message).toContain('/w/ignored: path is in ignore_paths');
+    expect(message).toContain('/w/plain: not a git worktree');
+    expect(message).toContain('/w/sub: not the root of a worktree');
+    expect(message).toContain('/w/slow: git timed out');
+    expect(calls.report).toEqual([]);
+  });
+
+  it('links, creates and skips, reporting each entry', async () => {
+    const claudeSess: ScannedSession = {
+      agent_kind: 'claude-code',
+      agent_session_id: 'sess-1',
+      cwd: '/w/a',
+      transcript_path: '/t/1.jsonl',
+      observed_at: '2026-10-30T10:00:00.000Z'
+    };
+    const { deps, calls } = applyDeps({
+      claudeSessions: () =>
+        Promise.resolve({ sessions: new Map([['/w/a', [claudeSess]]]), notes: [] })
+    });
+    const plan = {
+      entries: [
+        { path: '/w/a', action: 'link', feature_id: FEATURE.slice(0, 8) },
+        { path: '/w/b', action: 'create', title: ' New thing ' },
+        { path: '/w/c', action: 'skip' }
+      ]
+    };
+
+    const result = await runScanApply(plan, { dryRun: false }, deps);
+
+    expect(result.failed).toBe(0);
+    expect(result.results).toEqual([
+      { path: '/w/a', action: 'link', status: 'linked', feature_id: FEATURE },
+      { path: '/w/b', action: 'create', status: 'created', feature_id: CREATED_ID },
+      { path: '/w/c', action: 'skip', status: 'skipped' }
+    ]);
+    expect(calls.created).toEqual([{ content: 'New thing' }]);
+    expect(calls.report.map((r) => [r.workspace?.path, r.feature_id, r.source])).toEqual([
+      ['/w/a', FEATURE, 'scan'],
+      ['/w/b', CREATED_ID, 'scan']
+    ]);
+    expect(calls.report[0]?.sessions?.map((x) => x.agent_session_id)).toEqual(['sess-1']);
+    expect(calls.markersWritten).toEqual([
+      { worktree: '/w/a', featureId: FEATURE },
+      { worktree: '/w/b', featureId: CREATED_ID }
+    ]);
+  });
+
+  it('keeps going after a failed entry and counts it', async () => {
+    const { deps, calls } = applyDeps();
+    let first = true;
+    const original = deps.client.report.bind(deps.client);
+    deps.client.report = (body: ReportBody) => {
+      if (first) {
+        first = false;
+        return Promise.reject(new Error('boom'));
+      }
+      return original(body);
+    };
+    const plan = [
+      { path: '/w/a', action: 'link', feature_id: FEATURE },
+      { path: '/w/b', action: 'link', feature_id: FEATURE }
+    ];
+
+    const result = await runScanApply(plan, { dryRun: false }, deps);
+
+    expect(result.failed).toBe(1);
+    expect(result.results[0]).toEqual({
+      path: '/w/a',
+      action: 'link',
+      status: 'failed',
+      feature_id: FEATURE,
+      error: 'boom'
+    });
+    expect(result.results[1]).toMatchObject({ path: '/w/b', status: 'linked' });
+    expect(calls.report).toHaveLength(1);
+  });
+
+  it('writes nothing with dryRun and does not create features', async () => {
+    const { deps, calls } = applyDeps();
+    const plan = {
+      entries: [
+        { path: '/w/a', action: 'link', feature_id: FEATURE },
+        { path: '/w/b', action: 'create', title: 'New' }
+      ]
+    };
+    const result = await runScanApply(plan, { dryRun: true }, deps);
+    expect(result.results.map((r) => r.status)).toEqual(['would link', 'would create']);
+    expect(calls.report).toEqual([]);
+    expect(calls.created).toEqual([]);
+    expect(calls.markersWritten).toEqual([]);
+  });
+
+  it('rejects a plan that is not an entries list', async () => {
+    const { deps } = applyDeps();
+    await expect(runScanApply({ foo: 1 }, { dryRun: false }, deps)).rejects.toThrow(UsageError);
+    await expect(runScanApply('x', { dryRun: false }, deps)).rejects.toThrow(UsageError);
   });
 });

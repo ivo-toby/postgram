@@ -140,6 +140,7 @@ function makeDeps(overrides: Partial<FeatureDeps> = {}): FeatureDeps {
       scanRoots: [],
       worktreeRoot: null,
       hereTimeoutMs: 2000,
+      ignorePaths: [],
       resume: DEFAULT_RESUME
     },
     json: false,

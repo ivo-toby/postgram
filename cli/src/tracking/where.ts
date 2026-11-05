@@ -65,6 +65,8 @@ export type RenderInput = {
   now: Date;
   exists: (path: string) => boolean;
   failedIds: ReadonlySet<string>;
+  homeDir?: string;
+  expand?: boolean;
 };
 
 type AugmentedWorkspace = WorkspaceView & { resume: string; transcript_gone: boolean };
@@ -141,10 +143,36 @@ export function augmentWhere(response: WhereResponse, input: RenderInput): unkno
   return { ...response, groups };
 }
 
-const CUT_WIDTH = 60;
+const PATH_WIDTH = 70;
 
-function cut(line: string): string {
-  return line.length > CUT_WIDTH ? `${line.slice(0, CUT_WIDTH - 1)}…` : line;
+/**
+ * Home-relative for local workspaces. A path that is still too long loses its
+ * leading segments, never its end: the end is what tells worktrees apart.
+ */
+function displayPath(workspace: WorkspaceView, input: RenderInput): string {
+  let shown = workspace.path;
+  const home = input.homeDir;
+  if (
+    home !== undefined &&
+    workspace.machine === input.localAlias &&
+    (shown === home || shown.startsWith(`${home}/`))
+  ) {
+    shown = `~${shown.slice(home.length)}`;
+  }
+  if (shown.length <= PATH_WIDTH) {
+    return shown;
+  }
+  const segments = shown.split('/');
+  let tail = segments.pop() ?? '';
+  while (segments.length > 1) {
+    const next = segments[segments.length - 1] ?? '';
+    if (`…/${next}/${tail}`.length > PATH_WIDTH) {
+      break;
+    }
+    tail = `${next}/${tail}`;
+    segments.pop();
+  }
+  return `…/${tail}`;
 }
 
 function workspaceLines(workspace: WorkspaceView, input: RenderInput): string[] {
@@ -180,7 +208,7 @@ function workspaceLines(workspace: WorkspaceView, input: RenderInput): string[] 
       })
       .join(', ');
   }
-  const line2 = `  ${workspace.path}  git ${gitAge}  ${sessions}`;
+  const line2 = `  ${displayPath(workspace, input)}  git ${gitAge}  ${sessions}`;
 
   const resume = renderResume(workspace, {
     localAlias: input.localAlias,
@@ -188,7 +216,60 @@ function workspaceLines(workspace: WorkspaceView, input: RenderInput): string[] 
     transcriptGone: transcriptGone(workspace, input)
   });
 
-  return [cut(line1), cut(line2), `  resume: ${resume}`];
+  return [line1, line2, `  resume: ${resume}`];
+}
+
+function riskLabels(workspace: WorkspaceView, input: RenderInput): string[] {
+  return displayRisks(workspace, input).map((risk) => riskText(risk, workspace));
+}
+
+function latestWorkspace(workspaces: readonly WorkspaceView[]): WorkspaceView | null {
+  let latest: WorkspaceView | null = null;
+  for (const workspace of workspaces) {
+    if (
+      latest === null ||
+      Date.parse(workspace.last_activity_at) > Date.parse(latest.last_activity_at)
+    ) {
+      latest = workspace;
+    }
+  }
+  return latest;
+}
+
+function compactFeatureLines(
+  workspaces: readonly WorkspaceView[],
+  input: RenderInput
+): string[] {
+  const withRisks = workspaces.filter(
+    (workspace) => displayRisks(workspace, input).length > 0
+  ).length;
+  const latest = latestWorkspace(workspaces);
+  const lines = [
+    `  ${workspaces.length} workspaces, ${withRisks} with risks (--expand lists them)`
+  ];
+  if (latest !== null) {
+    lines.push(
+      `  latest: ${latest.machine}  ${latest.branch ?? '-'}  ${displayPath(
+        latest,
+        input
+      )}  ${formatAge(latest.last_activity_at, input.now)}`,
+      `  resume: ${renderResume(latest, {
+        localAlias: input.localAlias,
+        templates: input.templates,
+        transcriptGone: transcriptGone(latest, input)
+      })}`
+    );
+  }
+  return lines;
+}
+
+function compactWorkspaceLine(workspace: WorkspaceView, input: RenderInput): string {
+  const parts = [displayPath(workspace, input), workspace.machine, workspace.branch ?? '-'];
+  const risks = riskLabels(workspace, input);
+  if (risks.length > 0) {
+    parts.push(risks.join(' '));
+  }
+  return `  ${parts.join('  ')}`;
 }
 
 export function renderWhere(response: WhereResponse, input: RenderInput): string[] {
@@ -204,8 +285,12 @@ export function renderWhere(response: WhereResponse, input: RenderInput): string
           .map((pullRequest) => ` PR:${pullRequest.state}`)
           .join('');
         lines.push(`${shortId(feature.id)} ${feature.title}  [${feature.stage}]${pullRequests}`);
-        for (const workspace of feature.workspaces) {
-          lines.push(...workspaceLines(workspace, input));
+        if (input.expand === true || feature.workspaces.length <= 1) {
+          for (const workspace of feature.workspaces) {
+            lines.push(...workspaceLines(workspace, input));
+          }
+        } else {
+          lines.push(...compactFeatureLines(feature.workspaces, input));
         }
       }
     } else {
@@ -214,7 +299,11 @@ export function renderWhere(response: WhereResponse, input: RenderInput): string
       }
       lines.push(`== ${group.label} (${group.workspaces.length}) ==`);
       for (const workspace of group.workspaces) {
-        lines.push(...workspaceLines(workspace, input));
+        if (input.expand === true || group.workspaces.length <= 1) {
+          lines.push(...workspaceLines(workspace, input));
+        } else {
+          lines.push(compactWorkspaceLine(workspace, input));
+        }
       }
     }
   }
@@ -227,6 +316,7 @@ export type WhereOptions = {
   repo?: string;
   all: boolean;
   includeEnded: boolean;
+  expand?: boolean;
 };
 
 export async function runWhere(
@@ -255,7 +345,9 @@ export async function runWhere(
     templates: deps.templates,
     now: deps.now,
     exists: deps.exists,
-    failedIds
+    failedIds,
+    ...(deps.homeDir !== undefined ? { homeDir: deps.homeDir } : {}),
+    ...(options.expand === true ? { expand: true } : {})
   };
   return deps.json ? augmentWhere(response, input) : renderWhere(response, input);
 }
@@ -266,6 +358,7 @@ type WhereCommandOpts = {
   repo?: string;
   all?: boolean;
   includeEnded?: boolean;
+  expand?: boolean;
 };
 
 export function registerWhereCommand(program: Command): void {
@@ -278,6 +371,7 @@ export function registerWhereCommand(program: Command): void {
       .option('--repo <remote>', 'only workspaces of this repo')
       .option('--all', 'include released and done features')
       .option('--include-ended', 'include ended sessions')
+      .option('--expand', 'list every workspace instead of a summary per feature')
   ).action(async () => {
     const opts = command.opts<WhereCommandOpts>();
     await runTrackingCommand(command, (context) =>
@@ -287,7 +381,8 @@ export function registerWhereCommand(program: Command): void {
           ...(opts.machine !== undefined ? { machine: opts.machine } : {}),
           ...(opts.repo !== undefined ? { repo: opts.repo } : {}),
           all: opts.all === true,
-          includeEnded: opts.includeEnded === true
+          includeEnded: opts.includeEnded === true,
+          expand: opts.expand === true
         },
         {
           client: context.client,
@@ -295,7 +390,8 @@ export function registerWhereCommand(program: Command): void {
           localAlias: context.config.alias,
           templates: context.config.resume,
           now: new Date(),
-          exists: existsSync
+          exists: existsSync,
+          homeDir: context.homeDir
         }
       )
     );

@@ -26,6 +26,7 @@ import { registerHereCommand } from './tracking/here.js';
 import { registerHooksCommands } from './tracking/hooks.js';
 import { registerScanCommand } from './tracking/scan.js';
 import { registerWhereCommand } from './tracking/where.js';
+import { registerWorkspaceCommands } from './tracking/workspace-commands.js';
 import { registerWorktreeCommand } from './tracking/worktree.js';
 import { buildSyncManifest } from './sync-walk.js';
 import {
@@ -1231,5 +1232,6 @@ registerWhereCommand(program);
 registerFeatureCommands(program);
 registerWorktreeCommand(program);
 registerScanCommand(program);
+registerWorkspaceCommands(program);
 
 await program.parseAsync(process.argv);

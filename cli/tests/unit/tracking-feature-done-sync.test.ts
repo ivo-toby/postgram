@@ -89,6 +89,21 @@ describe('runFeatureDone', () => {
     await expect(runFeatureDone('nope', deps)).rejects.toBeInstanceOf(UsageError);
   });
 
+  it('refuses a task that is not a feature, by full or short id', async () => {
+    const { deps, completeTask, recallEntity, listTasks } = setup();
+    recallEntity.mockResolvedValue(entity({ metadata: {} }));
+    await expect(runFeatureDone(FEATURE_ID, deps)).rejects.toThrow(/not a feature/);
+
+    listTasks.mockResolvedValue({
+      items: [{ ...entity().entity, metadata: {} }],
+      total: 1,
+      limit: 100,
+      offset: 0
+    });
+    await expect(runFeatureDone('1a2b3c4d', deps)).rejects.toThrow(/no feature matches/);
+    expect(completeTask).not.toHaveBeenCalled();
+  });
+
   it('does nothing when the feature is already done', async () => {
     const { deps, completeTask, recallEntity } = setup();
     recallEntity.mockResolvedValue(entity({ status: 'done' }));
@@ -271,6 +286,17 @@ describe('runFeatureSync', () => {
   it('fails when the named feature is not found', async () => {
     const { deps } = setup([], () => Promise.resolve({ ok: true, state: 'open' }));
     await expect(runFeatureSync('deadbeef', deps)).rejects.toThrow(/no feature matches/);
+  });
+
+  it('accepts only a full or 8-hex id and refuses an ambiguous one', async () => {
+    const twin = '1a2b3c4d-2222-4000-8000-000000000004';
+    const { deps, addPullRequest } = setup(
+      [feature(FEATURE_ID, 'One', [pr(A, 'open')]), feature(twin, 'Twin', [pr(B, 'open')])],
+      () => Promise.resolve({ ok: true, state: 'merged' } as GhResult)
+    );
+    await expect(runFeatureSync('1a', deps)).rejects.toBeInstanceOf(UsageError);
+    await expect(runFeatureSync('1a2b3c4d', deps)).rejects.toThrow(/ambiguous/);
+    expect(addPullRequest).not.toHaveBeenCalled();
   });
 
   it('asks the default view only for active features without an id', async () => {

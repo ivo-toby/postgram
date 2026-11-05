@@ -1,3 +1,15 @@
+## [1.40.0](https://github.com/ivo-toby/postgram/compare/cli-v1.39.0...cli-v1.40.0) (2026-11-05)
+
+### Features
+
+* **tracking:** add ignore_paths to ~/.pgmrc and honour it in pgm here ([7accfc0](https://github.com/ivo-toby/postgram/commit/7accfc07728f4b6a2b065c36bd17f41ce828b9c5))
+* **tracking:** add pgm feature done and pgm feature sync ([9aa1bea](https://github.com/ivo-toby/postgram/commit/9aa1bea7a68fc549c6ef5306ec7e740782c3fc54))
+* **tracking:** add pgm scan --json and --apply, fail cleanly without a terminal ([e55e26d](https://github.com/ivo-toby/postgram/commit/e55e26d27aba85736f4058629aaf1d6c923dec18))
+* **tracking:** add pgm workspace prune ([5a2755a](https://github.com/ivo-toby/postgram/commit/5a2755a1b8b0b1005109d75e9b7510199f10e769))
+* **tracking:** add pgm worktree rm ([0b67a9d](https://github.com/ivo-toby/postgram/commit/0b67a9d1b6075e54708193e33579d2443758f4bf))
+* **tracking:** compact pgm where per feature with --expand and tail-preserving paths ([b826abc](https://github.com/ivo-toby/postgram/commit/b826abcaa130141aa11e8ba790dca8751a7728cd))
+* **workspaces:** add workspace delete endpoint and MCP tool ([3906ed5](https://github.com/ivo-toby/postgram/commit/3906ed559baecf00dc86fbe68800c833c49afcad))
+
 ## [1.39.0](https://github.com/ivo-toby/postgram/compare/cli-v1.38.3...cli-v1.39.0) (2026-11-04)
 
 ### Features

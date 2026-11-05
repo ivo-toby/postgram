@@ -121,10 +121,16 @@ function hasContent(content: string | null | undefined): boolean {
   return typeof content === 'string' && content.trim().length > 0;
 }
 
+const ENTITY_ID_RE = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
+
 async function fetchEntityRow(
   pool: Pool,
   id: string
 ): Promise<EntityRow | null> {
+  // Postgres rejects a non-UUID with a syntax error, which would surface as INTERNAL.
+  if (!ENTITY_ID_RE.test(id)) {
+    throw new AppError(ErrorCode.VALIDATION, 'entity id must be a full UUID');
+  }
   const result = await pool.query<EntityRow>(
     'SELECT * FROM entities WHERE id = $1 LIMIT 1',
     [id]

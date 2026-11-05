@@ -216,6 +216,32 @@ describe('task-service', () => {
     expect(ids).not.toContain(archived.id);
   }, 120_000);
 
+  it('filters features in or out with kind', async () => {
+    if (!database) throw new Error('test database not initialized');
+    const auth = makeAuthContext();
+    const plain = (
+      await createTask(database.pool, auth, { content: 'plain task', visibility: 'personal' })
+    )._unsafeUnwrap();
+    const feature = (
+      await createTask(database.pool, auth, {
+        content: 'a feature',
+        visibility: 'personal',
+        metadata: { kind: 'feature' }
+      })
+    )._unsafeUnwrap();
+
+    const ids = async (kind?: 'task' | 'feature' | 'all') =>
+      (await listTasks(database!.pool, auth, { kind, limit: 500 }))
+        ._unsafeUnwrap()
+        .items.map((entity) => entity.id);
+
+    expect(await ids('task')).toContain(plain.id);
+    expect(await ids('task')).not.toContain(feature.id);
+    expect(await ids('feature')).toContain(feature.id);
+    expect(await ids('feature')).not.toContain(plain.id);
+    expect(await ids()).toEqual(expect.arrayContaining([plain.id, feature.id]));
+  }, 120_000);
+
   it('includes archived tasks when includeArchived is true', async () => {
     if (!database) throw new Error('test database not initialized');
     const auth = makeAuthContext();

@@ -878,6 +878,7 @@ taskCommand
       validateToonOptions(options, json);
 
       const body = await client.listTasks({
+        kind: 'task',
         status: options.status,
         context: options.context,
         limit: Number(options.limit),

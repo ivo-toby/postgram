@@ -188,7 +188,7 @@ describe('createApiClient', () => {
     await client.listTasks({ status: 'inbox', context: '@home', limit: 25, offset: 50 });
 
     expect(mockFetch).toHaveBeenCalledWith(
-      '/api/tasks?status=inbox&context=%40home&limit=25&offset=50',
+      '/api/tasks?kind=task&status=inbox&context=%40home&limit=25&offset=50',
       expect.objectContaining({
         headers: { Authorization: 'Bearer key' },
       })

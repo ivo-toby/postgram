@@ -127,7 +127,8 @@ export function createApiClient(options: ApiClientOptions) {
       offset?: number;
       include_archived?: boolean;
     } = {}) {
-      const qs = new URLSearchParams();
+      // Features are tasks too; the task viewer only shows plain tasks.
+      const qs = new URLSearchParams({ kind: 'task' });
       if (params.status) qs.set('status', params.status);
       if (params.context) qs.set('context', params.context);
       qs.set('limit', String(params.limit ?? 50));

@@ -48,7 +48,12 @@ type ListTasksInput = {
   limit?: number | undefined;
   offset?: number | undefined;
   includeArchived?: boolean | undefined;
+  /** Features are tasks with metadata.kind = 'feature'. Default 'all'. */
+  kind?: TaskKindFilter | undefined;
 };
+
+export const TASK_KIND_FILTERS = ['task', 'feature', 'all'] as const;
+export type TaskKindFilter = (typeof TASK_KIND_FILTERS)[number];
 
 type UpdateTaskInput = {
   id: string;
@@ -202,6 +207,10 @@ export function listTasks(
             AND ($2::boolean = true OR status IS DISTINCT FROM 'archived')
             AND ($3::text IS NULL OR metadata->>'context' = $3)
             AND visibility = ANY($4)
+            AND (
+              $7::text = 'all'
+              OR (metadata->>'kind' IS NOT DISTINCT FROM 'feature') = ($7::text = 'feature')
+            )
           ORDER BY created_at DESC
           LIMIT $5
           OFFSET $6
@@ -212,7 +221,8 @@ export function listTasks(
           input.context ?? null,
           auth.allowedVisibility,
           limit,
-          offset
+          offset,
+          input.kind ?? 'all'
         ]
       );
 

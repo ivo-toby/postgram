@@ -76,7 +76,7 @@ describe('MCP workspace tools', () => {
   }
 
   async function connect(
-    scopes: Array<'read' | 'write'> = ['read', 'write']
+    scopes: Array<'read' | 'write' | 'delete'> = ['read', 'write']
   ): Promise<Client> {
     const name = `mcp-ws-${crypto.randomUUID()}`;
     const created = (
@@ -179,6 +179,7 @@ describe('MCP workspace tools', () => {
       'workspace_report',
       'workspace_lookup',
       'workspace_link',
+      'workspace_delete',
       'feature_stage',
       'feature_pr',
       'where'
@@ -293,6 +294,30 @@ describe('MCP workspace tools', () => {
     expect(unlinked.json).toEqual({
       workspace_id: workspaceId,
       feature_id: null
+    });
+  }, 120_000);
+
+  it('deletes a workspace only with the delete scope', async () => {
+    const writer = await connect();
+    const reported = await tool(
+      writer,
+      'workspace_report',
+      hookReport({ path: '/home/ivo/wt/del' })
+    );
+    const workspaceId = reported.json.workspace_id as string;
+
+    const denied = await tool(writer, 'workspace_delete', {
+      workspace_id: workspaceId
+    });
+    expect(denied.isError).toBe(true);
+
+    const deleter = await connect(['read', 'write', 'delete']);
+    const deleted = await tool(deleter, 'workspace_delete', {
+      workspace_id: workspaceId
+    });
+    expect(deleted).toEqual({
+      isError: false,
+      json: { deleted: true, workspace_id: workspaceId, path: '/home/ivo/wt/del' }
     });
   }, 120_000);
 

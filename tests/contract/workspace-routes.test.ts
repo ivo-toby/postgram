@@ -173,6 +173,34 @@ describe('workspace routes (contract)', () => {
     expect(typeof (badAlias.json.error as Json).message).toBe('string');
   });
 
+  it('deletes a workspace and keeps the feature (delete)', async () => {
+    const featureId = await makeFeature('Survivor');
+    const reported = await call(
+      'POST',
+      '/api/workspaces/report',
+      hookReport({ path: '/home/ivo/wt/gone', featureId })
+    );
+    const workspaceId = (reported.json.workspace as Json).id as string;
+
+    const denied = await call('DELETE', `/api/workspaces/${workspaceId}`);
+    expect(denied.status).toBe(403);
+
+    auth = { ...auth, scopes: ['read', 'write', 'delete'] };
+    const deleted = await call('DELETE', `/api/workspaces/${workspaceId}`);
+    expect(deleted.status).toBe(200);
+    expect(deleted.json.deleted).toBe(true);
+    expect((deleted.json.workspace as Json).path).toBe('/home/ivo/wt/gone');
+
+    const again = await call('DELETE', `/api/workspaces/${workspaceId}`);
+    expect(again.status).toBe(404);
+
+    const entity = await db().pool.query(
+      'SELECT 1 FROM entities WHERE id = $1',
+      [featureId]
+    );
+    expect(entity.rowCount).toBe(1);
+  });
+
   it('links, marks missing, and validates PATCH bodies (patch)', async () => {
     const reported = await call(
       'POST',

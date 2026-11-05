@@ -252,37 +252,51 @@ stages, PRs and links need judgement; that is your part.
 
 Use this when the user asks to get an overview, consolidate or clean up their
 projects on a machine. Work in three passes and stop after the second for
-approval.
+approval. Do not hand-roll git discovery and do not call `pgm feature link`
+per worktree.
 
-1. **Inventory (read-only).** Find git repos and their worktrees under the
-   scan roots (`scan_roots` in `~/.pgmrc`, or ask; often `~/workspace`), plus
-   `git worktree list` of each repo, which also finds worktrees elsewhere
-   (for example `~/.codex/worktrees`). For each worktree collect: path,
-   branch, last commit date and subject, dirty files, unpushed commits,
-   upstream, and the PR for the branch (`gh pr list --head <branch> --state
-   all`). Run `pgm where --all --json` for what Postgram already knows, and
-   search for existing features (`pgm search "<topic>" --type task --toon`).
+1. **Inventory (read-only).** Run `pgm scan --json` (roots come from
+   `scan_roots` in `~/.pgmrc`; pass `--root <dir>` otherwise, often
+   `~/workspace`). It lists every worktree with repo remote, branch, last
+   commit date and subject, dirty and unpushed state, the link Postgram
+   already has and candidate features. It sends nothing and needs no
+   terminal. Add `pgm where --all --json` for features without workspaces and
+   `gh pr list --head <branch> --state all` where the PR decides the action.
+   Run `pgm feature sync` first so PR states and stages are current.
 2. **Proposal.** Show one table, one row per worktree: path, branch, last
    activity, risks, and the proposed action:
    - link to an existing feature (give its short id),
    - new feature (give the title),
+   - skip,
    - remove (merged or closed PR, no unique commits, or a throwaway
      worktree).
    Also propose a stage per feature, derived from its PR (open → `review`,
-   merged → `awaiting_release` or `released`). Group large sets of the same
-   kind (for example hundreds of review worktrees from one tool) into one
-   row with a count and one decision. Mark rows you are unsure about and ask
-   about those; do not guess.
-3. **Apply what the user approved.** `pgm feature add`, then `pgm feature
-   link <id> --path <dir>`, `pgm feature pr <id> <url> [--state merged]` and
-   `pgm feature stage` where the PR does not settle it. Remove worktrees
-   only with `git worktree remove` (no `--force`) and only after explicit
-   approval; never remove one with dirty files or unpushed commits. End
-   with `pgm where` so the user sees the result.
+   merged → `awaiting_release` or `released`), and which features are
+   finished (`pgm feature done`). Group large sets of the same kind (for
+   example hundreds of review worktrees from one tool) into one row with a
+   count and one decision. Mark rows you are unsure about and ask about
+   those; do not guess.
+3. **Apply what the user approved.**
+   - Write the approved links, new features and skips to a plan file and run
+     `pgm scan --apply plan.json --dry-run`, then without `--dry-run`. The
+     plan is `{"entries": [{"path", "action": "link", "feature_id"} |
+     {"path", "action": "create", "title"} | {"path", "action": "skip"}]}`.
+     One invalid entry rejects the whole plan; fix it and rerun.
+   - `pgm feature pr <id> <url> [--state merged]` and `pgm feature stage` where
+     a PR does not settle the stage; `pgm feature done <id>` for finished
+     features.
+   - `pgm worktree rm <path>` for approved removals. It refuses dirty files and
+     unpushed commits and has no force flag; report the refusal instead of
+     working around it. Never run `git worktree remove --force`.
+   - `pgm workspace prune --dry-run`, then `pgm workspace prune`, for
+     registrations whose directory is gone.
+   - If a directory such as the workspace root got registered, add it to
+     `ignore_paths` in `~/.pgmrc` and run `pgm workspace prune --ignored`.
+   End with `pgm where` so the user sees the result.
 
-Links are per machine: `pgm feature link --path` links the path on the
-machine where it runs. For another machine, run each pass there (or over
-`ssh <connect_target>`), one machine at a time.
+Links are per machine: `pgm scan` links paths on the machine where it runs.
+For another machine, run each pass there (or over `ssh <connect_target>`),
+one machine at a time.
 
 ### Commands
 
@@ -296,7 +310,13 @@ machine where it runs. For another machine, run each pass there (or over
 | Set a stage | `pgm feature stage <id> <stage>` | `feature_stage` |
 | Attach a PR | `pgm feature pr <id> <url> [--state merged]` | `feature_pr` |
 | New worktree for a feature | `pgm worktree new <feature> [--create]` | — |
-| Bootstrap existing worktrees | `pgm scan --root <dir> [--dry-run]` (interactive) | — |
+| Bootstrap existing worktrees (human) | `pgm scan --root <dir> [--dry-run]` (interactive, needs a terminal) | — |
+| Inventory worktrees (agent) | `pgm scan --json` | — |
+| Apply an approved plan | `pgm scan --apply plan.json [--dry-run]` | — |
+| Follow PR state on GitHub | `pgm feature sync [id]` (needs `gh`) | `feature_pr` per changed PR |
+| Finish a feature | `pgm feature done <id>` | `task_complete` |
+| Remove a clean worktree | `pgm worktree rm <path>` | — |
+| Remove registrations of gone directories | `pgm workspace prune [--dry-run]` | `workspace_delete` (delete scope) |
 
 `pgm scan` asks per worktree; run it in the user's terminal, not from an
 agent without a TTY. Use `--yes-exact` to accept only marker and short-id

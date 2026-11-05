@@ -361,7 +361,7 @@ describe('renderWhere', () => {
       "  resume: cd '/w/d' && claude",
       '== Unassigned (1) ==',
       '  devbox  -',
-      `${longLine2.slice(0, 59)}…`,
+      longLine2,
       `  resume: cd '${longPath}' && claude`
     ]);
   });
@@ -502,6 +502,150 @@ describe('augmentWhere', () => {
   });
 });
 
+function manyWorkspaces(): WorkspaceView[] {
+  return [
+    makeWorkspace({
+      id: 'w1',
+      path: '/home/u/wt/one',
+      branch: 'feat/one',
+      last_activity_at: '2026-10-31T10:00:00Z'
+    }),
+    makeWorkspace({
+      id: 'w2',
+      path: '/home/u/wt/two',
+      branch: 'feat/two',
+      risks: ['dirty'],
+      git: { dirty_count: 3, unpushed_count: 0, has_upstream: true },
+      last_activity_at: '2026-10-31T14:00:00Z',
+      resume_session: {
+        id: 'sess-9',
+        agent_kind: 'claude-code',
+        agent_session_id: 's-9',
+        status: 'idle',
+        cwd: null,
+        transcript_path: null,
+        last_activity_at: '2026-10-31T14:00:00Z'
+      },
+      sessions: [makeSession({ id: 'sess-9', agent_session_id: 's-9' })]
+    }),
+    makeWorkspace({
+      id: 'w3',
+      path: '/home/u/wt/three',
+      branch: 'feat/three',
+      risks: ['unpushed', 'missing'],
+      last_activity_at: '2026-10-30T10:00:00Z'
+    })
+  ];
+}
+
+function featureGroup(workspaces: WorkspaceView[]): WhereResponse {
+  return makeResponse([
+    {
+      key: 'building',
+      label: 'Building',
+      features: [
+        {
+          id: '1a2b3c4d-0000-4000-8000-000000000000',
+          title: 'Big Feature',
+          stage: 'building',
+          stage_source: 'manual',
+          stage_set_at: null,
+          task_status: null,
+          pull_requests: [],
+          workspaces
+        }
+      ]
+    }
+  ]);
+}
+
+describe('renderWhere compact view', () => {
+  it('summarises a feature with several workspaces and resumes the most recent', () => {
+    const lines = renderWhere(
+      featureGroup(manyWorkspaces()),
+      makeInput({ homeDir: '/home/u' })
+    );
+    expect(lines).toEqual([
+      '== Building (1) ==',
+      '1a2b3c4d Big Feature  [building]',
+      '  3 workspaces, 2 with risks (--expand lists them)',
+      '  latest: me  feat/two  ~/wt/two  1h',
+      "  resume: cd '/home/u/wt/two' && claude --resume 's-9'"
+    ]);
+  });
+
+  it('lists every workspace with --expand', () => {
+    const lines = renderWhere(
+      featureGroup(manyWorkspaces()),
+      makeInput({ homeDir: '/home/u', expand: true })
+    );
+    expect(lines.filter((line) => line.startsWith('  resume:'))).toHaveLength(3);
+    expect(lines.some((line) => line.includes('workspaces,'))).toBe(false);
+    expect(lines).toContain('  me  feat/three  unpushed missing');
+    expect(lines.some((line) => line.startsWith('  ~/wt/one  git ?'))).toBe(true);
+  });
+
+  it('keeps the full block for a feature with one workspace', () => {
+    const lines = renderWhere(
+      featureGroup([manyWorkspaces()[0] as WorkspaceView]),
+      makeInput({ homeDir: '/home/u' })
+    );
+    expect(lines).toEqual([
+      '== Building (1) ==',
+      '1a2b3c4d Big Feature  [building]',
+      '  me  feat/one',
+      '  ~/wt/one  git ?  no sessions',
+      "  resume: cd '/home/u/wt/one' && claude"
+    ]);
+  });
+
+  it('lists unassigned workspaces one per line unless expanded', () => {
+    const response = makeResponse([
+      { key: 'unassigned', label: 'Unassigned', workspaces: manyWorkspaces() }
+    ]);
+    expect(renderWhere(response, makeInput({ homeDir: '/home/u' }))).toEqual([
+      '== Unassigned (3) ==',
+      '  ~/wt/one  me  feat/one',
+      '  ~/wt/two  me  feat/two  dirty:3',
+      '  ~/wt/three  me  feat/three  unpushed missing'
+    ]);
+  });
+
+  it('never cuts the end of a path: it keeps the tail and drops leading segments', () => {
+    const long = `/home/u/${'deeply/'.repeat(12)}feat-abc12345-keyword-fusion`;
+    const lines = renderWhere(
+      makeResponse([
+        {
+          key: 'unassigned',
+          label: 'Unassigned',
+          workspaces: [makeWorkspace({ path: long }), makeWorkspace({ id: 'w2', path: '/x' })]
+        }
+      ]),
+      makeInput({ homeDir: '/home/u' })
+    );
+    const line = lines[1] ?? '';
+    expect(line.startsWith('  …/')).toBe(true);
+    expect(line).toContain('/feat-abc12345-keyword-fusion  me');
+  });
+
+  it('leaves remote paths alone', () => {
+    const lines = renderWhere(
+      makeResponse([
+        {
+          key: 'unassigned',
+          label: 'Unassigned',
+          workspaces: [
+            makeWorkspace({ machine: 'devbox', path: '/home/u/wt/x' }),
+            makeWorkspace({ id: 'w2', machine: 'devbox', path: '/home/u/wt/y' })
+          ]
+        }
+      ]),
+      makeInput({ homeDir: '/home/u' })
+    );
+    expect(lines[1]).toBe('  /home/u/wt/x  devbox  -');
+  });
+});
+
 describe('runWhere', () => {
   it('refetches and renders the refreshed data after a missing patch', async () => {
     const first = makeResponse([
@@ -566,6 +710,24 @@ describe('runWhere', () => {
     expect(whereCalls).toHaveLength(1);
     expect(patchCalls).toEqual([]);
     expect((result as string[]).length).toBeGreaterThan(0);
+  });
+
+  it('passes expand and the home directory to the renderer', async () => {
+    const response = featureGroup(manyWorkspaces());
+    const { client } = makeClient([response]);
+    const result = await runWhere(
+      { actions: false, all: false, includeEnded: false, expand: true },
+      {
+        client,
+        json: false,
+        localAlias: 'me',
+        templates: DEFAULT_RESUME,
+        now: NOW,
+        exists: () => true,
+        homeDir: '/home/u'
+      }
+    );
+    expect((result as string[]).filter((line) => line.startsWith('  resume:'))).toHaveLength(3);
   });
 
   it('maps flags to the where query and returns the augmented body in json mode', async () => {

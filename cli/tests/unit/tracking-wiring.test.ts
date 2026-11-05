@@ -16,7 +16,8 @@ const NEW_COMMANDS = [
   'machine',
   'repo',
   'worktree',
-  'scan'
+  'scan',
+  'workspace'
 ];
 
 const EXISTING_COMMANDS = ['store', 'search', 'task'];

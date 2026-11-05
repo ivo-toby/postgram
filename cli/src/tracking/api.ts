@@ -33,6 +33,7 @@ export type TrackingClient = {
     id: string,
     body: { feature_id?: string | null; missing?: boolean }
   ): Promise<{ workspace: WorkspaceView }>;
+  deleteWorkspace(id: string): Promise<{ deleted: true; workspace: WorkspaceView }>;
   putMachine(
     alias: string,
     connectTarget: string | null
@@ -102,6 +103,13 @@ export function createTrackingClient(
         options,
         `/api/workspaces/${encodeURIComponent(id)}`,
         { method: 'PATCH', body }
+      );
+    },
+    deleteWorkspace(id) {
+      return request<{ deleted: true; workspace: WorkspaceView }>(
+        options,
+        `/api/workspaces/${encodeURIComponent(id)}`,
+        { method: 'DELETE' }
       );
     },
     putMachine(alias, connectTarget) {

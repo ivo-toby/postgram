@@ -73,6 +73,7 @@ function makeConfig(overrides?: Partial<TrackingConfig>): TrackingConfig {
     scanRoots: [],
     worktreeRoot: null,
     hereTimeoutMs: 2000,
+    ignorePaths: [],
     resume: DEFAULT_RESUME,
     ...overrides
   };
@@ -348,6 +349,66 @@ describe('runHere without --hook', () => {
 
     expect(result).toEqual({ stdout: '', exitCode: 2 });
     expect(calls).toHaveLength(0);
+  });
+});
+
+describe('runHere ignore_paths', () => {
+  it('sends nothing and stays silent for an ignored directory in hook mode', async () => {
+    const { client, calls } = makeClient({ id: FEATURE_ID, title: 'T', stage: 'building' });
+    const logs: string[] = [];
+    const resolved: string[] = [];
+    const deps = makeDeps({
+      client,
+      config: makeConfig({ ignorePaths: ['/w'] }),
+      stdin: () =>
+        Promise.resolve(
+          JSON.stringify({ hook_event_name: 'SessionStart', session_id: 's-1', cwd: '/w' })
+        ),
+      log: pushLog(logs),
+      resolveWorkspace: (cwd) => {
+        resolved.push(cwd);
+        return Promise.resolve({ kind: 'ok', path: '/w', repoRoot: null, workspace: { path: '/w' } });
+      }
+    });
+
+    const result = await runHere({ hook: true, quiet: false }, deps);
+
+    expect(result).toEqual({ stdout: '', exitCode: 0 });
+    expect(calls).toHaveLength(0);
+    expect(logs).toEqual([]);
+    expect(resolved).toEqual([]);
+  });
+
+  it('checks the resolved worktree root too and says so without --hook', async () => {
+    const { client, calls } = makeClient(null);
+    const deps = makeDeps({
+      client,
+      config: makeConfig({ ignorePaths: ['/w'] }),
+      cwd: '/w/sub',
+      resolveWorkspace: () =>
+        Promise.resolve({ kind: 'ok', path: '/w', repoRoot: '/w', workspace: { path: '/w' } })
+    });
+
+    const result = await runHere({ hook: false, quiet: false }, deps);
+
+    expect(result.exitCode).toBe(0);
+    expect(result.stdout).toBe('ignored /w (ignore_paths)\n');
+    expect(calls).toHaveLength(0);
+  });
+
+  it('keeps registering a child of an exactly ignored directory', async () => {
+    const { client, calls } = makeClient(null);
+    const deps = makeDeps({
+      client,
+      config: makeConfig({ ignorePaths: ['/w'] }),
+      cwd: '/w/app',
+      resolveWorkspace: () =>
+        Promise.resolve({ kind: 'ok', path: '/w/app', repoRoot: '/w/app', workspace: { path: '/w/app' } })
+    });
+
+    await runHere({ hook: false, quiet: false }, deps);
+
+    expect(calls).toHaveLength(1);
   });
 });
 

@@ -28,6 +28,7 @@ export type TrackingConfig = {
   scanRoots: string[];
   worktreeRoot: string | null;
   hereTimeoutMs: number;
+  ignorePaths: string[];
   resume: ResumeTemplates;
 };
 
@@ -61,6 +62,25 @@ export function expandHome(value: string, homeDir: string): string {
     return path.join(homeDir, value.slice(2));
   }
   return value;
+}
+
+function trimTrailingSlashes(value: string): string {
+  return value.length > 1 ? value.replace(/\/+$/, '') || '/' : value;
+}
+
+/**
+ * An entry matches that directory exactly. An entry ending in `/**` matches
+ * everything below the directory, but not the directory itself.
+ */
+export function isIgnoredPath(target: string, ignorePaths: readonly string[]): boolean {
+  const candidate = trimTrailingSlashes(target);
+  return ignorePaths.some((entry) => {
+    if (entry.endsWith('/**')) {
+      const base = trimTrailingSlashes(entry.slice(0, -3));
+      return candidate.startsWith(base === '/' ? '/' : `${base}/`);
+    }
+    return candidate === trimTrailingSlashes(entry);
+  });
 }
 
 function isRecord(value: unknown): value is Record<string, unknown> {
@@ -110,6 +130,15 @@ export function parseTrackingConfig(
       ? timeout
       : 2000;
 
+  const ignorePaths: string[] = [];
+  if (isRecord(raw) && Array.isArray(raw.ignore_paths)) {
+    for (const entry of raw.ignore_paths) {
+      if (typeof entry === 'string' && entry !== '') {
+        ignorePaths.push(expandHome(entry, input.homeDir));
+      }
+    }
+  }
+
   const resume = cloneResume(DEFAULT_RESUME);
   const rawResume = isRecord(raw) && isRecord(raw.resume) ? raw.resume : {};
   for (const kind of AGENT_KINDS) {
@@ -128,7 +157,15 @@ export function parseTrackingConfig(
     }
   }
 
-  return { alias, connectTarget, scanRoots, worktreeRoot, hereTimeoutMs, resume };
+  return {
+    alias,
+    connectTarget,
+    scanRoots,
+    worktreeRoot,
+    hereTimeoutMs,
+    ignorePaths,
+    resume
+  };
 }
 
 export async function loadTrackingConfig(

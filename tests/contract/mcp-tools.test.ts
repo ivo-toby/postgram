@@ -224,6 +224,7 @@ describe('MCP tools', () => {
           'unlink',
           'update',
           'where',
+          'workspace_delete',
           'workspace_link',
           'workspace_lookup',
           'workspace_report'

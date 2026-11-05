@@ -6,6 +6,7 @@ import {
   mkdtempSync,
   readFileSync,
   realpathSync,
+  rmSync,
   writeFileSync
 } from 'node:fs';
 import os from 'node:os';
@@ -156,7 +157,7 @@ describe('pgm scan (feature)', () => {
       await createKey(db().pool, {
         name,
         clientId: name,
-        scopes: ['read', 'write'],
+        scopes: ['read', 'write', 'delete'],
         allowedTypes: null,
         allowedVisibility: ['personal', 'work', 'shared']
       })
@@ -270,4 +271,87 @@ describe('pgm scan (feature)', () => {
     expect(`${again.stdout}${again.stderr}`).toContain('known');
     expect((await workspaces()).length).toBe(2);
   }, 180_000);
+
+  it('inventories, applies a plan, hides done features and prunes gone worktrees', async () => {
+    const existing = await createFeature('Existing feature');
+    const alpha = path.join(root, 'alpha');
+    initRepo(alpha, 'main');
+    const beta = path.join(root, 'beta');
+    initRepo(beta, 'feat/spike');
+    const skipped = path.join(root, 'gamma');
+    initRepo(skipped, 'main');
+
+    const inventoryRun = await pgm(['scan', '--root', root, '--json']);
+    expect(inventoryRun.code).toBe(0);
+    const inventory = JSON.parse(inventoryRun.stdout) as { worktrees: Json[] };
+    expect(inventory.worktrees.map((w) => w.path)).toEqual([alpha, beta, skipped]);
+    expect(inventory.worktrees[1]).toMatchObject({
+      branch: 'feat/spike',
+      workspace_id: null,
+      feature: null,
+      git: { dirty_count: 0, has_upstream: false }
+    });
+    expect((inventory.worktrees[1]?.last_commit as Json).subject).toBe('init');
+    expect(await workspaces()).toEqual([]);
+
+    const plan = path.join(tmp, 'plan.json');
+    writeFileSync(
+      plan,
+      JSON.stringify({
+        entries: [
+          { path: alpha, action: 'link', feature_id: existing.slice(0, 8) },
+          { path: beta, action: 'create', title: 'Spike feature' },
+          { path: skipped, action: 'skip' }
+        ]
+      })
+    );
+    const rejected = path.join(tmp, 'bad.json');
+    writeFileSync(
+      rejected,
+      JSON.stringify([
+        { path: alpha, action: 'link', feature_id: existing },
+        { path: beta, action: 'link', feature_id: 'deadbeef' }
+      ])
+    );
+    const bad = await pgm(['scan', '--apply', rejected]);
+    expect(bad.code).toBe(2);
+    expect(bad.stderr).toContain('no feature matches deadbeef');
+    expect(await workspaces()).toEqual([]);
+
+    const applied = await pgm(['scan', '--apply', plan, '--json']);
+    expect(applied.code).toBe(0);
+    const outcome = JSON.parse(applied.stdout) as { results: Json[]; failed: number };
+    expect(outcome.failed).toBe(0);
+    expect(outcome.results.map((r) => r.status)).toEqual(['linked', 'created', 'skipped']);
+    const stored = await workspaces();
+    expect(stored.map((w) => w.path).sort()).toEqual([alpha, beta].sort());
+    expect(stored.find((w) => w.path === alpha)?.feature_id).toBe(existing);
+    const created = stored.find((w) => w.path === beta)?.feature_id as string;
+    expect(created).toBeTruthy();
+
+    const where = await pgm(['where']);
+    expect(where.stdout).toContain('Existing feature');
+    expect(where.stdout).toContain('Spike feature');
+    const done = await pgm(['feature', 'done', existing.slice(0, 8)]);
+    expect(done.code).toBe(0);
+    const hidden = await pgm(['where']);
+    expect(hidden.stdout).not.toContain('Existing feature');
+    expect(hidden.stdout).toContain('Spike feature');
+    expect((await pgm(['where', '--all'])).stdout).toContain('Existing feature');
+
+    rmSync(alpha, { recursive: true, force: true });
+    const dry = await pgm(['workspace', 'prune', '--dry-run']);
+    expect(dry.stdout).toContain(`would remove ${alpha}`);
+    expect((await workspaces()).length).toBe(2);
+    const prune = await pgm(['workspace', 'prune']);
+    expect(prune.code).toBe(0);
+    expect((await workspaces()).map((w) => w.path)).toEqual([beta]);
+    const entity = await api('GET', `/api/entities/${existing}`);
+    expect((entity.entity as Json).id).toBe(existing);
+
+    const refused = await pgm(['worktree', 'rm', beta]);
+    expect(refused.code).not.toBe(0);
+    expect(refused.stderr).toContain('main working tree');
+    expect(existsSync(beta)).toBe(true);
+  }, 240_000);
 });

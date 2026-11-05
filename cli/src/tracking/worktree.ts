@@ -1,5 +1,6 @@
 // cli/src/tracking/worktree.ts: pgm worktree new — create a feature worktree.
 import { existsSync } from 'node:fs';
+import { realpath } from 'node:fs/promises';
 import os from 'node:os';
 import path from 'node:path';
 
@@ -228,6 +229,119 @@ export async function runWorktreeNew(
   return [worktreePath];
 }
 
+export type WorktreeRemoveDeps = {
+  client: TrackingClient;
+  config: TrackingConfig;
+  cwd: string;
+  run: GitRunner;
+  exists: (path: string) => boolean;
+  realpath: (path: string) => Promise<string>;
+  resolveWorkspace: (cwd: string) => Promise<LocalWorkspace>;
+  warn: (line: string) => void;
+};
+
+export type WorktreeRemoveResult = {
+  path: string;
+  removed: true;
+  unregistered: boolean;
+};
+
+function plural(count: number, noun: string): string {
+  return `${count} ${noun}${count === 1 ? '' : 's'}`;
+}
+
+/**
+ * Removes a linked worktree only when nothing would be lost: no changed files
+ * and no commits that no remote has. There is no force flag and `git worktree
+ * remove` runs without --force. The workspace registration goes afterwards.
+ */
+export async function runWorktreeRemove(
+  target: string,
+  deps: WorktreeRemoveDeps
+): Promise<WorktreeRemoveResult> {
+  const abs = path.resolve(deps.cwd, target);
+  if (!deps.exists(abs)) {
+    throw new UsageError(`no such directory: ${abs}`);
+  }
+
+  const local = await deps.resolveWorkspace(abs);
+  if (local.kind === 'timeout') {
+    throw new AppError(
+      ErrorCode.INTERNAL,
+      'git timed out reading the worktree state; nothing was removed'
+    );
+  }
+  if (local.repoRoot === null) {
+    throw new UsageError(`not a git worktree: ${abs}`);
+  }
+  if (local.path !== (await deps.realpath(abs))) {
+    throw new UsageError(
+      `not the root of a worktree: pass ${local.path} instead of ${abs}`
+    );
+  }
+  if (local.repoRoot === local.path) {
+    throw new UsageError(`refusing to remove the main working tree: ${local.path}`);
+  }
+
+  const git = local.workspace.git ?? null;
+  const reasons: string[] = [];
+  if (git === null) {
+    reasons.push('git state is unknown');
+  } else {
+    if (git.dirty_count > 0) {
+      reasons.push(plural(git.dirty_count, 'changed file'));
+    }
+    if (git.unpushed_count > 0) {
+      reasons.push(
+        `${plural(git.unpushed_count, 'unpushed commit')}${
+          git.has_upstream ? '' : ' (no upstream; no remote has them)'
+        }`
+      );
+    }
+  }
+  if (reasons.length > 0) {
+    throw new AppError(
+      ErrorCode.CONFLICT,
+      `refusing to remove ${local.path}: ${reasons.join(', ')}`
+    );
+  }
+
+  const commonDir = await deps.run(
+    ['rev-parse', '--path-format=absolute', '--git-common-dir'],
+    { cwd: local.path, timeoutMs: GIT_TIMEOUT_MS }
+  );
+  if (commonDir.ok === false) {
+    throw new AppError(ErrorCode.INTERNAL, 'could not determine the git common dir');
+  }
+  const removed = await deps.run(
+    ['--git-dir', commonDir.stdout, 'worktree', 'remove', local.path],
+    { cwd: local.repoRoot, timeoutMs: GIT_TIMEOUT_MS }
+  );
+  if (removed.ok === false) {
+    throw new AppError(
+      ErrorCode.INTERNAL,
+      `git worktree remove failed${removed.timedOut ? ' (timed out)' : ''}; nothing was unregistered`
+    );
+  }
+
+  let unregistered = false;
+  try {
+    const looked = await deps.client.lookup(deps.config.alias, local.path);
+    if (looked.workspace !== null && looked.workspace.path === local.path) {
+      await deps.client.deleteWorkspace(looked.workspace.id);
+      unregistered = true;
+    }
+  } catch (error) {
+    deps.warn(
+      `worktree removed, but unregistering failed: ${
+        error instanceof Error ? error.message : 'unknown error'
+      }; run \`pgm workspace prune\` later`
+    );
+  }
+
+  return { path: local.path, removed: true, unregistered };
+}
+
 type WorktreeNewOpts = {
   base?: string;
   path?: string;
@@ -256,6 +370,35 @@ export function registerWorktreeCommand(program: Command): void {
       .option('--path <dir>', 'worktree path (default: <worktree_root>/<8-hex>-<slug>)')
       .option('--create', 'create the feature when it does not exist')
   );
+  const removeCommand = usageExit(
+    worktree
+      .command('rm <path>')
+      .description(
+        'Remove a clean worktree and unregister it. Refuses when there are changed files or unpushed commits; there is no force flag'
+      )
+  );
+  removeCommand.action(async (target: string) => {
+    await runTrackingCommand(removeCommand, async (context) => {
+      const result = await runWorktreeRemove(target, {
+        client: context.client,
+        config: context.config,
+        cwd: process.cwd(),
+        run: runGit,
+        exists: existsSync,
+        realpath: (p) => realpath(p),
+        resolveWorkspace: (cwd) => resolveLocalWorkspace(cwd, { budgetMs: 5000 }),
+        warn: (line) => process.stderr.write(`${line}\n`)
+      });
+      return context.json
+        ? result
+        : [
+            `removed ${result.path}${
+              result.unregistered ? ' and unregistered the workspace' : ''
+            }`
+          ];
+    });
+  });
+
   newCommand.action(async (feature: string) => {
     const opts = newCommand.opts<WorktreeNewOpts>();
     await runTrackingCommand(newCommand, async (context) => {

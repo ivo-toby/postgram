@@ -245,6 +245,18 @@ Body: `{ "feature_id": "uuid|8-hex|null", "missing": true|false }`. Both fields 
 
 ---
 
+## Delete endpoints (scope `delete`)
+
+### DELETE /api/workspaces/:id
+
+Removes the workspace row; its `agent_sessions` cascade. Entities (including
+the linked feature) are never touched. Writes a `workspace_delete` audit row
+(`entity_id` = workspace id, details `path`, `machine`, `feature_id`).
+
+- 200: `{ "deleted": true, "workspace": <Workspace object as it was> }`
+- 404 `NOT_FOUND`: unknown, malformed or invisible id.
+- 403 `FORBIDDEN`: key lacks the `delete` scope.
+
 ## Read endpoints (scope `read`)
 
 ### GET /api/machines

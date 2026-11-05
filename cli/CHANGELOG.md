@@ -1,3 +1,12 @@
+## [1.41.0](https://github.com/ivo-toby/postgram/compare/cli-v1.40.1...cli-v1.41.0) (2026-11-05)
+
+### Features
+
+* **ui:** add the read-only Where page and its tab ([bd49f59](https://github.com/ivo-toby/postgram/commit/bd49f5949ae3110d9d35ad059ec6d89cc3716ce3))
+* **ui:** add the where types, resume rendering and the useWhere hook ([85f7ffe](https://github.com/ivo-toby/postgram/commit/85f7ffebdd3ca6d86d79dc1f1aa681c417458510))
+* **ui:** make the Where page easier to read ([d4f63cb](https://github.com/ivo-toby/postgram/commit/d4f63cb2fe7b1309bfff91b443c5daba51bc3dab))
+* **ui:** show the Where page as swimlanes per project ([2635fa0](https://github.com/ivo-toby/postgram/commit/2635fa03765d50edd24884544988a29b1d686118))
+
 ## [1.40.1](https://github.com/ivo-toby/postgram/compare/cli-v1.40.0...cli-v1.40.1) (2026-11-05)
 
 ### Bug Fixes

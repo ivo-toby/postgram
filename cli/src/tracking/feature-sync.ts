@@ -9,6 +9,9 @@ import type { WhereFeature } from './types.js';
 
 type PullState = 'open' | 'merged' | 'closed';
 
+const FULL_UUID = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
+const SHORT_HEX = /^[0-9a-f]{8}$/i;
+
 export type GhResult =
   | { ok: true; state: PullState }
   | { ok: false; kind: 'missing' | 'unauthenticated' | 'error'; message: string };
@@ -126,11 +129,17 @@ export async function runFeatureSync(
   let features = collectFeatures(response);
   if (id !== undefined) {
     const wanted = id.toLowerCase();
-    features = features.filter(
-      (feature) => feature.id === wanted || feature.id.startsWith(wanted)
+    if (!FULL_UUID.test(wanted) && !SHORT_HEX.test(wanted)) {
+      throw new UsageError('feature id must be a full UUID or an 8-hex short id');
+    }
+    features = features.filter((feature) =>
+      FULL_UUID.test(wanted) ? feature.id === wanted : feature.id.startsWith(wanted)
     );
     if (features.length === 0) {
       throw new AppError(ErrorCode.NOT_FOUND, `no feature matches ${id}`);
+    }
+    if (features.length > 1) {
+      throw new AppError(ErrorCode.CONFLICT, `feature id ${id} is ambiguous`);
     }
   }
 
@@ -209,7 +218,7 @@ export function formatSync(result: SyncResult): string[] {
     lines.push(`error ${shortId(error.feature_id)} ${error.url}: ${error.error}`);
   }
   lines.push(
-    `checked ${result.checked} pull requests: ${result.changed.length} changed, ${result.unchanged} unchanged, ${result.errors.length} failed`
+    `checked ${result.checked} pull ${result.checked === 1 ? 'request' : 'requests'}: ${result.changed.length} changed, ${result.unchanged} unchanged, ${result.errors.length} failed`
   );
   return lines;
 }

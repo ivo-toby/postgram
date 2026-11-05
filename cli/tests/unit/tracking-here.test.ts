@@ -352,6 +352,32 @@ describe('runHere without --hook', () => {
   });
 });
 
+describe('runHere outside git', () => {
+  it('sends nothing for a directory that is not in a git repository', async () => {
+    const { client, calls } = makeClient(null);
+    const logs: string[] = [];
+    const deps = makeDeps({
+      client,
+      cwd: '/notes',
+      stdin: () =>
+        Promise.resolve(
+          JSON.stringify({ hook_event_name: 'SessionStart', session_id: 's-1', cwd: '/notes' })
+        ),
+      log: pushLog(logs),
+      resolveWorkspace: () =>
+        Promise.resolve({ kind: 'ok', path: '/notes', repoRoot: null, workspace: { path: '/notes', git: null } })
+    });
+
+    const plain = await runHere({ hook: false, quiet: false }, deps);
+    expect(plain).toEqual({ stdout: 'skipped /notes (not a git repository)\n', exitCode: 0 });
+
+    const hooked = await runHere({ hook: true, quiet: false }, deps);
+    expect(hooked).toEqual({ stdout: '', exitCode: 0 });
+    expect(calls).toHaveLength(0);
+    expect(logs).toEqual([]);
+  });
+});
+
 describe('runHere ignore_paths', () => {
   it('sends nothing and stays silent for an ignored directory in hook mode', async () => {
     const { client, calls } = makeClient({ id: FEATURE_ID, title: 'T', stage: 'building' });

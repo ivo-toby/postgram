@@ -85,7 +85,7 @@ async function resolveTaskId(id: string, deps: FeatureDoneDeps): Promise<string>
   for (let offset = 0; ; offset += 100) {
     const page = await deps.pgm.listTasks({ limit: 100, offset });
     for (const item of page.items) {
-      if (item.id.startsWith(prefix)) {
+      if (item.id.startsWith(prefix) && item.metadata.kind === 'feature') {
         matches.push(item.id);
       }
     }
@@ -113,6 +113,9 @@ export async function runFeatureDone(
 ): Promise<unknown> {
   const taskId = await resolveTaskId(id, deps);
   const current = await deps.pgm.recallEntity(taskId);
+  if (current.entity.metadata.kind !== 'feature') {
+    throw new UsageError(`${shortId(taskId)} is not a feature`);
+  }
   if (current.entity.status === 'done') {
     return deps.json
       ? { id: taskId, status: 'done', changed: false }

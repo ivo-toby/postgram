@@ -119,7 +119,7 @@ Details are in research R6, R7 and R8.
 | Item | How |
 |------|-----|
 | Machine | alias and hostname from config, boot id (`null` when unavailable) |
-| Workspace path | `realpath(git worktree root)`, or `realpath(cwd)` outside git |
+| Workspace path | `realpath(git worktree root)`. Outside git no report is sent (`skipped <path> (not a git repository)` without `--hook`, silent with it). |
 | Git data | remote, repo root, branch, git counts |
 | Feature | the marker file |
 

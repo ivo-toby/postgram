@@ -27,13 +27,35 @@ export type Proposal = {
 
 export const BRANCH_SHORT_ID = /(?:^|\/)([0-9a-f]{8})(?:-|$)/;
 
+/** A feature task. `tasks` only ever holds features; `done` hides it from proposals. */
+export type ScanTask = { id: string; title: string; done?: boolean };
+
+/** Keeps the feature tasks of a task listing, so plain tasks are never offered or linked. */
+export function featureTasks(
+  items: ReadonlyArray<{
+    id: string;
+    content: string | null;
+    status?: string | null;
+    metadata: Record<string, unknown>;
+  }>
+): ScanTask[] {
+  return items
+    .filter((item) => item.metadata.kind === 'feature')
+    .map((item) => ({
+      id: item.id,
+      title: firstLineTitle(item.content),
+      done: item.status === 'done'
+    }));
+}
+
 export type ScanDeps = {
   client: TrackingClient;
   config: TrackingConfig;
   hostname: string;
   env: NodeJS.ProcessEnv;
   homeDir: string;
-  tasks: () => Promise<Array<{ id: string; title: string }>>;
+  /** Feature tasks only (see featureTasks). */
+  tasks: () => Promise<ScanTask[]>;
   search: (
     query: string
   ) => Promise<Array<{ id: string; title: string }>>;
@@ -86,7 +108,7 @@ function newFeatureTitle(branch: string | null, dirName: string): string {
 async function buildProposals(
   worktree: ScannedWorktree,
   deps: ScanDeps,
-  tasks: Array<{ id: string; title: string }>,
+  tasks: ScanTask[],
   yesExact: boolean
 ): Promise<Proposal[]> {
   const proposals: Proposal[] = [];
@@ -118,7 +140,11 @@ async function buildProposals(
       } catch {
         hits = [];
       }
-      for (const hit of hits.slice(0, 3)) {
+      // Search covers every task; only open features are worth proposing.
+      const open = new Set(
+        tasks.filter((task) => task.done !== true).map((task) => task.id)
+      );
+      for (const hit of hits.filter((h) => open.has(h.id)).slice(0, 3)) {
         proposals.push({ kind: 'search', featureId: hit.id, title: hit.title });
       }
     }
@@ -779,12 +805,10 @@ export function registerScanCommand(program: Command): void {
         env: process.env,
         homeDir: context.homeDir,
         tasks: async () => {
-          const items: Array<{ id: string; title: string }> = [];
+          const items: ScanTask[] = [];
           for (let offset = 0; ; offset += 100) {
             const page = await context.pgm.listTasks({ limit: 100, offset });
-            for (const item of page.items) {
-              items.push({ id: item.id, title: firstLineTitle(item.content) });
-            }
+            items.push(...featureTasks(page.items));
             if (page.items.length < 100) {
               break;
             }
@@ -795,7 +819,7 @@ export function registerScanCommand(program: Command): void {
           const response = await context.pgm.searchEntities({
             query,
             type: 'task',
-            limit: 3
+            limit: 10
           });
           return response.results.map((result) => ({
             id: result.entity.id,

@@ -46,7 +46,7 @@ The user starts a Claude Code or pi session in any directory. Without any action
 2. **Given** a running session, **When** the agent finishes a turn and waits for the human, **Then** the session is marked "idle" and the git state snapshot is refreshed.
 3. **Given** a running or idle session, **When** the session ends, **Then** it is marked "ended".
 4. **Given** the worktree contains a marker that names a feature, **When** a session registers, **Then** the workspace is linked to that feature.
-5. **Given** the directory is not inside a git repository, **When** a session registers, **Then** the session is still recorded against a workspace for that machine and path, with no repository or branch.
+5. **Given** the directory is not inside a git repository, **When** a session registers, **Then** nothing is recorded: a directory without git holds no project code, so it is not a workspace.
 6. **Given** Postgram is unreachable, **When** the hook runs, **Then** the hook finishes quickly without failing or blocking the agent session.
 
 ---

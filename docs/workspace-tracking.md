@@ -41,6 +41,8 @@ pgm hooks install --pi                               # pi extension, if you use 
 
 Check it with `pgm here` in any git repo. It prints
 `registered <machine>:<path> (unassigned)` or the linked feature.
+Outside a git repo it prints `skipped <path> (not a git repository)` and
+registers nothing; the hooks skip those directories silently.
 
 Make sure `PGM_API_URL` points to the server you want to track against. A
 project `.envrc` that points to a local dev server makes the hooks report

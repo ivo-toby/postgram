@@ -7,6 +7,8 @@ import {
   renderResume,
   resumeDirectory,
   shq,
+  shqIfNeeded,
+  stageLabel,
 } from './where.ts';
 import type { WhereGroup, WorkspaceView } from './where.ts';
 
@@ -46,6 +48,36 @@ describe('shq', () => {
   });
 });
 
+describe('shqIfNeeded', () => {
+  it('leaves plain paths, hosts and ids unquoted', () => {
+    expect(shqIfNeeded('/home/ivo/wt/postgram-ui')).toBe('/home/ivo/wt/postgram-ui');
+    expect(shqIfNeeded('nuc.lan')).toBe('nuc.lan');
+    expect(shqIfNeeded('ivo@codebox')).toBe('ivo@codebox');
+    expect(shqIfNeeded('8f3c1a2b-0000-4000-8000-000000000000')).toBe('8f3c1a2b-0000-4000-8000-000000000000');
+  });
+
+  it('quotes spaces, quotes, shell characters, a leading ~ or = and the empty string', () => {
+    expect(shqIfNeeded('a b')).toBe("'a b'");
+    expect(shqIfNeeded("x'y")).toBe(String.raw`'x'\''y'`);
+    expect(shqIfNeeded('a;rm -rf')).toBe("'a;rm -rf'");
+    expect(shqIfNeeded('$HOME')).toBe("'$HOME'");
+    expect(shqIfNeeded('~/wt')).toBe("'~/wt'");
+    expect(shqIfNeeded('=x')).toBe("'=x'");
+    expect(shqIfNeeded('')).toBe("''");
+  });
+});
+
+describe('stageLabel', () => {
+  it('turns every stage key into a readable label', () => {
+    expect(stageLabel('building')).toBe('Building');
+    expect(stageLabel('review')).toBe('Review');
+    expect(stageLabel('functional_test')).toBe('Functional test');
+    expect(stageLabel('ready_to_merge')).toBe('Ready to merge');
+    expect(stageLabel('awaiting_release')).toBe('Awaiting release');
+    expect(stageLabel('released')).toBe('Released');
+  });
+});
+
 describe('renderResume (ssh form only)', () => {
   it('renders a claude-code session with its id', () => {
     const ws = workspace({
@@ -60,7 +92,7 @@ describe('renderResume (ssh form only)', () => {
       },
     });
     expect(renderResume(ws)).toBe(
-      String.raw`ssh -t codebox 'cd '\''/w/a'\'' && claude --resume '\''8f3c'\'''`
+      String.raw`ssh -t codebox 'cd /w/a && claude --resume 8f3c'`
     );
   });
 
@@ -99,12 +131,12 @@ describe('renderResume (ssh form only)', () => {
         last_activity_at: agoMs(3 * DAY),
       },
     });
-    expect(renderResume(ws)).toBe(String.raw`ssh -t jarvis 'cd '\''/w/d'\'''`);
+    expect(renderResume(ws)).toBe(String.raw`ssh -t jarvis 'cd /w/d'`);
   });
 
   it('renders the bare claude command when there is no session at all', () => {
     const ws = workspace({ path: '/w/c' });
-    expect(renderResume(ws)).toBe(String.raw`ssh -t codebox 'cd '\''/w/c'\'' && claude'`);
+    expect(renderResume(ws)).toBe(String.raw`ssh -t codebox 'cd /w/c && claude'`);
   });
 
   it('falls back to the first session agent kind when resume_session is null', () => {
@@ -126,7 +158,7 @@ describe('renderResume (ssh form only)', () => {
         },
       ],
     });
-    expect(renderResume(ws)).toBe(String.raw`ssh -t codebox 'cd '\''/w/c'\'' && pi'`);
+    expect(renderResume(ws)).toBe(String.raw`ssh -t codebox 'cd /w/c && pi'`);
   });
 
   it('uses the workspace path when the resume cwd lies outside it', () => {
@@ -144,7 +176,7 @@ describe('renderResume (ssh form only)', () => {
     });
     expect(resumeDirectory(ws)).toBe('/w/a');
     expect(renderResume(ws)).toBe(
-      String.raw`ssh -t codebox 'cd '\''/w/a'\'' && claude --resume '\''8f3c'\'''`
+      String.raw`ssh -t codebox 'cd /w/a && claude --resume 8f3c'`
     );
   });
 

@@ -37,4 +37,18 @@ describe('TopBar', () => {
     expect(screen.getByRole('button', { name: 'Where' })).toHaveClass('bg-gray-800');
     expect(screen.getByRole('button', { name: 'Tasks' })).not.toHaveClass('bg-gray-800');
   });
+
+  it('marks the active tab with aria-current', () => {
+    render(<TopBar onLogout={vi.fn()} currentPage="where" onNavigate={vi.fn()} />);
+    expect(screen.getByRole('button', { name: 'Where' })).toHaveAttribute('aria-current', 'page');
+    expect(screen.getByRole('button', { name: 'Tasks' })).not.toHaveAttribute('aria-current');
+  });
+
+  it('keeps an accessible Logout button', async () => {
+    const user = userEvent.setup();
+    const onLogout = vi.fn();
+    render(<TopBar onLogout={onLogout} currentPage="search" onNavigate={vi.fn()} />);
+    await user.click(screen.getByRole('button', { name: 'Logout' }));
+    expect(onLogout).toHaveBeenCalledOnce();
+  });
 });

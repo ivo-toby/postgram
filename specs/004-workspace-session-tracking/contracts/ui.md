@@ -65,7 +65,7 @@ on screen when there is any.
 |---------|-------|
 | Short id | the first 8 characters of `id`, monospace |
 | Title | `title` |
-| Stage badge | `stage`, with `derived` or `manual` from `stage_source` as its tooltip |
+| Stage badge | the readable label of `stage` (below), with the raw value and `derived` or `manual` from `stage_source` as its tooltip |
 | Age | `stage_set_at` as a relative age (`12m`, `5h`, `3d`), omitted when null |
 | Status badge | `task_status`, only when it is `done` or `archived` |
 | PR chips | one per entry of `pull_requests`: `#<number> <state>`, linking to `url`, opening in a new tab with `rel="noreferrer"` |
@@ -114,14 +114,19 @@ applies the "transcript gone" fallback.
 4. The result is `ssh -t <connect_target> <shq(local)>`.
 
 `shq(s)` is the CLI's POSIX quoting: `"'" + s.replaceAll("'", "'\\''") + "'"`.
-Both the UI and the CLI are tested against the same vectors:
+To keep the command readable, the UI quotes `dir`, the session id and
+`connect_target` only when needed: a value made only of `A-Z a-z 0-9 _ @ % + = : , . / -`
+(and not starting with `=`) is left bare, anything else goes through `shq`. The
+outer `local` is always quoted with `shq`. The CLI still quotes every value, so
+its output differs from the UI for the same workspace, but both run the same
+command. The UI is tested against these vectors:
 
 | Case | Output |
 |------|--------|
-| `codebox`, path `/w/a`, claude-code, id `8f3c` | `ssh -t codebox 'cd '\''/w/a'\'' && claude --resume '\''8f3c'\'''` |
+| `codebox`, path `/w/a`, claude-code, id `8f3c` | `ssh -t codebox 'cd /w/a && claude --resume 8f3c'` |
 | `codebox`, path `/home/ivo/wt/a b`, id `x'y` | `ssh -t codebox 'cd '\''/home/ivo/wt/a b'\'' && claude --resume '\''x'\''\'\'''\''y'\'''` |
-| `codebox`, talon session, path `/w/a` | `ssh -t codebox 'cd '\''/w/a'\'''` |
-| `codebox`, no session, path `/w/a` | `ssh -t codebox 'cd '\''/w/a'\'' && claude'` |
+| `codebox`, talon session, path `/w/a` | `ssh -t codebox 'cd /w/a'` |
+| `codebox`, no session, path `/w/a` | `ssh -t codebox 'cd /w/a && claude'` |
 
 **Copy** uses `navigator.clipboard.writeText`. On success the button reads
 `Copied` for two seconds. When the clipboard is unavailable or rejects, the
@@ -155,7 +160,7 @@ The feature test asserts these, so they are part of the contract.
 | Refresh | a button `Refresh` |
 | Group header | `<label> (<count>)`, as a level-2 heading |
 | Feature line | the short id and the title as separate text, plus the stage as a badge |
-| Stage badge | the raw stage value, e.g. `functional_test` |
+| Stage badge | `Building`, `Review`, `Functional test`, `Ready to merge`, `Awaiting release` or `Released` |
 | Status badge | `done` or `archived` |
 | PR chip | `#<number> <state>`, e.g. `#42 open` |
 | No worktrees | `no worktrees` |

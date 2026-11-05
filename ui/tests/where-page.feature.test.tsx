@@ -275,7 +275,7 @@ describe('WherePage (feature)', () => {
     const review = await groupSection('Review');
     expect(await within(review).findByText('1a2b3c4d')).toBeInTheDocument();
     expect(within(review).getByText('Keyword rank fusion')).toBeInTheDocument();
-    expect(within(review).getByText('review')).toBeInTheDocument();
+    expect(within(review).getByText('Review')).toBeInTheDocument();
     expect(within(review).getAllByText('12m').length).toBeGreaterThan(0);
 
     const link = within(review).getByRole('link', { name: '#42 open' });
@@ -325,16 +325,16 @@ describe('WherePage (feature)', () => {
     render(<WherePage api={stubApi()} />);
 
     expect(
-      await screen.findByText(String.raw`ssh -t codebox 'cd '\''/w/a'\'' && claude --resume '\''8f3c'\'''`)
+      await screen.findByText(String.raw`ssh -t codebox 'cd /w/a && claude --resume 8f3c'`)
     ).toBeInTheDocument();
     expect(
       screen.getByText(
         String.raw`ssh -t nuc.lan 'cd '\''/home/ivo/wt/a b/cli'\'' && pi --session '\''x'\''\'\'''\''y'\'''`
       )
     ).toBeInTheDocument();
-    expect(screen.getByText(String.raw`ssh -t jarvis 'cd '\''/w/d'\'''`)).toBeInTheDocument();
+    expect(screen.getByText(String.raw`ssh -t jarvis 'cd /w/d'`)).toBeInTheDocument();
     expect(
-      screen.getByText(String.raw`ssh -t codebox 'cd '\''/w/c'\'' && claude'`)
+      screen.getByText(String.raw`ssh -t codebox 'cd /w/c && claude'`)
     ).toBeInTheDocument();
   });
 
@@ -349,7 +349,7 @@ describe('WherePage (feature)', () => {
     await user.click(button);
 
     expect(writeText).toHaveBeenCalledWith(
-      String.raw`ssh -t codebox 'cd '\''/w/a'\'' && claude --resume '\''8f3c'\'''`
+      String.raw`ssh -t codebox 'cd /w/a && claude --resume 8f3c'`
     );
     expect(await within(review).findByText('Copied')).toBeInTheDocument();
   });
@@ -364,7 +364,7 @@ describe('WherePage (feature)', () => {
 
     expect(await within(review).findByText('Copy failed')).toBeInTheDocument();
     expect(
-      screen.getByText(String.raw`ssh -t codebox 'cd '\''/w/a'\'' && claude --resume '\''8f3c'\'''`)
+      screen.getByText(String.raw`ssh -t codebox 'cd /w/a && claude --resume 8f3c'`)
     ).toBeInTheDocument();
   });
 

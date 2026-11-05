@@ -7,6 +7,7 @@ import {
   isGroupEmpty,
   pullRequestNumber,
   renderResume,
+  stageLabel,
   type FeaturePullRequest,
   type GitSnapshot,
   type Risk,
@@ -132,10 +133,10 @@ function FeatureCard({ feature, now }: { feature: WhereFeature; now: Date }) {
         <span className="font-mono text-xs text-gray-500">{feature.id.slice(0, 8)}</span>
         <h3 className="min-w-0 break-words text-sm font-medium text-white">{feature.title}</h3>
         <span
-          title={feature.stage_source ?? undefined}
+          title={feature.stage_source === null ? feature.stage : `${feature.stage} (${feature.stage_source})`}
           className="rounded-md border border-blue-500/30 bg-blue-500/10 px-2 py-0.5 text-xs text-blue-300"
         >
-          {feature.stage}
+          {stageLabel(feature.stage)}
         </span>
         {feature.stage_set_at !== null && (
           <span className="text-xs text-gray-500">{formatAge(feature.stage_set_at, now)}</span>

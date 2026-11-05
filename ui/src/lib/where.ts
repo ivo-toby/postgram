@@ -99,6 +99,15 @@ export function shq(value: string): string {
   return "'" + value.replaceAll("'", "'\\''") + "'";
 }
 
+// Words that need no quoting in a POSIX shell. A leading `~` or `=` is left out
+// on purpose, because some shells expand those.
+const SHELL_SAFE = /^[A-Za-z0-9_@%+:,./-][A-Za-z0-9_@%+=:,./-]*$/;
+
+// Quote only when needed, so the common resume command stays readable.
+export function shqIfNeeded(value: string): string {
+  return SHELL_SAFE.test(value) ? value : shq(value);
+}
+
 export function formatAge(fromIso: string, now: Date): string {
   const elapsedMs = Math.max(0, now.getTime() - Date.parse(fromIso));
   const minutes = Math.floor(elapsedMs / 60_000);
@@ -126,10 +135,23 @@ export function renderResume(workspace: WorkspaceView): string {
   const template = RESUME_TEMPLATES[kind];
   const command =
     session !== null && template.withId !== null
-      ? template.withId.replaceAll('{session_id}', shq(session.agent_session_id))
+      ? template.withId.replaceAll('{session_id}', shqIfNeeded(session.agent_session_id))
       : template.withoutId;
-  const local = `cd ${shq(resumeDirectory(workspace))}${command ? ` && ${command}` : ''}`;
-  return `ssh -t ${workspace.connect_target} ${shq(local)}`;
+  const local = `cd ${shqIfNeeded(resumeDirectory(workspace))}${command ? ` && ${command}` : ''}`;
+  return `ssh -t ${shqIfNeeded(workspace.connect_target)} ${shq(local)}`;
+}
+
+const STAGE_LABELS: Record<FeatureStage, string> = {
+  building: 'Building',
+  review: 'Review',
+  functional_test: 'Functional test',
+  ready_to_merge: 'Ready to merge',
+  awaiting_release: 'Awaiting release',
+  released: 'Released',
+};
+
+export function stageLabel(stage: FeatureStage): string {
+  return STAGE_LABELS[stage] ?? stage;
 }
 
 export function pullRequestNumber(url: string): string | null {

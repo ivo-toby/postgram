@@ -90,7 +90,7 @@ const EMPTY_RESPONSE: WhereResponse = {
   ],
 };
 
-const RESUME = String.raw`ssh -t codebox 'cd '\''/w/a'\'' && claude --resume '\''8f3c'\'''`;
+const RESUME = String.raw`ssh -t codebox 'cd /w/a && claude --resume 8f3c'`;
 
 function apiReturning(response: WhereResponse | (() => Promise<WhereResponse>)) {
   const getWhere = typeof response === 'function'

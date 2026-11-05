@@ -8,11 +8,12 @@ import type { TrackingConfig } from '../../src/tracking/config.js';
 import type { ScannedSession, ScannedWorktree } from '../../src/tracking/scan-discovery.js';
 import {
   BRANCH_SHORT_ID,
+  featureTasks,
   runScan,
   runScanApply,
   runScanInventory
 } from '../../src/tracking/scan.js';
-import type { ScanDeps } from '../../src/tracking/scan.js';
+import type { ScanDeps, ScanTask } from '../../src/tracking/scan.js';
 import type {
   ReportBody,
   ReportResponse,
@@ -103,7 +104,7 @@ function makeDeps(
     discovered: []
   };
   const answers: string[] = [];
-  const tasks: Array<{ id: string; title: string }> = [];
+  const tasks: ScanTask[] = [];
   let searchResult: (
     query: string
   ) => Array<{ id: string; title: string }> = () => [];
@@ -158,8 +159,7 @@ function makeDeps(
     hostname: 'host',
     env: {},
     homeDir: '/home',
-    tasks: (): Promise<Array<{ id: string; title: string }>> =>
-      Promise.resolve(tasks),
+    tasks: (): Promise<ScanTask[]> => Promise.resolve(tasks),
     search: (
       query: string
     ): Promise<Array<{ id: string; title: string }>> => {
@@ -351,7 +351,11 @@ describe('runScan interactive', () => {
       discover: () => Promise.resolve(worktrees),
       readMarker: (p: string) => Promise.resolve(p === w1 ? MARKER_ID : null)
     });
-    tasks.push({ id: MARKER_ID, title: 'Marker feature' });
+    tasks.push(
+      { id: MARKER_ID, title: 'Marker feature' },
+      { id: hit1, title: 'hit1' },
+      { id: hit2, title: 'hit2' }
+    );
     setSearchResult((query) => [
       { id: hit1, title: `hit1 ${query}` },
       { id: hit2, title: `hit2 ${query}` }
@@ -557,7 +561,8 @@ describe('runScanInventory', () => {
     );
     tasks.push(
       { id: MARKER_ID, title: 'Marker feature' },
-      { id: SHORT_ID_TASK, title: 'Short id feature' }
+      { id: SHORT_ID_TASK, title: 'Short id feature' },
+      { id: CREATED_ID, title: 'Searched' }
     );
     setSearchResult(() => [{ id: CREATED_ID, title: 'Searched' }]);
 
@@ -785,5 +790,72 @@ describe('runScanApply', () => {
     const { deps } = applyDeps();
     await expect(runScanApply({ foo: 1 }, { dryRun: false }, deps)).rejects.toThrow(UsageError);
     await expect(runScanApply('x', { dryRun: false }, deps)).rejects.toThrow(UsageError);
+  });
+});
+
+describe('scan proposals only offer open features', () => {
+  it('drops search hits that are plain tasks or done features', async () => {
+    const open = '44444444-0000-4000-8000-000000000000';
+    const done = '55555555-0000-4000-8000-000000000000';
+    const plain = '66666666-0000-4000-8000-000000000000';
+    const { deps, tasks, setSearchResult } = makeDeps({
+      discover: () => Promise.resolve([{ path: '/w/x', branch: 'feat/thing' }]),
+      resolveWorkspace: (p: string) =>
+        Promise.resolve({
+          kind: 'ok' as const,
+          path: p,
+          repoRoot: '/w/repo',
+          workspace: { path: p, branch: 'feat/thing', git: null }
+        })
+    });
+    tasks.push({ id: open, title: 'Open' }, { id: done, title: 'Done', done: true });
+    setSearchResult(() => [
+      { id: plain, title: 'Reply to someone' },
+      { id: done, title: 'Done' },
+      { id: open, title: 'Open' }
+    ]);
+
+    const inventory = await runScanInventory(
+      { root: ['/w'], dryRun: false, yesExact: false },
+      deps
+    );
+
+    expect(inventory.worktrees[0]?.candidates).toEqual([
+      { kind: 'search', feature_id: open, title: 'Open' }
+    ]);
+  });
+
+  it('refuses to link a plan entry to a task that is not a feature', async () => {
+    const { deps, calls } = makeDeps({
+      resolveWorkspace: (p: string) =>
+        Promise.resolve({
+          kind: 'ok' as const,
+          path: p,
+          repoRoot: '/w/repo',
+          workspace: { path: p, branch: 'b', git: null }
+        })
+    });
+    const message = await runScanApply(
+      { entries: [{ path: '/w/ok', action: 'link', feature_id: '66666666' }] },
+      { dryRun: true },
+      deps
+    ).catch((error: Error) => error.message);
+    expect(message).toContain('/w/ok: no feature matches 66666666');
+    expect(calls.report).toEqual([]);
+  });
+});
+
+describe('featureTasks', () => {
+  it('keeps feature tasks, marks done ones and drops plain tasks', () => {
+    expect(
+      featureTasks([
+        { id: 'a', content: 'Feature A\nmore', status: 'active', metadata: { kind: 'feature' } },
+        { id: 'b', content: 'Feature B', status: 'done', metadata: { kind: 'feature' } },
+        { id: 'c', content: 'Reply to Jethro', status: 'inbox', metadata: {} }
+      ])
+    ).toEqual([
+      { id: 'a', title: 'Feature A', done: false },
+      { id: 'b', title: 'Feature B', done: true }
+    ]);
   });
 });

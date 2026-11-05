@@ -4,6 +4,13 @@ on:
   push:
     branches: [main]
   workflow_dispatch:
+    inputs:
+      publish_tag:
+        description: >-
+          Existing cli-vX.Y.Z tag to publish to npm, for a release whose tag
+          was pushed but whose publish never ran. Leave empty for a normal run.
+        required: false
+        default: ''
 
 # Only one release at a time
 concurrency:
@@ -25,6 +32,7 @@ jobs:
         with:
           fetch-depth: 0
           persist-credentials: true
+          ref: ${{ inputs.publish_tag || github.ref }}
 
       - name: Setup Node.js
         uses: actions/setup-node@v4
@@ -49,7 +57,35 @@ jobs:
         run: npm test
 
       - name: Semantic release
+        if: ${{ !inputs.publish_tag }}
         working-directory: cli
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         run: npx semantic-release
+
+      # Recovery for a half-finished release: semantic-release pushed the tag
+      # but stopped before npm publish. Trusted publishing is bound to this
+      # workflow file, so the publish has to run here.
+      - name: Publish existing tag
+        if: ${{ inputs.publish_tag }}
+        working-directory: cli
+        env:
+          TAG: ${{ inputs.publish_tag }}
+        run: |
+          version="$(node -p "require('./package.json').version")"
+          if [ "cli-v${version}" != "$TAG" ]; then
+            echo "package.json is ${version}, which does not match ${TAG}" >&2
+            exit 1
+          fi
+          if npm view "@ivotoby/postgram-cli@${version}" version >/dev/null 2>&1; then
+            echo "${version} is already on npm"
+          else
+            npm publish
+          fi
+          ref="refs/notes/semantic-release-${TAG}"
+          if ! git ls-remote --exit-code origin "$ref" >/dev/null; then
+            git config user.name "github-actions[bot]"
+            git config user.email "41898283+github-actions[bot]@users.noreply.github.com"
+            git notes --ref "semantic-release-${TAG}" add -f -m '{"channels":[null]}' "$TAG"
+            git push origin "$ref"
+          fi

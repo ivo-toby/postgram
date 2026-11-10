@@ -384,6 +384,7 @@ export async function createAdminBackupArchive(
         '--no-owner',
         '--no-acl',
         '--exclude-table-data=public.schema_migrations',
+        '--exclude-table-data=public.query_embedding_cache',
         '--file',
         databaseDumpPath
       ],
@@ -561,6 +562,11 @@ function validatePgRestoreDataList(stdout: string | undefined): {
   for (const entry of restoreEntries) {
     const match = PG_RESTORE_TABLE_DATA_ENTRY.exec(entry);
     const tableName = match?.[1];
+    // Older Postgram backups may contain this rebuildable cache. Accept it
+    // but disable its TOC entry so pg_restore never imports its data.
+    if (tableName === 'query_embedding_cache') {
+      continue;
+    }
     if (!tableName || !ADMIN_BACKUP_DATA_TABLE_SET.has(tableName)) {
       throw new AppError(
         ErrorCode.VALIDATION,
@@ -588,7 +594,11 @@ function validatePgRestoreDataList(stdout: string | undefined): {
 
   return {
     entries: restoreEntries.length,
-    restoreList: `${restoreEntries.join('\n')}\n`
+    restoreList: `${restoreEntries.map((entry) =>
+      PG_RESTORE_TABLE_DATA_ENTRY.exec(entry)?.[1] === 'query_embedding_cache'
+        ? `;${entry}`
+        : entry
+    ).join('\n')}\n`
   };
 }
 

@@ -19,6 +19,8 @@ import {
 } from './extraction-service.js';
 import { getMemoryRole } from './memory-role-service.js';
 import type { AttachmentStore } from './loaders/attachment-store.js';
+import { lockIngestSha } from './document-ingest-service.js';
+import { MAX_LOADING_ATTEMPTS } from './document-loading-fields.js';
 import { renderLoaderResult } from './loaders/render.js';
 import type { LoaderRegistry } from './loaders/registry.js';
 import {
@@ -618,10 +620,10 @@ export function createEnrichmentWorker(options: EnrichmentWorkerOptions) {
         SET loading_status = 'failed',
             loading_error = 'interrupted: worker stopped during load'
         WHERE loading_status = 'running'
-          AND loading_attempts >= 3
+          AND loading_attempts >= $2
           AND updated_at < now() - ($1::bigint * interval '1 millisecond')
       `,
-      [staleRunningMs()]
+      [staleRunningMs(), MAX_LOADING_ATTEMPTS]
     );
   }
 
@@ -634,9 +636,9 @@ export function createEnrichmentWorker(options: EnrichmentWorkerOptions) {
           SELECT id, mime_type, loading_attempts
           FROM entities
           WHERE loading_status = 'pending'
-            OR (loading_status = 'failed' AND loading_attempts < 3
+            OR (loading_status = 'failed' AND loading_attempts < $2
                 AND updated_at < now() - interval '5 minutes')
-            OR (loading_status = 'running' AND loading_attempts < 3
+            OR (loading_status = 'running' AND loading_attempts < $2
                 AND updated_at < now() - ($1::bigint * interval '1 millisecond'))
           ORDER BY
             CASE WHEN loading_status = 'pending' THEN 0 ELSE 1 END,
@@ -644,7 +646,7 @@ export function createEnrichmentWorker(options: EnrichmentWorkerOptions) {
           FOR UPDATE SKIP LOCKED
           LIMIT 1
         `,
-        [staleRunningMs()]
+        [staleRunningMs(), MAX_LOADING_ATTEMPTS]
       );
       const row = claimed.rows[0];
       if (!row) {
@@ -877,6 +879,25 @@ export function createEnrichmentWorker(options: EnrichmentWorkerOptions) {
       const client = await options.pool.connect();
       try {
         await client.query('BEGIN');
+        // `attachments gc` takes the same per-hash lock before it deletes a
+        // file. Holding it here, and checking the file inside the lock, means
+        // gc cannot remove a derived file between the put above and this
+        // commit. A missing file fails the load so that the retry writes it again.
+        const derivedShas = [...new Set(storedDerived.map((d) => d.sha256))];
+        derivedShas.sort();
+        for (const sha of derivedShas) {
+          await lockIngestSha(client, sha);
+        }
+        for (const d of storedDerived) {
+          try {
+            await stat(store.resolvePath(d.storageUri));
+          } catch {
+            throw new LoadingFailure(
+              `derived attachment file is missing on disk (${d.storageUri})`,
+              loaderName
+            );
+          }
+        }
         const finalized = await client.query(
           `
             UPDATE entities

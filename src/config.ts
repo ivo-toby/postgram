@@ -10,6 +10,9 @@ const optionalString = z.preprocess(
   z.string().min(1).optional()
 );
 
+/** Default root of the attachment store. */
+export const DEFAULT_ATTACHMENTS_DIR = '/var/lib/postgram/attachments';
+
 const configSchema = z
   .object({
     DATABASE_URL: z.string().min(1),
@@ -55,7 +58,7 @@ const configSchema = z
     LOADERS_CONFIG_PATH: optionalString,
     ATTACHMENTS_DIR: z.preprocess(
       emptyToUndefined,
-      z.string().min(1).default('/var/lib/postgram/attachments')
+      z.string().min(1).default(DEFAULT_ATTACHMENTS_DIR)
     ),
     INGEST_MAX_BYTES: z.preprocess(
       emptyToUndefined,

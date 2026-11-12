@@ -9,6 +9,11 @@ export type StoredEntityResponse = {
     owner: string | null;
     status: string | null;
     enrichment_status: string | null;
+    // Set on documents that were ingested through a loader.
+    mime_type?: string;
+    loading_status?: string;
+    loading_error?: string;
+    loader_name?: string;
     version: number;
     tags: string[];
     source: string | null;
@@ -81,9 +86,17 @@ export type RestClientOptions = {
   apiKey: string;
 };
 
+export type IngestResponse = {
+  id: string;
+  status: 'created' | 'exists';
+  loading_status: string;
+};
+
 export type RequestOptions = {
   method?: string | undefined;
   body?: unknown;
+  /** Multipart upload; the fetch call sets the Content-Type with its boundary. */
+  form?: FormData | undefined;
   signal?: AbortSignal | undefined;
 };
 
@@ -112,7 +125,7 @@ export async function request<T>(
 ): Promise<T> {
   const headers: HeadersInit = {
     Authorization: `Bearer ${options.apiKey}`,
-    ...(requestOptions.body === undefined
+    ...(requestOptions.body === undefined || requestOptions.form !== undefined
       ? {}
       : {
           'Content-Type': 'application/json'
@@ -125,6 +138,10 @@ export async function request<T>(
 
   if (requestOptions.body !== undefined) {
     init.body = JSON.stringify(requestOptions.body);
+  }
+
+  if (requestOptions.form !== undefined) {
+    init.body = requestOptions.form;
   }
 
   if (requestOptions.signal !== undefined) {
@@ -163,6 +180,39 @@ export function createPgmClient(options: RestClientOptions) {
         body: input
       });
     },
+    ingestDocument(input: {
+      filename: string;
+      bytes: Uint8Array;
+      title?: string | undefined;
+      mime_type?: string | undefined;
+      visibility?: string | undefined;
+      owner?: string | undefined;
+      tags?: string[] | undefined;
+      metadata?: Record<string, unknown> | undefined;
+    }) {
+      const form = new FormData();
+      // No type on the part: the server then decides by file extension.
+      form.append(
+        'file',
+        new File([new Uint8Array(input.bytes)], input.filename)
+      );
+      if (input.title !== undefined) form.append('title', input.title);
+      if (input.mime_type !== undefined) {
+        form.append('mime_type', input.mime_type);
+      }
+      if (input.visibility !== undefined) {
+        form.append('visibility', input.visibility);
+      }
+      if (input.owner !== undefined) form.append('owner', input.owner);
+      if (input.tags?.length) form.append('tags', input.tags.join(','));
+      if (input.metadata !== undefined) {
+        form.append('metadata', JSON.stringify(input.metadata));
+      }
+      return request<IngestResponse>(options, '/api/documents/ingest', {
+        method: 'POST',
+        form
+      });
+    },
     storeSessionContext(input: {
       content: string;
       visibility?: string | undefined;
@@ -198,7 +248,11 @@ export function createPgmClient(options: RestClientOptions) {
         }
       );
     },
-    recallEntity(id: string, input: { owner?: string | undefined } = {}) {
+    recallEntity(
+      id: string,
+      input: { owner?: string | undefined } = {},
+      signal?: AbortSignal
+    ) {
       const params = new URLSearchParams();
       if (input.owner) {
         params.set('owner', input.owner);
@@ -207,7 +261,8 @@ export function createPgmClient(options: RestClientOptions) {
       const query = params.toString();
       return request<StoredEntityResponse>(
         options,
-        `/api/entities/${id}${query ? `?${query}` : ''}`
+        `/api/entities/${id}${query ? `?${query}` : ''}`,
+        { signal }
       );
     },
     searchEntities(input: {

@@ -8,6 +8,7 @@ Auto-generated from all feature plans. Last updated: 2026-10-31
 
 - TypeScript 5.9 on Node.js 22+ (LTS) + Hono (HTTP), `@modelcontextprotocol/sdk` (MCP SSE), (002-local-embeddings)
 - PostgreSQL 16+ with `pgvector` and `pgcrypto`; raw SQL with typed (002-local-embeddings)
+- TypeScript 5.9 on Node.js 22+ (LTS) + Hono (HTTP), local filesystem attachment store, loader plugins (in-process or sidecar); PostgreSQL `attachments` table (005-document-loaders)
 
 - TypeScript on Node.js 22+ (LTS) + Hono (HTTP), @modelcontextprotocol/sdk (MCP SSE), (001-phase1-mvp)
 
@@ -25,6 +26,8 @@ defaults, deployment docs, and README tables so container deployments receive
 the new value.
 
 ## Recent Changes
+- 005-document-loaders: Added TypeScript 5.9 on Node.js 22+ (LTS) + Hono (REST), local filesystem attachment store, loader plugins (in-process or sidecar). No new runtime dependencies in the server core.
+
 - 004-workspace-session-tracking: Added TypeScript 5.9 on Node.js 22+ (LTS) + Hono (REST), `@modelcontextprotocol/sdk` (MCP), `zod`, `neverthrow`, `pg`, `commander` (CLI). No new runtime dependencies.
 
 - 002-local-embeddings: Added TypeScript 5.9 on Node.js 22+ (LTS) + Hono (HTTP), `@modelcontextprotocol/sdk` (MCP SSE),

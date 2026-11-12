@@ -1,3 +1,4 @@
+import { statSync } from 'node:fs';
 import { mkdir, mkdtemp, rm, unlink, writeFile } from 'node:fs/promises';
 import { tmpdir } from 'node:os';
 import path from 'node:path';
@@ -12,6 +13,7 @@ import {
   it
 } from 'vitest';
 
+import { lockIngestSha } from '../../src/services/document-ingest-service.js';
 import { createEmbeddingService } from '../../src/services/embedding-service.js';
 import { createEnrichmentWorker } from '../../src/services/enrichment-worker.js';
 import { FilesystemAttachmentStore } from '../../src/services/loaders/attachment-store.js';
@@ -25,6 +27,7 @@ import type {
   LoaderInput,
   LoaderResult
 } from '../../src/types/loader.js';
+import { waitForBlockedIngestLock } from '../helpers/document-loaders.js';
 import {
   createTestDatabase,
   resetTestDatabase,
@@ -459,6 +462,60 @@ describe('enrichment-worker loading stage', () => {
       d = await derived(id);
       expect(d).toHaveLength(1);
       expect((await row(id)).loading_status).toBe('completed');
+    });
+
+    it('fails and retries when gc removes a derived file before the commit', async () => {
+      const id = await seed();
+      const bytes = Buffer.from('derived-bytes-shared-with-an-old-orphan');
+      // An old file with the same bytes exists already, so the worker's put skips the write.
+      const existing = await store.put(bytes);
+      const w = worker([
+        fakeLoader('fake', () =>
+          Promise.resolve({
+            ...goodResult,
+            attachments: [
+              {
+                ref: 'img1',
+                kind: 'image' as const,
+                mimeType: 'image/png',
+                source: { kind: 'bytes' as const, bytes }
+              }
+            ]
+          })
+        )
+      ]);
+
+      // A gc-like transaction holds the ingest lock of that hash.
+      const gc = await pool().connect();
+      try {
+        await gc.query('BEGIN');
+        await lockIngestSha(gc, existing.sha256);
+
+        const running = w.runOnce();
+        await waitForBlockedIngestLock(pool(), existing.sha256);
+        await store.remove(existing.sha256);
+        await gc.query('COMMIT');
+        await running;
+      } finally {
+        gc.release();
+      }
+
+      const failed = await row(id);
+      expect(failed.loading_status).toBe('failed');
+      expect(failed.loading_error).toMatch(
+        /^fake: derived attachment file is missing/
+      );
+      expect(await derived(id)).toHaveLength(0);
+
+      // The normal retry puts the file again and completes.
+      await age(id, 6);
+      await w.runOnce();
+      expect((await row(id)).loading_status).toBe('completed');
+      const d = await derived(id);
+      expect(d).toHaveLength(1);
+      expect(() =>
+        statSync(store.resolvePath(d[0]!.storage_uri))
+      ).not.toThrow();
     });
 
     it('accepts a path source inside the loader temp dir', async () => {

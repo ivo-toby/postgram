@@ -43,6 +43,7 @@ export type CreateAdminBackupInput = {
   now?: Date | undefined;
   commandRunner?: AdminBackupCommandRunner | undefined;
   pgDumpPath?: string | undefined;
+  pgRestorePath?: string | undefined;
   tarPath?: string | undefined;
 };
 
@@ -151,7 +152,15 @@ const SAFE_RUNTIME_CONFIG_KEYS = [
   'EMBEDDING_BASE_URL'
 ] as const satisfies readonly (keyof AppConfig)[];
 
-const ADMIN_BACKUP_DATA_TABLES = [
+/**
+ * Tables whose data every format-version-2 archive must contain.
+ *
+ * This is the v2 baseline and must not be extended. A restore requires every
+ * entry here, so adding a table would make archives taken by older Postgram
+ * versions unrestorable. Tables introduced after the baseline belong in
+ * ADMIN_BACKUP_OPTIONAL_DATA_TABLES instead.
+ */
+const ADMIN_BACKUP_REQUIRED_DATA_TABLES = [
   'admin_auth_attempts',
   'admin_bootstrap_tokens',
   'admin_job_events',
@@ -174,7 +183,65 @@ const ADMIN_BACKUP_DATA_TABLES = [
   'oauth_tokens'
 ] as const;
 
+/**
+ * Tables added after the v2 baseline (migration 018_workspace_tracking).
+ *
+ * New backups include their data and a restore applies it, but an archive
+ * taken before these tables existed is still a valid archive, so they are
+ * accepted when present rather than required.
+ */
+const ADMIN_BACKUP_OPTIONAL_DATA_TABLES = [
+  'machines',
+  'workspaces',
+  'agent_sessions',
+  'repositories'
+] as const;
+
+/**
+ * Tables deliberately kept out of backups because their contents are derived
+ * and rebuilt at runtime.
+ *
+ * New dumps exclude their data. Archives that already contain it stay valid,
+ * and the data is dropped from the restore list rather than applied.
+ *
+ * `query_embedding_cache` is a pure memo of (client, model, query digest) ->
+ * embedding (migration 015). It is also the only table holding digests of user
+ * query text, which is reason enough not to ship it inside a downloadable
+ * archive. `schema_migrations` is owned by the migration runner, which rebuilds
+ * it while migrating the staging database.
+ */
+const ADMIN_BACKUP_EXCLUDED_DATA_TABLES = [
+  'query_embedding_cache',
+  'schema_migrations'
+] as const;
+
+/**
+ * Every table whose data a backup carries and a restore may apply.
+ */
+const ADMIN_BACKUP_DATA_TABLES = [
+  ...ADMIN_BACKUP_REQUIRED_DATA_TABLES,
+  ...ADMIN_BACKUP_OPTIONAL_DATA_TABLES
+] as const;
+
 const ADMIN_BACKUP_DATA_TABLE_SET = new Set<string>(ADMIN_BACKUP_DATA_TABLES);
+
+const ADMIN_BACKUP_EXCLUDED_DATA_TABLE_SET = new Set<string>(
+  ADMIN_BACKUP_EXCLUDED_DATA_TABLES
+);
+
+/**
+ * How every table in the Postgram schema is treated by backup and restore.
+ *
+ * Exported so a test can assert that each table created by a migration is
+ * classified here. That assertion is the guard against the drift this
+ * classification exists to prevent: before it, a new migration silently
+ * produced archives that the restore validator rejected.
+ */
+export const adminBackupTableClassification = {
+  required: ADMIN_BACKUP_REQUIRED_DATA_TABLES,
+  optional: ADMIN_BACKUP_OPTIONAL_DATA_TABLES,
+  excluded: ADMIN_BACKUP_EXCLUDED_DATA_TABLES
+} as const;
 
 const PG_RESTORE_TABLE_DATA_ENTRY =
   /^\d+;\s+\d+\s+\d+\s+TABLE DATA public ([a-z_][a-z0-9_]*) \S+$/u;
@@ -383,12 +450,25 @@ export async function createAdminBackupArchive(
         '--no-blobs',
         '--no-owner',
         '--no-acl',
-        '--exclude-table-data=public.schema_migrations',
+        ...ADMIN_BACKUP_EXCLUDED_DATA_TABLES.map(
+          (table) => `--exclude-table-data=public.${table}`
+        ),
         '--file',
         databaseDumpPath
       ],
       env: dumpEnv
     });
+
+    // Validate the archive we just produced against the same rules the restore
+    // path applies. Without this, a migration that adds a table produces
+    // backups that look successful and only fail much later, during an actual
+    // recovery, which is the failure mode reported in issue #131.
+    const generatedToc = await commandRunner({
+      command: input.pgRestorePath ?? 'pg_restore',
+      args: ['--list', databaseDumpPath],
+      env: process.env
+    });
+    assertGeneratedBackupIsRestorable(generatedToc?.stdout);
 
     const manifest = {
       formatVersion: 2,
@@ -557,39 +637,83 @@ function validatePgRestoreDataList(stdout: string | undefined): {
     );
   }
 
-  const approvedEntries = new Set<string>();
+  const seenTables = new Set<string>();
+  const restorableEntries: string[] = [];
   for (const entry of restoreEntries) {
     const match = PG_RESTORE_TABLE_DATA_ENTRY.exec(entry);
     const tableName = match?.[1];
-    if (!tableName || !ADMIN_BACKUP_DATA_TABLE_SET.has(tableName)) {
+    // Every entry must be TABLE DATA for a table this version knows about.
+    // Anything else - a FUNCTION, TRIGGER, EXTENSION, an unrecognised object
+    // class, or a malformed row - is refused rather than ignored, because
+    // pg_restore would execute it against the staging database that the
+    // operator is then told to point the live application at.
+    if (
+      !tableName ||
+      (!ADMIN_BACKUP_DATA_TABLE_SET.has(tableName) &&
+        !ADMIN_BACKUP_EXCLUDED_DATA_TABLE_SET.has(tableName))
+    ) {
       throw new AppError(
         ErrorCode.VALIDATION,
         'Backup database dump contains unsupported or active PostgreSQL objects'
       );
     }
-    if (approvedEntries.has(tableName)) {
+    if (seenTables.has(tableName)) {
       throw new AppError(
         ErrorCode.VALIDATION,
         'Backup database dump contains duplicate table data entries'
       );
     }
-    approvedEntries.add(tableName);
+    seenTables.add(tableName);
+    // Data for an excluded table is tolerated so that archives taken before
+    // the exclusion existed stay restorable, but it is never applied.
+    if (!ADMIN_BACKUP_EXCLUDED_DATA_TABLE_SET.has(tableName)) {
+      restorableEntries.push(entry);
+    }
   }
 
-  if (
-    approvedEntries.size !== ADMIN_BACKUP_DATA_TABLES.length ||
-    ADMIN_BACKUP_DATA_TABLES.some((table) => !approvedEntries.has(table))
-  ) {
+  const missingTables = ADMIN_BACKUP_REQUIRED_DATA_TABLES.filter(
+    (table) => !seenTables.has(table)
+  );
+  if (missingTables.length > 0) {
     throw new AppError(
       ErrorCode.VALIDATION,
-      'Backup database dump is missing required Postgram table data'
+      'Backup database dump is missing required Postgram table data',
+      { missingTables }
+    );
+  }
+
+  if (restorableEntries.length === 0) {
+    throw new AppError(
+      ErrorCode.VALIDATION,
+      'Backup database dump has no restorable Postgram table data'
     );
   }
 
   return {
-    entries: restoreEntries.length,
-    restoreList: `${restoreEntries.join('\n')}\n`
+    entries: restorableEntries.length,
+    restoreList: `${restorableEntries.join('\n')}\n`
   };
+}
+
+/**
+ * Fail a backup that this build's own restore path would refuse.
+ *
+ * Reported as INTERNAL rather than VALIDATION: nothing about the operator's
+ * request is wrong, the server produced an archive it cannot restore.
+ */
+function assertGeneratedBackupIsRestorable(stdout: string | undefined): void {
+  try {
+    validatePgRestoreDataList(stdout);
+  } catch (error) {
+    if (error instanceof AppError) {
+      throw new AppError(
+        ErrorCode.INTERNAL,
+        'Generated backup would not pass Postgram restore validation, so it was discarded instead of being returned. A migration has probably added a table that is not yet classified in admin-backup-service.',
+        { reason: error.message, details: error.details }
+      );
+    }
+    throw error;
+  }
 }
 
 function formatStagingDatabaseName(now: Date, token: string): string {

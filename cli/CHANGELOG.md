@@ -1,3 +1,9 @@
+## [1.41.2](https://github.com/ivo-toby/postgram/compare/cli-v1.41.1...cli-v1.41.2) (2026-11-12)
+
+### Bug Fixes
+
+* **skill:** quote SKILL.md description so the frontmatter is valid YAML ([b65f85e](https://github.com/ivo-toby/postgram/commit/b65f85e3889b18f90f90581fec7bdf233bc7597d))
+
 ## [1.41.1](https://github.com/ivo-toby/postgram/compare/cli-v1.41.0...cli-v1.41.1) (2026-11-05)
 
 ### Bug Fixes

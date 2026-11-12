@@ -5,7 +5,10 @@ import path from 'node:path';
 import pino from 'pino';
 import { describe, expect, it, vi } from 'vitest';
 
-import { buildRegistry } from '../../src/services/loaders/build-registry.js';
+import {
+  buildRegistry,
+  stripUrlUserinfo
+} from '../../src/services/loaders/build-registry.js';
 import type { SidecarLoaderClient } from '../../src/services/loaders/sidecar-client.js';
 import type { DocumentLoader, LoaderResult } from '../../src/types/loader.js';
 import type {
@@ -319,6 +322,46 @@ describe('buildRegistry', () => {
       expect(payload.err).toBe('just text');
     });
 
+    it('includes the cause of a connection error in the probe warning', async () => {
+      const { logger, asPino } = spyLogger();
+      await buildRegistry(
+        { version: 1, loaders: [sidecar('whisper')] },
+        asPino,
+        {
+          sidecarFactory: () =>
+            fakeSidecar(() =>
+              Promise.reject(
+                new TypeError('fetch failed', {
+                  cause: new Error('connect ECONNREFUSED 127.0.0.1:3298')
+                })
+              )
+            )
+        }
+      );
+      const [payload] = logger.warn.mock.calls[0] as [Record<string, unknown>];
+      expect(payload.err).toBe(
+        'fetch failed: connect ECONNREFUSED 127.0.0.1:3298'
+      );
+    });
+
+    it('logs the endpoint without credentials', async () => {
+      const { logger, asPino } = spyLogger();
+      await buildRegistry(
+        {
+          version: 1,
+          loaders: [
+            sidecar('whisper', { endpoint: 'http://user:pw@host.local:8080/x' })
+          ]
+        },
+        asPino,
+        { sidecarFactory: () => fakeSidecar(() => Promise.resolve(null)) }
+      );
+      const registered = logger.info.mock.calls
+        .map((c) => c[0] as Record<string, unknown>)
+        .find((p) => 'endpoint' in p);
+      expect(registered?.endpoint).toBe('http://host.local:8080/x');
+    });
+
     it('probes the manifest with a 5 second timeout signal', async () => {
       const seen: (AbortSignal | undefined)[] = [];
       await buildRegistry(
@@ -358,5 +401,21 @@ describe('buildRegistry', () => {
         reason: 'bad endpoint'
       });
     });
+  });
+});
+
+describe('stripUrlUserinfo', () => {
+  it('removes user and password', () => {
+    expect(stripUrlUserinfo('http://u:p@h:1/a?b=c')).toBe('http://h:1/a?b=c');
+    expect(stripUrlUserinfo('https://tok@h/')).toBe('https://h/');
+  });
+
+  it('leaves a url without userinfo alone', () => {
+    expect(stripUrlUserinfo('http://h:1/a')).toBe('http://h:1/a');
+  });
+
+  it('strips userinfo from text that is not a valid url', () => {
+    expect(stripUrlUserinfo('//u:p@h/x')).toBe('//h/x');
+    expect(stripUrlUserinfo('not a url')).toBe('not a url');
   });
 });

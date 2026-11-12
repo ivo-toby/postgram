@@ -155,7 +155,7 @@ Acceptance, with a configured CLI:
 ### Configuration
 
 - **FR-28**: `LOADERS_ENABLED` (default `false`) turns the feature on.
-- **FR-29**: `LOADERS_CONFIG_PATH` points to the loader configuration file. The Docker image contains a default file that registers the PDF loader.
+- **FR-29**: `LOADERS_CONFIG_PATH` points to the loader configuration file. If it is not set, a built-in default configuration registers the PDF loader.
 - **FR-30**: `ATTACHMENTS_DIR`, `INGEST_MAX_BYTES` (default 50 MB) and `LOADER_TIMEOUT_MS` (default 10 minutes) are environment variables.
 - **FR-31**: A loader that fails to register does not stop the server.
 - **FR-32**: The Docker setup gets the new variables and a volume for attachments, in the same change that adds them.

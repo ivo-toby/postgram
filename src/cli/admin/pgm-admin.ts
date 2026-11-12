@@ -2054,7 +2054,7 @@ memoryCommand
 
 program
   .command('purge')
-  .description('Permanently delete archived entities (chunks, edges, and document_sources cascade automatically)')
+  .description('Permanently delete archived entities (chunks, edges, and document_sources cascade automatically). Attachment rows of purged entities are removed too; run `attachments gc` afterwards to free the files.')
   .option('--all', 'purge all archived entities')
   .option('--type <type>', 'limit purge to this entity type')
   .option('--older-than <duration>', 'only purge archived items older than this (e.g. 30d, 4w)')
@@ -2164,7 +2164,15 @@ attachmentsCommand
     const json = isJsonMode(command);
 
     await runWithPool(json, async (pool) => {
-      const minAgeMs = parseGroomOlderThan(options.minAge);
+      let minAgeMs: number;
+      try {
+        minAgeMs = parseGroomOlderThan(options.minAge);
+      } catch (error) {
+        throw new AppError(
+          ErrorCode.VALIDATION,
+          error instanceof Error ? error.message : String(error)
+        );
+      }
       if (minAgeMs < GC_MIN_AGE_FLOOR_MS) {
         throw new AppError(
           ErrorCode.VALIDATION,
@@ -2234,6 +2242,11 @@ attachmentsCommand
               `Deleted ${report.removed} files, freed ${report.bytesFreed} bytes`,
               `Deleted ${report.tempFilesRemoved} stale temporary files`
             ]),
+        ...(report.skippedYoung > 0
+          ? [
+              `Skipped ${report.skippedYoung} unreferenced ${report.skippedYoung === 1 ? 'file' : 'files'} younger than the minimum age`
+            ]
+          : []),
         ...(report.errors > 0 ? [`${report.errors} errors`] : [])
       ];
     });

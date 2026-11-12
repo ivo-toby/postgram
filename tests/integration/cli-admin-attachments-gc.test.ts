@@ -24,6 +24,7 @@ import {
   it,
   vi
 } from 'vitest';
+import { Pool } from 'pg';
 
 import {
   collectAttachmentGarbage,
@@ -32,6 +33,7 @@ import {
 } from '../../src/services/attachment-gc-service.js';
 import { lockIngestSha } from '../../src/services/document-ingest-service.js';
 import { FilesystemAttachmentStore } from '../../src/services/loaders/attachment-store.js';
+import { ErrorCode } from '../../src/util/errors.js';
 import { waitForBlockedIngestLock } from '../helpers/document-loaders.js';
 import {
   createTestDatabase,
@@ -293,6 +295,47 @@ describe('attachments gc', () => {
     );
   });
 
+  describe('report and cleanup details', () => {
+    beforeEach(seedKeeperRow);
+
+    it('counts unreferenced files that are too young as skippedYoung', async () => {
+      const young = await writeStored(60_000);
+      const old = await writeStored(2 * HOUR_MS);
+      const referenced = await writeStored(60_000);
+      await insertEntityWithRow(referenced.sha256);
+
+      const report = await gc({ dryRun: true });
+
+      expect(report).toMatchObject({ skippedYoung: 1, orphans: 1 });
+      expect(await exists(young.file)).toBe(true);
+      expect(await exists(old.file)).toBe(true);
+    });
+
+    it('reports a missing attachments table as a validation error', async () => {
+      await database.pool.query('CREATE SCHEMA IF NOT EXISTS gc_empty');
+      const bare = new Pool({
+        connectionString: dbUrl,
+        options: '-c search_path=gc_empty'
+      });
+      try {
+        await expect(
+          collectAttachmentGarbage(bare, store, {
+            minAgeMs: HOUR_MS,
+            dryRun: true
+          })
+        ).rejects.toMatchObject({
+          code: ErrorCode.VALIDATION,
+          message: expect.stringMatching(
+            /attachments table does not exist/
+          ) as unknown as string
+        });
+      } finally {
+        await bare.end();
+        await database.pool.query('DROP SCHEMA gc_empty');
+      }
+    });
+  });
+
   describe('wrong-database guard', () => {
     it('refuses to delete when the table is empty but the store has files', async () => {
       const orphan = await writeStored(2 * HOUR_MS);
@@ -502,6 +545,60 @@ describe('attachments gc', () => {
       ]);
       expect(malformed.code).toBe(1);
       expect(malformed.stdout).toMatch(/Invalid duration/);
+      expect(
+        (JSON.parse(malformed.stdout) as { error: { code: string } }).error.code
+      ).toBe('VALIDATION');
+
+      const unit = await runCommand([
+        '--json',
+        'attachments',
+        'gc',
+        '--min-age',
+        '600s'
+      ]);
+      expect(unit.code).toBe(1);
+      expect(
+        (JSON.parse(unit.stdout) as { error: { code: string } }).error.code
+      ).toBe('VALIDATION');
+    });
+
+    it('prints skippedYoung in JSON and as a text line', async () => {
+      await seedKeeperRow();
+      await writeStored(15 * 60_000);
+
+      const json = await runCommand([
+        '--json',
+        'attachments',
+        'gc',
+        '--dry-run',
+        '--min-age',
+        '10m'
+      ]);
+      expect(JSON.parse(json.stdout)).toMatchObject({
+        orphans: 1,
+        skippedYoung: 0
+      });
+
+      const young = await runCommand([
+        '--json',
+        'attachments',
+        'gc',
+        '--dry-run',
+        '--min-age',
+        '2h'
+      ]);
+      expect(JSON.parse(young.stdout)).toMatchObject({ skippedYoung: 1 });
+
+      const text = await runCommand([
+        'attachments',
+        'gc',
+        '--dry-run',
+        '--min-age',
+        '2h'
+      ]);
+      expect(text.stdout).toMatch(
+        /Skipped 1 unreferenced file.* younger than the minimum age/
+      );
     });
 
     it('exits non-zero when the guard refuses', async () => {

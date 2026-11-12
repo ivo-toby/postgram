@@ -24,7 +24,7 @@ Three REST routes handle documents. Each needs an API key.
 | `GET /api/entities/:id/attachments` | `read`  | `{ "attachments": [...] }` for one entity                                     |
 | `GET /api/attachments/:id/content`  | `read`  | The original bytes with `Content-Disposition: attachment`                     |
 
-The ingest route takes `multipart/form-data`. The `file` part is required. These text fields are optional: `title`, `mime_type`, `visibility`, `owner`, `tags` (comma-separated) and `metadata` (a JSON object).
+The ingest route takes `multipart/form-data`. The `file` part is required. These text fields are optional: `title`, `mime_type`, `visibility`, `owner`, `tags` (comma-separated) and `metadata` (a JSON object). If you leave out `visibility`, the API and `pgm ingest` both use `shared`.
 
 ```bash
 curl -X POST "$PGM_API_URL/api/documents/ingest" \
@@ -36,6 +36,8 @@ curl -X POST "$PGM_API_URL/api/documents/ingest" \
 ```
 
 The server answers at once. A background worker loads the file, so the text appears a short time later. To see progress, read the entity with `GET /api/entities/:id`. The fields `loading_status` and `enrichment_status` show the state.
+
+A finished load raises the entity `version` by one. A save that carries the old version fails with a version conflict. A load that finishes also replaces any content edit that you saved while the document was loading.
 
 If you upload the same bytes again with the same owner and visibility, the server answers `200` with `"status": "exists"` and the first entity id. This holds only while the first entity is not archived. If the first entity is archived, the server creates a new entity.
 
@@ -51,6 +53,8 @@ pgm ingest report.pdf --title "Q3 report" --tags finance --wait
 ```
 
 With `--wait`, the command polls until the document is loaded and indexed. If loading or indexing fails, it exits with a non-zero code. If the time set by `--timeout` (default 600 seconds) passes first, it also exits with a non-zero code. See `pgm ingest --help` for all options.
+
+If the load finishes with no text, such as a scan without a text layer, `--wait` prints `No text was extracted. A scan without a text layer is a common cause. OCR is not supported.` With `--json`, the output has `"text_extracted": false`. The field is `true` when the document has text.
 
 A failed load is final for `--wait`. The server retries a failed load by itself, up to 3 attempts, 5 minutes apart. After the last attempt, run `pgm ingest` with the same file again to queue it again. The failure message says so.
 
@@ -133,11 +137,57 @@ If a loader returns no blocks, the document ends with no text and the server ski
 
 A sidecar answers two routes.
 
-`GET /manifest` returns `200` with `{ "name", "version", "accepts" }`. The server reads it at start. If the probe fails, the server only logs the failure and still registers the sidecar.
+`GET /manifest` returns `200` with `{ "name", "version", "accepts" }`. The server reads it at start. If the probe fails, the server only logs the failure and still registers the sidecar. The probe sends the `x-postgram-secret` header too when the entry sets `sharedSecret`. A sidecar that checks the secret on every route therefore passes the probe.
 
-`POST /load` receives `multipart/form-data`. The `meta` part is a file part named `meta.json` with the type `application/json`. It is not a text field. The JSON has the keys `options` and `mimeType`. It also has `filename` and `sourceUri` when they are known. In `multipart` mode, the `file` part holds the bytes. In `shared-volume` mode, `meta.localPath` holds the path inside the sidecar and there is no `file` part. The stored file must be under `hostPath`. In practice, `hostPath` is the attachments directory. If the entry sets `sharedSecret`, the server sends it in the `x-postgram-secret` header.
+The `accepts` block in the server configuration file decides which files go to the sidecar. The server does not read the `accepts` in the manifest for routing. Keep both in step anyway.
 
-The route returns `200` with the loader result as JSON. The shape matches `LoaderResult`, with one difference. An attachment carries its bytes as `"source": { "kind": "base64", "data": "..." }`. Any other status counts as a failure. The error reaches `loading_error` as `sidecar <name> returned <status>: <body>`. The server cuts the body to 500 characters.
+`POST /load` receives `multipart/form-data`. The `meta` part is a file part named `meta.json` with the type `application/json`. It is not a text field. The JSON has the keys `options` and `mimeType`. It also has `filename` when it is known. In `multipart` mode, the `file` part holds the bytes. In `shared-volume` mode, `meta.localPath` holds the path inside the sidecar and there is no `file` part. The stored file must be under `hostPath`. In practice, `hostPath` is the attachments directory. If the entry sets `sharedSecret`, the server sends it in the `x-postgram-secret` header.
+
+The `endpoint` must not contain a user name or password. The configuration is rejected if it does. Use `sharedSecret` to authenticate.
+
+The server does not follow redirects. A `3xx` answer counts as a failure.
+
+This request calls a sidecar in `multipart` mode:
+
+```bash
+echo '{"options":{},"mimeType":"application/x-myf","filename":"notes.myf"}' > meta.json
+curl -X POST "http://office-loader:8080/load" \
+  -H "x-postgram-secret: change-me" \
+  -F "meta=@meta.json;type=application/json" \
+  -F "file=@notes.myf;type=application/x-myf"
+```
+
+The server sends the `meta` part first. The `file` part carries the document filename. If the document has no filename, the part is named `file.bin`.
+
+The route returns `200` with the loader result as JSON. This example has a heading block and a text block:
+
+```json
+{
+  "documentType": "my-format",
+  "blocks": [
+    { "kind": "heading", "level": 1, "text": "Notes", "metadata": { "page": 1 } },
+    { "kind": "text", "text": "First paragraph.", "metadata": { "page": 1 } }
+  ],
+  "metadata": { "pages": 1 }
+}
+```
+
+The result has `documentType` (a non-empty string), `blocks` (an array), and the optional `attachments` and `metadata`. The `metadata` of the result is a JSON object. Each block has a `kind` and the fields in this table. Every block also takes an optional `metadata` object. Its known keys are `page` (a positive integer), `startSeconds`, `endSeconds`, `youtubeId`, `chapter` (a string or a number) and `source` (`ocr`, `native`, `asr` or `caption-model`).
+
+| `kind`       | Required fields                                               | Optional fields                       |
+| ------------ | ------------------------------------------------------------- | ------------------------------------- |
+| `text`       | `text` (string)                                               |                                       |
+| `heading`    | `level` (integer 1 to 6), `text` (string)                     |                                       |
+| `code`       | `text` (string)                                               | `language` (string)                   |
+| `table`      | `rows` (array of arrays of strings)                           | `caption` (string)                    |
+| `transcript` | `text` (string), `startSeconds`, `endSeconds` (numbers, >= 0) | `speaker` (string)                    |
+| `image`      | `attachmentRef` (string)                                      | `alt`, `ocrText`, `caption` (strings) |
+| `audio`      | `attachmentRef` (string), `durationSeconds` (number, >= 0)    |                                       |
+| `video`      | `attachmentRef` (string), `durationSeconds` (number, >= 0)    | `thumbnailRef` (string)               |
+
+An attachment has `ref`, `kind` (`document`, `image`, `audio`, `video` or `binary`), `mimeType`, `source` and an optional `metadata` object. A block names an attachment with the same `ref` in `attachmentRef`. The `source` is `{ "kind": "base64", "data": "..." }`. The server rejects a result that does not match this shape, and the load fails.
+
+Any non-`200` status counts as a failure. The error reaches `loading_error` as `sidecar <name> returned <status>: <body>`. The server cuts the body to 500 characters. It replaces every copy of the shared secret in the body with `[redacted]`. If the server cannot connect, the error holds the cause, for example `fetch failed: connect ECONNREFUSED 127.0.0.1:3298`.
 
 ## Security
 
@@ -160,7 +210,7 @@ Ingest only files from sources that you trust. If you must accept files from oth
 
 ## Backup and cleanup
 
-`pgm backup` dumps the database. The dump includes the `attachments` rows but not the attachment files. Back up the `ATTACHMENTS_DIR` volume separately.
+`pgm backup` dumps the database. The dump includes the `attachments` rows but not the attachment files. Back up the `ATTACHMENTS_DIR` volume separately. If you restore a backup that has no attachment rows, the stored files have no rows. In that case `attachments gc` refuses to run without `--force`.
 
 Deleting an entity through the API archives it. The attachment rows and the files stay. Only `pgm-admin purge` deletes archived entities, and with them the attachment rows. After a purge, `attachments gc` frees the files that no row references.
 

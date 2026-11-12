@@ -109,6 +109,25 @@ describe('parseLoadersConfig', () => {
     expect(w.maxResponseBytes).toBe(99);
   });
 
+  it.each(['http://user:pw@w:8080', 'http://token@w:8080/x'])(
+    'rejects a sidecar endpoint with credentials (%s)',
+    (endpoint) => {
+      expect(() =>
+        parseLoadersConfig({
+          version: 1,
+          loaders: [
+            {
+              kind: 'sidecar',
+              name: 'w',
+              endpoint,
+              accepts: { mimeTypes: ['audio/mpeg'] }
+            }
+          ]
+        })
+      ).toThrowError(/endpoint must not contain credentials/);
+    }
+  );
+
   it('rejects extensions without a leading dot', () => {
     expect(() =>
       parseLoadersConfig({

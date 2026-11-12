@@ -136,6 +136,20 @@ describe('explainIngestError', () => {
     }
   );
 
+  it.each([
+    [512, '512 bytes'],
+    [2048, '2048 bytes (2 KB)'],
+    [52_428_800, '52428800 bytes (50 MB)']
+  ])('prints a 413 limit of %i bytes in a sensible unit', (max, text) => {
+    const result = explainIngestError(
+      new AppError(ErrorCode.PAYLOAD_TOO_LARGE, 'too big', { max_bytes: max }),
+      { bytes: 1 }
+    ) as AppError;
+
+    expect(result.message).toContain(`up to ${text}.`);
+    expect(result.message).not.toContain('0.0 MB');
+  });
+
   it('leaves other network errors alone', () => {
     const error = resetError('ECONNREFUSED');
 

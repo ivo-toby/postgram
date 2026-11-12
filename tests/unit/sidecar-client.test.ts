@@ -8,7 +8,8 @@ import { afterEach, beforeEach, describe, expect, it } from 'vitest';
 
 import {
   SidecarLoaderClient,
-  SidecarError
+  SidecarError,
+  errorMessageWithCause
 } from '../../src/services/loaders/sidecar-client.js';
 import type { SidecarLoaderConfig } from '../../src/types/loaders-config.js';
 import type { LoaderContext } from '../../src/types/loader.js';
@@ -17,6 +18,7 @@ type FakeRoute = {
   status: number;
   body: string;
   contentType?: string;
+  headers?: Record<string, string>;
   /** Wait this long before answering. */
   delayMs?: number;
   /** Stream the body in these pieces (chunked, no content-length). */
@@ -105,6 +107,9 @@ async function startFakeSidecar(routes: Record<string, FakeRoute>): Promise<{
         res.statusCode = route.status;
         if (route.contentType) {
           res.setHeader('content-type', route.contentType);
+        }
+        for (const [k, v] of Object.entries(route.headers ?? {})) {
+          res.setHeader(k, v);
         }
         if (route.chunks) {
           for (const piece of route.chunks) {
@@ -308,6 +313,106 @@ describe('SidecarLoaderClient', () => {
     } finally {
       await rm(tmp, { recursive: true, force: true });
     }
+  });
+
+  describe('hardening', () => {
+    const bytesInput = {
+      kind: 'bytes' as const,
+      bytes: new Uint8Array([1, 2]),
+      mimeType: 'application/x-test'
+    };
+
+    it('does not follow a redirect on /manifest', async () => {
+      server = await startFakeSidecar({
+        '/manifest': { status: 302, body: '', headers: { location: '/other' } },
+        '/other': { status: 200, body: '{}' }
+      });
+      const client = new SidecarLoaderClient(cfg(server.url));
+      await expect(client.probeManifest()).rejects.toThrow();
+      expect(server.captured.some((c) => c.pathname === '/other')).toBe(false);
+    });
+
+    it('does not follow a redirect on /load', async () => {
+      server = await startFakeSidecar({
+        '/load': { status: 302, body: '', headers: { location: '/other' } },
+        '/other': { status: 200, body: '{}' }
+      });
+      const client = new SidecarLoaderClient(cfg(server.url));
+      await expect(client.load(bytesInput, ctx())).rejects.toThrow();
+      expect(server.captured.some((c) => c.pathname === '/other')).toBe(false);
+    });
+
+    it('redacts the shared secret in an error body', async () => {
+      server = await startFakeSidecar({
+        '/load': { status: 500, body: 'bad header s3cret-value and s3cret-value' }
+      });
+      const client = new SidecarLoaderClient(
+        cfg(server.url, { sharedSecret: 's3cret-value' })
+      );
+      const err = await client.load(bytesInput, ctx()).catch((e: unknown) => e);
+      expect(err).toBeInstanceOf(SidecarError);
+      const message = (err as Error).message;
+      expect(message).not.toContain('s3cret-value');
+      expect(message).toContain('bad header [redacted] and [redacted]');
+    });
+
+    it('redacts the shared secret in the parse error of a non-JSON 200 body', async () => {
+      server = await startFakeSidecar({
+        '/load': { status: 200, body: 'sec{ret-value oops' }
+      });
+      const client = new SidecarLoaderClient(
+        cfg(server.url, { sharedSecret: 'ret-value' })
+      );
+      const err = await client.load(bytesInput, ctx()).catch((e: unknown) => e);
+      expect((err as Error).message).toMatch(/not valid JSON/);
+      expect((err as Error).message).not.toContain('ret-value');
+    });
+
+    it('describes a cause that is not an Error', () => {
+      const err = new TypeError('fetch failed', { cause: 'plain reason' });
+      expect(errorMessageWithCause(err)).toBe('fetch failed: plain reason');
+    });
+
+    it('includes the cause in a connection error on /load', async () => {
+      server = await startFakeSidecar({});
+      const url = server.url;
+      await server.close();
+      server = undefined;
+      const client = new SidecarLoaderClient(cfg(url));
+      await expect(client.load(bytesInput, ctx())).rejects.toThrow(
+        /^fetch failed: .*ECONNREFUSED/
+      );
+    });
+
+    it('includes the cause in a connection error on /manifest', async () => {
+      server = await startFakeSidecar({});
+      const url = server.url;
+      await server.close();
+      server = undefined;
+      const client = new SidecarLoaderClient(cfg(url));
+      await expect(client.probeManifest()).rejects.toThrow(
+        /^fetch failed: .*ECONNREFUSED/
+      );
+    });
+
+    it('sends the secret header on the manifest probe', async () => {
+      server = await startFakeSidecar({
+        '/manifest': { status: 200, body: '{}' }
+      });
+      const client = new SidecarLoaderClient(
+        cfg(server.url, { sharedSecret: 'abc' })
+      );
+      await client.probeManifest();
+      expect(server.captured[0]?.headers['x-postgram-secret']).toBe('abc');
+    });
+
+    it('sends no secret header on the probe when none is configured', async () => {
+      server = await startFakeSidecar({
+        '/manifest': { status: 200, body: '{}' }
+      });
+      await new SidecarLoaderClient(cfg(server.url)).probeManifest();
+      expect(server.captured[0]?.headers['x-postgram-secret']).toBeUndefined();
+    });
   });
 
   describe('response validation', () => {

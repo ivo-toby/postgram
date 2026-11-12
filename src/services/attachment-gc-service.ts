@@ -2,6 +2,8 @@ import { stat } from 'node:fs/promises';
 
 import type { Pool } from 'pg';
 
+import { AppError, ErrorCode } from '../util/errors.js';
+
 import { lockIngestSha } from './document-ingest-service.js';
 import type { AttachmentStore } from './loaders/attachment-store.js';
 
@@ -24,6 +26,8 @@ export type AttachmentGcReport = {
   scanned: number;
   orphans: number;
   orphanBytes: number;
+  /** Unreferenced files that stayed because they are younger than `minAgeMs`. */
+  skippedYoung: number;
   removed: number;
   bytesFreed: number;
   tempFilesRemoved: number;
@@ -47,6 +51,7 @@ export function createGcReport(
     scanned: 0,
     orphans: 0,
     orphanBytes: 0,
+    skippedYoung: 0,
     removed: 0,
     bytesFreed: 0,
     tempFilesRemoved: 0,
@@ -124,10 +129,23 @@ export async function collectAttachmentGarbage(
   }
 
   let dryRun = options.dryRun;
-  const tableResult = await pool.query<{ has_rows: boolean }>(
-    'SELECT EXISTS (SELECT 1 FROM attachments) AS has_rows'
-  );
-  if (!tableResult.rows[0]!.has_rows && (await storeHasFiles(store))) {
+  let hasRows: boolean;
+  try {
+    const tableResult = await pool.query<{ has_rows: boolean }>(
+      'SELECT EXISTS (SELECT 1 FROM attachments) AS has_rows'
+    );
+    hasRows = tableResult.rows[0]!.has_rows;
+  } catch (error) {
+    // 42P01: undefined_table
+    if ((error as { code?: string } | null)?.code === '42P01') {
+      throw new AppError(
+        ErrorCode.VALIDATION,
+        'The attachments table does not exist. Run the database migrations first (start the server once), and check DATABASE_URL.'
+      );
+    }
+    throw error;
+  }
+  if (!hasRows && (await storeHasFiles(store))) {
     if (!options.force) {
       report.warnings.push(
         'The attachments table has no rows, but the store holds files. This looks like the wrong database or directory. Nothing is deleted. Use --force to delete anyway.'
@@ -146,8 +164,12 @@ export async function collectAttachmentGarbage(
       const info = await stat(file.path);
       if (!info.isFile()) continue;
       report.scanned += 1;
-      if (info.mtimeMs > cutoff) continue;
-      if (await isReferenced(pool, file.sha256)) continue;
+      const referenced = await isReferenced(pool, file.sha256);
+      if (info.mtimeMs > cutoff) {
+        if (!referenced) report.skippedYoung += 1;
+        continue;
+      }
+      if (referenced) continue;
 
       if (dryRun) {
         report.orphans += 1;

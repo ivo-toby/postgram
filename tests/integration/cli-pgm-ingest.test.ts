@@ -354,8 +354,36 @@ describe('pgm ingest', () => {
     expect(JSON.parse(run.stdout) as IngestJson).toMatchObject({
       status: 'created',
       loading_status: 'completed',
-      enrichment_status: 'completed'
+      enrichment_status: 'completed',
+      text_extracted: false
     });
+  });
+
+  it('with --wait, says so in text mode when no text was extracted', async () => {
+    start({
+      load: () => Promise.resolve({ documentType: 'fake', blocks: [] })
+    });
+    runWorkerInBackground();
+    const report = await file('scan.pdf', '%PDF-1.4 scan');
+
+    const run = await pgm(['ingest', report, '--wait']);
+
+    expect(run.code).toBe(0);
+    expect(run.stdout).toContain(
+      'No text was extracted. A scan without a text layer is a common cause. OCR is not supported.'
+    );
+  });
+
+  it('with --wait, reports text_extracted true and no warning when text was loaded', async () => {
+    start();
+    runWorkerInBackground();
+    const report = await file('has-text.pdf', '%PDF-1.4 has text');
+
+    const json = await pgm(['--json', 'ingest', report, '--wait']);
+    expect(JSON.parse(json.stdout)).toMatchObject({ text_extracted: true });
+
+    const text = await pgm(['ingest', report, '--wait']);
+    expect(text.stdout).not.toContain('No text was extracted');
   });
 
   it('with --wait, exits non-zero and prints the loader error on failure', async () => {

@@ -90,4 +90,30 @@ describe('waitForProcessing', () => {
     expect(result.outcome).toBe('timeout');
     expect(s.delays.reduce((a, b) => a + b, 0)).toBe(2500);
   });
+
+  it('does not report its own deadline abort as a failed status check', async () => {
+    const startedAt = Date.now();
+    const result = await waitForProcessing({
+      // Honours the abort signal and takes 20 ms, like a real request.
+      fetchEntity: (signal) =>
+        new Promise<WaitEntity>((resolve, reject) => {
+          const timer = setTimeout(
+            () => resolve({ loading_status: 'running' }),
+            20
+          );
+          signal?.addEventListener('abort', () => {
+            clearTimeout(timer);
+            reject(signal.reason as Error);
+          });
+        }),
+      timeoutMs: 60,
+      // Wakes a little early, so the next poll gets a very short signal.
+      sleep: (ms) =>
+        new Promise<void>((resolve) => setTimeout(resolve, Math.max(0, ms - 3))),
+      now: () => Date.now() - startedAt
+    });
+
+    expect(result.outcome).toBe('timeout');
+    expect(result.lastError).toBeUndefined();
+  });
 });

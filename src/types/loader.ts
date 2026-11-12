@@ -30,7 +30,6 @@ export type LoaderInput =
       bytes: Uint8Array;
       mimeType: string;
       filename?: string;
-      sourceUri?: string;
     }
   | {
       kind: 'localPath';
@@ -41,7 +40,6 @@ export type LoaderInput =
        * extension, so extension matching and sidecar uploads need this.
        */
       filename?: string;
-      sourceUri?: string;
     };
 
 export interface LoaderLogger {

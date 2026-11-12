@@ -686,12 +686,13 @@ export function createEnrichmentWorker(options: EnrichmentWorkerOptions) {
       `
         UPDATE entities
         SET loading_status = 'failed',
-            loading_error = $2
+            loading_error = $2,
+            loader_name = COALESCE($4, loader_name)
         WHERE id = $1
           AND loading_status = 'running'
           AND loading_attempts = $3
       `,
-      [entityId, stripNul(truncateErrorMessage(text)), token]
+      [entityId, stripNul(truncateErrorMessage(text)), token, loaderName]
     );
     if (result.rowCount === 0) {
       logger.warn({ entityId }, 'lost claim; failure not recorded');
@@ -904,6 +905,7 @@ export function createEnrichmentWorker(options: EnrichmentWorkerOptions) {
             SET content = $2,
                 metadata = jsonb_set(metadata, '{loader}', $3::jsonb, true),
                 loader_name = $4,
+                version = version + 1,
                 loading_status = 'completed',
                 loading_error = NULL,
                 enrichment_status = CASE WHEN $5::boolean THEN 'pending' ELSE 'completed' END,

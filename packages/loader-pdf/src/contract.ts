@@ -19,14 +19,12 @@ export type LoaderInput =
       bytes: Uint8Array;
       mimeType: string;
       filename?: string;
-      sourceUri?: string;
     }
   | {
       kind: 'localPath';
       path: string;
       mimeType: string;
       filename?: string;
-      sourceUri?: string;
     };
 
 export interface LoaderContext {

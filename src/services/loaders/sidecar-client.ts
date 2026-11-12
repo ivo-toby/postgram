@@ -68,6 +68,7 @@ export class SidecarLoaderClient implements DocumentLoader {
     const capCtl = new AbortController();
     const res = await this.fetchSidecar('/manifest', {
       method: 'GET',
+      headers: this.secretHeaders(),
       signal: AbortSignal.any(
         signal ? [signal, capCtl.signal] : [capCtl.signal]
       )
@@ -103,10 +104,7 @@ export class SidecarLoaderClient implements DocumentLoader {
       useSharedVolume
     });
 
-    const headers: Record<string, string> = {};
-    if (this.cfg.sharedSecret) {
-      headers['x-postgram-secret'] = this.cfg.sharedSecret;
-    }
+    const headers = this.secretHeaders();
 
     // Aborted by us when the response grows past `maxResponseBytes`.
     const capCtl = new AbortController();
@@ -127,7 +125,11 @@ export class SidecarLoaderClient implements DocumentLoader {
 
     if (!res.ok) {
       const text = await safeText(res, () => capCtl.abort());
-      throw new SidecarError(this.cfg.name, res.status, text || res.statusText);
+      throw new SidecarError(
+        this.cfg.name,
+        res.status,
+        this.redact(text || res.statusText)
+      );
     }
 
     const raw = await readCapped(
@@ -141,10 +143,21 @@ export class SidecarLoaderClient implements DocumentLoader {
       json = JSON.parse(new TextDecoder().decode(raw));
     } catch (err) {
       throw new Error(
-        `sidecar ${this.cfg.name}: response is not valid JSON (${err instanceof Error ? err.message : String(err)})`
+        `sidecar ${this.cfg.name}: response is not valid JSON (${this.redact(err instanceof Error ? err.message : String(err))})`
       );
     }
     return parseLoaderResultWith(wireResultSchema, json) as LoaderResult;
+  }
+
+  private secretHeaders(): Record<string, string> {
+    return this.cfg.sharedSecret
+      ? { 'x-postgram-secret': this.cfg.sharedSecret }
+      : {};
+  }
+
+  private redact(text: string): string {
+    const secret = this.cfg.sharedSecret;
+    return secret ? text.split(secret).join('[redacted]') : text;
   }
 
   private async fetchSidecar(
@@ -152,8 +165,43 @@ export class SidecarLoaderClient implements DocumentLoader {
     init: RequestInit
   ): Promise<Response> {
     const url = `${this.cfg.endpoint.replace(/\/$/, '')}${pathname}`;
-    return await fetch(url, init);
+    try {
+      // A redirect could send the secret header to another host.
+      return await fetch(url, { ...init, redirect: 'error' });
+    } catch (err) {
+      if (init.signal?.aborted) throw err;
+      throw new Error(errorMessageWithCause(err), { cause: err });
+    }
   }
+}
+
+/**
+ * `fetch` hides the real reason (for example ECONNREFUSED) in `err.cause`.
+ * Returns `<message>: <cause message>` when a cause is present.
+ */
+export function errorMessageWithCause(err: unknown): string {
+  if (!(err instanceof Error)) return String(err);
+  const cause: unknown = err.cause;
+  let detail = '';
+  if (cause !== undefined && cause !== null && !(cause instanceof Error)) {
+    detail =
+      typeof cause === 'object'
+        ? (JSON.stringify(cause) ?? '')
+        : String(cause as string | number | boolean | bigint | symbol);
+  } else if (cause instanceof Error) {
+    detail = cause.message;
+    if (!detail && cause instanceof AggregateError) {
+      detail = cause.errors
+        .map((e: unknown) => (e instanceof Error ? e.message : String(e)))
+        .filter(Boolean)
+        .join('; ');
+    }
+    if (!detail) {
+      const code = (cause as { code?: unknown }).code;
+      if (typeof code === 'string') detail = code;
+    }
+  }
+  return detail ? `${err.message}: ${detail}` : err.message;
 }
 
 export type SidecarManifest = {
@@ -213,7 +261,6 @@ function buildMeta(
   const meta: Record<string, unknown> = { options: cfg.options };
   if (input.filename) meta.filename = input.filename;
   meta.mimeType = input.mimeType;
-  if (input.sourceUri) meta.sourceUri = input.sourceUri;
   if (cfg.transport.mode === 'shared-volume') {
     meta.localPath = sidecarPathFor(input, cfg);
   }

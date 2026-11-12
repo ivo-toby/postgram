@@ -58,7 +58,16 @@ const sidecarLoaderSchema = z.object({
     .string()
     .min(1)
     .regex(/^[a-z0-9][a-z0-9-]*$/, 'name must be lowercase kebab-case'),
-  endpoint: z.string().url(),
+  endpoint: z
+    .string()
+    .url()
+    .refine(
+      (value) => {
+        const url = new URL(value);
+        return url.username === '' && url.password === '';
+      },
+      { message: 'endpoint must not contain credentials' }
+    ),
   accepts: acceptDescriptorSchema,
   priority: z.number().int().default(0),
   /** Per-call timeout. Unset: the host's `LOADER_TIMEOUT_MS` signal applies. */

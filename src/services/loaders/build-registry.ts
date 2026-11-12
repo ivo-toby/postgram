@@ -10,7 +10,10 @@ import {
   type FailedLoader,
   type RegisteredLoader
 } from './registry.js';
-import { SidecarLoaderClient } from './sidecar-client.js';
+import {
+  errorMessageWithCause,
+  SidecarLoaderClient
+} from './sidecar-client.js';
 
 /**
  * Server application root: three levels above this file, which is the
@@ -22,6 +25,19 @@ const MANIFEST_PROBE_TIMEOUT_MS = 5_000;
 
 function errorMessage(err: unknown): string {
   return err instanceof Error ? err.message : String(err);
+}
+
+/** Remove `user:pass@` from a URL before it goes into a log line. */
+export function stripUrlUserinfo(url: string): string {
+  try {
+    const parsed = new URL(url);
+    if (!parsed.username && !parsed.password) return url;
+    parsed.username = '';
+    parsed.password = '';
+    return parsed.toString();
+  } catch {
+    return url.replace(/\/\/[^/@\s]*@/, '//');
+  }
 }
 
 export type BuildRegistryDeps = {
@@ -100,7 +116,7 @@ export async function buildRegistry(
           .probeManifest(AbortSignal.timeout(MANIFEST_PROBE_TIMEOUT_MS))
           .catch((err: unknown) => {
             logger.warn(
-              { loader: entry.name, err: errorMessage(err) },
+              { loader: entry.name, err: errorMessageWithCause(err) },
               'sidecar manifest probe failed (loader still registered)'
             );
             return null;
@@ -114,7 +130,7 @@ export async function buildRegistry(
         logger.info(
           {
             loader: entry.name,
-            endpoint: entry.endpoint,
+            endpoint: stripUrlUserinfo(entry.endpoint),
             version: manifest?.version ?? 'unknown'
           },
           'sidecar loader registered'

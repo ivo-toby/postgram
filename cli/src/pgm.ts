@@ -12,6 +12,8 @@ import { createPgmClient } from './client.js';
 import {
   explainIngestError,
   readIngestFile,
+  hasExtractedText,
+  NO_TEXT_MESSAGE,
   waitFailure,
   waitForProcessing
 } from './ingest.js';
@@ -536,6 +538,7 @@ program
 
       let loadingStatus: string = response.loading_status;
       let enrichmentStatus: string | null | undefined;
+      let textExtracted: boolean | undefined;
 
       if (options.wait === true) {
         if (!json) {
@@ -553,6 +556,7 @@ program
         }
         loadingStatus = result.entity.loading_status ?? loadingStatus;
         enrichmentStatus = result.entity.enrichment_status;
+        textExtracted = hasExtractedText(result.entity);
       }
 
       if (json) {
@@ -560,7 +564,8 @@ program
           ? {
               ...response,
               loading_status: loadingStatus,
-              enrichment_status: enrichmentStatus
+              enrichment_status: enrichmentStatus,
+              text_extracted: textExtracted
             }
           : response;
       }
@@ -570,7 +575,8 @@ program
         `loading: ${loadingStatus}`,
         ...(options.wait === true
           ? [`enrichment: ${enrichmentStatus ?? '-'}`]
-          : [])
+          : []),
+        ...(textExtracted === false ? [NO_TEXT_MESSAGE] : [])
       ];
     });
   });

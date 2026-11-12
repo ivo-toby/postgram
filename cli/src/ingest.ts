@@ -9,6 +9,7 @@ export type WaitEntity = {
   loading_status?: string | null;
   loading_error?: string | null;
   enrichment_status?: string | null;
+  content?: string | null;
 };
 
 export type WaitOutcome =
@@ -33,6 +34,13 @@ const FATAL_POLL_CODES: ReadonlySet<string> = new Set([
   ErrorCode.UNAUTHORIZED,
   ErrorCode.FORBIDDEN
 ]);
+
+function isAbortError(error: unknown): boolean {
+  return (
+    error instanceof Error &&
+    (error.name === 'AbortError' || error.name === 'TimeoutError')
+  );
+}
 
 function errorText(error: unknown): string {
   return error instanceof Error ? error.message : String(error);
@@ -67,11 +75,20 @@ export async function waitForProcessing(options: {
   let entity: WaitEntity = {};
   let lastError: string | undefined;
 
+  let polled = false;
   for (;;) {
-    const pollMs = Math.max(
-      1,
-      Math.min(deadline - now(), WAIT_POLL_TIMEOUT_MS)
-    );
+    const left = deadline - now();
+    if (polled && left <= 0) {
+      return {
+        outcome: 'timeout',
+        entity,
+        ...(lastError !== undefined ? { lastError } : {})
+      };
+    }
+    polled = true;
+    const pollMs = Math.max(1, Math.min(left, WAIT_POLL_TIMEOUT_MS));
+    // When the deadline sets the poll limit, an abort is our own doing.
+    const boundByDeadline = left <= WAIT_POLL_TIMEOUT_MS;
     try {
       entity = await options.fetchEntity(AbortSignal.timeout(pollMs));
       lastError = undefined;
@@ -90,7 +107,9 @@ export async function waitForProcessing(options: {
       if (error instanceof AppError && FATAL_POLL_CODES.has(error.code)) {
         throw error;
       }
-      lastError = errorText(error);
+      if (!(boundByDeadline && isAbortError(error))) {
+        lastError = errorText(error);
+      }
     }
 
     const remaining = deadline - now();
@@ -158,6 +177,19 @@ function stringList(value: unknown): string[] {
     : [];
 }
 
+/** Format a byte count in bytes, KB or MB. */
+export function formatSize(bytes: number): string {
+  if (bytes < 1024) return `${bytes} bytes`;
+  if (bytes < 1024 * 1024) return `${Number((bytes / 1024).toFixed(1))} KB`;
+  return `${Number((bytes / 1024 / 1024).toFixed(1))} MB`;
+}
+
+function describeSize(bytes: number): string {
+  return bytes < 1024
+    ? `${bytes} bytes`
+    : `${bytes} bytes (${formatSize(bytes)})`;
+}
+
 /** Replace the server's terse upload errors with messages that say what to do. */
 export function explainIngestError(
   error: unknown,
@@ -187,7 +219,7 @@ export function explainIngestError(
     return new AppError(
       error.code,
       typeof max === 'number'
-        ? `File is too large. The server accepts files up to ${max} bytes (${(max / 1024 / 1024).toFixed(1)} MB).`
+        ? `File is too large. The server accepts files up to ${describeSize(max)}.`
         : 'File is too large for this server.',
       error.details
     );
@@ -219,6 +251,14 @@ export function explainIngestError(
 
   return error;
 }
+
+/** True when the loaded document has any text. A scan without a text layer has none. */
+export function hasExtractedText(entity: WaitEntity): boolean {
+  return typeof entity.content === 'string' && entity.content.trim() !== '';
+}
+
+export const NO_TEXT_MESSAGE =
+  'No text was extracted. A scan without a text layer is a common cause. OCR is not supported.';
 
 /** The error for a finished `--wait` that did not end well. */
 export function waitFailure(

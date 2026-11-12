@@ -13,6 +13,9 @@ import {
   it
 } from 'vitest';
 
+import type { AuthContext } from '../../src/auth/types.js';
+import { updateEntity } from '../../src/services/entity-service.js';
+import { ErrorCode } from '../../src/util/errors.js';
 import { lockIngestSha } from '../../src/services/document-ingest-service.js';
 import { createEmbeddingService } from '../../src/services/embedding-service.js';
 import { createEnrichmentWorker } from '../../src/services/enrichment-worker.js';
@@ -31,6 +34,7 @@ import { waitForBlockedIngestLock } from '../helpers/document-loaders.js';
 import {
   createTestDatabase,
   resetTestDatabase,
+  seedApiKey,
   type TestDatabase
 } from '../helpers/postgres.js';
 
@@ -882,5 +886,72 @@ describe('enrichment-worker loading stage', () => {
     );
     expect(llmCalls).toBeGreaterThan(0);
     expect(r.rows[0]?.extraction_status).toBe('completed');
+  });
+  describe('version bump on load', () => {
+    const apiKeyId = '00000000-0000-0000-0000-000000000101';
+    const auth: AuthContext = {
+      apiKeyId,
+      keyName: 'k',
+      clientId: 'k',
+      scopes: ['read', 'write', 'delete'],
+      allowedTypes: null,
+      allowedVisibility: ['personal', 'work', 'shared']
+    };
+
+    async function version(id: string): Promise<number> {
+      const r = await pool().query<{ version: number }>(
+        'SELECT version FROM entities WHERE id = $1',
+        [id]
+      );
+      return r.rows[0]!.version;
+    }
+
+    it('rejects an update made with the pre-load version and accepts the new one', async () => {
+      await seedApiKey(pool(), { id: apiKeyId, name: 'k' });
+      const id = await seed();
+      const before = await version(id);
+      await worker([
+        fakeLoader('fake', () => Promise.resolve(goodResult))
+      ]).runOnce();
+      expect(await version(id)).toBe(before + 1);
+
+      const stale = await updateEntity(pool(), auth, {
+        id,
+        version: before,
+        content: '',
+        tags: ['x']
+      });
+      expect(stale.isErr()).toBe(true);
+      expect(stale._unsafeUnwrapErr().code).toBe(ErrorCode.CONFLICT);
+      expect((await row(id)).content).toContain('Second page body');
+
+      const fresh = await updateEntity(pool(), auth, {
+        id,
+        version: before + 1,
+        tags: ['x']
+      });
+      expect(fresh.isOk()).toBe(true);
+    });
+
+    it('bumps the version when the loader returns no text', async () => {
+      const id = await seed();
+      const before = await version(id);
+      await worker([
+        fakeLoader('fake', () =>
+          Promise.resolve({ documentType: 'empty', blocks: [] })
+        )
+      ]).runOnce();
+      expect(await version(id)).toBe(before + 1);
+    });
+  });
+
+  it('stores loader_name on a failed load', async () => {
+    const id = await seed();
+    await worker([
+      fakeLoader('fake', () => Promise.reject(new Error('boom')))
+    ]).runOnce();
+    const r = await row(id);
+    expect(r.loading_status).toBe('failed');
+    expect(r.loader_name).toBe('fake');
   });
 });

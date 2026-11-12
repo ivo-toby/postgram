@@ -10,6 +10,7 @@ import {
 import { loadConfig } from '../../src/config.js';
 import { createApp } from '../../src/index.js';
 import { verifyAdminBackupRestore } from '../../src/transport/admin-backups.js';
+import { adminBackupTableClassification } from '../../src/services/admin-backup-service.js';
 import type {
   AdminBackupCommandRunner,
   AdminBackupCommandRunnerResult,
@@ -22,27 +23,13 @@ import {
 } from '../helpers/postgres.js';
 
 const STRONG_PASSWORD = 'Correct-Horse-Battery-42!';
+
+// Derived from the service's own classification rather than a local copy: a
+// hardcoded duplicate here is what let the allowlist drift away from the
+// schema unnoticed (issue #131).
 const BACKUP_DATA_TABLES = [
-  'admin_auth_attempts',
-  'admin_bootstrap_tokens',
-  'admin_job_events',
-  'admin_jobs',
-  'admin_mfa_factors',
-  'admin_onboarding_state',
-  'admin_runtime_secrets',
-  'admin_runtime_settings',
-  'admin_sessions',
-  'admin_users',
-  'api_keys',
-  'audit_log',
-  'chunks',
-  'document_sources',
-  'edges',
-  'embedding_models',
-  'entities',
-  'oauth_authorization_codes',
-  'oauth_clients',
-  'oauth_tokens'
+  ...adminBackupTableClassification.required,
+  ...adminBackupTableClassification.optional
 ] as const;
 
 function postgramDataToc(): string {
@@ -175,6 +162,10 @@ describe('admin backup API', () => {
         return;
       }
 
+      if (input.command === 'pg_restore' && input.args.includes('--list')) {
+        return { stdout: `${postgramDataToc()}\n` };
+      }
+
       if (input.command === 'tar') {
         const outputPath = input.args[input.args.indexOf('-czf') + 1];
         if (!outputPath) {
@@ -216,12 +207,21 @@ describe('admin backup API', () => {
       /postgram-backup-.*\.tar\.gz/u
     );
     expect(await response.text()).toBe('fake gzipped backup archive');
-    expect(commands).toHaveLength(2);
+    expect(commands.map((command) => command.command)).toEqual([
+      'pg_dump',
+      'pg_restore',
+      'tar'
+    ]);
     expect(commands[0]?.command).toBe('pg_dump');
     expect(commands[0]?.args).toContain('--data-only');
-    expect(commands[0]?.args).toContain(
-      '--exclude-table-data=public.schema_migrations'
-    );
+    for (const table of adminBackupTableClassification.excluded) {
+      expect(commands[0]?.args).toContain(
+        `--exclude-table-data=public.${table}`
+      );
+    }
+    // The archive is checked against the restore rules before it is written.
+    expect(commands[1]?.command).toBe('pg_restore');
+    expect(commands[1]?.args).toContain('--list');
     expect(commands[0]?.args.join(' ')).not.toContain('s3cret');
     expect(commands[0]?.env).toMatchObject({
       PGDATABASE: 'postgram',
@@ -231,7 +231,7 @@ describe('admin backup API', () => {
       PGSSLMODE: 'require',
       PGUSER: 'postgram'
     });
-    expect(commands[1]?.command).toBe('tar');
+    expect(commands[2]?.command).toBe('tar');
 
     const audit = await database.pool.query<{ count: string }>(
       "SELECT COUNT(*)::text AS count FROM audit_log WHERE operation = 'admin.backup.download'"

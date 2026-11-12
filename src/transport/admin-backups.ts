@@ -297,6 +297,7 @@ export function registerAdminBackupRoutes(
         runtimeConfig: options.runtimeConfig,
         commandRunner: options.backupCommandRunner,
         pgDumpPath: options.pgDumpPath,
+        pgRestorePath: options.pgRestorePath,
         tarPath: options.tarPath
       });
 

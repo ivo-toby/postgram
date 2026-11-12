@@ -709,6 +709,16 @@ When Postgram runs in Docker and Ollama runs directly on the Docker host, use `h
 
 See [`specs/002-local-embeddings/quickstart.md`](specs/002-local-embeddings/quickstart.md) for a walkthrough of fresh-install-on-Ollama and migrating from OpenAI.
 
+### Document Loaders
+
+| Variable              | Required | Default                         | Description                                                                                                                                                                                                                                       |
+| --------------------- | -------- | ------------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `LOADERS_ENABLED`     | no       | `false`                         | Turns on file ingest, the loading stage and the attachment endpoints.                                                                                                                                                                             |
+| `LOADERS_CONFIG_PATH` | no       | unset                           | Path to a loader configuration file. When unset, the built-in default applies.                                                                                                                                                                    |
+| `ATTACHMENTS_DIR`     | no       | `/var/lib/postgram/attachments` | Root of the attachment store. The Docker image creates this directory for the `node` user and Compose mounts the `postgram_attachments` volume there. If you change it in Compose, mount a volume at the new path and make it writable by `node`. |
+| `INGEST_MAX_BYTES`    | no       | `52428800`                      | Largest accepted upload in bytes.                                                                                                                                                                                                                 |
+| `LOADER_TIMEOUT_MS`   | no       | `600000`                        | Timeout in milliseconds for one in-process loader call.                                                                                                                                                                                           |
+
 ### LLM Extraction
 
 | Variable                                       | Required                        | Default                      | Description                                                                                                                                                                                                                                                                                                  |

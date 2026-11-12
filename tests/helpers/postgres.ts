@@ -86,6 +86,7 @@ export async function resetTestDatabase(pool: Pool): Promise<void> {
       chunks,
       document_sources,
       edges,
+      attachments,
       entities,
       api_keys,
       embedding_models,

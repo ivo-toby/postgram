@@ -47,6 +47,24 @@ const configSchema = z
       emptyToUndefined,
       z.coerce.number().int().positive().default(30)
     ),
+    // Document loaders: ingest, the loading stage and the attachment store.
+    LOADERS_ENABLED: z
+      .enum(['true', 'false'])
+      .default('false')
+      .transform((v) => v === 'true'),
+    LOADERS_CONFIG_PATH: optionalString,
+    ATTACHMENTS_DIR: z.preprocess(
+      emptyToUndefined,
+      z.string().min(1).default('/var/lib/postgram/attachments')
+    ),
+    INGEST_MAX_BYTES: z.preprocess(
+      emptyToUndefined,
+      z.coerce.number().int().positive().default(52428800)
+    ),
+    LOADER_TIMEOUT_MS: z.preprocess(
+      emptyToUndefined,
+      z.coerce.number().int().positive().default(600000)
+    ),
     EXTRACTION_ENABLED: z
       .enum(['true', 'false'])
       .default('false')

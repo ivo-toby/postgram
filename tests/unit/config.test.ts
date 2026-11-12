@@ -423,4 +423,55 @@ describe('createAppliedProviderPolicyFetch', () => {
 
     expect(fetchImpl).toEqual(expect.any(Function));
   });
+
+  describe('document loader settings', () => {
+    it('defaults the loader settings', () => {
+      const cfg = loadConfig(baseEnv());
+      expect(cfg.LOADERS_ENABLED).toBe(false);
+      expect(cfg.LOADERS_CONFIG_PATH).toBeUndefined();
+      expect(cfg.ATTACHMENTS_DIR).toBe('/var/lib/postgram/attachments');
+      expect(cfg.INGEST_MAX_BYTES).toBe(52428800);
+      expect(cfg.LOADER_TIMEOUT_MS).toBe(600000);
+    });
+
+    it('reads explicit loader settings', () => {
+      const cfg = loadConfig(
+        baseEnv({
+          LOADERS_ENABLED: 'true',
+          LOADERS_CONFIG_PATH: '/etc/postgram/loaders.json',
+          ATTACHMENTS_DIR: '/data/attachments',
+          INGEST_MAX_BYTES: '1024',
+          LOADER_TIMEOUT_MS: '5000'
+        })
+      );
+      expect(cfg.LOADERS_ENABLED).toBe(true);
+      expect(cfg.LOADERS_CONFIG_PATH).toBe('/etc/postgram/loaders.json');
+      expect(cfg.ATTACHMENTS_DIR).toBe('/data/attachments');
+      expect(cfg.INGEST_MAX_BYTES).toBe(1024);
+      expect(cfg.LOADER_TIMEOUT_MS).toBe(5000);
+    });
+
+    it('treats blank loader settings as unset', () => {
+      // LOADERS_ENABLED is left out: a blank boolean flag fails validation, like EXTRACTION_ENABLED.
+      const cfg = loadConfig(
+        baseEnv({
+          LOADERS_CONFIG_PATH: '',
+          ATTACHMENTS_DIR: '',
+          INGEST_MAX_BYTES: '',
+          LOADER_TIMEOUT_MS: ''
+        })
+      );
+      expect(cfg.LOADERS_CONFIG_PATH).toBeUndefined();
+      expect(cfg.ATTACHMENTS_DIR).toBe('/var/lib/postgram/attachments');
+      expect(cfg.INGEST_MAX_BYTES).toBe(52428800);
+      expect(cfg.LOADER_TIMEOUT_MS).toBe(600000);
+    });
+
+    it('rejects invalid loader settings', () => {
+      expect(() => loadConfig(baseEnv({ LOADERS_ENABLED: 'yes' }))).toThrow();
+      expect(() => loadConfig(baseEnv({ INGEST_MAX_BYTES: '0' }))).toThrow();
+      expect(() => loadConfig(baseEnv({ INGEST_MAX_BYTES: '1.5' }))).toThrow();
+      expect(() => loadConfig(baseEnv({ LOADER_TIMEOUT_MS: '-1' }))).toThrow();
+    });
+  });
 });

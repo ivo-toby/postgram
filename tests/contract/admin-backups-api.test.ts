@@ -34,6 +34,7 @@ const BACKUP_DATA_TABLES = [
   'admin_sessions',
   'admin_users',
   'api_keys',
+  'attachments',
   'audit_log',
   'chunks',
   'document_sources',

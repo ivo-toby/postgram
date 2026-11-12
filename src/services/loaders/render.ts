@@ -32,7 +32,8 @@ export function renderLoaderResult(result: LoaderResult): string {
       parts.push(text);
     }
   }
-  return parts.join('\n\n');
+  // PostgreSQL rejects NUL in text columns; PDF extractors can emit it.
+  return parts.join('\n\n').replaceAll('\u0000', '');
 }
 
 function blockPage(block: Block): number | undefined {

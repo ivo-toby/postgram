@@ -318,4 +318,13 @@ describe('renderLoaderResult', () => {
       ).toBe('```tsfoobar\nx\n```');
     });
   });
+
+  it('strips NUL characters from the output', () => {
+    expect(
+      render([
+        { kind: 'heading', level: 1, text: 'T\u0000itle' },
+        { kind: 'text', text: 'a\u0000b' }
+      ])
+    ).toBe('# Title\n\nab');
+  });
 });

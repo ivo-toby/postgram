@@ -80,7 +80,7 @@ The original attachment has `ref = 'original'`. A derived attachment uses the `r
 | `LOADERS_CONFIG_PATH` | not set | Path to a loader configuration file. If not set, the built-in default applies. |
 | `ATTACHMENTS_DIR` | `/var/lib/postgram/attachments` | Root of the attachment store. |
 | `INGEST_MAX_BYTES` | `52428800` | Largest accepted upload. |
-| `LOADER_TIMEOUT_MS` | `600000` | Timeout of one in-process loader call. |
+| `LOADER_TIMEOUT_MS` | `600000` | Timeout of one loader call. A sidecar entry can set a shorter `timeoutMs`. |
 
 The built-in default configuration registers one loader:
 
@@ -103,17 +103,32 @@ Package resolution order for an in-process loader:
 1. If the configuration file sets `pluginsDir`, that directory.
 2. The server application root. First-party loaders are npm workspace packages, so they resolve from there in development and in the Docker image.
 
+## 3a. Loader selection
+
+One function selects the loader for the ingest endpoint and for the worker: `resolveByTypeOrName({ mimeType, filename })`.
+
+1. Remove parameters from the MIME type and make it lowercase.
+2. If the type is not empty and not `application/octet-stream`, match on the MIME type only. If a loader matches, the effective type is the given type.
+3. If step 2 gives no match, match on the file extension only. The effective type is then the first concrete MIME type of the selected loader.
+
+The entity stores the effective type in `mime_type`.
+
+## 3b. Loader output rules
+
+The host passes each loader result through `parseLoaderResult`. An invalid result is an error. This applies to in-process loaders and to sidecars. A sidecar cannot return an attachment as a file path. It sends attachment bytes as base64.
+
 ## 4. Attachment store
 
 `FilesystemAttachmentStore` in `src/services/loaders/attachment-store.ts`:
 
-- `put(bytes)` writes to `<root>/<sha[0..2]>/<sha>` and returns `{ sha256, byteSize, storageUri }`. Write to a temporary name in the same directory, then rename. If the target exists, skip the write.
-- `resolvePath(storageUri)` returns the local path. It rejects a URI that points outside the root.
+- `put(bytes)` writes to `<root>/<sha[0..2]>/<sha>` and returns `{ sha256, byteSize, storageUri }`. Write to a temporary name in the same directory, then rename. If the target exists with the same size, skip the write.
+- `resolvePath(storageUri)` returns the local path. It accepts only the key pattern below.
 - `openReadStream(storageUri)` returns a readable stream.
 - `listFiles()` yields `{ sha256, path }` for garbage collection.
 - `remove(sha256)` deletes one file.
+- `removeStaleTempFiles(olderThanMs)` deletes temporary files that a crash left behind.
 
-`storage_uri` has the form `file://<absolute path>`.
+`storage_uri` is a relative key: `<first 2 hex chars>/<sha256>`. It has no absolute path, so the store root can move.
 
 ## 5. Ingest service
 

@@ -78,3 +78,22 @@ describe('distributable documentation privacy', () => {
     expect(violations).toEqual([]);
   });
 });
+
+describe('skill frontmatter', () => {
+  it('quotes values that a YAML parser would otherwise split', async () => {
+    const skill = await readFile(
+      path.join(process.cwd(), 'skill/postgram/SKILL.md'),
+      'utf8'
+    );
+    const frontmatter = /^---\n([\s\S]*?)\n---\n/.exec(skill)?.[1];
+    expect(frontmatter).toBeDefined();
+
+    for (const line of (frontmatter ?? '').split('\n')) {
+      const value = /^[\w-]+:\s+(.*)$/.exec(line)?.[1] ?? '';
+      const quoted = /^'(?:[^']|'')*'$/.test(value) || /^".*"$/.test(value);
+      if (quoted) continue;
+      // In a plain scalar, ": " starts a mapping and " #" starts a comment.
+      expect(value).not.toMatch(/: | #/);
+    }
+  });
+});

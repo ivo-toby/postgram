@@ -46,6 +46,7 @@ import {
   toolFromService
 } from './mcp-results.js';
 import type { ToolPayload } from './mcp-results.js';
+import { MCP_SERVER_INSTRUCTIONS } from './mcp-instructions.js';
 import { registerWorkspaceTools } from './mcp-workspace-tools.js';
 import {
   AppError,
@@ -241,7 +242,7 @@ async function authenticateSession(
   return validateBearerToken(pool, token);
 }
 
-function createSessionServer(
+export function createSessionServer(
   pool: Pool,
   auth: AuthContext,
   options: {
@@ -252,10 +253,13 @@ function createSessionServer(
     searchDefaultThreshold?: number | undefined;
   } = {}
 ) {
-  const server = new McpServer({
-    name: 'postgram-mcp',
-    version: '0.1.0'
-  });
+  const server = new McpServer(
+    {
+      name: 'postgram-mcp',
+      version: '0.1.0'
+    },
+    { instructions: MCP_SERVER_INSTRUCTIONS }
+  );
 
   server.registerTool(
     'store',

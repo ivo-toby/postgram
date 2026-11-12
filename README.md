@@ -1418,15 +1418,24 @@ for personal and small-team self-hosting rather than multi-tenant scale.
 - LLM extraction is optional and disabled by default
 - Backup encryption requires `gpg`
 
-## Claude Code skill
+## Agent skill
 
-A portable Claude Code skill for using `pgm` from your own agent lives in
-[`skill/postgram/SKILL.md`](skill/postgram/SKILL.md). Copy the `skill/postgram/`
-directory into your own project's `.claude/skills/` (or your user-level
-`~/.claude/skills/`) and the agent will know when to invoke `pgm store`,
-`pgm search`, `pgm link`, etc. It assumes the CLI is on PATH and
-`PGM_API_URL` + `PGM_API_KEY` are set. The skill file is deliberately _not_
-under `.claude/` in this repo so you can decide where to put it.
+A portable skill that teaches an agent when and how to use Postgram lives in
+[`skill/postgram/`](skill/postgram/). Copy that whole directory into your own
+project's `.claude/skills/` (or your user-level `~/.claude/skills/`). The
+skill file is deliberately _not_ under `.claude/` in this repo so you can
+decide where to put it.
+
+The skill works over either transport. `SKILL.md` describes what to do and
+lets the agent pick: the Postgram MCP tools when the client has them,
+otherwise the `pgm` CLI (on PATH, with `PGM_API_URL` + `PGM_API_KEY` set).
+The call syntax is in `references/mcp.md`, `references/cli.md` and
+`references/workspace.md`, which the agent reads on demand, so copy the
+`references/` directory along with `SKILL.md`.
+
+Agents that connect over MCP without the skill still get the basics: the MCP
+server sends short instructions on connect that say when to search, store,
+keep session context and track tasks.
 
 ### Optimising your global CLAUDE.md
 

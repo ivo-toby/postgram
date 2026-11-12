@@ -244,13 +244,14 @@ Use session context for recent-thread continuity. Session context is embedded
 for semantic recall, scoped to the calling client when the server knows its
 `client_id`, and skipped by graph extraction.
 
-## Claude Code skill
+## Agent skill
 
-A portable Claude Code skill for using `pgm` from your agent lives in
-[`skill/postgram/SKILL.md`](https://github.com/ivo-toby/postgram/blob/main/skill/postgram/SKILL.md)
-in the main repo. Copy the `skill/postgram/` directory into your own project's
-`.claude/skills/` (or your user-level `~/.claude/skills/`) and the agent will
-know when to invoke `pgm store`, `pgm search`, `pgm link`, etc.
+A portable skill that teaches an agent when and how to use Postgram lives in
+[`skill/postgram/`](https://github.com/ivo-toby/postgram/tree/main/skill/postgram)
+in the main repo. Copy that whole directory, including `references/`, into
+your own project's `.claude/skills/` (or your user-level `~/.claude/skills/`)
+and the agent will know when to invoke `pgm store`, `pgm search`, `pgm link`,
+etc. The same skill also covers agents that reach Postgram over MCP.
 
 ## Development
 

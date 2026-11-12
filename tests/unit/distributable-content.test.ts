@@ -58,7 +58,7 @@ describe('distributable documentation privacy', () => {
     const files = [
       'README.md',
       'cli/README.md',
-      'skill/postgram/SKILL.md',
+      ...(await markdownFiles('skill')),
       ...(await markdownFiles('templates')),
       ...(await markdownFiles('docs')).filter(
         (file) => file !== path.join('docs', 'LICENSE.md')

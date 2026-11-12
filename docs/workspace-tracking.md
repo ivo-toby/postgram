@@ -74,9 +74,10 @@ An entry matches that directory only; `~/tmp/**` matches everything below it.
 
 ### 4. Tell your agents
 
-Install the Postgram skill (`skill/postgram/SKILL.md`) for your agents. Its
-"Workspace tracking" section tells them to link workspaces, attach PRs and
-move stages, and to use `where` when you ask what needs you.
+Install the Postgram skill (the `skill/postgram/` directory) for your agents.
+Its "Workspace tracking" section tells them to link workspaces, attach PRs and
+move stages, and to use `where` when you ask what needs you. The commands and
+MCP calls are in `references/workspace.md` next to it.
 
 ## Daily use
 

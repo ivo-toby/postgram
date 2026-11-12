@@ -26,6 +26,8 @@ export type ExtractionStatus =
   | 'skipped'
   | null;
 
+export type LoadingStatus = 'pending' | 'running' | 'completed' | 'failed';
+
 export type Entity = {
   id: string;
   type: EntityType;
@@ -40,6 +42,11 @@ export type Entity = {
   metadata: Record<string, unknown>;
   createdAt: string;
   updatedAt: string;
+  /** Document-loader fields. Present only when set. */
+  mimeType?: string;
+  loadingStatus?: LoadingStatus;
+  loadingError?: string;
+  loaderName?: string;
 };
 
 export type Chunk = {

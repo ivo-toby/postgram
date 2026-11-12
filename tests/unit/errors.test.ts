@@ -11,6 +11,9 @@ describe('toHttpStatus', () => {
     expect(toHttpStatus(ErrorCode.NOT_FOUND)).toBe(404);
     expect(toHttpStatus(ErrorCode.CONFLICT)).toBe(409);
     expect(toHttpStatus(ErrorCode.EMBEDDING_FAILED)).toBe(502);
+    expect(toHttpStatus(ErrorCode.PAYLOAD_TOO_LARGE)).toBe(413);
+    expect(toHttpStatus(ErrorCode.UNSUPPORTED_MEDIA_TYPE)).toBe(415);
+    expect(toHttpStatus(ErrorCode.UNAVAILABLE)).toBe(503);
     expect(toHttpStatus(ErrorCode.INTERNAL)).toBe(500);
   });
 });

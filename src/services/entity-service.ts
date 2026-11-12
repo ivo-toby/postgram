@@ -13,6 +13,7 @@ import type {
 } from '../types/entities.js';
 import { appendAuditEntry } from '../util/audit.js';
 import { AppError, ErrorCode } from '../util/errors.js';
+import { mapLoadingFields, type LoadingFieldsRow } from './document-loading-fields.js';
 import {
   matchesOwnerFilter,
   normalizeOwner,
@@ -24,7 +25,7 @@ import {
   type SessionContextInput
 } from './memory-role-service.js';
 
-type EntityRow = {
+type EntityRow = LoadingFieldsRow & {
   id: string;
   type: EntityType;
   content: string | null;
@@ -113,7 +114,8 @@ function mapEntity(row: EntityRow): Entity {
     source: row.source,
     metadata: row.metadata,
     createdAt: row.created_at.toISOString(),
-    updatedAt: row.updated_at.toISOString()
+    updatedAt: row.updated_at.toISOString(),
+    ...mapLoadingFields(row)
   };
 }
 

@@ -8,6 +8,9 @@ export enum ErrorCode {
   NOT_FOUND = 'NOT_FOUND',
   CONFLICT = 'CONFLICT',
   EMBEDDING_FAILED = 'EMBEDDING_FAILED',
+  PAYLOAD_TOO_LARGE = 'PAYLOAD_TOO_LARGE',
+  UNSUPPORTED_MEDIA_TYPE = 'UNSUPPORTED_MEDIA_TYPE',
+  UNAVAILABLE = 'UNAVAILABLE',
   INTERNAL = 'INTERNAL'
 }
 
@@ -43,6 +46,12 @@ export function toHttpStatus(code: ErrorCode): number {
       return 409;
     case ErrorCode.EMBEDDING_FAILED:
       return 502;
+    case ErrorCode.PAYLOAD_TOO_LARGE:
+      return 413;
+    case ErrorCode.UNSUPPORTED_MEDIA_TYPE:
+      return 415;
+    case ErrorCode.UNAVAILABLE:
+      return 503;
     case ErrorCode.INTERNAL:
       return 500;
   }

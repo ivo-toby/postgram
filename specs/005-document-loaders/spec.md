@@ -171,6 +171,8 @@ Acceptance, with a configured CLI:
 
 - An in-process loader runs with the full rights of the server process. Install only packages that you trust. The documentation says this.
 - Uploaded files are untrusted. The host limits the size. The loader call has a timeout. The PDF loader has a page limit.
+- These limits do not bound memory. A small crafted PDF can expand to gigabytes during the parse and stop the server process. Ingest only files from sources that you trust.
+- The timeout cannot stop an in-process loader that ignores the abort signal. The worker discards the late result.
 - The download endpoint sets `X-Content-Type-Options: nosniff` and `Content-Disposition: attachment`.
 - The idempotency check is scoped to owner and visibility, so one owner cannot learn that another owner holds a file.
 
@@ -189,6 +191,7 @@ Acceptance, with a configured CLI:
 
 ## 9. Follow-ups
 
+1. Run in-process loaders in a separate process with a memory limit, so that a crafted file cannot stop the server.
 1. Give loaders access to the configured providers through the loader context. Then build API loaders: OCR for images and scanned PDFs, and transcription for audio.
 2. A Word loader.
 3. The Mac share client. Convert Pages documents to PDF on the Mac before upload.

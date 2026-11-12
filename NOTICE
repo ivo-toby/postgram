@@ -13,3 +13,9 @@ International. See docs/LICENSE.md and docs/LICENSE.
 
 No trademark rights in the Postgram name, logos, icons, or other brand
 identifiers are granted by these copyright licenses. See TRADEMARKS.md.
+
+Third-party components bundled in the Postgram server image:
+
+packages/loader-pdf depends on unpdf (MIT), which bundles Mozilla PDF.js
+6.4.299 (Apache-2.0). The full license texts are in
+packages/loader-pdf/THIRD_PARTY_LICENSES.

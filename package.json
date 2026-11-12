@@ -6,6 +6,7 @@
   "type": "module",
   "workspaces": [
     "cli",
+    "packages/loader-pdf",
     "packages/browser-extension-chrome",
     "packages/browser-extension-firefox"
   ],
@@ -16,8 +17,9 @@
     "node": ">=22"
   },
   "scripts": {
-    "build": "tsc -p tsconfig.build.json",
-    "typecheck": "tsc -p tsconfig.json --noEmit && npm run typecheck --workspace @ivotoby/postgram-cli",
+    "build": "tsc -p tsconfig.build.json && npm run build --workspace @ivotoby/postgram-loader-pdf",
+    "typecheck": "tsc -p tsconfig.json --noEmit && npm run typecheck --workspace @ivotoby/postgram-cli && npm run typecheck --workspace @ivotoby/postgram-loader-pdf",
+    "predev": "npm run build --workspace @ivotoby/postgram-loader-pdf",
     "dev": "tsx watch src/index.ts",
     "start": "node dist/index.js",
     "test": "vitest run",

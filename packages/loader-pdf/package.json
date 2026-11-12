@@ -1,0 +1,28 @@
+{
+  "name": "@ivotoby/postgram-loader-pdf",
+  "version": "0.1.0",
+  "private": true,
+  "description": "PDF text loader for the Postgram document loading pipeline.",
+  "license": "AGPL-3.0-only",
+  "type": "module",
+  "main": "dist/index.js",
+  "types": "dist/index.d.ts",
+  "files": [
+    "dist"
+  ],
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/ivo-toby/postgram.git",
+    "directory": "packages/loader-pdf"
+  },
+  "scripts": {
+    "build": "tsc -p tsconfig.build.json",
+    "typecheck": "tsc -p tsconfig.build.json --noEmit"
+  },
+  "dependencies": {
+    "unpdf": "1.9.1"
+  },
+  "engines": {
+    "node": ">=22"
+  }
+}

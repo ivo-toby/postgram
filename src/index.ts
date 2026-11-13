@@ -1,3 +1,5 @@
+import { constants as fsConstants } from 'node:fs';
+import { access, mkdir } from 'node:fs/promises';
 import { pathToFileURL } from 'node:url';
 
 import { serve } from '@hono/node-server';
@@ -26,6 +28,11 @@ import {
 } from './services/embeddings/providers.js';
 import { ensureEmbeddingIdentityAgreement } from './services/embeddings/admin.js';
 import { createEnrichmentWorker } from './services/enrichment-worker.js';
+import { FilesystemAttachmentStore } from './services/loaders/attachment-store.js';
+import type { AttachmentStore } from './services/loaders/attachment-store.js';
+import { buildRegistry } from './services/loaders/build-registry.js';
+import { loadLoadersConfig } from './services/loaders/config-loader.js';
+import type { LoaderRegistry } from './services/loaders/registry.js';
 import {
   createProviderPolicyFetch,
   readAppliedProviderSettingKeys,
@@ -88,6 +95,13 @@ type AppOptions = {
   adminBackupDropdbPath?: string | undefined;
   adminBackupTarPath?: string | undefined;
   getHealthStatus?: () => Promise<HealthStatus> | HealthStatus;
+  documentLoaders?:
+    | {
+        registry: LoaderRegistry;
+        attachmentStore: AttachmentStore;
+        maxBytes: number;
+      }
+    | undefined;
 };
 
 const FIRST_RUN_BOOTSTRAP_TOKEN_TTL_MS = 24 * 60 * 60 * 1000;
@@ -321,6 +335,9 @@ export function createApp(
       searchDefaultThreshold: options.searchDefaultThreshold,
       ...(options.extractionEnabled !== undefined
         ? { extractionEnabled: options.extractionEnabled }
+        : {}),
+      ...(options.documentLoaders
+        ? { documentLoaders: options.documentLoaders }
         : {})
     });
     const dormantAfterDays = options.workspaceDormantAfterDays ?? 30;
@@ -374,6 +391,61 @@ export async function startServer(): Promise<{
 }> {
   const config = loadConfig();
   const logger = createLogger(config.LOG_LEVEL);
+  // Runs before the pool exists, so a bad loaders config or attachments
+  // directory fails startup before migrations and before any network call.
+  // An individual loader that cannot register is only logged (FR-31).
+  let documentLoaders:
+    | {
+        registry: LoaderRegistry;
+        attachmentStore: AttachmentStore;
+        maxBytes: number;
+      }
+    | undefined;
+  if (config.LOADERS_ENABLED) {
+    const loadersConfig = await loadLoadersConfig(config.LOADERS_CONFIG_PATH);
+    try {
+      await mkdir(config.ATTACHMENTS_DIR, { recursive: true });
+      await access(config.ATTACHMENTS_DIR, fsConstants.W_OK);
+    } catch (err) {
+      throw new AppError(
+        ErrorCode.INTERNAL,
+        `attachments directory ${config.ATTACHMENTS_DIR} (ATTACHMENTS_DIR) is not usable: ${err instanceof Error ? err.message : String(err)}`
+      );
+    }
+    const registry = await buildRegistry(loadersConfig, logger);
+    const attachmentStore = new FilesystemAttachmentStore(
+      config.ATTACHMENTS_DIR
+    );
+    try {
+      const removed = await attachmentStore.removeStaleTempFiles(
+        24 * 60 * 60 * 1000
+      );
+      if (removed > 0) {
+        logger.info({ removed }, 'removed stale attachment temp files');
+      }
+    } catch (err) {
+      logger.warn({ err }, 'attachment temp file cleanup failed');
+    }
+    documentLoaders = {
+      registry,
+      attachmentStore,
+      maxBytes: config.INGEST_MAX_BYTES
+    };
+    logger.info(
+      {
+        loaders: registry.list().map((l) => ({
+          name: l.name,
+          kind: l.kind,
+          status: l.status,
+          enabled: l.enabled,
+          ...(l.reason !== undefined ? { reason: l.reason } : {})
+        })),
+        attachmentsDir: config.ATTACHMENTS_DIR
+      },
+      'document loaders enabled'
+    );
+  }
+
   const pool = createPool(config.DATABASE_URL, logger);
 
   await runMigrations(pool);
@@ -532,6 +604,13 @@ export async function startServer(): Promise<{
   const worker = createEnrichmentWorker({
     pool,
     embeddingService,
+    ...(documentLoaders
+      ? {
+          loaderRegistry: documentLoaders.registry,
+          attachmentStore: documentLoaders.attachmentStore,
+          loaderTimeoutMs: config.LOADER_TIMEOUT_MS
+        }
+      : {}),
     extractionEnabled: runtimeConfig.EXTRACTION_ENABLED,
     extractionMemoryMode: runtimeConfig.EXTRACTION_MEMORY_MODE,
     callLlm,
@@ -601,6 +680,7 @@ export async function startServer(): Promise<{
       enabled: runtimeConfig.OAUTH_ENABLED,
       publicBaseUrl: runtimeConfig.PUBLIC_BASE_URL
     },
+    ...(documentLoaders ? { documentLoaders } : {}),
     getHealthStatus: () => createHealthStatus(pool)
   });
 

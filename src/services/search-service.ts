@@ -20,9 +20,10 @@ import {
   type QueryEmbeddingCacheStatus,
   vectorToSql
 } from './embedding-service.js';
+import { mapLoadingFields, type LoadingFieldsRow } from './document-loading-fields.js';
 import type { MemoryRole } from './memory-role-service.js';
 
-type EntityRow = {
+type EntityRow = LoadingFieldsRow & {
   id: string;
   type: EntityType;
   content: string | null;
@@ -136,7 +137,8 @@ function mapEntity(row: EntityRow): Entity {
     source: row.source,
     metadata: row.metadata,
     createdAt: row.created_at.toISOString(),
-    updatedAt: row.updated_at.toISOString()
+    updatedAt: row.updated_at.toISOString(),
+    ...mapLoadingFields(row)
   };
 }
 
@@ -884,6 +886,10 @@ function buildHybridSearchSql(
       e.metadata,
       e.created_at,
       e.updated_at,
+      e.mime_type,
+      e.loading_status,
+      e.loading_error,
+      e.loader_name,
       c.content AS chunk_content,
       top_results.similarity,
       top_results.score

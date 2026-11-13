@@ -482,6 +482,30 @@ The same service layer is exposed through:
   (or the Firefox equivalent); install unpacked from the per-package
   README.
 
+### 10. Document Ingestion
+
+Upload a PDF (or any file that a loader accepts) and Postgram keeps the
+original, converts it to text, and indexes the text like any other entity.
+The feature is off by default. Set `LOADERS_ENABLED=true` to turn it on. The
+Compose file mounts the `postgram_attachments` volume for the original files.
+
+```bash
+curl -X POST "$PGM_API_URL/api/documents/ingest" \
+  -H "Authorization: Bearer $PGM_API_KEY" \
+  -F "file=@report.pdf" -F "title=Q3 report"
+pgm ingest report.pdf --wait
+```
+
+The routes are `POST /api/documents/ingest`, `GET /api/entities/:id/attachments`
+and `GET /api/attachments/:id/content`. The loader settings are in the
+[Document Loaders](#document-loaders) variable table.
+
+[docs/document-loaders.md](docs/document-loaders.md) covers the loader
+configuration file, how to write a loader or a sidecar, security, and known
+limits. It also covers `pgm-admin attachments gc`. The admin backup includes
+the attachment rows. It does not include the attachment files, so back up the
+volume separately.
+
 ## Repository Layout
 
 ```text
@@ -709,6 +733,16 @@ When Postgram runs in Docker and Ollama runs directly on the Docker host, use `h
 
 See [`specs/002-local-embeddings/quickstart.md`](specs/002-local-embeddings/quickstart.md) for a walkthrough of fresh-install-on-Ollama and migrating from OpenAI.
 
+### Document Loaders
+
+| Variable              | Required | Default                         | Description                                                                                                                                                                                                                                       |
+| --------------------- | -------- | ------------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `LOADERS_ENABLED`     | no       | `false`                         | Turns on file ingest, the loading stage and the attachment endpoints.                                                                                                                                                                             |
+| `LOADERS_CONFIG_PATH` | no       | unset                           | Path to a loader configuration file. When unset, the built-in default applies.                                                                                                                                                                    |
+| `ATTACHMENTS_DIR`     | no       | `/var/lib/postgram/attachments` | Root of the attachment store. The Docker image creates this directory for the `node` user and Compose mounts the `postgram_attachments` volume there. If you change it in Compose, mount a volume at the new path and make it writable by `node`. |
+| `INGEST_MAX_BYTES`    | no       | `52428800`                      | Largest accepted upload in bytes.                                                                                                                                                                                                                 |
+| `LOADER_TIMEOUT_MS`   | no       | `600000`                        | Timeout in milliseconds for every loader call. A sidecar `timeoutMs` can only shorten it.                                                                                                                                                         |
+
 ### LLM Extraction
 
 | Variable                                       | Required                        | Default                      | Description                                                                                                                                                                                                                                                                                                  |
@@ -903,6 +937,12 @@ export PGM_API_KEY='<plaintext-key>'
 - `PATCH /api/entities/:id` — update entity
 - `DELETE /api/entities/:id` — soft-delete entity
 - `GET /api/entities` — list entities
+
+### Documents
+
+- `POST /api/documents/ingest`: upload a file (multipart); `202` created, `200` exists
+- `GET /api/entities/:id/attachments`: list the attachments of an entity
+- `GET /api/attachments/:id/content`: download an attachment
 
 ### Search
 
@@ -1107,6 +1147,16 @@ pgm sync ~/Documents/cf-notes --repo cf-notes --dry-run
 pgm sync ~/Documents/personal-notes --quiet  # for cron
 ```
 
+### Document ingest
+
+```bash
+pgm ingest report.pdf
+pgm ingest report.pdf --title "Q3 report" --tags finance --wait --timeout 300
+```
+
+`--wait` polls until loading and indexing finish. It exits non-zero if either
+fails or the timeout passes. See [docs/document-loaders.md](docs/document-loaders.md).
+
 ### Knowledge graph
 
 ```bash
@@ -1259,6 +1309,9 @@ Main commands:
 
 - `stats` — entity counts, chunk count, DB size
 - `embeddings migrate` — switch embedding dimensions (see [`specs/002-local-embeddings/quickstart.md`](specs/002-local-embeddings/quickstart.md))
+- `attachments gc`: delete attachment files that no database row references.
+  Files younger than `--min-age` (default `1h`, at least `10m`) stay. Use `--dry-run` to preview.
+  Archived entities keep their files until `purge` removes the rows. Run it where the attachments directory is mounted.
 
 ## Graph Maintenance
 

@@ -1,4 +1,8 @@
+import { Readable } from 'node:stream';
+
 import type { Hono } from 'hono';
+import { bodyLimit } from 'hono/body-limit';
+import { HTTPException } from 'hono/http-exception';
 import { z } from 'zod';
 import type { Pool } from 'pg';
 import type { Logger } from 'pino';
@@ -7,7 +11,16 @@ import type { AuthContext } from '../auth/types.js';
 import { checkTypeAccess, requireScope } from '../auth/key-service.js';
 import type { EmbeddingService } from '../services/embedding-service.js';
 import { createEdge, deleteEdge, listEdges, expandGraph } from '../services/edge-service.js';
+import {
+  getAttachmentForDownload,
+  ingestDocument,
+  listAttachments,
+  type Attachment
+} from '../services/document-ingest-service.js';
+import { toLoadingResponseFields } from '../services/document-loading-fields.js';
 import { getEntityEmbeddings } from '../services/embedding-query-service.js';
+import type { AttachmentStore } from '../services/loaders/attachment-store.js';
+import type { LoaderRegistry } from '../services/loaders/registry.js';
 import {
   bulkArchiveEntities,
   listEntities,
@@ -39,7 +52,7 @@ import {
 } from '../services/task-service.js';
 import type { TaskKindFilter } from '../services/task-service.js';
 import type { Entity, EntityStatus, EntityType, Visibility } from '../types/entities.js';
-import { AppError, ErrorCode } from '../util/errors.js';
+import { AppError, ErrorCode, toErrorResponse } from '../util/errors.js';
 
 const entityTypeSchema = z.enum([
   'memory',
@@ -269,7 +282,8 @@ export function toStoredEntity(entity: Entity) {
     source: entity.source,
     metadata: entity.metadata,
     created_at: entity.createdAt,
-    updated_at: entity.updatedAt
+    updated_at: entity.updatedAt,
+    ...toLoadingResponseFields(entity)
   };
 }
 
@@ -291,11 +305,271 @@ function toSearchStoredEntity(entity: Entity, includeContent: boolean) {
     source: storedEntity.source,
     metadata: storedEntity.metadata,
     created_at: storedEntity.created_at,
-    updated_at: storedEntity.updated_at
+    updated_at: storedEntity.updated_at,
+    ...toLoadingResponseFields(entity)
   };
 }
 
+const ingestFieldsSchema = z.object({
+  title: z.string().trim().min(1).optional(),
+  mime_type: z.string().trim().min(1).optional(),
+  visibility: visibilitySchema.optional(),
+  owner: ownerSchema.optional()
+});
+
+/**
+ * Allowance for multipart framing and the text fields on top of `maxBytes`.
+ * `bodyLimit` counts the whole body; the exact file size check decides.
+ */
+export const INGEST_FORM_OVERHEAD_BYTES = 64 * 1024;
+
+export type DocumentLoadersOption = {
+  registry: LoaderRegistry;
+  attachmentStore: AttachmentStore;
+  maxBytes: number;
+};
+
+/** An empty form field counts as absent. */
+function formString(value: unknown): string | undefined {
+  if (value === undefined) {
+    return undefined;
+  }
+  if (typeof value !== 'string') {
+    throw toValidationError('Form fields other than file must be text');
+  }
+  return value.trim() === '' ? undefined : value;
+}
+
+function parseMetadataField(raw: string | undefined): Record<string, unknown> | undefined {
+  if (raw === undefined) {
+    return undefined;
+  }
+  let parsed: unknown;
+  try {
+    parsed = JSON.parse(raw);
+  } catch {
+    throw toValidationError('metadata must be valid JSON');
+  }
+  if (typeof parsed !== 'object' || parsed === null || Array.isArray(parsed)) {
+    throw toValidationError('metadata must be a JSON object');
+  }
+  return parsed as Record<string, unknown>;
+}
+
+function toStoredAttachment(attachment: Attachment) {
+  return {
+    id: attachment.id,
+    entity_id: attachment.entityId,
+    role: attachment.role,
+    ref: attachment.ref,
+    kind: attachment.kind,
+    mime_type: attachment.mimeType,
+    filename: attachment.filename,
+    byte_size: attachment.byteSize,
+    sha256: attachment.sha256,
+    created_at: attachment.createdAt
+  };
+}
+
+const SAFE_CONTENT_TYPE_RE = /^[A-Za-z0-9!#$&^_.+-]+\/[A-Za-z0-9!#$&^_.+-]+$/;
+
+function safeContentType(mimeType: string): string {
+  return SAFE_CONTENT_TYPE_RE.test(mimeType)
+    ? mimeType
+    : 'application/octet-stream';
+}
+
+/** `attachment` disposition with an ASCII fallback and an RFC 5987 name. */
+export function contentDisposition(filename: string | null, fallback: string): string {
+  const name = filename ?? fallback;
+  const ascii = name.replace(/[^\x20-\x7e]|["\\%;]/g, '_');
+  const encoded = encodeURIComponent(name).replace(
+    /['()*]/g,
+    (ch) => `%${ch.charCodeAt(0).toString(16).toUpperCase()}`
+  );
+  return `attachment; filename="${ascii}"; filename*=UTF-8''${encoded}`;
+}
+
+/** Resolves once the stream is readable; rejects if it cannot be opened. */
+function whenReadable(stream: Readable): Promise<void> {
+  return new Promise((resolve, reject) => {
+    const onError = (error: Error) => {
+      stream.removeListener('readable', onReadable);
+      reject(error);
+    };
+    const onReadable = () => {
+      stream.removeListener('error', onError);
+      resolve();
+    };
+    stream.once('error', onError);
+    stream.once('readable', onReadable);
+  });
+}
+
 type RestApp = Hono<{ Variables: { auth: AuthContext } }>;
+
+function registerDocumentRoutes(
+  app: RestApp,
+  pool: Pool,
+  options: {
+    logger?: Pick<Logger, 'debug' | 'warn'> | undefined;
+    documentLoaders?: DocumentLoadersOption | undefined;
+  }
+): void {
+  const loaders = options.documentLoaders;
+
+  if (!loaders) {
+    app.post('/api/documents/ingest', () => {
+      throw new AppError(
+        ErrorCode.UNAVAILABLE,
+        'Document loaders are not enabled'
+      );
+    });
+    return;
+  }
+
+  app.post(
+    '/api/documents/ingest',
+    bodyLimit({
+      maxSize: loaders.maxBytes + INGEST_FORM_OVERHEAD_BYTES,
+      onError: (c) =>
+        c.json(
+          toErrorResponse(
+            new AppError(
+              ErrorCode.PAYLOAD_TOO_LARGE,
+              `Upload exceeds the limit of ${loaders.maxBytes} bytes`,
+              { max_bytes: loaders.maxBytes }
+            )
+          ),
+          413
+        )
+    }),
+    async (c) => {
+      const auth = c.get('auth');
+      // Read from the raw request (bodyLimit swaps it for a counting stream)
+      // to avoid Hono's cached body copy of the whole upload.
+      let form: FormData;
+      try {
+        form = await c.req.raw.formData();
+      } catch (error) {
+        if (error instanceof HTTPException) {
+          return error.getResponse();
+        }
+        throw toValidationError('Request must be valid multipart/form-data');
+      }
+
+      const file = form.get('file');
+      if (!(file instanceof File)) {
+        throw toValidationError('file is required (multipart file part)');
+      }
+      if (file.size > loaders.maxBytes) {
+        throw new AppError(
+          ErrorCode.PAYLOAD_TOO_LARGE,
+          `Upload exceeds the limit of ${loaders.maxBytes} bytes`,
+          { max_bytes: loaders.maxBytes }
+        );
+      }
+
+      const fields = parseJsonBody(ingestFieldsSchema, {
+        title: formString(form.get('title') ?? undefined),
+        mime_type: formString(form.get('mime_type') ?? undefined),
+        visibility: formString(form.get('visibility') ?? undefined),
+        owner: formString(form.get('owner') ?? undefined)
+      });
+      const tagsRaw = formString(form.get('tags') ?? undefined);
+      const tags = tagsRaw
+        ?.split(',')
+        .map((tag) => tag.trim())
+        .filter(Boolean);
+      const metadata = parseMetadataField(formString(form.get('metadata') ?? undefined));
+
+      const result = await ingestDocument(
+        auth,
+        {
+          bytes: new Uint8Array(await file.arrayBuffer()),
+          filename: file.name,
+          mimeType: fields.mime_type ?? (file.type || undefined),
+          title: fields.title,
+          visibility: fields.visibility,
+          owner: fields.owner,
+          tags,
+          metadata
+        },
+        {
+          pool,
+          registry: loaders.registry,
+          attachmentStore: loaders.attachmentStore
+        }
+      );
+
+      if (result.isErr()) {
+        throw result.error;
+      }
+
+      const { id, status, loadingStatus } = result.value;
+      return c.json(
+        { id, status, loading_status: loadingStatus },
+        status === 'created' ? 202 : 200
+      );
+    }
+  );
+
+  app.get('/api/entities/:id/attachments', async (c) => {
+    const result = await listAttachments(c.get('auth'), c.req.param('id'), {
+      pool
+    });
+    if (result.isErr()) {
+      throw result.error;
+    }
+    return c.json({ attachments: result.value.map(toStoredAttachment) });
+  });
+
+  app.get('/api/attachments/:id/content', async (c) => {
+    const result = await getAttachmentForDownload(
+      c.get('auth'),
+      c.req.param('id'),
+      { pool, attachmentStore: loaders.attachmentStore }
+    );
+    if (result.isErr()) {
+      throw result.error;
+    }
+
+    const { attachment, openStream } = result.value;
+    let stream: Readable;
+    try {
+      stream = openStream();
+      await whenReadable(stream);
+    } catch (error) {
+      const code = (error as { code?: unknown } | null)?.code;
+      options.logger?.warn(
+        {
+          attachmentId: attachment.id,
+          entityId: attachment.entityId,
+          code,
+          error: error instanceof Error ? error.message : String(error)
+        },
+        'attachment file could not be opened'
+      );
+      if (code === 'ENOENT') {
+        throw new AppError(ErrorCode.NOT_FOUND, 'Attachment content not found');
+      }
+      throw new AppError(ErrorCode.INTERNAL, 'Failed to read attachment content');
+    }
+
+    return new Response(Readable.toWeb(stream) as ReadableStream, {
+      status: 200,
+      headers: {
+        'Content-Type': safeContentType(attachment.mimeType),
+        'Content-Length': String(attachment.byteSize),
+        'X-Content-Type-Options': 'nosniff',
+        'Content-Disposition': contentDisposition(
+          attachment.filename,
+          `attachment-${attachment.ref}`
+        )
+      }
+    });
+  });
+}
 
 export function registerRestRoutes(
   app: RestApp,
@@ -305,8 +579,11 @@ export function registerRestRoutes(
     logger?: Pick<Logger, 'debug' | 'warn'> | undefined;
     extractionEnabled?: boolean | undefined;
     searchDefaultThreshold?: number | undefined;
+    documentLoaders?: DocumentLoadersOption | undefined;
   } = {}
 ): void {
+  registerDocumentRoutes(app, pool, options);
+
   app.post('/api/entities', async (c) => {
     const auth = c.get('auth');
     const body = parseJsonBody(storeEntitySchema, await c.req.json());

@@ -1,4 +1,7 @@
 import { createHash } from 'node:crypto';
+import { mkdtemp, readFile, realpath, rm, stat } from 'node:fs/promises';
+import { tmpdir } from 'node:os';
+import path from 'node:path';
 
 import type { Logger } from 'pino';
 import type { Pool, PoolClient } from 'pg';
@@ -15,6 +18,17 @@ import {
   SemanticMatchUnavailableError
 } from './extraction-service.js';
 import { getMemoryRole } from './memory-role-service.js';
+import type { AttachmentStore } from './loaders/attachment-store.js';
+import { lockIngestSha } from './document-ingest-service.js';
+import { MAX_LOADING_ATTEMPTS } from './document-loading-fields.js';
+import { renderLoaderResult } from './loaders/render.js';
+import type { LoaderRegistry } from './loaders/registry.js';
+import {
+  parseLoaderResult,
+  type LoaderContext,
+  type LoaderLogger,
+  type LoaderResult
+} from '../types/loader.js';
 
 type PendingEntityRow = {
   id: string;
@@ -86,7 +100,84 @@ type EnrichmentWorkerOptions = {
     maxNeighbors?: number;
     minSimilarity?: number;
   };
+  /** Document loading stage; it does nothing unless registry and store are both set. */
+  loaderRegistry?: LoaderRegistry | undefined;
+  attachmentStore?: AttachmentStore | undefined;
+  /** Per-call loader timeout in ms. Default 600000. */
+  loaderTimeoutMs?: number | undefined;
 };
+
+type LoadingEntityRow = {
+  id: string;
+  mime_type: string | null;
+  /** Attempt number set at claim time; doubles as the claim token. */
+  loading_attempts: number;
+};
+
+type OriginalAttachmentRow = {
+  filename: string | null;
+  byte_size: string;
+  storage_uri: string;
+};
+
+const DEFAULT_LOADER_TIMEOUT_MS = 600_000;
+const RESERVED_ATTACHMENT_REF = 'original';
+
+class LoadingFailure extends Error {
+  constructor(
+    message: string,
+    readonly loaderName: string | null = null
+  ) {
+    super(message);
+    this.name = 'LoadingFailure';
+  }
+}
+
+/** PostgreSQL rejects NUL in text and jsonb; strip it from strings and keys. */
+function stripNul<T>(value: T): T {
+  if (typeof value === 'string') {
+    return value.replaceAll('\u0000', '') as T;
+  }
+  if (Array.isArray(value)) {
+    return value.map((item: unknown) => stripNul(item)) as T;
+  }
+  if (value !== null && typeof value === 'object') {
+    const out: Record<string, unknown> = {};
+    for (const [key, item] of Object.entries(value)) {
+      out[stripNul(key)] = stripNul(item);
+    }
+    return out as T;
+  }
+  return value;
+}
+
+function createLoaderLogger(
+  logger: Logger,
+  base: Record<string, unknown>
+): LoaderLogger {
+  const make =
+    (level: 'trace' | 'debug' | 'info' | 'warn' | 'error') =>
+    (payload: Record<string, unknown> | string, message?: string): void => {
+      if (typeof payload === 'string') {
+        logger[level](base, payload);
+      } else {
+        logger[level]({ ...base, ...payload }, message);
+      }
+    };
+  return {
+    trace: make('trace'),
+    debug: make('debug'),
+    info: make('info'),
+    warn: make('warn'),
+    error: make('error')
+  };
+}
+
+async function isInside(dir: string, candidate: string): Promise<boolean> {
+  const root = await realpath(dir);
+  const real = await realpath(candidate);
+  return real === root || real.startsWith(`${root}${path.sep}`);
+}
 
 async function rollbackQuietly(client: PoolClient): Promise<void> {
   try {
@@ -516,9 +607,423 @@ export function createEnrichmentWorker(options: EnrichmentWorkerOptions) {
     }
   }
 
+  /** Running rows older than this are treated as abandoned. */
+  function staleRunningMs(): number {
+    const timeoutMs = options.loaderTimeoutMs ?? DEFAULT_LOADER_TIMEOUT_MS;
+    return Math.max(15 * 60 * 1000, timeoutMs + 5 * 60 * 1000);
+  }
+
+  async function sweepInterruptedLoads(): Promise<void> {
+    await options.pool.query(
+      `
+        UPDATE entities
+        SET loading_status = 'failed',
+            loading_error = 'interrupted: worker stopped during load'
+        WHERE loading_status = 'running'
+          AND loading_attempts >= $2
+          AND updated_at < now() - ($1::bigint * interval '1 millisecond')
+      `,
+      [staleRunningMs(), MAX_LOADING_ATTEMPTS]
+    );
+  }
+
+  async function claimLoadingEntity(): Promise<LoadingEntityRow | undefined> {
+    const client = await options.pool.connect();
+    try {
+      await client.query('BEGIN');
+      const claimed = await client.query<LoadingEntityRow>(
+        `
+          SELECT id, mime_type, loading_attempts
+          FROM entities
+          WHERE loading_status = 'pending'
+            OR (loading_status = 'failed' AND loading_attempts < $2
+                AND updated_at < now() - interval '5 minutes')
+            OR (loading_status = 'running' AND loading_attempts < $2
+                AND updated_at < now() - ($1::bigint * interval '1 millisecond'))
+          ORDER BY
+            CASE WHEN loading_status = 'pending' THEN 0 ELSE 1 END,
+            created_at ASC
+          FOR UPDATE SKIP LOCKED
+          LIMIT 1
+        `,
+        [staleRunningMs(), MAX_LOADING_ATTEMPTS]
+      );
+      const row = claimed.rows[0];
+      if (!row) {
+        await rollbackQuietly(client);
+        return undefined;
+      }
+      const updated = await client.query<{ loading_attempts: number }>(
+        `
+          UPDATE entities
+          SET loading_status = 'running',
+              loading_attempts = loading_attempts + 1
+          WHERE id = $1
+          RETURNING loading_attempts
+        `,
+        [row.id]
+      );
+      await client.query('COMMIT');
+      return { ...row, loading_attempts: updated.rows[0]!.loading_attempts };
+    } catch (error) {
+      await rollbackQuietly(client);
+      throw error;
+    } finally {
+      client.release();
+    }
+  }
+
+  async function markLoadingFailed(
+    entityId: string,
+    token: number,
+    loaderName: string | null,
+    error: unknown
+  ): Promise<void> {
+    const message = truncateErrorMessage(error);
+    const text = loaderName ? `${loaderName}: ${message}` : message;
+    // The attempt was counted at claim time; only the current claim may fail it.
+    const result = await options.pool.query(
+      `
+        UPDATE entities
+        SET loading_status = 'failed',
+            loading_error = $2,
+            loader_name = COALESCE($4, loader_name)
+        WHERE id = $1
+          AND loading_status = 'running'
+          AND loading_attempts = $3
+      `,
+      [entityId, stripNul(truncateErrorMessage(text)), token, loaderName]
+    );
+    if (result.rowCount === 0) {
+      logger.warn({ entityId }, 'lost claim; failure not recorded');
+    }
+  }
+
+  async function readDraftBytes(
+    source: NonNullable<LoaderResult['attachments']>[number]['source'],
+    tmpDir: string
+  ): Promise<Uint8Array> {
+    if (source.kind === 'bytes') {
+      return source.bytes;
+    }
+    let resolved: string | undefined;
+    try {
+      resolved = await realpath(source.path);
+      if (!(await isInside(tmpDir, resolved))) resolved = undefined;
+    } catch {
+      resolved = undefined;
+    }
+    if (!resolved) {
+      throw new Error(
+        'attachment path is outside the loader temp directory or unreadable'
+      );
+    }
+    return readFile(resolved);
+  }
+
+  async function runLoaderWithTimeout(
+    run: (signal: AbortSignal) => Promise<unknown>,
+    timeoutMs: number
+  ): Promise<unknown> {
+    const controller = new AbortController();
+    let timer: NodeJS.Timeout | undefined;
+    const timeout = new Promise<never>((_, reject) => {
+      timer = setTimeout(() => {
+        const err = new Error(`loader timed out after ${timeoutMs} ms`);
+        controller.abort(err);
+        reject(err);
+      }, timeoutMs);
+    });
+    try {
+      const call = Promise.resolve().then(() => run(controller.signal));
+      // If the timeout wins, the loader promise may still reject later.
+      call.catch(() => undefined);
+      return await Promise.race([call, timeout]);
+    } finally {
+      clearTimeout(timer);
+    }
+  }
+
+  async function processNextLoadingEntity(): Promise<boolean> {
+    const registry = options.loaderRegistry;
+    const store = options.attachmentStore;
+    if (!registry || !store) {
+      return false;
+    }
+
+    await sweepInterruptedLoads();
+    const entity = await claimLoadingEntity();
+    if (!entity) {
+      return false;
+    }
+
+    const startedAt = Date.now();
+    let loaderName: string | null = null;
+    let mimeType = entity.mime_type;
+    let bytesIn = 0;
+    let tmpDir: string | undefined;
+
+    try {
+      const originalResult = await options.pool.query<OriginalAttachmentRow>(
+        `
+          SELECT filename, byte_size::text AS byte_size, storage_uri
+          FROM attachments
+          WHERE entity_id = $1 AND role = 'original'
+        `,
+        [entity.id]
+      );
+      const original = originalResult.rows[0];
+      if (!original) {
+        throw new LoadingFailure('original attachment row is missing');
+      }
+      bytesIn = Number(original.byte_size);
+
+      let localPath: string;
+      try {
+        localPath = store.resolvePath(original.storage_uri);
+        await stat(localPath);
+      } catch {
+        throw new LoadingFailure(
+          `original attachment file is missing on disk (${original.storage_uri})`
+        );
+      }
+
+      const resolution = registry.resolveByTypeOrName({
+        mimeType: entity.mime_type ?? undefined,
+        filename: original.filename ?? undefined
+      });
+      if (!resolution.ok) {
+        throw new LoadingFailure(
+          `${resolution.error.code}: ${resolution.error.reason}`
+        );
+      }
+      const { entry } = resolution;
+      loaderName = entry.config.name;
+      mimeType = entity.mime_type ?? resolution.mimeType;
+
+      tmpDir = await mkdtemp(path.join(tmpdir(), 'pgm-loader-'));
+      const callTmpDir = tmpDir;
+      const loaderLogger = createLoaderLogger(logger, {
+        loader: loaderName,
+        entityId: entity.id
+      });
+      const timeoutMs = options.loaderTimeoutMs ?? DEFAULT_LOADER_TIMEOUT_MS;
+
+      const raw = await runLoaderWithTimeout((signal) => {
+        const ctx: LoaderContext = {
+          tmpDir: callTmpDir,
+          logger: loaderLogger,
+          fetch: (url, init) =>
+            fetch(url, {
+              ...init,
+              signal: init?.signal
+                ? AbortSignal.any([init.signal, signal])
+                : signal
+            }),
+          options: entry.config.options,
+          signal
+        };
+        return entry.loader.load(
+          {
+            kind: 'localPath',
+            path: localPath,
+            mimeType: mimeType ?? 'application/octet-stream',
+            ...(original.filename ? { filename: original.filename } : {})
+          },
+          ctx
+        );
+      }, timeoutMs);
+
+      const result = parseLoaderResult(raw);
+
+      const drafts = result.attachments ?? [];
+      const seenRefs = new Set<string>();
+      const storedDerived: {
+        ref: string;
+        kind: string;
+        mimeType: string;
+        metadata: Record<string, unknown>;
+        sha256: string;
+        byteSize: number;
+        storageUri: string;
+      }[] = [];
+      for (const draft of drafts) {
+        if (draft.ref === RESERVED_ATTACHMENT_REF) {
+          throw new Error(
+            `attachment ref "${RESERVED_ATTACHMENT_REF}" is reserved`
+          );
+        }
+        if (seenRefs.has(draft.ref)) {
+          throw new Error(`duplicate attachment ref "${draft.ref}"`);
+        }
+        seenRefs.add(draft.ref);
+        const bytes = await readDraftBytes(draft.source, callTmpDir);
+        const put = await store.put(bytes);
+        storedDerived.push({
+          ref: draft.ref,
+          kind: draft.kind,
+          mimeType: draft.mimeType,
+          metadata: stripNul(draft.metadata ?? {}),
+          sha256: put.sha256,
+          byteSize: put.byteSize,
+          storageUri: put.storageUri
+        });
+      }
+
+      const rendered = stripNul(renderLoaderResult(result));
+      const hasText = rendered.trim() !== '';
+      const loaderMetadata = stripNul({
+        documentType: result.documentType,
+        ...(result.metadata ?? {})
+      });
+
+      const client = await options.pool.connect();
+      try {
+        await client.query('BEGIN');
+        // `attachments gc` takes the same per-hash lock before it deletes a
+        // file. Holding it here, and checking the file inside the lock, means
+        // gc cannot remove a derived file between the put above and this
+        // commit. A missing file fails the load so that the retry writes it again.
+        const derivedShas = [...new Set(storedDerived.map((d) => d.sha256))];
+        derivedShas.sort();
+        for (const sha of derivedShas) {
+          await lockIngestSha(client, sha);
+        }
+        for (const d of storedDerived) {
+          try {
+            await stat(store.resolvePath(d.storageUri));
+          } catch {
+            throw new LoadingFailure(
+              `derived attachment file is missing on disk (${d.storageUri})`,
+              loaderName
+            );
+          }
+        }
+        const finalized = await client.query(
+          `
+            UPDATE entities
+            SET content = $2,
+                metadata = jsonb_set(metadata, '{loader}', $3::jsonb, true),
+                loader_name = $4,
+                version = version + 1,
+                loading_status = 'completed',
+                loading_error = NULL,
+                enrichment_status = CASE WHEN $5::boolean THEN 'pending' ELSE 'completed' END,
+                enrichment_attempts = CASE WHEN $5::boolean THEN 0 ELSE enrichment_attempts END,
+                enrichment_error = CASE WHEN $5::boolean THEN NULL ELSE enrichment_error END
+            WHERE id = $1
+              AND loading_status = 'running'
+              AND loading_attempts = $6
+          `,
+          [
+            entity.id,
+            hasText ? rendered : null,
+            JSON.stringify(loaderMetadata),
+            loaderName,
+            hasText,
+            entity.loading_attempts
+          ]
+        );
+        if (finalized.rowCount === 0) {
+          await rollbackQuietly(client);
+          logger.warn(
+            { loader: loaderName, entityId: entity.id },
+            'lost claim; loader result discarded'
+          );
+          return true;
+        }
+        if (!hasText) {
+          await client.query('DELETE FROM chunks WHERE entity_id = $1', [
+            entity.id
+          ]);
+        }
+        await client.query(
+          "DELETE FROM attachments WHERE entity_id = $1 AND role = 'derived'",
+          [entity.id]
+        );
+        for (const d of storedDerived) {
+          await client.query(
+            `
+              INSERT INTO attachments (
+                entity_id, role, ref, kind, mime_type,
+                byte_size, sha256, storage_uri, metadata
+              )
+              VALUES ($1, 'derived', $2, $3, $4, $5, $6, $7, $8::jsonb)
+            `,
+            [
+              entity.id,
+              d.ref,
+              d.kind,
+              d.mimeType,
+              d.byteSize,
+              d.sha256,
+              d.storageUri,
+              JSON.stringify(d.metadata)
+            ]
+          );
+        }
+        await client.query('COMMIT');
+      } catch (error) {
+        await rollbackQuietly(client);
+        throw error;
+      } finally {
+        client.release();
+      }
+
+      logger.info(
+        {
+          loader: loaderName,
+          entityId: entity.id,
+          mimeType,
+          bytesIn,
+          textChars: rendered.length,
+          attachmentsOut: storedDerived.length,
+          durationMs: Date.now() - startedAt,
+          status: 'completed'
+        },
+        'loader call finished'
+      );
+    } catch (error) {
+      const failureLoader =
+        error instanceof LoadingFailure ? error.loaderName : loaderName;
+      logger.warn(
+        {
+          err: error,
+          loader: failureLoader,
+          entityId: entity.id,
+          mimeType,
+          bytesIn,
+          textChars: 0,
+          attachmentsOut: 0,
+          durationMs: Date.now() - startedAt,
+          status: 'failed'
+        },
+        'loader call finished'
+      );
+      await markLoadingFailed(
+        entity.id,
+        entity.loading_attempts,
+        failureLoader,
+        error
+      );
+    } finally {
+      if (tmpDir) {
+        await rm(tmpDir, { recursive: true, force: true }).catch(
+          () => undefined
+        );
+      }
+    }
+    return true;
+  }
+
   return {
     async runOnce(): Promise<number> {
       let processed = 0;
+
+      // At most one loading row per pass, so ordinary entities keep flowing.
+      if (await processNextLoadingEntity()) {
+        processed += 1;
+      }
 
       if (await hasPendingEnrichment()) {
         const activeModel = await embeddingService.getActiveModel(options.pool);

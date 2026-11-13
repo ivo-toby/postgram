@@ -65,6 +65,9 @@ pgm task add "write integration tests" --context @dev --status next
 pgm task list --status inbox
 pgm task complete <task-id> --version 1
 
+# Upload a document (needs LOADERS_ENABLED=true on the server)
+pgm ingest report.pdf --title "Q3 report" --wait
+
 # Sync markdown directory
 pgm sync ./notes --repo my-notes
 

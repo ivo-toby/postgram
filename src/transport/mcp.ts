@@ -11,6 +11,7 @@ import {
 } from '../auth/key-service.js';
 import { validateBearerToken } from '../auth/bearer.js';
 import type { AuthContext } from '../auth/types.js';
+import { toLoadingResponseFields } from '../services/document-loading-fields.js';
 import type { EmbeddingService } from '../services/embedding-service.js';
 import {
   createEdge,
@@ -142,7 +143,8 @@ function toStoredEntity(entity: Entity) {
     source: entity.source,
     metadata: entity.metadata,
     created_at: entity.createdAt,
-    updated_at: entity.updatedAt
+    updated_at: entity.updatedAt,
+    ...toLoadingResponseFields(entity)
   };
 }
 

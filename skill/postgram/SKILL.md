@@ -168,6 +168,16 @@ Common relations: `involves`, `assigned_to`, `part_of`, `blocked_by`, `mentioned
 pgm list --type task --status next --limit 10 --toon
 ```
 
+### Ingest a document
+
+Use this to store a PDF or another file that the server has a loader for. It needs `LOADERS_ENABLED=true` on the server.
+
+```bash
+pgm ingest report.pdf --title "Q3 report" --wait
+```
+
+`--wait` blocks until the text is loaded and indexed, and exits non-zero on failure or timeout. Without it, the command returns at once and the server processes the file in the background.
+
 ### Check enrichment queue
 
 Use this when search results seem stale or entities aren't showing up yet — enrichment may still be in progress. Available as `pgm queue` (CLI) or the `queue` MCP tool.

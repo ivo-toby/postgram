@@ -34,6 +34,7 @@ const BACKUP_DATA_TABLES = [
   'admin_sessions',
   'admin_users',
   'api_keys',
+  'attachments',
   'audit_log',
   'chunks',
   'document_sources',
@@ -347,6 +348,88 @@ describe('admin backup API', () => {
     );
     expect(audit.rows[0]?.count).toBe('1');
   }, 120_000);
+
+  it.each([
+    { name: 'with an attachments entry', withAttachments: true },
+    { name: 'from before attachments existed', withAttachments: false }
+  ])(
+    'validates a dump $name',
+    async ({ withAttachments }) => {
+      if (!database) {
+        throw new Error('test database not initialized');
+      }
+      const toc = postgramDataToc()
+        .split('\n')
+        .filter((line) => withAttachments || !line.includes(' attachments '))
+        .join('\n');
+      expect(toc.includes(' attachments ')).toBe(withAttachments);
+      const commandRunner: AdminBackupCommandRunner = async (
+        input
+      ): Promise<AdminBackupCommandRunnerResult | void> => {
+        if (input.command === 'tar') {
+          const outputDir = input.args[input.args.indexOf('-C') + 1];
+          if (!outputDir) {
+            throw new Error('tar extraction directory missing');
+          }
+          await mkdir(outputDir, { recursive: true });
+          await writeFile(
+            join(outputDir, 'manifest.json'),
+            JSON.stringify({
+              formatVersion: 2,
+              id: 'backup-id-3',
+              product: 'postgram',
+              generatedAt: '2026-07-08T08:00:00.000Z',
+              contents: [
+                { path: 'database.dump', type: 'postgres_custom_data_dump' },
+                {
+                  path: 'configuration.json',
+                  type: 'redacted_runtime_configuration'
+                }
+              ]
+            })
+          );
+          await writeFile(join(outputDir, 'configuration.json'), '{}');
+          await writeFile(join(outputDir, 'database.dump'), 'fake dump');
+          return;
+        }
+        if (input.command === 'pg_restore') {
+          return { stdout: `${toc}\n` };
+        }
+        throw new Error(`Unexpected command ${input.command}`);
+      };
+      const admin = await createActiveAdminSession(database);
+      const app = createApp({
+        pool: database.pool,
+        runtimeConfig: loadConfig({
+          DATABASE_URL: 'postgresql://postgram:s3cret@postgres:5432/postgram',
+          EMBEDDING_PROVIDER: 'ollama',
+          EMBEDDING_DIMENSIONS: '1024',
+          OLLAMA_BASE_URL: 'http://localhost:11434'
+        }),
+        adminBackupCommandRunner: commandRunner
+      });
+      const formData = new FormData();
+      formData.set(
+        'backup',
+        new File(['fake archive'], 'postgram-backup.tar.gz', {
+          type: 'application/gzip'
+        })
+      );
+      const response = await app.request(
+        '/admin/api/backups/restore/validate',
+        {
+          method: 'POST',
+          headers: {
+            Cookie: admin.cookie,
+            'X-CSRF-Token': admin.csrfToken
+          },
+          body: formData
+        }
+      );
+      expect(response.status).toBe(200);
+    },
+    120_000
+  );
 
   it.each([
     {

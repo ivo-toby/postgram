@@ -10,6 +10,14 @@ import { pipeline } from 'node:stream/promises';
 
 import { createPgmClient } from './client.js';
 import {
+  explainIngestError,
+  readIngestFile,
+  hasExtractedText,
+  NO_TEXT_MESSAGE,
+  waitFailure,
+  waitForProcessing
+} from './ingest.js';
+import {
   handleCliFailure,
   isJsonMode,
   parseCommaList,
@@ -463,6 +471,113 @@ program
             owner: body.entity.owner,
             tags: body.entity.tags
           });
+    });
+  });
+
+program
+  .command('ingest')
+  .description('Upload a document (PDF and other loader-supported files) for text extraction')
+  .argument('<file>', 'path of the file to upload')
+  .option('--title <title>', 'document title (default: the file name)')
+  .option(
+    '--mime-type <type>',
+    'MIME type; if omitted, the server decides by file extension'
+  )
+  .option(
+    '--visibility <visibility>',
+    'entity visibility (server default: shared)'
+  )
+  .option('--owner <owner>', 'entity owner or namespace')
+  .option('--tags <tags>', 'comma-separated tags')
+  .option('--metadata <json>', 'JSON metadata object')
+  .option(
+    '--wait',
+    'wait until loading and indexing finish; exit non-zero if either fails or the timeout passes'
+  )
+  .option(
+    '--timeout <seconds>',
+    'with --wait, stop waiting after this many seconds (default: 600)'
+  )
+  .action(async (filePath, options, command) => {
+    await runWithClient(command, async (client, json) => {
+      if (options.timeout !== undefined && options.wait !== true) {
+        throw new AppError(
+          ErrorCode.VALIDATION,
+          '--timeout only applies together with --wait'
+        );
+      }
+      const timeoutSeconds =
+        options.timeout === undefined ? 600 : Number(options.timeout);
+      if (!Number.isFinite(timeoutSeconds) || timeoutSeconds <= 0) {
+        throw new AppError(
+          ErrorCode.VALIDATION,
+          '--timeout must be a positive number of seconds'
+        );
+      }
+      const metadata =
+        options.metadata === undefined
+          ? undefined
+          : parseJsonObject(options.metadata);
+      const { filename, bytes } = await readIngestFile(filePath);
+
+      let response;
+      try {
+        response = await client.ingestDocument({
+          filename,
+          bytes,
+          title: options.title,
+          mime_type: options.mimeType,
+          visibility: options.visibility,
+          owner: options.owner,
+          tags: parseCommaList(options.tags),
+          metadata
+        });
+      } catch (error) {
+        throw explainIngestError(error, { bytes: bytes.byteLength });
+      }
+
+      let loadingStatus: string = response.loading_status;
+      let enrichmentStatus: string | null | undefined;
+      let textExtracted: boolean | undefined;
+
+      if (options.wait === true) {
+        if (!json) {
+          process.stderr.write(
+            `Waiting for ${response.id} (up to ${timeoutSeconds} s)...\n`
+          );
+        }
+        const result = await waitForProcessing({
+          fetchEntity: async (signal) =>
+            (await client.recallEntity(response.id, {}, signal)).entity,
+          timeoutMs: timeoutSeconds * 1000
+        });
+        if (result.outcome !== 'completed') {
+          throw waitFailure(result, { id: response.id, timeoutSeconds });
+        }
+        loadingStatus = result.entity.loading_status ?? loadingStatus;
+        enrichmentStatus = result.entity.enrichment_status;
+        textExtracted = hasExtractedText(result.entity);
+      }
+
+      if (json) {
+        return options.wait === true
+          ? {
+              ...response,
+              loading_status: loadingStatus,
+              enrichment_status: enrichmentStatus,
+              text_extracted: textExtracted
+            }
+          : response;
+      }
+
+      return [
+        `document ${response.id} ${response.status}`,
+        `loading: ${loadingStatus}`,
+        ...(options.wait === true
+          ? [`enrichment: ${enrichmentStatus ?? '-'}`]
+          : []),
+        ...(textExtracted === false ? [NO_TEXT_MESSAGE] : [])
+      ];
     });
   });
 

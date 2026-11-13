@@ -163,6 +163,7 @@ const ADMIN_BACKUP_DATA_TABLES = [
   'admin_sessions',
   'admin_users',
   'api_keys',
+  'attachments',
   'audit_log',
   'chunks',
   'document_sources',
@@ -173,6 +174,9 @@ const ADMIN_BACKUP_DATA_TABLES = [
   'oauth_clients',
   'oauth_tokens'
 ] as const;
+
+/** Tables a dump may lack because it predates the migration that added them. */
+const ADMIN_BACKUP_OPTIONAL_DATA_TABLES = new Set<string>(['attachments']);
 
 const ADMIN_BACKUP_DATA_TABLE_SET = new Set<string>(ADMIN_BACKUP_DATA_TABLES);
 
@@ -577,8 +581,11 @@ function validatePgRestoreDataList(stdout: string | undefined): {
   }
 
   if (
-    approvedEntries.size !== ADMIN_BACKUP_DATA_TABLES.length ||
-    ADMIN_BACKUP_DATA_TABLES.some((table) => !approvedEntries.has(table))
+    ADMIN_BACKUP_DATA_TABLES.some(
+      (table) =>
+        !approvedEntries.has(table) &&
+        !ADMIN_BACKUP_OPTIONAL_DATA_TABLES.has(table)
+    )
   ) {
     throw new AppError(
       ErrorCode.VALIDATION,

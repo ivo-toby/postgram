@@ -6,13 +6,18 @@ import { Command } from 'commander';
 import { createKey, revokeKey } from '../../auth/key-service.js';
 import type { AuthContext, Scope } from '../../auth/types.js';
 import type { EntityType, Visibility } from '../../types/entities.js';
-import { loadConfig } from '../../config.js';
+import { DEFAULT_ATTACHMENTS_DIR, loadConfig } from '../../config.js';
 import { buildEmbeddingProviderConfig } from '../../index.js';
 import {
   MigrateRefusal,
   runMigrate,
   type MigrateReport
 } from '../../services/embeddings/admin.js';
+import {
+  collectAttachmentGarbage,
+  createGcReport
+} from '../../services/attachment-gc-service.js';
+import { FilesystemAttachmentStore } from '../../services/loaders/attachment-store.js';
 import { createEdge } from '../../services/edge-service.js';
 import { findSemanticNeighbors } from '../../services/extraction-service.js';
 import type { validateEdgeBatch as validateEdgeBatchFn } from '../../services/edge-validation-service.js';
@@ -2049,7 +2054,7 @@ memoryCommand
 
 program
   .command('purge')
-  .description('Permanently delete archived entities (chunks, edges, and document_sources cascade automatically)')
+  .description('Permanently delete archived entities (chunks, edges, and document_sources cascade automatically). Attachment rows of purged entities are removed too; run `attachments gc` afterwards to free the files.')
   .option('--all', 'purge all archived entities')
   .option('--type <type>', 'limit purge to this entity type')
   .option('--older-than <duration>', 'only purge archived items older than this (e.g. 30d, 4w)')
@@ -2129,6 +2134,121 @@ program
       return json
         ? { deleted }
         : [`Permanently deleted ${deleted} archived entit${deleted === 1 ? 'y' : 'ies'}`];
+    });
+  });
+
+const attachmentsCommand = program
+  .command('attachments')
+  .description('Maintain the attachment file store');
+
+
+/** Files younger than this are never deleted by `attachments gc`. */
+const GC_MIN_AGE_FLOOR_MS = 10 * 60_000;
+
+attachmentsCommand
+  .command('gc')
+  .description(
+    'Delete stored attachment files that no database row references. Run it where ATTACHMENTS_DIR is mounted.'
+  )
+  .option(
+    '--min-age <duration>',
+    'only delete files older than this (e.g. 30m, 1h, 7d); at least 10m',
+    '1h'
+  )
+  .option('--dry-run', 'report what would be deleted without deleting')
+  .option(
+    '--force',
+    'delete even if the attachments table is empty while the store has files'
+  )
+  .action(async (options, command) => {
+    const json = isJsonMode(command);
+
+    await runWithPool(json, async (pool) => {
+      let minAgeMs: number;
+      try {
+        minAgeMs = parseGroomOlderThan(options.minAge);
+      } catch (error) {
+        throw new AppError(
+          ErrorCode.VALIDATION,
+          error instanceof Error ? error.message : String(error)
+        );
+      }
+      if (minAgeMs < GC_MIN_AGE_FLOOR_MS) {
+        throw new AppError(
+          ErrorCode.VALIDATION,
+          `--min-age must be at least 10m (got '${options.minAge}'). A recent file can belong to an upload that is still in progress.`
+        );
+      }
+      // Not loadConfig: that would demand unrelated settings, and the directory
+      // can hold files from a time when LOADERS_ENABLED was true.
+      const attachmentsDir =
+        process.env.ATTACHMENTS_DIR?.trim() || DEFAULT_ATTACHMENTS_DIR;
+      const store = new FilesystemAttachmentStore(attachmentsDir);
+      const dryRun = options.dryRun === true;
+      const gcOptions = {
+        minAgeMs,
+        dryRun,
+        force: options.force === true,
+        attachmentsDir
+      };
+      const report = createGcReport(gcOptions);
+
+      let failureMessage: string | undefined;
+      try {
+        await collectAttachmentGarbage(pool, store, gcOptions, report);
+      } catch (error) {
+        failureMessage =
+          error instanceof Error ? error.message : 'unknown error';
+        throw error;
+      } finally {
+        // Written even when the run stops early, so a partial run is recorded.
+        // If the run failed, that failure stays the error that the user sees.
+        const stoppedEarly = failureMessage !== undefined;
+        await appendAuditEntry(pool, {
+          operation: dryRun ? 'attachments.gc.dry_run' : 'attachments.gc',
+          details: {
+            ...report,
+            attachmentsDir,
+            ...(stoppedEarly ? { failure: failureMessage } : {})
+          }
+        }).catch((auditError: unknown) => {
+          if (!stoppedEarly) throw auditError;
+        });
+      }
+
+      if (report.errors > 0 || report.refused) {
+        process.exitCode = 1;
+      }
+
+      if (json) {
+        return report;
+      }
+
+      for (const warning of report.warnings) {
+        process.stderr.write(`Warning: ${warning}\n`);
+      }
+      for (const message of report.errorMessages) {
+        process.stderr.write(`Error: ${message}\n`);
+      }
+
+      return [
+        `Scanned ${report.scanned} files`,
+        ...(dryRun || report.refused
+          ? [
+              `Would delete ${report.orphans} orphaned files (${report.orphanBytes} bytes) (no changes made)`
+            ]
+          : [
+              `Found ${report.orphans} orphaned files`,
+              `Deleted ${report.removed} files, freed ${report.bytesFreed} bytes`,
+              `Deleted ${report.tempFilesRemoved} stale temporary files`
+            ]),
+        ...(report.skippedYoung > 0
+          ? [
+              `Skipped ${report.skippedYoung} unreferenced ${report.skippedYoung === 1 ? 'file' : 'files'} younger than the minimum age`
+            ]
+          : []),
+        ...(report.errors > 0 ? [`${report.errors} errors`] : [])
+      ];
     });
   });
 
